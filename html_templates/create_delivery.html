@@ -1,0 +1,109 @@
+{% extends "home_base.html" %}
+
+{% block content %}
+    <div class="container">
+        <h3>Register new delivery</h3>
+        <br>
+        <form class="form-inline" role="form" method="POST">
+            {% module xsrf_form_html() %}
+            <div class="form-group mb-sm-9">
+                <input type="text" class="form-control" id="orderid_input" aria-describedby="order_help" placeholder="Order ID">
+                <!-- small id="orderHelp" class="form-text text-muted">Enter the order id to autofill some details.</small -->
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Auto fill</button>
+        </form>
+        <br>
+        <form role="form" method="POST">
+            <h4>Project Information</h4>
+            <hr>
+            <div class="form-group">
+                <label for="prj_name">Name</label>
+                <input type="text" class="form-control" id="prj_name" placeholder="Project name">
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="prj_ord_cat">Category</label>
+                        <input type="text" class="form-control" id="prj_ord_cat" placeholder="Project category">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="prj_ord_id">Order ID</label>
+                        <input type="text" class="form-control" id="prj_ord_id" placeholder="Project's order id">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="prj_pi_name">PI Name</label>
+                        <input type="text" class="form-control" id="prj_pi_name" placeholder="Name of PI">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="prj_pi_email">PI Email</label>
+                        <input type="text" class="form-control" id="prj_pi_email" placeholder="Email of PI">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="prj_desc">Description</label>
+                <input type="text" class="form-control form-control-lg" id="prj_desc" placeholder="Project description">
+            </div>
+            <br>
+            <h4>Data Information</h4>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="data_type">Data type</label>
+                        <input type="text" class="form-control" id="data_type" placeholder="Data type like Genomics, etc">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="data_format">File formats</label>
+                        <input type="text" class="form-control" id="data_format" placeholder="Fastq, BAM, SAM, etc">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="data_size">Data size</label>
+                        <input type="text" class="form-control" id="data_size" placeholder="Approx data size in GB">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="data_sensitive">Personal data</label>
+                        <input type="text" class="form-control" id="data_sensitive" placeholder="Yes or No">
+                    </div>
+                </div>
+            </div>
+            <br>
+            <h4>Delivery Information</h4>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="deliv_type">Delivery platform</label>
+                        <input type="text" class="form-control" id="deliv_type" placeholder="GRUS, Safespring, etc">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="deliv_date">Delivered date</label>
+                        <input type="text" class="form-control" id="deliv_date" placeholder="2019-03-26">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="deliv_recip">Recipient</label>
+                <input type="text" class="form-control form-control-lg" id="deliv_recip" placeholder="Email of recipient">
+            </div>
+        </form>
+    </div>
+{% end %}
