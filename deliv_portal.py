@@ -20,7 +20,7 @@ class MainHandler(BaseHandler):
     def get(self):
         # self.current_user = False
         if not self.current_user:
-            self.render('home_base.html')
+            self.render('home_base.php')
         else:
             self.render('home_login.html', user=self.current_user)
 
@@ -52,7 +52,7 @@ def main():
     
     # For devel puprose watch page changes
     tornado.autoreload.start()
-    tornado.autoreload.watch("html_templates/home_base.html")
+    tornado.autoreload.watch("html_templates/home_base.php")
     tornado.autoreload.watch("html_templates/home_login.html")
     tornado.autoreload.watch("html_templates/create_delivery.html")
     
