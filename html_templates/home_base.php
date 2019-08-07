@@ -1,4 +1,17 @@
 <!DOCTYPE html>
+<?php>
+$servername = "localhost";
+$username = "root";
+$password = "root";
+
+$conn = new mysqli($servername, $username, $password);
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+echo "Connected successfully";
+?>
+
 <html>
     <head>
         <title>Data Delivery Portal</title>
@@ -10,7 +23,8 @@
 			  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 		<link rel="stylesheet" type="text/css"
 			  href="https://cdn.datatables.net/1.10.11/css/dataTables.bootstrap.min.css">
-              
+
+        <!-- defer: script will not run until page has loaded -->
 		<script defer src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 		<script defer src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
 		<script defer src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js"></script>
@@ -90,6 +104,7 @@
 								<span class="glyphicon glyphicon-log-in"></span>
 								Login
 							</button>
+
 						</div>
 					</form>
 				</div>

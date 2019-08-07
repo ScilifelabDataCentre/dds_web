@@ -18,6 +18,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
 class MainHandler(BaseHandler):
     def get(self):
+        # self.current_user = False
         if not self.current_user:
             self.render('home_base.html')
         else:
