@@ -76,7 +76,7 @@
 					Sign In
 				</div>
 				<div class="panel-body">
-					<form action="{{ reverse_url('login') }}" role="form" method="POST">
+					<form action="{{ reverse_url('user') }}" role="form" method="post">
                         {% module xsrf_form_html() %}
 						<div class="form-group">
 							<label for="user_email">Email</label>
@@ -84,7 +84,7 @@
 								   placeholder="User account email address">
 						</div>
 						<div class="form-group">
-							<label for="passowrd">Password</label>
+							<label for="password">Password</label>
 							<input type="password" class="form-control" name="password" id="password">
 						</div>
 						<div class="form-group">

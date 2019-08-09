@@ -19,17 +19,17 @@ class BaseHandler(tornado.web.RequestHandler):
 class MainHandler(BaseHandler):
     def get(self):
         # self.current_user = False
-        if not self.current_user:
-            self.render('home_base.php')
-        else:
-            self.render('home_login.html', user=self.current_user)
+        # if not self.current_user:
+        self.render('home_base.php')
+        #else:
+        #    self.render('home_login.html', user=self.current_user)
 
 
 class LoginHandler(BaseHandler):
     def post(self):
         user_email = self.get_body_argument("user_email")
         password = self.get_body_argument("password")
-        self.set_secure_cookie("user", user_email, expires_days=2)
+        # self.set_secure_cookie("user", user_email, expires_days=0)
         self.redirect(site_base_url + self.reverse_url('home'))
 
 
@@ -42,12 +42,18 @@ class CreateDeliveryHandler(BaseHandler):
         self.render('create_delivery.html')
 
 
+class UserHandler(BaseHandler):
+    def post(self):
+        self.render('login_user.php')
+
+
 def main():
     
     url = tornado.web.url
     handlers = [ url(r"/", MainHandler, name='home'),
                  url(r"/login", LoginHandler, name='login'),
-                 url(r"/create", CreateDeliveryHandler, name='create')
+                 url(r"/create", CreateDeliveryHandler, name='create'),
+                 url(r"/user", UserHandler, name='user')
                ]
     
     # For devel puprose watch page changes
@@ -55,6 +61,7 @@ def main():
     tornado.autoreload.watch("html_templates/home_base.php")
     tornado.autoreload.watch("html_templates/home_login.html")
     tornado.autoreload.watch("html_templates/create_delivery.html")
+    tornado.autoreload.watch("html_templates/login_user.php")
     
     application = tornado.web.Application(handlers = handlers,
                                           xsrf_cookies = True,
