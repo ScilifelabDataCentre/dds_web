@@ -1,10 +1,12 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python3
 
 import base64
 import tornado.autoreload
 import tornado.ioloop
 import tornado.web
 import uuid
+import pymysql
+import tornado_mysql
 
 from utils.config import parse_config
 
@@ -29,6 +31,7 @@ class LoginHandler(BaseHandler):
     def post(self):
         user_email = self.get_body_argument("user_email")
         password = self.get_body_argument("password")
+        login_connection = pymysql.connect(host="localhost", user="root", password=password, db="del_port_db")
         # self.set_secure_cookie("user", user_email, expires_days=0)
         self.redirect(site_base_url + self.reverse_url('home'))
 
@@ -48,21 +51,40 @@ class UserHandler(BaseHandler):
 
 
 def main():
-    
+    try:
+        password = "Polarbear1"
+        # Open database connection
+        connection = pymysql.connect(host="localhost", user="root", password=password, db="del_port_db")
+
+        # prepare a cursor object
+        cursor = connection.cursor()
+
+        # Execute sql query: What is the database version?
+        cursor.execute("SELECT VERSION()")
+
+        # Fetch a single row
+        data = cursor.fetchone()
+        print("Database version: %s" % data)
+    finally:
+        # Disconnect from server
+        connection.close()
+
+
+
     url = tornado.web.url
     handlers = [ url(r"/", MainHandler, name='home'),
                  url(r"/login", LoginHandler, name='login'),
                  url(r"/create", CreateDeliveryHandler, name='create'),
                  url(r"/user", UserHandler, name='user')
                ]
-    
+
     # For devel puprose watch page changes
     tornado.autoreload.start()
     tornado.autoreload.watch("html_templates/home_base.php")
     tornado.autoreload.watch("html_templates/home_login.html")
     tornado.autoreload.watch("html_templates/create_delivery.html")
     tornado.autoreload.watch("html_templates/login_user.php")
-    
+
     application = tornado.web.Application(handlers = handlers,
                                           xsrf_cookies = True,
                                           #cookie_secret = base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),

@@ -4,7 +4,7 @@
     <head>
         <title>Data Delivery Portal</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        
+
 		<link rel="stylesheet" type="text/css"
 			  href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 		<link rel="stylesheet" type="text/css"
@@ -16,28 +16,28 @@
         <script defer src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
 		<script defer src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 		<script defer src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js"></script>
-        
+
         <style type="text/css">
             body {
                 padding: 10px;
             }
-            
+
             div.body_container {
-                
+
             }
-            
+
             div.header {
                 height: 80px;
                 width: 100%;
                 text-align: center;
                 vertical-align: middle;
-                line-height: 80px;  
+                line-height: 80px;
                 background-color: #8ee27f;
                 border-radius: 40px;
                 font-family: 'Book Antiqua';
                 font-size: 36px;
             }
-            
+
             div.arch {
                 height: 80px;
                 width: 40px;
@@ -45,13 +45,13 @@
                 border-radius: 0px 40px 40px 0px;
                 float: left;
             }
-            
+
             img.head_logo {
                 height: 80px;
                 width: 240px;
                 float: left;
             }
-            
+
 			div.login-container{
 				width: 50%;
 				max-width: 700px;
@@ -66,7 +66,7 @@
         <br>
         <br>
         <br>
-        
+
     {% block content %}
     <div class="container">
 		<div class="container login-container">
@@ -76,7 +76,7 @@
 					Sign In
 				</div>
 				<div class="panel-body">
-					<form action="{{ reverse_url('user') }}" role="form" method="post">
+					<form action="{{ reverse_url('login') }}" role="form" method="post">
                         {% module xsrf_form_html() %}
 						<div class="form-group">
 							<label for="user_email">Email</label>
