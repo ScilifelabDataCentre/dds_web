@@ -2,18 +2,14 @@
 
 {% block content %}
     <div class="container">
-        <h3>Register new delivery</h3>
-        <br>
-        <form class="form-inline" role="form" method="POST">
-            {% module xsrf_form_html() %}
-            <div class="form-group mb-sm-9">
-                <input type="text" class="form-control" id="orderid_input" aria-describedby="order_help" placeholder="Order ID">
-                <!-- small id="orderHelp" class="form-text text-muted">Enter the order id to autofill some details.</small -->
-            </div>
-            <button type="submit" class="btn btn-primary mb-2">Auto fill</button>
+        <form action="{{ reverse_url('home') }}" method="GET">
+          <button class="btn btn-primary" type="submit">Back</button>
         </form>
         <br>
-        <form action="insert.php" role="form" method="POST">
+        <h3>Register new delivery</h3>
+        <br>
+        <form action="{{ reverse_url('project') }}" role="form" method="POST">
+          {% module xsrf_form_html() %}
             <h4>Project Information</h4>
             <hr>
             <div class="form-group">
@@ -106,11 +102,7 @@
                     </div>
                 </div>
             </div>
-
-            <div class="row">
-                <button type="button" class="btn btn-primary mb-3">Back</button>
-                <button type="submit" class="btn btn-primary mb-3">Save</button>
-            </div>
+            <button class="btn btn-primary" type="submit">Save</button>
         </form>
     </div>
 {% end %}

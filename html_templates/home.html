@@ -3,27 +3,37 @@
 
 {% block content %}
     <div class="container">
+      <div class="col-md-3">
         <form action="{{ reverse_url('create') }}" role="form" method="POST">
             {% module xsrf_form_html() %}
             <button class="btn btn-primary" type="submit">Create</button>
         </form>
-    </div>
-
-    <br>
-    <br>
-
-    <div class="container">
-      {{user}}
-    </div>
-
-    <br>
-    <br>
-
-    <div class="container">
+      </div>
+      <div class="col-md-3">
+        Logged in as: {{user}}
+      </div>
+      <div class="col-md-3">
         <form action="{{ reverse_url('logout') }}" role="form" method="GET">
             {% module xsrf_form_html() %}
             <button class="btn btn-primary" type="submit">Log Out</button>
         </form>
+      </div>
     </div>
 
+    <div class="container">
+      <h2>Projects</h2>
+      <br>
+      <table>
+        <tr>
+            <th>Project</th>
+            <th>Order date</th>
+            <th>Status</th>
+        </tr>
+        <tr>
+            <td>Project name 1</td>
+            <td>Order date project 1</td>
+            <td>Status project 1</td>
+        </tr>
+      </table>
+    </div>
 {% end %}

@@ -1,5 +1,7 @@
 #!/usr/local/bin/python3
 
+
+# IMPORTS ############################################################ IMPORTS #
 import base64
 import tornado.autoreload
 import tornado.ioloop
@@ -16,15 +18,18 @@ from tornado.options import define, options
 define("port", default=8888, help="run on the given port", type=int)
 
 
+# CLASSES ############################################################ CLASSES #
 class ApplicationDP(tornado.web.Application):
     """docstring for ApplicationDP."""
 
     def __init__(self):
+        """"""
         url = tornado.web.url
         handlers = [ url(r"/", MainHandler, name='home'),
                      url(r"/login", LoginHandler, name='login'),
                      url(r"/create", CreateDeliveryHandler, name='create'),
-                     url(r"/logout", LogoutHandler, name='logout')
+                     url(r"/logout", LogoutHandler, name='logout'),
+                     url(r"/project", ProjectHandler, name='project')
                      ]
         settings = {"xsrf_cookies":True,
                     #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
@@ -36,20 +41,28 @@ class ApplicationDP(tornado.web.Application):
 
 
 class BaseHandler(tornado.web.RequestHandler):
+    """docstring for BaseHandler"""
     def get_current_user(self):
+        """"""
         return self.get_secure_cookie("user")
 
 
-class MainHandler(BaseHandler):
+class CreateDeliveryHandler(BaseHandler):
+    """docstring for CreateDeliveryHandler"""
     def get(self):
-        # self.current_user = False
-        if not self.current_user:
-            self.render('index.html')
-        else:
-            self.render('home.html', user=self.current_user)
+        """"""
+        self.render('create_delivery.html')
+
+    #@tornado.web.authenticated
+    def post(self):
+        """"""
+        self.render('create_delivery.html')
+
 
 class LoginHandler(BaseHandler):
+    """docstring for LoginHandler"""
     def check_permission(self, username, password):
+        """"""
         # Establish database connection
         login_connection = pymysql.connect(host="localhost",
                                            user="root",
@@ -70,12 +83,14 @@ class LoginHandler(BaseHandler):
             login_connection.close()
 
     def get(self):
+        """"""
         try:
             errormessage = self.get_argument("error")
         except:
             errormessage = ""
 
     def post(self):
+        """"""
         # Get form input
         user_email = self.get_body_argument("user_email")
         password = self.get_body_argument("password")
@@ -86,24 +101,57 @@ class LoginHandler(BaseHandler):
             self.redirect(site_base_url + self.reverse_url('home'))
         else:
             self.clear_cookie("user")
-
+            self.write("Login incorrect.")
 
 class LogoutHandler(BaseHandler):
+    """docstring for LogoutHandler"""
     def get(self):
+        """"""
         self.clear_cookie("user")
         self.redirect(site_base_url + self.reverse_url('home'))
 
 
-class CreateDeliveryHandler(BaseHandler):
+class MainHandler(BaseHandler):
+    """docstring for MainHandler"""
     def get(self):
-        self.render('create_delivery.html')
+        """"""
+        # self.current_user = False
+        if not self.current_user:
+            self.render('index.html')
+        else:
+            projects = self.get_user_projects()
+            self.render('home.html', user=self.current_user)
 
-    #@tornado.web.authenticated
+    def get_user_projects(self):
+        """"""
+        getproj_connection = pymysql.connect(host="localhost",
+                                     user="root", 
+                                     password="Polarbear1",
+                                     db="del_port_db")
+        try:
+            with getproj_connection.cursor() as cursor:   # cursor used to interact with database
+                sql = f"SELECT * FROM `users` WHERE `email`='{username}' AND `password`='{password}'"
+                cursor.execute(sql)
+                results = cursor.fetchall()
+                if len(results) == 1:
+                    return True
+                else:
+                    return False
+        finally:
+            login_connection.close()
+
+
+
+class ProjectHandler(BaseHandler):
+    """"""
     def post(self):
-        self.render('create_delivery.html')
+        """"""
+        self.redirect(site_base_url + self.reverse_url('home'))
 
 
-def main():
+# FUNCTIONS ######################################################## FUNCTIONS #
+def test_db_connection():
+    """Tests connection to database"""
     try:
         # Open database connection
         connection = pymysql.connect(host="localhost",
@@ -123,6 +171,12 @@ def main():
     finally:
         # Disconnect from server
         connection.close()
+
+
+# MAIN ################################################################## MAIN #
+def main():
+    """"""
+    test_db_connection()
 
     # For devel puprose watch page changes
     tornado.autoreload.start()
