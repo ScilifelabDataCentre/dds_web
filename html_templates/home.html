@@ -23,17 +23,38 @@
     <div class="container">
       <h2>Projects</h2>
       <br>
-      <table>
+      <table style="width:100%">
         <tr>
-            <th>Project</th>
-            <th>Order date</th>
-            <th>Status</th>
+          <th>Project</th>
+          <th>Order date</th>
+          <th>Status</th>
         </tr>
-        <tr>
-            <td>Project name 1</td>
-            <td>Order date project 1</td>
-            <td>Status project 1</td>
+        <tr class="collapsible">
+          <div class="content"><p>This is hopefully collapsible</p></div>
+          {% for p in projects %}
+          <td>{{ p[1] }}</td>
+          <td>{{ p[5] }}</td>
+          <td>{{ p[6] }}</td>
+          {% end %}
         </tr>
       </table>
     </div>
+
+    <script>
+      var coll = document.getElementsByClassName("collapsible");
+      var i;
+
+      for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+          this.classList.toggle("active");
+          var content = this.nextElementSibling;
+          if (content.style.display === "block") {
+            content.style.display = "none";
+          } else {
+            content.style.display = "block";
+          }
+        });
+      }
+      </script>
+
 {% end %}

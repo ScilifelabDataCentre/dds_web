@@ -120,25 +120,45 @@ class MainHandler(BaseHandler):
             self.render('index.html')
         else:
             projects = self.get_user_projects()
-            self.render('home.html', user=self.current_user)
+            print("Projects: ", projects, len(projects))
+            self.render('home.html', user=self.current_user, projects=projects)
 
     def get_user_projects(self):
         """"""
         getproj_connection = pymysql.connect(host="localhost",
-                                     user="root", 
+                                     user="root",
                                      password="Polarbear1",
                                      db="del_port_db")
         try:
             with getproj_connection.cursor() as cursor:   # cursor used to interact with database
-                sql = f"SELECT * FROM `users` WHERE `email`='{username}' AND `password`='{password}'"
-                cursor.execute(sql)
-                results = cursor.fetchall()
-                if len(results) == 1:
-                    return True
-                else:
-                    return False
+                username = tornado.escape.xhtml_escape(self.current_user)
+                sql1 = f"SELECT * FROM `users` WHERE `email`='{username}'"
+                cursor.execute(sql1)
+                results1 = cursor.fetchall()[0]
+                print(results1)
+
+                sql2 = f"SELECT `user_id` FROM `users` WHERE `email`='{username}'"
+                cursor.execute(sql2)
+                results2 = cursor.fetchall()[0]
+                print(results2, len(results2))
+
+                sql3 = f"SELECT * FROM `project_user` WHERE `user_id`=(SELECT `user_id` FROM `users` WHERE `email`='{username}')"
+                cursor.execute(sql3)
+                results3 = cursor.fetchall()[0]
+                print(results3)
+
+                sql4 = f"SELECT `project_id` FROM `project_user` WHERE `user_id`=(SELECT `user_id` FROM `users` WHERE `email`='{username}')"
+                cursor.execute(sql4)
+                results4 = cursor.fetchall()
+                print(results4)
+
+                sql5 = f"SELECT * FROM `projects` WHERE `project_id`=(SELECT `project_id` FROM `project_user` WHERE `user_id`=(SELECT `user_id` FROM `users` WHERE `email`='{username}'))"
+                cursor.execute(sql5)
+                results5 = cursor.fetchall()
+                print(results5)
+                return results5
         finally:
-            login_connection.close()
+            getproj_connection.close()
 
 
 
