@@ -20,41 +20,112 @@
       </div>
     </div>
 
-    <div class="container">
+  <div class="col-sm-12">
+    <br>
       <h2>Projects</h2>
-      <br>
-      <table style="width:100%">
-        <tr>
-          <th>Project</th>
-          <th>Order date</th>
-          <th>Status</th>
-        </tr>
-        <tr class="collapsible">
-          <div class="content"><p>This is hopefully collapsible</p></div>
+      <table class="table table-responsive table-hover">
+        <thead>
+          <tr>
+            <th>Project ID</th>
+            <th>Project</th>
+            <th>Order Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
           {% for p in projects %}
-          <td>{{ p[1] }}</td>
-          <td>{{ p[5] }}</td>
-          <td>{{ p[6] }}</td>
+          <tr data-toggle="collapse" id="{{p[0]}}" data-target=".{{p[0]}}">
+            <td>{{p[0]}}</td>
+            <td>{{p[1]}}</td>
+            <td>{{p[5]}}</td>
+            <td>{{p[6]}}</td>
+            <td><button class="btn btn-default btn-sm">View More</button></td>
+          </tr>
+          <tr class="collapse {{p[0]}}">
+            <td>
+              <div>
+                <p>This is the div which should have information such as Project name,<br>
+                Project Category, Order ID, PI name, and description of the project.</p>
+                <br>
+                <table class="table">
+                    <tr>
+                      <th>Project name: </th>
+                      <td>{{p[1]}}</td>
+                    </tr>
+                    <tr>
+                      <th>Category: </th>
+                      <td>{{p[2]}}</td>
+                    </tr>
+                    <tr>
+                      <th>Order ID: </th>
+                      <td>{{p[0]}}</td>
+                    </tr>
+                    <tr>
+                      <th>PI: </th>
+                      <td>{{p[4]}} (Name here later)</td>
+                    </tr>
+                    <tr>
+                      <th>Project description: </th>
+                      <td>{{p[3]}}</td>
+                    </tr>
+                    <tr>
+                      <th>Comments from facility: </th>
+                      <td>Maybe some good-to-know info here from the facility who processed the order...</td>
+                    </tr>
+                </table>
+              </div>
+            </td>
+            <td colspan="999">
+              <div>
+                <p>This table should have all the files: file name, data type, file format,
+                data size, if its sensitive data and date uploaded.</p>
+                <br>
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>File</th>
+                      <th>Type</th>
+                      <th>Format</th>
+                      <th>Size</th>
+                      <th>Sensitive</th>
+                      <th>Date uploaded</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><a href="{{ static_url('data_centre_logo.png') }}" download>filenumber1.fastq</a>
+                      </td>
+                      <td>Genomics</td>
+                      <td>FASTQ</td>
+                      <td>1 GB</td>
+                      <td>Y</td>
+                      <td>2019-08-15</td>
+                    </tr>
+                    <tr>
+                      <td><a href="{{ static_url('data_centre_logo.png') }}" download>filenumber2.fastq</a></td>
+                      <td>Genomics</td>
+                      <td>FASTA</td>
+                      <td>1 GB</td>
+                      <td>N</td>
+                      <td>2019-08-14</td>
+                    </tr>
+                    <tr>
+                      <td><a href="{{ static_url('data_centre_logo.png') }}" download>filenumber3.fastq</a></td>
+                      <td>Genomics</td>
+                      <td>BAM</td>
+                      <td>10 GB</td>
+                      <td>Y</td>
+                      <td>2019-08-13</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </td>
+          </tr>
           {% end %}
-        </tr>
+        </tbody>
       </table>
     </div>
-
-    <script>
-      var coll = document.getElementsByClassName("collapsible");
-      var i;
-
-      for (i = 0; i < coll.length; i++) {
-        coll[i].addEventListener("click", function() {
-          this.classList.toggle("active");
-          var content = this.nextElementSibling;
-          if (content.style.display === "block") {
-            content.style.display = "none";
-          } else {
-            content.style.display = "block";
-          }
-        });
-      }
-      </script>
 
 {% end %}

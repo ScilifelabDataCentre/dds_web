@@ -97,7 +97,7 @@ class LoginHandler(BaseHandler):
         auth = self.check_permission(user_email, password)
 
         if auth:
-            self.set_secure_cookie("user", user_email, expires_days=0.007)
+            self.set_secure_cookie("user", user_email, expires_days=0.01)
             self.redirect(site_base_url + self.reverse_url('home'))
         else:
             self.clear_cookie("user")
@@ -132,27 +132,13 @@ class MainHandler(BaseHandler):
         try:
             with getproj_connection.cursor() as cursor:   # cursor used to interact with database
                 username = tornado.escape.xhtml_escape(self.current_user)
-                sql1 = f"SELECT * FROM `users` WHERE `email`='{username}'"
-                cursor.execute(sql1)
-                results1 = cursor.fetchall()[0]
-                print(results1)
 
-                sql2 = f"SELECT `user_id` FROM `users` WHERE `email`='{username}'"
-                cursor.execute(sql2)
-                results2 = cursor.fetchall()[0]
-                print(results2, len(results2))
-
-                sql3 = f"SELECT * FROM `project_user` WHERE `user_id`=(SELECT `user_id` FROM `users` WHERE `email`='{username}')"
-                cursor.execute(sql3)
-                results3 = cursor.fetchall()[0]
-                print(results3)
-
-                sql4 = f"SELECT `project_id` FROM `project_user` WHERE `user_id`=(SELECT `user_id` FROM `users` WHERE `email`='{username}')"
-                cursor.execute(sql4)
-                results4 = cursor.fetchall()
-                print(results4)
-
-                sql5 = f"SELECT * FROM `projects` WHERE `project_id`=(SELECT `project_id` FROM `project_user` WHERE `user_id`=(SELECT `user_id` FROM `users` WHERE `email`='{username}'))"
+                sql5 = ("SELECT * FROM `projects`"
+                        "WHERE `project_id` IN"
+                        "(SELECT `project_id` FROM `project_user`"
+                        "WHERE `user_id`="
+                        "(SELECT `user_id` FROM `users`"
+                        f"WHERE `email`='{username}'))")
                 cursor.execute(sql5)
                 results5 = cursor.fetchall()
                 print(results5)
