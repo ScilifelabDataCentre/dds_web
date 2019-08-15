@@ -119,16 +119,46 @@ class MainHandler(BaseHandler):
         if not self.current_user:
             self.render('index.html')
         else:
-            projects = self.get_user_projects()
+            projects, files = self.get_user_projects()
             print("Projects: ", projects, len(projects))
-            self.render('home.html', user=self.current_user, projects=projects)
+            self.render('home.html', user=self.current_user, projects=projects, files=files)
+
+    def get_user_files(self, project_tuple):
+        """"""
+        getfile_connection = pymysql.connect(host="localhost",
+                                     user="root",
+                                     password="Polarbear1",
+                                     db="del_port_db")
+        files_per_project = {"Structure":("File ID",
+                                          "Project ID",
+                                          "File name",
+                                          "File size",
+                                          "Sensitive",
+                                          "Upload date",
+                                          "File type",
+                                          "File format")}
+        try:
+            with getfile_connection.cursor() as cursor:
+                for project in project_tuple:
+                    print("Project: ", project)
+
+                    sql6 = ("SELECT * FROM `files`"
+                            f"WHERE `project_id`='{project[0]}'")
+                    cursor.execute(sql6)
+                    results6 = cursor.fetchall()
+                    print("Files: ", results6)
+                    files_per_project[project[0]] = results6
+                    print("Files per project", files_per_project)
+                    return files_per_project
+        finally:
+            getfile_connection.close()
 
     def get_user_projects(self):
         """"""
         getproj_connection = pymysql.connect(host="localhost",
-                                     user="root",
-                                     password="Polarbear1",
-                                     db="del_port_db")
+                                             user="root",
+                                             password="Polarbear1",
+                                             db="del_port_db")
         try:
             with getproj_connection.cursor() as cursor:   # cursor used to interact with database
                 username = tornado.escape.xhtml_escape(self.current_user)
@@ -142,7 +172,8 @@ class MainHandler(BaseHandler):
                 cursor.execute(sql5)
                 results5 = cursor.fetchall()
                 print(results5)
-                return results5
+                files = self.get_user_files(results5)
+                return results5, files
         finally:
             getproj_connection.close()
 
