@@ -119,39 +119,35 @@ class MainHandler(BaseHandler):
         if not self.current_user:
             self.render('index.html')
         else:
-            projects, files = self.get_user_projects()
-            print("Projects: ", projects, len(projects))
-            self.render('home.html', user=self.current_user, projects=projects, files=files)
+            projects = self.get_user_projects()
+            files = self.get_project_files(projects)
+            # print("Projects: ", projects, len(projects))
+            self.render('home.html', user=self.current_user,
+                        projects=projects, files=files, all=all)
 
-    def get_user_files(self, project_tuple):
+    def get_project_files(self, project_tuple):
         """"""
         getfile_connection = pymysql.connect(host="localhost",
-                                     user="root",
-                                     password="Polarbear1",
-                                     db="del_port_db")
-        files_per_project = {"Structure":("File ID",
-                                          "Project ID",
-                                          "File name",
-                                          "File size",
-                                          "Sensitive",
-                                          "Upload date",
-                                          "File type",
-                                          "File format")}
+                                             user="root",
+                                             password="Polarbear1",
+                                             db="del_port_db")
+        files = {}
         try:
-            with getfile_connection.cursor() as cursor:
-                for project in project_tuple:
-                    print("Project: ", project)
+            for p in project_tuple:
+                print("p in project_tuple: ", p)
+                with getfile_connection.cursor() as cursor:
+                    proj_id = p[0]
+                    print("Project id: ", proj_id)
 
                     sql6 = ("SELECT * FROM `files`"
-                            f"WHERE `project_id`='{project[0]}'")
+                            f"WHERE `project_id`={proj_id}")
                     cursor.execute(sql6)
                     results6 = cursor.fetchall()
-                    print("Files: ", results6)
-                    files_per_project[project[0]] = results6
-                    print("Files per project", files_per_project)
-                    return files_per_project
+                    files[proj_id] = results6
+                    print("Files in project:", files[proj_id],"Length: ", len(files[proj_id]), "\n")
         finally:
             getfile_connection.close()
+            return files
 
     def get_user_projects(self):
         """"""
@@ -171,9 +167,8 @@ class MainHandler(BaseHandler):
                         f"WHERE `email`='{username}'))")
                 cursor.execute(sql5)
                 results5 = cursor.fetchall()
-                print(results5)
-                files = self.get_user_files(results5)
-                return results5, files
+                print("Projects: ", results5)
+                return results5     # The projects for the specified user
         finally:
             getproj_connection.close()
 

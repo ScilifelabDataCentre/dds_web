@@ -93,31 +93,27 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td><a href="{{ static_url('data_centre_logo.png') }}" download>filenumber1.fastq</a>
-                      </td>
-                      <td>Genomics</td>
-                      <td>FASTQ</td>
-                      <td>1 GB</td>
-                      <td>Y</td>
-                      <td>2019-08-15</td>
-                    </tr>
-                    <tr>
-                      <td><a href="{{ static_url('data_centre_logo.png') }}" download>filenumber2.fastq</a></td>
-                      <td>Genomics</td>
-                      <td>FASTA</td>
-                      <td>1 GB</td>
-                      <td>N</td>
-                      <td>2019-08-14</td>
-                    </tr>
-                    <tr>
-                      <td><a href="{{ static_url('data_centre_logo.png') }}" download>filenumber3.fastq</a></td>
-                      <td>Genomics</td>
-                      <td>BAM</td>
-                      <td>10 GB</td>
-                      <td>Y</td>
-                      <td>2019-08-13</td>
-                    </tr>
+                    {% for f in files %}
+                      {% if f==p[0] %}
+                        {% if files[f]==() %}
+                          <tr>
+                              <td colspan="999">No files have been uploaded for this project.</td>
+                          </tr>
+                        {% else %}
+                          {% for col in files[f] %}
+                            <tr>
+                              <td><a href="{{ static_url(col[2]) }}" download>{{col[2]}}</a>
+                              </td>
+                              <td>{{col[6]}}</td>
+                              <td>{{col[7]}}</td>
+                              <td>{{col[3]}}</td>
+                              <td>{{col[4]}}</td>
+                              <td>{{col[5]}}</td>
+                            </tr>
+                          {% end %}
+                        {% end %}
+                      {% end %}
+                    {% end %}
                   </tbody>
                 </table>
               </div>
