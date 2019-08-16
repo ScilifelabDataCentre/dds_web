@@ -29,7 +29,8 @@ class ApplicationDP(tornado.web.Application):
                      url(r"/login", LoginHandler, name='login'),
                      url(r"/create", CreateDeliveryHandler, name='create'),
                      url(r"/logout", LogoutHandler, name='logout'),
-                     url(r"/project", ProjectHandler, name='project')
+                     url(r"/project", ProjectHandler, name='project'),
+                     url(r"/files/(?P<pid>.*)", FileHandler, name='files')
                      ]
         settings = {"xsrf_cookies":True,
                     #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
@@ -57,6 +58,15 @@ class CreateDeliveryHandler(BaseHandler):
     def post(self):
         """"""
         self.render('create_delivery.html')
+
+
+class FileHandler(BaseHandler):
+    """docstring for FileHandler"""
+    def get(self, pid):
+        """"""
+        print("Här: ",pid)              # HÄR ÄR JAG!! FUNKAR
+        self.render('view_all.html')
+
 
 
 class LoginHandler(BaseHandler):
@@ -120,7 +130,7 @@ class MainHandler(BaseHandler):
             self.render('index.html')
         else:
             projects = self.get_user_projects()
-            files = self.get_project_files(projects)
+            files, all = self.get_project_files(projects)
             # print("Projects: ", projects, len(projects))
             self.render('home.html', user=self.current_user,
                         projects=projects, files=files, all=all)
@@ -132,6 +142,7 @@ class MainHandler(BaseHandler):
                                              password="Polarbear1",
                                              db="del_port_db")
         files = {}
+        all = {}
         try:
             for p in project_tuple:
                 print("p in project_tuple: ", p)
@@ -139,15 +150,28 @@ class MainHandler(BaseHandler):
                     proj_id = p[0]
                     print("Project id: ", proj_id)
 
-                    sql6 = ("SELECT * FROM `files`"
+                    sql6 = ("SELECT COUNT(*) FROM `files` "
                             f"WHERE `project_id`={proj_id}")
+
                     cursor.execute(sql6)
-                    results6 = cursor.fetchall()
-                    files[proj_id] = results6
+                    results6 = cursor.fetchone()
+                    print("Hopefully number of rows:", results6[0], type(results6[0]))
+                    if results6[0] > 10:
+                        all[proj_id] = False
+                        print(all)
+                    else:
+                        all[proj_id] = True
+                        print(all)
+                    sql7 = ("SELECT * FROM `files` "
+                            f"WHERE `project_id`={proj_id} LIMIT 10")
+                    cursor.execute(sql7)
+                    results7 = cursor.fetchall()
+                    print("Results : ", results7)
+                    files[proj_id] = results7
                     print("Files in project:", files[proj_id],"Length: ", len(files[proj_id]), "\n")
         finally:
             getfile_connection.close()
-            return files
+            return files, all
 
     def get_user_projects(self):
         """"""

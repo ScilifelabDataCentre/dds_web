@@ -35,6 +35,7 @@
 
         <tbody>
           {% for p in projects %}
+          {{ pid = p[0]}}
           <tr data-toggle="collapse" id="{{p[0]}}" data-target=".{{p[0]}}">
             <td>{{p[0]}}</td>
             <td>{{p[1]}}</td>
@@ -93,27 +94,40 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {% for f in files %}
-                      {% if f==p[0] %}
-                        {% if files[f]==() %}
-                          <tr>
-                              <td colspan="999">No files have been uploaded for this project.</td>
-                          </tr>
-                        {% else %}
-                          {% for col in files[f] %}
+                    {% if all[p[0]]==True %}
+                      {% for f in files %}
+                        {% if f==p[0] %}
+                          {% if files[f]==() %}
                             <tr>
-                              <td><a href="{{ static_url(col[2]) }}" download>{{col[2]}}</a>
-                              </td>
-                              <td>{{col[6]}}</td>
-                              <td>{{col[7]}}</td>
-                              <td>{{col[3]}}</td>
-                              <td>{{col[4]}}</td>
-                              <td>{{col[5]}}</td>
+                                <td colspan="999">No files have been uploaded for this project.</td>
                             </tr>
+                          {% else %}
+                            {% for col in files[f] %}
+                              <tr>
+                                <td><a href="{{ static_url(col[2]) }}" download>{{col[2]}}</a>
+                                </td>
+                                <td>{{col[6]}}</td>
+                                <td>{{col[7]}}</td>
+                                <td>{{col[3]}}</td>
+                                <td>{{col[4]}}</td>
+                                <td>{{col[5]}}</td>
+                              </tr>
+                            {% end %}
                           {% end %}
                         {% end %}
                       {% end %}
+                    {% else %}
+                      <tr>
+                        <td colspan="999">This project includes more than 10 files. </td>
+                        <td>
+                          <form action="{{ reverse_url('files', pid) }}" role="form" method="GET">
+                              {% module xsrf_form_html() %}
+                              <button class="button" type="submit" id="viewfiles" name="viewfiles">View all files</button>
+                          </form>
+                        </td>
+                      </tr>
                     {% end %}
+
                   </tbody>
                 </table>
               </div>
