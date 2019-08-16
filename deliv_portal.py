@@ -30,7 +30,7 @@ class ApplicationDP(tornado.web.Application):
                      url(r"/create", CreateDeliveryHandler, name='create'),
                      url(r"/logout", LogoutHandler, name='logout'),
                      url(r"/project", ProjectHandler, name='project'),
-                     url(r"/files/(?P<pid>.*)", FileHandler, name='files')
+                     # url(r"/files/(?P<pid>.*)", FileHandler, name='files')
                      ]
         settings = {"xsrf_cookies":True,
                     #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
@@ -143,6 +143,7 @@ class MainHandler(BaseHandler):
                                              db="del_port_db")
         files = {}
         all = {}
+        queries = {}
         try:
             for p in project_tuple:
                 print("p in project_tuple: ", p)

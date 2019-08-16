@@ -35,7 +35,6 @@
 
         <tbody>
           {% for p in projects %}
-          {{ pid = p[0]}}
           <tr data-toggle="collapse" id="{{p[0]}}" data-target=".{{p[0]}}">
             <td>{{p[0]}}</td>
             <td>{{p[1]}}</td>
@@ -104,8 +103,7 @@
                           {% else %}
                             {% for col in files[f] %}
                               <tr>
-                                <td><a href="{{ static_url(col[2]) }}" download>{{col[2]}}</a>
-                                </td>
+                                <td><a href="{{ static_url(col[2]) }}" download>{{col[2]}}</a></td>
                                 <td>{{col[6]}}</td>
                                 <td>{{col[7]}}</td>
                                 <td>{{col[3]}}</td>
@@ -120,7 +118,7 @@
                       <tr>
                         <td colspan="999">This project includes more than 10 files. </td>
                         <td>
-                          <form action="{{ reverse_url('files', pid) }}" role="form" method="GET">
+                          <form action="" role="form" method="GET">
                               {% module xsrf_form_html() %}
                               <button class="button" type="submit" id="viewfiles" name="viewfiles">View all files</button>
                           </form>
