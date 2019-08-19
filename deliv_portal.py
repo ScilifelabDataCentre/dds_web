@@ -5,10 +5,12 @@
 import base64
 import tornado.autoreload
 import tornado.ioloop
+import tornado.gen
 import tornado.web
 import uuid
 import pymysql
 import tornado_mysql
+import couch
 
 from utils.config import parse_config
 config = parse_config()
@@ -107,7 +109,7 @@ class LoginHandler(BaseHandler):
         auth = self.check_permission(user_email, password)
 
         if auth:
-            self.set_secure_cookie("user", user_email, expires_days=0.01)
+            self.set_secure_cookie("user", user_email, expires_days=0.1)
             self.redirect(site_base_url + self.reverse_url('home'))
         else:
             self.clear_cookie("user")
@@ -240,6 +242,7 @@ def main():
     tornado.autoreload.watch("html_templates/index.html")
     tornado.autoreload.watch("html_templates/home.html")
     tornado.autoreload.watch("html_templates/create_delivery.html")
+    tornado.autoreload.watch("html_templates/view_all.html")
 
     application = ApplicationDP()
     application.listen(options.port)
