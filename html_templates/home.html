@@ -32,176 +32,43 @@
             <th>Status</th>
           </tr>
         </thead>
+        {% if projects != {} %}
+          <tbody>
+            {% for proj in projects %}
+              {{ proj }}
+              {{ projects[proj] }}<br>
+                <tr data-toggle="collapse" id="{{proj}}" data-target=".{{proj}}">
+                  <td>{{ proj }}</td>
+                  <td>{{ projects[proj]['name'] }}</td>
+                  <td>{{ projects[proj]['order_date'] }}</td>
+                  <td>{{ projects[proj]['status'] }}</td>
+                  <td>
+                    <button class="btn btn-default btn-sm">Info</button>
+                  </td>
+                  <td>
+                    <button class="btn btn-default btn-sm" type="submit" id="viewfiles" name="viewfiles">View Project</button>
+                  </td>
+                </tr>
 
-        <tbody>
-          {% for p in projects %}
-          <tr data-toggle="collapse" id="{{p[0]}}" data-target=".{{p[0]}}">
-            <td>{{p[0]}}</td>
-            <td>{{p[1]}}</td>
-            <td>{{p[5]}}</td>
-            <td>{{p[6]}}</td>
-            <td><button class="btn btn-default btn-sm">Info</button></td>
-            <td>
-              <form action="/view_all.html" role="form" method="GET">
-                <button class="btn btn-default btn-sm" type="submit" id="viewfiles" name="viewfiles">View Project</button>
-              </form>
-            </td>
-          </tr>
-          <tr class="collapse {{p[0]}}">
-            <td colspan="2">
-              <div>
-                <p>This is the div which should have information such as Project name,<br>
-                Project Category, Order ID, PI name, and description of the project.</p>
-                <br>
-                <table class="table">
-                    <tr>
-                      <th>Order ID: </th>
-                      <td>{{p[0]}}</td>
-                    </tr>
-                    <tr>
-                      <th>Project name: </th>
-                      <td>{{p[1]}}</td>
-                    </tr>
-                    <tr>
-                      <th>Category: </th>
-                      <td>{{p[2]}}</td>
-                    </tr>
-                    <tr>
-                      <th>PI: </th>
-                      <td>{{p[4]}} (Name here later)</td>
-                    </tr>
-                    <tr>
-                      <th>Project description: </th>
-                      <td>{{p[3]}}</td>
-                    </tr>
-                    <tr>
-                      <th>Comments from facility: </th>
-                      <td>Maybe some good-to-know info here from the facility who processed the order...</td>
-                    </tr>
-                </table>
-              </div>
-            </td>
-            <td colspan="999">
-              <div>
-                <p>This table should have all the files: file name, data type, file format,
-                data size, if its sensitive data and date uploaded.</p>
-                <br>
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>File</th>
-                      <th>Type</th>
-                      <th>Format</th>
-                      <th>Size</th>
-                      <th>Sensitive</th>
-                      <th>Date uploaded</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                      {% for f in files %}
-                        {% if f==p[0] %}
-                          {% if files[f]==() %}
-                            <tr>
-                                <td colspan="999">No files have been uploaded for this project.</td>
-                            </tr>
-                          {% else %}
-                            {% for col in files[f] %}
-                              <tr>
-                                <td><a href="{{ static_url(col[2]) }}" download>{{col[2]}}</a></td>
-                                <td>{{col[6]}}</td>
-                                <td>{{col[7]}}</td>
-                                <td>{{col[3]}}</td>
-                                <td>{{col[4]}}</td>
-                                <td>{{col[5]}}</td>
-                              </tr>
-                            {% end %} <!-- for col in files -->
-                          {% end %} <!-- else -->
-                        {% end %} <!-- if f==p -->
-                      {% end %} <!-- for f in files -->
-                      {% if all[p[0]]==False %}
+                {% if proj in files %} <!-- DET HÄR STÄMMER INTE, FILER SKA TILL ANNAN SIDA -->
+                  <tr class="collapse {{proj}}">
+                    <div>
+                      <table>
                         <tr>
-                          <td colspan="999">This project includes more than 10 files. </td>
-                          <td>
-                            <form action="" role="form" method="GET">
-                                {% module xsrf_form_html() %}
-                                <button class="btn btn-default btn-sm" type="submit" id="viewfiles" name="viewfiles">View all files</button>
-                            </form>
-                          </td>
+
                         </tr>
-                      {% end %}
-                  </tbody>
-                </table>
-              </div>
-            </td>
-          </tr>
-          {% end %}
-        </tbody>
+                        {% for file in files[proj] %}
+                        <td>{{ file }}</td>
+                        {% end %}
+                      </table>
+                    </div>
+                  </tr>
+                {% end %}
+            {% end %}
+          </tbody>
+        {% end %}
+
       </table>
     </div>
-
-    <!-- <style type="text/css">
-    .collapsible {
-      background-color: #777;
-      color: white;
-      cursor: pointer;
-      padding: 18px;
-      width: 100%;
-      border: none;
-      text-align: left;
-      outline: none;
-      font-size: 15px;
-    }
-
-    .active, .collapsible:hover {
-      background-color: #555;
-    }
-
-    .content {
-      padding: 0 18px;
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.2s ease-out;
-      background-color: #f1f1f1;
-    }
-    </style>
-
-    <h2>Animated Collapsibles</h2>
-
-    <p>A Collapsible:</p>
-    <button class="collapsible">Open Collapsible</button>
-    <div class="content">
-      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-    </div>
-
-    <p>Collapsible Set:</p>
-    <button class="collapsible">Open Section 1</button>
-    <div class="content">
-      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-    </div>
-    <button class="collapsible">Open Section 2</button>
-    <div class="content">
-      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-    </div>
-    <button class="collapsible">Open Section 3</button>
-    <div class="content">
-      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-    </div>
-
-    <script type="text/javascript">
-    var coll = document.getElementsByClassName("collapsible");
-    var i;
-
-    for (i = 0; i < coll.length; i++) {
-      coll[i].addEventListener("click", function() {
-        this.classList.toggle("active");
-        var content = this.nextElementSibling;
-        if (content.style.maxHeight){
-          content.style.maxHeight = null;
-        } else {
-          content.style.maxHeight = content.scrollHeight + "px";
-        }
-      });
-    }
-    </script> -->
 
 {% end %}

@@ -10,7 +10,7 @@ import tornado.web
 import uuid
 import pymysql
 import tornado_mysql
-import couch
+import couchdb
 
 from utils.config import parse_config
 config = parse_config()
@@ -70,29 +70,46 @@ class FileHandler(BaseHandler):
         self.render('view_all.html')
 
 
-
 class LoginHandler(BaseHandler):
     """docstring for LoginHandler"""
     def check_permission(self, username, password):
         """"""
-        # Establish database connection
-        login_connection = pymysql.connect(host="localhost",
-                                           user="root",
-                                           password="Polarbear1",
-                                           db="del_port_db")
+        couch = couchdb.Server("http://admin:admin@localhost:5984/")
+        print(couch)
 
-        # Check if user exists
-        try:
-            with login_connection.cursor() as cursor:   # cursor used to interact with database
-                sql = f"SELECT * FROM `users` WHERE `email`='{username}' AND `password`='{password}'"
-                cursor.execute(sql)
-                results = cursor.fetchall()
-                if len(results) == 1:
-                    return True
-                else:
-                    return False
-        finally:
-            login_connection.close()
+        db = couch['dp_users']
+        print(db)
+
+        for id in db:
+            print("Document ID:", id)
+            print(db[id])
+            for part in db[id]['user']:
+                print(part)
+                # print("------->>>>> ", db[id]['user']['email'])
+                if db[id]['user']['email'] == username and db[id]['user']['password'] == password:
+                    print("------->>>>> ", db[id]['user']['email'])
+                    return True, id
+        return False, ""
+        # # Establish database connection
+        # login_connection = pymysql.connect(host="localhost",
+        #                                    user="root",
+        #                                    password="Polarbear1",
+        #                                    db="del_port_db")
+        #
+        # # Check if user exists
+        # try:
+        #     with login_connection.cursor() as cursor:   # cursor used to interact with database
+        #         login_query = (f"SELECT * FROM `users` "
+        #                        "WHERE `email`='{username}' "
+        #                        "AND `password`='{password}'")
+        #         cursor.execute(sql)
+        #         results = cursor.fetchall()
+        #         if len(results) == 1:
+        #             return True
+        #         else:
+        #             return False
+        # finally:
+        #     login_connection.close()
 
     def get(self):
         """"""
@@ -106,14 +123,16 @@ class LoginHandler(BaseHandler):
         # Get form input
         user_email = self.get_body_argument("user_email")
         password = self.get_body_argument("password")
-        auth = self.check_permission(user_email, password)
+        auth, id = self.check_permission(user_email, password)
+        print("Set to current user:", id)
 
         if auth:
-            self.set_secure_cookie("user", user_email, expires_days=0.1)
+            self.set_secure_cookie("user", id, expires_days=0.1)
             self.redirect(site_base_url + self.reverse_url('home'))
         else:
             self.clear_cookie("user")
             self.write("Login incorrect.")
+
 
 class LogoutHandler(BaseHandler):
     """docstring for LogoutHandler"""
@@ -131,74 +150,28 @@ class MainHandler(BaseHandler):
         if not self.current_user:
             self.render('index.html')
         else:
-            projects = self.get_user_projects()
-            files, all = self.get_project_files(projects)
-            # print("Projects: ", projects, len(projects))
+            projects, files = self.get_user_projects()
             self.render('home.html', user=self.current_user,
-                        projects=projects, files=files, all=all)
-
-    def get_project_files(self, project_tuple):
-        """"""
-        getfile_connection = pymysql.connect(host="localhost",
-                                             user="root",
-                                             password="Polarbear1",
-                                             db="del_port_db")
-        files = {}
-        all = {}
-        queries = {}
-        try:
-            for p in project_tuple:
-                print("p in project_tuple: ", p)
-                with getfile_connection.cursor() as cursor:
-                    proj_id = p[0]
-                    print("Project id: ", proj_id)
-
-                    sql6 = ("SELECT COUNT(*) FROM `files` "
-                            f"WHERE `project_id`={proj_id}")
-
-                    cursor.execute(sql6)
-                    results6 = cursor.fetchone()
-                    print("Hopefully number of rows:", results6[0], type(results6[0]))
-                    if results6[0] > 10:
-                        all[proj_id] = False
-                        print(all)
-                    else:
-                        all[proj_id] = True
-                        print(all)
-                    sql7 = ("SELECT * FROM `files` "
-                            f"WHERE `project_id`={proj_id} LIMIT 10")
-                    cursor.execute(sql7)
-                    results7 = cursor.fetchall()
-                    print("Results : ", results7)
-                    files[proj_id] = results7
-                    print("Files in project:", files[proj_id],"Length: ", len(files[proj_id]), "\n")
-        finally:
-            getfile_connection.close()
-            return files, all
+                        projects=projects, files=files)
 
     def get_user_projects(self):
         """"""
-        getproj_connection = pymysql.connect(host="localhost",
-                                             user="root",
-                                             password="Polarbear1",
-                                             db="del_port_db")
-        try:
-            with getproj_connection.cursor() as cursor:   # cursor used to interact with database
-                username = tornado.escape.xhtml_escape(self.current_user)
+        user = tornado.escape.xhtml_escape(self.current_user)
 
-                sql5 = ("SELECT * FROM `projects`"
-                        "WHERE `project_id` IN"
-                        "(SELECT `project_id` FROM `project_user`"
-                        "WHERE `user_id`="
-                        "(SELECT `user_id` FROM `users`"
-                        f"WHERE `email`='{username}'))")
-                cursor.execute(sql5)
-                results5 = cursor.fetchall()
-                print("Projects: ", results5)
-                return results5     # The projects for the specified user
-        finally:
-            getproj_connection.close()
+        couch = couchdb.Server("http://admin:admin@localhost:5984/")
 
+        user_db = couch['dp_users']
+        proj_db = couch['projects']
+
+        projects = {}
+        files = {}
+
+        for proj in user_db[user]['projects']:
+            projects[proj] = proj_db[proj]['project_info']
+            if 'files' in proj_db[proj]:
+                files[proj] = proj_db[proj]['files']
+
+        return projects, files
 
 
 class ProjectHandler(BaseHandler):
@@ -226,7 +199,7 @@ def test_db_connection():
 
         # Fetch a single row
         data = cursor.fetchone()
-        print("Database version: %s" % data)
+        print(f"Database version: {data}")
     finally:
         # Disconnect from server
         connection.close()
@@ -235,14 +208,13 @@ def test_db_connection():
 # MAIN ################################################################## MAIN #
 def main():
     """"""
-    test_db_connection()
+    # test_db_connection()
 
     # For devel puprose watch page changes
     tornado.autoreload.start()
     tornado.autoreload.watch("html_templates/index.html")
     tornado.autoreload.watch("html_templates/home.html")
     tornado.autoreload.watch("html_templates/create_delivery.html")
-    tornado.autoreload.watch("html_templates/view_all.html")
 
     application = ApplicationDP()
     application.listen(options.port)
