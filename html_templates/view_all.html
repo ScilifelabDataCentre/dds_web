@@ -1,5 +1,24 @@
 {% extends "index.html" %}
 
 {% block content %}
+<div class="container">
+  <div class="col-md-3">
+    <form action="{{ reverse_url('home') }}" role="form" method="GET">
+        {% module xsrf_form_html() %}
+        <button class="btn btn-primary" type="submit">Back</button>
+    </form>
+  </div>
+  <div class="col-md-3">
+    Logged in as: {{user}}
+  </div>
+  <div class="col-md-3">
+    <form action="{{ reverse_url('logout') }}" role="form" method="GET">
+        {% module xsrf_form_html() %}
+        <button class="btn btn-primary" type="submit">Log Out</button>
+    </form>
+  </div>
+</div>
+
 Här ska alla filer visas.
+{{ files }}
 {% end %}

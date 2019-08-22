@@ -1,15 +1,40 @@
-import couch
-from tornado import ioloop, gen
+<table class="table table-responsive table-hover">
+<thead>
+<tr>
+<th>Project ID</th>
+<th>Project</th>
+<th>Order Date</th>
+<th>Status</th>
+</tr>
+</thead>
+{% if projects != {} %}
+<tbody>
+{% for proj in projects %}
+{{ proj }}
+{{ projects[proj] }}<br>
+  <tr data-toggle="collapse" id="{{proj}}" data-target=".{{proj}}" aria-expanded="false" aria-controls="{{proj}}">
+    <td>{{ proj }}</td>
+    <td>{{ projects[proj]['name'] }}</td>
+    <td>{{ projects[proj]['order_date'] }}</td>
+    <td>{{ projects[proj]['status'] }}</td>
+    <td>
+      <button class="btn btn-default btn-sm">Info</button>
+    </td>
+    <td>
+      <button class="btn btn-default btn-sm" type="submit" id="viewfiles" name="viewfiles">View Project</button>
+    </td>
+  </tr>
 
-@gen.coroutine
-def run_test():
-    db = couch.AsyncCouch('mytestdb')
-    yield db.create_db()
-    r = yield db.save_doc({'msg': 'My first document'})
-    doc = yield db.get_doc(r['id'])
-    yield db.delete_doc(doc)
-    yield db.delete_db()
+  <tr class="collapse {{proj}}">
+    <td>
+      <div>
+        fgdfgdgd
+      </div>
+    </td>
+  </tr>
 
-ioloop.IOLoop.instance.start()
-run_test()
-ioloop.IOLoop.instance.stop()
+{% end %}
+</tbody>
+{% end %}
+
+</table>

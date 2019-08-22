@@ -20,55 +20,90 @@
       </div>
     </div>
 
-  <div class="container">
-    <br>
-      <h2>Projects</h2>
-      <table class="table table-responsive table-hover">
-        <thead>
-          <tr>
-            <th>Project ID</th>
-            <th>Project</th>
-            <th>Order Date</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        {% if projects != {} %}
+    <div class="col-sm-12">
+      <br>
+        <h2>Projects</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Project ID</th>
+              <th>Project</th>
+              <th>Order Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
           <tbody>
             {% for proj in projects %}
-              {{ proj }}
-              {{ projects[proj] }}<br>
-                <tr data-toggle="collapse" id="{{proj}}" data-target=".{{proj}}">
-                  <td>{{ proj }}</td>
-                  <td>{{ projects[proj]['name'] }}</td>
-                  <td>{{ projects[proj]['order_date'] }}</td>
-                  <td>{{ projects[proj]['status'] }}</td>
-                  <td>
-                    <button class="btn btn-default btn-sm">Info</button>
-                  </td>
-                  <td>
-                    <button class="btn btn-default btn-sm" type="submit" id="viewfiles" name="viewfiles">View Project</button>
-                  </td>
-                </tr>
-
-                {% if proj in files %} <!-- DET HÄR STÄMMER INTE, FILER SKA TILL ANNAN SIDA -->
-                  <tr class="collapse {{proj}}">
-                    <div>
-                      <table>
-                        <tr>
-
-                        </tr>
-                        {% for file in files[proj] %}
-                        <td>{{ file }}</td>
+            <tr>
+              <td>{{ proj }}</td>
+              <td>{{ projects[proj]['name'] }}</td>
+              <td>{{ projects[proj]['order_date'] }}</td>
+              <td>{{ projects[proj]['status'] }}</td>
+              <td><button class="btn btn-default btn-sm"  data-toggle="collapse" data-target="#{{proj}}">Info</button></td>
+              <td>
+                <form action="{{ reverse_url('project', proj) }}">
+                <button class="btn btn-default btn-sm">See project</button>
+                </form>
+              </td>
+            </tr>
+            <tr id="{{proj}}" class="collapse">
+              <td>
+                <div>
+                  <h5><i>Project information</i></h5>
+                  <table class="table">
+                    <tr>
+                      <th class=subtable>Order ID: </th>
+                      <td>{{ proj }}</td>
+                    </tr>
+                      <tr>
+                        <th class=subtable>Project name: </th>
+                        <td>{{ projects[proj]['name'] }}</td>
+                      </tr>
+                      <tr>
+                        <th class=subtable>Category: </th>
+                        <td>{{ projects[proj]['category'] }}</td>
+                      </tr>
+                      <tr>
+                        <th class=subtable>Sensitive data: </th>
+                        {% if projects[proj]['sensitive']=="True" %}
+                          <td>Yes</td>
+                        {% else %}
+                          <td>No</td>
                         {% end %}
-                      </table>
-                    </div>
-                  </tr>
-                {% end %}
+                      </tr>
+                      <tr>
+                        <th class=subtable>Project size: </th>
+                        <td>Aggreg. size of all files.</td>
+                      </tr>
+                  </table>
+                </div>
+              </td>
+              <td colspan="999">
+                <div id="test">
+                  <br>
+                  <br>
+                  <table>
+                    <tr>
+                      <th class=subtable>Project PI: </th>
+                      <td>{{ projects[proj]['pi'] }}</td>
+                    </tr>
+                    <tr>
+                      <th class=subtable>Project description: </th>
+                      <td>{{ projects[proj]['description'] }}</td>
+                    </tr>
+                    <tr>
+                      <th class=subtable>Comments from facility: </th>
+                      <td>{{ projects[proj]['comments']}}</td>
+                    </tr>
+
+                  </table>
+                </div>
+              </td>
+            </tr>
             {% end %}
           </tbody>
-        {% end %}
-
-      </table>
-    </div>
+        </table>
+      </div>
 
 {% end %}

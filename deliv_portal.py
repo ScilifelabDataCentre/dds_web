@@ -11,6 +11,7 @@ import uuid
 import pymysql
 import tornado_mysql
 import couchdb
+import re
 
 from utils.config import parse_config
 config = parse_config()
@@ -31,7 +32,7 @@ class ApplicationDP(tornado.web.Application):
                      url(r"/login", LoginHandler, name='login'),
                      url(r"/create", CreateDeliveryHandler, name='create'),
                      url(r"/logout", LogoutHandler, name='logout'),
-                     url(r"/project", ProjectHandler, name='project'),
+                     url(r"/project/(?P<projid>.*)", ProjectHandler, name='project'),
                      # url(r"/files/(?P<pid>.*)", FileHandler, name='files')
                      ]
         settings = {"xsrf_cookies":True,
@@ -66,7 +67,6 @@ class FileHandler(BaseHandler):
     """docstring for FileHandler"""
     def get(self, pid):
         """"""
-        print("Här: ",pid)              # HÄR ÄR JAG!! FUNKAR
         self.render('view_all.html')
 
 
@@ -90,26 +90,6 @@ class LoginHandler(BaseHandler):
                     print("------->>>>> ", db[id]['user']['email'])
                     return True, id
         return False, ""
-        # # Establish database connection
-        # login_connection = pymysql.connect(host="localhost",
-        #                                    user="root",
-        #                                    password="Polarbear1",
-        #                                    db="del_port_db")
-        #
-        # # Check if user exists
-        # try:
-        #     with login_connection.cursor() as cursor:   # cursor used to interact with database
-        #         login_query = (f"SELECT * FROM `users` "
-        #                        "WHERE `email`='{username}' "
-        #                        "AND `password`='{password}'")
-        #         cursor.execute(sql)
-        #         results = cursor.fetchall()
-        #         if len(results) == 1:
-        #             return True
-        #         else:
-        #             return False
-        # finally:
-        #     login_connection.close()
 
     def get(self):
         """"""
@@ -176,9 +156,18 @@ class MainHandler(BaseHandler):
 
 class ProjectHandler(BaseHandler):
     """"""
-    def post(self):
+    def get(self, projid):
         """"""
-        self.redirect(site_base_url + self.reverse_url('home'))
+        print(projid)
+
+        couch = couchdb.Server("http://admin:admin@localhost:5984/")
+        proj_db = couch['projects']
+
+        files = {}
+        if 'files' in proj_db[projid]:
+            files = proj_db[projid]['files']
+
+        self.render('view_all.html', user=self.current_user, files=files)
 
 
 # FUNCTIONS ######################################################## FUNCTIONS #
@@ -215,6 +204,7 @@ def main():
     tornado.autoreload.watch("html_templates/index.html")
     tornado.autoreload.watch("html_templates/home.html")
     tornado.autoreload.watch("html_templates/create_delivery.html")
+    tornado.autoreload.watch("html_templates/view_all.html")
 
     application = ApplicationDP()
     application.listen(options.port)
