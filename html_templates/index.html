@@ -1,127 +1,156 @@
 <!DOCTYPE html>
 
 <html>
-    <head>
-        <title>Data Delivery Portal</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- HEAD START -->
+  <head>
+    <title>Data Delivery Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- css links -->
 		<link rel="stylesheet" type="text/css"
-			  href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+      href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 		<link rel="stylesheet" type="text/css"
-			  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+			href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 		<link rel="stylesheet" type="text/css"
-			  href="https://cdn.datatables.net/1.10.11/css/dataTables.bootstrap.min.css">
+			href="https://cdn.datatables.net/1.10.11/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-        <!-- defer: script will not run until page has loaded -->
-        <script defer src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+    <!-- Scripts    defer: script will not run until page has loaded -->
+    <script defer src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
 		<script defer src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 		<script defer src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
-        <style type="text/css">
-            body {
-                padding: 10px;
-            }
+    <!-- Page style -->
+    <style type="text/css">
+      /* Page body */
+      body {
+          padding: 10px;
+      }
 
-            div.body_container {
+      /* Download button */
+      /* .downloadbtn {
+        background-color: DodgerBlue;
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        cursor: pointer;
+        font-size: 20px;
+      } */
 
-            }
+      /* Download button -- Darker background on mouse-over */
+      /* .downloadbtn:hover {
+        background-color: RoyalBlue;
+      } */
 
-            div.header {
-                height: 80px;
-                width: 100%;
-                text-align: center;
-                vertical-align: middle;
-                line-height: 80px;
-                background-color: #8ee27f;
-                border-radius: 40px;
-                font-family: 'Book Antiqua';
-                font-size: 36px;
-            }
+      /* Arch between SciLifeLab and 'Data delivery' - area */
+      div.arch {
+          height: 80px;
+          width: 40px;
+          background-color: #ffffff;
+          border-radius: 0px 40px 40px 0px;
+          float: left;
+      }
 
-            div.arch {
-                height: 80px;
-                width: 40px;
-                background-color: #ffffff;
-                border-radius: 0px 40px 40px 0px;
-                float: left;
-            }
+      /* 'Data delivery' area */
+      div.header {
+          height: 80px;
+          width: 100%;
+          text-align: center;
+          vertical-align: middle;
+          line-height: 80px;
+          background-color: #8ee27f;
+          border-radius: 40px;
+          font-family: 'Book Antiqua';
+          font-size: 36px;
+      }
 
-            img.head_logo {
-                height: 80px;
-                width: 240px;
-                float: left;
-            }
+      /* Login form */
+      div.login-container{
+				width: 50%;
+				max-width: 700px;
+			}
 
-      			div.login-container{
-      				width: 50%;
-      				max-width: 700px;
-      			}
+      /* SciLifeLab logo */
+      img.head_logo {
+          height: 80px;
+          width: 240px;
+          float: left;
+      }
 
-            table {
-              border-collapse: collapse;
-              width: 100%;
-            }
+      /* All tables */
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
 
-            th, td {
-              text-align: left;
-              padding: 8px;
-            }
+      /* All table headers and cells */
+      th, td {
+        text-align: left;
+        padding: 8px;
+      }
 
-            /* tr.collapse{
-      				background-color: #E5E5E5;
-      			} */
+      /* Project information table in collapsible */
+      th.subtable{
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <!-- HEAD END -->
 
-            th.subtable{
-              /* font-weight: normal; */
-              font-style: italic;
-            }
+  <!-- BODY START -->
+  <body>
+    <!-- Header (Logo etc) Start -->
+    <div>
+      <img class="head_logo" src="{{ static_url('data_centre_logo.png') }}">
+      <div class="arch"></div>
+    <div class="header"> Data delivery portal </div>
+    <!-- Header (Logo etc) End -->
 
-            /* tr:nth-child(even) {background: #DCDCDC;} */
-        </style>
-    </head>
-    <body>
-        <div>
-        <img class="head_logo" src="{{ static_url('data_centre_logo.png') }}">
-        <div class="arch"></div>
-        <div class="header"> Data delivery portal </div>
-        <br>
-        <br>
-        <br>
+    <br><br><br>
 
     {% block content %}
     <div class="container">
-		<div class="container login-container">
-			<div class="panel panel-default">
-				<div class="panel-heading text-center">
-					<span class="glyphicon glyphicon-user"></span>
-					Sign In
-				</div>
-				<div class="panel-body">
-					<form action="{{ reverse_url('login') }}" role="form" method="post">
-                        {% module xsrf_form_html() %}
-						<div class="form-group">
-							<label for="user_email">Email</label>
-							<input type="text" class="form-control" name="user_email" id="user_email"
-								   placeholder="User account email address">
-						</div>
-						<div class="form-group">
-							<label for="password">Password</label>
-							<input type="password" class="form-control" name="password" id="password">
-						</div>
-						<div class="form-group">
-							<button type="submit" class="btn btn-info btn-block">
-								<span class="glyphicon glyphicon-log-in"></span>
-								Login
-							</button>
+      <!-- Login form start -->
+    	<div class="container login-container">
+    		<div class="panel panel-default">
+          <!-- "Sign In" -->
+    			<div class="panel-heading text-center">
+    				<span class="glyphicon glyphicon-user"></span>
+    				Sign In
+    			</div>
 
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
+          <!-- Form -->
+    			<div class="panel-body">
+    				<form action="{{ reverse_url('login') }}" role="form" method="post">
+              {% module xsrf_form_html() %}
+              <!-- Email -->
+              <div class="form-group">
+    						<label for="user_email">Email</label>
+    						<input type="text" class="form-control" name="user_email" id="user_email"
+                  placeholder="User account email address">
+    					</div>
+              <!-- Password -->
+    					<div class="form-group">
+    						<label for="password">Password</label>
+    						<input type="password" class="form-control" name="password" id="password">
+    					</div>
+              <!-- Button -->
+    					<div class="form-group">
+    						<button type="submit" class="btn btn-info btn-block">
+    							<span class="glyphicon glyphicon-log-in"></span>
+    							Login
+    						</button>
+    					</div>
+    				</form>
+    			</div>
+          <!-- Form end -->
+    		</div>
+    	</div>
+      <!-- Login form end -->
     </div>
     {% end %}
-
-    </body>
+  </body>
+  <!-- BODY END -->
 </html>

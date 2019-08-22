@@ -52,15 +52,17 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class CreateDeliveryHandler(BaseHandler):
-    """docstring for CreateDeliveryHandler"""
+    """Called by create button on home page.
+    Renders form for a new delivery. """
+
     def get(self):
-        """"""
+        """Renders form for a new delivery."""
         self.render('create_delivery.html')
 
     #@tornado.web.authenticated
-    def post(self):
-        """"""
-        self.render('create_delivery.html')
+    # def post(self):
+    #     """"""
+    #     self.render('create_delivery.html')
 
 
 class FileHandler(BaseHandler):
@@ -71,25 +73,22 @@ class FileHandler(BaseHandler):
 
 
 class LoginHandler(BaseHandler):
-    """docstring for LoginHandler"""
+    """ Handles request to log in user. """
+
     def check_permission(self, username, password):
-        """"""
+        """Called by post.
+        Connects to database and checks if user exists."""
+
         couch = couchdb.Server("http://admin:admin@localhost:5984/")
-        print(couch)
-
         db = couch['dp_users']
-        print(db)
 
+        # Searches database for user with matching email and password
         for id in db:
-            print("Document ID:", id)
-            print(db[id])
             for part in db[id]['user']:
-                print(part)
-                # print("------->>>>> ", db[id]['user']['email'])
                 if db[id]['user']['email'] == username and db[id]['user']['password'] == password:
-                    print("------->>>>> ", db[id]['user']['email'])
                     return True, id
-        return False, ""
+
+        return False, ""    # Returns false and "" if user not found
 
     def get(self):
         """"""
@@ -99,15 +98,20 @@ class LoginHandler(BaseHandler):
             errormessage = ""
 
     def post(self):
-        """"""
+        """Called by login button.
+        Gets inputs from form and checks user permissions."""
+
         # Get form input
         user_email = self.get_body_argument("user_email")
         password = self.get_body_argument("password")
-        auth, id = self.check_permission(user_email, password)
-        print("Set to current user:", id)
 
+        # Check if user exists
+        auth, id = self.check_permission(user_email, password)
+
+        # Sets current user if user exists
         if auth:
             self.set_secure_cookie("user", id, expires_days=0.1)
+            # Redirects to homepage via mainhandler
             self.redirect(site_base_url + self.reverse_url('home'))
         else:
             self.clear_cookie("user")
@@ -115,51 +119,55 @@ class LoginHandler(BaseHandler):
 
 
 class LogoutHandler(BaseHandler):
-    """docstring for LogoutHandler"""
+    """Called by logout button.
+    Logs user out, and redirects to login page via main handler."""
     def get(self):
-        """"""
+        """Clears cookies and redirects to login page."""
+
         self.clear_cookie("user")
         self.redirect(site_base_url + self.reverse_url('home'))
 
 
 class MainHandler(BaseHandler):
-    """docstring for MainHandler"""
+    """Checks if user is logged in and redirects to home page."""
+
     def get(self):
-        """"""
-        # self.current_user = False
+        """Renders login page if not logged in, otherwise homepage."""
+
         if not self.current_user:
             self.render('index.html')
         else:
-            projects, files = self.get_user_projects()
+            # Get projects associated with user and send to home page
+            # with user and project info
+            projects = self.get_user_projects()
             self.render('home.html', user=self.current_user,
-                        projects=projects, files=files)
+                        projects=projects)
 
     def get_user_projects(self):
-        """"""
-        user = tornado.escape.xhtml_escape(self.current_user)
+        """Connects to database and saves projects in dictionary."""
+        user = tornado.escape.xhtml_escape(self.current_user)   # Current user
 
         couch = couchdb.Server("http://admin:admin@localhost:5984/")
-
         user_db = couch['dp_users']
         proj_db = couch['projects']
 
         projects = {}
-        files = {}
 
+        # Gets all projects for current user and save projects
+        # and their associated information
         for proj in user_db[user]['projects']:
             projects[proj] = proj_db[proj]['project_info']
-            if 'files' in proj_db[proj]:
-                files[proj] = proj_db[proj]['files']
 
-        return projects, files
+        return projects
 
 
 class ProjectHandler(BaseHandler):
-    """"""
+    """Called by "See project" button.
+    Connects to database and collects all files
+    associated with the project and user. Renders project page."""
+
     def get(self, projid):
         """"""
-        print(projid)
-
         couch = couchdb.Server("http://admin:admin@localhost:5984/")
         proj_db = couch['projects']
 
@@ -167,7 +175,7 @@ class ProjectHandler(BaseHandler):
         if 'files' in proj_db[projid]:
             files = proj_db[projid]['files']
 
-        self.render('view_all.html', user=self.current_user, files=files)
+        self.render('project_page.html', user=self.current_user, files=files)
 
 
 # FUNCTIONS ######################################################## FUNCTIONS #
@@ -204,7 +212,8 @@ def main():
     tornado.autoreload.watch("html_templates/index.html")
     tornado.autoreload.watch("html_templates/home.html")
     tornado.autoreload.watch("html_templates/create_delivery.html")
-    tornado.autoreload.watch("html_templates/view_all.html")
+    tornado.autoreload.watch("html_templates/project_page.html")
+    tornado.autoreload.watch("html_templates/style.css")
 
     application = ApplicationDP()
     application.listen(options.port)

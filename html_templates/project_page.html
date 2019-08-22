@@ -1,0 +1,51 @@
+<!-- Gives same logo etc as index.html -->
+{% extends "index.html" %}
+
+{% block content %}
+<div class="container">
+  <!-- Back button -- redirects to home page -->
+  <div class="col-md-3">
+    <form action="{{ reverse_url('home') }}" role="form" method="GET">
+      {% module xsrf_form_html() %}
+      <button class="btn btn-primary" type="submit">Back</button>
+    </form>
+  </div>
+  <!-- User info -->
+  <div class="col-md-3">
+    Logged in as: {{user}}
+  </div>
+  <!-- Log out button -->
+  <div class="col-md-3">
+    <form action="{{ reverse_url('logout') }}" role="form" method="GET">
+        {% module xsrf_form_html() %}
+        <button class="btn btn-primary" type="submit">Log Out</button>
+    </form>
+  </div>
+</div>
+
+<!-- All files in current project -->
+<div>
+  {% if files != {} %}
+    <table>
+      <!-- Table header row -->
+      <tr>
+        <th>File name</th>
+        <th>Format</th>
+        <th>Size</th>
+        <th>Date Uploaded</th>
+      </tr>
+      <!-- All files -->
+      {% for f in files %}
+        <tr>
+          <td>{{ f }}</td>
+          <td>{{ files[f]['format'] }}</td>
+          <td>{{ files[f]['size'] }}</td>
+          <td>{{ files[f]['date_uploaded'] }}</td>
+          <td><button class="btn"><i class="fa fa-download"></i> Download</button></td>
+        </tr>
+      {% end %}
+    </table>
+  {% end %}
+
+</div>
+{% end %}
