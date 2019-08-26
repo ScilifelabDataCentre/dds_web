@@ -171,11 +171,14 @@ class ProjectHandler(BaseHandler):
         couch = couchdb.Server("http://admin:admin@localhost:5984/")
         proj_db = couch['projects']
 
+        project_info = proj_db[projid]['project_info']
+
         files = {}
         if 'files' in proj_db[projid]:
             files = proj_db[projid]['files']
 
-        self.render('project_page.html', user=self.current_user, files=files)
+        self.render('project_page.html', user=self.current_user,
+                    files=files, project=project_info)
 
 
 # FUNCTIONS ######################################################## FUNCTIONS #

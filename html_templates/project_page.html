@@ -24,28 +24,75 @@
 </div>
 
 <!-- All files in current project -->
-<div>
-  {% if files != {} %}
-    <table>
-      <!-- Table header row -->
-      <tr>
-        <th>File name</th>
-        <th>Format</th>
-        <th>Size</th>
-        <th>Date Uploaded</th>
-      </tr>
-      <!-- All files -->
-      {% for f in files %}
-        <tr>
-          <td>{{ f }}</td>
-          <td>{{ files[f]['format'] }}</td>
-          <td>{{ files[f]['size'] }}</td>
-          <td>{{ files[f]['date_uploaded'] }}</td>
-          <td><button class="btn"><i class="fa fa-download"></i> Download</button></td>
-        </tr>
-      {% end %}
-    </table>
-  {% end %}
+<br>
+<br>
+<div class="container">
+  <div class="row">
+    <h3 align="center">Project: {{ project['name'] }}</h3>
+    <br>
+    <div class="container">
+      {{ project['description'] }}
+    </div>
+    <br>
+    <br>
+    <div class="col-sm-4">
+      <table>
+          <tr>
+            <th>Order date:</th>  <td>{{ project['order_date'] }}</td>
+          </tr>
+          {% if project['status'] == "Uploaded" %}
+            <tr>
+              <th>Final delivery date:</th> <td></td>
+            </tr>
+          {% else %}
+            <tr>
+              <th>Status:</th>  <td>{{ project['status'] }}</td>
+            </tr>
+          {% end %}
+          <tr>
+            <th>Project category:</th>  <td>{{ project['category'] }}</td>
+          </tr>
+          <tr>
+            <th>Sensitive:</th> <td>{% if project['sensitive'] == "True" %} Yes {% else %} No {% end %}</td>
+          </tr>
+          <tr>
+            <th>PI:</th>  <td>{{ project['pi'] }}</td>
+          </tr>
+          <br>
+          <tr>
+            <th>Comments/Information:</th>
+          </tr>
+          <tr>
+            <td>{{ project['comments'] }}</td>
+          </tr>
+      </table>
+    </div>
+    <div class="col-sm-7">
 
+      {% if files != {} %}
+        <table>
+          <!-- Table header row -->
+          <tr>
+            <th>File name</th>
+            <th>Format</th>
+            <th>Size</th>
+            <th>Date Uploaded</th>
+          </tr>
+          <!-- All files -->
+          {% for f in files %}
+            <tr>
+              <td>{{ f }}</td>
+              <td>{{ files[f]['format'] }}</td>
+              <td>{{ files[f]['size'] }}</td>
+              <td>{{ files[f]['date_uploaded'] }}</td>
+              <td><button class="btn"><i class="fa fa-download"></i> Download</button></td>
+            </tr>
+          {% end %}
+        </table>
+      {% else %}
+        <p>This project does not contain any uploaded files.</p>
+      {% end %}
+    </div>
+  </div>
 </div>
 {% end %}
