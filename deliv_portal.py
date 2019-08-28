@@ -18,7 +18,7 @@ config = parse_config()
 site_base_url = config["site_base_url"]
 
 from tornado.options import define, options
-define("port", default=8888, help="run on the given port", type=int)
+define("port", default=config['site_port'], help="run on the given port", type=int)
 
 
 # CLASSES ############################################################ CLASSES #
@@ -79,7 +79,8 @@ class LoginHandler(BaseHandler):
         """Called by post.
         Connects to database and checks if user exists."""
 
-        couch = couchdb.Server("http://admin:admin@localhost:5984/")
+        couch = couchdb.Server(config['couch_url'])
+        couch.login(config['couch_username'], config['couch_password'])
         db = couch['dp_users']
 
         # Searches database for user with matching email and password
@@ -147,7 +148,8 @@ class MainHandler(BaseHandler):
         """Connects to database and saves projects in dictionary."""
         user = tornado.escape.xhtml_escape(self.current_user)   # Current user
 
-        couch = couchdb.Server("http://admin:admin@localhost:5984/")
+        couch = couchdb.Server(config['couch_url'])
+        couch.login(config['couch_username'], config['couch_password'])
         user_db = couch['dp_users']
         proj_db = couch['projects']
 
@@ -168,7 +170,8 @@ class ProjectHandler(BaseHandler):
 
     def get(self, projid):
         """"""
-        couch = couchdb.Server("http://admin:admin@localhost:5984/")
+        couch = couchdb.Server(config['couch_url'])
+        couch.login(config['couch_username'], config['couch_password'])
         proj_db = couch['projects']
 
         project_info = proj_db[projid]['project_info']
