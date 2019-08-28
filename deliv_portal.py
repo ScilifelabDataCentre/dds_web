@@ -41,6 +41,12 @@ class ApplicationDP(tornado.web.Application):
                     "template_path":"html_templates",
                     "static_path":"files"
                     }
+
+        if config.get('development_mode'):
+            settings['debug'] = True
+            settings['develop'] = True
+            logging.getLogger().setLevel(logging.DEBUG)
+
         tornado.web.Application.__init__(self, handlers, **settings)
 
 
