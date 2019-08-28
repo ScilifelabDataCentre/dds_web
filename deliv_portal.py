@@ -79,7 +79,7 @@ class LoginHandler(BaseHandler):
         """Called by post.
         Connects to database and checks if user exists."""
 
-        couch = couchdb.Server("http://admin:admin@localhost:5984/")
+        couch = couchdb.Server(config['couch_url'])
         couch.login(config['couch_username'], config['couch_password'])
         db = couch['dp_users']
 
@@ -171,6 +171,7 @@ class ProjectHandler(BaseHandler):
     def get(self, projid):
         """"""
         couch = couchdb.Server(config['couch_url'])
+        couch.login(config['couch_username'], config['couch_password'])
         proj_db = couch['projects']
 
         project_info = proj_db[projid]['project_info']
