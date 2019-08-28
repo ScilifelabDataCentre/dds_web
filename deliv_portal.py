@@ -2,6 +2,8 @@
 
 
 # IMPORTS ############################################################ IMPORTS #
+import logging
+
 import base64
 import tornado.autoreload
 import tornado.ioloop
@@ -230,6 +232,7 @@ def main():
     application = ApplicationDP()
     application.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
+
 
 if __name__ == "__main__":
     main()

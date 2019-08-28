@@ -4,3 +4,4 @@ cookie_secret: "0123456789ABCDEF"
 couch_url: "http://couch_url:5984"
 couch_username: "username"
 couch_password: "password"
+development_mode: false
