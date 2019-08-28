@@ -1,0 +1,5 @@
+CouchDB==1.2
+PyMySQL==0.9.3
+PyYAML==5.1.2
+tornado==6.0.3
+Tornado-MySQL==0.5.1
