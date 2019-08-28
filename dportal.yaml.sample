@@ -1,0 +1,6 @@
+site_base_url: "a hostname"
+site_port: 8888
+cookie_secret: "0123456789ABCDEF"
+couch_url: "couch_url"
+couch_username: "username"
+couch_password: "password"
