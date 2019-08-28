@@ -17,8 +17,6 @@ from utils.config import parse_config
 config = parse_config()
 site_base_url = config["site_base_url"]
 
-import settings
-
 from tornado.options import define, options
 define("port", default=8888, help="run on the given port", type=int)
 
@@ -149,7 +147,7 @@ class MainHandler(BaseHandler):
         """Connects to database and saves projects in dictionary."""
         user = tornado.escape.xhtml_escape(self.current_user)   # Current user
 
-        couch = couchdb.Server(settings.couch_url)
+        couch = couchdb.Server("http://admin:admin@localhost:5984/")
         user_db = couch['dp_users']
         proj_db = couch['projects']
 
@@ -170,7 +168,7 @@ class ProjectHandler(BaseHandler):
 
     def get(self, projid):
         """"""
-        couch = couchdb.Server(settings.couch_url)
+        couch = couchdb.Server("http://admin:admin@localhost:5984/")
         proj_db = couch['projects']
 
         project_info = proj_db[projid]['project_info']
