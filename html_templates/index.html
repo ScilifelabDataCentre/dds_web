@@ -7,85 +7,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- css links -->
-		<link rel="stylesheet" type="text/css"
+    <link rel="stylesheet" type="text/css"
       href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
-		<link rel="stylesheet" type="text/css"
-			href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-		<link rel="stylesheet" type="text/css"
-			href="https://cdn.datatables.net/1.10.11/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css"
+      href="https://cdn.datatables.net/1.10.11/css/dataTables.bootstrap.min.css">
     <link rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ static_url('style.css') }}">
 
     <!-- Scripts    defer: script will not run until page has loaded -->
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+    <script defer src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script defer src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
-		<script defer src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-		<script defer src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script defer src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js"></script>
 
-    <!-- Page style -->
-    <style type="text/css">
-      /* Page body */
-      body {
-          padding: 10px;
-      }
-
-      .inner-div {
-        display: inline-block;
-        padding: 50px;
-      }
-
-      /* Arch between SciLifeLab and 'Data delivery' - area */
-      div.arch {
-          height: 80px;
-          width: 40px;
-          background-color: #ffffff;
-          border-radius: 0px 40px 40px 0px;
-          float: left;
-      }
-
-      /* 'Data delivery' area */
-      div.header {
-          height: 80px;
-          width: 100%;
-          text-align: center;
-          vertical-align: middle;
-          line-height: 80px;
-          background-color: #8ee27f;
-          border-radius: 40px;
-          font-family: 'Book Antiqua';
-          font-size: 36px;
-      }
-
-      /* Login form */
-      div.login-container{
-				width: 50%;
-				max-width: 700px;
-			}
-
-      /* SciLifeLab logo */
-      img.head_logo {
-          height: 80px;
-          width: 240px;
-          float: left;
-      }
-
-      /* All tables */
-      table {
-        border-collapse: collapse;
-        width: 100%;
-      }
-
-      /* All table headers and cells */
-      th, td {
-        text-align: left;
-        padding: 8px;
-      }
-
-      /* Project information table in collapsible */
-      th.subtable{
-        font-style: italic;
-      }
-    </style>
   </head>
   <!-- HEAD END -->
 

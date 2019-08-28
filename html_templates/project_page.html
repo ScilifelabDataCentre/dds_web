@@ -30,7 +30,7 @@
   <div class="row">
     <h3 align="center">Project: {{ project['name'] }}</h3>
     <br>
-    <div class="container">
+    <div class="container" align="center">
       {{ project['description'] }}
     </div>
     <br>
@@ -59,40 +59,62 @@
             <th>PI:</th>  <td>{{ project['pi'] }}</td>
           </tr>
           <br>
-          <tr>
-            <th>Comments/Information:</th>
-          </tr>
-          <tr>
-            <td>{{ project['comments'] }}</td>
-          </tr>
+      </table>
+      <br>
+      <br>
+      <table class="comments">
+        <tr>
+          <th>Comments/Information:</th>
+        </tr>
+        <tr>
+          <td>{{ project['comments'] }}</td>
+        </tr>
       </table>
     </div>
-    <div class="col-sm-7">
-
+    <div class="col-sm-7 pull-right">
       {% if files != {} %}
-        <table>
-          <!-- Table header row -->
-          <tr>
-            <th>File name</th>
-            <th>Format</th>
-            <th>Size</th>
-            <th>Date Uploaded</th>
-          </tr>
-          <!-- All files -->
-          {% for f in files %}
-            <tr>
-              <td>{{ f }}</td>
-              <td>{{ files[f]['format'] }}</td>
-              <td>{{ files[f]['size'] }}</td>
-              <td>{{ files[f]['date_uploaded'] }}</td>
-              <td><button class="btn"><i class="fa fa-download"></i> Download</button></td>
-            </tr>
-          {% end %}
-        </table>
+      <div class="row">
+        <div>
+          <table id="files">
+            <thead>
+              <tr>
+                <th>File name</th>
+                <th>Format</th>
+                <th>Size</th>
+                <th>Date Uploaded</th>
+                <th>Download</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in files %}
+                <tr>
+                  <td>{{ f }}</td>
+                  <td>{{ files[f]['format'] }}</td>
+                  <td>{{ files[f]['size'] }}</td>
+                  <td>{{ files[f]['date_uploaded'] }}</td>
+                  <td>
+                    <button class="btn"><i class="fa fa-download" align="center"></i></button>
+                  </td>
+                </tr>
+              {% end %}
+            </tbody>
+          </table>
+        </div>
+      </div>
       {% else %}
         <p>This project does not contain any uploaded files.</p>
       {% end %}
     </div>
   </div>
 </div>
+
+<script>
+  $(document).ready(function() {
+    $('#files').DataTable( {
+      responsive: true,
+      paging: true
+    })
+  })
+</script>
+
 {% end %}
