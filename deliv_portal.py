@@ -173,7 +173,6 @@ class MainHandler(BaseHandler):
             for proj in user_db[user]['projects']:
                 projects[proj] = proj_db[proj]['project_info']
                 
-
         return projects
 
 

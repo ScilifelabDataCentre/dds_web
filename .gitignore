@@ -2,4 +2,4 @@
 *.pyc
 __pycache__
 couchdb-data
-dportal.yaml
+dportal.yaml*
