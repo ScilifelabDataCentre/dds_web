@@ -2,6 +2,8 @@
 
 
 # IMPORTS ############################################################ IMPORTS #
+import logging
+
 import base64
 import tornado.autoreload
 import tornado.ioloop
@@ -15,7 +17,7 @@ import re
 
 from utils.config import parse_config
 config = parse_config()
-site_base_url = config["site_base_url"]
+site_base_url = f'{config["site_base_url"]}:{config["site_port"]}/'
 
 from tornado.options import define, options
 define("port", default=config['site_port'], help="run on the given port", type=int)
@@ -56,6 +58,12 @@ class BaseHandler(tornado.web.RequestHandler):
         """"""
         return self.get_secure_cookie("user")
 
+    def couch_connect(self):
+        """Connect to a couchdb interface."""
+        couch = couchdb.Server(f'{config["couch_url"]}:{config["couch_port"]}')
+        couch.login(config['couch_username'], config['couch_password'])
+        return couch
+
 
 class CreateDeliveryHandler(BaseHandler):
     """Called by create button on home page.
@@ -85,8 +93,7 @@ class LoginHandler(BaseHandler):
         """Called by post.
         Connects to database and checks if user exists."""
 
-        couch = couchdb.Server(config['couch_url'])
-        couch.login(config['couch_username'], config['couch_password'])
+        couch = self.couch_connect()
         db = couch['dp_users']
 
         # Searches database for user with matching email and password
@@ -154,8 +161,7 @@ class MainHandler(BaseHandler):
         """Connects to database and saves projects in dictionary."""
         user = tornado.escape.xhtml_escape(self.current_user)   # Current user
 
-        couch = couchdb.Server(config['couch_url'])
-        couch.login(config['couch_username'], config['couch_password'])
+        couch = self.couch_connect()
         user_db = couch['dp_users']
         proj_db = couch['projects']
 
@@ -176,8 +182,7 @@ class ProjectHandler(BaseHandler):
 
     def get(self, projid):
         """"""
-        couch = couchdb.Server(config['couch_url'])
-        couch.login(config['couch_username'], config['couch_password'])
+        couch = self.couch_connect()
         proj_db = couch['projects']
 
         project_info = proj_db[projid]['project_info']
@@ -220,16 +225,18 @@ def main():
     # test_db_connection()
 
     # For devel puprose watch page changes
-    tornado.autoreload.start()
-    tornado.autoreload.watch("html_templates/index.html")
-    tornado.autoreload.watch("html_templates/home.html")
-    tornado.autoreload.watch("html_templates/create_delivery.html")
-    tornado.autoreload.watch("html_templates/project_page.html")
-    tornado.autoreload.watch("html_templates/style.css")
+    if config.get('development_mode'):
+        tornado.autoreload.start()
+        tornado.autoreload.watch("html_templates/index.html")
+        tornado.autoreload.watch("html_templates/home.html")
+        tornado.autoreload.watch("html_templates/create_delivery.html")
+        tornado.autoreload.watch("html_templates/project_page.html")
+        tornado.autoreload.watch("html_templates/style.css")
 
     application = ApplicationDP()
     application.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
+
 
 if __name__ == "__main__":
     main()
