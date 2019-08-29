@@ -35,6 +35,7 @@ class ApplicationDP(tornado.web.Application):
                      url(r"/create", CreateDeliveryHandler, name='create'),
                      url(r"/logout", LogoutHandler, name='logout'),
                      url(r"/project/(?P<projid>.*)", ProjectHandler, name='project'),
+                     url(r"/profile", ProfileHandler, name='profile')
                      # url(r"/files/(?P<pid>.*)", FileHandler, name='files')
                      ]
         settings = {"xsrf_cookies":True,
@@ -153,8 +154,8 @@ class MainHandler(BaseHandler):
         else:
             # Get projects associated with user and send to home page
             # with user and project info
-            projects = self.get_user_projects()
-            self.render('home.html', user=self.current_user,
+            projects, email = self.get_user_projects()
+            self.render('home.html', user=self.current_user, email=email,
                         projects=projects)
 
     def get_user_projects(self):
@@ -172,9 +173,16 @@ class MainHandler(BaseHandler):
         if 'projects' in user_db[user]:
             for proj in user_db[user]['projects']:
                 projects[proj] = proj_db[proj]['project_info']
-                
-        return projects
 
+        return projects, user_db[user]['user']['email']
+
+
+class ProfileHandler():
+    """Profile page."""
+
+    def get(self):
+        message="This is the profile page where one can change password etc. "
+        self.render('profile.html', message=message)
 
 class ProjectHandler(BaseHandler):
     """Called by "See project" button.

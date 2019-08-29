@@ -1,28 +1,33 @@
 <!-- Gives same logo etc as index.html -->
 {% extends "index.html" %}
 
-{% block content %}
-<div class="container">
+{% block back_button %}
+  <form action="{{ reverse_url('home') }}" role="form" method="GET">
+    {% module xsrf_form_html() %}
+    <button class="btn btn-primary" type="submit">Back</button>
+  </form>
+{% end %}
+<!-- <div class="container"> -->
   <!-- Back button -- redirects to home page -->
-  <div class="col-md-3">
+  <!-- <div class="col-md-3">
     <form action="{{ reverse_url('home') }}" role="form" method="GET">
       {% module xsrf_form_html() %}
       <button class="btn btn-primary" type="submit">Back</button>
     </form>
-  </div>
+  </div> -->
   <!-- User info -->
-  <div class="col-md-3">
-    Logged in as: {{user}}
-  </div>
+  <!-- <div class="col-md-3">
+    Logged in as: {{ user }}
+  </div> -->
   <!-- Log out button -->
-  <div class="col-md-3">
+  <!-- <div class="col-md-3">
     <form action="{{ reverse_url('logout') }}" role="form" method="GET">
         {% module xsrf_form_html() %}
         <button class="btn btn-primary" type="submit">Log Out</button>
     </form>
   </div>
-</div>
-
+</div> -->
+{% block content %}
 <!-- All files in current project -->
 <br>
 <br>

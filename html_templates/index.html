@@ -32,11 +32,26 @@
     <!-- Header (Logo etc) Start -->
     <div>
       <img class="head_logo" src="{{ static_url('data_centre_logo.png') }}">
-      <div class="arch"></div>
+      <div class="arch">
+    </div>
     <div class="header"> Data delivery portal </div>
     <!-- Header (Logo etc) End -->
 
-    <br><br><br>
+    <div class="main">
+    {% try %}
+      {% if user %}
+        {% block button_content %}
+        <!-- Sidenav -->
+        <div class="sidenav">
+          <a href="">Profile</a>
+          <a href="">Information</a>
+          <a href="">Contact</a>
+          <a href="{{ reverse_url('logout') }}">Log Out</a>
+        </div>
+        {% end %}
+      {% end %}
+    {% except %}
+    {% end %}
 
     {% block content %}
     <div class="container">
@@ -79,6 +94,7 @@
       <!-- Login form end -->
     </div>
     {% end %}
+  </div>
   </body>
   <!-- BODY END -->
 </html>

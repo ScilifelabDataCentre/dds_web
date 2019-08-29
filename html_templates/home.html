@@ -1,34 +1,19 @@
 <!-- Gives same logo etc as index.html -->
 {% extends "index.html" %}
 
-{% block content %}
-<div class="container">
-  <!-- "Create" button -- will not be needed later -->
-  <div class="col-md-3">
-    <!-- <form href="{{ reverse_url('create') }}" role="form" method="GET">
-      <button class="btn btn-primary" type="submit">Create</button>
-    </form> -->
-  </div>
-  <!-- Create button end -->
-  <!-- Show user -->
-  <div class="col-md-3">
-    Logged in as: {{user}}
-  </div>
-  <!-- Log Out button -->
-  <div class="col-md-3">
-    <form action="{{ reverse_url('logout') }}" role="form" method="GET">
-      {% module xsrf_form_html() %}
-      <button class="btn btn-primary" type="submit">Log Out</button>
-    </form>
-  </div>
-  <!-- Log Out button end -->
-</div>
+{% block back_button %}
+  <!-- <form action="{{ reverse_url('home') }}" role="form" method="GET">
+    {% module xsrf_form_html() %}
+    <button class="btn btn-primary" type="submit">Create</button>
+  </form> -->
+{% end %}
 
+{% block content %}
 <div class="col-sm-12">
 <br>
   <h2>Projects</h2>
   <!-- TABLE BEGIN -->
-  <table class="table">
+  <table class="table" id="projects">
     <!-- Table column headers -->
     <thead>
       <tr>
@@ -36,6 +21,8 @@
         <th>Project</th>
         <th>Order Date</th>
         <th>Status</th>
+        <th></th>
+        <th></th>
       </tr>
     </thead>
 
@@ -50,12 +37,12 @@
         <td>{{ projects[proj]['status'] }}</td>       <!-- Status -->
         <!-- "Info" button -- opens collapsible rows -->
         <td>
-          <button class="btn btn-default btn-sm"  data-toggle="collapse" data-target="#{{proj}}">Info</button>
+          <button class="btn btn-default btn-sm projtable"  data-toggle="collapse" data-target="#{{proj}}">Info</button>
         </td>
         <!-- "See project" button -- redirects to project page -->
         <td>
           <form action="{{ reverse_url('project', proj) }}">
-            <button class="btn btn-default btn-sm">See project</button>
+            <button class="btn btn-default btn-sm projtable">See project</button>
           </form>
         </td>
       </tr>

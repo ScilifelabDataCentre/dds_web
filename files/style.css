@@ -3,6 +3,10 @@ body {
     padding: 10px;
 }
 
+.collapse {
+  font-size: 17px;
+}
+
 .inner-div {
   display: inline-block;
   padding: 50px;
@@ -43,10 +47,51 @@ img.head_logo {
     float: left;
 }
 
+.projtable {
+  font-size: 20px;
+}
+
+.sidenav {
+  height: 100%;
+  width: 180px;
+  position: fixed;
+  z-index: 1;
+  top: 90px;
+  left: 0;
+  background-color: #FFFFFF;
+  overflow-x: hidden;
+  padding-top: 40px;
+}
+
+.sidenav a {
+  padding: 10px 8px 10px 16px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #000000;
+  display: block;
+}
+
+.sidenav a:hover {
+  color: #8ee27f;
+}
+
+.main {
+  margin-top: 20px;
+  margin-left: 200px; /* Same as the width of the sidenav */
+  padding: 0px 10px;
+  font-size: 20px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
+
 /* All tables */
 table {
   border-collapse: collapse;
   width: 100%;
+  table-layout: auto;
 }
 
 /* All table headers and cells */
