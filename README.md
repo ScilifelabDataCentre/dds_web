@@ -11,7 +11,8 @@ docker-compose up
 ```
 
 ## Database setup:
-1. The db needs setup: `http://localhost:5984/_utils/#setup`
+1. 
+The db needs setup: `http://localhost:5984/_utils/#setup`
 2.
 ```
 curl -X PUT http://delport:delport@127.0.0.1:5984/projects
