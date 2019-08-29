@@ -12,7 +12,7 @@ services:
   web:
     build:
       context: ./
-      dockerfile: Dockerfile-Portal
+      dockerfile: Dockerfile-portal
     depends_on:
       - db
     ports:
