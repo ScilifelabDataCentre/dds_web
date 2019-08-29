@@ -11,11 +11,7 @@ docker-compose up
 ```
 
 ## Database setup:
-<<<<<<< HEAD
-1.
-=======
 1. 
->>>>>>> 745f781ab5aa457902bcf6a2f54d2f3475a8673e
 The db needs setup: `http://localhost:5984/_utils/#setup`
 
 2.
