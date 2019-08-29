@@ -12,7 +12,8 @@ Mac: `https://docs.docker.com/v17.12/docker-for-mac/install/`
 Ubuntu: `https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04?fbclid=IwAR3zNawDfhtWhehs4pbUIbHSxwqiVnLRafq2gY6rLSZVY_F0b81b7MHiTQ0`
 
 2. 
-```cp dportal.yaml.sample dportal.yaml
+```
+cp dportal.yaml.sample dportal.yaml
 docker-compose up
 ```
 
