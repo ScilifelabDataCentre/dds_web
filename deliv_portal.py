@@ -222,12 +222,13 @@ def main():
     # test_db_connection()
 
     # For devel puprose watch page changes
-    tornado.autoreload.start()
-    tornado.autoreload.watch("html_templates/index.html")
-    tornado.autoreload.watch("html_templates/home.html")
-    tornado.autoreload.watch("html_templates/create_delivery.html")
-    tornado.autoreload.watch("html_templates/project_page.html")
-    tornado.autoreload.watch("html_templates/style.css")
+    if config.get('development_mode'):
+        tornado.autoreload.start()
+        tornado.autoreload.watch("html_templates/index.html")
+        tornado.autoreload.watch("html_templates/home.html")
+        tornado.autoreload.watch("html_templates/create_delivery.html")
+        tornado.autoreload.watch("html_templates/project_page.html")
+        tornado.autoreload.watch("html_templates/style.css")
 
     application = ApplicationDP()
     application.listen(options.port)
