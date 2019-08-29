@@ -169,8 +169,10 @@ class MainHandler(BaseHandler):
 
         # Gets all projects for current user and save projects
         # and their associated information
-        for proj in user_db[user]['projects']:
-            projects[proj] = proj_db[proj]['project_info']
+        if 'projects' in user_db[user]:
+            for proj in user_db[user]['projects']:
+                projects[proj] = proj_db[proj]['project_info']
+                
 
         return projects
 
