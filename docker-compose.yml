@@ -8,7 +8,7 @@ services:
     volumes:
       - ./couchdb-data:/opt/couchdb/data
     ports:
-      - 5990:5984
+      - 5984:5984
   web:
     build:
       context: ./
