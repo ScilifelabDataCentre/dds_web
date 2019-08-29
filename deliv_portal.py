@@ -17,7 +17,7 @@ import re
 
 from utils.config import parse_config
 config = parse_config()
-site_base_url = f'{config["site_base_url"]}:{config["site_port"]}/'
+site_base_url = f'{config["site_base_url"]}:{config["site_port"]}'
 
 from tornado.options import define, options
 define("port", default=config['site_port'], help="run on the given port", type=int)
@@ -71,7 +71,7 @@ class CreateDeliveryHandler(BaseHandler):
 
     def get(self):
         """Renders form for a new delivery."""
-        self.render('create_delivery.html')
+        self.render('create_delivery.html', pid="dgu8y3488hdfs8dh88r3")
 
     #@tornado.web.authenticated
     # def post(self):

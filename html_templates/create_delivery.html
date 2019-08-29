@@ -16,7 +16,7 @@
   <h3>Register new delivery</h3>
   <br>
   <!-- FORM START -->
-  <form action="{{ reverse_url('project') }}" role="form" method="POST">
+  <form action="{{ reverse_url('project', pid) }}" role="form" method="POST">
     {% module xsrf_form_html() %}
 
     <h4>Project Information</h4>

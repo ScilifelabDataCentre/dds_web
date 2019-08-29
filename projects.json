@@ -1,0 +1,94 @@
+{"docs": [
+  {"_id":"0549ccc37f19cf10f62ae436f30038e4",
+  "project_info":{
+    "name":"Project number one",
+    "category":"Category 1",
+    "description":"This is the first project created for the delivery portal and does not contain any real info.",
+    "order_date":"2019-08-01",
+    "status":"Uploaded",
+    "sensitive":"True",
+    "pi":"SciLifeLab Data Center",
+    "comments":"Comment from facility."},
+    "files":{
+      "filenumber1.docx":{
+        "size":1,"format":"text","date_uploaded":"2019-08-01"},
+      "filenumber2.docx":{
+        "size":1.1,"format":"text","date_uploaded":"2019-08-02"},
+      "filenumber3.docx":{
+        "size":1.2,"format":"text","date_uploaded":"2019-08-03"},
+      "filenumber4.docx":{
+        "size":1.3,"format":"text","date_uploaded":"2019-08-04"},
+      "filenumber5.docx":{
+        "size":1.4,"format":"text","date_uploaded":"2019-08-05"},
+      "filenumber6.docx":{
+        "size":1.5,"format":"text","date_uploaded":"2019-08-06"},
+      "filenumber7.docx":{
+        "size":1.6,"format":"text","date_uploaded":"2019-08-07"},
+      "filenumber8.docx":{
+        "size":1.7,"format":"text","date_uploaded":"2019-08-08"},
+      "filenumber9.docx":{
+        "size":1.8,"format":"text","date_uploaded":"2019-08-09"},
+      "filenumber10.docx":{
+        "size":1.9,"format":"text","date_uploaded":"2019-08-10"},
+      "filenumber11.docx":{
+        "size":10,"format":"text","date_uploaded":"2019-08-11"},
+      "filenumber12.docx":{
+        "size":11,"format":"text","date_uploaded":"2019-08-12"},
+      "filenumber13.docx":{
+        "size":12,"format":"text","date_uploaded":"2019-08-13"},
+      "filenumber14.docx":{
+        "size":13,"format":"text","date_uploaded":"2019-08-14"},
+      "filenumber15.docx":{
+        "size":14,"format":"text","date_uploaded":"2019-08-15"},
+      "filenumber16.docx":{
+        "size":15,"format":"text","date_uploaded":"2019-08-16"},
+      "filenumber17.docx":{
+        "size":16,"format":"text","date_uploaded":"2019-08-17"}
+    }
+  },
+  {"_id":"0549ccc37f19cf10f62ae436f300ce2d",
+    "project_info":{
+    "name":"The second project",
+    "category":"Category 2",
+    "description":"And this is the second project.",
+    "order_date":"2019-08-01",
+    "status":"Delivery in progress",
+    "sensitive":"True",
+    "pi":"SciLifeLab Data Center",
+    "comments":"Comment from facility."},
+    "files":{
+      "filenumber18.docx":{
+        "size":2,"format":"text","date_uploaded":"2019-08-18"},
+      "filenumber19.docx":{
+        "size":2.1,"format":"text","date_uploaded":"2019-08-19"},
+      "filenumber20.docx":{
+        "size":2.2,"format":"text","date_uploaded":"2019-08-20"},
+      "filenumber21.docx":{
+        "size":2.3,"format":"text","date_uploaded":"2019-08-21"},
+      "filenumber22.docx":{
+        "size":2.4,"format":"text","date_uploaded":"2019-08-22"}
+    }
+  },
+  {"_id":"0549ccc37f19cf10f62ae436f3012ecf",
+  "project_info":{
+    "name":"Project 3",
+    "category":"Category 3",
+    "description":"And this is the thiiird project.",
+    "order_date":"2019-08-02",
+    "status":"Delivery in progress",
+    "sensitive":"False",
+    "pi":"SciLifeLab Data Center",
+    "comments":"Comment from facility."}
+    },
+  {"_id":"0549ccc37f19cf10f62ae436f3015a75",
+  "project_info":{
+    "name":"Project four",
+    "category":"Category 4",
+    "description":"The fourth project.",
+    "order_date":"2019-08-01",
+    "status":"Processing order.",
+    "sensitive":"True",
+    "pi":"SciLifeLab Data Center",
+    "comments":"Comment from facility."}
+  }
+]}
