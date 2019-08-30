@@ -1,10 +1,15 @@
 /* Page body */
-body {
-    padding: 10px;
+a.panel-link {
+  text-decoration: none;
+  color: #000000;
 }
 
-.collapse {
-  font-size: 17px;
+a.panel-link:hover {
+  color: #1589FF;
+}
+
+body {
+    padding: 10px;
 }
 
 .inner-div {
@@ -48,7 +53,7 @@ img.head_logo {
 }
 
 .projtable {
-  font-size: 20px;
+  font-size: 15px;
 }
 
 .sidenav {
@@ -75,6 +80,11 @@ img.head_logo {
   color: #8ee27f;
 }
 
+.sidenav a:active {
+  color: inherit;
+  background-color: #8ee27f;
+}
+
 .main {
   margin-top: 20px;
   margin-left: 200px; /* Same as the width of the sidenav */
@@ -89,9 +99,21 @@ img.head_logo {
 
 /* All tables */
 table {
+  table-layout: auto;
   border-collapse: collapse;
   width: 100%;
+}
+
+table.table-finished, table.table-pending {
+  font-size: 15px;
   table-layout: auto;
+  width: 100%;
+}
+
+table.table-finished td, table.table-pending td,
+table.table-finished tr, table.table-pending tr {
+  white-space:nowrap;
+  padding-right: 50px;
 }
 
 /* All table headers and cells */

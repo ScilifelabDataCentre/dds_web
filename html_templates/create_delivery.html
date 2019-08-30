@@ -1,14 +1,13 @@
 <!-- Gives same logo etc as index.html -->
 {% extends "index.html" %}
 
-{% block content %}
 <!-- Back button -->
-<div class="container">
-  <form action="{{ reverse_url('home') }}" method="GET">
-    <button class="btn btn-primary" type="submit">Back</button>
-  </form>
-</div>
+{% block back_button %}
+  <a href="{{ reverse_url('home') }}">Back</a>
+{% end %}
 <!-- Back button end -->
+
+{% block content %}
 
 <!-- New delivery form start -->
 <div class="container">
@@ -16,7 +15,7 @@
   <h3>Register new delivery</h3>
   <br>
   <!-- FORM START -->
-  <form action="{{ reverse_url('project', pid) }}" role="form" method="POST">
+  <form action="" role="form" enctype="multipart/formdata">
     {% module xsrf_form_html() %}
 
     <h4>Project Information</h4>
@@ -56,14 +55,14 @@
       <div class="col-md-6">
         <div class="form-group">
           <label for="prj_pi_name">PI Name</label>
-          <input type="text" class="form-control" id="prj_pi_name" placeholder="Name of PI">
+          <input type="text" class="form-control" name="prj_pi_name" id="prj_pi_name" placeholder="Name of PI">
         </div>
       </div>
       <!-- PI email -->
       <div class="col-md-6">
         <div class="form-group">
           <label for="prj_pi_email">PI Email</label>
-          <input type="text" class="form-control" id="prj_pi_email" placeholder="Email of PI">
+          <input type="text" class="form-control" name="prj_pi_email" id="prj_pi_email" placeholder="Email of PI">
         </div>
       </div>
     </div>
@@ -98,6 +97,10 @@
       </div>
     </div>
     <!-- row 3 end -->
+
+    <!-- file row start -->
+    <input type="file" name="file" multiple>
+    <!-- file row end -->
 
     <!-- row 4 start -->
     <div class="row">

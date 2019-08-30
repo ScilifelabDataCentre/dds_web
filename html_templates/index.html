@@ -23,7 +23,6 @@
     <script defer src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script defer src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
     <script defer src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js"></script>
-
   </head>
   <!-- HEAD END -->
 
@@ -37,64 +36,72 @@
     <div class="header"> Data delivery portal </div>
     <!-- Header (Logo etc) End -->
 
+    <!-- Main div start -->
     <div class="main">
-    {% try %}
-      {% if user %}
-        {% block button_content %}
-        <!-- Sidenav -->
-        <div class="sidenav">
-          <a href="">Profile</a>
-          <a href="">Information</a>
-          <a href="">Contact</a>
-          <a href="{{ reverse_url('logout') }}">Log Out</a>
-        </div>
+      {% try %}
+        {% if user %}
+          {% block nav_content %}
+          <!-- Sidenav -->
+          <div class="sidenav">
+            {% block back_button %}
+
+            {% end %}
+            <!-- <a href="{{ reverse_url('home') }}">Home Page</a> -->
+            <a class="a" href="{{ reverse_url('profile') }}">Profile</a>
+            <a class="a" href="{{ reverse_url('create') }}">New Delivery</a>
+            <a class="a" href="{{ reverse_url('info') }}">Information</a>
+            <a class="a" href="{{ reverse_url('contact') }}">Contact</a>
+            <a class="a" href="{{ reverse_url('logout') }}">Log Out</a>
+          </div>
+          {% end %}
         {% end %}
+      {% except %}
       {% end %}
-    {% except %}
-    {% end %}
 
-    {% block content %}
-    <div class="container">
-      <!-- Login form start -->
-    	<div class="container login-container">
-    		<div class="panel panel-default">
-          <!-- "Sign In" -->
-    			<div class="panel-heading text-center">
-    				<span class="glyphicon glyphicon-user"></span>
-    				Sign In
-    			</div>
+      {% block content %}
+      <div class="container">
+        <!-- Login form start -->
+      	<div class="container login-container">
+      		<div class="panel panel-default">
+            <!-- "Sign In" -->
+      			<div class="panel-heading text-center">
+      				<span class="glyphicon glyphicon-user"></span>
+      				Sign In
+      			</div>
 
-          <!-- Form -->
-    			<div class="panel-body">
-    				<form action="{{ reverse_url('login') }}" role="form" method="post">
-              {% module xsrf_form_html() %}
-              <!-- Email -->
-              <div class="form-group">
-    						<label for="user_email">Email</label>
-    						<input type="text" class="form-control" name="user_email" id="user_email"
-                  placeholder="User account email address">
-    					</div>
-              <!-- Password -->
-    					<div class="form-group">
-    						<label for="password">Password</label>
-    						<input type="password" class="form-control" name="password" id="password">
-    					</div>
-              <!-- Button -->
-    					<div class="form-group">
-    						<button type="submit" class="btn btn-info btn-block">
-    							<span class="glyphicon glyphicon-log-in"></span>
-    							Login
-    						</button>
-    					</div>
-    				</form>
-    			</div>
-          <!-- Form end -->
-    		</div>
-    	</div>
-      <!-- Login form end -->
+            <!-- Form -->
+      			<div class="panel-body">
+      				<form action="{{ reverse_url('login') }}" role="form" method="post">
+                {% module xsrf_form_html() %}
+                <!-- Email -->
+                <div class="form-group">
+      						<label for="user_email">Email</label>
+      						<input type="text" class="form-control" name="user_email" id="user_email"
+                    placeholder="User account email address">
+      					</div>
+                <!-- Password -->
+      					<div class="form-group">
+      						<label for="password">Password</label>
+      						<input type="password" class="form-control" name="password" id="password">
+      					</div>
+                <!-- Button -->
+      					<div class="form-group">
+      						<button type="submit" class="btn btn-info btn-block">
+      							<span class="glyphicon glyphicon-log-in"></span>
+      							Login
+      						</button>
+      					</div>
+      				</form>
+      			</div>
+            <!-- Form end -->
+      		</div>
+      	</div>
+        <!-- Login form end -->
+      </div>
+      {% end %}
     </div>
-    {% end %}
-  </div>
+    <!-- Main div end -->
   </body>
   <!-- BODY END -->
+
 </html>

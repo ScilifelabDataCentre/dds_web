@@ -1,0 +1,131 @@
+{% extends "index.html" %}
+
+{% block content %}
+<br>
+<br>
+<div class="panel-group">
+  <div class="panel panel-default">
+    <a class="panel-link" data-toggle="collapse" href="#pend_projects_div">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          Pending orders
+        </h4>
+      </div>
+    </a>
+    <div id="pend_projects_div" class="panel-collapse collapse">
+      <div class="panel-body">
+        <table class="table-pending container" id="pend_projects">
+          <!-- Table column headers -->
+          <thead>
+            <tr>
+              <th>Project ID</th>
+              <th>Project</th>
+              <th>Order Date</th>
+              <th>Status</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <!-- Table body start -->
+          <tbody>
+            {% for proj in projects %}
+              {% if projects[proj]['status'] != "Uploaded" %}
+              <!-- Table row -- one for each project associated with logged in user -->
+              <tr>
+                <td>{{ proj }}</td>                           <!-- ID -->
+                <td>{{ projects[proj]['name'] }}</td>         <!-- Name -->
+                <td>{{ projects[proj]['order_date'] }}</td>   <!-- Order date -->
+                <td>{{ projects[proj]['status'] }}</td>       <!-- Status -->
+                <!-- "Info" button -- opens collapsible rows -->
+                <td>
+                  <button class="btn btn-default btn-sm projtable">Upload files</button>
+                </td>
+                <!-- "See project" button -- redirects to project page -->
+                <td>
+                  <form action="">
+                    <button class="btn btn-default btn-sm projtable">See project</button>
+                  </form>
+                </td>
+              </tr>
+              {% end %} <!-- if projects[proj]['status'] != "Uploaded" -->
+            {% end %} <!-- for proj in projects -->
+          </tbody>
+          <!-- Table body end -->
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-group">
+  <div class="panel panel-default">
+    <a class="panel-link" data-toggle="collapse" href="#fin_projects_div">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          Finished orders
+        </h4>
+      </div>
+    </a>
+    <div id="fin_projects_div" class="panel-collapse collapse">
+      <div class="panel-body">
+        <table class="table-finished" id="fin_projects">
+          <!-- Table column headers -->
+          <thead>
+            <tr>
+              <th>Project ID</th>
+              <th>Project</th>
+              <th>Order Date</th>
+              <th>Status</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <!-- Table body start -->
+          <tbody>
+            {% for proj in projects %}
+              {% if projects[proj]['status'] == "Uploaded" %}
+              <!-- Table row -- one for each project associated with logged in user -->
+              <tr>
+                <td>{{ proj }}</td>                           <!-- ID -->
+                <td>{{ projects[proj]['name'] }}</td>         <!-- Name -->
+                <td>{{ projects[proj]['order_date'] }}</td>   <!-- Order date -->
+                <td>{{ projects[proj]['status'] }}</td>       <!-- Status -->
+                <!-- "Info" button -- opens collapsible rows -->
+                <td>
+                  <button class="btn btn-default btn-sm projtable">Update order</button>
+                </td>
+                <!-- "See project" button -- redirects to project page -->
+                <td>
+                  <form action="">
+                    <button class="btn btn-default btn-sm projtable">See project</button>
+                  </form>
+                </td>
+              </tr>
+              {% end %} <!-- if projects[proj]['status'] != "Uploaded" -->
+            {% end %} <!-- for proj in projects -->
+          </tbody>
+          <!-- Table body end -->
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('#pend_projects').DataTable( {
+      responsive: true,
+      paging: true
+    })
+    $('#fin_projects').DataTable( {
+      responsive: true,
+      paging: true
+    })
+  })
+</script>
+
+{% end %} <!-- block content -->
+
+</div>
