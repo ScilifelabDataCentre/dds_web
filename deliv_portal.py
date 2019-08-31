@@ -41,7 +41,6 @@ class ApplicationDP(tornado.web.Application):
                      url(r"/profile", ProfileHandler, name='profile'),
                      url(r"/info", InfoHandler, name='info'),
                      url(r"/contact", ContactHandler, name="contact")
-                     # url(r"/files/(?P<pid>.*)", FileHandler, name='files')
                      ]
         settings = {"xsrf_cookies":True,
                     #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
@@ -153,7 +152,6 @@ class CreateDeliveryHandler(BaseHandler):
     # def post(self):
     #     """"""
     #     self.render('create_delivery.html')
-    #
 
 
 class InfoHandler(BaseHandler):
@@ -299,14 +297,18 @@ class ProjectHandler(BaseHandler):
             files = proj_db[projid]['files']
 
         self.render('project_page.html', user=self.current_user,
-                    files=files, project=project_info)
+                    files=files, projid=projid, project=project_info,
+                    addfiles=(self.get_argument('uploadfiles', None) is not None))
 
 
 @tornado.web.stream_request_body        # Allows for uploading of large files
 class UploadHandler(BaseHandler):
     """Class. Handles the upload of the file."""
 
-    def initialize(self):
+    def get(self, projid):
+        self.render("file_upload.html", user=self.current_user)
+
+    def initialize(self, projid):
         """
         Initialized the file upload.
         :return: ----
@@ -318,7 +320,7 @@ class UploadHandler(BaseHandler):
         self.aes_key = AESKey()
         self.bucket = "s3://kMTZXkjLvM47TFn11zjhHJ8UlkT8PxrS"
 
-    def prepare(self):
+    def prepare(self, projid):
         """
         Sets the max streamed size.
         :return: ----
@@ -326,7 +328,7 @@ class UploadHandler(BaseHandler):
 
         self.request.connection.set_max_body_size(MAX_STREAMED_SIZE)
 
-    def data_received(self, chunk):
+    def data_received(self, chunk, projid):
         """
         Received the data.
         :param chunk:   chunk of data
@@ -336,7 +338,7 @@ class UploadHandler(BaseHandler):
         self.bytes_read += len(chunk)
         self.data += chunk
 
-    def post(self):
+    def post(self, projid):
         """
         Saves the uploaded data and checks that the file is identical to the uploaded file.
         :return: ---

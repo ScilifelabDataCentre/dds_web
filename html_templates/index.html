@@ -48,7 +48,9 @@
             {% end %}
             <!-- <a href="{{ reverse_url('home') }}">Home Page</a> -->
             <a class="a" href="{{ reverse_url('profile') }}">Profile</a>
-            <a class="a" href="{{ reverse_url('create') }}">New Delivery</a>
+            {% block new_delivery %}
+
+            {% end %}
             <a class="a" href="{{ reverse_url('info') }}">Information</a>
             <a class="a" href="{{ reverse_url('contact') }}">Contact</a>
             <a class="a" href="{{ reverse_url('logout') }}">Log Out</a>
@@ -60,6 +62,7 @@
 
       {% block content %}
       <div class="container">
+
         <!-- Login form start -->
       	<div class="container login-container">
       		<div class="panel panel-default">

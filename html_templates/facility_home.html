@@ -1,5 +1,9 @@
 {% extends "index.html" %}
 
+{% block new_delivery %}
+  <a class="a" href="{{ reverse_url('create') }}">New Delivery</a>
+{% end %}
+
 {% block content %}
 <br>
 <br>
@@ -39,12 +43,14 @@
                 <td>{{ projects[proj]['status'] }}</td>       <!-- Status -->
                 <!-- "Info" button -- opens collapsible rows -->
                 <td>
-                  <button class="btn btn-default btn-sm projtable">Upload files</button>
+                  <form action="{{ reverse_url('project', proj) }}">
+                    <input type="submit" name="uploadfiles" class="btn btn-default btn-sm projtable" value="Upload Files"/>
+                  </form>
                 </td>
                 <!-- "See project" button -- redirects to project page -->
                 <td>
-                  <form action="">
-                    <button class="btn btn-default btn-sm projtable">See project</button>
+                  <form action="{{ reverse_url('project', proj) }}">
+                    <input type="submit" name="seeproject" class="btn btn-default btn-sm projtable" value="See Project"/>
                   </form>
                 </td>
               </tr>

@@ -9,10 +9,23 @@
 <!-- All files in current project -->
 <br>
 <br>
+
 <div class="container">
+  <h3 align="center">Project: {{ project['name'] }}</h3>
+  <br>
+  {% try %}
+    {% if addfiles %}
+    <form method="POST" action="" enctype="multipart/form-data">
+      <input name="filesToUpload[]" id="filesToUpload" type="file" multiple/>
+      <input type="submit" value="Upload File(s)"/>
+    </form>
+    <div id="chosenfiles">
+
+    </div>
+    {% end %} <!-- if addfiles -->
+  {% except %} <!-- try -->
+  {% end %} <!-- try except -->
   <div class="row">
-    <h3 align="center">Project: {{ project['name'] }}</h3>
-    <br>
     <div class="container" align="center">
       {{ project['description'] }}
     </div>
@@ -99,6 +112,18 @@
       paging: true
     })
   })
+
+    //get the input and UL list
+  var input = document.getElementById('filesToUpload');
+  var list = document.getElementById('chosenfiles');
+
+  //for every file...
+  for (var x = 0; x < input.files.length; x++) {
+  	//add to list
+  	var p = document.createElement('p');
+  	p.innerHTML = input.files[x].name + ", " + input.files[x].size;
+  	list.append(p);
+  }
 </script>
 
 {% end %}
