@@ -15,8 +15,9 @@
   <br>
   {% try %}
     {% if addfiles %}
-    <form method="POST" action="" enctype="multipart/form-data">
-      <input name="filesToUpload[]" id="filesToUpload" type="file" multiple/>
+    <form action="{{ reverse_url('upload') }}" role="form" method="post" enctype="multipart/form-data">
+      {% module xsrf_form_html() %}
+      <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
       <input type="submit" value="Upload File(s)"/>
     </form>
     <div id="chosenfiles">
