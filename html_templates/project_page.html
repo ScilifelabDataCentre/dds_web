@@ -15,10 +15,10 @@
   <br>
   {% try %}
     {% if addfiles %}
-    <form action="{{ reverse_url('upload') }}" role="form" method="post" enctype="multipart/form-data">
+    <form action="{{ reverse_url('upload') }}" method="post" enctype="multipart/form-data">
       {% module xsrf_form_html() %}
-      <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
-      <input type="submit" value="Upload File(s)"/>
+      <input class="file" name="file" id="file" type="file"/>
+      <input type="submit" name="submit" value="Upload File(s)"/>
     </form>
     <div id="chosenfiles">
 
@@ -106,25 +106,31 @@
 </div>
 <br><br>
 
+
 <script>
+
+
   $(document).ready(function() {
+    // XMLHttpRequest.setRequestHeader('_xsrf', "0123456789ABCDEF");
+
     $('#files').DataTable( {
       responsive: true,
       paging: true
-    })
+    });
   })
 
-    //get the input and UL list
-  var input = document.getElementById('filesToUpload');
-  var list = document.getElementById('chosenfiles');
+  //   //get the input and UL list
+  // var input = document.getElementById('filesToUpload');
+  // var list = document.getElementById('chosenfiles');
+  //
+  // //for every file...
+  // for (var x = 0; x < input.files.length; x++) {
+  // 	//add to list
+  // 	var p = document.createElement('p');
+  // 	p.innerHTML = input.files[x].name + ", " + input.files[x].size;
+  // 	list.append(p);
+  // }
 
-  //for every file...
-  for (var x = 0; x < input.files.length; x++) {
-  	//add to list
-  	var p = document.createElement('p');
-  	p.innerHTML = input.files[x].name + ", " + input.files[x].size;
-  	list.append(p);
-  }
 </script>
 
 {% end %}

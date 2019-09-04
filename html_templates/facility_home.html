@@ -43,13 +43,13 @@
                 <td>{{ projects[proj]['status'] }}</td>       <!-- Status -->
                 <!-- "Info" button -- opens collapsible rows -->
                 <td>
-                  <form action="{{ reverse_url('project', proj) }}">
+                  <form action="{{ reverse_url('project', proj) }}" method="GET">
                     <input type="submit" name="uploadfiles" class="btn btn-default btn-sm projtable" value="Upload Files"/>
                   </form>
                 </td>
                 <!-- "See project" button -- redirects to project page -->
                 <td>
-                  <form action="{{ reverse_url('project', proj) }}">
+                  <form action="{{ reverse_url('project', proj) }}" method="GET">
                     <input type="submit" name="seeproject" class="btn btn-default btn-sm projtable" value="See Project"/>
                   </form>
                 </td>

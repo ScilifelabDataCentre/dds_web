@@ -27,6 +27,9 @@ define("port", default=config['site_port'], help="run on the given port", type=i
 
 
 # CLASSES ############################################################ CLASSES #
+
+MAX_STREAMED_SIZE = 1024 * 1024 * 1024
+
 class ApplicationDP(tornado.web.Application):
     """docstring for ApplicationDP."""
 
@@ -45,8 +48,8 @@ class ApplicationDP(tornado.web.Application):
                      ]
         settings = {"xsrf_cookies":True,
                     #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
-                    #"cookie_secret":config["cookie_secret"], #for dev purpose, shoulde be removed in the end
-                    "cookie_secret": "0123456789ABCDEF",
+                    "cookie_secret":config["cookie_secret"], #for dev purpose, shoulde be removed in the end
+                    # "cookie_secret": "0123456789ABCDEF",
                     "template_path":"html_templates",
                     "static_path":"files"
                     }
@@ -249,15 +252,12 @@ class ProjectHandler(BaseHandler):
                     addfiles=(self.get_argument('uploadfiles', None) is not None))
 
 
-#@tornado.web.stream_request_body
 class UploadHandler(BaseHandler):
-    """Handles upload operations"""
+    """Class. Handles the upload of the file."""
 
     def post(self):
-        files = self.request.files['filesToUpload']
-        for f in files:
-            with open("test.txt", 'ab+') as test:
-                test.write(f['filename'].encode('utf-8'))
+        with open("test.txt", 'wb+') as f:
+            f.write(b"testtest")
 
 
 # FUNCTIONS ######################################################## FUNCTIONS #
