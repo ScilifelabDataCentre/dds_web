@@ -289,16 +289,13 @@ class UploadHandler(BaseHandler):
                 }
 
         # Save couchdb --> updated
-        # and show the project page again. 
+        # and show the project page again.
         try:
             proj_db.save(curr_proj)
         finally:
             self.render('project_page.html', user=self.current_user,
                         projid=projid, project=curr_proj['project_info'], files=curr_proj_files,
                         addfiles=(self.get_argument('uploadfiles', None) is not None))
-
-
-
 
 
 # FUNCTIONS ######################################################## FUNCTIONS #

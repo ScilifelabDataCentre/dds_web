@@ -1,51 +1,56 @@
 <!-- Gives same logo etc as index.html -->
 {% extends "index.html" %}
 
+<!-- Adds back button to side nav bar -->
 {% block back_button %}
   <a href="{{ reverse_url('home') }}">Back</a>
 {% end %}
 
 {% block content %}
-<!-- All files in current project -->
-<br>
-<br>
+<br><br>
 
+<!-- All files and associated information in current project -->
 <div class="container">
   <h3 align="center">Project: {{ project['name'] }}</h3>
   <br>
   {% try %}
-    {% if addfiles %}
+    {% if addfiles %} <!-- user chose to upload files -->
       {% block addfile_content %}
-      <div class="row">
-        <div class="pull-left">
-          <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
-            {% module xsrf_form_html() %}
-            <div class="newfiles">
-            <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
+        <div class="row">
+          <div class="pull-left">
+            <!-- File upload -->
+            <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
+              {% module xsrf_form_html() %}
+              <div class="newfiles">
+                <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
+              </div>
+              <div class="newfiles">
+                <input type="submit" name="submit" value="Upload File(s)"/>
+              </div>
+            </form>
+            <output id="list"></output>
+          </div>
+          <!-- Exit add-file view -->
+          <div class="pull-right">
+            <div class="col-sm-6">
+              <button href="#" class="btn btn-primary pull-right">Close File-edit</button>
             </div>
-            <div class="newfiles">
-            <input type="submit" name="submit" value="Upload File(s)"/>
-            </div>
-          </form>
-          <output id="list"></output>
-        </div>
-        <div class="pull-right">
-          <div class="col-sm-6">
-            <button href="#" class="btn btn-primary pull-right">Close File-edit</button>
           </div>
         </div>
-      </div>
-      <br><br>
+        <br><br>
       {% end %} <!-- block addfile_content -->
     {% end %} <!-- if addfiles -->
   {% except %} <!-- try -->
   {% end %} <!-- try except -->
+
+  <!-- Main content: Project info and files -->
   <div class="row">
+    <!-- Project description area -->
     <div class="container" align="center">
       {{ project['description'] }}
     </div>
-    <br>
-    <br>
+    <br><br>
+    <!-- Project information area (left) -->
     <div class="col-sm-4">
       <table>
           <tr>
@@ -82,58 +87,62 @@
         </tr>
       </table>
     </div>
+    <!-- File area (right) -->
     <div class="col-sm-7 pull-right">
       {% if files != {} %}
-      <div class="row">
-        <div>
-          <table id="files">
-            <thead>
-              <tr>
-                <th>File name</th>
-                <th>Format</th>
-                <th>Size</th>
-                <th>Date Uploaded</th>
-                <th>Download</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for f in files %}
+        <div class="row">
+          <div>
+            <table id="files">
+              <thead>
                 <tr>
-                  <td>{{ f }}</td>
-                  <td>{{ files[f]['format'] }}</td>
-                  <td>{{ files[f]['size'] }}</td>
-                  <td>{{ files[f]['date_uploaded'] }}</td>
-                  <td>
-                    <button class="btn"><i class="fa fa-download" align="center"></i></button>
-                  </td>
+                  <th>File name</th>
+                  <th>Format</th>
+                  <th>Size</th>
+                  <th>Date Uploaded</th>
+                  <th>Download</th>
                 </tr>
-              {% end %} <!-- for f in files -->
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {% for f in files %}
+                  <tr>
+                    <td>{{ f }}</td>
+                    <td>{{ files[f]['format'] }}</td>
+                    <td>{{ files[f]['size'] }}</td>
+                    <td>{{ files[f]['date_uploaded'] }}</td>
+                    <td>
+                      <button class="btn"><i class="fa fa-download" align="center"></i></button>
+                    </td>
+                  </tr>
+                {% end %} <!-- for f in files -->
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
       {% else %} <!-- if files != {} -->
         <p>This project does not contain any uploaded files.</p>
       {% end %} <!-- if files != {} -->
     </div>
   </div>
-  <br>
-  <br>
-    <div class="row">
-      <div class="col-sm-6">
-        <button href="#" class="btn btn-primary pull-left" onclick="infoboxFunction()">Mark project as finished</button>
-      </div>
-      {% if not addfiles %}
-        <div class="col-sm-6">
-          <button href="#" class="btn btn-primary pull-right">Add files</button>
-        </div>
-      {% end %} <!-- if not addfiles -->
+  <br><br>
+  <!-- End main content -->
+
+  <!-- Buttons (finished or add files) -->
+  <div class="row">
+    <div class="col-sm-6">
+      <button href="#" class="btn btn-primary pull-left">Mark project as finished</button>
     </div>
+    {% if not addfiles %}
+      <div class="col-sm-6">
+        <button href="#" class="btn btn-primary pull-right">Add files</button>
+      </div>
+    {% end %} <!-- if not addfiles -->
+  </div>
 </div>
 <br><br>
 
-
+<!-- JAVASCRIPT -->
 <script>
+  // Makes DataTable (pagination etc)
   $(document).ready(function() {
     $('#files').DataTable( {
       responsive: true,
@@ -148,41 +157,34 @@
   alert('The File APIs are not fully supported in this browser.');
   }
 
+  // Display chosen files
   function handleFileSelect(evt) {
     var files = evt.target.files;
 
     var output = [];
     for (var i=0, f; f=files[i]; i++) {
-      output.push('<li><strong>', escape(f.name), '</strong> (',
-        f.type || 'n/a', ') - ',
-        f.size, ' bytes, last modified: ',
-        f.lastModifiedDate ? f.lastModifiedDate.toLocalDateString() : 'n/a',
-        '</li>');
+      output.push('<tr>',
+                    '<td>', escape(f.name), '</td>',
+                    '<td>', f.type || 'n/a', '</td>',
+                    '<td>', f.size, ' bytes </td>',
+                    '<td>', f.lastModifiedDate ? f.lastModifiedDate.toLocalDateString() : 'n/a', '</td>',
+                  '</tr>');
     }
-    document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
+    document.getElementById('list').innerHTML = '<table>' +
+                                                  '<thead>' +
+                                                    '<tr>' +
+                                                      '<th>File name</th>' +
+                                                      '<th>Format</th>' +
+                                                      '<th>Size</th>' +
+                                                      '<th>Last modified</th>' +
+                                                    '</tr>' +
+                                                  '</thead>' +
+                                                  '<tbody>' +
+                                                    output.join('') +
+                                                  '</tbody>' +
+                                                '</table>';
   }
   document.getElementById('filesToUpload').addEventListener('change', handleFileSelect, false);
-
-  function infoboxFunction() {
-    var txt;
-    var info = "This will close the project and move it to the 'Finished orders'. If you do not wish to do this, press Cancel.";
-    if (confirm(info)) {
-      // txt = "You pressed OK!";
-    } else {
-      // txt = "You pressed Cancel!";
-    }
-  }
-  // //   //get the input and UL list
-  // var input = document.getElementById('filesToUpload');
-  // var list = document.getElementById('chosenfiles');
-  //
-  // //for every file...
-  // for (var x = 0; x < input.files.length; x++) {
-  // 	//add to list
-  // 	var p = document.createElement('p');
-  // 	p.innerHTML = input.files[x].name + ", " + input.files[x].size;
-  // 	list.append(p);
-  // }
 
 </script>
 
