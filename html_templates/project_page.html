@@ -15,14 +15,28 @@
   <br>
   {% try %}
     {% if addfiles %}
-    <form action="{{ reverse_url('upload') }}" method="post" enctype="multipart/form-data">
-      {% module xsrf_form_html() %}
-      <input class="file" name="file" id="file" type="file"/>
-      <input type="submit" name="submit" value="Upload File(s)"/>
-    </form>
-    <div id="chosenfiles">
-
-    </div>
+      {% block addfile_content %}
+      <div class="row">
+        <div class="pull-left">
+          <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
+            {% module xsrf_form_html() %}
+            <div class="newfiles">
+            <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
+            </div>
+            <div class="newfiles">
+            <input type="submit" name="submit" value="Upload File(s)"/>
+            </div>
+          </form>
+          <output id="list"></output>
+        </div>
+        <div class="pull-right">
+          <div class="col-sm-6">
+            <button href="#" class="btn btn-primary pull-right">Close File-edit</button>
+          </div>
+        </div>
+      </div>
+      <br><br>
+      {% end %} <!-- block addfile_content -->
     {% end %} <!-- if addfiles -->
   {% except %} <!-- try -->
   {% end %} <!-- try except -->
@@ -93,33 +107,72 @@
                     <button class="btn"><i class="fa fa-download" align="center"></i></button>
                   </td>
                 </tr>
-              {% end %}
+              {% end %} <!-- for f in files -->
             </tbody>
           </table>
         </div>
       </div>
-      {% else %}
+      {% else %} <!-- if files != {} -->
         <p>This project does not contain any uploaded files.</p>
-      {% end %}
+      {% end %} <!-- if files != {} -->
     </div>
   </div>
+  <br>
+  <br>
+    <div class="row">
+      <div class="col-sm-6">
+        <button href="#" class="btn btn-primary pull-left" onclick="infoboxFunction()">Mark project as finished</button>
+      </div>
+      {% if not addfiles %}
+        <div class="col-sm-6">
+          <button href="#" class="btn btn-primary pull-right">Add files</button>
+        </div>
+      {% end %} <!-- if not addfiles -->
+    </div>
 </div>
 <br><br>
 
 
 <script>
-
-
   $(document).ready(function() {
-    // XMLHttpRequest.setRequestHeader('_xsrf', "0123456789ABCDEF");
-
     $('#files').DataTable( {
       responsive: true,
       paging: true
-    });
+    })
   })
 
-  //   //get the input and UL list
+  // Check for the various File API support.
+  if (window.File && window.FileReader && window.FileList && window.Blob) {
+  // Great success! All the File APIs are supported.
+  } else {
+  alert('The File APIs are not fully supported in this browser.');
+  }
+
+  function handleFileSelect(evt) {
+    var files = evt.target.files;
+
+    var output = [];
+    for (var i=0, f; f=files[i]; i++) {
+      output.push('<li><strong>', escape(f.name), '</strong> (',
+        f.type || 'n/a', ') - ',
+        f.size, ' bytes, last modified: ',
+        f.lastModifiedDate ? f.lastModifiedDate.toLocalDateString() : 'n/a',
+        '</li>');
+    }
+    document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
+  }
+  document.getElementById('filesToUpload').addEventListener('change', handleFileSelect, false);
+
+  function infoboxFunction() {
+    var txt;
+    var info = "This will close the project and move it to the 'Finished orders'. If you do not wish to do this, press Cancel.";
+    if (confirm(info)) {
+      // txt = "You pressed OK!";
+    } else {
+      // txt = "You pressed Cancel!";
+    }
+  }
+  // //   //get the input and UL list
   // var input = document.getElementById('filesToUpload');
   // var list = document.getElementById('chosenfiles');
   //

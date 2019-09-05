@@ -14,6 +14,10 @@ import pymysql
 import tornado_mysql
 import couchdb
 import re
+import time
+import sys
+
+from datetime import date
 
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
@@ -44,7 +48,7 @@ class ApplicationDP(tornado.web.Application):
                      url(r"/profile", ProfileHandler, name='profile'),
                      url(r"/info", InfoHandler, name='info'),
                      url(r"/contact", ContactHandler, name="contact"),
-                     url(r"/upload", UploadHandler, name="upload")
+                     url(r"/upload/(?P<projid>.*)", UploadHandler, name="upload")
                      ]
         settings = {"xsrf_cookies":True,
                     #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
@@ -255,9 +259,46 @@ class ProjectHandler(BaseHandler):
 class UploadHandler(BaseHandler):
     """Class. Handles the upload of the file."""
 
-    def post(self):
-        with open("test.txt", 'wb+') as f:
-            f.write(b"testtest")
+    def post(self, projid):
+
+        # Checks if there are files "uploaded"
+        files = []
+        try:
+            files = self.request.files['filesToUpload']
+        except:
+            pass
+
+        # Connects to the database
+        couch = self.couch_connect()            # couchdb
+        proj_db = couch['projects']             # database: projects
+        curr_proj = proj_db[projid]             # current project
+        curr_proj_files = curr_proj['files']    # files assoc. with project
+
+        # Save files (now uploaded)
+        for f in files:
+            filename = f['filename']
+
+            try:
+                with open(filename, "wb") as out:
+                    out.write(f['body'])
+            finally:
+                curr_proj_files[filename] = {
+                    "size": sys.getsizeof(filename),
+                    "format": filename.split(".")[-1],
+                    "date_uploaded": date.today().strftime("%Y-%m-%d"),
+                }
+
+        # Save couchdb --> updated
+        # and show the project page again. 
+        try:
+            proj_db.save(curr_proj)
+        finally:
+            self.render('project_page.html', user=self.current_user,
+                        projid=projid, project=curr_proj['project_info'], files=curr_proj_files,
+                        addfiles=(self.get_argument('uploadfiles', None) is not None))
+
+
+
 
 
 # FUNCTIONS ######################################################## FUNCTIONS #

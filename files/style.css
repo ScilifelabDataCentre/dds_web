@@ -52,6 +52,10 @@ img.head_logo {
     float: left;
 }
 
+div.newfiles {
+  display: inline-block;
+}
+
 .projtable {
   font-size: 15px;
 }
