@@ -13,35 +13,23 @@
 <div class="container">
   <h3 align="center">Project: {{ project['name'] }}</h3>
   <br>
-  {% try %}
-    {% if addfiles %} <!-- user chose to upload files -->
-      {% block addfile_content %}
-        <div class="row">
-          <div class="pull-left">
-            <!-- File upload -->
-            <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
-              {% module xsrf_form_html() %}
-              <div class="newfiles">
-                <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
-              </div>
-              <div class="newfiles">
-                <input type="submit" name="submit" value="Upload File(s)"/>
-              </div>
-            </form>
-            <output id="list"></output>
-          </div>
-          <!-- Exit add-file view -->
-          <div class="pull-right">
-            <div class="col-sm-6">
-              <button href="#" class="btn btn-primary pull-right">Close File-edit</button>
-            </div>
-          </div>
+
+  <button id="collapse-button" data-toggle="collapse" data-target="#addfiles_div">
+    {% if addfiles %}<span class="close_add"></span>Exit file upload{% else %}<span class="open_add"></span>Add files{% end %}</button>
+  <div id="addfiles_div" class="row container collapse {% if addfiles %}in{% else %}{% end %}">
+      <!-- File upload -->
+      <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
+        {% module xsrf_form_html() %}
+        <div class="newfiles">
+          <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
         </div>
-        <br><br>
-      {% end %} <!-- block addfile_content -->
-    {% end %} <!-- if addfiles -->
-  {% except %} <!-- try -->
-  {% end %} <!-- try except -->
+        <div class="newfiles">
+          <input type="submit" name="submit" value="Upload File(s)"/>
+        </div>
+      </form>
+      <output id="list"></output>
+    </div>
+  <br><br>
 
   <!-- Main content: Project info and files -->
   <div class="row">
@@ -185,6 +173,18 @@
                                                 '</table>';
   }
   document.getElementById('filesToUpload').addEventListener('change', handleFileSelect, false);
+
+  // Change content of collapse button when clicked
+  $('#collapse-button').click(function () {
+  if($('button span').hasClass('open_add'))
+  {
+      $('#collapse-button').html('<span class="close_add"></span>Exit file upload');
+  }
+  else
+  {
+      $('#collapse-button').html('<span class="open_add"></span>Add files');
+  }
+  });
 
 </script>
 
