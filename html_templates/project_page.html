@@ -19,6 +19,8 @@
   </div>
   <br><br>
 
+  <!-- Button to close add-file-div.
+  Visible when "add files" button is pressed on home page or project page -->
   <button id="collapse-button-exit" data-toggle="collapse"
     data-target="#addfiles_div"
     style="{% if addfiles %}display:block;{% else %}display:none;{% end %}"
@@ -27,8 +29,8 @@
   </button>
   <br><br>
 
+  <!-- File upload -->
   <div id="addfiles_div" class="row container collapse pull-left {% if addfiles %}in{% else %}{% end %}">
-    <!-- File upload -->
     <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
       {% module xsrf_form_html() %}
       <div class="newfiles">
@@ -57,11 +59,11 @@
             <tr>
               <th>Final delivery date:</th> <td></td>
             </tr>
-          {% else %}
+          {% else %} <!-- if project['status'] == "Uploaded" -->
             <tr>
               <th>Status:</th>  <td>{{ project['status'] }}</td>
             </tr>
-          {% end %}
+          {% end %} <!-- if project['status'] == "Uploaded" -->
           <tr>
             <th>Project category:</th>  <td>{{ project['category'] }}</td>
           </tr>
@@ -115,14 +117,13 @@
             </table>
           </div>
           <div>
+            <!-- Download all button -->
             <button class="btn btn-default btn-block" style="align:center;">Download all</button>
           </div>
         </div>
       {% else %} <!-- if files != {} -->
         <p>This project does not contain any uploaded files.</p>
       {% end %} <!-- if files != {} -->
-
-      <!-- Download all button -->
     </div>
   </div>
   <br><br>
@@ -135,14 +136,13 @@
           {% module xsrf_form_html() %}
           {% if project['status'] == "Uploaded" %}
             <button name="setasopen" class="btn btn-primary pull-left submit">Open project</button>
-          {% else %}
+          {% else %} <!-- if project['status'] == "Uploaded" -->
             <button name="setasfinished" class="btn btn-primary pull-left submit">Mark project as finished</button>
-          {% end %}
+          {% end %} <!-- if project['status'] == "Uploaded" -->
         </form>
-
-
     </div>
 
+    <!-- Add files button - opens collapsible -->
     <div class="col-sm-6">
       <button id="collapse-button-add" data-toggle="collapse"
         data-target="#addfiles_div"
@@ -201,7 +201,7 @@
   }
   document.getElementById('filesToUpload').addEventListener('change', handleFileSelect, false);
 
-  //
+  // Show/hide "add files"/"exit file view" button
   function switchVisible() {
     if (document.getElementById('collapse-button-add')) {
       if (document.getElementById('collapse-button-add').style.display == 'none') {
@@ -214,17 +214,6 @@
       }
     }
   }
-  // // Change content of collapse button when clicked
-  // $('#collapse-button').click(function () {
-  // if($('button span').hasClass('open_add'))
-  // {
-  //     $('#collapse-button').html('<span class="close_add"></span>Exit file upload');
-  // }
-  // else
-  // {
-  //     $('#collapse-button').html('<span class="open_add"></span>Add files');
-  // }
-  // });
 
 </script>
 
