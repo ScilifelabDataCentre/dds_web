@@ -1,33 +1,26 @@
 #!/usr/bin/env python3
+"""Delivery portal application."""
 
 
 # IMPORTS ############################################################ IMPORTS #
+from __future__ import absolute_import
 import logging
-
-# import base64
 import sys
 from datetime import date
+from tornado.options import define, options
 import tornado.autoreload
 import tornado.ioloop
 import tornado.gen
 import tornado.web
-# import uuid
-# import pymysql
-# import tornado_mysql
 import couchdb
-# import re
-# import time
-
-# from Crypto.Cipher import AES
-# from Crypto.Random import get_random_bytes
-
 from utils.config import parse_config
-config = parse_config()
-site_base_url = f'{config["site_base_url"]}:{config["site_port"]}'
 
-from tornado.options import define, options
-define("port", default=config['site_port'], help="run on the given port", type=int)
+# DEFINITIONS #################################################### DEFINITIONS #
 
+CONFIG = parse_config()
+SITE_BASE_URL = f'{CONFIG["site_base_url"]}:{CONFIG["site_port"]}'
+
+define("port", default=CONFIG['site_port'], help="run on the given port", type=int)
 
 # CLASSES ############################################################ CLASSES #
 
@@ -39,25 +32,25 @@ class ApplicationDP(tornado.web.Application):
     def __init__(self):
         """ Initializes the application incl. handlers. """
         url = tornado.web.url
-        handlers = [ url(r"/", MainHandler, name='home'),
-                     url(r"/login", LoginHandler, name='login'),
-                     url(r"/create", CreateDeliveryHandler, name='create'),
-                     url(r"/logout", LogoutHandler, name='logout'),
-                     url(r"/project/(?P<projid>.*)", ProjectHandler, name='project'),
-                     url(r"/profile", ProfileHandler, name='profile'),
-                     url(r"/info", InfoHandler, name='info'),
-                     url(r"/contact", ContactHandler, name="contact"),
-                     url(r"/upload/(?P<projid>.*)", UploadHandler, name="upload")
-                     ]
+        handlers = [url(r"/", MainHandler, name='home'),
+                    url(r"/login", LoginHandler, name='login'),
+                    url(r"/create", CreateDeliveryHandler, name='create'),
+                    url(r"/logout", LogoutHandler, name='logout'),
+                    url(r"/project/(?P<projid>.*)", ProjectHandler, name='project'),
+                    url(r"/profile", ProfileHandler, name='profile'),
+                    url(r"/info", InfoHandler, name='info'),
+                    url(r"/contact", ContactHandler, name="contact"),
+                    url(r"/upload/(?P<projid>.*)", UploadHandler, name="upload")
+                    ]
         settings = {"xsrf_cookies":True,
                     #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
-                    "cookie_secret":config["cookie_secret"], #for dev purpose, shoulde be removed in the end
+                    "cookie_secret":CONFIG["cookie_secret"], #for dev purpose
                     # "cookie_secret": "0123456789ABCDEF",
                     "template_path":"html_templates",
                     "static_path":"files"
                     }
 
-        if config.get('development_mode'):
+        if CONFIG.get('development_mode'):
             settings['debug'] = True
             settings['develop'] = True
             logging.getLogger().setLevel(logging.DEBUG)
@@ -73,10 +66,11 @@ class BaseHandler(tornado.web.RequestHandler):
 
         return self.get_secure_cookie("user")
 
-    def couch_connect(self):
+    @classmethod
+    def couch_connect(cls):
         """Connect to a couchdb interface."""
-        couch = couchdb.Server(f'{config["couch_url"]}:{config["couch_port"]}')
-        couch.login(config['couch_username'], config['couch_password'])
+        couch = couchdb.Server(f'{CONFIG["couch_url"]}:{CONFIG["couch_port"]}')
+        couch.login(CONFIG['couch_username'], CONFIG['couch_password'])
         return couch
 
 
@@ -84,6 +78,7 @@ class ContactHandler(BaseHandler):
     """Contact page."""
 
     def get(self):
+        """get"""
         message = "This is the page where contact info is displayed. "
         self.render("contact_page.html", user=self.current_user, message=message)
 
@@ -97,16 +92,12 @@ class CreateDeliveryHandler(BaseHandler):
         self.render('create_delivery.html', user=self.current_user,
                     pid="dgu8y3488hdfs8dh88r3")
 
-    #@tornado.web.authenticated
-    # def post(self):
-    #     """"""
-    #     self.render('create_delivery.html')
-
 
 class InfoHandler(BaseHandler):
     """Information page."""
 
     def get(self):
+        """get"""
         message = "This is an information page about the dp."
         self.render("info_dp.html", user=self.current_user, message=message)
 
@@ -119,22 +110,15 @@ class LoginHandler(BaseHandler):
         Connects to database and checks if user exists."""
 
         couch = self.couch_connect()
-        db = couch['dp_users']
+        database = couch['dp_users']
 
         # Searches database for user with matching email and password
-        for id in db:
-            for part in db[id]['user']:
-                if db[id]['user']['email'] == username and db[id]['user']['password'] == password:
-                    return True, id
+        for user_id in database:
+            if (database[user_id]['user']['email'] == username and
+                    database[user_id]['user']['password'] == password):
+                return True, user_id
 
         return False, ""    # Returns false and "" if user not found
-
-    def get(self):
-        """"""
-        try:
-            errormessage = self.get_argument("error")
-        except:
-            errormessage = ""
 
     def post(self):
         """Called by login button.
@@ -145,13 +129,13 @@ class LoginHandler(BaseHandler):
         password = self.get_body_argument("password")
 
         # Check if user exists
-        auth, id = self.check_permission(user_email, password)
+        auth, user_id = self.check_permission(user_email, password)
 
         # Sets current user if user exists
         if auth:
-            self.set_secure_cookie("user", id, expires_days=0.1)
+            self.set_secure_cookie("user", user_id, expires_days=0.1)
             # Redirects to homepage via mainhandler
-            self.redirect(site_base_url + self.reverse_url('home'))
+            self.redirect(SITE_BASE_URL + self.reverse_url('home'))
         else:
             self.clear_cookie("user")
             self.write("Login incorrect.")
@@ -165,7 +149,7 @@ class LogoutHandler(BaseHandler):
         """Clears cookies and redirects to login page."""
 
         self.clear_cookie("user")
-        self.redirect(site_base_url + self.reverse_url('home'))
+        self.redirect(SITE_BASE_URL + self.reverse_url('home'))
 
 
 class MainHandler(BaseHandler):
@@ -181,7 +165,7 @@ class MainHandler(BaseHandler):
             # with user and project info
             projects, email, is_facility = self.get_user_projects()
 
-            homepage=""
+            homepage = ""
             if is_facility:
                 homepage = "facility_home.html"
             else:
@@ -216,7 +200,7 @@ class ProfileHandler(BaseHandler):
     def get(self):
         """Displays the profile page. """
 
-        message="This is the profile page where one can change password etc. "
+        message = "This is the profile page where one can change password etc. "
         self.render('profile.html', user=self.current_user, message=message)
 
 
@@ -226,25 +210,30 @@ class ProjectHandler(BaseHandler):
     associated with the project and user. Renders project page."""
 
     def post(self, projid):
-        """"""
+        """Sets project status to finished or open depending on which
+        button is pressed on project page."""
 
-        if (self.get_argument('setasfinished', None) is not None) or (self.get_argument('setasopen', None) is not None):
+        if ((self.get_argument('setasfinished', None) is not None)
+                or (self.get_argument('setasopen', None) is not None)):
             couch = self.couch_connect()
 
             proj_db = couch['projects']
             curr_proj = proj_db[projid]
 
-            if (self.get_argument('setasfinished', None) is not None):
+            if self.get_argument('setasfinished', None) is not None:
                 curr_proj['project_info']['status'] = "Uploaded"
-            elif (self.get_argument('setasopen', None) is not None):
+            elif self.get_argument('setasopen', None) is not None:
                 curr_proj['project_info']['status'] = "Delivery in progress"
 
             try:
                 proj_db.save(curr_proj)
             finally:
-                self.render('project_page.html', user=self.current_user,
-                            projid=projid, project=curr_proj['project_info'],
-                            files=curr_proj['files'], addfiles=(self.get_argument('uploadfiles', None) is not None))
+                self.render('project_page.html',
+                            user=self.current_user,
+                            projid=projid,
+                            project=curr_proj['project_info'],
+                            files=curr_proj['files'],
+                            addfiles=(self.get_argument('uploadfiles', None) is not None))
 
     def get(self, projid):
         """Renders the project page with projects and associated files."""
@@ -272,12 +261,13 @@ class UploadHandler(BaseHandler):
     """Class. Handles the upload of the file."""
 
     def post(self, projid):
+        """post"""
 
         # Checks if there are files "uploaded"
         files = []
         try:
             files = self.request.files['filesToUpload']
-        except:
+        except OSError:
             pass
 
         # Connects to the database
@@ -287,12 +277,12 @@ class UploadHandler(BaseHandler):
         curr_proj_files = curr_proj['files']    # files assoc. with project
 
         # Save files (now uploaded)
-        for f in files:
-            filename = f['filename']
+        for file in files:
+            filename = file['filename']
 
             try:
                 with open(filename, "wb") as out:
-                    out.write(f['body'])
+                    out.write(file['body'])
             finally:
                 curr_proj_files[filename] = {
                     "size": sys.getsizeof(filename),
@@ -314,10 +304,10 @@ class UploadHandler(BaseHandler):
 
 # MAIN ################################################################## MAIN #
 def main():
-    """"""
+    """main"""
 
     # For devel puprose watch page changes
-    if config.get('development_mode'):
+    if CONFIG.get('development_mode'):
         tornado.autoreload.start()
         tornado.autoreload.watch("html_templates/index.html")
         tornado.autoreload.watch("html_templates/home.html")
