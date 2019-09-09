@@ -13,34 +13,43 @@
 <div class="container">
   <h3 align="center">Project: {{ project['name'] }}</h3>
   <br>
-
-  <button id="collapse-button" data-toggle="collapse" data-target="#addfiles_div">
-    {% if addfiles %}<span class="close_add"></span>Exit file upload{% else %}<span class="open_add"></span>Add files{% end %}</button>
-  <div id="addfiles_div" class="row container collapse {% if addfiles %}in{% else %}{% end %}">
-      <!-- File upload -->
-      <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
-        {% module xsrf_form_html() %}
-        <div class="newfiles">
-          <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
-        </div>
-        <div class="newfiles">
-          <input type="submit" name="submit" value="Upload File(s)"/>
-        </div>
-      </form>
-      <output id="list"></output>
-    </div>
+  <!-- Project description area -->
+  <div class="container" align="center">
+    {{ project['description'] }}
+  </div>
   <br><br>
+
+  <button id="collapse-button-exit" data-toggle="collapse"
+    data-target="#addfiles_div"
+    style="{% if addfiles %}display:block;{% else %}display:none;{% end %}"
+    onclick="switchVisible();" class="btn btn-primary pull-left">
+      Exit file edit view
+  </button>
+  <br><br>
+
+  <div id="addfiles_div" class="row container collapse pull-left {% if addfiles %}in{% else %}{% end %}">
+    <!-- File upload -->
+    <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
+      {% module xsrf_form_html() %}
+      <div class="newfiles">
+        <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
+      </div>
+      <div class="newfiles">
+        <input type="submit" name="submit" value="Upload File(s)"/>
+      </div>
+    </form>
+    <output id="list"></output>
+  </div>
+  <br><br><br>
 
   <!-- Main content: Project info and files -->
   <div class="row">
-    <!-- Project description area -->
-    <div class="container" align="center">
-      {{ project['description'] }}
-    </div>
-    <br><br>
     <!-- Project information area (left) -->
     <div class="col-sm-4">
       <table>
+          <tr>
+            <th>Order ID:</th>   <td>{{ projid }}</td>
+          </tr>
           <tr>
             <th>Order date:</th>  <td>{{ project['order_date'] }}</td>
           </tr>
@@ -98,17 +107,22 @@
                     <td>{{ files[f]['size'] }}</td>
                     <td>{{ files[f]['date_uploaded'] }}</td>
                     <td>
-                      <button class="btn"><i class="fa fa-download" align="center"></i></button>
+                      <button class="btn" id="{{ f }}"><i class="fa fa-download" align="center"></i></button>
                     </td>
                   </tr>
                 {% end %} <!-- for f in files -->
               </tbody>
             </table>
           </div>
+          <div>
+            <button class="btn btn-default btn-block" style="align:center;">Download all</button>
+          </div>
         </div>
       {% else %} <!-- if files != {} -->
         <p>This project does not contain any uploaded files.</p>
       {% end %} <!-- if files != {} -->
+
+      <!-- Download all button -->
     </div>
   </div>
   <br><br>
@@ -117,13 +131,26 @@
   <!-- Buttons (finished or add files) -->
   <div class="row">
     <div class="col-sm-6">
-      <button href="#" class="btn btn-primary pull-left">Mark project as finished</button>
+        <form action="{{ reverse_url('project', projid) }}" method="POST">
+          {% module xsrf_form_html() %}
+          {% if project['status'] == "Uploaded" %}
+            <button name="setasopen" class="btn btn-primary pull-left submit">Open project</button>
+          {% else %}
+            <button name="setasfinished" class="btn btn-primary pull-left submit">Mark project as finished</button>
+          {% end %}
+        </form>
+
+
     </div>
-    {% if not addfiles %}
-      <div class="col-sm-6">
-        <button href="#" class="btn btn-primary pull-right">Add files</button>
-      </div>
-    {% end %} <!-- if not addfiles -->
+
+    <div class="col-sm-6">
+      <button id="collapse-button-add" data-toggle="collapse"
+        data-target="#addfiles_div"
+        style="{% if addfiles %}display:none;{% else %}display:block;{% end %}"
+        onclick="switchVisible();" class="btn btn-primary pull-right">
+          Add files
+      </button>
+    </div>
   </div>
 </div>
 <br><br>
@@ -142,7 +169,7 @@
   if (window.File && window.FileReader && window.FileList && window.Blob) {
   // Great success! All the File APIs are supported.
   } else {
-  alert('The File APIs are not fully supported in this browser.');
+    alert('The File APIs are not fully supported in this browser.');
   }
 
   // Display chosen files
@@ -174,17 +201,30 @@
   }
   document.getElementById('filesToUpload').addEventListener('change', handleFileSelect, false);
 
-  // Change content of collapse button when clicked
-  $('#collapse-button').click(function () {
-  if($('button span').hasClass('open_add'))
-  {
-      $('#collapse-button').html('<span class="close_add"></span>Exit file upload');
+  //
+  function switchVisible() {
+    if (document.getElementById('collapse-button-add')) {
+      if (document.getElementById('collapse-button-add').style.display == 'none') {
+        document.getElementById('collapse-button-add').style.display = 'block';
+        document.getElementById('collapse-button-exit').style.display = 'none';
+      }
+      else {
+        document.getElementById('collapse-button-add').style.display = 'none';
+        document.getElementById('collapse-button-exit').style.display = 'block';
+      }
+    }
   }
-  else
-  {
-      $('#collapse-button').html('<span class="open_add"></span>Add files');
-  }
-  });
+  // // Change content of collapse button when clicked
+  // $('#collapse-button').click(function () {
+  // if($('button span').hasClass('open_add'))
+  // {
+  //     $('#collapse-button').html('<span class="close_add"></span>Exit file upload');
+  // }
+  // else
+  // {
+  //     $('#collapse-button').html('<span class="open_add"></span>Add files');
+  // }
+  // });
 
 </script>
 

@@ -229,15 +229,23 @@ class ProjectHandler(BaseHandler):
     def post(self, projid):
         """"""
 
-        couch = self.couch_connect()
+        if (self.get_argument('setasfinished', None) is not None) or (self.get_argument('setasopen', None) is not None):
+            couch = self.couch_connect()
 
-        proj_name = self.get_body_argument('prj_name')
-        proj_category = self.get_body_argument('prj_ord_cat')
-        proj_id = self.get_body_argument('prj_ord_id')
-        proj_description = self.get_body_argument('prj_desc')
+            proj_db = couch['projects']
+            curr_proj = proj_db[projid]
 
-        pi_name = self.get_body_argument('prj_pi_name')
-        pi_email = self.get_body_argument('prj_pi_email')
+            if (self.get_argument('setasfinished', None) is not None):
+                curr_proj['project_info']['status'] = "Uploaded"
+            elif (self.get_argument('setasopen', None) is not None):
+                curr_proj['project_info']['status'] = "Delivery in progress"
+
+            try:
+                proj_db.save(curr_proj)
+            finally:
+                self.render('project_page.html', user=self.current_user,
+                            projid=projid, project=curr_proj['project_info'],
+                            files=curr_proj['files'], addfiles=(self.get_argument('uploadfiles', None) is not None))
 
     def get(self, projid):
         """Renders the project page with projects and associated files."""
@@ -251,7 +259,7 @@ class ProjectHandler(BaseHandler):
 
         project_info = proj_db[projid]['project_info']
 
-        # Save project files in dict 
+        # Save project files in dict
         files = {}
         if 'files' in proj_db[projid]:
             files = proj_db[projid]['files']
