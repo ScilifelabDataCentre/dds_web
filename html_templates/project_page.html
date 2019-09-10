@@ -11,11 +11,11 @@
 
 <!-- All files and associated information in current project -->
 <div class="container">
-  <h3 align="center">Project: {{ project['name'] }}</h3>
+  <h3 align="center">Project: {{ curr_project['name'] }}</h3>
   <br>
   <!-- Project description area -->
   <div class="container" align="center">
-    {{ project['description'] }}
+    {{ curr_project['description'] }}
   </div>
   <br><br>
 
@@ -53,25 +53,25 @@
             <th>Order ID:</th>   <td>{{ projid }}</td>
           </tr>
           <tr>
-            <th>Order date:</th>  <td>{{ project['order_date'] }}</td>
+            <th>Order date:</th>  <td>{{ curr_project['order_date'] }}</td>
           </tr>
-          {% if project['status'] == "Uploaded" %}
+          {% if curr_project['status'] == "Uploaded" %}
             <tr>
               <th>Final delivery date:</th> <td></td>
             </tr>
-          {% else %} <!-- if project['status'] == "Uploaded" -->
+          {% else %} <!-- if curr_project['status'] == "Uploaded" -->
             <tr>
-              <th>Status:</th>  <td>{{ project['status'] }}</td>
+              <th>Status:</th>  <td>{{ curr_project['status'] }}</td>
             </tr>
-          {% end %} <!-- if project['status'] == "Uploaded" -->
+          {% end %} <!-- if curr_project['status'] == "Uploaded" -->
           <tr>
-            <th>Project category:</th>  <td>{{ project['category'] }}</td>
+            <th>Project category:</th>  <td>{{ curr_project['category'] }}</td>
           </tr>
           <tr>
-            <th>Sensitive:</th> <td>{% if project['sensitive'] == "True" %} Yes {% else %} No {% end %}</td>
+            <th>Sensitive:</th> <td>{% if curr_project['sensitive'] == "True" %} Yes {% else %} No {% end %}</td>
           </tr>
           <tr>
-            <th>PI:</th>  <td>{{ project['pi'] }}</td>
+            <th>PI:</th>  <td>{{ curr_project['pi'] }}</td>
           </tr>
           <br>
       </table>
@@ -82,7 +82,7 @@
           <th>Comments/Information:</th>
         </tr>
         <tr>
-          <td>{{ project['comments'] }}</td>
+          <td>{{ curr_project['comments'] }}</td>
         </tr>
       </table>
     </div>
@@ -134,11 +134,11 @@
     <div class="col-sm-6">
         <form action="{{ reverse_url('project', projid) }}" method="POST">
           {% module xsrf_form_html() %}
-          {% if project['status'] == "Uploaded" %}
+          {% if curr_project['status'] == "Uploaded" %}
             <button name="setasopen" class="btn btn-primary pull-left submit">Open project</button>
-          {% else %} <!-- if project['status'] == "Uploaded" -->
+          {% else %} <!-- if curr_project['status'] == "Uploaded" -->
             <button name="setasfinished" class="btn btn-primary pull-left submit">Mark project as finished</button>
-          {% end %} <!-- if project['status'] == "Uploaded" -->
+          {% end %} <!-- if curr_project['status'] == "Uploaded" -->
         </form>
     </div>
 

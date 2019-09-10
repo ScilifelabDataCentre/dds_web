@@ -5,26 +5,24 @@
 # IMPORTS ############################################################ IMPORTS #
 from __future__ import absolute_import
 import logging
-import sys
-from datetime import date
-from tornado.options import define, options
 import tornado.autoreload
 import tornado.ioloop
 import tornado.gen
 import tornado.web
-import couchdb
-from utils.config import parse_config
 
-# DEFINITIONS #################################################### DEFINITIONS #
+import base
+from base import BaseHandler
+from info import InfoHandler, ContactHandler
+from user import LoginHandler, LogoutHandler, ProfileHandler
+from project import ProjectHandler
+from file import UploadHandler
 
-CONFIG = parse_config()
-SITE_BASE_URL = f'{CONFIG["site_base_url"]}:{CONFIG["site_port"]}'
-
-define("port", default=CONFIG['site_port'], help="run on the given port", type=int)
-
-# CLASSES ############################################################ CLASSES #
+# GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
 MAX_STREAMED_SIZE = 1024 * 1024 * 1024
+
+
+# CLASSES ############################################################ CLASSES #
 
 class ApplicationDP(tornado.web.Application):
     """docstring for ApplicationDP."""
@@ -34,7 +32,6 @@ class ApplicationDP(tornado.web.Application):
         url = tornado.web.url
         handlers = [url(r"/", MainHandler, name='home'),
                     url(r"/login", LoginHandler, name='login'),
-                    url(r"/create", CreateDeliveryHandler, name='create'),
                     url(r"/logout", LogoutHandler, name='logout'),
                     url(r"/project/(?P<projid>.*)", ProjectHandler, name='project'),
                     url(r"/profile", ProfileHandler, name='profile'),
@@ -44,112 +41,18 @@ class ApplicationDP(tornado.web.Application):
                     ]
         settings = {"xsrf_cookies":True,
                     #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
-                    "cookie_secret":CONFIG["cookie_secret"], #for dev purpose
+                    "cookie_secret":base.CONFIG["cookie_secret"], #for dev purpose
                     # "cookie_secret": "0123456789ABCDEF",
                     "template_path":"html_templates",
                     "static_path":"files"
                     }
 
-        if CONFIG.get('development_mode'):
+        if base.CONFIG.get('development_mode'):
             settings['debug'] = True
             settings['develop'] = True
             logging.getLogger().setLevel(logging.DEBUG)
 
         tornado.web.Application.__init__(self, handlers, **settings)
-
-
-class BaseHandler(tornado.web.RequestHandler):
-    """Main class used for general functions applying to entire application. """
-
-    def get_current_user(self):
-        """Gets the current user - used for log in check etc. """
-
-        return self.get_secure_cookie("user")
-
-    @classmethod
-    def couch_connect(cls):
-        """Connect to a couchdb interface."""
-        couch = couchdb.Server(f'{CONFIG["couch_url"]}:{CONFIG["couch_port"]}')
-        couch.login(CONFIG['couch_username'], CONFIG['couch_password'])
-        return couch
-
-
-class ContactHandler(BaseHandler):
-    """Contact page."""
-
-    def get(self):
-        """get"""
-        message = "This is the page where contact info is displayed. "
-        self.render("contact_page.html", user=self.current_user, message=message)
-
-
-class CreateDeliveryHandler(BaseHandler):
-    """Called by create button on home page.
-    Renders form for a new delivery. """
-
-    def get(self):
-        """Renders form for a new delivery."""
-        self.render('create_delivery.html', user=self.current_user,
-                    pid="dgu8y3488hdfs8dh88r3")
-
-
-class InfoHandler(BaseHandler):
-    """Information page."""
-
-    def get(self):
-        """get"""
-        message = "This is an information page about the dp."
-        self.render("info_dp.html", user=self.current_user, message=message)
-
-
-class LoginHandler(BaseHandler):
-    """ Handles request to log in user. """
-
-    def check_permission(self, username, password):
-        """Called by post.
-        Connects to database and checks if user exists."""
-
-        couch = self.couch_connect()
-        database = couch['dp_users']
-
-        # Searches database for user with matching email and password
-        for user_id in database:
-            if (database[user_id]['user']['email'] == username and
-                    database[user_id]['user']['password'] == password):
-                return True, user_id
-
-        return False, ""    # Returns false and "" if user not found
-
-    def post(self):
-        """Called by login button.
-        Gets inputs from form and checks user permissions."""
-
-        # Get form input
-        user_email = self.get_body_argument("user_email")
-        password = self.get_body_argument("password")
-
-        # Check if user exists
-        auth, user_id = self.check_permission(user_email, password)
-
-        # Sets current user if user exists
-        if auth:
-            self.set_secure_cookie("user", user_id, expires_days=0.1)
-            # Redirects to homepage via mainhandler
-            self.redirect(SITE_BASE_URL + self.reverse_url('home'))
-        else:
-            self.clear_cookie("user")
-            self.write("Login incorrect.")
-
-
-class LogoutHandler(BaseHandler):
-    """Called by logout button.
-    Logs user out, and redirects to login page via main handler."""
-
-    def get(self):
-        """Clears cookies and redirects to login page."""
-
-        self.clear_cookie("user")
-        self.redirect(SITE_BASE_URL + self.reverse_url('home'))
 
 
 class MainHandler(BaseHandler):
@@ -171,13 +74,13 @@ class MainHandler(BaseHandler):
             else:
                 homepage = "home.html"
 
-            self.render(homepage, user=self.current_user, email=email,
+            self.render(homepage, curr_user=self.current_user, email=email,
                         projects=projects)
 
     def get_user_projects(self):
         """Connects to database and saves projects in dictionary."""
 
-        user = tornado.escape.xhtml_escape(self.current_user)   # Current user
+        curr_user = tornado.escape.xhtml_escape(self.current_user)   # Current user
 
         couch = self.couch_connect()
         user_db = couch['dp_users']
@@ -187,117 +90,11 @@ class MainHandler(BaseHandler):
 
         # Gets all projects for current user and save projects
         # and their associated information
-        if 'projects' in user_db[user]:
-            for proj in user_db[user]['projects']:
+        if 'projects' in user_db[curr_user]:
+            for proj in user_db[curr_user]['projects']:
                 projects[proj] = proj_db[proj]['project_info']
 
-        return projects, user_db[user]['user']['email'], ("facility" in user_db[user]["user"])
-
-
-class ProfileHandler(BaseHandler):
-    """Profile page."""
-
-    def get(self):
-        """Displays the profile page. """
-
-        message = "This is the profile page where one can change password etc. "
-        self.render('profile.html', user=self.current_user, message=message)
-
-
-class ProjectHandler(BaseHandler):
-    """Called by "See project" button.
-    Connects to database and collects all files
-    associated with the project and user. Renders project page."""
-
-    def post(self, projid):
-        """Sets project status to finished or open depending on which
-        button is pressed on project page."""
-
-        if ((self.get_argument('setasfinished', None) is not None)
-                or (self.get_argument('setasopen', None) is not None)):
-            couch = self.couch_connect()
-
-            proj_db = couch['projects']
-            curr_proj = proj_db[projid]
-
-            if self.get_argument('setasfinished', None) is not None:
-                curr_proj['project_info']['status'] = "Uploaded"
-            elif self.get_argument('setasopen', None) is not None:
-                curr_proj['project_info']['status'] = "Delivery in progress"
-
-            try:
-                proj_db.save(curr_proj)
-            finally:
-                self.render('project_page.html',
-                            user=self.current_user,
-                            projid=projid,
-                            project=curr_proj['project_info'],
-                            files=curr_proj['files'],
-                            addfiles=(self.get_argument('uploadfiles', None) is not None))
-
-    def get(self, projid):
-        """Renders the project page with projects and associated files."""
-
-        # Current project
-        self.set_secure_cookie("project", projid, expires_days=0.1)
-
-        # Connect to db
-        couch = self.couch_connect()
-        proj_db = couch['projects']
-
-        project_info = proj_db[projid]['project_info']
-
-        # Save project files in dict
-        files = {}
-        if 'files' in proj_db[projid]:
-            files = proj_db[projid]['files']
-
-        self.render('project_page.html', user=self.current_user,
-                    files=files, projid=projid, project=project_info,
-                    addfiles=(self.get_argument('uploadfiles', None) is not None))
-
-
-class UploadHandler(BaseHandler):
-    """Class. Handles the upload of the file."""
-
-    def post(self, projid):
-        """post"""
-
-        # Checks if there are files "uploaded"
-        files = []
-        try:
-            files = self.request.files['filesToUpload']
-        except OSError:
-            pass
-
-        # Connects to the database
-        couch = self.couch_connect()            # couchdb
-        proj_db = couch['projects']             # database: projects
-        curr_proj = proj_db[projid]             # current project
-        curr_proj_files = curr_proj['files']    # files assoc. with project
-
-        # Save files (now uploaded)
-        for file in files:
-            filename = file['filename']
-
-            try:
-                with open(filename, "wb") as out:
-                    out.write(file['body'])
-            finally:
-                curr_proj_files[filename] = {
-                    "size": sys.getsizeof(filename),
-                    "format": filename.split(".")[-1],
-                    "date_uploaded": date.today().strftime("%Y-%m-%d"),
-                }
-
-        # Save couchdb --> updated
-        # and show the project page again.
-        try:
-            proj_db.save(curr_proj)
-        finally:
-            self.render('project_page.html', user=self.current_user,
-                        projid=projid, project=curr_proj['project_info'], files=curr_proj_files,
-                        addfiles=(self.get_argument('uploadfiles', None) is not None))
+        return projects, user_db[curr_user]['user']['email'], ("facility" in user_db[curr_user]["user"])
 
 
 # FUNCTIONS ######################################################## FUNCTIONS #
@@ -307,7 +104,7 @@ def main():
     """main"""
 
     # For devel puprose watch page changes
-    if CONFIG.get('development_mode'):
+    if base.CONFIG.get('development_mode'):
         tornado.autoreload.start()
         tornado.autoreload.watch("html_templates/index.html")
         tornado.autoreload.watch("html_templates/home.html")
@@ -318,7 +115,7 @@ def main():
         tornado.autoreload.watch("html_templates/contact_page.html")
 
     application = ApplicationDP()
-    application.listen(options.port)
+    application.listen(base.CONFIG["site_port"])
     tornado.ioloop.IOLoop.instance().start()
 
 
