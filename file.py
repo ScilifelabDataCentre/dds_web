@@ -55,6 +55,9 @@ class UploadHandler(BaseHandler):
         try:
             proj_db.save(curr_proj)
         finally:
-            self.render('project_page.html', curr_user=self.current_user,
-                        projid=projid, curr_project=curr_proj['project_info'], files=curr_proj_files,
+            self.render('project_page.html',
+                        curr_user=self.current_user,
+                        projid=projid,
+                        curr_project=curr_proj['project_info'],
+                        files=curr_proj_files,
                         addfiles=(self.get_argument('uploadfiles', None) is not None))

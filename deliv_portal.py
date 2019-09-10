@@ -19,8 +19,6 @@ from file import UploadHandler
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
-MAX_STREAMED_SIZE = 1024 * 1024 * 1024
-
 
 # CLASSES ############################################################ CLASSES #
 
@@ -94,7 +92,8 @@ class MainHandler(BaseHandler):
             for proj in user_db[curr_user]['projects']:
                 projects[proj] = proj_db[proj]['project_info']
 
-        return projects, user_db[curr_user]['user']['email'], ("facility" in user_db[curr_user]["user"])
+        return projects, user_db[curr_user]['user']['email'], \
+            ("facility" in user_db[curr_user]["user"])
 
 
 # FUNCTIONS ######################################################## FUNCTIONS #

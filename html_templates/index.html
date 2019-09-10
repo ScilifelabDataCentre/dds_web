@@ -39,27 +39,27 @@
 
     <!-- Main div start -->
     <div class="main">
+      <!-- Sidenav -->
       {% try %}
-        {% if user %}
-          {% block nav_content %}
-          <!-- Sidenav -->
-          <div class="sidenav">
-            {% block back_button %}
+        {% if curr_user %}
+          <div class="sidenav" style="{% if curr_user %}width:180px;{% else %}width:0px;{% end %}">
+            {% block nav_content %}
+              {% block back_button %}
 
-            {% end %}
-            <!-- <a href="{{ reverse_url('home') }}">Home Page</a> -->
-            <a class="a" href="{{ reverse_url('profile') }}">Profile</a>
-            {% block new_delivery %}
+              {% end %}   <!-- block back_button -->
+              <!-- <a href="{{ reverse_url('home') }}">Home Page</a> -->
+              <a class="a" href="{{ reverse_url('profile') }}">Profile</a>
+              {% block new_delivery %}
 
-            {% end %}
-            <a class="a" href="{{ reverse_url('info') }}">Information</a>
-            <a class="a" href="{{ reverse_url('contact') }}">Contact</a>
-            <a class="a" href="{{ reverse_url('logout') }}">Log Out</a>
+              {% end %}   <!-- block new_delivery -->
+              <a class="a" href="{{ reverse_url('info') }}">Information</a>
+              <a class="a" href="{{ reverse_url('contact') }}">Contact</a>
+              <a class="a" href="{{ reverse_url('logout') }}">Log Out</a>
+            {% end %}   <!-- block nav_content -->
           </div>
-          {% end %}
-        {% end %}
-      {% except %}
-      {% end %}
+        {% end %}   <!-- if curr_user -->
+      {% except %}  <!-- try -->
+      {% end %}   <!-- try except -->
 
       {% block content %}
       <div class="container">

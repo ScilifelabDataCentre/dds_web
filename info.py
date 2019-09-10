@@ -20,7 +20,7 @@ class ContactHandler(BaseHandler):
     def get(self):
         """get"""
         message = "This is the page where contact info is displayed. "
-        self.render("contact_page.html", user=self.current_user, message=message)
+        self.render("contact_page.html", curr_user=self.current_user, message=message)
 
 
 class InfoHandler(BaseHandler):
