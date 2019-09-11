@@ -14,7 +14,7 @@ import base
 from base import BaseHandler
 from info import InfoHandler, ContactHandler
 from user import LoginHandler, LogoutHandler, ProfileHandler
-from project import ProjectHandler
+from project import ProjectHandler, ProjectStatus
 from file import UploadHandler
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
@@ -32,6 +32,7 @@ class ApplicationDP(tornado.web.Application):
                     url(r"/login", LoginHandler, name='login'),
                     url(r"/logout", LogoutHandler, name='logout'),
                     url(r"/project/(?P<projid>.*)", ProjectHandler, name='project'),
+                    url(r"/status/(?P<projid>.*)", ProjectStatus, name='status'),
                     url(r"/profile", ProfileHandler, name='profile'),
                     url(r"/info", InfoHandler, name='info'),
                     url(r"/contact", ContactHandler, name="contact"),

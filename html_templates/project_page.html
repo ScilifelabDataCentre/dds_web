@@ -132,7 +132,7 @@
   <!-- Buttons (finished or add files) -->
   <div class="row">
     <div class="col-sm-6">
-        <form action="{{ reverse_url('project', projid) }}" method="POST">
+        <form action="{{ reverse_url('status', projid) }}" method="POST">
           {% module xsrf_form_html() %}
           {% if curr_project['status'] == "Uploaded" %}
             <button name="setasopen" class="btn btn-primary pull-left submit">Open project</button>

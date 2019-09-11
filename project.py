@@ -9,10 +9,37 @@ from base import BaseHandler
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
-MAX_STREAMED_SIZE = 1024 * 1024 * 1024
-
 
 # CLASSES ############################################################ CLASSES #
+
+class ProjectStatus(BaseHandler):
+    """docstring"""
+
+    def post(self, projid):
+        """docstring"""
+
+        if ((self.get_argument('setasfinished', None) is not None)
+                or (self.get_argument('setasopen', None) is not None)):
+            couch = self.couch_connect()
+
+            proj_db = couch['projects']
+            curr_proj = proj_db[projid]
+
+            if self.get_argument('setasfinished', None) is not None:
+                curr_proj['project_info']['status'] = "Uploaded"
+            elif self.get_argument('setasopen', None) is not None:
+                curr_proj['project_info']['status'] = "Delivery in progress"
+
+            try:
+                proj_db.save(curr_proj)
+            finally:
+                self.render('project_page.html',
+                            curr_user=self.current_user,
+                            projid=projid,
+                            curr_project=curr_proj['project_info'],
+                            files=curr_proj['files'],
+                            addfiles=(self.get_argument('uploadfiles', None) is not None))
+
 
 class ProjectHandler(BaseHandler):
     """Called by "See project" button.
