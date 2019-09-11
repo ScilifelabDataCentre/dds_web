@@ -37,12 +37,12 @@ class UploadHandler(BaseHandler):
         curr_proj_files = curr_proj['files']    # files assoc. with project
 
         # Save files (now uploaded)
-        for fl in files:
-            filename = fl['filename']
+        for file_ in files:
+            filename = file_['filename']
 
             try:
                 with open(filename, "wb") as out:
-                    out.write(fl['body'])
+                    out.write(file_['body'])
             finally:
                 curr_proj_files[filename] = {
                     "size": sys.getsizeof(filename),
