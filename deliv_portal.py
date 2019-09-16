@@ -10,6 +10,8 @@ import tornado.ioloop
 import tornado.gen
 import tornado.web
 
+from secure import SecureCookie
+
 import base
 from base import BaseHandler
 from info import InfoHandler, ContactHandler
@@ -19,6 +21,7 @@ from file import UploadHandler
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
+SECURE_COOKIE = SecureCookie(samesite=SecureCookie.SameSite.LAX)
 
 # CLASSES ############################################################ CLASSES #
 
@@ -38,13 +41,14 @@ class ApplicationDP(tornado.web.Application):
                     url(r"/contact", ContactHandler, name="contact"),
                     url(r"/upload/(?P<projid>.*)", UploadHandler, name="upload")
                     ]
-        settings = {"xsrf_cookies":True,
-                    #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
-                    "cookie_secret":base.CONFIG["cookie_secret"], #for dev purpose
-                    # "cookie_secret": "0123456789ABCDEF",
-                    "template_path":"html_templates",
-                    "static_path":"files"
-                    }
+        settings = {
+            # "xsrf_cookies":True,
+            # "cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
+            "cookie_secret":base.CONFIG["cookie_secret"], #for dev purpose
+            # "cookie_secret": "0123456789ABCDEF",
+            "template_path":"html_templates",
+            "static_path":"files"
+            }
 
         if base.CONFIG.get('development_mode'):
             settings['debug'] = True

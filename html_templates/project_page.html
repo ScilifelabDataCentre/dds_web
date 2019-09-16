@@ -32,7 +32,7 @@
   <!-- File upload -->
   <div id="addfiles_div" class="row container collapse pull-left {% if addfiles %}in{% else %}{% end %}">
     <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
-      {% module xsrf_form_html() %}
+      <!-- {% module xsrf_form_html() %} -->
       <div class="newfiles">
         <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
       </div>
@@ -133,7 +133,7 @@
   <div class="row">
     <div class="col-sm-6">
         <form action="{{ reverse_url('status', projid) }}" method="POST">
-          {% module xsrf_form_html() %}
+          <!-- {% module xsrf_form_html() %} -->
           {% if curr_project['status'] == "Uploaded" %}
             <button name="setasopen" class="btn btn-primary pull-left submit">Open project</button>
           {% else %} <!-- if curr_project['status'] == "Uploaded" -->

@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import tornado.web
 import couchdb
 
+from secure import SecureHeaders
 from utils.config import parse_config
 
 
@@ -15,11 +16,16 @@ from utils.config import parse_config
 CONFIG = parse_config()
 SITE_BASE_URL = f'{CONFIG["site_base_url"]}:{CONFIG["site_port"]}'
 
+SECURE_HEADERS = SecureHeaders()
 
 # CLASSES ############################################################ CLASSES #
 
 class BaseHandler(tornado.web.RequestHandler):
     """Main class used for general functions applying to entire application. """
+
+    def set_default_headers(self):
+        """docstring"""
+        SECURE_HEADERS.tornado(self)
 
     def get_current_user(self):
         """Gets the current user - used for login check etc. """
