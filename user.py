@@ -47,7 +47,7 @@ class LoginHandler(BaseHandler):
 
         # Sets current user if user exists
         if auth:
-            self.set_secure_cookie("user", user_id, expires_days=0.1)
+            self.set_samesite_cookie(cookie_name="user", cookie_value=user_id)
             # Redirects to homepage via mainhandler
             self.redirect(base.SITE_BASE_URL + self.reverse_url('home'))
         else:

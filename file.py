@@ -63,27 +63,38 @@ MAX_STREAMED_SIZE = 1024 * 1024 * 1024
 #                         files=curr_proj_files,
 #                         addfiles=(self.get_argument('uploadfiles', None) is not None))
 
-
-MAX_STREAMED_SIZE = 1024 * 1024 * 1024
-
+# stream_request_body -- apply to RequestHandler subclasses to enable streaming body support
+# HTTPServerRequest.body = undefined
+# RequestHandler.get_argument --> body arguments not included
+# RequestHandler.prepare =  called when the request headers have been read instead
+#                           of after the entire body has been read
+# data_received(self, data) =   called zero or more times as data is available.
+#                               if request has empty body, not called
+# prepare & data_received = may return Futures --> next method not called until
+#                           those futures have been completed
+# The regular HTTP method will be called after the entire body has been read
 @stream_request_body
 class UploadHandler(BaseHandler):
     """docstring"""
+
+    # Hook for subclass initialization. Called for each request.
     def initialize(self):
         """docstring"""
         self.bytes_read = 0
         self.data = b''
 
+    # Called at the beginning of a request before get/post/etc.
     def prepare(self):
         self.request.connection.set_max_body_size(MAX_STREAMED_SIZE)
 
-    def data_received(self, chunck):
-        self.bytes_read += len(chunck)
-        self.data += chunck
+    # Implement this method to handle streamed request data.
+    def data_received(self, chunk):
+        self.bytes_read += len(chunk)
+        self.data += chunk
 
     def post(self, projid):
         """docstring"""
         this_request = self.request
-        value = self.data
-        with open('file', 'wb') as f:
-            f.write(value)
+        with open('file', 'w') as f:
+            for h in self.request.headers:
+                f.write(f"{h}\n")

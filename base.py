@@ -4,10 +4,10 @@
 # IMPORTS ############################################################ IMPORTS #
 
 from __future__ import absolute_import
+from http.cookies import Morsel
 import tornado.web
 import couchdb
 
-from secure import SecureHeaders
 from utils.config import parse_config
 
 
@@ -16,16 +16,17 @@ from utils.config import parse_config
 CONFIG = parse_config()
 SITE_BASE_URL = f'{CONFIG["site_base_url"]}:{CONFIG["site_port"]}'
 
-SECURE_HEADERS = SecureHeaders()
+Morsel._reserved['samesite'] = 'SameSite'
 
 # CLASSES ############################################################ CLASSES #
 
 class BaseHandler(tornado.web.RequestHandler):
     """Main class used for general functions applying to entire application. """
 
-    def set_default_headers(self):
-        """docstring"""
-        SECURE_HEADERS.tornado(self)
+    def set_samesite_cookie(self, cookie_name, cookie_value):
+        """Sets a samesite cookie"""
+
+        self.set_secure_cookie(cookie_name, cookie_value, expires_days=0.1, samesite="lax")
 
     def get_current_user(self):
         """Gets the current user - used for login check etc. """

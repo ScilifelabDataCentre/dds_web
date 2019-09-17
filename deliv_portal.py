@@ -10,8 +10,6 @@ import tornado.ioloop
 import tornado.gen
 import tornado.web
 
-from secure import SecureCookie
-
 import base
 from base import BaseHandler
 from info import InfoHandler, ContactHandler
@@ -19,9 +17,9 @@ from user import LoginHandler, LogoutHandler, ProfileHandler
 from project import ProjectHandler, ProjectStatus
 from file import UploadHandler
 
+
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
-SECURE_COOKIE = SecureCookie(samesite=SecureCookie.SameSite.LAX)
 
 # CLASSES ############################################################ CLASSES #
 
@@ -47,7 +45,7 @@ class ApplicationDP(tornado.web.Application):
             "cookie_secret":base.CONFIG["cookie_secret"], #for dev purpose
             # "cookie_secret": "0123456789ABCDEF",
             "template_path":"html_templates",
-            "static_path":"files"
+            "static_path":"files",
             }
 
         if base.CONFIG.get('development_mode'):

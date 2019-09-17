@@ -49,9 +49,6 @@ class ProjectHandler(BaseHandler):
     def get(self, projid):
         """Renders the project page with projects and associated files."""
 
-        # Current project
-        self.set_secure_cookie("project", projid, expires_days=0.1)
-
         # Connect to db
         couch = self.couch_connect()
         proj_db = couch['projects']

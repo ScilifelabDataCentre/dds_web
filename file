@@ -1,29 +1,11 @@
------------------------------177531852564065825760319341
-Content-Disposition: form-data; name="filesToUpload"; filename="filenumber1.txt"
-Content-Type: text/plain
-
-This is the first file.
-
------------------------------177531852564065825760319341
-Content-Disposition: form-data; name="filesToUpload"; filename="filenumber2.txt"
-Content-Type: text/plain
-
-This is the second file.
-
------------------------------177531852564065825760319341
-Content-Disposition: form-data; name="filesToUpload"; filename="filenumber3.txt"
-Content-Type: text/plain
-
-This is the third file.
-
------------------------------177531852564065825760319341
-Content-Disposition: form-data; name="filesToUpload"; filename="filenumber4.txt"
-Content-Type: text/plain
-
-This is the fourth file.
-
------------------------------177531852564065825760319341
-Content-Disposition: form-data; name="submit"
-
-Upload File(s)
------------------------------177531852564065825760319341--
+Host
+User-Agent
+Accept
+Accept-Language
+Accept-Encoding
+Content-Type
+Content-Length
+Connection
+Referer
+Cookie
+Upgrade-Insecure-Requests
