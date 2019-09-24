@@ -5,6 +5,7 @@
 # IMPORTS ############################################################ IMPORTS #
 from __future__ import absolute_import
 import logging
+import os
 import tornado.autoreload
 import tornado.ioloop
 import tornado.gen
@@ -44,8 +45,8 @@ class ApplicationDP(tornado.web.Application):
             # "cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
             "cookie_secret":base.CONFIG["cookie_secret"], #for dev purpose
             # "cookie_secret": "0123456789ABCDEF",
-            "template_path":"html_templates",
-            "static_path":"files",
+            "template_path":f"{os.pardir}/html_templates",
+            "static_path":f"{os.pardir}/files",
             }
 
         if base.CONFIG.get('development_mode'):
