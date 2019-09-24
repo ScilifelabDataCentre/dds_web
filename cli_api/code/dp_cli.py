@@ -3,14 +3,17 @@
 import click
 
 @click.command()
-@click.option('--count', default=1, help='Number of greetings')
-@click.option('--name', prompt='Your name', help='The person to greet.')
+@click.option('--file', default="", help="Files to be uploaded.")
 
-def hello(count, name):
+def upload_files(file):
     """function docstring"""
 
-    for x in range(count):
-        click.echo(f'Hello {name}')
+    click.echo(file)
+
+
+def main():
+    upload_files()
+
 
 if __name__ == '__main__':
-    hello()
+    main()
