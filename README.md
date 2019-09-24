@@ -32,8 +32,3 @@ curl -X PUT http://delport:delport@127.0.0.1:5984/dp_users
 curl -d @dbfiles/projects.json -H "Content-type: application/json" -X POST http://delport:delport@127.0.0.1:5984/projects/_bulk_docs
 curl -d @dbfiles/dp_users.json -H "Content-type: application/json" -X POST http://delport:delport@127.0.0.1:5984/dp_users/_bulk_docs
 ```
-
-## CLI use (in `cli_api` folder)
-```bash
-python3 dp_cli.py --file [files-to-upload]
-```
