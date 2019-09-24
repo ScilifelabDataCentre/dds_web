@@ -32,13 +32,13 @@
 
   <!-- File upload -->
   <div id="addfiles_div" class="row container collapse pull-left {% if addfiles %}in{% else %}{% end %}">
-    <form action="{{ reverse_url('upload', projid) }}" method="post" enctype="multipart/form-data">
+    <form action="{{reverse_url('upload', projid)}}" method="post" enctype="multipart/form-data">
       <!-- {% module xsrf_form_html() %} -->
       <div class="newfiles">
         <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
       </div>
       <div class="newfiles">
-        <input type="submit" name="submit" value="Upload File(s)"/>
+        <input type="submit" name="submit"  onclick​="uploadFiles()" value="Upload File(s)"/>
       </div>
     </form>
     <output id="list"></output>
