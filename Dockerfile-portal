@@ -13,11 +13,13 @@ ADD . /delivery_portal
 
 # Set default working directory
 # Where the command defined with CMD is to be executed
-WORKDIR /delivery_portal
+WORKDIR /delivery_portal/code
+
+COPY requirements.txt requirements.txt
 
 # Build image, execute directives for docker files
 RUN pip3 install -r requirements.txt
 
 # Execute command
-# NOT used to build docker image 
+# NOT used to build docker image
 CMD ["python3", "deliv_portal.py"]
