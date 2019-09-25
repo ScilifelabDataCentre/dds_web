@@ -4,3 +4,5 @@ __pycache__
 couchdb-data
 dportal.yaml
 dportal.yaml.sample
+venv
+*.egg*
