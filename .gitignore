@@ -6,3 +6,4 @@ dportal.yaml
 dportal.yaml.sample
 venv
 *.egg*
+.Rproj.user
