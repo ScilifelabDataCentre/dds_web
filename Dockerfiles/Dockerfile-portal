@@ -1,0 +1,25 @@
+# Defines base image to start the build process from
+FROM ubuntu:18.04
+
+# Build image, execute directives for docker files
+RUN apt-get update && apt-get install -y \
+        python3 \
+        python3-pip
+
+# (or COPY)
+# Add files from local computer to image
+# Copy files from source on host into containers own file system
+ADD . /delivery_portal
+
+# Set default working directory
+# Where the command defined with CMD is to be executed
+WORKDIR /delivery_portal/code
+
+COPY requirements.txt requirements.txt
+
+# Build image, execute directives for docker files
+RUN pip3 install -r requirements.txt
+
+# Execute command
+# NOT used to build docker image
+CMD ["python3", "deliv_portal.py"]
