@@ -1,30 +1,35 @@
 # delivery_portal
 An open source data delivery portal for Scilifelab facilities
 
-**WIP at the moment**
+**WIP**
 
+---
 ## Setup docker environment:
 
 ### 1. Install Docker if you don't already have it.
 
-Mac: `https://docs.docker.com/v17.12/docker-for-mac/install/`
+Mac:  
+https://docs.docker.com/v17.12/docker-for-mac/install
 
-Ubuntu: `https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04?fbclid=IwAR3zNawDfhtWhehs4pbUIbHSxwqiVnLRafq2gY6rLSZVY_F0b81b7MHiTQ0`
+Ubuntu:  
+https://docs.docker.com/install/linux/docker-ce/ubuntu/
 
-### 2. Run the command.
+### 2. Build and run containers
 
 ```bash
 cp dportal.yaml.sample dportal.yaml
 docker-compose up
 ```
 
+---
+
 ## Database setup:
 
 ### 1. Setup database. Go to: 
 
-`http://localhost:5984/_utils/#setup`
+http://localhost:5984/_utils/#setup
 
-### 2. Create the _projects_ and _dp_users_ databases. 
+### 2. Create the databases. 
 
 ```bash
 curl -X PUT http://delport:delport@127.0.0.1:5984/projects
