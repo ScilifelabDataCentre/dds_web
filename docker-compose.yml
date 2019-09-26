@@ -22,9 +22,3 @@ services:
       - type: bind
         source: .
         target: /delivery_portal
-  cli:
-    build:
-      context: ./
-      dockerfile: ./Dockerfiles/Dockerfile-cli
-    depends_on:
-      - db

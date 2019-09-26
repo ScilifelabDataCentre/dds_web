@@ -6,7 +6,7 @@ An open source data delivery portal for Scilifelab facilities
 ---
 ## Setup docker environment:
 
-### 1. Install Docker if you don't already have it.
+1. Install Docker if you don't already have it.
 
 Mac:  
 https://docs.docker.com/v17.12/docker-for-mac/install
@@ -14,14 +14,23 @@ https://docs.docker.com/v17.12/docker-for-mac/install
 Ubuntu:  
 https://docs.docker.com/install/linux/docker-ce/ubuntu/
 
-### 2. Build and run containers
+2. Build and run containers
 
 ```bash
 cp dportal.yaml.sample dportal.yaml
 docker-compose up
 ```
 
----
+**To use terminal after starting services, use the `-d` option.**
+```bash 
+cp dportal.yaml.sample dportal.yaml
+docker-compose up -d 
+```
+
+**To stop service** (if `-d` option used or in new terminal tab):
+```bash 
+docker-compose down
+```
 
 ## Database setup:
 
