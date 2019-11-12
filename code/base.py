@@ -10,6 +10,8 @@ import couchdb
 
 from utils.config import parse_config
 
+from code.dp_exceptions import CouchDBException
+
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
@@ -17,17 +19,6 @@ CONFIG = parse_config()
 SITE_BASE_URL = f'{CONFIG["site_base_url"]}:{CONFIG["site_port"]}'
 
 Morsel._reserved['samesite'] = 'SameSite'
-
-# EXCEPTION CLASSES ######################################## EXCEPTION CLASSES #
-
-
-class CouchDBException(Exception):
-    """Custom exception class. Handles errors in database operations."""
-
-    def __init__(self, msg: str):
-        """Passes message from exception call to the base class __init__."""
-
-        super().__init__(msg)
 
 
 # CLASSES ############################################################ CLASSES #

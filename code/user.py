@@ -11,9 +11,11 @@ from base import BaseHandler
 
 import hashlib
 
-# GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
+import string
 
-MAX_STREAMED_SIZE = 1024 * 1024 * 1024
+from code.dp_exceptions import DeliveryPortalException, SecurePasswordException, AuthenticationError
+
+# GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
 
 # CLASSES ############################################################ CLASSES #
@@ -33,28 +35,56 @@ class LoginHandler(BaseHandler):
 
         return False, ""
 
-
     def post(self):
         """Called by login button.
         Gets inputs from form and checks user permissions."""
 
-        # Get form input
-        user_email = self.get_body_argument("user_email")
-        # TODO: Change to secure password hashing
-        password = hashlib.sha256(
-            (self.get_body_argument("password")).encode('utf-8')).hexdigest()
+        # Get login form input
+        try:
+            # If username has been entered, get username and password
+            # Otherwise, raise exception.
+            if self.get_argument('username', None) is not None:
+                username = self.get_body_argument('username')
 
-        # Check if user exists
-        auth, user_id = self.check_dp_access(user_email, password)
+                if not username.isalpha():
+                    raise AuthenticationError(
+                        "Username contains invalid characters.")
+                else:
+                    # If password has been entered, get password and generate secure password hash
+                    # Otherwise, raise exception.
+                    if self.get_argument('password', None) is not None:
+                        try:
+                            password = hashlib.sha256(
+                                (self.get_body_argument('password')).encode('utf-8')).hexdigest()
+                        except SecurePasswordException as se:
+                            print(f"Password retrieval failed: {se}")
+                    else:
+                        raise DeliveryPortalException(
+                            "No password was entered.")
+            else:
+                raise DeliveryPortalException("No user name was entered.")
 
-        # Sets current user if user exists
-        if auth:
-            self.set_samesite_cookie(cookie_name="user", cookie_value=user_id)
-            # Redirects to homepage via mainhandler
-            self.redirect(base.SITE_BASE_URL + self.reverse_url('home'))
+        except DeliveryPortalException as de:
+            print(f"Could not collect login information from DP: {de}")
+
         else:
-            self.clear_cookie("user")
-            self.write("Login incorrect.")
+            # Check if user exists and permissions
+            auth, user_id = self.check_dp_access(username, password)
+
+            # Sets current user if user exists
+            if auth:
+                try:
+                    self.set_samesite_cookie(
+                        cookie_name='user', cookie_value=user_id)
+                except AuthenticationError as ae:
+                    print(f"Samesite cookie could not be set: {ae}")
+                else:
+                    # Redirects to homepage via mainhandler
+                    self.redirect(base.SITE_BASE_URL +
+                                  self.reverse_url('home'))
+            else:
+                self.clear_cookie('user')
+                self.write("Login incorrect.")
 
 
 class LogoutHandler(BaseHandler):
@@ -64,7 +94,7 @@ class LogoutHandler(BaseHandler):
     def get(self):
         """Clears cookies and redirects to login page."""
 
-        self.clear_cookie("user")
+        self.clear_cookie('user')
         self.redirect(base.SITE_BASE_URL + self.reverse_url('home'))
 
 
