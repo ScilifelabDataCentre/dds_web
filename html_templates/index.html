@@ -85,12 +85,14 @@
                 <div class="form-group">
       						<label for="user_email">Username</label>
       						<input type="text" class="form-control" name="username" id="username"
-                    placeholder="Enter your username or email address" required>
+                    placeholder="Enter your username" required pattern="[A-Za-z0-9]+" title="Upper- or lowercase letters, numbers 0-9">
       					</div>
                 <!-- Password -->
       					<div class="form-group">
       						<label for="password">Password</label>
-      						<input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
+      						<input type="password" class="form-control" name="password" id="password" placeholder="Password" 
+                    required minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
+                    title="Eight characters or more, at least one number, at least one uppercase, at least one lowercase">
       					</div>
                 <!-- Button -->
       					<div class="form-group">

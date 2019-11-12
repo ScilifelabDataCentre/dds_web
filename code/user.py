@@ -13,7 +13,9 @@ import hashlib
 
 import string
 
-from code.dp_exceptions import DeliveryPortalException, SecurePasswordException, AuthenticationError
+import re
+
+from dp_exceptions import DeliveryPortalException, SecurePasswordException, AuthenticationError
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
@@ -39,6 +41,9 @@ class LoginHandler(BaseHandler):
         """Called by login button.
         Gets inputs from form and checks user permissions."""
 
+        username = ""
+        password = ""
+
         # Get login form input
         try:
             # If username has been entered, get username and password
@@ -46,7 +51,7 @@ class LoginHandler(BaseHandler):
             if self.get_argument('username', None) is not None:
                 username = self.get_body_argument('username')
 
-                if not username.isalpha():
+                if not re.match("^[A-Za-z0-9]+$", username):
                     raise AuthenticationError(
                         "Username contains invalid characters.")
                 else:

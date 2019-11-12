@@ -10,7 +10,7 @@ import couchdb
 
 from utils.config import parse_config
 
-from code.dp_exceptions import CouchDBException
+from dp_exceptions import CouchDBException
 
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
