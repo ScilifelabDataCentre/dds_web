@@ -33,14 +33,13 @@
 
           <!-- Table body start -->
           <tbody>
-            {% for proj in projects %}
-              {% if projects[proj]['status'] != "Uploaded" %}
+            {% for proj in projects_ongoing %}
               <!-- Table row -- one for each project associated with logged in user -->
               <tr>
-                <td>{{ proj }}</td>                           <!-- ID -->
-                <td>{{ projects[proj]['name'] }}</td>         <!-- Name -->
-                <td>{{ projects[proj]['order_date'] }}</td>   <!-- Order date -->
-                <td>{{ projects[proj]['status'] }}</td>       <!-- Status -->
+                <td>{{ proj }}</td>                                   <!-- ID -->
+                <td>{{ projects_ongoing[proj]['title'] }}</td>        <!-- Name -->
+                <td>{{ projects_ongoing[proj]['order_date'] }}</td>   <!-- Order date -->
+                <td>{{ projects_ongoing[proj]['status'] }}</td>       <!-- Status -->
                 <!-- "Info" button -- opens collapsible rows -->
                 <td>
                   <form action="{{ reverse_url('project', proj) }}" method="GET">
@@ -54,7 +53,6 @@
                   </form>
                 </td>
               </tr>
-              {% end %} <!-- if projects[proj]['status'] != "Uploaded" -->
             {% end %} <!-- for proj in projects -->
           </tbody>
           <!-- Table body end -->
@@ -90,14 +88,13 @@
 
           <!-- Table body start -->
           <tbody>
-            {% for proj in projects %}
-              {% if projects[proj]['status'] == "Uploaded" %}
+            {% for proj in projects_finished %}
               <!-- Table row -- one for each project associated with logged in user -->
               <tr>
-                <td>{{ proj }}</td>                           <!-- ID -->
-                <td>{{ projects[proj]['name'] }}</td>         <!-- Name -->
-                <td>{{ projects[proj]['order_date'] }}</td>   <!-- Order date -->
-                <td>{{ projects[proj]['status'] }}</td>       <!-- Status -->
+                <td>{{ proj }}</td>                                   <!-- ID -->
+                <td>{{ projects_finished[proj]['title'] }}</td>       <!-- Name -->
+                <td>{{ projects_finished[proj]['order_date'] }}</td>  <!-- Order date -->
+                <td>{{ projects_finished[proj]['status'] }}</td>      <!-- Status -->
                 <!-- "Info" button -- opens collapsible rows -->
                 <td>
                   <button href="" class="btn btn-default btn-sm projtable">Update order</button>
@@ -107,7 +104,6 @@
                     <button href="" class="btn btn-default btn-sm projtable">See project</button>
                 </td>
               </tr>
-              {% end %} <!-- if projects[proj]['status'] != "Uploaded" -->
             {% end %} <!-- for proj in projects -->
           </tbody>
           <!-- Table body end -->

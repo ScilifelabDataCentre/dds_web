@@ -22,16 +22,16 @@ class ProjectStatus(BaseHandler):
                 or (self.get_argument('setasopen', None) is not None)):
             couch = self.couch_connect()
 
-            proj_db = couch['projects']
-            curr_proj = proj_db[projid]
+            project_db = couch['project_db']
+            curr_proj = project_db[projid]
 
             if self.get_argument('setasfinished', None) is not None:
-                curr_proj['project_info']['status'] = "Uploaded"
+                curr_proj['project_info']['status'] = "Finished"
             elif self.get_argument('setasopen', None) is not None:
-                curr_proj['project_info']['status'] = "Delivery in progress"
+                curr_proj['project_info']['status'] = "Ongoing"
 
             try:
-                proj_db.save(curr_proj)
+                project_db.save(curr_proj)
             finally:
                 self.render('project_page.html',
                             curr_user=self.current_user,
@@ -51,15 +51,15 @@ class ProjectHandler(BaseHandler):
 
         # Connect to db
         couch = self.couch_connect()
-        proj_db = couch['projects']
+        project_db = couch['project_db']
 
-        project_info = proj_db[projid]['project_info']
+        project_info = project_db[projid]['project_info']
 
         # Save project files in dict
         files = {}
-        if 'files' in proj_db[projid]:
-            files = proj_db[projid]['files']
-
+        if 'files' in project_db[projid]:
+            files = project_db[projid]['files']
+        
         self.render('project_page.html', curr_user=self.current_user,
-                    files=files, projid=projid, curr_project=project_info,
+                    files=files, projid=projid, curr_project=project_info, comment=project_db[projid]['comment'],
                     addfiles=(self.get_argument('uploadfiles', None) is not None))

@@ -9,6 +9,8 @@ from __future__ import absolute_import
 import base
 from base import BaseHandler
 
+import hashlib
+
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
 MAX_STREAMED_SIZE = 1024 * 1024 * 1024
@@ -19,20 +21,18 @@ MAX_STREAMED_SIZE = 1024 * 1024 * 1024
 class LoginHandler(BaseHandler):
     """ Handles request to log in user. """
 
-    def check_permission(self, username, password):
-        """Called by post.
-        Connects to database and checks if user exists."""
+    def check_dp_access(self, username: str, password: str) -> (bool, str):
+        """Check existance of user in database and the password validity."""
 
-        couch = self.couch_connect()
-        database = couch['dp_users']
+        dp_couch = self.couch_connect()
+        user_db = dp_couch['user_db']
+        for id_ in user_db:
+            if username in [user_db[id_]['username'], user_db[id_]['contact_info']['email']]:
+                if user_db[id_]['password_hash'] == password:
+                    return True, id_
 
-        # Searches database for user with matching email and password
-        for user_id in database:
-            if (database[user_id]['user']['email'] == username and
-                    database[user_id]['user']['password'] == password):
-                return True, user_id
+        return False, ""
 
-        return False, ""    # Returns false and "" if user not found
 
     def post(self):
         """Called by login button.
@@ -40,10 +40,12 @@ class LoginHandler(BaseHandler):
 
         # Get form input
         user_email = self.get_body_argument("user_email")
-        password = self.get_body_argument("password")
+        # TODO: Change to secure password hashing
+        password = hashlib.sha256(
+            (self.get_body_argument("password")).encode('utf-8')).hexdigest()
 
         # Check if user exists
-        auth, user_id = self.check_permission(user_email, password)
+        auth, user_id = self.check_dp_access(user_email, password)
 
         # Sets current user if user exists
         if auth:
@@ -73,4 +75,5 @@ class ProfileHandler(BaseHandler):
         """Displays the profile page. """
 
         message = "This is the profile page where one can change password etc. "
-        self.render('profile.html', curr_user=self.current_user, message=message)
+        self.render('profile.html', curr_user=self.current_user,
+                    message=message)

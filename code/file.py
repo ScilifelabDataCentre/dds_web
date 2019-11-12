@@ -9,8 +9,6 @@ import sys
 import logging
 from datetime import date
 
-
-
 from base import BaseHandler
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
@@ -35,8 +33,8 @@ class UploadHandler(BaseHandler):
 
         # Connects to the database
         couch = self.couch_connect()            # couchdb
-        proj_db = couch['projects']             # database: projects
-        curr_proj = proj_db[projid]             # current project
+        project_db = couch['project_db']        # database: projects
+        curr_proj = project_db[projid]          # current project
         curr_proj_files = curr_proj['files']    # files assoc. with project
 
         # Save files (now uploaded)
@@ -49,14 +47,15 @@ class UploadHandler(BaseHandler):
             finally:
                 curr_proj_files[filename] = {
                     "size": sys.getsizeof(filename),
-                    "format": filename.split(".")[-1],
+                    "mime": filename.split(".")[-1],
                     "date_uploaded": date.today().strftime("%Y-%m-%d"),
+                    "checksum": ""
                 }
 
         # Save couchdb --> updated
         # and show the project page again.
         try:
-            proj_db.save(curr_proj)
+            project_db.save(curr_proj)
         finally:
             self.render('project_page.html',
                         curr_user=self.current_user,
