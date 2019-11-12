@@ -28,14 +28,19 @@ class LoginHandler(BaseHandler):
     def check_dp_access(self, username: str, password: str) -> (bool, str):
         """Check existance of user in database and the password validity."""
 
-        dp_couch = self.couch_connect()
-        user_db = dp_couch['user_db']
-        for id_ in user_db:
-            if username in [user_db[id_]['username'], user_db[id_]['contact_info']['email']]:
-                if user_db[id_]['password_hash'] == password:
-                    return True, id_
+        user_db = self.couch_connect()['user_db']
+        if user_db != {}:
+            for id_ in user_db:
+                if username in [user_db[id_]['username'], user_db[id_]['contact_info']['email']]:
+                    if user_db[id_]['password_hash'] == password:
+                        try: 
+                            self.set_secure_cookie('user', id_, expires_days=0.1)
+                        except AuthenticationError as ae: 
+                            print(f"Cookie could not be set: {ae}")
+                        else: 
+                            return True
 
-        return False, ""
+        return False
 
     def post(self):
         """Called by login button.
@@ -74,19 +79,11 @@ class LoginHandler(BaseHandler):
 
         else:
             # Check if user exists and permissions
-            auth, user_id = self.check_dp_access(username, password)
+            auth = self.check_dp_access(username, password)
 
             # Sets current user if user exists
             if auth:
-                try:
-                    self.set_samesite_cookie(
-                        cookie_name='user', cookie_value=user_id)
-                except AuthenticationError as ae:
-                    print(f"Samesite cookie could not be set: {ae}")
-                else:
-                    # Redirects to homepage via mainhandler
-                    self.redirect(base.SITE_BASE_URL +
-                                  self.reverse_url('home'))
+                self.redirect(base.SITE_BASE_URL + self.reverse_url('home'))
             else:
                 self.clear_cookie('user')
                 self.write("Login incorrect.")
