@@ -5,17 +5,12 @@
 # IMPORTS ############################################################ IMPORTS #
 
 from __future__ import absolute_import
-
 import base
 from base import BaseHandler
-
 import hashlib
-
 import string
-
 import re
-
-from dp_exceptions import DeliveryPortalException, SecurePasswordException, AuthenticationError
+from dp_exceptions import DeliveryPortalException, SecurePasswordException, AuthenticationError, CouchDBException
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
@@ -28,10 +23,11 @@ class LoginHandler(BaseHandler):
     def check_dp_access(self, username: str, password: str) -> (bool, str):
         """Check existance of user in database and the password validity."""
 
-        user_db = self.couch_connect()['user_db']
-        if user_db != {}:
+        user_db = self.couch_connect()['user_db']   # Connect and get user database
+        
+        if user_db != {}:       
             for id_ in user_db:
-                if username in [user_db[id_]['username'], user_db[id_]['contact_info']['email']]:
+                if username == user_db[id_]['username']:
                     if user_db[id_]['password_hash'] == password:
                         try: 
                             self.set_secure_cookie('user', id_, expires_days=0.1)
@@ -39,6 +35,8 @@ class LoginHandler(BaseHandler):
                             print(f"Cookie could not be set: {ae}")
                         else: 
                             return True
+        else:
+            raise CouchDBException("The database 'user_db' is empty!")
 
         return False
 
