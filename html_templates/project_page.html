@@ -69,7 +69,7 @@
             <th>Project category:</th>  <td>{{ curr_project['category'] }}</td>
           </tr>
           <tr>
-            <th>Sensitive:</th> <td>{% if curr_project['sensitive'] == "True" %} Yes {% else %} No {% end %}</td>
+            <th>Sensitive:</th> <td>{% if curr_project['sensitive'] %} Yes {% else %} No {% end %}</td>
           </tr>
           <tr>
             <th>PI:</th>  <td>{{ curr_project['principal_investigator'] }}</td>
