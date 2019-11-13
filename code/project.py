@@ -7,38 +7,49 @@
 from __future__ import absolute_import
 from base import BaseHandler
 
+from dp_exceptions import DeliveryPortalException, CouchDBException
+
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
 
 # CLASSES ############################################################ CLASSES #
 
 class ProjectStatus(BaseHandler):
-    """docstring"""
+    """Handles change of project status (finished or ongoing)"""
 
     def post(self, projid):
-        """docstring"""
+        """Called by 'Mark project as finished' or 'Mark project as open'"""
 
+        # If one of the buttons are pressed, open connection to database
         if ((self.get_argument('setasfinished', None) is not None)
                 or (self.get_argument('setasopen', None) is not None)):
-            couch = self.couch_connect()
+            project_db = self.couch_connect()['project_db']
+            curr_proj = project_db[projid]  # The current project
 
-            project_db = couch['project_db']
-            curr_proj = project_db[projid]
-
+            # If the 'Mark project as finished' button is pressed
+            # Change status to 'Finished'
+            # If the 'Mark project as open' button is pressed
+            # Change status to 'Ongoing'
             if self.get_argument('setasfinished', None) is not None:
                 curr_proj['project_info']['status'] = "Finished"
             elif self.get_argument('setasopen', None) is not None:
                 curr_proj['project_info']['status'] = "Ongoing"
 
             try:
-                project_db.save(curr_proj)
-            finally:
-                self.render('project_page.html',
-                            curr_user=self.current_user,
-                            projid=projid,
-                            curr_project=curr_proj['project_info'],
-                            files=curr_proj['files'],
-                            addfiles=(self.get_argument('uploadfiles', None) is not None))
+                project_db.save(curr_proj)  # Save changes
+            except CouchDBException as cdbe:
+                print(f"The project could not be saved: {cdbe}")
+            else:
+                try: 
+                    self.render('project_page.html',
+                                curr_user=self.current_user,
+                                files=curr_proj['files'],
+                                projid=projid,
+                                curr_project=curr_proj['project_info'],
+                                comment=curr_proj['commment'],
+                                addfiles=(self.get_argument('uploadfiles', None) is not None))
+                except DeliveryPortalException as dpe: 
+                    print(f"The project page could not be rendered: {dpe}")
 
 
 class ProjectHandler(BaseHandler):
@@ -49,17 +60,23 @@ class ProjectHandler(BaseHandler):
     def get(self, projid):
         """Renders the project page with projects and associated files."""
 
-        # Connect to db
-        couch = self.couch_connect()
-        project_db = couch['project_db']
+        try: 
+            project_db = self.couch_connect()['project_db'][projid]
+        except CouchDBException as cdbe:
+            print(f"Project ID {projid} not in database: {cdbe}")
+        else:
+            # Save project files in dict
+            files = {}
+            if 'files' in project_db:
+                files = project_db['files']
 
-        project_info = project_db[projid]['project_info']
-
-        # Save project files in dict
-        files = {}
-        if 'files' in project_db[projid]:
-            files = project_db[projid]['files']
-        
-        self.render('project_page.html', curr_user=self.current_user,
-                    files=files, projid=projid, curr_project=project_info, comment=project_db[projid]['comment'],
-                    addfiles=(self.get_argument('uploadfiles', None) is not None))
+            try:
+                self.render('project_page.html',
+                            curr_user=self.current_user,
+                            files=files, 
+                            projid=projid,
+                            curr_project=project_db['project_info'],
+                            comment=project_db['comment'],
+                            addfiles=(self.get_argument('uploadfiles', None) is not None))
+            except DeliveryPortalException as dpe:
+                print(f"The project page could not be rendered! {dpe}")
