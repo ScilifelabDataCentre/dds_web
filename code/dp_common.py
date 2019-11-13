@@ -4,8 +4,23 @@
 # IMPORTS ########################################################### IMPORTS #
 
 import datetime
+from cryptography.hazmat.primitives import hashes, hmac
+from cryptography.hazmat.backends import default_backend
+
 
 # FUNCTIONS ####################################################### FUNCTIONS #
+
+
+def gen_hmac(filepath: str) -> str:
+    """Generates HMAC"""
+
+    key = b"ThisIsTheSuperSecureKeyThatWillBeGeneratedLater"
+    h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+
+    with open(filepath, 'rb') as f:
+        for compressed_chunk in iter(lambda: f.read(16384), b''):
+            h.update(compressed_chunk)
+        return h.finalize()
 
 
 def get_current_time() -> str:

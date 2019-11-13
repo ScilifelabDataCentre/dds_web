@@ -10,7 +10,7 @@ import logging
 from datetime import date
 
 from base import BaseHandler
-from dp_common import get_current_time
+from dp_common import get_current_time, gen_hmac
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
@@ -39,16 +39,17 @@ class UploadHandler(BaseHandler):
         # Save files (now uploaded)
         for file_ in files:
             filename = file_['filename']
-
             try:
                 with open(filename, "wb") as out:
                     out.write(file_['body'])
-            finally:
+            except:
+                print("FAILED")
+            else:
                 curr_proj_files[filename] = {
                     "size": sys.getsizeof(filename),
                     "mime": filename.split(".")[-1],
                     "date_uploaded": get_current_time(),
-                    "checksum": ""
+                    "checksum": gen_hmac(filename).hex()
                 }
 
         # Save couchdb --> updated
