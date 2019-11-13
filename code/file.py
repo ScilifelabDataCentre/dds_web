@@ -10,10 +10,9 @@ import logging
 from datetime import date
 
 from base import BaseHandler
+from dp_common import get_current_time
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
-
-MAX_STREAMED_SIZE = 1024 * 1024 * 1024
 
 
 # CLASSES ############################################################ CLASSES #
@@ -30,7 +29,7 @@ class UploadHandler(BaseHandler):
             files = self.request.files['filesToUpload']
         except OSError:
             pass
-
+        
         # Connects to the database
         couch = self.couch_connect()            # couchdb
         project_db = couch['project_db']        # database: projects
@@ -48,7 +47,7 @@ class UploadHandler(BaseHandler):
                 curr_proj_files[filename] = {
                     "size": sys.getsizeof(filename),
                     "mime": filename.split(".")[-1],
-                    "date_uploaded": date.today().strftime("%Y-%m-%d"),
+                    "date_uploaded": get_current_time(),
                     "checksum": ""
                 }
 

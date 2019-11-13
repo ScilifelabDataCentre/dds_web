@@ -31,6 +31,15 @@ class DeliveryPortalException(Exception):
         super().__init__(msg)
 
 
+class DeliveryOptionException(Exception):
+    """Custom exception class. Handles errors regarding data delivery 
+    options (s3 delivery) etc."""
+
+    def __init__(self, msg: str):
+        """Passes message from exception call to base class __init__."""
+        super().__init__(msg)
+        
+
 class SecurePasswordException(Exception):
     """Custom exception class. Handles errors regarding password retrieval and handling."""
 

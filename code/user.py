@@ -10,7 +10,8 @@ from base import BaseHandler
 import hashlib
 import string
 import re
-from dp_exceptions import DeliveryPortalException, SecurePasswordException, AuthenticationError, CouchDBException
+from dp_exceptions import DeliveryPortalException, SecurePasswordException, \
+    AuthenticationError, CouchDBException
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
 
