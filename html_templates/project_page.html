@@ -12,7 +12,7 @@
 
 <!-- All files and associated information in current project -->
 <div class="container">
-  <h3 align="center">Project: {{ curr_project['name'] }}</h3>
+  <h3 align="center">Project: {{ curr_project['title'] }}</h3>
   <br>
   <!-- Project description area -->
   <div class="container" align="center">
@@ -33,7 +33,7 @@
   <!-- File upload -->
   <div id="addfiles_div" class="row container collapse pull-left {% if addfiles %}in{% else %}{% end %}">
     <form action="{{reverse_url('upload', projid)}}" method="post" enctype="multipart/form-data">
-      <!-- {% module xsrf_form_html() %} -->
+      {% module xsrf_form_html() %}
       <div class="newfiles">
         <input name="filesToUpload" id="filesToUpload" type="file" multiple/>
       </div>
@@ -69,10 +69,10 @@
             <th>Project category:</th>  <td>{{ curr_project['category'] }}</td>
           </tr>
           <tr>
-            <th>Sensitive:</th> <td>{% if curr_project['sensitive'] == "True" %} Yes {% else %} No {% end %}</td>
+            <th>Sensitive:</th> <td>{% if curr_project['sensitive'] %} Yes {% else %} No {% end %}</td>
           </tr>
           <tr>
-            <th>PI:</th>  <td>{{ curr_project['pi'] }}</td>
+            <th>PI:</th>  <td>{{ curr_project['principal_investigator'] }}</td>
           </tr>
           <br>
       </table>
@@ -83,7 +83,7 @@
           <th>Comments/Information:</th>
         </tr>
         <tr>
-          <td>{{ curr_project['comments'] }}</td>
+          <td>{{ comment }}</td>
         </tr>
       </table>
     </div>
@@ -106,14 +106,14 @@
                 {% for f in files %}
                   <tr>
                     <td>{{ f }}</td>
-                    <td>{{ files[f]['format'] }}</td>
+                    <td>{{ files[f]['mime'] }}</td>
                     <td>{{ files[f]['size'] }}</td>
                     <td>{{ files[f]['date_uploaded'] }}</td>
                     <td>
                       <button class="btn" id="{{ f }}"><i class="fa fa-download" align="center"></i></button>
                     </td>
                   </tr>
-                {% end %} <!-- for f in files -->
+                {% end %} <!-- for f in files --> 
               </tbody>
             </table>
           </div>
@@ -134,8 +134,8 @@
   <div class="row">
     <div class="col-sm-6">
         <form action="{{ reverse_url('status', projid) }}" method="POST">
-          <!-- {% module xsrf_form_html() %} -->
-          {% if curr_project['status'] == "Uploaded" %}
+          {% module xsrf_form_html() %}
+          {% if curr_project['status'] == "Finished" %}
             <button name="setasopen" class="btn btn-primary pull-left submit">Open project</button>
           {% else %} <!-- if curr_project['status'] == "Uploaded" -->
             <button name="setasfinished" class="btn btn-primary pull-left submit">Mark project as finished</button>
