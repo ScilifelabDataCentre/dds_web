@@ -42,7 +42,7 @@ http://localhost:5984/_utils/#setup
 
 ```bash
 curl -X PUT http://delport:delport@127.0.0.1:5984/projects
-curl -X PUT http://delport:delport@127.0.0.1:5984/dp_users
+curl -X PUT http://delport:delport@127.0.0.1:5984/users
 ```
 
 ### 3. Import the database contents. 
