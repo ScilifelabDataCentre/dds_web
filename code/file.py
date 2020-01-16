@@ -9,13 +9,10 @@ import sys
 import logging
 from datetime import date
 
-
-
 from base import BaseHandler
+from dp_common import get_current_time, gen_hmac
 
 # GLOBAL VARIABLES ########################################## GLOBAL VARIABLES #
-
-MAX_STREAMED_SIZE = 1024 * 1024 * 1024
 
 
 # CLASSES ############################################################ CLASSES #
@@ -32,31 +29,33 @@ class UploadHandler(BaseHandler):
             files = self.request.files['filesToUpload']
         except OSError:
             pass
-
+        
         # Connects to the database
         couch = self.couch_connect()            # couchdb
-        proj_db = couch['projects']             # database: projects
-        curr_proj = proj_db[projid]             # current project
+        project_db = couch['project_db']        # database: projects
+        curr_proj = project_db[projid]          # current project
         curr_proj_files = curr_proj['files']    # files assoc. with project
 
         # Save files (now uploaded)
         for file_ in files:
             filename = file_['filename']
-
             try:
                 with open(filename, "wb") as out:
                     out.write(file_['body'])
-            finally:
+            except:
+                print("FAILED")
+            else:
                 curr_proj_files[filename] = {
                     "size": sys.getsizeof(filename),
-                    "format": filename.split(".")[-1],
-                    "date_uploaded": date.today().strftime("%Y-%m-%d"),
+                    "mime": filename.split(".")[-1],
+                    "date_uploaded": get_current_time(),
+                    "checksum": gen_hmac(filename).hex()
                 }
 
         # Save couchdb --> updated
         # and show the project page again.
         try:
-            proj_db.save(curr_proj)
+            project_db.save(curr_proj)
         finally:
             self.render('project_page.html',
                         curr_user=self.current_user,
