@@ -41,8 +41,8 @@ http://localhost:5984/_utils/#setup
 ### 2. Create the databases. 
 
 ```bash
-curl -X PUT http://delport:delport@127.0.0.1:5984/projects
-curl -X PUT http://delport:delport@127.0.0.1:5984/dp_users
+curl -X PUT http://delport:delport@127.0.0.1:5984/project_db
+curl -X PUT http://delport:delport@127.0.0.1:5984/user_db
 ```
 
 ### 3. Import the database contents. 
