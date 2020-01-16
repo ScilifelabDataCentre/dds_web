@@ -3,7 +3,7 @@ services:
   db:
     build:
       context: ./
-      dockerfile: Dockerfile-database
+      dockerfile: ./Dockerfiles/Dockerfile-database
     restart: on-failure
     volumes:
       - ./couchdb-data:/opt/couchdb/data
@@ -21,7 +21,7 @@ services:
     volumes:
       - type: bind
         source: .
-        target: /delivery_portal
+        target: /Data-Delivery_Portal
   s3-backend:
     command: server /data
     container_name: s3

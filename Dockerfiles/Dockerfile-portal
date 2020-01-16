@@ -9,11 +9,11 @@ RUN apt-get update && apt-get install -y \
 # (or COPY)
 # Add files from local computer to image
 # Copy files from source on host into containers own file system
-ADD . /delivery_portal
+ADD . /Data-Delivery-Portal
 
 # Set default working directory
 # Where the command defined with CMD is to be executed
-WORKDIR /delivery_portal/code
+WORKDIR /Data-Delivery-Portal/code
 
 COPY requirements.txt requirements.txt
 
