@@ -1,0 +1,8 @@
+[submodule "Data-Delivery-Portal"]
+	path = Data-Delivery-Portal
+	url = https://github.com/inaod568/Data-Delivery-Portal.git
+	branch = master
+[submodule "dp_api"]
+	path = dp_api
+	url = https://github.com/inaod568/dp_api.git
+	branch = master
