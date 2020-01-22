@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 # Data Delivery Portal -- **WIP**
 A a single cloud-based system for all SciLifeLab facilities, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way. 
+=======
+# Data Delivery Portal 
+An open source data delivery system for Scilifelab facilities
+>>>>>>> b9190ec48aca4403b59aa1a6fc8ecf63ff27af3c
 
 The Delivery Portal consists of two components:
 * The **web interface** where the research groups and facilities will be able to follow the data
