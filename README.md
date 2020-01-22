@@ -1,53 +1,65 @@
-# delivery_portal
-An open source data delivery portal for Scilifelab facilities
+# Data Delivery Portal -- **WIP**
+A a single cloud-based system for all SciLifeLab facilities, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way. 
 
-**WIP**
+The Delivery Portal consists of two components:
+* The **web interface** where the research groups and facilities will be able to follow the data
+delivery progress. The web interface will also be an option for the delivery within small
+projects, e.g. small and/or few files.
+* The **command line interface (CLI)**. This will be used for data delivery within larger projects
+and/or projects resulting in the production of large amounts of data, e.g. sequence data.
 
 ---
 ## Setup docker environment:
 
-1. Install Docker if you don't already have it.
+**1. Docker installation**
 
-Mac:  
-https://docs.docker.com/v17.12/docker-for-mac/install
+	Mac:  
+	https://docs.docker.com/v17.12/docker-for-mac/install
 
-Ubuntu:  
-https://docs.docker.com/install/linux/docker-ce/ubuntu/
+	Ubuntu:  
+	https://docs.docker.com/install/linux/docker-ce/ubuntu/
 
-2. Build and run containers
+**2. In _S3-Upload-Proxy_ folder** 
+* Go to subfolder: `cd dev_utils`
+* Comment out _s3_proxy_ part in docker-compose.yml file 
+* Build and start service: `docker-compose up -d` 
+* Back to S3-Upload-Proxy folder: `cd ..`
+* Start the s3-proxy: `SERVER_CONFILE=dev_utils/config.yaml go run .`
+* Go to https://localhost:9000/ and log in with ElexirID and 987654321
+* Create a `test` bucket and an inner "bucket" called some username --> 
+	```s3://test/<username>``` 
 
-```bash
-cp dportal.yaml.sample dportal.yaml
-docker-compose up
-```
+**3. In _dp_api_ folder**
+* Setup CLI: `pip3 install --editable .`
 
-**To use terminal after starting services, use the `-d` option.**
-```bash 
-cp dportal.yaml.sample dportal.yaml
-docker-compose up -d 
-```
+**4. In root (Data-Delivery-Portal)** 
+* Build and run containers
 
-**To stop service** (if `-d` option used or in new terminal tab):
-```bash 
-docker-compose down
-```
+	```bash
+	cp dportal.yaml.sample dportal.yamp
+	docker-comopose up
+	```
 
-## Database setup:
+	* To use terminal after starting services, use the `-d` option.
 
-### 1. Setup database. Go to: 
+		```
+		cp dportal.yaml.sample dportal.yaml
+		docker-compose up -d 
+		```
 
-http://localhost:5984/_utils/#setup
-
-### 2. Create the databases. 
-
-```bash
-curl -X PUT http://delport:delport@127.0.0.1:5984/project_db
-curl -X PUT http://delport:delport@127.0.0.1:5984/user_db
-```
-
-### 3. Import the database contents. 
-
-```bash
-curl -d @dbfiles/project_db.json -H "Content-type: application/json" -X POST http://delport:delport@127.0.0.1:5984/projects/_bulk_docs
-curl -d @dbfiles/user_db.json -H "Content-type: application/json" -X POST http://delport:delport@127.0.0.1:5984/user_db/_bulk_docs
-```
+	* To stop service: 
+		```bash 
+		docker-compose down
+		```
+**5. Setup database**
+* Go to http://localhost:5984/_utils/#setup 
+* Create the databases. 
+	```bash
+	curl -X PUT http://delport:delport@127.0.0.1:5984/project_db
+	curl -X PUT http://delport:delport@127.0.0.1:5984/user_db
+	```
+* Import the database contents. 
+	```bash
+	curl -d @dbfiles/project_db.json -H "Content-type: application/json" -X POST http://delport:delport@127.0.0.1:5984/project_db/_bulk_docs
+	curl -d @dbfiles/user_db.json -H "Content-type: application/json" -X POST http://delport:delport@127.0.0.1:5984/user_db/_bulk_docs
+	```
