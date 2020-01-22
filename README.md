@@ -1,5 +1,5 @@
-# delivery_portal
-An open source data delivery portal for Scilifelab facilities
+# Data Delivery Portal 
+An open source data delivery system for Scilifelab facilities
 
 **WIP**
 
