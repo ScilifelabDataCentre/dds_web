@@ -5,6 +5,7 @@
 # IMPORTS ############################################################ IMPORTS #
 
 from __future__ import absolute_import
+import base
 from base import BaseHandler
 
 from dp_exceptions import DeliveryPortalException, CouchDBException

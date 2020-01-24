@@ -20,8 +20,8 @@ services:
     restart: on-failure
     volumes:
       - type: bind
-        source: .
-        target: /Data-Delivery_Portal
+        source: ./
+        target: /Data-Delivery-Portal
   # s3-backend:
   #   command: server /data
   #   container_name: s3

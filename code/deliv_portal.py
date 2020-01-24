@@ -112,14 +112,16 @@ def main():
     # For devel puprose watch page changes
     if base.CONFIG.get('development_mode'):
         tornado.autoreload.start()
-        tornado.autoreload.watch("html_templates/index.html")
+        tornado.autoreload.watch("html_templates/contact_page.html")
+        tornado.autoreload.watch("html_templates/create_delivery.html")
+        tornado.autoreload.watch("html_templates/facility_home.html")
         tornado.autoreload.watch("html_templates/home.html")
+        tornado.autoreload.watch("html_templates/index.html")
+        tornado.autoreload.watch("html_templates/info_dp.html")
+        tornado.autoreload.watch("html_templates/profile.html")
         tornado.autoreload.watch("html_templates/project_page.html")
         tornado.autoreload.watch("html_templates/style.css")
-        tornado.autoreload.watch("html_templates/profile.html")
-        tornado.autoreload.watch("html_templates/info_dp.html")
-        tornado.autoreload.watch("html_templates/contact_page.html")
-
+        
     application = ApplicationDP()
     application.listen(base.CONFIG["site_port"])
     tornado.ioloop.IOLoop.instance().start()

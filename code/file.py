@@ -9,6 +9,7 @@ import sys
 import logging
 from datetime import date
 
+import base
 from base import BaseHandler
 from dp_common import get_current_time, gen_hmac
 
