@@ -70,13 +70,7 @@ class MainHandler(BaseHandler):
             # with user and project info
             projects_ongoing, projects_finished,  email, is_facility = self.get_user_projects()
 
-            homepage = ""
-            if is_facility:
-                homepage = "facility_home.html"
-            else:
-                homepage = "home.html"
-
-            self.render(homepage, curr_user=self.current_user, email=email,
+            self.render("home.html", is_facility=is_facility, curr_user=self.current_user, email=email,
                         projects_ongoing=projects_ongoing, projects_finished=projects_finished)
 
     def get_user_projects(self):
