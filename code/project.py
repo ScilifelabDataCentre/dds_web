@@ -82,3 +82,6 @@ class ProjectHandler(BaseHandler):
                             addfiles=(self.get_argument('uploadfiles', None) is not None))
             except DeliveryPortalException as dpe:
                 print(f"The project page could not be rendered! {dpe}")
+
+
+Datan som ni delar med er av ska användas för att testa delen med anonymiseringsverktyget. 

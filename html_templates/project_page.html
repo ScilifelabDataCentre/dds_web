@@ -101,7 +101,9 @@
                   <th>Format</th>
                   <th>Size</th>
                   <th>Date Uploaded</th>
-                  {% if not is_facility %}
+                  {% if is_facility %}
+                  <th>Delete</th>
+                  {% else %}
                   <th>Download</th>
                   {% end %}
                 </tr>
@@ -113,7 +115,11 @@
                     <td>{{ files[f]['mime'] }}</td>
                     <td>{{ files[f]['size'] }}</td>
                     <td>{{ files[f]['date_uploaded'] }}</td> 
-                    {% if not is_facility %}
+                    {% if is_facility %}
+                    <td>
+                      <button class="btn" id="{{ f }}"><i class="fa fa-trash" align="center"></i></button>
+                    </td>
+                    {% else %}
                     <td>
                       <button class="btn" id="{{ f }}"><i class="fa fa-download" align="center"></i></button>
                     </td>
