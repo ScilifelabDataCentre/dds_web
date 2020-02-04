@@ -5,6 +5,7 @@
 # IMPORTS ############################################################ IMPORTS #
 
 from __future__ import absolute_import
+import base
 from base import BaseHandler
 
 from dp_exceptions import DeliveryPortalException, CouchDBException
@@ -73,6 +74,7 @@ class ProjectHandler(BaseHandler):
             try:
                 self.render('project_page.html',
                             curr_user=self.current_user,
+                            is_facility=(self.couch_connect()['user_db'][self.current_user]['role']=="facility"),
                             files=files, 
                             projid=projid,
                             curr_project=project_db['project_info'],

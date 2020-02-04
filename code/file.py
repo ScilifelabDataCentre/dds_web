@@ -9,6 +9,7 @@ import sys
 import logging
 from datetime import date
 
+import base
 from base import BaseHandler
 from dp_common import get_current_time, gen_hmac
 
@@ -52,6 +53,8 @@ class UploadHandler(BaseHandler):
                     "checksum": gen_hmac(filename).hex()
                 }
 
+        proj_comment = curr_proj['comment']
+
         # Save couchdb --> updated
         # and show the project page again.
         try:
@@ -62,4 +65,5 @@ class UploadHandler(BaseHandler):
                         projid=projid,
                         curr_project=curr_proj['project_info'],
                         files=curr_proj_files,
+                        comment=proj_comment,
                         addfiles=(self.get_argument('uploadfiles', None) is not None))
