@@ -1,6 +1,3 @@
 [submodule "dp_api"]
 	path = dp_api
 	url = https://github.com/inaod568/dp_api.git
-[submodule "S3-Upload-Proxy"]
-	path = S3-Upload-Proxy
-	url = https://github.com/ScilifelabDataCentre/S3-Upload-Proxy
