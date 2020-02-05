@@ -26,7 +26,7 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 * Build and run containers
 
 	```bash
-	cp dportal.yaml.sample dportal.yamp
+	cp dportal.yaml.sample dportal.yaml
 	docker-comopose up
 	```
 
