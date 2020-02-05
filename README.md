@@ -19,20 +19,10 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 	Ubuntu:  
 	https://docs.docker.com/install/linux/docker-ce/ubuntu/
 
-**2. In _S3-Upload-Proxy_ folder** 
-* Go to subfolder: `cd dev_utils`
-* Comment out _s3_proxy_ part in docker-compose.yml file 
-* Build and start service: `docker-compose up -d` 
-* Back to S3-Upload-Proxy folder: `cd ..`
-* Start the s3-proxy: `SERVER_CONFILE=dev_utils/config.yaml go run .`
-* Go to https://localhost:9000/ and log in with ElexirID and 987654321
-* Create a `test` bucket and an inner "bucket" called some username --> 
-	```s3://test/<username>``` 
-
-**3. In _dp_api_ folder**
+**2. In _dp_api_ folder**
 * Setup CLI: `pip3 install --editable .`
 
-**4. In root (Data-Delivery-Portal)** 
+**3. In root (Data-Delivery-Portal)** 
 * Build and run containers
 
 	```bash
@@ -51,7 +41,7 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 		```bash 
 		docker-compose down
 		```
-**5. Setup database**
+**4. Setup database**
 * Go to http://localhost:5984/_utils/#setup 
 * Create the databases. 
 	```bash
