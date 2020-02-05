@@ -7,6 +7,8 @@
 from __future__ import absolute_import
 import base
 from base import BaseHandler
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+from cryptography.hazmat.backends import default_backend
 import hashlib
 import string
 import re
@@ -24,17 +26,33 @@ class LoginHandler(BaseHandler):
     def check_dp_access(self, username: str, password: str) -> (bool, str):
         """Check existance of user in database and the password validity."""
 
-        user_db = self.couch_connect()['user_db']   # Connect and get user database
-        
-        if user_db != {}:       
+        user_db = self.couch_connect()['user_db']
+
+        if user_db != {}:
             for id_ in user_db:
                 if username == user_db[id_]['username']:
-                    if user_db[id_]['password_hash'] == password:
-                        try: 
-                            self.set_secure_cookie('user', id_, expires_days=0.1)
-                        except AuthenticationError as ae: 
+                    correct_password = user_db[id_]['password']['hash']
+                    settings = user_db[id_]['password']['settings']
+
+                    split_settings = settings.split('$')
+                    for i in [1, 2, 3, 4]:
+                        split_settings[i] = int(split_settings[i])
+
+                    kdf = Scrypt(salt=bytes.fromhex(split_settings[0]),
+                                 length=split_settings[1],
+                                 n=2**split_settings[2],
+                                 r=split_settings[3],
+                                 p=split_settings[4],
+                                 backend=default_backend())
+                    input_password = kdf.derive(password.encode('utf-8')).hex()
+                    if correct_password == input_password:
+                        try:
+                            self.set_secure_cookie('user',
+                                                   id_, expires_days=0.1)
+
+                        except AuthenticationError as ae:
                             print(f"Cookie could not be set: {ae}")
-                        else: 
+                        else:
                             return True
         else:
             raise CouchDBException("The database 'user_db' is empty!")
@@ -63,8 +81,14 @@ class LoginHandler(BaseHandler):
                     # Otherwise, raise exception.
                     if self.get_argument('password', None) is not None:
                         try:
-                            password = hashlib.sha256(
-                                (self.get_body_argument('password')).encode('utf-8')).hexdigest()
+                            access_granted = self.check_dp_access(username=username,
+                                                             password=self.get_body_argument('password'))
+                             # Sets current user if user exists
+                            if access_granted:
+                                self.redirect(base.SITE_BASE_URL + self.reverse_url('home'))
+                            else:
+                                self.clear_cookie('user')
+                                self.write("Login incorrect.")
                         except SecurePasswordException as se:
                             print(f"Password retrieval failed: {se}")
                     else:
@@ -76,16 +100,7 @@ class LoginHandler(BaseHandler):
         except DeliveryPortalException as de:
             print(f"Could not collect login information from DP: {de}")
 
-        else:
-            # Check if user exists and permissions
-            auth = self.check_dp_access(username, password)
-
-            # Sets current user if user exists
-            if auth:
-                self.redirect(base.SITE_BASE_URL + self.reverse_url('home'))
-            else:
-                self.clear_cookie('user')
-                self.write("Login incorrect.")
+           
 
 
 class LogoutHandler(BaseHandler):

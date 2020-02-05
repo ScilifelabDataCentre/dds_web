@@ -1,0 +1,118 @@
+<!-- Gives same logo etc as index.html -->
+{% extends "index.html" %}
+
+{% block content %}
+<div class="col-sm-12">
+<br>
+  <h2>Projects</h2>
+  <!-- TABLE BEGIN -->
+  <table class="table" id="projects">
+    <!-- Table column headers -->
+    <thead>
+      <tr>
+        <th>Project ID</th>
+        <th>Project</th>
+        <th>Order Date</th>
+        <th>Status</th>
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
+
+    <!-- Table body start -->
+    <tbody>
+      {% for proj in projects %}
+      <!-- Table row -- one for each project associated with logged in user -->
+      <tr>
+        <td>{{ proj }}</td>                           <!-- ID -->
+        <td>{{ projects[proj]['name'] }}</td>         <!-- Name -->
+        <td>{{ projects[proj]['order_date'] }}</td>   <!-- Order date -->
+        <td>{{ projects[proj]['status'] }}</td>       <!-- Status -->
+        <!-- "Info" button -- opens collapsible rows -->
+        <td>
+          <button class="btn btn-default btn-sm projtable"  data-toggle="collapse" data-target="#{{proj}}">Info</button>
+        </td>
+        <!-- "See project" button -- redirects to project page -->
+        <td>
+          <form action="{{ reverse_url('project', proj) }}">
+            <input type="submit" name="seeproject" class="btn btn-default btn-sm projtable" value="See Project"/>
+          </form>
+        </td>
+      </tr>
+
+      <!-- Table row COLLAPSIBLE -- opened when button clicked -->
+      <tr id="{{proj}}" class="collapse">
+        <!-- Left side of collapsible -->
+        <td>
+          <div>
+            <h5><i>Project information</i></h5>
+            <!-- Table within collapsible -->
+            <table class="table">
+              <!-- Row: Order ID -->
+              <tr>
+                <th class=subtable>Order ID: </th>
+                <td>{{ proj }}</td>
+              </tr>
+              <!-- Row: Project name -->
+              <tr>
+                <th class=subtable>Project name: </th>
+                <td>{{ projects[proj]['name'] }}</td>
+              </tr>
+              <!-- Row: Category -->
+              <tr>
+                <th class=subtable>Category: </th>
+                <td>{{ projects[proj]['category'] }}</td>
+              </tr>
+              <!-- Row: Senstive -->
+              <tr>
+                <th class=subtable>Sensitive data: </th>
+                {% if projects[proj]['sensitive']=="True" %}
+                  <td>Yes</td>
+                {% else %}
+                  <td>No</td>
+                {% end %}
+              </tr>
+              <!-- Row: Project size -->
+              <tr>
+                <th class=subtable>Project size: </th>
+                <td>Aggreg. size of all files.</td>
+              </tr>
+            </table>
+            <!-- Table within collapsible end -->
+          </div>
+        </td>
+        <!-- Right side of collapsible -->
+        <td colspan="999">
+          <div id="test">
+            <br>
+            <br>
+            <!-- Table within collapsible -->
+            <table>
+              <!-- Row: Project PI -->
+              <tr>
+                <th class=subtable>Project PI: </th>
+                <td>{{ projects[proj]['pi'] }}</td>
+              </tr>
+              <!-- Row: Project description -->
+              <tr>
+                <th class=subtable>Project description: </th>
+                <td>{{ projects[proj]['description'] }}</td>
+              </tr>
+              <!-- Row: Comments from facility-->
+              <tr>
+                <th class=subtable>Comments from facility: </th>
+                <td>{{ projects[proj]['comments']}}</td>
+              </tr>
+            </table>
+            <!-- Table within collapsible end -->
+          </div>
+        </td>
+      </tr>
+      {% end %}
+    </tbody>
+    <!-- Table body end -->
+  </table>
+  <!-- TABLE END -->
+</div>
+
+{% end %}

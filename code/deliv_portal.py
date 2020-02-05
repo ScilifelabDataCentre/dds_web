@@ -70,13 +70,7 @@ class MainHandler(BaseHandler):
             # with user and project info
             projects_ongoing, projects_finished,  email, is_facility = self.get_user_projects()
 
-            homepage = ""
-            if is_facility:
-                homepage = "facility_home.html"
-            else:
-                homepage = "home.html"
-
-            self.render(homepage, curr_user=self.current_user, email=email,
+            self.render("home.html", is_facility=is_facility, curr_user=self.current_user, email=email,
                         projects_ongoing=projects_ongoing, projects_finished=projects_finished)
 
     def get_user_projects(self):
@@ -112,14 +106,16 @@ def main():
     # For devel puprose watch page changes
     if base.CONFIG.get('development_mode'):
         tornado.autoreload.start()
-        tornado.autoreload.watch("html_templates/index.html")
+        tornado.autoreload.watch("html_templates/contact_page.html")
+        tornado.autoreload.watch("html_templates/create_delivery.html")
+        tornado.autoreload.watch("html_templates/facility_home.html")
         tornado.autoreload.watch("html_templates/home.html")
+        tornado.autoreload.watch("html_templates/index.html")
+        tornado.autoreload.watch("html_templates/info_dp.html")
+        tornado.autoreload.watch("html_templates/profile.html")
         tornado.autoreload.watch("html_templates/project_page.html")
         tornado.autoreload.watch("html_templates/style.css")
-        tornado.autoreload.watch("html_templates/profile.html")
-        tornado.autoreload.watch("html_templates/info_dp.html")
-        tornado.autoreload.watch("html_templates/contact_page.html")
-
+        
     application = ApplicationDP()
     application.listen(base.CONFIG["site_port"])
     tornado.ioloop.IOLoop.instance().start()
