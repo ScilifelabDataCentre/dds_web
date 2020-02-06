@@ -1,34 +1,31 @@
 {
 	"docs": [
 		{
-			"id": "0372838e2cf1f4a2b86997472300112a",
-			"key": "0372838e2cf1f4a2b86997472300112a",
-			"value": {
-				"rev": "3-7788261a7e95d89982119cb5fbeab79c"
+			"_id": "0372838e2cf1f4a2b86997472300112a",
+			"_rev": "12-f2f5fd3171c629a5b85d6e05ce79bb79",
+			"role": "facility",
+			"name": "Facility 1",
+			"username": "facility1",
+			"password": {
+				"hash": "3561e6bd8d25714b753c55545375fe057328e15d4f130904836894149f6f4158",
+				"settings": "41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1"
 			},
-			"doc": {
-				"_id": "0372838e2cf1f4a2b86997472300112a",
-				"_rev": "3-7788261a7e95d89982119cb5fbeab79c",
-				"role": "facility",
-				"name": "Facility 1",
-				"username": "facility1",
-				"password_hash": "01a76201b4408e57481f20d85026138122344b0a3c6f0d7bc75c707f85065271",
-				"contact_info": {
-					"address": {
-						"postal": "Postal address 1",
-						"billing": "Billing address 1"
-					},
-					"email": "facility1@example.com",
-					"phone": "0700000000"
+			"contact_info": {
+				"address": {
+					"postal": "Postal address 1",
+					"billing": "Billing address 1"
 				},
-				"projects": {
-					"ongoing": {
-						"0372838e2cf1f4a2b869974723002bb7": "thisisthesizeoftheproject"
-					},
-					"finished": {}
+				"email": "facility1@example.com",
+				"phone": "0700000000"
+			},
+			"projects": {
+				"ongoing": {
+					"0372838e2cf1f4a2b869974723002bb7": "thisisthesizeoftheproject"
 				},
-				"invoice_information": {}
-			}
+				"finished": {
+				}
+			}, 
+			"invoice_information": {}
 		}
 	]
 }
