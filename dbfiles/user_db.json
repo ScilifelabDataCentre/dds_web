@@ -2,7 +2,6 @@
 	"docs": [
 		{
 			"_id": "0372838e2cf1f4a2b86997472300112a",
-			"_rev": "12-f2f5fd3171c629a5b85d6e05ce79bb79",
 			"role": "facility",
 			"name": "Facility 1",
 			"username": "facility1",
@@ -22,9 +21,8 @@
 				"ongoing": {
 					"0372838e2cf1f4a2b869974723002bb7": "thisisthesizeoftheproject"
 				},
-				"finished": {
-				}
-			}, 
+				"finished": {}
+			},
 			"invoice_information": {}
 		}
 	]
