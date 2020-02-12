@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Delivery Portal CLI &mdash; SciLifeLab Data Delivery Portal 1.0.0 documentation</title>
+  <title>Delivery Portal CLI &mdash; Data Delivery Portal 1.0.0 documentation</title>
   
 
   
@@ -49,7 +49,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> SciLifeLab Data Delivery Portal
+            <a href="index.html" class="icon icon-home"> Data Delivery Portal
           
 
           
@@ -113,7 +113,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">SciLifeLab Data Delivery Portal</a>
+          <a href="index.html">Data Delivery Portal</a>
         
       </nav>
 
@@ -272,19 +272,6 @@
 <div class="section" id="module-dp_api.code_api.dp_cli">
 <span id="main"></span><h3>Main<a class="headerlink" href="#module-dp_api.code_api.dp_cli" title="Permalink to this headline">¶</a></h3>
 <p>Command line interface for Data Delivery Portal</p>
-<dl class="class">
-<dt id="dp_api.code_api.dp_cli.ECDHKeyPair">
-<em class="property">class </em><code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">ECDHKeyPair</code><span class="sig-paren">(</span><em class="sig-param">privatekey: str = 'key'</em>, <em class="sig-param">publickey: str = 'key'</em>, <em class="sig-param">temp_dir: str = ''</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.ECDHKeyPair" title="Permalink to this definition">¶</a></dt>
-<dd><p>Public key pair.
-Algorithm: Eliptic Curve Diffie-Hellman (Curve25519)</p>
-<dl class="method">
-<dt id="dp_api.code_api.dp_cli.ECDHKeyPair.encrypt">
-<code class="sig-name descname">encrypt</code><span class="sig-paren">(</span><em class="sig-param">file: str</em>, <em class="sig-param">remote_pubkey</em>, <em class="sig-param">temp_dir: str</em>, <em class="sig-param">sub_dir: str</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.ECDHKeyPair.encrypt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses the remote public key and the own private key to encrypt a file</p>
-</dd></dl>
-
-</dd></dl>
-
 <dl class="function">
 <dt id="dp_api.code_api.dp_cli.all_data">
 <code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">all_data</code><span class="sig-paren">(</span><em class="sig-param">data_file: str</em><span class="sig-paren">)</span> &#x2192; tuple<a class="headerlink" href="#dp_api.code_api.dp_cli.all_data" title="Permalink to this definition">¶</a></dt>
@@ -321,15 +308,17 @@ and the projects S3 access.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="dp_api.code_api.dp_cli.compress_chunk">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">compress_chunk</code><span class="sig-paren">(</span><em class="sig-param">original_chunk</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.compress_chunk" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compress individual chunks read in a streamed fashion</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="dp_api.code_api.dp_cli.compression_dict">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">compression_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.compression_dict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a list of compressed-format mime types</p>
+<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">compression_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#dp_api.code_api.dp_cli.compression_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a dictionary of compressed types.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>All mime types regarded as compressed formats</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -344,12 +333,6 @@ and the projects S3 access.</p>
 <dd class="field-even"><p>couchdb.client.Server</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.couch_disconnect">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">couch_disconnect</code><span class="sig-paren">(</span><em class="sig-param">couch</em>, <em class="sig-param">token</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.couch_disconnect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Disconnect from couchdb interface.</p>
 </dd></dl>
 
 <dl class="function">
@@ -373,18 +356,6 @@ and the projects S3 access.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="dp_api.code_api.dp_cli.decompress_chunk">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">decompress_chunk</code><span class="sig-paren">(</span><em class="sig-param">compressed_chunk</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.decompress_chunk" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs gzip compression and streams compressed chunk</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.dp_access">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">dp_access</code><span class="sig-paren">(</span><em class="sig-param">username: str</em>, <em class="sig-param">password: str</em>, <em class="sig-param">upload: bool) -&gt; (&lt;class 'bool'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.dp_access" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check existance of user in database and the password validity.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="dp_api.code_api.dp_cli.file_type">
 <code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">file_type</code><span class="sig-paren">(</span><em class="sig-param">fpath: str) -&gt; (&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'bool'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.file_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Guesses file mime.</p>
@@ -396,74 +367,22 @@ and the projects S3 access.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="dp_api.code_api.dp_cli.gen_hmac">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">gen_hmac</code><span class="sig-paren">(</span><em class="sig-param">filepath: str</em>, <em class="sig-param">chunk_size: int</em>, <em class="sig-param">hash_</em><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#dp_api.code_api.dp_cli.gen_hmac" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates HMAC for file</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.generate_header">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">generate_header</code><span class="sig-paren">(</span><em class="sig-param">own_private_key</em>, <em class="sig-param">remote_public_key</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.generate_header" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates crypt4gh format header</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="dp_api.code_api.dp_cli.get_current_time">
 <code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">get_current_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#dp_api.code_api.dp_cli.get_current_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the current time and formats for database.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.get_filesize">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">get_filesize</code><span class="sig-paren">(</span><em class="sig-param">filename: str</em><span class="sig-paren">)</span> &#x2192; int<a class="headerlink" href="#dp_api.code_api.dp_cli.get_filesize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns file size</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.get_passphrase">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">get_passphrase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.get_passphrase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets passphrase for private key encryption</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.hash_compress_hash">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">hash_compress_hash</code><span class="sig-paren">(</span><em class="sig-param">file: str</em>, <em class="sig-param">compressed_file: str</em>, <em class="sig-param">hash_original</em>, <em class="sig-param">hash_compressed) -&gt; (&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.hash_compress_hash" title="Permalink to this definition">¶</a></dt>
-<dd><p>hash + compress + hash</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.hash_compress_hash_encrypt_hash">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">hash_compress_hash_encrypt_hash</code><span class="sig-paren">(</span><em class="sig-param">file: str</em>, <em class="sig-param">encrypted_file: str</em>, <em class="sig-param">keypair</em>, <em class="sig-param">hash_original</em>, <em class="sig-param">hash_compressed</em>, <em class="sig-param">hash_encrypted) -&gt; (&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.hash_compress_hash_encrypt_hash" title="Permalink to this definition">¶</a></dt>
-<dd><p>hash + compress + hash + encrypt + hash</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.hash_dir">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">hash_dir</code><span class="sig-paren">(</span><em class="sig-param">dir_path: str</em>, <em class="sig-param">key</em><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#dp_api.code_api.dp_cli.hash_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates a hash for all contents within a folder</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.hash_encrypt_hash">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">hash_encrypt_hash</code><span class="sig-paren">(</span><em class="sig-param">file: str</em>, <em class="sig-param">encrypted_file: str</em>, <em class="sig-param">keypair</em>, <em class="sig-param">hash_compressed</em>, <em class="sig-param">hash_encrypted) -&gt; (&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.hash_encrypt_hash" title="Permalink to this definition">¶</a></dt>
-<dd><p>hash + encrypt + hash</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.new_dir">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">new_dir</code><span class="sig-paren">(</span><em class="sig-param">filename: str</em>, <em class="sig-param">sub_dir: str</em>, <em class="sig-param">temp_dir: str</em>, <em class="sig-param">operation: str</em><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#dp_api.code_api.dp_cli.new_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks which dir to place file in</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.ngs_type">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">ngs_type</code><span class="sig-paren">(</span><em class="sig-param">extension: str</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.ngs_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks if the file is of ngs type</p>
+<dd><p>Gets the current time. Formats timestamp.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Timestamp in format ‘YY-MM-DD_HH-MM-SS’</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="dp_api.code_api.dp_cli.process_file">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">process_file</code><span class="sig-paren">(</span><em class="sig-param">file: str</em>, <em class="sig-param">temp_dir: str</em>, <em class="sig-param">sub_dir: str = ''</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#dp_api.code_api.dp_cli.process_file" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">process_file</code><span class="sig-paren">(</span><em class="sig-param">file: str</em>, <em class="sig-param">s3_resource</em>, <em class="sig-param">user: dict</em>, <em class="sig-param">temp_dir: str</em>, <em class="sig-param">sub_dir: str = ''</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#dp_api.code_api.dp_cli.process_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handles processing of files including compression and encryption.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -471,6 +390,7 @@ and the projects S3 access.</p>
 <li><p><strong>file</strong> – File to be uploaded</p></li>
 <li><p><strong>temp_dir</strong> – Temporary directory</p></li>
 <li><p><strong>sub_dir</strong> – Sub directory within temp_dir</p></li>
+<li><p><strong>s3_resource</strong> – The users S3 login credentials</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -484,7 +404,7 @@ and the projects S3 access.</p>
 
 <dl class="function">
 <dt id="dp_api.code_api.dp_cli.process_folder">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">process_folder</code><span class="sig-paren">(</span><em class="sig-param">folder: str</em>, <em class="sig-param">temp_dir: str</em>, <em class="sig-param">sub_dir: str = ''</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#dp_api.code_api.dp_cli.process_folder" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">process_folder</code><span class="sig-paren">(</span><em class="sig-param">folder: str</em>, <em class="sig-param">s3_resource</em>, <em class="sig-param">user: dict</em>, <em class="sig-param">temp_dir: str</em>, <em class="sig-param">sub_dir: str = ''</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#dp_api.code_api.dp_cli.process_folder" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handles processing of folders.
 Opens folders and redirects to file processing function.</p>
 <dl class="field-list simple">
@@ -493,6 +413,7 @@ Opens folders and redirects to file processing function.</p>
 <li><p><strong>folder</strong> – Path to folder</p></li>
 <li><p><strong>temp_dir</strong> – Temporary directory</p></li>
 <li><p><strong>sub_dir</strong> – Current sub directory within temp_dir</p></li>
+<li><p><strong>s3_resource</strong> – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -543,24 +464,6 @@ r and p variables. Taken from database. Separated by ‘$’.</p></li>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.stream_chunks">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">stream_chunks</code><span class="sig-paren">(</span><em class="sig-param">file_handle</em>, <em class="sig-param">chunk_size</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.stream_chunks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reads file and returns (streams) the content in chunks</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.try_decryption">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">try_decryption</code><span class="sig-paren">(</span><em class="sig-param">encrypted_file: str</em>, <em class="sig-param">keypair: tuple</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.try_decryption" title="Permalink to this definition">¶</a></dt>
-<dd><p>Tests decryption of encrypted c4gh file</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="dp_api.code_api.dp_cli.validate_api_options">
-<code class="sig-prename descclassname">dp_api.code_api.dp_cli.</code><code class="sig-name descname">validate_api_options</code><span class="sig-paren">(</span><em class="sig-param">config: str</em>, <em class="sig-param">username: str</em>, <em class="sig-param">password: str</em>, <em class="sig-param">project: str</em>, <em class="sig-param">pathfile: str</em>, <em class="sig-param">data: tuple) -&gt; (&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em>, <em class="sig-param">&lt;class 'str'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_api.code_api.dp_cli.validate_api_options" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks if all required options are entered etc.</p>
 </dd></dl>
 
 <dl class="function">

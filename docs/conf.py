@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'SciLifeLab Data Delivery Portal'
+project = 'Data Delivery Portal'
 copyright = '2020, Senthilkumar Panneerselvam, Ina Odén Österbo'
 author = 'Senthilkumar Panneerselvam, Ina Odén Österbo'
 
