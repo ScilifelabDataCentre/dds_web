@@ -9,3 +9,6 @@ venv
 .vscode
 .Rproj.user
 sensitive
+filenumber*
+testfile*
+files
