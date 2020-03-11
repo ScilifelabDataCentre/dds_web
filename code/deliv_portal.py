@@ -30,10 +30,11 @@ class ApplicationDP(tornado.web.Application):
     def __init__(self):
         """ Initializes the application incl. handlers. """
         url = tornado.web.url
-        handlers = [url(r"/", MainHandler, name='home'), 
+        handlers = [url(r"/", MainHandler, name='home'),
                     url(r"/login", LoginHandler, name='login'),
                     url(r"/logout", LogoutHandler, name='logout'),
-                    url(r"/project/(?P<projid>.*)", ProjectHandler, name='project'),
+                    url(r"/project/(?P<projid>.*)",
+                        ProjectHandler, name='project'),
                     url(r"/status/(?P<projid>.*)", ProjectStatus, name='status'),
                     url(r"/profile", ProfileHandler, name='profile'),
                     url(r"/info", InfoHandler, name='info'),
@@ -41,7 +42,7 @@ class ApplicationDP(tornado.web.Application):
                     url(r"/upload/(?P<projid>.*)", UploadHandler, name="upload")
                     ]
         settings = {
-            "xsrf_cookies":True,
+            "xsrf_cookies": True,
             # "cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes),
             "cookie_secret": base.CONFIG["cookie_secret"],  # for dev purpose
             # "cookie_secret": "0123456789ABCDEF",
@@ -64,11 +65,11 @@ class MainHandler(BaseHandler):
         """Renders login page if not logged in, otherwise homepage."""
 
         if not self.current_user:
-            self.render('index.html')  
+            self.render('index.html')
         else:
             # Get projects associated with user and send to home page
             # with user and project info
-            projects_ongoing, projects_finished,  email, is_facility = self.get_user_projects()
+            projects_ongoing, projects_finished, email, is_facility = self.get_user_projects()
 
             self.render("home.html", is_facility=is_facility, curr_user=self.current_user, email=email,
                         projects_ongoing=projects_ongoing, projects_finished=projects_finished)
@@ -76,7 +77,8 @@ class MainHandler(BaseHandler):
     def get_user_projects(self):
         """Connects to database and saves projects in dictionary."""
 
-        curr_user = tornado.escape.xhtml_escape(self.current_user)   # Current user
+        curr_user = tornado.escape.xhtml_escape(
+            self.current_user)   # Current user
 
         couch = self.couch_connect()
         user_db = couch['user_db']
@@ -88,12 +90,20 @@ class MainHandler(BaseHandler):
         # Gets all projects for current user and save projects
         # and their associated information
         if 'projects' in user_db[curr_user]:
-            for ong in user_db[curr_user]['projects']['ongoing']:
-                projects_ongoing[ong] = project_db[ong]['project_info']
-            for fin in user_db[curr_user]['projects']['finished']:
-                projects_finished[fin] = project_db[fin]['proejct_info']
+            for proj in user_db[curr_user]['projects']:
+                proj_status = user_db[curr_user]['projects'][proj]['status']
+                if proj_status == "ongoing":
+                    projects_ongoing[proj] = project_db[proj]['project_info']
+                elif proj_status == "finished":
+                    projects_finished[proj] = project_db[proj]['project_info']
 
-        return projects_ongoing, projects_finished, user_db[curr_user]['contact_info']['email'], \
+            # for ong in user_db[curr_user]['projects']['ongoing']:
+            #     projects_ongoing[ong] = project_db[ong]['project_info']
+            # for fin in user_db[curr_user]['projects']['finished']:
+            #     projects_finished[fin] = project_db[fin]['proejct_info']
+
+        return projects_ongoing, projects_finished, \
+            user_db[curr_user]['contact_info']['email'], \
             (user_db[curr_user]["role"] == "facility")
 
 
@@ -115,7 +125,7 @@ def main():
         tornado.autoreload.watch("html_templates/profile.html")
         tornado.autoreload.watch("html_templates/project_page.html")
         tornado.autoreload.watch("html_templates/style.css")
-        
+
     application = ApplicationDP()
     application.listen(base.CONFIG["site_port"])
     tornado.ioloop.IOLoop.instance().start()

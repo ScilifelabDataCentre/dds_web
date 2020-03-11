@@ -45,6 +45,11 @@ div.login-container{
   max-width: 700px;
 }
 
+div.panel-group {
+  margin-left: 200px;
+
+}
+
 /* SciLifeLab logo */
 img.head_logo {
     height: 80px;
@@ -133,4 +138,9 @@ th.subtable{
 
 tr.spaceUnder {
   padding-bottom: 20em;
+}
+
+div.col-sm-4 td{
+  max-width: 200px;
+  overflow-wrap: break-word;
 }
