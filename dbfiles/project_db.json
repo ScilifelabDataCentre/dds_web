@@ -15,54 +15,9 @@
 				"owner": "1116e4785a1877d84c7c7e6e86008c1c",
 				"delivery_option": "S3"
 			},
-			"members": {
-				"owner": "1116e4785a1877d84c7c7e6e86008c1c"
-			},
 			"invoice": {},
 			"comment": "",
 			"files": {
-				"testfile1.fna": {
-					"size": 109246967,
-					"mime": "fasta",
-					"date_uploaded": "2019-10-7 14:45:0",
-					"checksum": "01257ca3d305cff5b11f4abdb0c75059f2e5055dd62b40a6a65c95a00e519d52305b7a2f4ca955d1c44ccbf42df6133d25c19088fed63a36e92442372bd18c8a"
-				},
-				"testfile2.fna": {
-					"size": 109246967,
-					"mime": "fasta",
-					"date_uploaded": "2019-10-11 11:35:3",
-					"checksum": "01257ca3d305cff5b11f4abdb0c75059f2e5055dd62b40a6a65c95a00e519d52305b7a2f4ca955d1c44ccbf42df6133d25c19088fed63a36e92442372bd18c8a"
-				},
-				"testfile3.fna": {
-					"size": 109246967,
-					"mime": "fasta",
-					"date_uploaded": "2019-10-11 11:35:4",
-					"checksum": "01257ca3d305cff5b11f4abdb0c75059f2e5055dd62b40a6a65c95a00e519d52305b7a2f4ca955d1c44ccbf42df6133d25c19088fed63a36e92442372bd18c8a"
-				},
-				"testfile4.fna": {
-					"size": 109246967,
-					"mime": "fasta",
-					"date_uploaded": "2019-10-11 11:35:5",
-					"checksum": "01257ca3d305cff5b11f4abdb0c75059f2e5055dd62b40a6a65c95a00e519d52305b7a2f4ca955d1c44ccbf42df6133d25c19088fed63a36e92442372bd18c8a"
-				},
-				"testfile_05.fna": {
-					"size": 532557,
-					"mime": "fasta",
-					"date_uploaded": "2019-10-23 13:27:2",
-					"checksum": "8c141b21ff34c1ec25c1855dafbe72d6b320aaa1a1c8dce70a055c3109803d999e3f5d820e6fe3306505d257715952cfbd72318e3a3b3992306ce039fb3bcdd2"
-				},
-				"testfile_109.fna": {
-					"size": 109247544,
-					"mime": "fasta",
-					"date_uploaded": "2019-11-4 15:42:13",
-					"checksum": "0223ec01aea1eb783b20c5dc9a36f780947618dc62941088fcee7a0abe3093ff21eeb3283e6b67ae19f3dff653290d49856d6ebb0fe9fc0e2a7e0146ef4ad8fe"
-				},
-				"microbe.fna": {
-					"size": 68873352,
-					"mime": "fasta",
-					"date_uploaded": "2019-11-5 21:6:5",
-					"checksum": "e688eb1c458def62d4d6ebd99f140719affc1496850dcd6bdd942cc4b0ab2e22439d6da773ca24cccae7b3c0b199432973e7a89e1a3089d6b10d5bd1af38baae"
-				}
 			},
 			"users": {
 				"0372838e2cf1f4a2b86997472300112a": "facility1"
