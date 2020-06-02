@@ -1,4 +1,4 @@
-# Data Delivery Portal -- **WIP**
+# Data Delivery System -- **WIP**
 A a single cloud-based system for all SciLifeLab facilities, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way. 
 
 The Delivery Portal consists of two components:
@@ -19,10 +19,10 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 	Ubuntu:  
 	https://docs.docker.com/install/linux/docker-ce/ubuntu/
 
-**2. In _dp_api_ folder**
+**2. In _DS_CLI_ folder**
 * Setup CLI: `pip3 install --editable .`
 
-**3. In root (Data-Delivery-Portal)** 
+**3. In root (Data-Delivery-System)** 
 * Build and run containers
 
 	```bash
