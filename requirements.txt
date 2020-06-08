@@ -1,6 +1,6 @@
 CouchDB==1.2
 PyMySQL==0.9.3
-PyYAML==5.1.2
+PyYAML==5.2
 tornado==6.0.3
 flowjs==0.1.1
 resumable==0.1.1
