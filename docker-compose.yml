@@ -22,19 +22,3 @@ services:
       - type: bind
         source: ./
         target: /Data-Delivery-Portal
-  # s3-backend:
-  #   command: server /data
-  #   container_name: s3
-  #   environment:
-  #     - MINIO_ACCESS_KEY=ElexirID
-  #     - MINIO_SECRET_KEY=987654321
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-  #     interval: 30s
-  #     timeout: 20s
-  #     retries: 3
-  #   image: minio/minio:RELEASE.2019-10-12T01-39-57Z
-  #   ports:
-  #     - "9000:9000"
-  #   volumes:
-  #     - "/tmp/data:/data"

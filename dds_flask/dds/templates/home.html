@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+
+<html>
+    <!-- HEAD START -->
+    <head>
+        <title>Data Delivery Portal</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!-- css links -->
+        <link rel="stylesheet" type="text/css"
+          href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+        <link rel="stylesheet" type="text/css"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css"
+          href="https://cdn.datatables.net/1.10.11/css/dataTables.bootstrap.min.css">
+        <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+        <!-- Scripts    defer: script will not run until page has loaded -->
+        <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+        <script defer src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script defer src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+        <script defer src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js"></script>
+        <script src="{{ url_for('static', filename='resumable.js') }}"></script>
+        <script src="{{ url_for('static', filename='flow.js') }}"></script>
+        <script src="{{ url_for('static', filename='flow.min.js') }}"></script>
+    </head>
+    <!-- HEAD END -->
+
+    <!-- BODY START -->
+    <body>
+        <!-- Header (Logo etc) Start -->
+        <div>
+            <img class="head_logo" src="{{ url_for('static', filename='data_centre_logo.png') }}">
+            <div class="arch"></div>
+            <div class="header">
+                <div class="header-title"> Data delivery portal </div>
+            </div>
+        </div>
+        <!-- Header (Logo etc) End -->
+      
+        <!-- Main div start -->
+        <div class="main">
+            {% block content %}
+            <div class="container">
+                <!-- Login form start -->
+       	        <div class="container login-container">
+       		        <div class="panel panel-default">
+                        <!-- "Sign In" -->
+       		            <div class="panel-heading text-center">
+       		                <span class="glyphicon glyphicon-user"></span>
+       			            Sign In
+       		            </div>
+
+                        <!-- Form -->
+       		            <div class="panel-body">
+       		                <form action="" role="form" method="post">
+                                <!-- Email -->
+                                <div class="form-group">
+               			            <label for="user_email">Username</label>
+               				        <input type="text" class="form-control" name="username" id="username"
+                                    placeholder="Enter your username" required pattern="[A-Za-z0-9]+" title="Upper- or lowercase letters, numbers 0-9">
+               					</div>
+                                <!-- Password -->
+       					        <div class="form-group">
+       						        <label for="password">Password</label>
+       						        <input type="password" class="form-control" name="password" id="password" placeholder="Password" 
+                                    required minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
+                                    title="Eight characters or more, at least one number, at least one uppercase, at least one lowercase">
+       					        </div>
+                                <!-- Button -->
+       					        <div class="form-group">
+       						        <button type="submit" class="btn btn-info btn-block">
+       							        <span class="glyphicon glyphicon-log-in"></span>
+       							        Login
+       						        </button>
+       					        </div>
+       				        </form>
+       			        </div>
+                        <!-- Form end -->
+       		        </div>
+       	        </div>
+                <!-- Login form end -->
+            </div>
+            {% endblock %}
+        </div>
+        <!-- Main div end -->      
+    </body>
+</html>

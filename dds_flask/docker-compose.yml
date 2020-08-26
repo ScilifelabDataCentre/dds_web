@@ -1,0 +1,25 @@
+version: "3.2"
+services:
+  db:
+    build:
+      context: ./
+      dockerfile: Dockerfile-database
+    volumes:
+      - ./db-data:/data/db
+    ports:
+      - 127.0.0.1:3306:3306
+  backend:
+    environment:
+      - DDS_SETTINGS_FILEPATH=/code/settings.json
+    build:
+      context: ./
+      dockerfile: Dockerfile-backend
+    depends_on:
+      - db
+    restart: on-failure
+    ports:
+      - 127.0.0.1:5000:5000
+    volumes:
+      - type: bind
+        source: .
+        target: /code

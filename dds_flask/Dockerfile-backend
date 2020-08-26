@@ -1,0 +1,11 @@
+FROM python:latest
+
+COPY ./dds/requirements.txt /requirements.txt
+
+RUN pip3 install -r /requirements.txt
+
+RUN mkdir /code
+
+WORKDIR /code/dds
+
+CMD ["python3", "app.py"]
