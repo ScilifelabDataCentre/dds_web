@@ -1,92 +1,66 @@
 <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <title>Data Delivery System</title>
+  </head>
 
-<html>
-    <!-- HEAD START -->
-    <head>
-        <title>Data Delivery Portal</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-        <!-- css links -->
-        <link rel="stylesheet" type="text/css"
-          href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
-        <link rel="stylesheet" type="text/css"
-          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-        <link rel="stylesheet" type="text/css"
-          href="https://cdn.datatables.net/1.10.11/css/dataTables.bootstrap.min.css">
-        <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-        <!-- Scripts    defer: script will not run until page has loaded -->
-        <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-        <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
-        <script defer src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-        <script defer src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
-        <script defer src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js"></script>
-        <script src="{{ url_for('static', filename='resumable.js') }}"></script>
-        <script src="{{ url_for('static', filename='flow.js') }}"></script>
-        <script src="{{ url_for('static', filename='flow.min.js') }}"></script>
-    </head>
-    <!-- HEAD END -->
-
-    <!-- BODY START -->
-    <body>
-        <!-- Header (Logo etc) Start -->
-        <div>
-            <img class="head_logo" src="{{ url_for('static', filename='data_centre_logo.png') }}">
-            <div class="arch"></div>
-            <div class="header">
-                <div class="header-title"> Data delivery portal </div>
-            </div>
-        </div>
-        <!-- Header (Logo etc) End -->
+  <body>
+    <div class="container">
       
-        <!-- Main div start -->
-        <div class="main">
-            {% block content %}
-            <div class="container">
-                <!-- Login form start -->
-       	        <div class="container login-container">
-       		        <div class="panel panel-default">
-                        <!-- "Sign In" -->
-       		            <div class="panel-heading text-center">
-       		                <span class="glyphicon glyphicon-user"></span>
-       			            Sign In
-       		            </div>
-
-                        <!-- Form -->
-       		            <div class="panel-body">
-       		                <form action="" role="form" method="post">
-                                <!-- Email -->
-                                <div class="form-group">
-               			            <label for="user_email">Username</label>
-               				        <input type="text" class="form-control" name="username" id="username"
-                                    placeholder="Enter your username" required pattern="[A-Za-z0-9]+" title="Upper- or lowercase letters, numbers 0-9">
-               					</div>
-                                <!-- Password -->
-       					        <div class="form-group">
-       						        <label for="password">Password</label>
-       						        <input type="password" class="form-control" name="password" id="password" placeholder="Password" 
-                                    required minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
-                                    title="Eight characters or more, at least one number, at least one uppercase, at least one lowercase">
-       					        </div>
-                                <!-- Button -->
-       					        <div class="form-group">
-       						        <button type="submit" class="btn btn-info btn-block">
-       							        <span class="glyphicon glyphicon-log-in"></span>
-       							        Login
-       						        </button>
-       					        </div>
-       				        </form>
-       			        </div>
-                        <!-- Form end -->
-       		        </div>
-       	        </div>
-                <!-- Login form end -->
-            </div>
-            {% endblock %}
+      <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img class="head_logo" src="{{ url_for('static', filename='img/data_centre_logo.png') }}">
+            <h1>Data Delivery System</h1>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExample01" aria-controls="navbarsExample01" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarsExample01">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Link</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link disabled" href="#">Disabled</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+              <div class="dropdown-menu" aria-labelledby="dropdown01">
+                <a class="dropdown-item" href="#">Action</a>
+                <a class="dropdown-item" href="#">Another action</a>
+                <a class="dropdown-item" href="#">Something else here</a>
+              </div>
+            </li>
+          </ul>
         </div>
-        <!-- Main div end -->      
-    </body>
+      </nav>
+
+      <main role="main">
+        <div class="jumbotron" style="background: #f0f0f0;">
+          <div class="col-sm-8 mx-auto">
+            <h1>Information about the DS</h1>
+            <p>
+              This is some information about the Delivery System and maybe a <a href="#">link</a> to the login page. 
+              There could also be some information on how to use the CLI <code>ds_deliver</code>.
+            </p>
+          </div>
+        </div>
+      </main>
+
+    </div>
+
+
+    
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+  </body>
 </html>
