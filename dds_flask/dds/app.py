@@ -34,6 +34,12 @@ def home():
     return render_template('home.html')
 
 
+@app.route('/login')
+def login():
+    """Login"""
+    return render_template('home.html')
+
+
 # Register blueprints for URL mapping
 app.register_blueprint(user.blueprint, url_prefix='/user')
 app.register_blueprint(api.blueprint, url_prefix="/api/v1")

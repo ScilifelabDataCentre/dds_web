@@ -1,4 +1,4 @@
-/* Page body */
+/* Page body
 a.panel-link {
   text-decoration: none;
   color: #000000;
@@ -18,16 +18,16 @@ body {
 }
 
 /* Arch between SciLifeLab and 'Data delivery' - area */
-div.arch {
+/* div.arch {
     height: 80px;
     width: 40px;
     background-color: #ffffff;
     border-radius: 0px 40px 40px 0px;
     float: left;
-}
+} */
 
 /* 'Data delivery' area */
-div.header {
+/* div.header {
     height: 80px;
     width: 100%;
     text-align: center;
@@ -37,18 +37,18 @@ div.header {
     border-radius: 40px;
     font-family: 'Book Antiqua';
     font-size: 36px;
-}
+} */
 
 /* Login form */
-div.login-container{
+/* div.login-container{
   width: 50%;
   max-width: 700px;
-}
+} */
 
-div.panel-group {
+/* div.panel-group {
   margin-left: 200px;
 
-}
+} */ 
 
 /* SciLifeLab logo */
 img.head_logo {
@@ -57,11 +57,11 @@ img.head_logo {
     float: left;
 }
 
-div.newfiles {
+/* div.newfiles {
   display: inline-block;
-}
+} */
 
-.projtable {
+/* .projtable {
   font-size: 15px;
 }
 
@@ -92,55 +92,55 @@ div.newfiles {
 .sidenav a:active {
   color: inherit;
   background-color: #8ee27f;
-}
+} */
 
-.main {
+/* .main {
   margin-top: 20px;
-  margin-left: 200px; /* Same as the width of the sidenav */
+  margin-left: 200px; Same as the width of the sidenav
   padding: 0px 10px;
   font-size: 20px;
-}
-
+} */
+/* 
 @media screen and (max-height: 450px) {
   .sidenav {padding-top: 15px;}
   .sidenav a {font-size: 18px;}
-}
+} */
 
 /* All tables */
-table {
+/* table {
   table-layout: auto;
   border-collapse: collapse;
   width: 100%;
-}
+} */
 
-table.table-finished, table.table-pending {
+/* table.table-finished, table.table-pending {
   font-size: 15px;
   table-layout: auto;
   width: 100%;
-}
+} */
 
-table.table-finished td, table.table-pending td,
+/* table.table-finished td, table.table-pending td,
 table.table-finished tr, table.table-pending tr {
   white-space:nowrap;
   padding-right: 50px;
-}
+} */
 
 /* All table headers and cells */
-th, td {
+/* th, td {
   text-align: left;
   padding: 8px;
-}
+} */
 
 /* Project information table in collapsible */
-th.subtable{
+/* th.subtable{
   font-style: italic;
-}
+} */
 
-tr.spaceUnder {
+/* tr.spaceUnder {
   padding-bottom: 20em;
-}
+} */
 
-div.col-sm-4 td{
+/* div.col-sm-4 td{
   max-width: 200px;
   overflow-wrap: break-word;
-}
+} */
