@@ -14,10 +14,12 @@ config.configit(app)
 
 #import pdb; pdb.set_trace()
 
+
 @app.context_processor
 def global_template_context():
     """Add functions to be available in template context"""
     return dict(get_csrf_token=utils.get_csrf_token)
+
 
 @app.before_request
 def prepare():
@@ -25,10 +27,12 @@ def prepare():
     g.current_user = "tester"
     g.db = mariadb.connect(**app.config['DB'])
 
+
 @app.route('/')
 def home():
     """Home Page"""
     return render_template('home.html')
+
 
 # Register blueprints for URL mapping
 app.register_blueprint(user.blueprint, url_prefix='/user')

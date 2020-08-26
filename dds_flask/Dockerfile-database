@@ -1,7 +1,10 @@
+# Set official image
 FROM mariadb:latest
 
+# Postgres script?
 COPY sql/* /docker-entrypoint-initdb.d/
 
+# Set variables for db log in
 ENV MYSQL_ROOT_PASSWORD rootpwd
 ENV MYSQL_USER apiuser
 ENV MYSQL_PASSWORD apipass
