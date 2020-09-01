@@ -1,7 +1,11 @@
 # Defines base image to start the build process from
-FROM couchdb:latest
+FROM mariadb:latest
+
+# Copy file from <src> (code/sql/*) to <dest> (/docker-entrypoint-initdb.d/)
+COPY code/sql/* /docker-entrypoint-initdb.d/
 
 # Sets the environment variables (one or more)
-ENV COUCHDB_USER delport
-ENV COUCHDB_PASSWORD delport
-ENV COUCHDB_SECRET secret
+ENV MYSQL_ROOT_PASSWORD rootpwd
+ENV MYSQL_USER apiuser
+ENV MYSQL_PASSWORD apipass
+ENV MYSQL_DATABASE DeliverySystem

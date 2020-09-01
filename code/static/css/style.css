@@ -1,0 +1,27 @@
+img.head_logo {
+    width: 80%;
+    float: left;
+    margin-left: 10px;
+  }
+  
+  div.navbar-brand {
+    display: inline-block;
+    padding-top: 0%;
+  }
+  
+  body {
+    font-family: Lora !important;
+  }
+  
+  h1.title {
+    font-size: 60px;
+    text-indent: 60px;
+    display: inline-block;
+    margin-top: 11px;
+  }
+  
+  button.navbar-toggler {
+    /* display: inline-block; */
+    float: right;
+    margin-top: 20px;
+  }
