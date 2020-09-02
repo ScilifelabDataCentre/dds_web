@@ -7,11 +7,8 @@ services:
     restart: on-failure
     volumes:
       - ./db-data:/data/db
-      # - ./couchdb-data:/opt/couchdb/data
     ports:
-      # - 5984:5984
       - 127.0.0.1:3306:3306
-  # web:
   backend:
     environment: 
       - DDS_SETTINGS_FILEPATH=/code/settings.json
@@ -22,7 +19,6 @@ services:
       - db
     restart: on-failure
     ports:
-      # - 8888:8888
       - 127.0.0.1:5000:5000
     volumes:
       - type: bind
