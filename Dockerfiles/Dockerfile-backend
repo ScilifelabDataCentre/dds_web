@@ -6,6 +6,7 @@ COPY requirements.txt /requirements.txt
 
 # Set as development environment
 ENV FLASK_ENV development
+ENV PYTHONPATH /code
 
 # Install all dependencies
 RUN pip3 install -r /requirements.txt
