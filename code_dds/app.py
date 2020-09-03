@@ -2,13 +2,17 @@
 
 from flask import Flask, g, render_template
 
-import api
+# import api
 import config
 import mariadb
 import user
 import utils
 
 app = Flask(__name__)
+
+# Add URL map converters.
+app.url_map.converters["name"] = utils.NameConverter
+app.url_map.converters["iuid"] = utils.IuidConverter
 
 config.configit(app)
 
@@ -42,7 +46,7 @@ def login():
 
 # Register blueprints for URL mapping
 app.register_blueprint(user.blueprint, url_prefix='/user')
-app.register_blueprint(api.blueprint, url_prefix="/api/v1")
+# app.register_blueprint(api.blueprint, url_prefix="/api/v1")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
