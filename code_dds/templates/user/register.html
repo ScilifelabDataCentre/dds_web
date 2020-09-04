@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Register a user account{% endblock %}
+
+{% block body_title %}Register a user account{% endblock %}
+
+{% block main %}
+<form action="{{ url_for('.register') }}"
+      method="POST">
+  {{ csrf_token() }}
+  <div class="form-group row">
+    <label for="username" class="col-md-2 col-form-label text-right">
+      User name</label>
+    <div class="col-md">
+      <div class="row">
+        <div class="col-md-4">
+          <input type="text" id="username" name="username"
+                 class="form-control"
+                 aria-describedby="usernameHelp">
+        </div>
+      </div>
+      <small id="usernameHelp" class="form-text text-muted">
+        <strong>Required!</strong>
+        The identifier for the user account. It must start with a
+	letter and continue with letters, digits, underscore or dash
+	characters. It must be unique within the site. It cannot be
+	changed once set.
+      </small>
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="email" class="col-md-2 col-form-label text-right">Email</label>
+    <div class="col-md">
+      <div class="row">
+        <div class="col-md-6">
+          <input type="text" id="email" name="email"
+                 class="form-control"
+                 aria-describedby="emailHelp">
+        </div>
+      </div>
+      <small id="emailHelp" class="form-text text-muted">
+        <strong>Required!</strong>
+	A valid email address for the user. The password setting code
+	will be sent to this address. It must be unique within the
+	site.
+      </small>
+    </div>
+  </div>
+  {% if g.am_admin or not config['MAIL_SERVER'] %}
+  <div class="form-group row">
+    <label for="password" class="col-md-2 col-form-label text-right">
+      Password</label>
+    <div class="col-md">
+      <div class="row">
+        <div class="col-md-6">
+          <input type="password" id="password" name="password"
+                 class="form-control"
+                 aria-describedby="passwordHelp">
+        </div>
+      </div>
+      <small id="passwordHelp" class="form-text text-muted">
+        The password must contain at least
+        {{ config['MIN_PASSWORD_LENGTH'] }} characters.
+        {% if g.am_admin %}
+        <br>
+        No email with a password setting code will be sent to the user
+        if the password is set here.
+        {% endif %}
+      </small>
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="confirm_password" class="col-md-2 col-form-label text-right">
+      Confirm password</label>
+    <div class="col-md">
+      <div class="row">
+        <div class="col-md-6">
+          <input type="password" id="confirm_password" name="confirm_password"
+                 class="form-control"
+                 aria-describedby="confirm_passwordHelp">
+        </div>
+      </div>
+      <small id="confirm_passwordHelp" class="form-text text-muted">
+        Confirm the password, to safeguard against typographical mistakes.
+      </small>
+    </div>
+  </div>
+  {% endif %}
+  <div class="form-group row">
+    <div class="col-md-3 offset-md-2">
+      <button type="submit" class="btn btn-block btn-primary">Register</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

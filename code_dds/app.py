@@ -65,7 +65,7 @@ def prepare():
     #     flask.g.current_user["role"] == constants.ADMIN
 
 
-app.after_request(utils.log_access)
+# app.after_request(utils.log_access)
 
 
 @app.route("/")

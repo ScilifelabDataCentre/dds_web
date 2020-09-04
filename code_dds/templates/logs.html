@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block head_title %}{{ title }} logs{% endblock %}
+
+{% block body_title %}{{ title }} logs{% endblock %}
+
+{% block main %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>User</th>
+      <th>Remote address</th>
+      <th>User agent</th>
+      <th>Added keys</th>
+      <th>Updated items</th>
+      <th>Removed items</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for log in logs %}
+    <tr>
+      <td class="localtime">{{ log['timestamp'] }}</td>
+      <td>{{ log['username'] or '-' }}</td>
+      <td>{{ log['remote_addr'] or '-' }}</td>
+      <td>{{ log['user_agent'] or '-' }}</td>
+      <td><pre>{{ log['added'] | tojson(indent=2) }}</pre></td>
+      <td><pre>{{ log['updated'] | tojson(indent=2) }}</pre></td>
+      <td><pre>{{ log['removed'] | tojson(indent=2) }}</pre></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block meta %}
+<div class="py-1">
+  <div>
+    <a href="{{ api_logs_url }}" class="badge badge-pill badge-dark">API</a>
+  </div>
+</div>
+{% endblock %} {# block meta #}
+
+{% block actions %}
+<div>
+  <a href="{{ cancel_url }}" 
+     role="button" class="btn btn-secondary btn-block">Back</a>
+</div>
+{% endblock %} {# block actions #}
