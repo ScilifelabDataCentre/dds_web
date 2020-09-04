@@ -1,40 +1,51 @@
 "Web app template."
 
-import flask
-import jinja2
+# IMPORTS ########################################################### IMPORTS #
 
+# Standard library
+
+# Installed
+from flask import (Flask, g, redirect, render_template, request, url_for)
+import jinja2
 import mariadb
+
+# Own modules
+from code_dds import constants
+from code_dds import utils
 
 import code_dds.about
 import code_dds.config
 import code_dds.user
 import code_dds.site
-# To be developed.
-# import code_dds.entity
 
 import code_dds.api.about
 import code_dds.api.root
 import code_dds.api.schema
 import code_dds.api.user
-from code_dds import constants
-from code_dds import utils
 
-app = flask.Flask(__name__)
+# CONFIG ############################################################# CONFIG #
 
-# Add URL map converters.
+app = Flask(__name__)
+
+# URL map converters - "xxx" will result in that xxx can be used in @app.route
 app.url_map.converters["name"] = utils.NameConverter
 app.url_map.converters["iuid"] = utils.IuidConverter
 
-# Get the configuration, and initialize modules (database).
+# Get and initialize app configuration
 code_dds.config.init(app)
 # utils.init(app)
 # code_dds.user.init(app)
 # utils.mail.init_app(app)
 
-# Add template filters.
+# Add template filters - "converts" integers with thousands delimiters
 app.add_template_filter(utils.thousands)
 
 
+# Context processors injects new variables automatically into the context of a
+# template. Runs before the template is rendered.
+# Returns a dictionary. Keys and values are merged with the template context
+# for all templates in the app. In this case: the constants and the function
+# csrf_token.
 @app.context_processor
 def setup_template_context():
     "Add useful stuff to the global context of Jinja2 templates."
@@ -42,25 +53,28 @@ def setup_template_context():
                 csrf_token=utils.csrf_token)
 
 
+# Registers a function to run before >>each<< request
 @app.before_request
 def prepare():
     "Open the database connection; get the current user."
-    flask.g.db = mariadb.connect(**app.config['DB'])
-    flask.g.current_user = "tester"
+    g.db = mariadb.connect(**app.config['DB'])
+    g.current_user = "tester"
+    # flask.g.db = utils.get_db()
+    # flask.g.current_user = webapp.user.get_current_user()
     # flask.g.am_admin = flask.g.current_user and \
     #     flask.g.current_user["role"] == constants.ADMIN
 
 
-# app.after_request(utils.log_access)
+app.after_request(utils.log_access)
 
 
 @app.route("/")
 def home():
     "Home page. Redirect to API root if JSON is accepted."
     if utils.accept_json():
-        return flask.redirect(flask.url_for("api_root"))
+        return redirect(url_for("api_root"))
     else:
-        return flask.render_template("home.html")
+        return render_template("home.html")
 
 
 @app.route("/debug")
@@ -70,12 +84,12 @@ def debug():
     result = [f"<h1>Debug  {constants.VERSION}</h2>"]
     result.append("<h2>headers</h2>")
     result.append("<table>")
-    for key, value in sorted(flask.request.headers.items()):
+    for key, value in sorted(request.headers.items()):
         result.append(f"<tr><td>{key}</td><td>{value}</td></tr>")
     result.append("</table>")
     result.append("<h2>environ</h2>")
     result.append("<table>")
-    for key, value in sorted(flask.request.environ.items()):
+    for key, value in sorted(request.environ.items()):
         result.append(f"<tr><td>{key}</td><td>{value}</td></tr>")
     result.append("</table>")
     return jinja2.utils.Markup("\n".join(result))

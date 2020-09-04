@@ -1,5 +1,7 @@
 "Various utility functions and classes."
 
+# IMPORTS ########################################################### IMPORTS #
+
 import datetime
 import functools
 import http.client
@@ -9,13 +11,15 @@ import sqlite3
 import time
 import uuid
 
-import flask
+from flask import (abort, current_app, flash, g, jsonify, request, redirect,
+                   session, url_for)
 # import flask_mail
 import jinja2.utils
 import werkzeug.routing
 
 from code_dds import constants
 
+# CONFIG ############################################################# CONFIG #
 
 # def init(app):
 #     "Initialize the database; create logs table."
@@ -38,56 +42,56 @@ from code_dds import constants
 # Global logger instance.
 # _logger = None
 
+# FUNCTIONS ####################################################### FUNCTIONS #
 
-# def get_logger():
-#     global _logger
-#     if _logger is None:
-#         config = flask.current_app.config
-#         _logger = logging.getLogger(config["LOG_NAME"])
-#         if config["LOG_DEBUG"]:
-#             _logger.setLevel(logging.DEBUG)
-#         else:
-#             _logger.setLevel(logging.WARNING)
-#         if config["LOG_FILEPATH"]:
-#             if config["LOG_ROTATING"]:
-#                 loghandler = logging.TimedRotatingFileHandler(
-#                     config["LOG_FILEPATH"],
-#                     when="midnight",
-#                     backupCount=config["LOG_ROTATING"])
-#             else:
-#                 loghandler = logging.FileHandler(config["LOG_FILEPATH"])
-#         else:
-#             loghandler = logging.StreamHandler()
-#         loghandler.setFormatter(logging.Formatter(config["LOG_FORMAT"]))
-#         _logger.addHandler(loghandler)
-#     return _logger
+def get_logger():
+    global _logger
+    if _logger is None:
+        config = current_app.config
+        _logger = logging.getLogger(config["LOG_NAME"])
+        if config["LOG_DEBUG"]:
+            _logger.setLevel(logging.DEBUG)
+        else:
+            _logger.setLevel(logging.WARNING)
+        if config["LOG_FILEPATH"]:
+            if config["LOG_ROTATING"]:
+                loghandler = logging.TimedRotatingFileHandler(
+                    config["LOG_FILEPATH"],
+                    when="midnight",
+                    backupCount=config["LOG_ROTATING"])
+            else:
+                loghandler = logging.FileHandler(config["LOG_FILEPATH"])
+        else:
+            loghandler = logging.StreamHandler()
+        loghandler.setFormatter(logging.Formatter(config["LOG_FORMAT"]))
+        _logger.addHandler(loghandler)
+    return _logger
 
 
-# def log_access(response):
-#     "Record access using the logger."
-#     if flask.g.current_user:
-#         username = flask.g.current_user["username"]
-#     else:
-#         username = None
-#     get_logger().debug(f"{flask.request.remote_addr} {username}"
-#                        f" {flask.request.method} {flask.request.path}"
-#                        f" {response.status_code}")
-#     return response
+def log_access(response):
+    "Record access using the logger."
+    if g.current_user:
+        username = g.current_user["username"]
+    else:
+        username = None
+    get_logger().debug(f"{request.remote_addr} {username}"
+                       f" {request.method} {request.path}"
+                       f" {response.status_code}")
+    return response
 
 
 # Global instance of mail interface.
 # mail = flask_mail.Mail()
 
+
 # Decorators for endpoints
-
-
 def login_required(f):
     "Decorator for checking if logged in. Send to login page if not."
     @functools.wraps(f)
     def wrap(*args, **kwargs):
-        if not flask.g.current_user:
-            url = flask.url_for("user.login", next=flask.request.base_url)
-            return flask.redirect(url)
+        if not g.current_user:
+            url = url_for("user.login", next=request.base_url)
+            return redirect(url)
         return f(*args, **kwargs)
     return wrap
 
@@ -98,8 +102,8 @@ def admin_required(f):
     """
     @functools.wraps(f)
     def wrap(*args, **kwargs):
-        if not flask.g.am_admin:
-            flask.abort(http.client.UNAUTHORIZED)
+        if not g.am_admin:
+            abort(http.client.UNAUTHORIZED)
         return f(*args, **kwargs)
     return wrap
 
@@ -164,19 +168,19 @@ def get_time(offset=None):
 
 def url_for(endpoint, **values):
     "Same as 'flask.url_for', but with '_external' set to True."
-    return flask.url_for(endpoint, _external=True, **values)
+    return url_for(endpoint, _external=True, **values)
 
 
 def http_GET():
     "Is the HTTP method GET?"
-    return flask.request.method == "GET"
+    return request.method == "GET"
 
 
 def http_POST(csrf=True):
     "Is the HTTP method POST? Check whether used for method tunneling."
-    if flask.request.method != "POST":
+    if request.method != "POST":
         return False
-    if flask.request.form.get("_http_method") in (None, "POST"):
+    if request.form.get("_http_method") in (None, "POST"):
         if csrf:
             check_csrf_token()
         return True
@@ -186,17 +190,17 @@ def http_POST(csrf=True):
 
 def http_PUT():
     "Is the HTTP method PUT? Is not tunneled."
-    return flask.request.method == "PUT"
+    return request.method == "PUT"
 
 
 def http_DELETE(csrf=True):
     "Is the HTTP method DELETE? Check for method tunneling."
-    if flask.request.method == "DELETE":
+    if request.method == "DELETE":
         return True
-    if flask.request.method == "POST":
+    if request.method == "POST":
         if csrf:
             check_csrf_token()
-        return flask.request.form.get("_http_method") == "DELETE"
+        return request.form.get("_http_method") == "DELETE"
     else:
         return False
 
@@ -204,29 +208,29 @@ def http_DELETE(csrf=True):
 def csrf_token():
     """Output HTML for cross-site request forgery (CSRF) protection."""
     # Generate a token to last the session's lifetime.
-    if "_csrf_token" not in flask.session:
-        flask.session["_csrf_token"] = get_iuid()
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = get_iuid()
     html = '<input type="hidden" name="_csrf_token" value="%s">' % \
-           flask.session["_csrf_token"]
+           session["_csrf_token"]
     return jinja2.utils.Markup(html)
 
 
 def check_csrf_token():
     "Check the CSRF token for POST HTML."
     # Do not use up the token; keep it for the session's lifetime.
-    token = flask.session.get("_csrf_token", None)
-    if not token or token != flask.request.form.get("_csrf_token"):
-        flask.abort(http.client.BAD_REQUEST)
+    token = session.get("_csrf_token", None)
+    if not token or token != request.form.get("_csrf_token"):
+        abort(http.client.BAD_REQUEST)
 
 
 def flash_error(msg):
     "Flash error message."
-    flask.flash(str(msg), "error")
+    flash(str(msg), "error")
 
 
 def flash_message(msg):
     "Flash information message."
-    flask.flash(str(msg), "message")
+    flash(str(msg), "message")
 
 
 def thousands(value):
@@ -239,7 +243,7 @@ def thousands(value):
 
 def accept_json():
     "Return True if the header Accept contains the JSON content type."
-    acc = flask.request.accept_mimetypes
+    acc = request.accept_mimetypes
     best = acc.best_match([constants.JSON_MIMETYPE, constants.HTML_MIMETYPE])
     return best == constants.JSON_MIMETYPE and \
         acc[best] > acc[constants.HTML_MIMETYPE]
@@ -247,7 +251,7 @@ def accept_json():
 
 def get_json(**data):
     "Return the JSON structure after fixing up for external representation."
-    result = {"$id": flask.request.url,
+    result = {"$id": request.url,
               "timestamp": get_time()}
     try:
         result["iuid"] = data.pop("_id")
@@ -262,7 +266,7 @@ def get_json(**data):
 def jsonify(result, schema_url=None):
     """Return a Response object containing the JSON of 'result'.
     Optionally add a header Link to the schema."""
-    response = flask.jsonify(result)
+    response = jsonify(result)
     if schema_url:
         response.headers.add("Link", schema_url, rel="schema")
     return response
@@ -271,7 +275,7 @@ def jsonify(result, schema_url=None):
 def get_db(app=None):
     "Get the connection to the Sqlite3 database file."
     if app is None:
-        app = flask.current_app
+        app = current_app
     db = sqlite3.connect(app.config["SQLITE3_FILE"])
     db.row_factory = sqlite3.Row
     return db
@@ -281,7 +285,7 @@ def get_logs(docid):
     """Return the list of log entries for the given document identifier,
     sorted by reverse timestamp.
     """
-    cursor = flask.g.db.cursor()
+    cursor = g.db.cursor()
     cursor.execute("SELECT added, updated, removed, username,"
                    " remote_addr, user_agent, timestamp"
                    " FROM logs WHERE docid=?"
