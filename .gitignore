@@ -14,4 +14,4 @@ testfile*
 files
 test*
 dp_venv
-settings.json
+*settings.json*
