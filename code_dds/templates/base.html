@@ -1,188 +1,75 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block head_title %}{{ config['SITE_NAME'] }}{% endblock %}</title>
-    {% if config['SITE_ICON'] %}
-    <link rel="icon" href="{{ url_for('site.static', filename=config['SITE_ICON']) }}">
-    {% else %}
-    <link rel="icon" href="{{ url_for('static', filename='logo32.png') }}">
-    {% endif %}
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" 
-	  integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
-	  crossorigin="anonymous"
-	  rel="stylesheet">
-    <link href="https://cdn.datatables.net/1.10.18/css/dataTables.bootstrap4.min.css" 
-	  rel="stylesheet">
-    {% block style %}
-    {% endblock %}
-  </head>
-  <body>
-    <nav class="navbar navbar-expand-md navbar-light"
-         style="background-color: #e8e8e8;">
-      <a class="navbar-brand" href="{{ url_for('home') }}">
-        <img width="32" height="32" class="d-inline-block align-top"
-	     {% if config['SITE_LOGO'] %}
-	     src="{{ url_for('site.static', filename=config['SITE_LOGO']) }}"
-	     {% else %}
-	     src="{{ url_for('static', filename='logo32.png') }}"
-             {% endif %}
-	     title="{{ config['SITE_NAME'] }}" alt="{{ config['SITE_NAME'] }}">
-        {{ config['SITE_NAME'] }}</a>
-      <button type="button" class="navbar-toggler navbar-toggler-right"
-              data-toggle="collapse" data-target="#top_navbar"
-              aria-controls="top_navbar" aria-expanded="false"
-              aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="top_navbar">
-        <ul class="navbar-nav mr-auto">
-          {% if g.am_admin %}
-          <li class="nav-item dropdown">
-            <a href="#" id="navbarAdmin" class="nav-link dropdown-toggle pr-4"
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">Admin</a>
-            <div class="dropdown-menu" aria-labelledby="navbarAdmin">
-              <a class="dropdown-item"
-                 href="{{ url_for('user.all') }}">All users</a>
-              <a class="dropdown-item"
-                 href="{{ url_for('user.register') }}">Register user</a>
-              <a class="dropdown-item"
-                 href="{{ url_for('about.settings') }}">Settings</a>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+            integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
+            crossorigin="anonymous">
+        <!-- <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet'> -->
+        <link rel="stylesheet" href="{{ url_for('static',
+            filename='css/style.css') }}">
+        <title>Data Delivery System</title>
+    </head>
+
+    <body>
+
+        <nav class="navbar navbar-light bg-light">
+           <!-- Should also add a if g.am_admin here somewhere -->
+            <div class="navbar-brand" href="#">
+                <img class="head_logo" src="{{ url_for('static',
+                    filename='img/logo_and_title_lora.png') }}">
+                <button class="navbar-toggler" type="button"
+                    data-toggle="collapse" data-target="#navbarsExample01"
+                    aria-controls="navbarsExample01" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
             </div>
-          </li>
-          {% endif %} {# if g.am_admin #}
-        </ul>
 
-        <ul class="navbar-nav justify-content-end">
-          <li class="nav-item dropdown">
-            <a href="#" id="navbarAbout" class="nav-link dropdown-toggle"
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">About</a>
-            <div class="dropdown-menu" aria-labelledby="navbarAbout">
-              <a class="nav-link"
-                 href="{{ url_for('about.software') }}">Software</a>
-	    </div>
-          </li>
 
-          <li class="mx-1">
-            {% if g.current_user %}
-            <a href="{{ url_for('user.display', username=g.current_user['username']) }}"
-	       role="button" class="btn btn-outline-secondary my-2 my-sm-0">
-              User {{ g.current_user['username'] }}</a>
-            {% else %}
-            <form action="{{ url_for('user.login') }}"
-                  class="form-inline my-2 my-sm-0"
-                  method="GET">
-              <input type="hidden" name="next" value="{{ request.url }}">
-              <button class="btn btn-secondary">Login</button>
-            </form>
-            {% endif %}
-          </li>
-        </ul>
-      </div>
-    </nav>
+            <div class="collapse navbar-collapse" id="navbarsExample01">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Log In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link disabled" href="#">Disabled</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#"
+                            id="dropdown01" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">Dropdown</a>
+                        <div class="dropdown-menu"
+                            aria-labelledby="dropdown01">
+                            <a class="dropdown-item" href="#">Action</a>
+                            <a class="dropdown-item" href="#">Another action</a>
+                            <a class="dropdown-item" href="#">Something else
+                                here</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
 
-    <div class="container-fluid">
-      {% block flash %}
-      <div class="row">
-        <div class="col-md">
-          {% for msg in get_flashed_messages(category_filter=['error']) %}
-          <div class="alert alert-danger mt-1" role="alert">
-            <strong>Error:</strong> {{ msg }}
-          </div>
-          {% endfor %}
-          {% for msg in get_flashed_messages(category_filter=['message']) %}
-          <div class="alert alert-warning mt-1" role="alert">
-            {{ msg }}
-          </div>
-          {% endfor %}
+        <div class="container" style="background: white;">
+            {% block body %}{% endblock %}
         </div>
-      </div>
-      {% endblock %} {# block flash #}
-      {% block header %}
-      <div class="row">
-        <div class="col-md-9 offset-md-1">
-          <h2 class="mt-2 mb-3">{% block body_title %}{{ config['SITE_NAME'] }}{% endblock %}</h2>
-        </div>
-        <div class="col-md-2 py-1">
-          {% block meta %}
-          {% endblock %}
-        </div>
-      </div>
-      {% endblock %} {# block header #}
 
-      {% block supermain %}
-      <div class="row">
-        <div class="col-md-10">
-          {% block main %}
-          {% endblock %}
-        </div>
-        <div class="col-md-2">
-          <div>
-            {% block links %}
-            {% endblock %}
-          </div>
-          <div>
-            {% block actions %}
-            {% endblock %}
-          </div>
-          <div>
-            {% block info %}
-            {% endblock %}
-          </div>
-        </div>
-      </div>
-      {% endblock %} {# block supermain #}
-
-      {% block footer %}
-      <hr>
-      <div class="row">
-        <div class="col-md-4">
-          {% if config['HOST_URL'] %}
-          <a href="{{ config['HOST_URL'] }}">
-            {% if config['HOST_LOGO'] %}
-            <img src="{{ url_for('site.static',filename=config['HOST_LOGO']) }}"
-                 title="{{ config['HOST_NAME'] or '' }}">
-            {% else %}
-            {{ config['HOST_NAME'] or '' }}
-            {% endif %}
-          </a>
-          {% else %}
-          {% if config['HOST_LOGO'] %}
-          <img src="{{ url_for('site.static', filename=config['HOST_LOGO']) }}"
-               title="{{ config['HOST_NAME'] or '' }}">
-          {% else %}
-          {{ config['HOST_NAME'] or '' }}
-          {% endif %}
-          {% endif %}
-        </div>
-        <div class="col-md-4 offset-md-4 text-right">
-          <a href="{{ constants.SOURCE_URL }}">
-            <img src="{{ url_for('static', filename='logo32.png') }}"
-		 width="32" height="32">
-	    {{ constants.SOURCE_NAME }}
-	  </a>
-	  version {{ constants.VERSION }}
-        </div>
-      </div>
-      {% endblock %} {# block footer #}
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" 
-	    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-	    crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" 
-	    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-	    crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" 
-	    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-	    crossorigin="anonymous"></script>
-    <script src="https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js"></script>
-    <script src="{{ url_for('static', filename='jquery.localtime-0.9.1.min.js') }}"></script>
-    {% block javascript %}
-    {% endblock %}
-  </body>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+            integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+            crossorigin="anonymous"></script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+            integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+            crossorigin="anonymous"></script>
+        <script
+            src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+            integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+            crossorigin="anonymous"></script>
+    </body>
 </html>

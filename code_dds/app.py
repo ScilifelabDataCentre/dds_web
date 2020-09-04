@@ -70,42 +70,44 @@ def prepare():
 
 @app.route("/")
 def home():
-    "Home page. Redirect to API root if JSON is accepted."
-    if utils.accept_json():
-        return redirect(url_for("api_root"))
-    else:
-        return render_template("home.html")
+    """Home page."""
+    return render_template("home.html")
 
 
-@app.route("/debug")
-@utils.admin_required
-def debug():
-    "Return some debug info for admin."
-    result = [f"<h1>Debug  {constants.VERSION}</h2>"]
-    result.append("<h2>headers</h2>")
-    result.append("<table>")
-    for key, value in sorted(request.headers.items()):
-        result.append(f"<tr><td>{key}</td><td>{value}</td></tr>")
-    result.append("</table>")
-    result.append("<h2>environ</h2>")
-    result.append("<table>")
-    for key, value in sorted(request.environ.items()):
-        result.append(f"<tr><td>{key}</td><td>{value}</td></tr>")
-    result.append("</table>")
-    return jinja2.utils.Markup("\n".join(result))
+@app.route('/login')
+def login():
+    """Login"""
+    return render_template('home.html')
+    
+# @app.route("/debug")
+# @utils.admin_required
+# def debug():
+#     "Return some debug info for admin."
+#     result = [f"<h1>Debug  {constants.VERSION}</h2>"]
+#     result.append("<h2>headers</h2>")
+#     result.append("<table>")
+#     for key, value in sorted(request.headers.items()):
+#         result.append(f"<tr><td>{key}</td><td>{value}</td></tr>")
+#     result.append("</table>")
+#     result.append("<h2>environ</h2>")
+#     result.append("<table>")
+#     for key, value in sorted(request.environ.items()):
+#         result.append(f"<tr><td>{key}</td><td>{value}</td></tr>")
+#     result.append("</table>")
+#     return jinja2.utils.Markup("\n".join(result))
 
 
 # Set up the URL map.
-app.register_blueprint(code_dds.about.blueprint, url_prefix="/about")
+# app.register_blueprint(code_dds.about.blueprint, url_prefix="/about")
 app.register_blueprint(code_dds.user.blueprint, url_prefix="/user")
-app.register_blueprint(code_dds.site.blueprint, url_prefix="/site")
+# app.register_blueprint(code_dds.site.blueprint, url_prefix="/site")
 # To be developed.
 # app.register_blueprint(code_dds.entity.blueprint, url_prefix="/entity")
 
-app.register_blueprint(code_dds.api.root.blueprint, url_prefix="/api")
-app.register_blueprint(code_dds.api.about.blueprint, url_prefix="/api/about")
-app.register_blueprint(code_dds.api.schema.blueprint, url_prefix="/api/schema")
-app.register_blueprint(code_dds.api.user.blueprint, url_prefix="/api/user")
+# app.register_blueprint(code_dds.api.root.blueprint, url_prefix="/api")
+# app.register_blueprint(code_dds.api.about.blueprint, url_prefix="/api/about")
+# app.register_blueprint(code_dds.api.schema.blueprint, url_prefix="/api/schema")
+# app.register_blueprint(code_dds.api.user.blueprint, url_prefix="/api/user")
 # To be developed
 # app.register_blueprint(code_dds.api.entity.blueprint, url_prefix="/api/entity")
 
