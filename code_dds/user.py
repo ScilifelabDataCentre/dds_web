@@ -10,7 +10,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from code_dds import constants
 from code_dds import utils
-# from webapp.saver import BaseSaver
+from code_dds.saver import BaseSaver
 
 KEYS = ["ID", "Firstname", "Lastname", "Username", "Password", "Settings",
         "Email", "Phone"]
@@ -168,35 +168,35 @@ def logout():
 #         return flask.redirect(flask.url_for("home"))
 
 
-@blueprint.route("/reset", methods=["GET", "POST"])
-def reset():
-    "Reset the password for a user account and send email."
-    if not flask.current_app.config["MAIL_SERVER"]:
-        utils.flash_error("Cannot reset password; no email server defined.")
-        return flask.redirect(flask.url_for("home"))
+# @blueprint.route("/reset", methods=["GET", "POST"])
+# def reset():
+#     "Reset the password for a user account and send email."
+#     if not flask.current_app.config["MAIL_SERVER"]:
+#         utils.flash_error("Cannot reset password; no email server defined.")
+#         return flask.redirect(flask.url_for("home"))
 
-    if utils.http_GET():
-        email = flask.request.args.get("email") or ""
-        email = email.lower()
-        return flask.render_template("user/reset.html", email=email)
+#     if utils.http_GET():
+#         email = flask.request.args.get("email") or ""
+#         email = email.lower()
+#         return flask.render_template("user/reset.html", email=email)
 
-    elif utils.http_POST():
-        try:
-            user = get_user(email=flask.request.form["email"])
-            if user is None:
-                raise KeyError
-            if user["status"] != constants.ENABLED:
-                raise KeyError
-        except KeyError:
-            pass
-        else:
-            with UserSaver(user) as saver:
-                saver.set_password()
-            send_password_code(user, "password reset")
-        utils.get_logger().info(f"reset user {user['username']}")
-        utils.flash_message(
-            "An email has been sent if the user account exists.")
-        return flask.redirect(flask.url_for("home"))
+#     elif utils.http_POST():
+#         try:
+#             user = get_user(email=flask.request.form["email"])
+#             if user is None:
+#                 raise KeyError
+#             if user["status"] != constants.ENABLED:
+#                 raise KeyError
+#         except KeyError:
+#             pass
+#         else:
+#             with UserSaver(user) as saver:
+#                 saver.set_password()
+#             send_password_code(user, "password reset")
+#         utils.get_logger().info(f"reset user {user['username']}")
+#         utils.flash_message(
+#             "An email has been sent if the user account exists.")
+#         return flask.redirect(flask.url_for("home"))
 
 
 @blueprint.route("/password", methods=["GET", "POST"])
@@ -380,92 +380,92 @@ def disable(username):
     return flask.redirect(flask.url_for(".display", username=username))
 
 
-# class UserSaver(BaseSaver):
-#     "User document saver context."
+class UserSaver(BaseSaver):
+    "User document saver context."
 
-#     HIDDEN_FIELDS = ["password"]
+    HIDDEN_FIELDS = ["password"]
 
-#     def initialize(self):
-#         "Set the status for a new user."
-#         if flask.current_app.config["USER_ENABLE_IMMEDIATELY"]:
-#             self.doc["status"] = constants.ENABLED
-#         else:
-#             self.doc["status"] = constants.PENDING
+    def initialize(self):
+        "Set the status for a new user."
+        if flask.current_app.config["USER_ENABLE_IMMEDIATELY"]:
+            self.doc["status"] = constants.ENABLED
+        else:
+            self.doc["status"] = constants.PENDING
 
-#     def finalize(self):
-#         "Check that required fields have been set."
-#         for key in ["username", "email", "role", "status"]:
-#             if not self.doc.get(key):
-#                 raise ValueError("invalid user: %s not set" % key)
+    def finalize(self):
+        "Check that required fields have been set."
+        for key in ["username", "email", "role", "status"]:
+            if not self.doc.get(key):
+                raise ValueError("invalid user: %s not set" % key)
 
-#     def set_username(self, username):
-#         "Username can be set only when creating the account."
-#         if "username" in self.doc:
-#             raise ValueError("username cannot be changed")
-#         if not constants.NAME_RX.match(username):
-#             raise ValueError("invalid username; must be a name")
-#         if get_user(username=username):
-#             raise ValueError("username already in use")
-#         self.doc["username"] = username
+    def set_username(self, username):
+        "Username can be set only when creating the account."
+        if "username" in self.doc:
+            raise ValueError("username cannot be changed")
+        if not constants.NAME_RX.match(username):
+            raise ValueError("invalid username; must be a name")
+        if get_user(username=username):
+            raise ValueError("username already in use")
+        self.doc["username"] = username
 
-#     def set_email(self, email):
-#         email = email.lower()
-#         if not constants.EMAIL_RX.match(email):
-#             raise ValueError("invalid email")
-#         if get_user(email=email):
-#             raise ValueError("email already in use")
-#         self.doc["email"] = email
-#         if self.doc.get("status") == constants.PENDING:
-#             for rx in flask.current_app.config["USER_ENABLE_EMAIL_WHITELIST"]:
-#                 if re.match(rx, email):
-#                     self.set_status(constants.ENABLED)
-#                     break
+    def set_email(self, email):
+        email = email.lower()
+        if not constants.EMAIL_RX.match(email):
+            raise ValueError("invalid email")
+        if get_user(email=email):
+            raise ValueError("email already in use")
+        self.doc["email"] = email
+        if self.doc.get("status") == constants.PENDING:
+            for rx in flask.current_app.config["USER_ENABLE_EMAIL_WHITELIST"]:
+                if re.match(rx, email):
+                    self.set_status(constants.ENABLED)
+                    break
 
-#     def set_status(self, status):
-#         if status not in constants.USER_STATUSES:
-#             raise ValueError("invalid status")
-#         self.doc["status"] = status
+    def set_status(self, status):
+        if status not in constants.USER_STATUSES:
+            raise ValueError("invalid status")
+        self.doc["status"] = status
 
-#     def set_role(self, role):
-#         if role not in constants.USER_ROLES:
-#             raise ValueError("invalid role")
-#         self.doc["role"] = role
+    def set_role(self, role):
+        if role not in constants.USER_ROLES:
+            raise ValueError("invalid role")
+        self.doc["role"] = role
 
-#     def set_password(self, password=None):
-#         "Set the password; a one-time code if no password provided."
-#         config = flask.current_app.config
-#         if password is None:
-#             self.doc["password"] = "code:%s" % utils.get_iuid()
-#         else:
-#             if len(password) < config["MIN_PASSWORD_LENGTH"]:
-#                 raise ValueError("password too short")
-#             self.doc["password"] = generate_password_hash(
-#                 password, salt_length=config["SALT_LENGTH"])
+    def set_password(self, password=None):
+        "Set the password; a one-time code if no password provided."
+        config = flask.current_app.config
+        if password is None:
+            self.doc["password"] = "code:%s" % utils.get_iuid()
+        else:
+            if len(password) < config["MIN_PASSWORD_LENGTH"]:
+                raise ValueError("password too short")
+            self.doc["password"] = generate_password_hash(
+                password, salt_length=config["SALT_LENGTH"])
 
-#     def set_apikey(self):
-#         "Set a new API key."
-#         self.doc["apikey"] = utils.get_iuid()
+    def set_apikey(self):
+        "Set a new API key."
+        self.doc["apikey"] = utils.get_iuid()
 
-#     def upsert(self):
-#         "Actually insert or update the user in the database."
-#         # Cannot use the Sqlite3 native UPSERT: was included only in v 3.24.0
-#         cursor = flask.g.db.cursor()
-#         rows = list(cursor.execute("SELECT COUNT(*) FROM users WHERE iuid=?",
-#                                    (self.doc["iuid"],)))
-#         if rows[0][0] == 0:
-#             with flask.g.db:
-#                 cursor.execute(f"INSERT INTO users ({','.join(KEYS)})"
-#                                f" VALUES ({','.join('?'*len(KEYS))})",
-#                                [self.doc[k] for k in KEYS])
-#         else:
-#             with flask.g.db:
-#                 keys = KEYS[1:]  # Skip 'iuid'
-#                 assignments = [f"{k}=?" for k in keys]
-#                 values = [self.doc[k] for k in keys]
-#                 values.append(self.doc["iuid"])
-#                 cursor.execute("UPDATE users SET"
-#                                f" {','.join(assignments)}"
-#                                "WHERE iuid=?", values)
+    def upsert(self):
+        "Actually insert or update the user in the database."
+        # Cannot use the Sqlite3 native UPSERT: was included only in v 3.24.0
+        cursor = flask.g.db.cursor()
+        rows = list(cursor.execute("SELECT COUNT(*) FROM users WHERE iuid=?",
+                                   (self.doc["iuid"],)))
+        if rows[0][0] == 0:
+            with flask.g.db:
+                cursor.execute(f"INSERT INTO users ({','.join(KEYS)})"
+                               f" VALUES ({','.join('?'*len(KEYS))})",
+                               [self.doc[k] for k in KEYS])
+        else:
+            with flask.g.db:
+                keys = KEYS[1:]  # Skip 'iuid'
+                assignments = [f"{k}=?" for k in keys]
+                values = [self.doc[k] for k in keys]
+                values.append(self.doc["iuid"])
+                cursor.execute("UPDATE users SET"
+                               f" {','.join(assignments)}"
+                               "WHERE iuid=?", values)
 
 # Utility functions
 
