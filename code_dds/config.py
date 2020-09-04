@@ -2,6 +2,7 @@
 
 import os
 import os.path
+import sys
 
 from code_dds import constants
 from code_dds import utils
@@ -19,15 +20,7 @@ DEFAULT_SETTINGS = dict(
     MIN_PASSWORD_LENGTH=6,
     PERMANENT_SESSION_LIFETIME=7 * 24 * 60 * 60,  # seconds; 1 week
     DOC_DIRPATH=os.path.join(ROOT_DIRPATH, 'documentation'),
-    TEMPLATES_AUTO_RELOAD=True,
-    DB={
-        "host": "db",
-        "port": 3306,
-        "user": "apiuser",
-        "password": "apipass",
-        "database": "DeliverySystem"
-    }
-
+    TEMPLATES_AUTO_RELOAD=True
     #     SERVER_NAME="127.0.0.1:5000",  # For URL generation.
     #     SERVER_HOST="0.0.0.0",        # For app.run()
     #     SERVER_PORT="5003",           # For app.run()
@@ -79,17 +72,19 @@ def init(app):
     app.config.from_mapping(DEFAULT_SETTINGS)
     # Modify the configuration from a JSON settings file.
     try:
-        filepaths = [os.environ["DDS_SETTINGS_FILEPATH"]]
-    except KeyError:
-        filepaths = []
-    for filepath in ["settings.json"]:
-        filepaths.append(os.path.normpath(
-            os.path.join(ROOT_DIRPATH, filepath)))
-    for filepath in filepaths:
-        try:
-            app.config.from_json(filepath)
-        except FileNotFoundError:
-            pass
+        filepath = os.environ["DDS_SETTINGS_FILEPATH"]
+    except Exception as e:
+        # filepaths = []
+        # for filepath in ["/Users/inaod568/repos/Data-Delivery-System/settings.json"]:
+        #     filepaths.append(os.path.normpath(
+        #         os.path.join(ROOT_DIRPATH, filepath)))
+        # for filepath in filepaths:
+        #     try:
+        #         app.config.from_json(filepath)
+        #     except Exception as e:
+        print(f"ERROR: {e}")
+    else:
+        app.config.from_json(filepath)
         # else:
         #     app.config["SETTINGS_FILE"] = filepath
         #     break
@@ -109,6 +104,6 @@ def init(app):
     #     except (KeyError, TypeError, ValueError):
     #         pass
     # Sanity check; should not execute if this fails.
-    # assert app.config["SECRET_KEY"]
+    assert app.config["SECRET_KEY"]
     # assert app.config["SALT_LENGTH"] > 6
     # assert app.config["MIN_PASSWORD_LENGTH"] > 4

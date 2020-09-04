@@ -11,7 +11,7 @@ services:
       - 127.0.0.1:3306:3306
   backend:
     environment: 
-      - DDS_SETTINGS_FILEPATH=/code_dds/settings.json
+      - DDS_SETTINGS_FILEPATH=/code/settings.json
     build:
       context: ./
       dockerfile: ./Dockerfiles/Dockerfile-backend

@@ -74,10 +74,10 @@ def home():
     return render_template("home.html")
 
 
-@app.route('/login')
-def login():
-    """Login"""
-    return render_template('home.html')
+# @app.route('/login')
+# def login():
+#     """Login"""
+#     return render_template('home.html')
     
 # @app.route("/debug")
 # @utils.admin_required
