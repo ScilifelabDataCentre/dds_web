@@ -1,50 +1,18 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Login{% endblock %}
-
-{% block body_title %}Login{% endblock %}
-
 {% block body %}
-<form action="{{ url_for('.login') }}"
-      method="POST">
-  {{ csrf_token() }}
-  <div class="form-group row">
-    <label for="username" class="col-md-2 col-form-label text-right">
-      User name</label>
-    <div class="col-md-6">
-      <input type="text" id="username" name="username" class="form-control">
+
+  <form class="form-signin text-center" action="{{ url_for('user.login') }}" method="POST">
+    {{ csrf_token() }}
+    <div class="container login-form">
+      <h1 class="h3 mb-3 font-weight-normal">Log In</h1>
+      <label for="email" class="sr-only">Email address</label>
+      <input type="email" name="email" id="email" class="form-control" placeholder="Email address" required autofocus>
+      <label for="password" class="sr-only">Password</label>
+      <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
+      <button class="btn btn-lg btn-primary btn-block" type="submit">Log In</button>
     </div>
-  </div>
-  <div class="form-group row">
-    <label for="email" class="col-md-2 col-form-label text-right">
-      Password</label>
-    <div class="col-md-6">
-      <input type="password" id="password" name="password" class="form-control">
-    </div>
-  </div>
-  {% if next %}
-  <input type="hidden" name="next" value="{{ next }}">
-  {% endif %}
-  <div class="form-group row">
-    <div class="col-md-3 offset-md-2">
-      <button type="submit" class="btn btn-block btn-primary">Login</button>
-    </div>
-  </div>
-</form>
-<div class="row pt-5">
-  <div class="col-md-4 offset-md-2">
-    <a href="{{ url_for('.register') }}"
-       class="btn btn-block btn-outline-primary">
-      Register a new user account</a>
-  </div>
-</div>
-{% if config['MAIL_SERVER'] %}
-<div class="row pt-4">
-  <div class="col-md-4 offset-md-2">
-    <a href="{{ url_for('.reset') }}"
-       class="btn btn-block btn-outline-primary">
-      Reset password for an existing user account</a>
-  </div>
-</div>
-{% endif %}
+    
+  </form>
+
 {% endblock %}

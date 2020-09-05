@@ -25,3 +25,7 @@ img.head_logo {
     float: right;
     margin-top: 20px;
   }
+
+  div.login-form {
+    width: 50%;
+  }

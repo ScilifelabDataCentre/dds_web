@@ -13,9 +13,10 @@ import mariadb
 from code_dds import constants
 from code_dds import utils
 
+from code_dds import user
 import code_dds.about
 import code_dds.config
-import code_dds.user
+# import code_dds.user
 import code_dds.site
 
 import code_dds.api.about
@@ -74,11 +75,6 @@ def home():
     return render_template("home.html")
 
 
-# @app.route('/login')
-# def login():
-#     """Login"""
-#     return render_template('home.html')
-    
 # @app.route("/debug")
 # @utils.admin_required
 # def debug():
@@ -99,7 +95,7 @@ def home():
 
 # Set up the URL map.
 # app.register_blueprint(code_dds.about.blueprint, url_prefix="/about")
-app.register_blueprint(code_dds.user.blueprint, url_prefix="/user")
+app.register_blueprint(user.blueprint)
 # app.register_blueprint(code_dds.site.blueprint, url_prefix="/site")
 # To be developed.
 # app.register_blueprint(code_dds.entity.blueprint, url_prefix="/entity")
