@@ -5,7 +5,9 @@
 # Standard library
 
 # Installed
-from flask import (Flask, g, redirect, render_template, request, url_for)
+from flask import (Flask, g, redirect, render_template,
+                   request, url_for, flash)
+from flask_wtf.csrf import CSRFProtect
 import jinja2
 import mariadb
 
@@ -23,10 +25,13 @@ import code_dds.api.about
 import code_dds.api.root
 import code_dds.api.schema
 import code_dds.api.user
+from forms import RegistrationForm, LoginForm
 
 # CONFIG ############################################################# CONFIG #
 
 app = Flask(__name__)
+
+app.config['SECRET_KEY'] = "9f85bef56ef02cb85c2450d5d492977c"
 
 # URL map converters - "xxx" will result in that xxx can be used in @app.route
 app.url_map.converters["name"] = utils.NameConverter
@@ -41,12 +46,13 @@ code_dds.config.init(app)
 # Add template filters - "converts" integers with thousands delimiters
 app.add_template_filter(utils.thousands)
 
-
 # Context processors injects new variables automatically into the context of a
 # template. Runs before the template is rendered.
 # Returns a dictionary. Keys and values are merged with the template context
 # for all templates in the app. In this case: the constants and the function
 # csrf_token.
+
+
 @app.context_processor
 def setup_template_context():
     "Add useful stuff to the global context of Jinja2 templates."
@@ -74,6 +80,24 @@ def home():
     """Home page."""
     return render_template("home.html")
 
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    """Home page."""
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        flash(f'Account created for {form.username.data}!', 'success')
+        return redirect(url_for('home'))
+    # else: 
+    #     return f"{form.username.data}, {form.email.data}, {form.password.data == form.confirm_password.data}"
+    return render_template("register.html", title='Register', form=form)
+
+
+@app.route("/login")
+def login():
+    """Home page."""
+    form = LoginForm()
+    return render_template("login.html", title='Login', form=form)
 
 # @app.route("/debug")
 # @utils.admin_required

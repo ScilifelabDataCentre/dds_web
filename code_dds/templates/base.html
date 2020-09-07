@@ -16,7 +16,7 @@
     <body>
 
         <nav class="navbar navbar-light bg-light">
-           <!-- Should also add a if g.am_admin here somewhere -->
+            <!-- Should also add a if g.am_admin here somewhere -->
             <div class="navbar-brand" href="#">
                 <img class="head_logo" src="{{ url_for('static',
                     filename='img/logo_and_title_lora.png') }}">
@@ -55,9 +55,13 @@
                 </ul>
             </div>
         </nav>
+        
 
         <div class="container" style="background: white;">
-            {% block body %}{% endblock %}
+            
+            {% block body %}
+
+            {% endblock %}
         </div>
 
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"

@@ -40,6 +40,7 @@ KEYS = ["ID", "Firstname", "Lastname", "Username", "Password", "Settings",
 
 blueprint = Blueprint("user", __name__, url_prefix="/user")
 
+
 @blueprint.route("/login", methods=["GET", "POST"])
 def login():
     """Login to a user account.
@@ -47,12 +48,13 @@ def login():
     """
 
     if request.method == "GET":
-    # if utils.http_GET():
+        # if utils.http_GET():
         return render_template("user/login.html")
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
-        return render_template("base.html")
+        token = session.get("_csrf_token", None)
+        return f"email: {email}, password: {password}, csrf: {token}, {token == session.get('_csrf_token')}"
         # try:
         #     if username and password:
         #         do_login(username, password)

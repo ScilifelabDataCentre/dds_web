@@ -12,6 +12,7 @@ ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 # Default configurable values; modified by reading a JSON file in 'init'.
 DEFAULT_SETTINGS = dict(
     ROOT_DIRPATH=ROOT_DIRPATH,
+    WTF_CSRF_ENABLED=True,
     SERVER_NAME='127.0.0.1:5000',
     SERVER_HOST='0.0.0.0',
     SERVER_PORT=5000,

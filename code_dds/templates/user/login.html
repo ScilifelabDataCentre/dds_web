@@ -3,7 +3,7 @@
 {% block body %}
 
   <form class="form-signin text-center" action="{{ url_for('user.login') }}" method="POST">
-    {{ csrf_token() }}
+    
     <div class="container login-form">
       <h1 class="h3 mb-3 font-weight-normal">Log In</h1>
       <label for="email" class="sr-only">Email address</label>

@@ -6,3 +6,5 @@
 # resumable==0.1.1
 Flask
 mariadb
+flask_wtf
+email_validator
