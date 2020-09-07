@@ -13,6 +13,8 @@ from code_dds import constants
 from code_dds import utils
 from code_dds.saver import BaseSaver
 
+from forms import LoginForm
+
 KEYS = ["ID", "Firstname", "Lastname", "Username", "Password", "Settings",
         "Email", "Phone"]
 
@@ -49,7 +51,8 @@ def login():
 
     if request.method == "GET":
         # if utils.http_GET():
-        return render_template("user/login.html")
+        form = LoginForm()
+        return render_template('login.html', title='Login', form=form)
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]

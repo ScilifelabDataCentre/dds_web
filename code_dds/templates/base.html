@@ -15,6 +15,7 @@
 
     <body>
 
+
         <nav class="navbar navbar-light bg-light">
             <!-- Should also add a if g.am_admin here somewhere -->
             <div class="navbar-brand" href="#">
@@ -35,7 +36,7 @@
                         <a class="nav-link" href="/">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/user/login">Log In</a>
+                        <a class="nav-link" href="{{ url_for('login') }}">Log In</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link disabled" href="#">Disabled</a>
@@ -55,13 +56,12 @@
                 </ul>
             </div>
         </nav>
-        
+
 
         <div class="container" style="background: white;">
-            
             {% block body %}
 
-            {% endblock %}
+            {% endblock body %}
         </div>
 
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"

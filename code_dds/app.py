@@ -31,11 +31,9 @@ from forms import RegistrationForm, LoginForm
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = "9f85bef56ef02cb85c2450d5d492977c"
-
 # URL map converters - "xxx" will result in that xxx can be used in @app.route
-app.url_map.converters["name"] = utils.NameConverter
-app.url_map.converters["iuid"] = utils.IuidConverter
+# app.url_map.converters["name"] = utils.NameConverter
+# app.url_map.converters["iuid"] = utils.IuidConverter
 
 # Get and initialize app configuration
 code_dds.config.init(app)
@@ -44,7 +42,7 @@ code_dds.config.init(app)
 # utils.mail.init_app(app)
 
 # Add template filters - "converts" integers with thousands delimiters
-app.add_template_filter(utils.thousands)
+# app.add_template_filter(utils.thousands)
 
 # Context processors injects new variables automatically into the context of a
 # template. Runs before the template is rendered.
@@ -81,23 +79,21 @@ def home():
     return render_template("home.html")
 
 
-@app.route("/register", methods=['GET', 'POST'])
-def register():
-    """Home page."""
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        flash(f'Account created for {form.username.data}!', 'success')
-        return redirect(url_for('home'))
-    # else: 
-    #     return f"{form.username.data}, {form.email.data}, {form.password.data == form.confirm_password.data}"
-    return render_template("register.html", title='Register', form=form)
-
-
-@app.route("/login")
+@app.route("/login", methods=['GET', 'POST'])
 def login():
-    """Home page."""
     form = LoginForm()
-    return render_template("login.html", title='Login', form=form)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            if form.email.data == 'admin@blog.com' and form.password.data == 'password':
+                # flash('You have been logged in!', 'success')
+                return redirect(url_for('home'))
+            else:
+                # flash(, 'danger')
+                return "Login Unsuccessful. Please check username and password'"
+        else: 
+            return f"{request.method}, {form.errors}"
+
+    return render_template('login.html', title='Login', form=form)
 
 # @app.route("/debug")
 # @utils.admin_required
@@ -119,7 +115,7 @@ def login():
 
 # Set up the URL map.
 # app.register_blueprint(code_dds.about.blueprint, url_prefix="/about")
-app.register_blueprint(user.blueprint)
+# app.register_blueprint(user.blueprint)
 # app.register_blueprint(code_dds.site.blueprint, url_prefix="/site")
 # To be developed.
 # app.register_blueprint(code_dds.entity.blueprint, url_prefix="/entity")

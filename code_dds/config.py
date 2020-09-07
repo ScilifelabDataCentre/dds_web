@@ -13,6 +13,7 @@ ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_SETTINGS = dict(
     ROOT_DIRPATH=ROOT_DIRPATH,
     WTF_CSRF_ENABLED=True,
+    WTF_CSRF_TIME_LIMIT=3600,
     SERVER_NAME='127.0.0.1:5000',
     SERVER_HOST='0.0.0.0',
     SERVER_PORT=5000,
@@ -21,8 +22,7 @@ DEFAULT_SETTINGS = dict(
     MIN_PASSWORD_LENGTH=6,
     PERMANENT_SESSION_LIFETIME=7 * 24 * 60 * 60,  # seconds; 1 week
     DOC_DIRPATH=os.path.join(ROOT_DIRPATH, 'documentation'),
-    TEMPLATES_AUTO_RELOAD=True,
-    SECRET_KEY=None         # Must be set in 'settings.json'
+    TEMPLATES_AUTO_RELOAD=True
 )
 
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -43,4 +43,4 @@ def init(app):
     else:
         app.config.from_json(filepath)
 
-    assert app.config["SECRET_KEY"]
+    # assert app.config["SECRET_KEY"]
