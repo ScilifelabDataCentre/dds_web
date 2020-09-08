@@ -18,7 +18,7 @@ from code_dds import utils
 from code_dds import user
 from code_dds import config
 
-from code_dds.api import dds_api
+from code_dds.common.user import user_api
 
 # CONFIG ############################################################# CONFIG #
 
@@ -69,7 +69,7 @@ def prepare():
 # add_resource(resource, *urls, **kwargs)
 # endpoint -- endpoint name --> can be used to reference the route in fields.Url fields
 # add_resource(HelloWorld, "/helloworld/<string:name>")
-app.register_blueprint(dds_api)
+app.register_blueprint(user_api)
 
 # This code is used only during development.
 if __name__ == "__main__":
