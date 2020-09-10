@@ -10,7 +10,7 @@ from flask import (Flask, g, redirect, render_template,
 from flask_restful import Api, Resource
 import jinja2
 import mariadb
-
+import logging
 # Own modules
 from code_dds import constants
 from code_dds import utils
@@ -54,6 +54,7 @@ def setup_template_context():
 @app.before_request
 def prepare():
     "Open the database connection; get the current user."
+    logging.warning(app.config['DB'])
     g.db = mariadb.connect(**app.config['DB'])
     g.current_user = "tester"
 

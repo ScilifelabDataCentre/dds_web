@@ -39,7 +39,8 @@ def init(app):
     try:
         filepath = os.environ["DDS_SETTINGS_FILEPATH"]
     except Exception as e:
-        print(f"ERROR: {e}")
+        import logging
+        logging.warning(e)
     else:
         app.config.from_json(filepath)
 

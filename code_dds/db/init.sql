@@ -1,10 +1,16 @@
 USE DeliverySystem;
+DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Facilities;
+DROP TABLE IF EXISTS Projects;
+DROP TABLE IF EXISTS Files;
+DROP TABLE IF EXISTS ProjectFiles;
+
 CREATE TABLE Users (
     ID CHAR(4),
     Firstname VARCHAR(40) NOT NULL,
     Lastname VARCHAR(40) NOT NULL,
     Username VARCHAR(15) NOT NULL,
-    Password VARCHAR(64) NOT NULL,
+    Password VARCHAR(102) NOT NULL,
     Settings VARCHAR(42) NOT NULL,
     Email VARCHAR(100) NOT NULL,
     Phone VARCHAR(20) NOT NULL,
@@ -51,7 +57,6 @@ CREATE TABLE Files (
     KeyPublic VARCHAR(64) NOT NULL,
     Salt VARCHAR(30) NOT NULL,
     DateUploaded DATE,
-    -- Checksum VARCHAR(100) NOT NULL,
     PRIMARY KEY(ID)
 );
 CREATE TABLE ProjectFiles (
@@ -66,8 +71,8 @@ INSERT INTO Facilities (ID, Name, InternalRef, Email) VALUES
     ('fac1', 'National Seq Facility', 'nsf', 'supprt@nsf.se'),
     ('fac2', 'Proteomics Facility', 'pfc', 'supprt@pfc.se');
 INSERT INTO Users (ID, Firstname, Lastname, Username, Password, Settings, Email, Phone) VALUES
-    ('0001', 'Ross', 'Geller', 'rossy', 'pbkdf2:sha256:150000$U778YuGrIiUkoifJ$5cc91ed33b92910cf0872f76058f1d9693328f1b75e94e50ee10a292d4f120dd', 'settingshere', 'ross.geller@museum.com', '070-000 00 01'),
-    ('0002', 'Rachel', 'Green', 'rache', 'pbkdf2:sha256:150000$0GG8wwKNWiIpX7Ve$d582f9a5305c4e62dcb6bcc0ae37411edf85210fe1a13d7dfc24199ef31c1e58', 'settingshere', 'rachel.green@ralphlauren.com', '070-000 00 02');
+    ('0001', 'Ross', 'Geller', 'rossy', 'pbkdf2:sha256:15000', 'settingshere', 'ross.geller@museum.com', '070-000 00 01'),
+    ('0002', 'Rachel', 'Green', 'rache', 'pbkdf2:sha256:15000', 'settingshere', 'rachel.green@ralphlauren.com', '070-000 00 02');
     
 INSERT INTO Projects (ID, Title, Category, OrderDate, DeliveryDate, Status, Sensitivity, Description, PI, Owner, Facility, Size, DeliveryOption, KeyPublic, KeyPrivate, Nonce) VALUES
     ('prj1', 'Whole genome sequencing', 'Genomics', '2019-05-25', '2019-09-02', 'Delivered',
