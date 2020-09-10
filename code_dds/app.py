@@ -18,7 +18,7 @@ from code_dds import utils
 from code_dds import user
 from code_dds import config
 
-from code_dds.common.user import user_api
+from code_dds.resources.user import user_api
 
 # CONFIG ############################################################# CONFIG #
 
@@ -34,15 +34,12 @@ config.init(app)
 # Add template filters - "converts" integers with thousands delimiters
 app.add_template_filter(utils.thousands)
 
-# api = Api(app)
 
 # Context processors injects new variables automatically into the context of a
 # template. Runs before the template is rendered.
 # Returns a dictionary. Keys and values are merged with the template context
 # for all templates in the app. In this case: the constants and the function
 # csrf_token.
-
-
 @app.context_processor
 def setup_template_context():
     "Add useful stuff to the global context of Jinja2 templates."
@@ -62,10 +59,11 @@ def prepare():
 # app.after_request(utils.log_access)
 
 
-# @app.route("/")
-# def home():
-#     """Home page."""
-#     return render_template("home.html")
+@app.route("/")
+def home():
+    """Home page."""
+    return render_template("home.html")
+
 
 # add_resource(resource, *urls, **kwargs)
 # endpoint -- endpoint name --> can be used to reference the route in fields.Url fields
