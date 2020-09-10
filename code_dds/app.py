@@ -18,7 +18,7 @@ from code_dds import utils
 from code_dds import user
 from code_dds import config
 
-from code_dds.resources.user import user_api
+from code_dds.api import api_blueprint
 
 # CONFIG ############################################################# CONFIG #
 
@@ -35,11 +35,18 @@ config.init(app)
 app.add_template_filter(utils.thousands)
 
 
+# add_resource(resource, *urls, **kwargs)
+# endpoint -- endpoint name --> can be used to reference the route in fields.Url fields
+# add_resource(HelloWorld, "/helloworld/<string:name>")
+app.register_blueprint(api_blueprint)
+
 # Context processors injects new variables automatically into the context of a
 # template. Runs before the template is rendered.
 # Returns a dictionary. Keys and values are merged with the template context
 # for all templates in the app. In this case: the constants and the function
 # csrf_token.
+
+
 @app.context_processor
 def setup_template_context():
     "Add useful stuff to the global context of Jinja2 templates."
@@ -51,7 +58,6 @@ def setup_template_context():
 @app.before_request
 def prepare():
     "Open the database connection; get the current user."
-    logging.warning(app.config['DB'])
     g.db = mariadb.connect(**app.config['DB'])
     g.current_user = "tester"
 
@@ -64,11 +70,6 @@ def home():
     """Home page."""
     return render_template("home.html")
 
-
-# add_resource(resource, *urls, **kwargs)
-# endpoint -- endpoint name --> can be used to reference the route in fields.Url fields
-# add_resource(HelloWorld, "/helloworld/<string:name>")
-app.register_blueprint(user_api)
 
 # This code is used only during development.
 if __name__ == "__main__":

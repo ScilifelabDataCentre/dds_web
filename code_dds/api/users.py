@@ -6,7 +6,7 @@ user_api = Blueprint('user_api', __name__)
 api = Api(user_api)
 
 
-@api.resource('/login', endpoint="login")
+# @api.resource('/login', endpoint="login")
 class Login(Resource):
     def get(self):
         return {"class": "Login", "method": "get"}
@@ -15,7 +15,7 @@ class Login(Resource):
         return {"class": "Login", "method": "post"}
 
 
-@api.resource('/logout', endpoint="logout")
+# @api.resource('/logout', endpoint="logout")
 class Logout(Resource):
     def get(self):
         return {"class": "Logout", "method": "get"}
@@ -24,7 +24,7 @@ class Logout(Resource):
         return {"class": "Logout", "method": "post"}
 
 
-@api.resource('/listusers', endpoint="list_users")
+# @api.resource('/listusers', endpoint="list_users")
 class ListUsers(Resource):
     def get(self):
         try:
@@ -46,9 +46,3 @@ class ListUsers(Resource):
 
     def post(self):
         return {"class": "ListUsers", "method": "post"}
-
-
-# # Resources
-# api.add_resource(Login, "/login", endpoint="login")
-# api.add_resource(Logout, "/logout", endpoint="logout")
-# api.add_resource(ListUsers, "/listusers", endpoint="list_users")
