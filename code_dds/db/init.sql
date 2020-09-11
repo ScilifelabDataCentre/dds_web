@@ -6,75 +6,78 @@ DROP TABLE IF EXISTS Files;
 DROP TABLE IF EXISTS ProjectFiles;
 
 CREATE TABLE Users (
-    ID CHAR(4),
-    Firstname VARCHAR(40) NOT NULL,
-    Lastname VARCHAR(40) NOT NULL,
-    Username VARCHAR(15) NOT NULL,
-    Password VARCHAR(102) NOT NULL,
-    Settings VARCHAR(42) NOT NULL,
-    Email VARCHAR(100) NOT NULL,
-    Phone VARCHAR(20) NOT NULL,
-    PRIMARY KEY(ID),
-    UNIQUE(Username),
-    UNIQUE(Email)
+    id CHAR(4),
+    first_name VARCHAR(40) NOT NULL,
+    last_name VARCHAR(40) NOT NULL,
+    username VARCHAR(15) NOT NULL,
+    password_ VARCHAR(102) NOT NULL,
+    settings VARCHAR(42) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    PRIMARY KEY(id),
+    UNIQUE(username),
+    UNIQUE(email)
 );
 CREATE TABLE Facilities (
-    ID CHAR(4),
-    Name VARCHAR(100) NOT NULL,
-    InternalRef VARCHAR(10) NOT NULL,
-    Email VARCHAR(100) NOT NULL,
-    PRIMARY KEY(ID),
-    UNIQUE(InternalRef)
+    id CHAR(4),
+    name_ VARCHAR(100) NOT NULL,
+    internal_ref VARCHAR(10) NOT NULL,
+    username VARCHAR(15) NOT NULL,
+    password_ VARCHAR(102) NOT NULL,
+    settings VARCHAR(42) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    PRIMARY KEY(id),
+    UNIQUE(internal_ref)
 );
 CREATE TABLE Projects (
-    ID CHAR(4),
-    Title VARCHAR(100) NOT NULL,
-    Category VARCHAR(40),
-    OrderDate DATE,
-    DeliveryDate DATE,
-    Status VARCHAR(20),
-    Sensitivity BOOL NOT NULL,
-    Description TEXT,
-    PI VARCHAR(50) NOT NULL,
-    Owner CHAR(4) NOT NULL,
-    Facility CHAR(4) NOT NULL,
-    Size INT,
-    DeliveryOption VARCHAR(10) NOT NULL,
-    KeyPublic VARCHAR(64) NOT NULL,
-    KeyPrivate VARCHAR(200) NOT NULL,
-    Nonce VARCHAR(24) NOT NULL,
-    PRIMARY KEY (ID),
-    FOREIGN KEY (Owner) REFERENCES Users(ID) ON DELETE CASCADE,
-    FOREIGN KEY (Facility) REFERENCES Facilities(ID) ON DELETE CASCADE
+    id CHAR(4),
+    title VARCHAR(100) NOT NULL,
+    category VARCHAR(40),
+    order_date DATE,
+    delivery_date DATE,
+    status_ VARCHAR(20),
+    sensitivity BOOL NOT NULL,
+    description_ TEXT,
+    pi_ VARCHAR(50) NOT NULL,
+    owner_ CHAR(4) NOT NULL,
+    facility CHAR(4) NOT NULL,
+    size INT,
+    deliveryOption VARCHAR(10) NOT NULL,
+    public_key VARCHAR(64) NOT NULL,
+    private_key VARCHAR(200) NOT NULL,
+    nonce VARCHAR(24) NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (owner_) REFERENCES Users(id) ON DELETE CASCADE,
+    FOREIGN KEY (facility) REFERENCES Facilities(id) ON DELETE CASCADE
 );
 CREATE TABLE Files (
-    ID INT NOT NULL AUTO_INCREMENT,
-    Name VARCHAR(100) NOT NULL,
-    DirectoryPath VARCHAR(500),
-    Size INT NOT NULL,
-    Format VARCHAR(10),
-    Compressed BOOL NOT NULL,
-    KeyPublic VARCHAR(64) NOT NULL,
-    Salt VARCHAR(30) NOT NULL,
-    DateUploaded DATE,
-    PRIMARY KEY(ID)
+    id INT NOT NULL AUTO_INCREMENT,
+    name_ VARCHAR(100) NOT NULL,
+    directory_path VARCHAR(500),
+    size INT NOT NULL,
+    format_ VARCHAR(10),
+    compressed BOOL NOT NULL,
+    public_key VARCHAR(64) NOT NULL,
+    salt VARCHAR(30) NOT NULL,
+    date_uploaded DATE,
+    PRIMARY KEY(id)
 );
 CREATE TABLE ProjectFiles (
-    ID INT NOT NULL AUTO_INCREMENT,
-    FileID INT NOT NULL,
-    ProjectID CHAR(4) NOT NULL,
-    PRIMARY KEY (ID),
-    FOREIGN KEY (FileID) REFERENCES Files(ID) ON DELETE CASCADE,
-    FOREIGN KEY (ProjectID) REFERENCES Projects(ID) ON DELETE CASCADE
+    id INT NOT NULL AUTO_INCREMENT,
+    fileid INT NOT NULL,
+    projectid CHAR(4) NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (fileid) REFERENCES Files(id) ON DELETE CASCADE,
+    FOREIGN KEY (projectid) REFERENCES Projects(id) ON DELETE CASCADE
 );
-INSERT INTO Facilities (ID, Name, InternalRef, Email) VALUES
-    ('fac1', 'National Seq Facility', 'nsf', 'supprt@nsf.se'),
-    ('fac2', 'Proteomics Facility', 'pfc', 'supprt@pfc.se');
-INSERT INTO Users (ID, Firstname, Lastname, Username, Password, Settings, Email, Phone) VALUES
+INSERT INTO Facilities (id, name_, internal_ref, username, password_, settings, email) VALUES
+    ('fac1', 'National Seq Facility', 'nsf', 'fac1_username', 'fac1_password', 'fac1_settings', 'supprt@nsf.se'),
+    ('fac2', 'Proteomics Facility', 'pfc', 'fac2_username', 'fac2_password', 'fac2_settings', 'supprt@pfc.se');
+INSERT INTO Users (id, first_name, last_name, username, password_, settings, email, phone) VALUES
     ('0001', 'Ross', 'Geller', 'rossy', 'pbkdf2:sha256:15000', 'settingshere', 'ross.geller@museum.com', '070-000 00 01'),
     ('0002', 'Rachel', 'Green', 'rache', 'pbkdf2:sha256:15000', 'settingshere', 'rachel.green@ralphlauren.com', '070-000 00 02');
     
-INSERT INTO Projects (ID, Title, Category, OrderDate, DeliveryDate, Status, Sensitivity, Description, PI, Owner, Facility, Size, DeliveryOption, KeyPublic, KeyPrivate, Nonce) VALUES
+INSERT INTO Projects (id, title, category, order_date, delivery_date, status_, sensitive_, description_, pi_, owner_, facility, size, delivery_option, public_key, private_key, nonce) VALUES
     ('prj1', 'Whole genome sequencing', 'Genomics', '2019-05-25', '2019-09-02', 'Delivered',
       True, 'Whole genome sequencing of the spruce genome, that will go published',
      'Andrey Ericsson', '0001', 'fac1', 0, 'S3', 'publickey', 'privatekey', 'nonce'),
@@ -83,7 +86,7 @@ INSERT INTO Projects (ID, Title, Category, OrderDate, DeliveryDate, Status, Sens
       0, 'S3', 'publickey', 'privatekey', 'nonce');
       
       
-INSERT INTO Projects (ID, Title, Category, OrderDate, Status, Sensitivity, Description, PI, Owner, Facility) VALUES
+INSERT INTO Projects (id, title, category, order_date, status_, sensitive_, description_, pi_, owner_, facility) VALUES
     ('prj3', 'Virus phage sequencing', 'Genomics', '2019-05-25', 'Ongoing', True,
      'Corono virus sequencing to trap different phages', 'Nemo Svensson', '0001', 'fac1', 
      0, 'S3', 'publickey', 'privatekey', 'nonce');

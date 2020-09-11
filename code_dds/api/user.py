@@ -1,30 +1,41 @@
 from flask import Blueprint, g
 from flask_restful import Resource, Api
+import json
 
 # Create user_api blueprint
 user_api = Blueprint('user_api', __name__)
 api = Api(user_api)
 
 
-# @api.resource('/login', endpoint="login")
-class Login(Resource):
-    def get(self):
-        return {"class": "Login", "method": "get"}
+class LoginUser(Resource):
+    def get(self, username, password):
+        try:
+            cursor = g.db.cursor()
+        except:
+            pass    # Something wrong with db connection
+        else:
+            cursor.execute(
+                "SELECT * FROM Users WHERE (Username=?) AND (Password=?)", (username, password)
+            )
+
+            user = cursor.fetchone()
+            if user is None:
+                pass  # The user doesn't exist in the database
+
+            return user
 
     def post(self):
-        return {"class": "Login", "method": "post"}
+        return {"class": "LoginUser", "method": "post"}
 
 
-# @api.resource('/logout', endpoint="logout")
-class Logout(Resource):
+class LogoutUser(Resource):
     def get(self):
-        return {"class": "Logout", "method": "get"}
+        return {"class": "LogoutUser", "method": "get"}
 
     def post(self):
-        return {"class": "Logout", "method": "post"}
+        return {"class": "LogoutUser", "method": "post"}
 
 
-# @api.resource('/listusers', endpoint="list_users")
 class ListUsers(Resource):
     def get(self):
         try:
