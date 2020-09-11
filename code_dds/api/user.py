@@ -1,6 +1,5 @@
-from flask import Blueprint, g
-from flask_restful import Resource, Api
-import json
+from flask import Blueprint, g, make_response, session, request
+from flask_restful import Resource, Api, reqparse, abort
 
 # Create user_api blueprint
 user_api = Blueprint('user_api', __name__)
@@ -8,23 +7,30 @@ api = Api(user_api)
 
 
 class LoginUser(Resource):
-    def get(self, username, password):
+    def get(self):
         try:
             cursor = g.db.cursor()
         except:
             pass    # Something wrong with db connection
         else:
-            cursor.execute(
-                "SELECT * FROM Users WHERE (Username=?) AND (Password=?)", (username, password)
-            )
+            # table = """Users""" if method == "get" else """Facilities"""
+            query_user = """SELECT * FROM Users"""
+            # WHERE (username=?) AND (password_=?)"""
 
+            # cursor.execute(query_user, (username, password))
+            cursor.execute(query_user)
             user = cursor.fetchone()
             if user is None:
                 pass  # The user doesn't exist in the database
 
+            # id_ = user[0]
+
+            # return {"id_": id_}
             return user
 
     def post(self):
+        print(request.form['test'], flush=True)
+        # print(request.args.get('test'), flush=True)
         return {"class": "LoginUser", "method": "post"}
 
 

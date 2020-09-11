@@ -6,7 +6,7 @@ from .facility import LoginFacility, LogoutFacility, ListFacilities
 api_blueprint = Blueprint('api_blueprint', __name__)
 api = Api(api_blueprint)
 
-api.add_resource(LoginUser, '/user/login/<string:username>/<string:password>',
+api.add_resource(LoginUser, '/user/login',
                  endpoint='u_login')
 api.add_resource(LoginFacility,
                  '/fac/login',
@@ -15,3 +15,4 @@ api.add_resource(LogoutUser, '/user/logout', endpoint='u_logout')
 api.add_resource(LogoutFacility, '/fac/logout', endpoint='f_logout')
 api.add_resource(ListUsers, '/listusers', endpoint='list_users')
 api.add_resource(ListFacilities, '/listfacs', endpoint='list_facs')
+

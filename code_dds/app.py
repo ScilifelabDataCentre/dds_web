@@ -38,7 +38,7 @@ app.add_template_filter(utils.thousands)
 # add_resource(resource, *urls, **kwargs)
 # endpoint -- endpoint name --> can be used to reference the route in fields.Url fields
 # add_resource(HelloWorld, "/helloworld/<string:name>")
-app.register_blueprint(api_blueprint)
+app.register_blueprint(api_blueprint, url_prefix='/api/v1')
 
 # Context processors injects new variables automatically into the context of a
 # template. Runs before the template is rendered.
