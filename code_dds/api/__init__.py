@@ -10,7 +10,7 @@ api = Api(api_blueprint)
 api.add_resource(LoginUser, '/user/login',
                  endpoint='u_login')
 api.add_resource(LoginFacility,
-                 '/fac/login',
+                 '/fac/login/<string:username>$<string:password>$<string:project>$<string:owner>',
                  endpoint='f_login')
 api.add_resource(LogoutUser, '/user/logout', endpoint='u_logout')
 api.add_resource(LogoutFacility, '/fac/logout', endpoint='f_logout')

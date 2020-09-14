@@ -36,19 +36,25 @@ CREATE TABLE Projects (
     order_date DATE,
     delivery_date DATE,
     status_ VARCHAR(20),
-    sensitivity BOOL NOT NULL,
+    sensitive_ BOOL NOT NULL,
     description_ TEXT,
     pi_ VARCHAR(50) NOT NULL,
     owner_ CHAR(4) NOT NULL,
     facility CHAR(4) NOT NULL,
     size INT,
-    deliveryOption VARCHAR(10) NOT NULL,
+    delivery_option VARCHAR(10) NOT NULL,
     public_key VARCHAR(64) NOT NULL,
     private_key VARCHAR(200) NOT NULL,
     nonce VARCHAR(24) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (owner_) REFERENCES Users(id) ON DELETE CASCADE,
     FOREIGN KEY (facility) REFERENCES Facilities(id) ON DELETE CASCADE
+);
+CREATE TABLE S3Projects (
+    id CHAR(10), 
+    project_s3 CHAR(4), 
+    PRIMARY KEY (id), 
+    FOREIGN KEY (project_s3) REFERENCES Projects(id) ON DELETE CASCADE
 );
 CREATE TABLE Files (
     id INT NOT NULL AUTO_INCREMENT,
@@ -78,18 +84,20 @@ INSERT INTO Users (id, first_name, last_name, username, password_, settings, ema
     ('0002', 'Rachel', 'Green', 'rache', 'pbkdf2:sha256:15000', 'settingshere', 'rachel.green@ralphlauren.com', '070-000 00 02');
     
 INSERT INTO Projects (id, title, category, order_date, delivery_date, status_, sensitive_, description_, pi_, owner_, facility, size, delivery_option, public_key, private_key, nonce) VALUES
-    ('prj1', 'Whole genome sequencing', 'Genomics', '2019-05-25', '2019-09-02', 'Delivered',
-      True, 'Whole genome sequencing of the spruce genome, that will go published',
+    ('prj1', 'Whole genome sequencing', 'Genomics', '2019-05-25', '2019-09-02', 'Delivered', True, 'Whole genome sequencing of the spruce genome, that will go published',
      'Andrey Ericsson', '0001', 'fac1', 0, 'S3', 'publickey', 'privatekey', 'nonce'),
     ('prj2', 'Protein modelling', 'Proteomics', '2019-08-05', '2019-10-17', 'Delivered',
       False, 'Modelling of endo protein structure', 'Olof Hoglund', '0002', 'fac2', 
       0, 'S3', 'publickey', 'privatekey', 'nonce');
-      
+INSERT INTO S3Projects (id, project_s3) VALUES
+    ('s3proj1', 'prj1'), 
+    ('s3proj2', 'prj2');     
       
 INSERT INTO Projects (id, title, category, order_date, status_, sensitive_, description_, pi_, owner_, facility) VALUES
     ('prj3', 'Virus phage sequencing', 'Genomics', '2019-05-25', 'Ongoing', True,
      'Corono virus sequencing to trap different phages', 'Nemo Svensson', '0001', 'fac1', 
      0, 'S3', 'publickey', 'privatekey', 'nonce');
+
 -- INSERT INTO Files (ID, Name, Size, Format, DateUploaded, Checksum) VALUES
 --     (1, 'testfile1.fna ', 109246967, 'fasta', '2019-09-02', '01257ca3d305cff5b11f4abdb0c'),
 --     (2, 'testfile2.fna ', 109246967, 'fasta', '2019-09-02', '01257ca3d305cff5b11f4abdb0c'),

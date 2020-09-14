@@ -50,7 +50,7 @@ To rebuild the database after a change, you need to:
 	```
 3. Run 
 	```
-	docker-compose --build --no-cache
+	docker-compose build --no-cache
 	```
 4. Run `docker-compose up` as described above.
 5. If there are still issues, try deleting the pycache folders and repeat the steps. 
