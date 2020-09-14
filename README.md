@@ -24,16 +24,14 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 
 **3. In root (Data-Delivery-System)** 
 * Build and run containers
-
+	In the root folder (Data-Delivery-System/), run: 
 	```bash
-	cp dportal.yaml.sample dportal.yaml
-	docker-comopose up
+	docker-compose up
 	```
 
 	* To use terminal after starting services, use the `-d` option.
 
 		```
-		cp dportal.yaml.sample dportal.yaml
 		docker-compose up -d 
 		```
 
@@ -41,15 +39,18 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 		```bash 
 		docker-compose down
 		```
-**4. Setup database**
-* Go to http://localhost:5984/_utils/#setup 
-* Create the databases. 
-	```bash
-	curl -X PUT http://delport:delport@127.0.0.1:5984/project_db
-	curl -X PUT http://delport:delport@127.0.0.1:5984/user_db
+
+**4. After changing DB**
+To rebuild the database after a change, you need to: 
+1. Delete the `db-data` folder
+2. Run 
 	```
-* Import the database contents. 
-	```bash
-	curl -d @dbfiles/project_db.json -H "Content-type: application/json" -X POST http://delport:delport@127.0.0.1:5984/project_db/_bulk_docs
-	curl -d @dbfiles/user_db.json -H "Content-type: application/json" -X POST http://delport:delport@127.0.0.1:5984/user_db/_bulk_docs
+	docker rm $(docker ps -a -q) -f
+	docker volume prune
 	```
+3. Run 
+	```
+	docker-compose --build --no-cache
+	```
+4. Run `docker-compose up` as described above.
+5. If there are still issues, try deleting the pycache folders and repeat the steps. 
