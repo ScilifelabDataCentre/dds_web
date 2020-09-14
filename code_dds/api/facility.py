@@ -21,7 +21,7 @@ def cloud_access(project):
 
 
 def ds_access(username, password):
-    query = f"""SELECT * FROM Facilities
+    query = f"""SELECT id FROM Facilities
             WHERE username='{username}' and password_='{password}'"""
     print(query, flush=True)
     try:
@@ -33,14 +33,14 @@ def ds_access(username, password):
         facility = cursor.fetchone()
         print(facility, flush=True)
         if facility is None:
-            return False
+            return {'access': False, 'id': ''}
 
-        return True
+        return {'access': True, 'id': facility[0]}
 
 
-def project_access(project, owner):
+def project_access(fac_id, project, owner):
     query = f"""SELECT delivery_option FROM Projects
-            WHERE id='{project}' and owner_='{owner}'"""
+            WHERE id='{project}' AND owner_='{owner}' AND facility='{fac_id}'"""
     print(query, flush=True)
     try:
         cursor = g.db.cursor()
@@ -51,16 +51,16 @@ def project_access(project, owner):
         proj_found = cursor.fetchone()
         print(proj_found, flush=True)
         if proj_found is None:
-            return {'project': project, 'access': False,
+            return {'id': fac_id, 'project': project, 'access': False,
                     'error': """The project doesn't exist or you
                              do not have access"""}
 
         deliv_option = proj_found[0]
         if deliv_option != "S3":
-            return {'project': project, 'access': False,
+            return {'id': fac_id, 'project': project, 'access': False,
                     'error': "This project does not have S3 access."}
 
-    return {'project': project, 'access': True, 'error': None}
+    return {'id': fac_id, 'project': project, 'access': True, 'error': None}
 
 
 class LoginFacility(Resource):
@@ -68,11 +68,13 @@ class LoginFacility(Resource):
         print(
             f"username: {username}, password: {password}, project: {project}", flush=True)
 
-        if not ds_access(username=username, password=password):
+        ds_response = ds_access(username=username, password=password)
+        if not ds_response['access']:
             print("No DS access", flush=True)
             return jsonify({'access': False, 'error': "Invalid credentials"})
 
-        proj_response = project_access(project=project, owner=owner)
+        proj_response = project_access(fac_id=ds_response['id'],
+                                       project=project, owner=owner)
         print(f"proj_response: {proj_response}", flush=True)
         if not proj_response['access']:
             return jsonify(proj_response)
@@ -80,21 +82,9 @@ class LoginFacility(Resource):
         s3_access = cloud_access(project=project)
         print(f"s3_access: {s3_access}", flush=True)
         if s3_access == '':
-            return jsonify({'access': False, **s3_access})
+            return jsonify({'access': False, **proj_response, **s3_access})
 
-        return jsonify({'access': True, **s3_access})
-
-    def post(self):
-        # 1. Check if user exists - done
-        # 2. Check if password is correct - done
-        # 3. Check if allowed to post (role etc)? (probably not needed here atm)
-        # 4. Get user id if ok - done
-        # 5. Check if project exists - done
-        # 6. Check if user has access to project
-        # 7. Check delivery option
-        # 8. Check S3 option
-        # 9. Get S3 project id
-        return {"class": "LoginFacility", "method": "post"}
+        return jsonify({'access': True, **proj_response, **s3_access})
 
 
 class LogoutFacility(Resource):
