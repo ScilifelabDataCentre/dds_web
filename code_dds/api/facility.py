@@ -1,6 +1,14 @@
 from flask import Blueprint, g, request, jsonify
-from flask_restful import Resource, Api, fields
+from flask_restful import Resource, Api, fields, reqparse, marshal_with
 import json
+
+resource_fields = {
+    'access': fields.Boolean,
+    'user_id': fields.String,
+    'project_id': fields.String,
+    's3_id': fields.String,
+    'error': fields.String
+}
 
 
 def cloud_access(project):
@@ -15,15 +23,16 @@ def cloud_access(project):
         cursor.execute(s3_query)
         s3_id = cursor.fetchone()
         if s3_id is None:
-            return {'project': project, 's3_id': '', 'error': 'There is no recorded S3 project for the specified project'}
+            return False, "", \
+                "There is no recorded S3 project for the specified project"
 
-        return {'project': project, 's3_id': s3_id[0], 'error': None}
+        return True, s3_id[0], ""
 
 
 def ds_access(username, password):
     query = f"""SELECT id FROM Facilities
             WHERE username='{username}' and password_='{password}'"""
-    print(query, flush=True)
+    print(f"ds_access query: {query}", flush=True)
     try:
         cursor = g.db.cursor()
     except:
@@ -31,11 +40,12 @@ def ds_access(username, password):
     else:
         cursor.execute(query)
         facility = cursor.fetchone()
-        print(facility, flush=True)
+        print(f"ds_access result: {facility}", flush=True)
+        # return facility
         if facility is None:
-            return {'access': False, 'id': ''}
+            return False, ''
 
-        return {'access': True, 'id': facility[0]}
+        return True, facility[0]
 
 
 def project_access(fac_id, project, owner):
@@ -51,40 +61,49 @@ def project_access(fac_id, project, owner):
         proj_found = cursor.fetchone()
         print(proj_found, flush=True)
         if proj_found is None:
-            return {'id': fac_id, 'project': project, 'access': False,
-                    'error': """The project doesn't exist or you
-                             do not have access"""}
+            return False, "The project doesn't exist or you don't have access"
 
         deliv_option = proj_found[0]
         if deliv_option != "S3":
-            return {'id': fac_id, 'project': project, 'access': False,
-                    'error': "This project does not have S3 access."}
+            return False, "This project does not have S3 access"
 
-    return {'id': fac_id, 'project': project, 'access': True, 'error': None}
+    return True, ""
+
+
+class FacilityInfo(object):
+    def __init__(self, project_id, s3_id="", access=False, user_id="", error=""):
+        print(f"within the facility info class. access: {access}, "
+              f"user_id: {user_id}, project_id: {project_id}"
+              f"s3_id: {s3_id}, error: {error}")
+        self.access = access
+        self.user_id = user_id
+        self.project_id = project_id
+        self.s3_id = s3_id
+        self.error = error
 
 
 class LoginFacility(Resource):
+    @marshal_with(resource_fields)
     def get(self, username, password, project, owner):
-        print(
-            f"username: {username}, password: {password}, project: {project}", flush=True)
 
-        ds_response = ds_access(username=username, password=password)
-        if not ds_response['access']:
-            print("No DS access", flush=True)
-            return jsonify({'access': False, 'error': "Invalid credentials"})
+        ok, fac_id = ds_access(username=username, password=password)
+        if not ok:
+            return FacilityInfo(project_id=project, user_id=fac_id,
+                                error="Invalid credentials")
 
-        proj_response = project_access(fac_id=ds_response['id'],
-                                       project=project, owner=owner)
-        print(f"proj_response: {proj_response}", flush=True)
-        if not proj_response['access']:
-            return jsonify(proj_response)
+        ok, error = project_access(fac_id=fac_id,
+                                   project=project, owner=owner)
+        if not ok:
+            return FacilityInfo(project_id=project, user_id=fac_id,
+                                error=error)
 
-        s3_access = cloud_access(project=project)
-        print(f"s3_access: {s3_access}", flush=True)
-        if s3_access == '':
-            return jsonify({'access': False, **proj_response, **s3_access})
+        ok, s3_id, error = cloud_access(project=project)
+        if not ok:
+            return FacilityInfo(project_id=project, user_id=fac_id,
+                                error=error, s3_id=s3_id)
 
-        return jsonify({'access': True, **proj_response, **s3_access})
+        return FacilityInfo(access=True, project_id=project, s3_id=s3_id,
+                            user_id=fac_id)
 
 
 class LogoutFacility(Resource):
