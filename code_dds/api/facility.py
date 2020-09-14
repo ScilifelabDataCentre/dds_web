@@ -14,7 +14,7 @@ class LoginFacility(Resource):
         # 4. Get user id if ok 
         # 5. Check if project exists 
         # 6. Check if user has access to project
-        # 7. 
+        # 7. Check if 
         username = request.form['username']
         password = request.form['password']
         query = """SELECT id FROM Facilities WHERE username=? and password_=?"""
