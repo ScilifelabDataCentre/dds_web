@@ -1,10 +1,6 @@
 from flask import Blueprint, g, make_response, session, request
 from flask_restful import Resource, Api, reqparse, abort
 
-# Create user_api blueprint
-user_api = Blueprint('user_api', __name__)
-api = Api(user_api)
-
 
 class LoginUser(Resource):
     def get(self):
