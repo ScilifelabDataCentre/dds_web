@@ -72,9 +72,20 @@ def project_access(fac_id, project, owner):
 
 class FacilityInfo(object):
     def __init__(self, project_id, s3_id="", access=False, user_id="", error=""):
-        print(f"within the facility info class. access: {access}, "
-              f"user_id: {user_id}, project_id: {project_id}"
-              f"s3_id: {s3_id}, error: {error}")
+        '''Sets the values for common format for login response with 
+        resource_fields. 
+
+        Args: 
+            project_id:     Project ID
+            s3_id:          The S3 project ID used for the current project
+            access:         True if access to DS granted
+            user_id:        ID of approved user, "" if not granted
+            error:          Error message, "" if no error
+
+        Attributes:
+            Same as args.
+        '''
+
         self.access = access
         self.user_id = user_id
         self.project_id = project_id
@@ -85,23 +96,38 @@ class FacilityInfo(object):
 class LoginFacility(Resource):
     @marshal_with(resource_fields)
     def get(self, username, password, project, owner):
+        '''Checks the users access to the delivery system. 
 
+        Args:
+            username:   Username
+            password:   Password
+            project:    Project ID
+            owner:      Owner of project with project ID
+
+        Returns:
+            FacilityInfo with format resource_fields
+        '''
+
+        # Look for user in database
         ok, fac_id = ds_access(username=username, password=password)
-        if not ok:
+        if not ok:  # Access denied
             return FacilityInfo(project_id=project, user_id=fac_id,
                                 error="Invalid credentials")
 
+        # Look for project in database
         ok, error = project_access(fac_id=fac_id,
                                    project=project, owner=owner)
-        if not ok:
+        if not ok:  # Access denied
             return FacilityInfo(project_id=project, user_id=fac_id,
                                 error=error)
 
+        # Get S3 project ID for project
         ok, s3_id, error = cloud_access(project=project)
-        if not ok:
+        if not ok:  # Access denied
             return FacilityInfo(project_id=project, user_id=fac_id,
                                 error=error, s3_id=s3_id)
 
+        # Access approved
         return FacilityInfo(access=True, project_id=project, s3_id=s3_id,
                             user_id=fac_id)
 
