@@ -2,7 +2,7 @@ from flask import Blueprint
 from flask_restful import Api, Resource
 from .user import LoginUser, LogoutUser, ListUsers
 from .facility import LoginFacility, LogoutFacility, ListFacilities
-from .project import Project
+from .project import ProjectFiles
 
 api_blueprint = Blueprint('api_blueprint', __name__)
 api = Api(api_blueprint)
@@ -16,4 +16,4 @@ api.add_resource(LogoutUser, '/user/logout', endpoint='u_logout')
 api.add_resource(LogoutFacility, '/fac/logout', endpoint='f_logout')
 api.add_resource(ListUsers, '/listusers', endpoint='list_users')
 api.add_resource(ListFacilities, '/listfacs', endpoint='list_facs')
-api.add_resource(Project, '/project', endpoint='project')
+api.add_resource(ProjectFiles, '/project/listfiles/<string:project>', endpoint='project_files')

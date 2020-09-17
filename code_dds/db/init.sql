@@ -36,7 +36,7 @@ CREATE TABLE Projects (
     order_date DATE,
     delivery_date DATE,
     status_ VARCHAR(20),
-    sensitive_ BOOL NOT NULL,
+    sensitive_ TINYINT(1) NOT NULL,
     description_ TEXT,
     pi_ VARCHAR(50) NOT NULL,
     owner_ CHAR(4) NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE Files (
     directory_path VARCHAR(500),
     size INT NOT NULL,
     format_ VARCHAR(10),
-    compressed BOOL NOT NULL,
+    compressed TINYINT(1) NOT NULL,
     public_key VARCHAR(64) NOT NULL,
     salt VARCHAR(30) NOT NULL,
     date_uploaded DATE,
@@ -98,17 +98,17 @@ INSERT INTO Projects (id, title, category, order_date, status_, sensitive_, desc
      'Corono virus sequencing to trap different phages', 'Nemo Svensson', '0001', 'fac1', 
      0, 'S3', 'publickey', 'privatekey', 'nonce');
 
--- INSERT INTO Files (ID, Name, Size, Format, DateUploaded, Checksum) VALUES
---     (1, 'testfile1.fna ', 109246967, 'fasta', '2019-09-02', '01257ca3d305cff5b11f4abdb0c'),
---     (2, 'testfile2.fna ', 109246967, 'fasta', '2019-09-02', '01257ca3d305cff5b11f4abdb0c'),
---     (3, 'testfile3.fna ', 109246967, 'fasta', '2019-09-02', '01257ca3d305cff5b11f4abdb0c'),
---     (4, 'testfile4.fna ', 109246967, 'fasta', '2019-09-02', '01257ca3d305cff5b11f4abdb0c'),
---     (5, 'testfile5.fna ', 109246967, 'fasta', '2019-10-17', '01257ca3d305cff5b11f4abdb0c'),
---     (6, 'testfile6.fna ', 109246967, 'fasta', '2019-10-17', '01257ca3d305cff5b11f4abdb0c');
--- INSERT INTO ProjectFiles (ID, FileID, ProjectID) VALUES
---     (1, 1, 'prj1'),
---     (2, 2, 'prj1'),
---     (3, 3, 'prj1'),
---     (4, 4, 'prj1'),
---     (5, 5, 'prj2'),
---     (6, 6, 'prj2');
+INSERT INTO Files (id, name_, directory_path, size, format_, compressed, public_key, salt, date_uploaded) VALUES
+    (1, 'testfile1.fna ', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-09-02'),
+    (2, 'testfile2.fna ', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-09-02'),
+    (3, 'testfile3.fna ', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-09-02'),
+    (4, 'testfile4.fna ', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-09-02'),
+    (5, 'testfile5.fna ', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-10-17'),
+    (6, 'testfile6.fna ', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-10-17');
+INSERT INTO ProjectFiles (id, fileid, projectid) VALUES
+    (1, 1, 'prj1'),
+    (2, 2, 'prj1'),
+    (3, 3, 'prj1'),
+    (4, 4, 'prj1'),
+    (5, 5, 'prj2'),
+    (6, 6, 'prj2');

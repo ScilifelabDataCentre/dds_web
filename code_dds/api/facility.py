@@ -7,25 +7,40 @@ resource_fields = {
     'user_id': fields.String,
     'project_id': fields.String,
     's3_id': fields.String,
+    'public_key': fields.String,
     'error': fields.String
 }
 
 
 def cloud_access(project):
+    '''Gets the S3 project ID (bucket ID).
+
+    Args:
+        project:    Specified project ID used in current delivery
+
+    Returns:
+        tuple:  access, s3 project ID and error message
+    '''
+
+    # Specify database query
     s3_query = f"""SELECT id FROM S3Projects
                WHERE project_s3='{project}'"""
-    print(s3_query, flush=True)
+
+    # Execute query
     try:
         cursor = g.db.cursor()
-    except:
+    except:     # TODO: Fix exception
         pass
     else:
-        cursor.execute(s3_query)
+        cursor.execute(s3_query)    # Execute
+
+        # Should be only one S3 ID --> get one
         s3_id = cursor.fetchone()
         if s3_id is None:
             return False, "", \
                 "There is no recorded S3 project for the specified project"
 
+        # Access granted, S3 ID and no error message
         return True, s3_id[0], ""
 
 
@@ -48,31 +63,53 @@ def ds_access(username, password):
         return True, facility[0]
 
 
-def project_access(fac_id, project, owner):
-    query = f"""SELECT delivery_option FROM Projects
+def project_access(fac_id, project, owner) -> (bool, str):
+    '''Checks the users access to the specified project
+
+    Args:
+        fac_id:     Facility ID
+        project:    Project ID
+        owner:      Owner ID
+
+    Returns:
+        tuple:  access and error message
+    '''
+
+    # Specify query
+    query = f"""SELECT delivery_option, public_key FROM Projects
             WHERE id='{project}' AND owner_='{owner}' AND facility='{fac_id}'"""
-    print(query, flush=True)
+
+    # Execute query
     try:
-        cursor = g.db.cursor()
-    except:
+        cursor = g.db.cursor()  # Connection is performed at beginning of req
+    except:     # TODO: Fix exception
         pass
     else:
-        cursor.execute(query)
-        proj_found = cursor.fetchone()
-        print(proj_found, flush=True)
-        if proj_found is None:
-            return False, "The project doesn't exist or you don't have access"
+        cursor.execute(query)   # Execute
 
+        # Should be only one project --> fetch only one
+        proj_found = cursor.fetchone()
+        if proj_found is None:
+            return False, None, "The project doesn't exist" \
+                "or you don't have access"
+
+        # Quit if project delivery option is not S3
         deliv_option = proj_found[0]
         if deliv_option != "S3":
-            return False, "This project does not have S3 access"
+            return False, None, "This project does not have S3 access"
 
-    return True, ""
+        public_key = proj_found[1]
+        if public_key is None:
+            return False, public_key, "The project does not have a public key"
+
+        # Access granted and no error
+        return True, public_key, ""
 
 
 class FacilityInfo(object):
-    def __init__(self, project_id, s3_id="", access=False, user_id="", error=""):
-        '''Sets the values for common format for login response with 
+    def __init__(self, project_id, s3_id="", access=False, user_id="",
+                 public_key=None, error=""):
+        '''Sets the values for common format for login response with
         resource_fields. 
 
         Args: 
@@ -91,12 +128,13 @@ class FacilityInfo(object):
         self.project_id = project_id
         self.s3_id = s3_id
         self.error = error
+        self.public_key = public_key
 
 
 class LoginFacility(Resource):
     @marshal_with(resource_fields)
     def get(self, username, password, project, owner):
-        '''Checks the users access to the delivery system. 
+        '''Checks the users access to the delivery system.
 
         Args:
             username:   Username
@@ -115,8 +153,8 @@ class LoginFacility(Resource):
                                 error="Invalid credentials")
 
         # Look for project in database
-        ok, error = project_access(fac_id=fac_id,
-                                   project=project, owner=owner)
+        ok, public_key, error = project_access(fac_id=fac_id, project=project,
+                                               owner=owner)
         if not ok:  # Access denied
             return FacilityInfo(project_id=project, user_id=fac_id,
                                 error=error)
@@ -129,8 +167,7 @@ class LoginFacility(Resource):
 
         # Access approved
         return FacilityInfo(access=True, project_id=project, s3_id=s3_id,
-                            user_id=fac_id)
-
+                            user_id=fac_id, public_key=public_key)
 
 class LogoutFacility(Resource):
     def get(self):
