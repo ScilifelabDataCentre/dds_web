@@ -1,4 +1,4 @@
-from flask import Blueprint, g, request, jsonify
+from flask import Blueprint, g, jsonify, request
 from flask_restful import Resource, Api
 import json
 
@@ -32,3 +32,14 @@ class ProjectFiles(Resource):
                 }
 
         return jsonify(files)
+
+
+class DatabaseUpdate(Resource):
+    def post(self):
+        # 1. Check if exists
+        # 2. If exists -- update, otherwise create
+        print("HEELLOOOO", flush=True)
+        file = request.form['file']
+        print(f"file: {file}", flush=True)
+        # query = """SELECT id FROM Files
+        #         where """
