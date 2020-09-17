@@ -84,20 +84,20 @@ INSERT INTO Users (id, first_name, last_name, username, password_, settings, ema
     ('0002', 'Rachel', 'Green', 'rache', 'pbkdf2:sha256:15000', 'settingshere', 'rachel.green@ralphlauren.com', '070-000 00 02');
     
 INSERT INTO Projects (id, title, category, order_date, delivery_date, status_, sensitive_, description_, pi_, owner_, facility, size, delivery_option, public_key, private_key, nonce) VALUES
-    ('prj1', 'Whole genome sequencing', 'Genomics', '2019-05-25', '2019-09-02', 'Delivered', True, 'Whole genome sequencing of the spruce genome, that will go published',
+    ('prj1', 'Whole genome sequencing', 'Genomics', '2019-05-25', '2019-09-02', 'Delivered', 
+    True, 'Whole genome sequencing of the spruce genome, that will go published',
      'Andrey Ericsson', '0001', 'fac1', 0, 'S3', 'publickey', 'privatekey', 'nonce'),
     ('prj2', 'Protein modelling', 'Proteomics', '2019-08-05', '2019-10-17', 'Delivered',
       False, 'Modelling of endo protein structure', 'Olof Hoglund', '0002', 'fac2', 
-      0, 'S3', 'publickey', 'privatekey', 'nonce');
+      0, 'S3', 'publickey', 'privatekey', 'nonce'), 
+    ('prj3', 'Virus phage sequencing', 'Genomics', '2019-05-25', '2019-07-29', 'Ongoing', 
+    True, 'Corono virus sequencing to trap different phages', 'Nemo Svensson', '0001', 'fac1', 
+    0, 'S3', 'publickey', 'privatekey', 'nonce');
+    
 INSERT INTO S3Projects (id, project_s3) VALUES
     ('s3proj1', 'prj1'), 
     ('s3proj2', 'prj2');     
       
-INSERT INTO Projects (id, title, category, order_date, status_, sensitive_, description_, pi_, owner_, facility) VALUES
-    ('prj3', 'Virus phage sequencing', 'Genomics', '2019-05-25', 'Ongoing', True,
-     'Corono virus sequencing to trap different phages', 'Nemo Svensson', '0001', 'fac1', 
-     0, 'S3', 'publickey', 'privatekey', 'nonce');
-
 INSERT INTO Files (id, name_, directory_path, size, format_, compressed, public_key, salt, date_uploaded) VALUES
     (1, 'testfile1.fna ', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-09-02'),
     (2, 'testfile2.fna ', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-09-02'),

@@ -1,12 +1,16 @@
-from flask import Blueprint, g, request
+from flask import Blueprint, g, request, jsonify
 from flask_restful import Resource, Api
 import json
 
 
 class ProjectFiles(Resource):
     def get(self, project):
-        query = f"""SELECT fileid FROM ProjectFiles
-                WHERE projectid='{project}'"""
+
+        files = {}
+
+        query = f"""SELECT * FROM Files
+                WHERE id IN (SELECT fileid FROM ProjectFiles
+                            WHERE projectid='{project}')"""
 
         try:
             cursor = g.db.cursor()
@@ -14,9 +18,17 @@ class ProjectFiles(Resource):
             pass
         else:
             cursor.execute(query)
-            
-            all_files = cursor.fetchall()
-            if all_files is None:
-                return {"any?": False}
-        
-        return {"ok": True}
+
+            for file in cursor:
+                print(file, flush=True)
+                files[file[1]] = {
+                    'directory_path': file[2],
+                    'size': file[3],
+                    'format': file[4],
+                    'compressed': True if file[5] == 1 else False,
+                    'public_key': file[6],
+                    'salt': file[7],
+                    'date_uploaded': file[8]
+                }
+
+        return jsonify(files)
