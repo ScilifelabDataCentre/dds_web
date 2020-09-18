@@ -71,6 +71,52 @@ CREATE TABLE Files (
     FOREIGN KEY(project_id) REFERENCES Projects(id)
 );
 
+DELIMITER $$
+
+CREATE TRIGGER project_size_insert 
+AFTER INSERT ON Files 
+FOR EACH ROW 
+BEGIN      
+    DECLARE tot_size INT;    
+
+    SELECT SUM(size) INTO tot_size
+    FROM Files WHERE project_id=new.project_id; 
+    
+    UPDATE Projects 
+    SET size = tot_size 
+    WHERE Projects.id=new.project_id;  
+END$$
+
+CREATE TRIGGER project_size_update
+AFTER UPDATE ON Files 
+FOR EACH ROW 
+BEGIN      
+    DECLARE tot_size INT;    
+
+    SELECT SUM(size) INTO tot_size
+    FROM Files WHERE project_id=new.project_id; 
+    
+    UPDATE Projects 
+    SET size = tot_size 
+    WHERE Projects.id=new.project_id;  
+END$$
+
+CREATE TRIGGER project_size_delete
+AFTER DELETE ON Files 
+FOR EACH ROW 
+BEGIN      
+    DECLARE tot_size INT;    
+
+    SELECT SUM(size) INTO tot_size
+    FROM Files WHERE project_id=old.project_id; 
+    
+    UPDATE Projects 
+    SET size = tot_size 
+    WHERE Projects.id=old.project_id;  
+END$$
+
+DELIMITER ;
+
 INSERT INTO Facilities (id, name_, internal_ref, username, password_, settings, email) VALUES
     ('fac1', 'National Seq Facility', 'nsf', 'fac1_username', 'fac1_password', 'fac1_settings', 'supprt@nsf.se'),
     ('fac2', 'Proteomics Facility', 'pfc', 'fac2_username', 'fac2_password', 'fac2_settings', 'supprt@pfc.se');
