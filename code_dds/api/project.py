@@ -60,16 +60,16 @@ class DatabaseUpdate(Resource):
                     f"""INSERT INTO Files (name_, directory_path, size,
                                            format_, compressed, public_key,
                                            salt, date_uploaded)
-                        VALUES ('{all_["file"]}', 'all_["directory_path"]',
-                                '{all_["size"]}', 'keep?',
-                                '{1 if all_["ds_compressed"] else 0}', '{all_["key"]}',
-                                'salt', CURDATE())"""
-                try: 
+                        VALUES ('{all_["file"]}', '{all_["directory_path"]}',
+                                '{all_["size"]}', 'format?',
+                                '{1 if all_["ds_compressed"] else 0}', 
+                                '{all_["key"]}', '{all_["salt"]}', NOW());"""
+                try:
                     cursor.execute(insert_query)
-                    # g.db.commit()
+                    g.db.commit()
                 except Exception as e:
                     print(e, flush=True)
-                else: 
+                else:
                     print("successful? ", flush=True)
                 
             elif len(all_files) > 1:

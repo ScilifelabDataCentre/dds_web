@@ -65,17 +65,12 @@ CREATE TABLE Files (
     compressed TINYINT(1) NOT NULL,
     public_key VARCHAR(64) NOT NULL,
     salt VARCHAR(50) NOT NULL,
-    date_uploaded DATE,
-    PRIMARY KEY(id)
+    date_uploaded DATETIME NOT NULL DEFAULT NOW(),
+    project_id CHAR(4) NOT NULL,
+    PRIMARY KEY(id), 
+    FOREIGN KEY(project_id) REFERENCES Projects(id)
 );
-CREATE TABLE ProjectFiles (
-    id INT NOT NULL AUTO_INCREMENT,
-    fileid INT NOT NULL,
-    projectid CHAR(4) NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (fileid) REFERENCES Files(id) ON DELETE CASCADE,
-    FOREIGN KEY (projectid) REFERENCES Projects(id) ON DELETE CASCADE
-);
+
 INSERT INTO Facilities (id, name_, internal_ref, username, password_, settings, email) VALUES
     ('fac1', 'National Seq Facility', 'nsf', 'fac1_username', 'fac1_password', 'fac1_settings', 'supprt@nsf.se'),
     ('fac2', 'Proteomics Facility', 'pfc', 'fac2_username', 'fac2_password', 'fac2_settings', 'supprt@pfc.se');
@@ -98,17 +93,10 @@ INSERT INTO S3Projects (id, project_s3) VALUES
     ('s3proj1', 'prj1'), 
     ('s3proj2', 'prj2');     
       
-INSERT INTO Files (id, name_, directory_path, size, format_, compressed, public_key, salt, date_uploaded) VALUES
-    (1, 'testfile1.fna', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-09-02'),
-    (2, 'testfile2.fna', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-09-02'),
-    (3, 'testfile3.fna', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-09-02'),
-    (4, 'testfile4.fna', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-09-02'),
-    (5, 'testfile5.fna', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-10-17'),
-    (6, 'testfile6.fna', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-10-17');
-INSERT INTO ProjectFiles (id, fileid, projectid) VALUES
-    (1, 1, 'prj1'),
-    (2, 2, 'prj1'),
-    (3, 3, 'prj1'),
-    (4, 4, 'prj1'),
-    (5, 5, 'prj2'),
-    (6, 6, 'prj2');
+INSERT INTO Files (id, name_, directory_path, size, format_, compressed, public_key, salt, date_uploaded, project_id) VALUES
+    (1, 'testfile1.fna', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-09-02', 'prj1'),
+    (2, 'testfile2.fna', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-09-02', 'prj1'),
+    (3, 'testfile3.fna', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-09-02', 'prj1'),
+    (4, 'testfile4.fna', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-09-02', 'prj1'),
+    (5, 'testfile5.fna', '', 109246967, 'fasta', 1, 'file_public', 'file_salt', '2019-10-17', 'prj2'),
+    (6, 'testfile6.fna', '', 109246967, 'fasta', 0, 'file_public', 'file_salt', '2019-10-17', 'prj2');
