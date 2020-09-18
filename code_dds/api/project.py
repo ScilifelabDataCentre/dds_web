@@ -39,7 +39,40 @@ class DatabaseUpdate(Resource):
         # 1. Check if exists
         # 2. If exists -- update, otherwise create
         print("HEELLOOOO", flush=True)
-        file = request.form['file']
-        print(f"file: {file}", flush=True)
-        # query = """SELECT id FROM Files
-        #         where """
+        all_ = request.form
+        print(f"all: {all_}", flush=True)
+        # project = request.form
+        # file = request.form['file']
+        # print(f"file: {file}", flush=True)
+        query = f"""SELECT id FROM Files
+                WHERE name_='{all_['file']}'"""
+        try:
+            cursor = g.db.cursor()
+        except:     # TODO: Fix execption
+            pass
+        else:
+            cursor.execute(query)
+
+            all_files = cursor.fetchall()
+            if len(all_files) == 0:
+                # The file is not in the database --> create
+                insert_query = \
+                    f"""INSERT INTO Files (name_, directory_path, size,
+                                           format_, compressed, public_key,
+                                           salt, date_uploaded)
+                        VALUES ('{all_["file"]}', 'all_["directory_path"]',
+                                '{all_["size"]}', 'keep?',
+                                '{1 if all_["ds_compressed"] else 0}', '{all_["key"]}',
+                                'salt', CURDATE())"""
+                try: 
+                    cursor.execute(insert_query)
+                    # g.db.commit()
+                except Exception as e:
+                    print(e, flush=True)
+                else: 
+                    print("successful? ", flush=True)
+                
+            elif len(all_files) > 1:
+                pass    # There are multiple files, should not be possible --> error
+            else:
+                pass    # The file exists in the database --> update

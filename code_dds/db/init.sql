@@ -64,7 +64,7 @@ CREATE TABLE Files (
     format_ VARCHAR(10),
     compressed TINYINT(1) NOT NULL,
     public_key VARCHAR(64) NOT NULL,
-    salt VARCHAR(30) NOT NULL,
+    salt VARCHAR(50) NOT NULL,
     date_uploaded DATE,
     PRIMARY KEY(id)
 );
