@@ -1,6 +1,8 @@
 from flask import Blueprint, g, request, jsonify
 from flask_restful import Resource, Api, fields, reqparse, marshal_with
 import json
+from webargs import fields
+from webargs.flaskparser import use_args
 
 resource_fields = {
     'access': fields.Boolean,
@@ -138,18 +140,22 @@ class FacilityInfo(object):
         self.public_key = public_key
 
 
-class PasswordResponse(object):
-    def __init__(self, exists, username, settings="", error=""):
-        self.exists = exists
-        self.username = username
-        self.pw_settings = settings
-        self.error = error
-
-
 class PasswordSettings(Resource):
-    @marshal_with(pw_fields)
+
     def get(self, username):
-        print(username, flush=True)
+        '''Checks database for user and returns password settings if found.
+        
+        Args:
+            username:   The username wanting to get access
+            
+        Returns:
+            json:
+                exists:     True
+                username:   Username
+                settings:   Salt, length, n, r, p settings for pw
+        '''
+        
+        # Get password settings if the user exists
         pw_query = f"""SELECT settings FROM Facilities
                        WHERE username='{username}'"""
         try:
@@ -157,15 +163,20 @@ class PasswordSettings(Resource):
         except:     # TODO: Fix exception
             pass
         else:
+            # Execute query
             cursor.execute(pw_query)
 
+            # Fetch result
             pw_settings = cursor.fetchone()
+
+            # If result is empty the user does not exist, otherwise return
+            # password settings
             if pw_settings is None:
-                return PasswordResponse(exists=False, username=username,
-                                        error='The user does not exist')  # The user doesn't exist
+                return jsonify({'exists': False, 'username': username,
+                                'settings': "", 'error': "The user does not exist"})  # The user doesn't exist
             else:
-                return PasswordResponse(exists=True, username=username,
-                                        settings=pw_settings[0])
+                return jsonify({'exists': True, 'username': username,
+                                'settings': pw_settings[0], 'error': ""})
 
 
 class LoginFacility(Resource):

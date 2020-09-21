@@ -9,3 +9,4 @@ mariadb
 flask_wtf
 flask_restful
 email_validator
+webargs
