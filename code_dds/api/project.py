@@ -9,9 +9,8 @@ class ProjectFiles(Resource):
         files = {}
 
         query = f"""SELECT * FROM Files
-                WHERE id IN (SELECT fileid FROM ProjectFiles
-                            WHERE projectid='{project}')"""
-
+                WHERE project_id='{project}'"""
+        print(f"query listing projects: {query}", flush=True)
         try:
             cursor = g.db.cursor()
         except:     # TODO: Fix exception
@@ -36,6 +35,7 @@ class ProjectFiles(Resource):
 
 class DatabaseUpdate(Resource):
     def post(self):
+        db_changed = False
         # 1. Check if exists
         # 2. If exists -- update, otherwise create
         print("HEELLOOOO", flush=True)
@@ -59,20 +59,41 @@ class DatabaseUpdate(Resource):
                 insert_query = \
                     f"""INSERT INTO Files (name_, directory_path, size,
                                            format_, compressed, public_key,
-                                           salt, date_uploaded)
+                                           salt, date_uploaded, project_id)
                         VALUES ('{all_["file"]}', '{all_["directory_path"]}',
                                 '{all_["size"]}', 'format?',
                                 '{1 if all_["ds_compressed"] else 0}', 
-                                '{all_["key"]}', '{all_["salt"]}', NOW());"""
+                                '{all_["key"]}', '{all_["salt"]}', NOW(), 
+                                '{all_["project"]}');"""
                 try:
                     cursor.execute(insert_query)
                     g.db.commit()
-                except Exception as e:
+                except Exception as e:  # TODO: Fix exception
                     print(e, flush=True)
                 else:
-                    print("successful? ", flush=True)
-                
+                    db_changed = True
+
             elif len(all_files) > 1:
+
                 pass    # There are multiple files, should not be possible --> error
             else:
-                pass    # The file exists in the database --> update
+                update_query = \
+                    f"""UPDATE Files
+                    SET 
+                    directory_path='{all_["directory_path"]}', 
+                    size='{all_["size"]}', 
+                    compressed='{1 if all_["ds_compressed"] else 0}', 
+                    public_key='{all_["key"]}',
+                    salt='{all_["salt"]}', 
+                    date_uploaded=NOW(), 
+                    project_id='{all_["project"]}'
+                    WHERE id=all_files[0]
+                    """
+                try: 
+                    cursor.execute(update_query)
+                    g.db.commit()
+                except Exception as e:  # TODO: Fix exception
+                    print(e, flush=True)
+                else: 
+                    db_changed = True
+        return db_changed

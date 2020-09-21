@@ -11,6 +11,13 @@ resource_fields = {
     'error': fields.String
 }
 
+pw_fields = {
+    'exists': fields.Boolean,
+    'username': fields.String,
+    'pw_settings': fields.String,
+    'error': fields.String
+}
+
 
 def cloud_access(project):
     '''Gets the S3 project ID (bucket ID).
@@ -131,6 +138,36 @@ class FacilityInfo(object):
         self.public_key = public_key
 
 
+class PasswordResponse(object):
+    def __init__(self, exists, username, settings="", error=""):
+        self.exists = exists
+        self.username = username
+        self.pw_settings = settings
+        self.error = error
+
+
+class PasswordSettings(Resource):
+    @marshal_with(pw_fields)
+    def get(self, username):
+        print(username, flush=True)
+        pw_query = f"""SELECT settings FROM Facilities
+                       WHERE username='{username}'"""
+        try:
+            cursor = g.db.cursor()
+        except:     # TODO: Fix exception
+            pass
+        else:
+            cursor.execute(pw_query)
+
+            pw_settings = cursor.fetchone()
+            if pw_settings is None:
+                return PasswordResponse(exists=False, username=username,
+                                        error='The user does not exist')  # The user doesn't exist
+            else:
+                return PasswordResponse(exists=True, username=username,
+                                        settings=pw_settings[0])
+
+
 class LoginFacility(Resource):
     @marshal_with(resource_fields)
     def get(self, username, password, project, owner):
@@ -168,6 +205,7 @@ class LoginFacility(Resource):
         # Access approved
         return FacilityInfo(access=True, project_id=project, s3_id=s3_id,
                             user_id=fac_id, public_key=public_key)
+
 
 class LogoutFacility(Resource):
     def get(self):

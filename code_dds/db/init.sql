@@ -118,8 +118,8 @@ END$$
 DELIMITER ;
 
 INSERT INTO Facilities (id, name_, internal_ref, username, password_, settings, email) VALUES
-    ('fac1', 'National Seq Facility', 'nsf', 'fac1_username', 'fac1_password', 'fac1_settings', 'supprt@nsf.se'),
-    ('fac2', 'Proteomics Facility', 'pfc', 'fac2_username', 'fac2_password', 'fac2_settings', 'supprt@pfc.se');
+    ('fac1', 'National Seq Facility', 'nsf', 'fac1_username', 'b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258095735f5a395e9013d70ec', '41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1', 'supprt@nsf.se'),
+    ('fac2', 'Proteomics Facility', 'pfc', 'fac2_username', 'fac2_password', '41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1', 'supprt@pfc.se');
 INSERT INTO Users (id, first_name, last_name, username, password_, settings, email, phone) VALUES
     ('0001', 'Ross', 'Geller', 'rossy', 'pbkdf2:sha256:15000', 'settingshere', 'ross.geller@museum.com', '070-000 00 01'),
     ('0002', 'Rachel', 'Green', 'rache', 'pbkdf2:sha256:15000', 'settingshere', 'rachel.green@ralphlauren.com', '070-000 00 02');
