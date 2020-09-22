@@ -1,17 +1,9 @@
-from flask import Blueprint, g, request, jsonify
+from flask import Blueprint, g, request, jsonify, Response
 from flask_restful import Resource, Api, fields, reqparse, marshal_with
 import json
 from webargs import fields
 from webargs.flaskparser import use_args
 
-resource_fields = {
-    'access': fields.Boolean,
-    'user_id': fields.String,
-    'project_id': fields.String,
-    's3_id': fields.String,
-    'public_key': fields.String,
-    'error': fields.String
-}
 
 pw_fields = {
     'exists': fields.Boolean,
@@ -115,46 +107,21 @@ def project_access(fac_id, project, owner) -> (bool, str):
         return True, public_key, ""
 
 
-class FacilityInfo(object):
-    def __init__(self, project_id, s3_id="", access=False, user_id="",
-                 public_key=None, error=""):
-        '''Sets the values for common format for login response with
-        resource_fields. 
-
-        Args: 
-            project_id:     Project ID
-            s3_id:          The S3 project ID used for the current project
-            access:         True if access to DS granted
-            user_id:        ID of approved user, "" if not granted
-            error:          Error message, "" if no error
-
-        Attributes:
-            Same as args.
-        '''
-
-        self.access = access
-        self.user_id = user_id
-        self.project_id = project_id
-        self.s3_id = s3_id
-        self.error = error
-        self.public_key = public_key
-
-
 class PasswordSettings(Resource):
 
     def get(self, username):
         '''Checks database for user and returns password settings if found.
-        
+
         Args:
             username:   The username wanting to get access
-            
+
         Returns:
             json:
                 exists:     True
                 username:   Username
                 settings:   Salt, length, n, r, p settings for pw
         '''
-        
+
         # Get password settings if the user exists
         pw_query = f"""SELECT settings FROM Facilities
                        WHERE username='{username}'"""
@@ -179,9 +146,55 @@ class PasswordSettings(Resource):
                                 'settings': pw_settings[0], 'error': ""})
 
 
+# login_fields = {
+#     'access': fields.Boolean,
+#     'user_id': fields.String,
+#     'project_id': fields.String,
+#     's3_id': fields.String,
+#     'public_key': fields.String,
+#     'error': fields.String
+# }
+
+
+# class FacilityInfo(object):
+#     def __init__(self, project_id, s3_id="", access=False, user_id="",
+#                  public_key="", error=""):
+#         '''Sets the values for common format for login response with
+#         resource_fields.
+
+#         Args:
+#             project_id:     Project ID
+#             s3_id:          The S3 project ID used for the current project
+#             access:         True if access to DS granted
+#             user_id:        ID of approved user, "" if not granted
+#             error:          Error message, "" if no error
+
+#         Attributes:
+#             Same as args.
+#         '''
+
+#         self.access = access
+#         self.user_id = user_id
+#         self.project_id = project_id
+#         self.s3_id = s3_id
+#         self.error = error
+#         self.public_key = public_key
+
+
 class LoginFacility(Resource):
-    @marshal_with(resource_fields)
-    def get(self, username, password, project, owner):
+
+    global DEFAULTS
+    DEFAULTS = {
+        'access': False,
+        'user_id': "",
+        's3_id': "",
+        'public_key': None,
+        'error': ""
+    }
+
+    # @marshal_with(login_fields)  # Worked first but stopped working for some
+    # reason. Gives response 500.
+    def post(self):
         '''Checks the users access to the delivery system.
 
         Args:
@@ -194,28 +207,45 @@ class LoginFacility(Resource):
             FacilityInfo with format resource_fields
         '''
 
+        user_info = request.args
+
+        # return {'access': False}
         # Look for user in database
-        ok, fac_id = ds_access(username=username, password=password)
+        ok, fac_id = ds_access(username=user_info['username'],
+                               password=user_info['password'])
         if not ok:  # Access denied
-            return FacilityInfo(project_id=project, user_id=fac_id,
-                                error="Invalid credentials")
+            return jsonify(access=DEFAULTS['access'], user_id=fac_id,
+                           s3_id=DEFAULTS['s3_id'],
+                           public_key=DEFAULTS['public_key'],
+                           error="Invalid credentials",
+                           project_id=user_info['project'])
 
         # Look for project in database
-        ok, public_key, error = project_access(fac_id=fac_id, project=project,
-                                               owner=owner)
+        ok, public_key, error = project_access(fac_id=fac_id,
+                                               project=user_info['project'],
+                                               owner=user_info['owner'])
         if not ok:  # Access denied
-            return FacilityInfo(project_id=project, user_id=fac_id,
-                                error=error)
+            return jsonify(access=DEFAULTS['access'], user_id=fac_id,
+                           s3_id=DEFAULTS['s3_id'],
+                           public_key=DEFAULTS['public_key'],
+                           error=error,
+                           project_id=user_info['project'])
 
         # Get S3 project ID for project
-        ok, s3_id, error = cloud_access(project=project)
+        ok, s3_id, error = cloud_access(project=user_info['project'])
         if not ok:  # Access denied
-            return FacilityInfo(project_id=project, user_id=fac_id,
-                                error=error, s3_id=s3_id)
+            return jsonify(access=DEFAULTS['access'], user_id=fac_id,
+                           s3_id=s3_id,
+                           public_key=DEFAULTS['public_key'],
+                           error=error,
+                           project_id=user_info['project'])
 
         # Access approved
-        return FacilityInfo(access=True, project_id=project, s3_id=s3_id,
-                            user_id=fac_id, public_key=public_key)
+        return jsonify(access=True, user_id=fac_id,
+                       s3_id=s3_id,
+                       public_key=public_key,
+                       error="Invalid credentials",
+                       project_id=user_info['project'])
 
 
 class LogoutFacility(Resource):
