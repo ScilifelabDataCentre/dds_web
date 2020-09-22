@@ -121,8 +121,8 @@ INSERT INTO Facilities (id, name_, internal_ref, username, password_, settings, 
     ('fac1', 'National Seq Facility', 'nsf', 'fac1_username', 'b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258095735f5a395e9013d70ec', '41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1', 'supprt@nsf.se'),
     ('fac2', 'Proteomics Facility', 'pfc', 'fac2_username', 'fac2_password', '41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1', 'supprt@pfc.se');
 INSERT INTO Users (id, first_name, last_name, username, password_, settings, email, phone) VALUES
-    ('0001', 'Ross', 'Geller', 'rossy', 'pbkdf2:sha256:15000', 'settingshere', 'ross.geller@museum.com', '070-000 00 01'),
-    ('0002', 'Rachel', 'Green', 'rache', 'pbkdf2:sha256:15000', 'settingshere', 'rachel.green@ralphlauren.com', '070-000 00 02');
+    ('0001', 'Ross', 'Geller', 'rossy', 'rosspass', '41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1', 'ross.geller@museum.com', '070-000 00 01'),
+    ('0002', 'Rachel', 'Green', 'rache', 'rachpass', '41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1', 'rachel.green@ralphlauren.com', '070-000 00 02');
     
 INSERT INTO Projects (id, title, category, order_date, delivery_date, status_, sensitive_, description_, pi_, owner_, facility, size, delivery_option, public_key, private_key, nonce) VALUES
     ('prj1', 'Whole genome sequencing', 'Genomics', '2019-05-25', '2019-09-02', 'Delivered', 

@@ -109,7 +109,7 @@ def project_access(fac_id, project, owner) -> (bool, str):
 
 class PasswordSettings(Resource):
 
-    def get(self, username):
+    def get(self, role, username):
         '''Checks database for user and returns password settings if found.
 
         Args:
@@ -121,9 +121,9 @@ class PasswordSettings(Resource):
                 username:   Username
                 settings:   Salt, length, n, r, p settings for pw
         '''
-
+        table = """Users""" if role == 'user' else """Facilities"""
         # Get password settings if the user exists
-        pw_query = f"""SELECT settings FROM Facilities
+        pw_query = f"""SELECT settings FROM {table}
                        WHERE username='{username}'"""
         try:
             cursor = g.db.cursor()
@@ -209,9 +209,9 @@ class LoginFacility(Resource):
 
         user_info = request.args
 
-        # return {'access': False}
         # Look for user in database
-        ok, fac_id = ds_access(username=user_info['username'],
+        ok, fac_id = ds_access(table="Facilities",
+                               username=user_info['username'],
                                password=user_info['password'])
         if not ok:  # Access denied
             return jsonify(access=DEFAULTS['access'], user_id=fac_id,
