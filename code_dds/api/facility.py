@@ -1,5 +1,6 @@
 from flask import Blueprint, g, request, jsonify, Response
 from flask_restful import Resource, Api, fields, reqparse, marshal_with
+from flask_sqlalchemy import SQLAlchemy
 import json
 from webargs import fields
 from webargs.flaskparser import use_args
@@ -11,6 +12,7 @@ pw_fields = {
     'pw_settings': fields.String,
     'error': fields.String
 }
+
 
 
 def cloud_access(project):
