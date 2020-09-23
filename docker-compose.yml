@@ -5,9 +5,9 @@ services:
       context: ./
       dockerfile: ./Dockerfiles/Dockerfile-database
     restart: on-failure
-    volumes:
-      - ./code_dds/db/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./db-data:/data/db
+    # volumes:
+      # - ./code_dds/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      # - ./db-data:/data/db
     ports:
       - 127.0.0.1:3306:3306
   backend:

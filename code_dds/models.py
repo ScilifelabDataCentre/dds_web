@@ -1,6 +1,6 @@
 """Data models."""
 from . import db
-from sqlalchemy import func, DDL
+from sqlalchemy import func, DDL, event
 
 
 class User(db.Model):
@@ -16,7 +16,7 @@ class User(db.Model):
     email = db.Column(db.String(80), unique=True, nullable=False)
     phone = db.Column(db.String(20), unique=False, nullable=True)
     admin = db.Column(db.Boolean, unique=False, nullable=False)
-    projects = db.relationship('Project', backref='user', lazy=True)
+    projects = db.relationship('Project', backref='owner', lazy=True)
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -53,9 +53,9 @@ class Project(db.Model):
     sensitive = db.Column(db.Boolean, nullable=False)
     description = db.Column(db.Text)
     pi = db.Column(db.String(50), unique=False, nullable=False)
-    owner = db.Column(db.Integer, db.ForeignKey('user.id'),
+    owner = db.Column(db.Integer, db.ForeignKey('Users.id'),
                       unique=False, nullable=False)
-    facility = db.Column(db.Integer, db.ForeignKey('facility.id'),
+    facility = db.Column(db.Integer, db.ForeignKey('Facilities.id'),
                          unique=False, nullable=False)
     size = db.Column(db.Integer, unique=False, nullable=False)
     delivery_option = db.Column(db.String(10), unique=False, nullable=False)
@@ -102,18 +102,18 @@ class File(db.Model):
 TRIGGER_ProjectSize_Insert = DDL(
     """DELIMITER $$
 
-    CREATE TRIGGER project_size_insert
-    AFTER INSERT ON Files
+    CREATE TRIGGER TRIGGER_ProjectSize_Insert
+    AFTER INSERT ON file
     FOR EACH ROW
     BEGIN
         DECLARE tot_size INT;
 
         SELECT SUM(size) INTO tot_size
-        FROM Files WHERE project_id=new.project_id;
+        FROM file WHERE project_id=new.project_id;
 
-        UPDATE Projects
+        UPDATE project
         SET size = tot_size
-        WHERE Projects.id=new.project_id;
+        WHERE project.id=new.project_id;
     END$$
 
     DELIMITER ;"""
@@ -123,17 +123,17 @@ TRIGGER_ProjectSize_Update = DDL(
     """DELIMITER $$
 
     CREATE TRIGGER TRIGGER_ProjectSize_Update
-    AFTER UPDATE ON Files
+    AFTER UPDATE ON files
     FOR EACH ROW
     BEGIN
         DECLARE tot_size INT;
 
         SELECT SUM(size) INTO tot_size
-        FROM Files WHERE project_id=new.project_id;
+        FROM file WHERE project_id=new.project_id;
 
-        UPDATE Projects
+        UPDATE project
         SET size = tot_size
-        WHERE Projects.id=new.project_id;
+        WHERE project.id=new.project_id;
     END$$
 
     DELIMITER ;"""
@@ -142,19 +142,23 @@ TRIGGER_ProjectSize_Update = DDL(
 TRIGGER_ProjectSize_Delete = DDL(
     """DELIMITER $$
 
-    CREATE TRIGGER project_size_delete
-    AFTER DELETE ON Files
+    CREATE TRIGGER TRIGGER_ProjectSize_Delete
+    AFTER DELETE ON file
     FOR EACH ROW
     BEGIN
         DECLARE tot_size INT;
 
         SELECT SUM(size) INTO tot_size
-        FROM Files WHERE project_id=old.project_id;
+        FROM file WHERE project_id=old.project_id;
 
-        UPDATE Projects
+        UPDATE project
         SET size = tot_size
-        WHERE Projects.id=old.project_id;
+        WHERE project.id=old.project_id;
     END$$
 
     DELIMITER ;"""
 )
+
+event.listen(File, 'after_insert', TRIGGER_ProjectSize_Insert)
+event.listen(File, 'after_update', TRIGGER_ProjectSize_Update)
+event.listen(File, 'after_delete', TRIGGER_ProjectSize_Delete)

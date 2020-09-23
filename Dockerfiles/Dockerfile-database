@@ -2,7 +2,7 @@
 FROM mariadb:latest
 
 # Copy file from <src> (code/sql/*) to <dest> (/docker-entrypoint-initdb.d/)
-COPY code_dds/db/* /docker-entrypoint-initdb.d/
+# COPY code_dds/db/* /docker-entrypoint-initdb.d/
 
 # Sets the environment variables (one or more)
 ENV MYSQL_ROOT_PASSWORD rootpwd
