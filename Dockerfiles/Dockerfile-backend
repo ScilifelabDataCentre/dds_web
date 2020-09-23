@@ -6,6 +6,8 @@ COPY requirements.txt /requirements.txt
 
 # Set as development environment
 ENV FLASK_ENV development
+ENV SECRET_KEY mysecretkey
+ENV SQLALCHEMY_DATABASE_URI mysql+pymysql://apiuser:apipass@db/DeliverySystem
 ENV PYTHONPATH /code
 
 # Install all dependencies
