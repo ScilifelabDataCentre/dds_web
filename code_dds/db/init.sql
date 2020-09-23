@@ -5,75 +5,75 @@ DROP TABLE IF EXISTS Projects;
 DROP TABLE IF EXISTS Files;
 DROP TABLE IF EXISTS ProjectFiles;
 
-CREATE TABLE Users (
-    id CHAR(4),
-    first_name VARCHAR(40) NOT NULL,
-    last_name VARCHAR(40) NOT NULL,
-    username VARCHAR(15) NOT NULL,
-    password_ VARCHAR(102) NOT NULL,
-    settings VARCHAR(42) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    PRIMARY KEY(id),
-    UNIQUE(username),
-    UNIQUE(email)
-);
-CREATE TABLE Facilities (
-    id CHAR(4),
-    name_ VARCHAR(100) NOT NULL,
-    internal_ref VARCHAR(10) NOT NULL,
-    username VARCHAR(15) NOT NULL,
-    password_ VARCHAR(102) NOT NULL,
-    settings VARCHAR(42) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    PRIMARY KEY(id),
-    UNIQUE(internal_ref)
-);
-CREATE TABLE Projects (
-    id CHAR(4),
-    title VARCHAR(100) NOT NULL,
-    category VARCHAR(40),
-    order_date DATE,
-    delivery_date DATE,
-    status_ VARCHAR(20),
-    sensitive_ TINYINT(1) NOT NULL,
-    description_ TEXT,
-    pi_ VARCHAR(50) NOT NULL,
-    owner_ CHAR(4) NOT NULL,
-    facility CHAR(4) NOT NULL,
-    size INT,
-    delivery_option VARCHAR(10) NOT NULL,
-    public_key VARCHAR(64) NOT NULL,
-    private_key VARCHAR(200) NOT NULL,
-    nonce VARCHAR(24) NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (owner_) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY (facility) REFERENCES Facilities(id) ON DELETE CASCADE
-);
-CREATE TABLE S3Projects (
-    id CHAR(10), 
-    project_s3 CHAR(4), 
-    PRIMARY KEY (id), 
-    FOREIGN KEY (project_s3) REFERENCES Projects(id) ON DELETE CASCADE
-);
-CREATE TABLE Files (
-    id INT NOT NULL AUTO_INCREMENT,
-    name_ VARCHAR(100) NOT NULL,
-    directory_path VARCHAR(500),
-    size INT NOT NULL,
-    format_ VARCHAR(10),
-    compressed TINYINT(1) NOT NULL,
-    public_key VARCHAR(64) NOT NULL,
-    salt VARCHAR(50) NOT NULL,
-    date_uploaded DATETIME NOT NULL DEFAULT NOW(),
-    project_id CHAR(4) NOT NULL,
-    PRIMARY KEY(id), 
-    FOREIGN KEY(project_id) REFERENCES Projects(id)
-);
+-- CREATE TABLE Users (
+--     id CHAR(4),
+--     first_name VARCHAR(40) NOT NULL,
+--     last_name VARCHAR(40) NOT NULL,
+--     username VARCHAR(15) NOT NULL,
+--     password_ VARCHAR(102) NOT NULL,
+--     settings VARCHAR(42) NOT NULL,
+--     email VARCHAR(100) NOT NULL,
+--     phone VARCHAR(20) NOT NULL,
+--     PRIMARY KEY(id),
+--     UNIQUE(username),
+--     UNIQUE(email)
+-- );
+-- CREATE TABLE Facilities (
+--     id CHAR(4),
+--     name_ VARCHAR(100) NOT NULL,
+--     internal_ref VARCHAR(10) NOT NULL,
+--     username VARCHAR(15) NOT NULL,
+--     password_ VARCHAR(102) NOT NULL,
+--     settings VARCHAR(42) NOT NULL,
+--     email VARCHAR(100) NOT NULL,
+--     PRIMARY KEY(id),
+--     UNIQUE(internal_ref)
+-- );
+-- CREATE TABLE Projects (
+--     id CHAR(4),
+--     title VARCHAR(100) NOT NULL,
+--     category VARCHAR(40),
+--     order_date DATE,
+--     delivery_date DATE,
+--     status_ VARCHAR(20),
+--     sensitive_ TINYINT(1) NOT NULL,
+--     description_ TEXT,
+--     pi_ VARCHAR(50) NOT NULL,
+--     owner_ CHAR(4) NOT NULL,
+--     facility CHAR(4) NOT NULL,
+--     size INT,
+--     delivery_option VARCHAR(10) NOT NULL,
+--     public_key VARCHAR(64) NOT NULL,
+--     private_key VARCHAR(200) NOT NULL,
+--     nonce VARCHAR(24) NOT NULL,
+--     PRIMARY KEY (id),
+--     FOREIGN KEY (owner_) REFERENCES Users(id) ON DELETE CASCADE,
+--     FOREIGN KEY (facility) REFERENCES Facilities(id) ON DELETE CASCADE
+-- );
+-- CREATE TABLE S3Projects (
+--     id CHAR(10), 
+--     project_s3 CHAR(4), 
+--     PRIMARY KEY (id), 
+--     FOREIGN KEY (project_s3) REFERENCES Projects(id) ON DELETE CASCADE
+-- );
+-- CREATE TABLE Files (
+--     id INT NOT NULL AUTO_INCREMENT,
+--     name_ VARCHAR(100) NOT NULL,
+--     directory_path VARCHAR(500),
+--     size INT NOT NULL,
+--     format_ VARCHAR(10),
+--     compressed TINYINT(1) NOT NULL,
+--     public_key VARCHAR(64) NOT NULL,
+--     salt VARCHAR(50) NOT NULL,
+--     date_uploaded DATETIME NOT NULL DEFAULT NOW(),
+--     project_id CHAR(4) NOT NULL,
+--     PRIMARY KEY(id), 
+--     FOREIGN KEY(project_id) REFERENCES Projects(id)
+-- );
 
 DELIMITER $$
 
-CREATE TRIGGER project_size_insert 
+CREATE TRIGGER TRIGGER_ProjectSize_Insert 
 AFTER INSERT ON Files 
 FOR EACH ROW 
 BEGIN      
@@ -87,7 +87,7 @@ BEGIN
     WHERE Projects.id=new.project_id;  
 END$$
 
-CREATE TRIGGER project_size_update
+CREATE TRIGGER TRIGGER_ProjectSize_Update
 AFTER UPDATE ON Files 
 FOR EACH ROW 
 BEGIN      
