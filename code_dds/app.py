@@ -61,7 +61,6 @@
 #     g.db = mariadb.connect(**app.config['DB'])
 #     g.current_user = "tester"
 
-
 # # app.after_request(utils.log_access)
 
 

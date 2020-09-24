@@ -71,51 +71,51 @@ DROP TABLE IF EXISTS ProjectFiles;
 --     FOREIGN KEY(project_id) REFERENCES Projects(id)
 -- );
 
-DELIMITER $$
+-- DELIMITER $$
 
-CREATE TRIGGER TRIGGER_ProjectSize_Insert 
-AFTER INSERT ON Files 
-FOR EACH ROW 
-BEGIN      
-    DECLARE tot_size INT;    
+-- CREATE TRIGGER TRIGGER_ProjectSize_Insert 
+-- AFTER INSERT ON Files 
+-- FOR EACH ROW 
+-- BEGIN      
+--     DECLARE tot_size INT;    
 
-    SELECT SUM(size) INTO tot_size
-    FROM Files WHERE project_id=new.project_id; 
+--     SELECT SUM(size) INTO tot_size
+--     FROM Files WHERE project_id=new.project_id; 
     
-    UPDATE Projects 
-    SET size = tot_size 
-    WHERE Projects.id=new.project_id;  
-END$$
+--     UPDATE Projects 
+--     SET size = tot_size 
+--     WHERE Projects.id=new.project_id;  
+-- END$$
 
-CREATE TRIGGER TRIGGER_ProjectSize_Update
-AFTER UPDATE ON Files 
-FOR EACH ROW 
-BEGIN      
-    DECLARE tot_size INT;    
+-- CREATE TRIGGER TRIGGER_ProjectSize_Update
+-- AFTER UPDATE ON Files 
+-- FOR EACH ROW 
+-- BEGIN      
+--     DECLARE tot_size INT;    
 
-    SELECT SUM(size) INTO tot_size
-    FROM Files WHERE project_id=new.project_id; 
+--     SELECT SUM(size) INTO tot_size
+--     FROM Files WHERE project_id=new.project_id; 
     
-    UPDATE Projects 
-    SET size = tot_size 
-    WHERE Projects.id=new.project_id;  
-END$$
+--     UPDATE Projects 
+--     SET size = tot_size 
+--     WHERE Projects.id=new.project_id;  
+-- END$$
 
-CREATE TRIGGER project_size_delete
-AFTER DELETE ON Files 
-FOR EACH ROW 
-BEGIN      
-    DECLARE tot_size INT;    
+-- CREATE TRIGGER project_size_delete
+-- AFTER DELETE ON Files 
+-- FOR EACH ROW 
+-- BEGIN      
+--     DECLARE tot_size INT;    
 
-    SELECT SUM(size) INTO tot_size
-    FROM Files WHERE project_id=old.project_id; 
+--     SELECT SUM(size) INTO tot_size
+--     FROM Files WHERE project_id=old.project_id; 
     
-    UPDATE Projects 
-    SET size = tot_size 
-    WHERE Projects.id=old.project_id;  
-END$$
+--     UPDATE Projects 
+--     SET size = tot_size 
+--     WHERE Projects.id=old.project_id;  
+-- END$$
 
-DELIMITER ;
+-- DELIMITER ;
 
 INSERT INTO Facilities (id, name_, internal_ref, username, password_, settings, email) VALUES
     ('fac1', 'National Seq Facility', 'nsf', 'fac1_username', 'b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258095735f5a395e9013d70ec', '41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1', 'supprt@nsf.se'),
