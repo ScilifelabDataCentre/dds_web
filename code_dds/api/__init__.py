@@ -13,7 +13,9 @@ from flask_marshmallow import Marshmallow
 from code_dds.api.user import LoginUser, ListUsers
 from code_dds.api.facility import (LoginFacility, ListFacilities,
                                    PasswordSettings)
-from code_dds.api.project import ProjectFiles, DatabaseUpdate
+from code_dds.api.project import ProjectFiles, DatabaseUpdate, ListProjects
+from code_dds.api.files import ListFiles
+from code_dds.api.s3 import ListS3
 
 api_blueprint = Blueprint('api_blueprint', __name__)
 api = Api(api_blueprint)
@@ -33,6 +35,8 @@ api.add_resource(ListUsers, '/listusers', endpoint='list_users')
 api.add_resource(ListFacilities, '/listfacs', endpoint='list_facs')
 api.add_resource(
     ProjectFiles, '/project/listfiles/<string:project>', endpoint='project_files')
+api.add_resource(ListFiles, '/listfiles', endpoint='list_files')
+api.add_resource(ListS3, '/lists3', endpoint='list_s3')
 
 # Delivery
 api.add_resource(DatabaseUpdate, '/project/updatefile', endpoint='update_file')

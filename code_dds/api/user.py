@@ -5,19 +5,7 @@ from flask_restful import Resource, Api, reqparse, abort
 # from api import my_schema, my_schemas
 from code_dds.models import User
 
-from code_dds import ma
-
-
-class UserSchema(ma.Schema):
-    class Meta:
-        # The following fields will be shown when returned in request
-        # Change for later -- hide sensitive info etc
-        fields = ("id", "first_name", "last_name", "username", "password",
-                  "settings", "email", "phone", "admin")
-
-
-user_schema = UserSchema()
-users_schema = UserSchema(many=True)
+from code_dds.marshmallows import user_schema, users_schema
 
 
 class LoginUser(Resource):
@@ -58,21 +46,6 @@ class LogoutUser(Resource):
 
 class ListUsers(Resource):
     def get(self):
-
-        # try:
-        #     cur = g.db.cursor()
-        # except:
-        #     pass
-        # else:
-        #     cur.execute("SELECT * FROM Users")
-        #     result = {}
-        #     for (ID, Firstname, Lastname, Username, Password, Settings, Email, Phone) in cur:
-        #         result[ID] = {"firstname": Firstname,
-        #                       "lastname": Lastname,
-        #                       "password": Password,
-        #                       "settings": Settings,
-        #                       "email": Email,
-        #                       "phone": Phone}
         all_users = User.query.all()
         return users_schema.dump(all_users)
 

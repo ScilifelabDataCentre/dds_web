@@ -5,6 +5,9 @@ import json
 from webargs import fields
 from webargs.flaskparser import use_args
 
+from code_dds.models import Facility
+from code_dds.marshmallows import fac_schema, facs_schema
+
 
 pw_fields = {
     'exists': fields.Boolean,
@@ -260,14 +263,8 @@ class LogoutFacility(Resource):
 
 class ListFacilities(Resource):
     def get(self):
-        try:
-            cursor = g.db.cursor()
-        except:
-            pass
-        else:
-            cursor.execute("SELECT * FROM Facilities")
-            facilities = cursor.fetchall()
-            return facilities
+        all_facilities = Facility.query.all()
+        return facs_schema.dump(all_facilities)
 
     def post(self):
         return {"class": "ListFacilities", "method": "post"}

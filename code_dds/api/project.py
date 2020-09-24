@@ -1,6 +1,14 @@
 from flask import Blueprint, g, jsonify, request
 from flask_restful import Resource, Api
 import json
+from code_dds.models import Project
+from code_dds.marshmallows import project_schema, projects_schema
+
+
+class ListProjects(Resource):
+    def get(self):
+        all_projects = Project.query.all()
+        return projects_schema.dump(all_projects)
 
 
 class ProjectFiles(Resource):
@@ -89,11 +97,11 @@ class DatabaseUpdate(Resource):
                     project_id='{all_["project"]}'
                     WHERE id=all_files[0]
                     """
-                try: 
+                try:
                     cursor.execute(update_query)
                     g.db.commit()
                 except Exception as e:  # TODO: Fix exception
                     print(e, flush=True)
-                else: 
+                else:
                     db_changed = True
         return db_changed
