@@ -1,7 +1,16 @@
+"""REST API for the Data Delivery System"""
+
+# IMPORTS ########################################################### IMPORTS #
+
+# Standard library
+
+# Installed
 from flask import Blueprint
-from flask_restful import Api, Resource
-from .user import LoginUser, LogoutUser, ListUsers
-from .facility import (LoginFacility, LogoutFacility, ListFacilities,
+from flask_restful import Api
+
+# Own modules
+from .user import LoginUser, ListUsers
+from .facility import (LoginFacility, ListFacilities,
                        PasswordSettings)
 from .project import ProjectFiles, DatabaseUpdate
 
@@ -19,8 +28,7 @@ api.add_resource(LoginUser, '/user/login', endpoint='u_login')
 # List
 api.add_resource(ListUsers, '/listusers', endpoint='list_users')
 api.add_resource(ListFacilities, '/listfacs', endpoint='list_facs')
-api.add_resource(
-    ProjectFiles, '/project/listfiles/<string:project>', endpoint='project_files')
+api.add_resource(ProjectFiles, '/project/listfiles/<string:project>', endpoint='project_files')
 
 # Delivery
 api.add_resource(DatabaseUpdate, '/project/updatefile', endpoint='update_file')

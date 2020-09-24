@@ -71,6 +71,6 @@ def fill_db():
     # Add user and facility, the rest is automatically added and commited
     db.session.add(user1)
     db.session.add(facility1)
-    
+
     # Required for change in db
     db.session.commit()

@@ -5,7 +5,6 @@
 # Standard library
 
 # Installed
-from flask import render_template
 
 # Own modules
 from code_dds import create_app
@@ -21,11 +20,8 @@ app = create_app()
 app.register_blueprint(api_blueprint, url_prefix='/api/v1')
 
 
-# HOME ROUTE ##################################################### HOME ROUTE #
-
-
-
 # INITIATE ######################################################### INITIATE #
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
 
