@@ -1,5 +1,23 @@
-from flask import Blueprint, g, make_response, session, request
+from flask import (Blueprint, g, make_response, session, request, jsonify,
+                   current_app)
 from flask_restful import Resource, Api, reqparse, abort
+# from code_dds import db
+# from api import my_schema, my_schemas
+from code_dds.models import User
+
+from code_dds import ma
+
+
+class UserSchema(ma.Schema):
+    class Meta:
+        # The following fields will be shown when returned in request
+        # Change for later -- hide sensitive info etc
+        fields = ("id", "first_name", "last_name", "username", "password",
+                  "settings", "email", "phone", "admin")
+
+
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
 
 
 class LoginUser(Resource):
@@ -40,22 +58,23 @@ class LogoutUser(Resource):
 
 class ListUsers(Resource):
     def get(self):
-        try:
-            cur = g.db.cursor()
-        except:
-            pass
-        else:
-            cur.execute("SELECT * FROM Users")
-            result = {}
-            for (ID, Firstname, Lastname, Username, Password, Settings, Email, Phone) in cur:
-                result[ID] = {"firstname": Firstname,
-                              "lastname": Lastname,
-                              "password": Password,
-                              "settings": Settings,
-                              "email": Email,
-                              "phone": Phone}
 
-            return result
+        # try:
+        #     cur = g.db.cursor()
+        # except:
+        #     pass
+        # else:
+        #     cur.execute("SELECT * FROM Users")
+        #     result = {}
+        #     for (ID, Firstname, Lastname, Username, Password, Settings, Email, Phone) in cur:
+        #         result[ID] = {"firstname": Firstname,
+        #                       "lastname": Lastname,
+        #                       "password": Password,
+        #                       "settings": Settings,
+        #                       "email": Email,
+        #                       "phone": Phone}
+        all_users = User.query.all()
+        return users_schema.dump(all_users)
 
     def post(self):
         return {"class": "ListUsers", "method": "post"}

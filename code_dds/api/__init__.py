@@ -7,18 +7,21 @@
 # Installed
 from flask import Blueprint
 from flask_restful import Api
+from flask_marshmallow import Marshmallow
 
 # Own modules
-from .user import LoginUser, ListUsers
-from .facility import (LoginFacility, ListFacilities,
-                       PasswordSettings)
-from .project import ProjectFiles, DatabaseUpdate
+from code_dds.api.user import LoginUser, ListUsers
+from code_dds.api.facility import (LoginFacility, ListFacilities,
+                                   PasswordSettings)
+from code_dds.api.project import ProjectFiles, DatabaseUpdate
 
 api_blueprint = Blueprint('api_blueprint', __name__)
 api = Api(api_blueprint)
 
+
 # Login/access
-api.add_resource(PasswordSettings, '/pw_settings/<string:role>/<string:username>', endpoint='pw_settings')
+api.add_resource(PasswordSettings,
+                 '/pw_settings/<string:role>/<string:username>', endpoint='pw_settings')
 api.add_resource(LoginFacility, '/fac/login', endpoint='f_login')
 api.add_resource(LoginUser, '/user/login', endpoint='u_login')
 
@@ -28,7 +31,8 @@ api.add_resource(LoginUser, '/user/login', endpoint='u_login')
 # List
 api.add_resource(ListUsers, '/listusers', endpoint='list_users')
 api.add_resource(ListFacilities, '/listfacs', endpoint='list_facs')
-api.add_resource(ProjectFiles, '/project/listfiles/<string:project>', endpoint='project_files')
+api.add_resource(
+    ProjectFiles, '/project/listfiles/<string:project>', endpoint='project_files')
 
 # Delivery
 api.add_resource(DatabaseUpdate, '/project/updatefile', endpoint='update_file')

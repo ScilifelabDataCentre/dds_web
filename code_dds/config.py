@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 # GLOBAL VARIABLES ######################################### GLOBAL VARIABLES #
 
 basedir = path.abspath(path.dirname(__file__))
+print(basedir)
 load_dotenv(path.join(basedir, '.env'))
 
 

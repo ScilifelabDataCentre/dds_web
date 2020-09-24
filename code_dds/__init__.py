@@ -8,13 +8,16 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
+from flask_marshmallow import Marshmallow
 
 # Own modules
 
 
 # GLOBAL VARIABLES ######################################### GLOBAL VARIABLES #
 
+app = Flask(__name__, instance_relative_config=False)
 db = SQLAlchemy()
+ma = Marshmallow(app)
 
 
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -22,10 +25,10 @@ db = SQLAlchemy()
 def create_app():
     """Construct the core application."""
 
-    app = Flask(__name__, instance_relative_config=False)
     app.config.from_object('config.Config')
 
     db.init_app(app)    # Initialize database
+    ma.init_app(app)
 
     with app.app_context():     # Everything in here has access to sessions
         from code_dds import routes  # Import routes
@@ -34,6 +37,9 @@ def create_app():
         db.create_all()     # Create database tables for our data models
 
         fill_db()           # Fill db with initial entries (for development)
+
+        from api import api_blueprint
+        app.register_blueprint(api_blueprint, url_prefix='/api/v1')
 
         return app
 

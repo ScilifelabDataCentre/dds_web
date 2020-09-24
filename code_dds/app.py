@@ -5,6 +5,7 @@
 # Standard library
 
 # Installed
+# from flask_marshmallow import Marshmallow
 
 # Own modules
 from code_dds import create_app
@@ -14,10 +15,7 @@ from code_dds.api import api_blueprint
 
 app = create_app()
 
-
 # BLUEPRINTS ##################################################### BLUEPRINTS #
-
-app.register_blueprint(api_blueprint, url_prefix='/api/v1')
 
 
 # INITIATE ######################################################### INITIATE #
