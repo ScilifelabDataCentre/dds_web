@@ -1,7 +1,7 @@
 from flask import Blueprint, g, jsonify, request
 from flask_restful import Resource, Api
 import json
-from code_dds.models import Project
+from code_dds.models import Project, File
 from code_dds.marshmallows import project_schema, projects_schema
 
 
@@ -13,32 +13,42 @@ class ListProjects(Resource):
 
 class ProjectFiles(Resource):
     def get(self, project):
+        
+        file_info = File.query.filter_by(project_id=project).all()
+        
+        if file_info is None:
+            return jsonify(message="There are no files in project")
 
         files = {}
 
-        query = f"""SELECT * FROM Files
-                WHERE project_id='{project}'"""
-        print(f"query listing projects: {query}", flush=True)
-        try:
-            cursor = g.db.cursor()
-        except:     # TODO: Fix exception
-            pass
-        else:
-            cursor.execute(query)
+        for file in file_info:
+            print(file, flush=True)
 
-            for file in cursor:
-                print(file, flush=True)
-                files[file[1]] = {
-                    'directory_path': file[2],
-                    'size': file[3],
-                    'format': file[4],
-                    'compressed': True if file[5] == 1 else False,
-                    'public_key': file[6],
-                    'salt': file[7],
-                    'date_uploaded': file[8]
-                }
+        return {}
 
-        return jsonify(files)
+        # query = f"""SELECT * FROM Files
+        #         WHERE project_id='{project}'"""
+        # print(f"query listing projects: {query}", flush=True)
+        # try:
+        #     cursor = g.db.cursor()
+        # except:     # TODO: Fix exception
+        #     pass
+        # else:
+        #     cursor.execute(query)
+
+        #     for file in cursor:
+        #         print(file, flush=True)
+        #         files[file[1]] = {
+        #             'directory_path': file[2],
+        #             'size': file[3],
+        #             'format': file[4],
+        #             'compressed': True if file[5] == 1 else False,
+        #             'public_key': file[6],
+        #             'salt': file[7],
+        #             'date_uploaded': file[8]
+        #         }
+
+        # return jsonify(files)
 
 
 class DatabaseUpdate(Resource):
