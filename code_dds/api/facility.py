@@ -5,8 +5,9 @@ import json
 from webargs import fields
 from webargs.flaskparser import use_args
 
-from code_dds.models import Facility
+from code_dds.models import Facility, User
 from code_dds.marshmallows import fac_schema, facs_schema
+from code_dds import db
 
 
 pw_fields = {
@@ -15,7 +16,6 @@ pw_fields = {
     'pw_settings': fields.String,
     'error': fields.String
 }
-
 
 
 def cloud_access(project):
@@ -112,6 +112,14 @@ def project_access(fac_id, project, owner) -> (bool, str):
         return True, public_key, ""
 
 
+# class PwInfo(object):
+#     def __init__(self, exists=False, error="", settings="", username=""):
+#         self.exists = exists
+#         self.error = error
+#         self.pw_settings = settings
+#         self.username = username
+
+
 class PasswordSettings(Resource):
 
     def get(self, role, username):
@@ -126,29 +134,16 @@ class PasswordSettings(Resource):
                 username:   Username
                 settings:   Salt, length, n, r, p settings for pw
         '''
-        table = """Users""" if role == 'user' else """Facilities"""
-        # Get password settings if the user exists
-        pw_query = f"""SELECT settings FROM {table}
-                       WHERE username='{username}'"""
-        try:
-            cursor = g.db.cursor()
-        except:     # TODO: Fix exception
-            pass
-        else:
-            # Execute query
-            cursor.execute(pw_query)
 
-            # Fetch result
-            pw_settings = cursor.fetchone()
+        if role == 'user':
+            user = User.query.filter_by(username=username).first()
+        elif role == 'fac':
+            user = Facility.query.filter_by(username=username).first()
 
-            # If result is empty the user does not exist, otherwise return
-            # password settings
-            if pw_settings is None:
-                return jsonify({'exists': False, 'username': username,
-                                'settings': "", 'error': "The user does not exist"})  # The user doesn't exist
-            else:
-                return jsonify({'exists': True, 'username': username,
-                                'settings': pw_settings[0], 'error': ""})
+        if user is None:
+            return jsonify(error="The user does not exist", username=username)
+
+        return jsonify(exists=True, username=username, settings=user.settings)
 
 
 # login_fields = {
