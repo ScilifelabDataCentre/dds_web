@@ -133,7 +133,7 @@ class File(db.Model):
     __table_args__ = {'extend_existing': True}
 
     # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     directory_path = db.Column(db.String(500), unique=False, nullable=False)
     size = db.Column(db.Integer, unique=False, nullable=False)
@@ -152,66 +152,67 @@ class File(db.Model):
         return f'<File {self.id}>'
 
 
-TRIGGER_ProjectSize_Insert = DDL(
-    """DELIMITER $$
+## THE ISSUE IS HERE -------
+# TRIGGER_ProjectSize_Insert = DDL(
+#     """DELIMITER $$
 
-    CREATE TRIGGER TRIGGER_ProjectSize_Insert
-    AFTER INSERT ON files
-    FOR EACH ROW
-    BEGIN
-        DECLARE tot_size INT;
+#     CREATE TRIGGER TRIGGER_ProjectSize_Insert
+#     AFTER INSERT ON files
+#     FOR EACH ROW
+#     BEGIN
+#         DECLARE tot_size INT;
 
-        SELECT SUM(size) INTO tot_size
-        FROM files WHERE project_id=new.project_id;
+#         SELECT SUM(size) INTO tot_size
+#         FROM files WHERE project_id=new.project_id;
 
-        UPDATE projects
-        SET size = tot_size
-        WHERE projects.id=new.project_id;
-    END$$
+#         UPDATE projects
+#         SET size = tot_size
+#         WHERE projects.id=new.project_id;
+#     END$$
 
-    DELIMITER ;"""
-)
+#     DELIMITER ;"""
+# )
 
-TRIGGER_ProjectSize_Update = DDL(
-    """DELIMITER $$
+# TRIGGER_ProjectSize_Update = DDL(
+#     """DELIMITER $$
 
-    CREATE TRIGGER TRIGGER_ProjectSize_Update
-    AFTER UPDATE ON files
-    FOR EACH ROW
-    BEGIN
-        DECLARE tot_size INT;
+#     CREATE TRIGGER TRIGGER_ProjectSize_Update
+#     AFTER UPDATE ON files
+#     FOR EACH ROW
+#     BEGIN
+#         DECLARE tot_size INT;
 
-        SELECT SUM(size) INTO tot_size
-        FROM files WHERE project_id=new.project_id;
+#         SELECT SUM(size) INTO tot_size
+#         FROM files WHERE project_id=new.project_id;
 
-        UPDATE projects
-        SET size = tot_size
-        WHERE projects.id=new.project_id;
-    END$$
+#         UPDATE projects
+#         SET size = tot_size
+#         WHERE projects.id=new.project_id;
+#     END$$
 
-    DELIMITER ;"""
-)
+#     DELIMITER ;"""
+# )
 
-TRIGGER_ProjectSize_Delete = DDL(
-    """DELIMITER $$
+# TRIGGER_ProjectSize_Delete = DDL(
+#     """DELIMITER $$
 
-    CREATE TRIGGER TRIGGER_ProjectSize_Delete
-    AFTER DELETE ON files
-    FOR EACH ROW
-    BEGIN
-        DECLARE tot_size INT;
+#     CREATE TRIGGER TRIGGER_ProjectSize_Delete
+#     AFTER DELETE ON files
+#     FOR EACH ROW
+#     BEGIN
+#         DECLARE tot_size INT;
 
-        SELECT SUM(size) INTO tot_size
-        FROM files WHERE project_id=old.project_id;
+#         SELECT SUM(size) INTO tot_size
+#         FROM files WHERE project_id=old.project_id;
 
-        UPDATE projects
-        SET size = tot_size
-        WHERE projects.id=old.project_id;
-    END$$
+#         UPDATE projects
+#         SET size = tot_size
+#         WHERE projects.id=old.project_id;
+#     END$$
 
-    DELIMITER ;"""
-)
+#     DELIMITER ;"""
+# )
 
-event.listen(File, 'after_insert', TRIGGER_ProjectSize_Insert)
-event.listen(File, 'after_update', TRIGGER_ProjectSize_Update)
-event.listen(File, 'after_delete', TRIGGER_ProjectSize_Delete)
+# event.listen(File, 'after_insert', TRIGGER_ProjectSize_Insert)
+# event.listen(File, 'after_update', TRIGGER_ProjectSize_Update)
+# event.listen(File, 'after_delete', TRIGGER_ProjectSize_Delete)

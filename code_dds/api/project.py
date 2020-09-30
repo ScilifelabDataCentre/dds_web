@@ -3,6 +3,7 @@ from flask_restful import Resource, Api
 import json
 from code_dds.models import Project, File
 from code_dds.marshmallows import project_schema, projects_schema
+from code_dds import db
 
 
 class ListProjects(Resource):
@@ -13,18 +14,29 @@ class ListProjects(Resource):
 
 class ProjectFiles(Resource):
     def get(self, project):
-        
+        '''Get all files for a specific project
+
+        Args:
+            project:    Project ID
+
+        Returns:
+            List of files in db
+        '''
+
+        # Get all files belonging to project
         file_info = File.query.filter_by(project_id=project).all()
-        
+
+        # Return empty list if no files have been delivered
         if file_info is None:
-            return jsonify(message="There are no files in project")
+            print("HERE", flush=True)
+            return jsonify(message="There are no files in project",
+                           files=[])
 
-        files = {}
-
+        filenames = []
         for file in file_info:
-            print(file, flush=True)
+            filenames.append(file.name)
 
-        return {}
+        return jsonify(message="", files=filenames)
 
         # query = f"""SELECT * FROM Files
         #         WHERE project_id='{project}'"""
@@ -53,65 +65,22 @@ class ProjectFiles(Resource):
 
 class DatabaseUpdate(Resource):
     def post(self):
-        db_changed = False
-        # 1. Check if exists
-        # 2. If exists -- update, otherwise create
-        print("HEELLOOOO", flush=True)
-        all_ = request.form
-        print(f"all: {all_}", flush=True)
-        # project = request.form
-        # file = request.form['file']
-        # print(f"file: {file}", flush=True)
-        query = f"""SELECT id FROM Files
-                WHERE name_='{all_['file']}'"""
+        all_ = request.args
+
         try:
-            cursor = g.db.cursor()
-        except:     # TODO: Fix execption
-            pass
+            new_file = File(
+                name=all_['file'],
+                directory_path=all_['directory_path'],
+                size=int(all_['size']),
+                format="",
+                compressed=True if all_['ds_compressed'] else False,
+                public_key=all_['key'], salt=all_['salt'],
+                project_id=int(all_['project'])
+            )
+        except Exception as e:
+            return jsonify(updated=False, message=e)
         else:
-            cursor.execute(query)
+            db.session.add(new_file)
+            db.session.commit()
 
-            all_files = cursor.fetchall()
-            if len(all_files) == 0:
-                # The file is not in the database --> create
-                insert_query = \
-                    f"""INSERT INTO Files (name_, directory_path, size,
-                                           format_, compressed, public_key,
-                                           salt, date_uploaded, project_id)
-                        VALUES ('{all_["file"]}', '{all_["directory_path"]}',
-                                '{all_["size"]}', 'format?',
-                                '{1 if all_["ds_compressed"] else 0}', 
-                                '{all_["key"]}', '{all_["salt"]}', NOW(), 
-                                '{all_["project"]}');"""
-                try:
-                    cursor.execute(insert_query)
-                    g.db.commit()
-                except Exception as e:  # TODO: Fix exception
-                    print(e, flush=True)
-                else:
-                    db_changed = True
-
-            elif len(all_files) > 1:
-
-                pass    # There are multiple files, should not be possible --> error
-            else:
-                update_query = \
-                    f"""UPDATE Files
-                    SET 
-                    directory_path='{all_["directory_path"]}', 
-                    size='{all_["size"]}', 
-                    compressed='{1 if all_["ds_compressed"] else 0}', 
-                    public_key='{all_["key"]}',
-                    salt='{all_["salt"]}', 
-                    date_uploaded=NOW(), 
-                    project_id='{all_["project"]}'
-                    WHERE id=all_files[0]
-                    """
-                try:
-                    cursor.execute(update_query)
-                    g.db.commit()
-                except Exception as e:  # TODO: Fix exception
-                    print(e, flush=True)
-                else:
-                    db_changed = True
-        return db_changed
+        return jsonify(updated=True, message="")
