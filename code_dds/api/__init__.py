@@ -13,7 +13,7 @@ from flask_marshmallow import Marshmallow
 from code_dds.api.user import LoginUser, ListUsers
 from code_dds.api.facility import (LoginFacility, ListFacilities)
 from code_dds.api.project import ProjectFiles, DatabaseUpdate, ListProjects
-from code_dds.api.files import ListFiles
+from code_dds.api.files import ListFiles, FileSalt
 from code_dds.api.s3 import ListS3
 
 api_blueprint = Blueprint('api_blueprint', __name__)
@@ -39,3 +39,4 @@ api.add_resource(ListS3, '/lists3', endpoint='list_s3')
 
 # Delivery
 api.add_resource(DatabaseUpdate, '/project/updatefile', endpoint='update_file')
+api.add_resource(FileSalt, '/file/salt/<int:file_id>', endpoint='file_salt')

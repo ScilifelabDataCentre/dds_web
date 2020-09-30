@@ -32,11 +32,16 @@ class ProjectFiles(Resource):
             return jsonify(message="There are no files in project",
                            files=[])
 
-        filenames = []
+        files = {}
         for file in file_info:
-            filenames.append(file.name)
+            files[file.name] = {'id': file.id,
+                                'directory_path': file.directory_path,
+                                'size': file.size,
+                                'compressed': file.compressed,
+                                'public_key': file.public_key,
+                                'salt': file.salt}
 
-        return jsonify(message="", files=filenames)
+        return jsonify(message="", files=files)
 
         # query = f"""SELECT * FROM Files
         #         WHERE project_id='{project}'"""
@@ -74,7 +79,8 @@ class DatabaseUpdate(Resource):
                 size=int(all_['size']),
                 format="",
                 compressed=True if all_['ds_compressed'] else False,
-                public_key=all_['key'], salt=all_['salt'],
+                public_key=all_['key'], 
+                salt=all_['salt'],
                 project_id=int(all_['project'])
             )
         except Exception as e:

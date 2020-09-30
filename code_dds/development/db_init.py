@@ -7,7 +7,7 @@ def fill_db():
     """Fills the database with initial entries used for development."""
 
     user1 = User(first_name="FirstName", last_name="LastName", username="username1",
-                 password="password1",
+                 password="9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8c27a8efd774bc5",
                  settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
                  email="user@email.com", phone="070-000 00 01",
                  admin=False)
