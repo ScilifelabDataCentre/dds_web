@@ -146,6 +146,7 @@ class File(db.Model):
                               server_default=func.now())
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'),
                            unique=False, nullable=False)
+    latest_download = db.Column(db.DateTime, unique=False, nullable=True)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
