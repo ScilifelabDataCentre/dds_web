@@ -21,9 +21,9 @@ def fill_db():
                        order_date=func.now(), delivery_date=None,
                        status="Ongoing", sensitive=True, description="test",
                        pi="", owner=user1, facility=facility1, size=0,
-                       delivery_option="S3", public_key="8F88EAA7B72DB95BE36D6B1EA83064C3F5F8B5306ACB7457B1E49659FF60142C",
-                       private_key="327385F4FA65EE58C74A18D587CA164C0D00606800BC514E7653B48A9836F144CB423579D52D103DFBA7B30C76096583626FCBDFF55649D7F7E8CC9C38E8", 
-                       salt="222339AC9AC2DB8B8F0D66839CC03D7D", nonce="C3A0595CDF9F5BA947E5C9A0")
+                       delivery_option="S3", public_key="09025813E230038449E635E8006D9FB9A3E02B0E41115B92A036274896EAB912",
+                       private_key="DDDE5F608FA19E58B9F2D501900FED90D3672FC999E786EC89C76281F4CCDC9C9B55FBB733B4245273CB6D25A8ADE9F4F21F1B172600F1C6A8F09FCA8579", 
+                       salt="B686A3EB696AB3FB82043698831CA02F", nonce="EDAAE37DD295AF3A741C5156")
 
     s3proj1 = S3Project(id="s3proj1", project_id=project1)
 
