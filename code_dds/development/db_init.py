@@ -22,7 +22,8 @@ def fill_db():
                        status="Ongoing", sensitive=True, description="test",
                        pi="", owner=user1, facility=facility1, size=0,
                        delivery_option="S3", public_key="8F88EAA7B72DB95BE36D6B1EA83064C3F5F8B5306ACB7457B1E49659FF60142C",
-                       private_key="privatekeyshouldnotbehere", nonce="nonce")
+                       private_key="327385F4FA65EE58C74A18D587CA164C0D00606800BC514E7653B48A9836F144CB423579D52D103DFBA7B30C76096583626FCBDFF55649D7F7E8CC9C38E8", 
+                       salt="222339AC9AC2DB8B8F0D66839CC03D7D", nonce="C3A0595CDF9F5BA947E5C9A0")
 
     s3proj1 = S3Project(id="s3proj1", project_id=project1)
 

@@ -93,6 +93,7 @@ class Project(db.Model):
     delivery_option = db.Column(db.String(10), unique=False, nullable=False)
     public_key = db.Column(db.String(64), nullable=False)
     private_key = db.Column(db.String(200), nullable=False)
+    salt = db.Column(db.String(32), nullable=False)
     nonce = db.Column(db.String(24), nullable=False)
 
     # Relationships

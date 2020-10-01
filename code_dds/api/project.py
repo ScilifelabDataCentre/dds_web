@@ -12,6 +12,20 @@ class ListProjects(Resource):
         return projects_schema.dump(all_projects)
 
 
+class ProjectKey(Resource):
+    def get(self, project):
+        key = Project.query.filter_by(id=project).first()
+        
+        if key is None:
+            return jsonify(message="There is no such project", project=project,
+                           encrypted_key="", salt="",
+                           nonce="")
+
+        return jsonify(message="", project=project,
+                       encrypted_key=key.private_key, salt=key.salt,
+                       nonce=key.nonce)
+
+
 class ProjectFiles(Resource):
     def get(self, project):
         '''Get all files for a specific project
@@ -79,7 +93,7 @@ class DatabaseUpdate(Resource):
                 size=int(all_['size']),
                 format="",
                 compressed=True if all_['ds_compressed'] else False,
-                public_key=all_['key'], 
+                public_key=all_['key'],
                 salt=all_['salt'],
                 project_id=int(all_['project'])
             )
