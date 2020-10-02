@@ -37,6 +37,8 @@ class ProjectFiles(Resource):
             List of files in db
         '''
 
+        print("projects endpoint", flush=True)
+
         # Get all files belonging to project
         file_info = File.query.filter_by(project_id=project).all()
 

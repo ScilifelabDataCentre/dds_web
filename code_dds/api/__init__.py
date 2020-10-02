@@ -34,7 +34,7 @@ api.add_resource(LoginUser, '/user/login', endpoint='u_login')
 api.add_resource(ListUsers, '/listusers', endpoint='list_users')
 api.add_resource(ListFacilities, '/listfacs', endpoint='list_facs')
 api.add_resource(
-    ProjectFiles, '/project/listfiles/<string:project>', endpoint='project_files')
+    ProjectFiles, '/project/listfiles/<int:project>', endpoint='project_files')
 api.add_resource(ListFiles, '/listfiles', endpoint='list_files')
 api.add_resource(ListS3, '/lists3', endpoint='list_s3')
 
