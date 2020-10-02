@@ -37,14 +37,14 @@ class ProjectFiles(Resource):
             List of files in db
         '''
 
-        print("projects endpoint", flush=True)
+        # print("projects endpoint", flush=True)
 
         # Get all files belonging to project
         file_info = File.query.filter_by(project_id=project).all()
 
         # Return empty list if no files have been delivered
         if file_info is None:
-            print("HERE", flush=True)
+            # print("HERE", flush=True)
             return jsonify(message="There are no files in project",
                            files=[])
 

@@ -26,13 +26,13 @@ class FileSalt(Resource):
 class DeliveryDate(Resource):
     def post(self):
 
-        print("TEST:", flush=True)
+        # print("TEST:", flush=True)
         file_id = request.args['file_id']
         # print(f"TEST: {file_id}", flush=True)
         # print(f"file id? {file_id['file_id']}", flush=True)
-        print(type(file_id), flush=True)
+        # print(type(file_id), flush=True)
         file = File.query.filter_by(id=int(file_id)).first()
-        print(f"{file.id}", flush=True)
+        # print(f"{file.id}", flush=True)
         file.latest_download = dt.now()
         # db.session.add(file)
         db.session.commit()
