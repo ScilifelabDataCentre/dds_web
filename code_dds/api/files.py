@@ -5,6 +5,7 @@ from code_dds.marshmallows import file_schema, files_schema
 from sqlalchemy import func
 from code_dds import db
 from datetime import datetime as dt
+from code_dds import timestamp
 
 
 class ListFiles(Resource):
@@ -33,7 +34,7 @@ class DeliveryDate(Resource):
         # print(type(file_id), flush=True)
         file = File.query.filter_by(id=int(file_id)).first()
         # print(f"{file.id}", flush=True)
-        file.latest_download = dt.now()
+        file.latest_download = timestamp()
         # db.session.add(file)
         db.session.commit()
 

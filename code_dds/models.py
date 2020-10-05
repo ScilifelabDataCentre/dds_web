@@ -3,12 +3,14 @@
 # IMPORTS ########################################################### IMPORTS #
 
 # Standard library
+import datetime
+import pytz
 
 # Installed
 from sqlalchemy import func, DDL, event
 
 # Own modules
-from code_dds import db
+from code_dds import db, timestamp
 
 # CLASSES ########################################################### CLASSES #
 
@@ -143,7 +145,7 @@ class File(db.Model):
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
     date_uploaded = db.Column(db.DateTime, unique=False, nullable=False,
-                              server_default=func.now())
+                              server_default=timestamp())
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'),
                            unique=False, nullable=False)
     latest_download = db.Column(db.DateTime, unique=False, nullable=True)
@@ -218,3 +220,5 @@ class File(db.Model):
 # event.listen(File, 'after_insert', TRIGGER_ProjectSize_Insert)
 # event.listen(File, 'after_update', TRIGGER_ProjectSize_Update)
 # event.listen(File, 'after_delete', TRIGGER_ProjectSize_Delete)
+
+

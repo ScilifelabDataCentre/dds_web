@@ -15,7 +15,7 @@ class ListProjects(Resource):
 class ProjectKey(Resource):
     def get(self, project):
         key = Project.query.filter_by(id=project).first()
-        
+
         if key is None:
             return jsonify(message="There is no such project", project=project,
                            encrypted_key="", salt="",
@@ -89,20 +89,42 @@ class DatabaseUpdate(Resource):
         all_ = request.args
 
         try:
-            new_file = File(
-                name=all_['file'],
-                directory_path=all_['directory_path'],
-                size=int(all_['size']),
-                format="",
-                compressed=True if all_['ds_compressed'] else False,
-                public_key=all_['key'],
-                salt=all_['salt'],
-                project_id=int(all_['project'])
-            )
+            existing_file = File.query.filter_by(name=all_['file']).first()
         except Exception as e:
             return jsonify(updated=False, message=e)
         else:
-            db.session.add(new_file)
-            db.session.commit()
+            if existing_file is None and all_['overwrite']:
+                try:
+                    new_file = File(
+                        name=all_['file'],
+                        directory_path=all_['directory_path'],
+                        size=int(all_['size']),
+                        format="",
+                        compressed=True if all_['ds_compressed'] else False,
+                        public_key=all_['key'],
+                        salt=all_['salt'],
+                        project_id=int(all_['project'])
+                    )
+                except Exception as e:
+                    return jsonify(updated=False, message=e)
+                else:
+                    db.session.add(new_file)
+                    db.session.commit()
+            else:
+                try:
+                    existing_file.update(
+                        dict(name=all_['file'],
+                             directory_path=all_['directory_path'],
+                             size=int(all_['size']),
+                             format="",
+                             compressed=True if all_['ds_compressed'] else False,
+                             public_key=all_['key'],
+                             salt=all_['salt'],
+                             project_id=int(all_['project']))
+                    )
+                except Exception as e:
+                    return jsonify(updated=False, message=e)
+                else:
+                    db.session.commit()
 
         return jsonify(updated=True, message="")

@@ -3,6 +3,8 @@
 # IMPORTS ########################################################### IMPORTS #
 
 # Standard library
+import pytz
+from datetime import datetime
 
 # Installed
 from flask import Flask
@@ -18,6 +20,7 @@ from flask_marshmallow import Marshmallow
 app = Flask(__name__, instance_relative_config=False)
 db = SQLAlchemy()
 ma = Marshmallow(app)
+C_TZ = pytz.timezone('Europe/Stockholm')
 
 
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -43,3 +46,24 @@ def create_app():
         app.register_blueprint(api_blueprint, url_prefix='/api/v1')
 
         return app
+
+
+def timestamp() -> (str):
+    '''Gets the current time. Formats timestamp.
+
+    Returns:
+        str:    Timestamp in format 'YY-MM-DD_HH-MM-SS'
+
+    '''
+
+    now = datetime.now(tz=C_TZ)
+    timestamp = ""
+
+    for t in (now.year, "-", now.month, "-", now.day, " ",
+              now.hour, ":", now.minute, ":", now.second):
+        if len(str(t)) == 1 and isinstance(t, int):
+            timestamp += f"0{t}"
+        else:
+            timestamp += f"{t}"
+
+    return timestamp
