@@ -7,7 +7,7 @@ import pytz
 from datetime import datetime
 
 # Installed
-from flask import Flask
+from flask import Flask, g
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_marshmallow import Marshmallow

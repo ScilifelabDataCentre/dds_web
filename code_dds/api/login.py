@@ -2,7 +2,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
 from code_dds.models import Facility, User, Project, S3Project
-from code_dds import app
+from code_dds import db
 
 
 def cloud_access(project):
@@ -42,12 +42,14 @@ def ds_access(username, password, role) -> (bool, int, str):
         table = Facility
     elif role == 0:
         table = User
-    else: 
+    else:
         pass    # custom error here?
-    
-    # Get user from database
-    user = table.query.filter_by(username=username).first()
 
+    # Get user from database
+    user1 = db.session.query(table.email).filter_by(username=username).first()
+
+    user = table.query.filter_by(username=username).first()
+    print(f"user: {user1.email}", flush=True)
     # Return error if username doesn't exist in database
     if user is None:
         return False, 0, "The user does not exist"
