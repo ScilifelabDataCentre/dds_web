@@ -2,6 +2,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
 from code_dds.models import Facility, User, Project, S3Project
+from code_dds import app
 
 
 def cloud_access(project):
@@ -43,7 +44,7 @@ def ds_access(username, password, role) -> (bool, int, str):
         table = User
     else: 
         pass    # custom error here?
-
+    
     # Get user from database
     user = table.query.filter_by(username=username).first()
 
