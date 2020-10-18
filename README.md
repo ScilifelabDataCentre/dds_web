@@ -13,10 +13,10 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 
 **1. Docker installation**
 
-	Mac:  
+	Mac:
 	https://docs.docker.com/v17.12/docker-for-mac/install
 
-	Ubuntu:  
+	Ubuntu:
 	https://docs.docker.com/install/linux/docker-ce/ubuntu/
 
 **2. In _DS_CLI_ folder**
