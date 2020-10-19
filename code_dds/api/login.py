@@ -37,19 +37,17 @@ def ds_access(username, password, role) -> (bool, int, str):
         tuple:  If access to DS granted, facility/user ID and error message
 
     '''
-
     if role == 1:
         table = Facility
     elif role == 0:
         table = User
     else:
         pass    # custom error here?
+    
+    print(table, flush=True)
 
     # Get user from database
-    user1 = db.session.query(table.email).filter_by(username=username).first()
-
     user = table.query.filter_by(username=username).first()
-    print(f"user: {user1.email}", flush=True)
     # Return error if username doesn't exist in database
     if user is None:
         return False, 0, "The user does not exist"
