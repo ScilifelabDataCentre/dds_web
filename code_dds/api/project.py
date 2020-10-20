@@ -6,7 +6,8 @@ from code_dds.marshmallows import project_schema, projects_schema
 from code_dds import db, app
 
 
-def update_project_size(proj_id, altered_size, method, old_size: int = 0):
+def update_project_size(proj_id, altered_size, altered_enc_size,
+                        method, old_size: int = 0, old_enc_size: int = 0):
     '''Updates the specified project size'''
 
     try:
@@ -20,9 +21,11 @@ def update_project_size(proj_id, altered_size, method, old_size: int = 0):
         if method == 'insert':
             # New file --> add file size to project size
             current_project.size += altered_size
+            current_project.size_enc += altered_enc_size
         elif method == 'update':
             # Existing file --> update project with file size
             current_project.size += (altered_size - old_size)
+            current_project.size_enc += (altered_size - old_size)
         else:
             # User tried an unspecified method
             return False, (f"Method {method} not applicable when "
@@ -113,7 +116,8 @@ class DatabaseUpdate(Resource):
             return jsonify(updated=False, message=e)
         else:
             print("\nQuery successful!\n", flush=True)
-
+            size = int(all_['size'])
+            size_enc = int(all_['size_enc'])
             # Add new file if it doesn't already exist in db
             if existing_file is None:
                 print("\nFile doesn't exist. Adding to db...\n", flush=True)
@@ -122,7 +126,8 @@ class DatabaseUpdate(Resource):
                     new_file = File(
                         name=all_['file'],
                         directory_path=all_['directory_path'],
-                        size=int(all_['size']),
+                        size=size,
+                        size_enc=size_enc,
                         format="",
                         compressed=True if all_['ds_compressed'] else False,
                         public_key=all_['key'],
@@ -140,7 +145,8 @@ class DatabaseUpdate(Resource):
                     # Update project size
                     proj_updated, error = update_project_size(
                         proj_id=all_['project'],
-                        altered_size=int(all_['size']),
+                        altered_size=size,
+                        altered_enc_size=size_enc,
                         method="insert"
                     )
 
@@ -157,28 +163,32 @@ class DatabaseUpdate(Resource):
             else:
                 if all_['overwrite']:
                     old_size = existing_file.size
+                    old_enc_size = existing_file.size_enc
                     # Update file if it exists in db
                     try:
-                        existing_file.update(
-                            dict(name=all_['file'],
-                                 directory_path=all_['directory_path'],
-                                 size=int(all_['size']),
-                                 format="",
-                                 compressed=True if all_[
-                                'ds_compressed'] else False,
-                                public_key=all_['key'],
-                                salt=all_['salt'],
-                                project_id=int(all_['project']))
-                        )
+                        existing_file.name = all_['file']
+                        existing_file.directory_path = all_['directory_path']
+                        existing_file.size = size
+                        existing_file.size_enc = size_enc
+                        existing_file.format = ""
+                        print(type(bool(all_['ds_compressed'])), flush=True)
+                        existing_file.compressed = bool(all_[
+                            'ds_compressed'])
+                        
+                        existing_file.public_key = all_['key']
+                        existing_file.salt = all_['salt']
+                        existing_file.project_id = int(all_['project'])
                     except Exception as e:
                         return jsonify(updated=False, message=e)
                     else:
                         # Update project size
                         proj_updated, error = update_project_size(
                             proj_id=all_['project'],
-                            altered_size=all_['size'],
+                            altered_size=size,
+                            altered_enc_size=size_enc,
                             method='update',
-                            old_size=old_size
+                            old_size=old_size,
+                            old_enc_size=old_enc_size
                         )
 
                         # If project size updated, commit to session to save to db

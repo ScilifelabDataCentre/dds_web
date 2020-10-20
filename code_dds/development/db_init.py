@@ -21,15 +21,15 @@ def fill_db():
                        order_date=func.now(), delivery_date=None,
                        status="Ongoing", sensitive=True, description="test",
                        pi="", owner=user1, facility=facility1, size=0,
-                       delivery_option="S3", public_key="09025813E230038449E635E8006D9FB9A3E02B0E41115B92A036274896EAB912",
-                       private_key="DDDE5F608FA19E58B9F2D501900FED90D3672FC999E786EC89C76281F4CCDC9C9B55FBB733B4245273CB6D25A8ADE9F4F21F1B172600F1C6A8F09FCA8579", 
+                       size_enc=0, delivery_option="S3", public_key="09025813E230038449E635E8006D9FB9A3E02B0E41115B92A036274896EAB912",
+                       private_key="DDDE5F608FA19E58B9F2D501900FED90D3672FC999E786EC89C76281F4CCDC9C9B55FBB733B4245273CB6D25A8ADE9F4F21F1B172600F1C6A8F09FCA8579",
                        salt="B686A3EB696AB3FB82043698831CA02F", nonce="EDAAE37DD295AF3A741C5156")
 
     s3proj1 = S3Project(id="s3proj1", project_id=project1)
 
-    file1 = File(name="testfile1.fna", directory_path=".", size=1, format="",
-                 compressed=False, public_key="publickey", salt="salt",
-                 project_id=project1)
+    file1 = File(name="testfile1.fna", directory_path=".", size=1, size_enc=1,
+                 format="", compressed=False, public_key="publickey", 
+                 salt="salt", project_id=project1)
 
     # Foreign key/relationship updates
     user1.user_projects.append(project1)
