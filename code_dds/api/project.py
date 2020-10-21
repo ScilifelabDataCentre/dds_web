@@ -88,6 +88,7 @@ class ProjectFiles(Resource):
             files[file.name] = {'id': file.id,
                                 'directory_path': file.directory_path,
                                 'size': file.size,
+                                'size_enc': file.size_enc,
                                 'compressed': file.compressed,
                                 'public_key': file.public_key,
                                 'salt': file.salt}
