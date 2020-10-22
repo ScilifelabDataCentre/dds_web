@@ -158,7 +158,7 @@ class File(db.Model):
         return f'<File {self.id}>'
 
 
-## THE ISSUE IS HERE -------
+# THE ISSUE IS HERE -------
 # TRIGGER_ProjectSize_Insert = DDL(
 #     """DELIMITER $$
 
@@ -222,5 +222,3 @@ class File(db.Model):
 # event.listen(File, 'after_insert', TRIGGER_ProjectSize_Insert)
 # event.listen(File, 'after_update', TRIGGER_ProjectSize_Update)
 # event.listen(File, 'after_delete', TRIGGER_ProjectSize_Delete)
-
-

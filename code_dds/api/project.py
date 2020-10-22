@@ -123,6 +123,7 @@ class DatabaseUpdate(Resource):
             if existing_file is None:
                 print("\nFile doesn't exist. Adding to db...\n", flush=True)
 
+                print(f"Type - bool? {type(all_['ds_compressed'])} - {bool(all_['ds_compressed'] == 'True')}", flush=True)
                 try:
                     new_file = File(
                         name=all_['file'],
@@ -130,7 +131,7 @@ class DatabaseUpdate(Resource):
                         size=size,
                         size_enc=size_enc,
                         format="",
-                        compressed=True if all_['ds_compressed'] else False,
+                        compressed=bool(all_['ds_compressed'] == "True"),
                         public_key=all_['key'],
                         salt=all_['salt'],
                         project_id=int(all_['project'])
