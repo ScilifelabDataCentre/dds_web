@@ -27,20 +27,20 @@ def fill_db():
 
     s3proj1 = S3Project(id="s3proj1", project_id=project1)
 
-    file1 = File(name="testfile1.fna", directory_path=".", size=1, size_enc=1,
-                 extension="", compressed=False, public_key="publickey",
-                 salt="salt", project_id=project1)
+    # file1 = File(name="testfile1.fna", directory_path=".", size=1, size_enc=1,
+    #              extension="", compressed=False, public_key="publickey",
+    #              salt="salt", project_id=project1)
 
     # Foreign key/relationship updates
     user1.user_projects.append(project1)
     facility1.fac_projects.append(project1)
     project1.project_s3.append(s3proj1)
-    project1.project_files.append(file1)
+    # project1.project_files.append(file1)
 
     # Add user and facility, the rest is automatically added and commited
     db.session.add(user1)
     db.session.add(facility1)
-    db.session.add(file1)
+    # db.session.add(file1)
 
     # Required for change in db
     db.session.commit()
