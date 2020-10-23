@@ -90,6 +90,7 @@ class ProjectFiles(Resource):
                                 'size': file.size,
                                 'size_enc': file.size_enc,
                                 'compressed': file.compressed,
+                                'extension': file.extension,
                                 'public_key': file.public_key,
                                 'salt': file.salt}
 
@@ -130,7 +131,7 @@ class DatabaseUpdate(Resource):
                         directory_path=all_['directory_path'],
                         size=size,
                         size_enc=size_enc,
-                        format="",
+                        extension=all_['extension'],
                         compressed=bool(all_['ds_compressed'] == "True"),
                         public_key=all_['key'],
                         salt=all_['salt'],
@@ -172,7 +173,7 @@ class DatabaseUpdate(Resource):
                         existing_file.directory_path = all_['directory_path']
                         existing_file.size = size
                         existing_file.size_enc = size_enc
-                        existing_file.format = ""
+                        existing_file.extension = all_['extension']
                         print(type(bool(all_['ds_compressed'])), flush=True)
                         existing_file.compressed = bool(all_[
                             'ds_compressed'])

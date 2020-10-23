@@ -28,7 +28,7 @@ def fill_db():
     s3proj1 = S3Project(id="s3proj1", project_id=project1)
 
     file1 = File(name="testfile1.fna", directory_path=".", size=1, size_enc=1,
-                 format="", compressed=False, public_key="publickey", 
+                 extension="", compressed=False, public_key="publickey",
                  salt="salt", project_id=project1)
 
     # Foreign key/relationship updates

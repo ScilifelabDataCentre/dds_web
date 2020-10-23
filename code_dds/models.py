@@ -142,7 +142,7 @@ class File(db.Model):
     directory_path = db.Column(db.String(500), unique=False, nullable=False)
     size = db.Column(db.BigInteger, unique=False, nullable=False)
     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)
-    format = db.Column(db.String(10))
+    extension = db.Column(db.String(15), unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
