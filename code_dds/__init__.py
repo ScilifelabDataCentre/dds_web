@@ -4,7 +4,7 @@
 
 # Standard library
 import pytz
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Installed
 from flask import Flask, g
@@ -48,7 +48,7 @@ def create_app():
         return app
 
 
-def timestamp() -> (str):
+def timestamp(dts = None) -> (str):
     '''Gets the current time. Formats timestamp.
 
     Returns:
@@ -56,14 +56,22 @@ def timestamp() -> (str):
 
     '''
 
-    now = datetime.now(tz=C_TZ)
-    timestamp = ""
-
-    for t in (now.year, "-", now.month, "-", now.day, " ",
-              now.hour, ":", now.minute, ":", now.second):
-        if len(str(t)) == 1 and isinstance(t, int):
-            timestamp += f"0{t}"
-        else:
-            timestamp += f"{t}"
+    now = datetime.now(tz=C_TZ) if dts is None else dts
+    timestamp = str(now.strftime('%Y-%m-%d %H:%M:%S.%f%z'))
+    
+    # for t in (now.year, "-", now.month, "-", now.day, " ",
+    #           now.hour, ":", now.minute, ":", now.second):
+    #     if len(str(t)) == 1 and isinstance(t, int):
+    #         timestamp += f"0{t}"
+    #     else:
+    #         timestamp += f"{t}"
 
     return timestamp
+
+
+def token_expiration(valid_time: int = 48):
+    now = datetime.now(tz=C_TZ)
+    expire = now + timedelta(hours=valid_time)
+    
+    return timestamp(dts=expire)
+    

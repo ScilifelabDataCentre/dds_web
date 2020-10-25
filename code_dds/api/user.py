@@ -5,7 +5,8 @@ from flask_restful import Resource, Api, reqparse, abort
 from code_dds.models import User
 
 from code_dds.marshmallows import user_schema, users_schema
-from code_dds.api.login import ds_access, project_access, cloud_access
+from code_dds.api.login import (
+    ds_access, project_access, cloud_access, gen_access_token)
 
 
 class LoginUser(Resource):
@@ -45,7 +46,7 @@ class LoginUser(Resource):
                            s3_id=DEFAULTS['s3_id'],
                            public_key=DEFAULTS['public_key'],
                            error=error,
-                           project_id=user_info['project'])
+                           project_id=user_info['project'], token="")
 
         # Look for project in database
         ok, public_key, error = project_access(uid=uid,
@@ -56,7 +57,7 @@ class LoginUser(Resource):
                            s3_id=DEFAULTS['s3_id'],
                            public_key=DEFAULTS['public_key'],
                            error=error,
-                           project_id=user_info['project'])
+                           project_id=user_info['project'], token="")
 
         # Get S3 project ID for project
         ok, s3_id, error = cloud_access(project=user_info['project'])
@@ -65,14 +66,16 @@ class LoginUser(Resource):
                            s3_id=s3_id,
                            public_key=DEFAULTS['public_key'],
                            error=error,
-                           project_id=user_info['project'])
+                           project_id=user_info['project'], token="")
+
+        token = gen_access_token(project=user_info['project'])
 
         # Access approved
         return jsonify(access=True, user_id=uid,
                        s3_id=s3_id,
                        public_key=public_key,
                        error="",
-                       project_id=user_info['project'])
+                       project_id=user_info['project'], token=token)
 
 
 class LogoutUser(Resource):

@@ -10,9 +10,27 @@ import pytz
 from sqlalchemy import func, DDL, event
 
 # Own modules
-from code_dds import db, timestamp
+from code_dds import db, timestamp, token_expiration
 
 # CLASSES ########################################################### CLASSES #
+
+
+class Tokens(db.Model):
+    """Data model for access tokens."""
+
+    # Table setup
+    __tablename__ = 'tokens'
+    __table_args__ = {'extend_existing': True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    token = db.Column(db.String(50), unique=True, nullable=False)
+    created = db.Column(db.String(50), unique=False, nullable=False,
+                        server_default=timestamp())
+    expires = db.Column(db.String(50), unique=False, nullable=False,
+                        server_default=token_expiration())
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'),
+                           unique=False, nullable=False)
 
 
 class User(db.Model):
@@ -81,8 +99,8 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(100), unique=False, nullable=False)
     category = db.Column(db.String(40), unique=False, nullable=False)
-    order_date = db.Column(db.DateTime, nullable=False)
-    delivery_date = db.Column(db.DateTime, nullable=True)
+    order_date = db.Column(db.String(50), nullable=False)
+    delivery_date = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20), nullable=False)
     sensitive = db.Column(db.Boolean, nullable=False)
     description = db.Column(db.Text)
@@ -104,6 +122,8 @@ class Project(db.Model):
                                  foreign_keys='S3Project.project_id')
     project_files = db.relationship('File', backref='file_project', lazy=True,
                                     foreign_keys='File.project_id')
+    project_tokens = db.relationship('Tokens', backref='token_project',
+                                     lazy=True, foreign_keys='Tokens.project_id')
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -146,11 +166,11 @@ class File(db.Model):
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
-    date_uploaded = db.Column(db.DateTime, unique=False, nullable=False,
+    date_uploaded = db.Column(db.String(50), unique=False, nullable=False,
                               server_default=timestamp())
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'),
                            unique=False, nullable=False)
-    latest_download = db.Column(db.DateTime, unique=False, nullable=True)
+    latest_download = db.Column(db.String(50), unique=False, nullable=True)
 
     def __repr__(self):
         """Called by print, creates representation of object"""

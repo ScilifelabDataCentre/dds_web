@@ -1,6 +1,7 @@
-from code_dds.models import User, Project, Facility, S3Project, File
+from code_dds.models import User, Project, Facility, S3Project, File, Tokens
 from code_dds import db
 from sqlalchemy import func
+import os
 
 
 def fill_db():
@@ -31,11 +32,14 @@ def fill_db():
     #              extension="", compressed=False, public_key="publickey",
     #              salt="salt", project_id=project1)
 
+    token = Tokens(token=os.urandom(16).hex(), project_id=project1)
+
     # Foreign key/relationship updates
     user1.user_projects.append(project1)
     facility1.fac_projects.append(project1)
     project1.project_s3.append(s3proj1)
     # project1.project_files.append(file1)
+    project1.project_tokens.append(token)
 
     # Add user and facility, the rest is automatically added and commited
     db.session.add(user1)

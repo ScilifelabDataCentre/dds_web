@@ -1,8 +1,12 @@
+import os
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+from datetime import datetime
 
-from code_dds.models import Facility, User, Project, S3Project
-from code_dds import db
+from code_dds.models import Facility, User, Project, S3Project, Tokens
+from code_dds import db, C_TZ
+
 
 
 def cloud_access(project):
@@ -123,3 +127,44 @@ def secure_password_hash(password_settings: str,
                  backend=default_backend())
 
     return (kdf.derive(password_entered.encode('utf-8'))).hex()
+
+def gen_access_token(project, length: int = 16):
+
+    token = os.urandom(length).hex()
+    curr_token = Tokens.query.filter_by(token=token).first()
+    while curr_token is not None:
+        token = os.urandom(length).hex()
+        curr_token = Tokens.query.filter_by(token=token).first()
+    
+    new_token = Tokens(token=token, project_id=project)
+    db.session.add(new_token)
+    db.session.commit()
+
+    return token
+
+def validate_token(created, expires):
+    print(f"created: {created}", flush=True)
+    print(f"expires: {expires}", flush=True)
+
+    validated = False
+    # date_time_str = '18/09/19 01:55:19'
+    try: 
+        date_time_created = datetime.strptime(created, '%Y-%m-%d %H:%M:%S.%f%z')
+    except Exception as e:
+        print(e, flush=True)
+    else:
+        print(date_time_created, flush=True)
+    date_time_expires = datetime.strptime(expires, '%Y-%m-%d %H:%M:%S.%f%z')
+
+    print(f"created: {date_time_created}", flush=True)
+    print(f"expires: {date_time_expires}", flush=True)
+
+    now = datetime.now(tz=C_TZ)
+    print(f"now: {now}", flush=True)
+
+    if date_time_created < now < date_time_expires:
+        validated = True
+    
+    return validated
+
+    print(f"checking if in interval: {date_time_created < now < date_time_expires}", flush=True)

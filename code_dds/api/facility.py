@@ -7,7 +7,8 @@ from webargs.flaskparser import use_args
 
 from code_dds.marshmallows import fac_schema, facs_schema
 from code_dds import db
-from code_dds.api.login import ds_access, project_access, cloud_access
+from code_dds.api.login import (
+    ds_access, project_access, cloud_access, gen_access_token)
 
 
 class LoginFacility(Resource):
@@ -50,7 +51,7 @@ class LoginFacility(Resource):
                            s3_id=DEFAULTS['s3_id'],
                            public_key=DEFAULTS['public_key'],
                            error=error,
-                           project_id=user_info['project'])
+                           project_id=user_info['project'], token="")
 
         # Look for project in database
         ok, public_key, error = project_access(uid=fac_id,
@@ -61,7 +62,7 @@ class LoginFacility(Resource):
                            s3_id=DEFAULTS['s3_id'],
                            public_key=DEFAULTS['public_key'],
                            error=error,
-                           project_id=user_info['project'])
+                           project_id=user_info['project'], token="")
 
         # Get S3 project ID for project
         ok, s3_id, error = cloud_access(project=user_info['project'])
@@ -70,14 +71,16 @@ class LoginFacility(Resource):
                            s3_id=s3_id,
                            public_key=DEFAULTS['public_key'],
                            error=error,
-                           project_id=user_info['project'])
+                           project_id=user_info['project'], token="")
+
+        token = gen_access_token(project=user_info['project'])
 
         # Access approved
         return jsonify(access=True, user_id=fac_id,
                        s3_id=s3_id,
                        public_key=public_key,
                        error="",
-                       project_id=user_info['project'])
+                       project_id=user_info['project'], token=token)
 
 
 class LogoutFacility(Resource):

@@ -34,7 +34,7 @@ api.add_resource(LoginUser, '/user/login', endpoint='u_login')
 api.add_resource(ListUsers, '/listusers', endpoint='list_users')
 api.add_resource(ListFacilities, '/listfacs', endpoint='list_facs')
 api.add_resource(
-    ProjectFiles, '/project/listfiles/<int:project>', endpoint='project_files')
+    ProjectFiles, '/project/listfiles/<int:project>/<string:token>', endpoint='project_files')
 api.add_resource(ListFiles, '/listfiles', endpoint='list_files')
 api.add_resource(ListS3, '/lists3', endpoint='list_s3')
 
@@ -42,5 +42,5 @@ api.add_resource(ListS3, '/lists3', endpoint='list_s3')
 api.add_resource(DatabaseUpdate, '/project/updatefile', endpoint='update_file')
 api.add_resource(FileSalt, '/file/salt/<int:file_id>', endpoint='file_salt')
 
-api.add_resource(ProjectKey, '/project/<int:project>/key/', endpoint='key')
+api.add_resource(ProjectKey, '/project/<int:project>/key/<string:token>', endpoint='key')
 api.add_resource(DeliveryDate, '/delivery/date/', endpoint='delivery_date')
