@@ -3,7 +3,7 @@ from flask_restful import Resource, Api
 import json
 from code_dds.models import Project, File
 from code_dds.marshmallows import project_schema, projects_schema
-from code_dds import db, app
+from code_dds import db, app, timestamp
 
 
 def update_project_size(proj_id, altered_size, altered_enc_size,
@@ -177,7 +177,7 @@ class DatabaseUpdate(Resource):
                         print(type(bool(all_['ds_compressed'])), flush=True)
                         existing_file.compressed = bool(all_[
                             'ds_compressed'])
-                        
+                        existing_file.date_uploaded = timestamp()
                         existing_file.public_key = all_['key']
                         existing_file.salt = all_['salt']
                         existing_file.project_id = int(all_['project'])
