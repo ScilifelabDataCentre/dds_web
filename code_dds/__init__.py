@@ -57,7 +57,7 @@ def timestamp(dts = None) -> (str):
     '''
 
     now = datetime.now(tz=C_TZ) if dts is None else dts
-    timestamp = str(now.strftime('%Y-%m-%d %H:%M:%S.%f%z'))
+    ts = str(now.strftime('%Y-%m-%d %H:%M:%S.%f%z'))
     
     # for t in (now.year, "-", now.month, "-", now.day, " ",
     #           now.hour, ":", now.minute, ":", now.second):
@@ -66,7 +66,7 @@ def timestamp(dts = None) -> (str):
     #     else:
     #         timestamp += f"{t}"
 
-    return timestamp
+    return ts
 
 
 def token_expiration(valid_time: int = 48):

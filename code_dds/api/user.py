@@ -42,40 +42,49 @@ class LoginUser(Resource):
                                    password=user_info['password'],
                                    role=0)
         if not ok:  # Access denied
-            return jsonify(access=DEFAULTS['access'], user_id=uid,
+            return jsonify(access=DEFAULTS['access'],
+                           user_id=uid,
                            s3_id=DEFAULTS['s3_id'],
                            public_key=DEFAULTS['public_key'],
                            error=error,
-                           project_id=user_info['project'], token="")
+                           project_id=user_info['project'],
+                           token="")
 
         # Look for project in database
         ok, public_key, error = project_access(uid=uid,
                                                project=user_info['project'],
                                                owner=uid)
         if not ok:  # Access denied
-            return jsonify(access=DEFAULTS['access'], user_id=uid,
+            return jsonify(access=DEFAULTS['access'],
+                           user_id=uid,
                            s3_id=DEFAULTS['s3_id'],
                            public_key=DEFAULTS['public_key'],
                            error=error,
-                           project_id=user_info['project'], token="")
+                           project_id=user_info['project'],
+                           oken="")
 
         # Get S3 project ID for project
         ok, s3_id, error = cloud_access(project=user_info['project'])
         if not ok:  # Access denied
-            return jsonify(access=DEFAULTS['access'], user_id=uid,
+            return jsonify(access=DEFAULTS['access'],
+                           user_id=uid,
                            s3_id=s3_id,
                            public_key=DEFAULTS['public_key'],
                            error=error,
-                           project_id=user_info['project'], token="")
+                           project_id=user_info['project'],
+                           token="")
 
+        # Generate delivery token
         token = gen_access_token(project=user_info['project'])
 
         # Access approved
-        return jsonify(access=True, user_id=uid,
+        return jsonify(access=True,
+                       user_id=uid,
                        s3_id=s3_id,
                        public_key=public_key,
                        error="",
-                       project_id=user_info['project'], token=token)
+                       project_id=user_info['project'],
+                       token=token)
 
 
 class LogoutUser(Resource):

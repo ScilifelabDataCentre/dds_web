@@ -3,10 +3,10 @@ import os
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from datetime import datetime
+from flask import jsonify
 
 from code_dds.models import Facility, User, Project, S3Project, Tokens
 from code_dds import db, C_TZ
-
 
 
 def cloud_access(project):
@@ -47,7 +47,7 @@ def ds_access(username, password, role) -> (bool, int, str):
         table = User
     else:
         pass    # custom error here?
-    
+
     print(table, flush=True)
 
     # Get user from database
@@ -128,43 +128,71 @@ def secure_password_hash(password_settings: str,
 
     return (kdf.derive(password_entered.encode('utf-8'))).hex()
 
-def gen_access_token(project, length: int = 16):
 
+def gen_access_token(project, length: int = 16) -> (str):
+    """Generate access token for logged in user and save to database.
+
+    Args:
+        project:    Project ID
+        length:     Length of token
+
+    Returns:
+        str:    Token
+    """
+
+    # Generate random bytes as token and make hex string
     token = os.urandom(length).hex()
+
+    # Check if token exists in token db and generate new token until not in db
     curr_token = Tokens.query.filter_by(token=token).first()
     while curr_token is not None:
         token = os.urandom(length).hex()
         curr_token = Tokens.query.filter_by(token=token).first()
-    
+
+    # Create new token object for db and add it
     new_token = Tokens(token=token, project_id=project)
     db.session.add(new_token)
     db.session.commit()
 
     return token
 
-def validate_token(created, expires):
-    print(f"created: {created}", flush=True)
-    print(f"expires: {expires}", flush=True)
 
-    validated = False
-    # date_time_str = '18/09/19 01:55:19'
-    try: 
-        date_time_created = datetime.strptime(created, '%Y-%m-%d %H:%M:%S.%f%z')
+def validate_token(token: str):
+    """Checks that the token specified in the request is valid.
+
+    Args:
+        token (str):    The request token
+
+    Returns:
+        bool:   True if token validated
+    """
+
+    validated = False      # Returned variable - changes is validated
+
+    # Get token from db matching the specified token in request
+    try:
+        token_info = Tokens.query.filter_by(token=token).first()
     except Exception as e:
         print(e, flush=True)
-    else:
-        print(date_time_created, flush=True)
-    date_time_expires = datetime.strptime(expires, '%Y-%m-%d %H:%M:%S.%f%z')
+        return validated
 
-    print(f"created: {date_time_created}", flush=True)
-    print(f"expires: {date_time_expires}", flush=True)
+    # Access to project delivery not granted if the token is not in db
+    if token_info is None:
+        return validated
 
+    # Transform timestamps in db to datetime object
+    try:
+        date_time_created = datetime.strptime(token_info.created,
+                                              '%Y-%m-%d %H:%M:%S.%f%z')
+        date_time_expires = datetime.strptime(token_info.expires,
+                                              '%Y-%m-%d %H:%M:%S.%f%z')
+    except Exception as e:
+        print(e, flush=True)
+        return validated
+
+    # Get current time and check if it is within correct interval
     now = datetime.now(tz=C_TZ)
-    print(f"now: {now}", flush=True)
-
     if date_time_created < now < date_time_expires:
         validated = True
-    
-    return validated
 
-    print(f"checking if in interval: {date_time_created < now < date_time_expires}", flush=True)
+    return validated

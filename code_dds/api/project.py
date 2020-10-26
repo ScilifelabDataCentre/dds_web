@@ -50,44 +50,48 @@ class ListProjects(Resource):
 
 class ProjectKey(Resource):
     def get(self, project, token):
+        """Get project private key from database.
 
-        print(f"token: {token}", flush=True)
-        try:
-            token_info = Tokens.query.filter_by(token=token).first()
-        except Exception as e:
-            print(e, flush=True)
+        Args:
+            project:    Project ID
+            token:      Token string in request
 
-        if token_info is None:
-            return jsonify(access_granted=False,
-                           message="Token invalid. Access denied.",
-                           project=project,
-                           encrypted_key="", salt="", nonce="")
+        Returns:
+            json:   Error message, project ID, key, salt and nonce
+        """
 
-        print(f"token -- {token_info.created}", flush=True)
-        # token in db -- check if valid
-        ok = validate_token(token_info.created, token_info.expires)
+        # Validate token
+        ok = validate_token(token)
         if not ok:
             return jsonify(access_granted=False,
                            message="Token expired. Access denied.",
-                           project=project,
-                           encrypted_key="", salt="", nonce="")
+                           project=project, encrypted_key="", salt="",
+                           nonce="")
 
-        key = Project.query.filter_by(id=project).first()
+        try:
+            key = Project.query.filter_by(id=project).first()
+        except Exception as e:
+            print(str(e), flush=True)
+            return jsonify(access_granted=False,
+                           message="Could not perform database query",
+                           project=project, encrypted_key="", salt="",
+                           nonce="")
 
         if key is None:
             return jsonify(access_granted=False,
-                           message="There is no such project", project=project,
-                           encrypted_key="", salt="",
+                           message="There is no such project",
+                           project=project, encrypted_key="", salt="",
                            nonce="")
 
-        return jsonify(access_granted=True, message="", project=project,
+        return jsonify(access_granted=True,
+                       message="", project=project,
                        encrypted_key=key.private_key, salt=key.salt,
                        nonce=key.nonce)
 
 
 class ProjectFiles(Resource):
     def get(self, project, token):
-        '''Get all files for a specific project
+        '''Get all files for a specific project.
 
         Args:
             project:    Project ID
@@ -96,23 +100,12 @@ class ProjectFiles(Resource):
             List of files in db
         '''
 
-        print(f"token: {token}", flush=True)
-        try:
-            token_info = Tokens.query.filter_by(token=token).first()
-        except Exception as e:
-            print(e, flush=True)
-
-        if token_info is None:
-            return jsonify(access_granted=False,
-                           message="Token invalid. Access denied.", files=[])
-
-        print(f"token -- {token_info.created}", flush=True)
-        # token in db -- check if valid
-        ok = validate_token(token_info.created, token_info.expires)
+        # Check if token is valid and cancel delivery if not
+        ok = validate_token(token=token)
         if not ok:
             return jsonify(access_granted=False,
-                           message="Token expired. Access denied.", files=[])
-        # print("projects endpoint", flush=True)
+                           message="Token expired. Access denied.",
+                           files=[])
 
         # Get all files belonging to project
         file_info = File.query.filter_by(project_id=project).all()
@@ -140,28 +133,17 @@ class ProjectFiles(Resource):
 
 class DatabaseUpdate(Resource):
     def post(self):
-        '''Add to or update file in database'''
+        '''Add to or update file in database.
+
+        Returns:
+            json: 
+        '''
 
         # Get all params from request
         all_ = request.args
 
-        print("\nUpdating db...\n", flush=True)
-        print(f"Type: {type(all_['size'])}")
-
-        print(f"token: {all_['token']}", flush=True)
-        try:
-            token_info = Tokens.query.filter_by(token="all_['token']").first()
-        except Exception as e:
-            print(e, flush=True)
-
-        if token_info is None:
-            return jsonify(access_granted=False,
-                           updated=False,
-                           message="Token invalid. Access denied.")
-
-        print(f"token -- {token_info.created}", flush=True)
-        # token in db -- check if valid
-        ok = validate_token(token_info.created, token_info.expires)
+        # Validate token and cancel delivery if not valid
+        ok = validate_token(all_["token"])
         if not ok:
             return jsonify(access_granted=False,
                            updated=False,
@@ -175,17 +157,13 @@ class DatabaseUpdate(Resource):
             ).first()
         except Exception as e:
             print("\nError occurred! {e}\n", flush=True)
-            return jsonify(access_granted=True, updated=False, message=e)
+            return jsonify(access_granted=True, updated=False, message=str(e))
         else:
-            print("\nQuery successful!\n", flush=True)
-            size = int(all_['size'])
-            size_enc = int(all_['size_enc'])
+            size = int(all_['size'])            # File size
+            size_enc = int(all_['size_enc'])    # Encrypted file size
+
             # Add new file if it doesn't already exist in db
             if existing_file is None:
-                print("\nFile doesn't exist. Adding to db...\n", flush=True)
-
-                print(
-                    f"Type - bool? {type(all_['ds_compressed'])} - {bool(all_['ds_compressed'] == 'True')}", flush=True)
                 try:
                     new_file = File(
                         name=all_['file'],
@@ -199,10 +177,9 @@ class DatabaseUpdate(Resource):
                         project_id=int(all_['project'])
                     )
                 except Exception as e:
-                    return jsonify(access_granted=True, updated=False, message=e)
+                    return jsonify(access_granted=True, updated=False,
+                                   message=str(e))
                 else:
-                    print("\nAdding successful! Updating project size...\n", flush=True)
-
                     # Add new info to db
                     db.session.add(new_file)
 
@@ -219,15 +196,19 @@ class DatabaseUpdate(Resource):
                         try:
                             db.session.commit()
                         except Exception as e:
-                            return jsonify(access_granted=True, updated=False, message=e)
+                            return jsonify(access_granted=True, updated=False,
+                                           message=str(e))
                         else:
-                            return jsonify(access_granted=True, updated=True, message="")
+                            return jsonify(access_granted=True, updated=True,
+                                           message="")
                     else:
-                        return jsonify(access_granted=True, updated=False, message=error)
+                        return jsonify(access_granted=True, updated=False,
+                                       message=error)
             else:
                 if all_['overwrite']:
-                    old_size = existing_file.size
-                    old_enc_size = existing_file.size_enc
+                    old_size = existing_file.size   # Curr file size in db
+                    old_enc_size = existing_file.size_enc   # Curr enc size db
+
                     # Update file if it exists in db
                     try:
                         existing_file.name = all_['file']
@@ -235,15 +216,14 @@ class DatabaseUpdate(Resource):
                         existing_file.size = size
                         existing_file.size_enc = size_enc
                         existing_file.extension = all_['extension']
-                        print(type(bool(all_['ds_compressed'])), flush=True)
-                        existing_file.compressed = bool(all_[
-                            'ds_compressed'])
+                        existing_file.compressed = bool(all_['ds_compressed'])
                         existing_file.date_uploaded = timestamp()
                         existing_file.public_key = all_['key']
                         existing_file.salt = all_['salt']
                         existing_file.project_id = int(all_['project'])
                     except Exception as e:
-                        return jsonify(access_granted=True, updated=False, message=e)
+                        return jsonify(access_granted=True, updated=False,
+                                       message=str(e))
                     else:
                         # Update project size
                         proj_updated, error = update_project_size(
@@ -260,11 +240,14 @@ class DatabaseUpdate(Resource):
                             try:
                                 db.session.commit()
                             except Exception as e:
-                                return jsonify(access_granted=True, updated=False, message=e)
+                                return jsonify(access_granted=True,
+                                               updated=False, message=str(e))
                             else:
-                                return jsonify(access_granted=True, updated=True, message="")
+                                return jsonify(access_granted=True,
+                                               updated=True, message="")
                         else:
-                            return jsonify(access_granted=True, updated=False, message=error)
+                            return jsonify(access_granted=True, updated=False,
+                                           message=error)
                 else:
                     return jsonify(access_granted=True, updated=False,
                                    message=("Trying to overwrite delivered "

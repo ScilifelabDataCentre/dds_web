@@ -26,16 +26,42 @@ class FileSalt(Resource):
 
 class DeliveryDate(Resource):
     def post(self):
+        """Update latest download date in file database.
 
-        # print("TEST:", flush=True)
+        Returns:
+            json:   If updated
+        """
+
+        # Validate token and cancel delivery if not valid
+        token = request.args["token"]
+        ok = validate_token(token)
+        if not ok:
+            return jsonify(access_granted=False,
+                           updated=False,
+                           message="Token expired. Access denied.")
+
+        # Get file id
         file_id = request.args['file_id']
-        # print(f"TEST: {file_id}", flush=True)
-        # print(f"file id? {file_id['file_id']}", flush=True)
-        # print(type(file_id), flush=True)
-        file = File.query.filter_by(id=int(file_id)).first()
-        # print(f"{file.id}", flush=True)
-        file.latest_download = timestamp()
-        # db.session.add(file)
-        db.session.commit()
 
-        return jsonify(true=True)
+        # Update file info
+        try:
+            file = File.query.filter_by(id=int(file_id)).first()
+        except Exception as e:
+            print(str(e), flush=True)
+            return jsonify(access_granted=True, updated=False, message=str(e))
+
+        if file is None:
+            emess = "The file does not exist in the database, cannot update."
+            print(emess, flush=True)
+            return jsonify(access_granted=True, updated=False, message=emess)
+
+        # Update download time
+        try:
+            file.latest_download = timestamp()
+        except Exception as e:
+            print(str(e), flush=True)
+            return jsonify(access_granted=True, updated=False, message=str(e))
+        else:
+            db.session.commit()
+
+        return jsonify(access_granted=True, updated=True, message="")
