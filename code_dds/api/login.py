@@ -157,7 +157,7 @@ def gen_access_token(project, length: int = 16) -> (str):
     return token
 
 
-def validate_token(token: str):
+def validate_token(token: str, project_id):
     """Checks that the token specified in the request is valid.
 
     Args:
@@ -171,7 +171,8 @@ def validate_token(token: str):
 
     # Get token from db matching the specified token in request
     try:
-        token_info = Tokens.query.filter_by(token=token).first()
+        token_info = Tokens.query.filter_by(
+            token=token, project_id=project_id).first()
     except Exception as e:
         print(e, flush=True)
         return validated

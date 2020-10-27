@@ -6,6 +6,7 @@ from sqlalchemy import func
 from code_dds import db
 from datetime import datetime as dt
 from code_dds import timestamp
+from code_dds.api.login import validate_token
 
 
 class ListFiles(Resource):
@@ -34,7 +35,8 @@ class DeliveryDate(Resource):
 
         # Validate token and cancel delivery if not valid
         token = request.args["token"]
-        ok = validate_token(token)
+        project = request.args["project"]
+        ok = validate_token(token, project)
         if not ok:
             return jsonify(access_granted=False,
                            updated=False,

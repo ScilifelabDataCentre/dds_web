@@ -61,7 +61,7 @@ class ProjectKey(Resource):
         """
 
         # Validate token
-        ok = validate_token(token)
+        ok = validate_token(token, project)
         if not ok:
             return jsonify(access_granted=False,
                            message="Token expired. Access denied.",
@@ -101,7 +101,7 @@ class ProjectFiles(Resource):
         '''
 
         # Check if token is valid and cancel delivery if not
-        ok = validate_token(token=token)
+        ok = validate_token(token=token, project_id=project)
         if not ok:
             return jsonify(access_granted=False,
                            message="Token expired. Access denied.",
@@ -143,7 +143,7 @@ class DatabaseUpdate(Resource):
         all_ = request.args
 
         # Validate token and cancel delivery if not valid
-        ok = validate_token(all_["token"])
+        ok = validate_token(all_["token"], all_["project"])
         if not ok:
             return jsonify(access_granted=False,
                            updated=False,
