@@ -1,31 +1,98 @@
-img.head_logo {
-    width: 80%;
+img.scilife_logo {
+    height: 55px;
+    width: 252px;
     float: left;
-    margin-left: 10px;
-  }
-  
-  div.navbar-brand {
+ }
+
+div.nav_header {
+    min-width: 450px;
+    /*margin-left: 252px;*/
+    text-align: center;
+    vertical-align: middle;
+    font-family: 'Book Antiqua';
+    font-size: 36px;
+ }
+ 
+ a.nav_color {
+     color: black;
+ }
+ 
+.material-icons.md20 { font-size: 20px; }
+
+div.panel {
+    width: 70%;
+    padding: 15px 40px;
+    background-color: #f0f0f0;
+    align-content: center;
+    border-radius: 10px;
+}
+
+div.panel-header {
+    text-align: center;
+}
+
+div.place-center {
+    align-content: center;
+}
+
+div.input-group-prepend span{
+background-color: #BDD775;
+color: black;
+border: 0;
+}
+
+.facility-box input {
+width: 18px;
+height: 18px;
+margin-left: 15px;
+margin-right: 5px;
+}
+
+input.submit_btn{
+color: black;
+background-color: #BDD775;
+width: 100px;
+}
+
+input.submit_btn:hover{
+color: white;
+background-color: black;
+}
+
+div.navbar-brand {
     display: inline-block;
     padding-top: 0%;
-  }
+ }
   
-  body {
+body {
     font-family: Lora !important;
-  }
+ }
+
+div.temp-holder {
+    text-align: center;
+}
+
+div.plot-container {
+    width: 100%;
+    align-content: center;
+}
+
+div.half-plot {
+    width: 800px;
+    height: 550px;
+    margin: auto;
+}
   
-  h1.title {
+h1.title {
     font-size: 60px;
     text-indent: 60px;
     display: inline-block;
     margin-top: 11px;
-  }
+ }
   
-  button.navbar-toggler {
+button.navbar-toggler {
     /* display: inline-block; */
     float: right;
     margin-top: 20px;
-  }
+ }
 
-  div.login-form {
-    width: 50%;
-  }

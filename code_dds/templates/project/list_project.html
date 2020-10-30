@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<table class="table table-striped">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Title</th>
+            <th scope="col">Category</th>
+            <th scope="col">Facility</th>
+            <th scope="col">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for project in projects_list %}
+        <tr>
+            <td>{{ projects_list[project]['id'] }}</td>
+            <td>{{ projects_list[project]['title'] }}</td>
+            <td>{{ projects_list[project]['category'] }}</td>
+            <td>{{ projects_list[project]['facility'] }}</td>
+            <td>{{ projects_list[project]['status'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

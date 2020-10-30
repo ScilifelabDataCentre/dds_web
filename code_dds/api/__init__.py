@@ -17,7 +17,7 @@ from code_dds.api.project import (ProjectFiles, DatabaseUpdate, ListProjects,
 from code_dds.api.files import ListFiles, FileSalt, DeliveryDate
 from code_dds.api.s3 import ListS3
 
-api_blueprint = Blueprint('api_blueprint', __name__)
+api_blueprint = Blueprint('api_blueprint', __name__, url_prefix='/api/v1')
 api = Api(api_blueprint)
 
 

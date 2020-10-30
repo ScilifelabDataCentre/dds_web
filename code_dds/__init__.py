@@ -7,7 +7,7 @@ import pytz
 from datetime import datetime, timedelta
 
 # Installed
-from flask import Flask, g
+from flask import Flask, g, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_marshmallow import Marshmallow
@@ -25,6 +25,11 @@ C_TZ = pytz.timezone('Europe/Stockholm')
 
 # FUNCTIONS ####################################################### FUNCTIONS #
 
+@app.before_request
+def prepare():
+    ## Test line for global
+    g.current_user = session.get('current_user')
+
 def create_app():
     """Construct the core application."""
 
@@ -33,7 +38,7 @@ def create_app():
     db.init_app(app)    # Initialize database
     ma.init_app(app)
 
-    with app.app_context():     # Everything in here has access to sessions
+    with app.app_context():     # Everything in here has access to sessions        
         from code_dds import routes  # Import routes
 
         db.drop_all()       # Make sure it's the latest db
@@ -43,7 +48,10 @@ def create_app():
         fill_db()           # Fill db with initial entries (for development)
 
         from api import api_blueprint
-        app.register_blueprint(api_blueprint, url_prefix='/api/v1')
+        app.register_blueprint(api_blueprint)
+        
+        from user import user_blueprint
+        app.register_blueprint(user_blueprint)
 
         return app
 

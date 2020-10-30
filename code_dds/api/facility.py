@@ -45,7 +45,7 @@ class LoginFacility(Resource):
         # Look for user in database
         ok, fac_id, error = ds_access(username=user_info['username'],
                                       password=user_info['password'],
-                                      role=1)
+                                      role='facility')
         if not ok:  # Access denied
             return jsonify(access=DEFAULTS['access'],
                            user_id=fac_id,

@@ -2,16 +2,51 @@
 
 {% block body %}
   <main role="main">
-    <div class="jumbotron" style="background: #f0f0f0;">
-        <div class="col-sm-8 mx-auto">
-            <h1>Information about the DS</h1>
+    <div class="jumbotron justify-content-center" style="background: #f0f0f0;">
+        <div class="temp-holder">
+            <h3>Information about the DS</h3>
+            <br>
             <p>
-                This is some information about the Delivery System
-                and maybe a <a href="#">link</a> to the login page.
-                There could also be some information on how to use
-                the CLI <code>ds_deliver</code>.
+                ** Dashboard and other homepage coming here soon **
             </p>
         </div>
     </div>
+    <div class="plot-container">
+        <div id="data-bar" class="half-plot"></div>
+    </div>
+    </div>
+    
+    <!-- A temporary hardcode demo -->
+    <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+    <script>
+        var trace1 = {
+          x: ['Oct1', 'Oct2', 'Oct3', 'Oct4', 'Oct5', 'Oct6'],
+          y: [8.0, 8.0, 12.0, 12.0, 13.0, 20.0],
+          type: 'bar',
+          marker: {
+            color: '#BDD775'
+          }
+        };
+
+        var data = [trace1];
+
+        var layout = {
+          title: 'Data per day',
+          font:{
+            family: 'Raleway, sans-serif'
+          },
+          showlegend: false,
+          xaxis: {
+            tickangle: -45
+          },
+          yaxis: {
+            zeroline: false,
+            gridwidth: 2
+          },
+          bargap :0.05
+        };
+
+        Plotly.newPlot('data-bar', data, layout);
+    </script>
   </main>
 {% endblock %}

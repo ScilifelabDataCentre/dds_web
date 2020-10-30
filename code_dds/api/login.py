@@ -41,14 +41,12 @@ def ds_access(username, password, role) -> (bool, int, str):
         tuple:  If access to DS granted, facility/user ID and error message
 
     '''
-    if role == 1:
-        table = Facility
-    elif role == 0:
-        table = User
-    else:
-        pass    # custom error here?
 
-    print(table, flush=True)
+    if role == 'facility':
+        table = Facility
+    elif role == 'user':
+        table = User
+
 
     # Get user from database
     user = table.query.filter_by(username=username).first()

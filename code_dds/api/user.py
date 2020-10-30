@@ -40,7 +40,7 @@ class LoginUser(Resource):
         # Look for user in database
         ok, uid, error = ds_access(username=user_info['username'],
                                    password=user_info['password'],
-                                   role=0)
+                                   role='user')
         if not ok:  # Access denied
             return jsonify(access=DEFAULTS['access'],
                            user_id=uid,
