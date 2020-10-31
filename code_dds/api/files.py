@@ -7,6 +7,7 @@ from code_dds import db
 from datetime import datetime as dt
 from code_dds import timestamp
 from code_dds.api.login import validate_token
+from code_dds.api.project import update_project_size
 
 
 class ListFiles(Resource):

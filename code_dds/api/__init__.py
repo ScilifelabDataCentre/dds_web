@@ -15,7 +15,7 @@ from code_dds.api.facility import (LoginFacility, ListFacilities)
 from code_dds.api.project import (ProjectFiles, ListProjects,
                                   ProjectKey)
 from code_dds.api.files import ListFiles, FileSalt, DeliveryDate, FileUpdate
-from code_dds.api.s3 import ListS3
+from code_dds.api.s3 import ListS3, S3Info
 
 api_blueprint = Blueprint('api_blueprint', __name__)
 api = Api(api_blueprint)
@@ -44,3 +44,5 @@ api.add_resource(FileSalt, '/file/salt/<int:file_id>', endpoint='file_salt')
 
 api.add_resource(ProjectKey, '/project/<int:project>/key/<string:token>', endpoint='key')
 api.add_resource(DeliveryDate, '/delivery/date/', endpoint='delivery_date')
+
+api.add_resource(S3Info, '/s3info', endpoint="s3info")
