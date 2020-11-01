@@ -83,6 +83,12 @@ class ProjectKey(Resource):
                            project=project, encrypted_key="", salt="",
                            nonce="")
 
+        # TODO (ina): On project creation - encrypt passphrase with server-
+        # known key and store in secure place. When download starts - get and
+        # decrypt key, and then take the current user password (or token? or
+        # both?) do encrypt the private key, which in the cli is decrypted and 
+        # then can be used. 
+
         return jsonify(access_granted=True,
                        message="", project=project,
                        encrypted_key=key.private_key, salt=key.salt,
