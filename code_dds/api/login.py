@@ -55,7 +55,7 @@ def ds_access(username, password, role) -> (bool, int, str):
     # Return error if username doesn't exist in database
     if user is None:
         return False, 0, "The user does not exist"
-
+    
     # Get password info in response and
     # calculate secure password hash with Scrypt
     sec_pw = secure_password_hash(password_settings=user.settings,
@@ -68,7 +68,7 @@ def ds_access(username, password, role) -> (bool, int, str):
     return True, user.id, ""
 
 
-def project_access(uid, project, owner) -> (bool, str):
+def project_access(uid, project, owner, role="facility") -> (bool, str):
     '''Checks the users access to the specified project
 
     Args:
@@ -79,10 +79,17 @@ def project_access(uid, project, owner) -> (bool, str):
     Returns:
         tuple:  access and error message
     '''
+    
+    print(f"uid: {uid}, owner: {owner}, {uid==owner}", flush=True)
 
-    # Get project info if owner and facility matches
-    project_info = Project.query.filter_by(id=project, owner=owner,
-                                           facility=uid).first()
+    if role == "facility":
+        # Get project info if owner and facility matches
+        project_info = Project.query.filter_by(id=project, owner=owner,
+                                            facility=uid).first()
+    else:
+        # Get project info if owner matches
+        # TODO (ina): possibly another check here
+        project_info = Project.query.filter_by(id=project, owner=owner).first()
 
     # Return error if project not found
     if project_info is None:

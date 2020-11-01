@@ -53,7 +53,8 @@ class LoginUser(Resource):
         # Look for project in database
         ok, public_key, error = project_access(uid=uid,
                                                project=user_info['project'],
-                                               owner=uid)
+                                               owner=user_info['username'], 
+                                               role="user")
         if not ok:  # Access denied
             return jsonify(access=DEFAULTS['access'],
                            user_id=uid,
@@ -61,7 +62,7 @@ class LoginUser(Resource):
                            public_key=DEFAULTS['public_key'],
                            error=error,
                            project_id=user_info['project'],
-                           oken="")
+                           token="")
 
         # Get S3 project ID for project
         ok, s3_id, error = cloud_access(project=user_info['project'])
