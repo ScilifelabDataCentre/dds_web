@@ -16,3 +16,4 @@ test*
 dp_venv
 *settings.json*
 *info.md*
+create_encrypted_private.py

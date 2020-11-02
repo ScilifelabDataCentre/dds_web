@@ -5,6 +5,8 @@
 ###############################################################################
 
 # Standard library
+import json
+import pathlib
 
 # Installed
 import flask
@@ -21,6 +23,18 @@ from code_dds.api import login
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
+
+def get_passphrase():
+    """Gets the passphrase used for encrypting the private key."""
+
+    # TODO (ina): Change this!!!
+    passp_path = pathlib.Path.cwd() / \
+        pathlib.Path("sensitive/passphrase.json")
+    with passp_path.open(mode="r") as f:
+        passp_info = json.load(f)
+
+    return passp_info
+
 
 def update_project_size(proj_id, altered_size, altered_enc_size,
                         method, old_size: int = 0):
@@ -89,35 +103,38 @@ class ProjectKey(flask_restful.Resource):
         ok_ = login.validate_token(token, project)
         if not ok_:
             return flask.jsonify(access_granted=False,
-                           message="Token expired. Access denied.",
-                           project=project, encrypted_key="", salt="",
-                           nonce="")
+                                 message="Token expired. Access denied.",
+                                 project=project, encrypted_key="", salt="",
+                                 nonce="", passphrase="")
 
         try:
             key = models.Project.query.filter_by(id=project).first()
         except sqlalchemy.exc.SQLAlchemyError as e:
             print(str(e), flush=True)
             return flask.jsonify(access_granted=False,
-                           message="Could not perform database query",
-                           project=project, encrypted_key="", salt="",
-                           nonce="")
+                                 message="Could not perform database query",
+                                 project=project, encrypted_key="", salt="",
+                                 nonce="", passphrase="")
 
         if key is None:
             return flask.jsonify(access_granted=False,
-                           message="There is no such project",
-                           project=project, encrypted_key="", salt="",
-                           nonce="")
+                                 message="There is no such project",
+                                 project=project, encrypted_key="", salt="",
+                                 nonce="", passphrase="")
 
         # TODO (ina): On project creation - encrypt passphrase with server-
         # known key and store in secure place. When download starts - get and
         # decrypt key, and then take the current user password (or token? or
         # both?) do encrypt the private key, which in the cli is decrypted and
         # then can be used.
+        # TODO (ina): This should NOT be in the same request later.
+        passp = get_passphrase()
 
         return flask.jsonify(access_granted=True,
-                       message="", project=project,
-                       encrypted_key=key.private_key, salt=key.salt,
-                       nonce=key.nonce)
+                             message="", project=project,
+                             encrypted_key=key.private_key, salt=key.salt,
+                             nonce=key.nonce,
+                             passphrase=passp["PRIVKEY_ENC_PASSPHRASE"])
 
 
 class ProjectFiles(flask_restful.Resource):
@@ -137,8 +154,8 @@ class ProjectFiles(flask_restful.Resource):
         ok_ = login.validate_token(token=token, project_id=project)
         if not ok_:
             return flask.jsonify(access_granted=False,
-                           message="Token expired. Access denied.",
-                           files=[])
+                                 message="Token expired. Access denied.",
+                                 files=[])
 
         # Get all files belonging to project
         file_info = models.File.query.filter_by(project_id=project).all()
@@ -147,8 +164,8 @@ class ProjectFiles(flask_restful.Resource):
         if file_info is None:
             # print("HERE", flush=True)
             return flask.jsonify(access_granted=False,
-                           message="There are no files in project",
-                           files=[])
+                                 message="There are no files in project",
+                                 files=[])
 
         files = {}
         for file in file_info:

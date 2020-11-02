@@ -7,25 +7,24 @@
 # Standard library
 
 # Installed
-from flask import Blueprint
-from flask_restful import Api
-from flask_marshmallow import Marshmallow
+import flask
+import flask_restful
+import flask_marshmallow
 
 # Own modules
-from code_dds.api.user import LoginUser, ListUsers
-from code_dds.api.facility import (LoginFacility, ListFacilities)
-from code_dds.api.project import (ProjectFiles, ListProjects,
-                                  ProjectKey)
-from code_dds.api.files import ListFiles, FileSalt, DeliveryDate, FileUpdate
-from code_dds.api.s3 import ListS3, S3Info
+from code_dds.api import facility
+from code_dds.api import files
+from code_dds.api import project
+from code_dds.api import s3
+from code_dds.api import user
 
 
 ###############################################################################
 # BLUEPRINTS ##################################################### BLUEPRINTS #
 ###############################################################################
 
-api_blueprint = Blueprint('api_blueprint', __name__)
-api = Api(api_blueprint)
+api_blueprint = flask.Blueprint('api_blueprint', __name__)
+api = flask_restful.Api(api_blueprint)
 
 
 ###############################################################################
@@ -33,24 +32,27 @@ api = Api(api_blueprint)
 ###############################################################################
 
 # Login/access
-api.add_resource(LoginFacility, '/fac/login', endpoint='f_login')
-api.add_resource(LoginUser, '/user/login', endpoint='u_login')
+api.add_resource(user.LoginUser, '/user/login', endpoint='u_login')
 
 # List
-api.add_resource(ListUsers, '/listusers', endpoint='list_users')
-api.add_resource(ListFacilities, '/listfacs', endpoint='list_facs')
-api.add_resource(ProjectFiles,
+api.add_resource(user.ListUsers, '/listusers', endpoint='list_users')
+api.add_resource(facility.ListFacilities, '/listfacs', endpoint='list_facs')
+api.add_resource(project.ProjectFiles,
                  '/project/listfiles/<int:project>/<string:token>',
                  endpoint='project_files')
-api.add_resource(ListFiles, '/listfiles', endpoint='list_files')
-api.add_resource(ListS3, '/lists3', endpoint='list_s3')
+api.add_resource(files.ListFiles, '/listfiles', endpoint='list_files')
+api.add_resource(s3.ListS3, '/lists3', endpoint='list_s3')
 
 # Delivery
-api.add_resource(FileUpdate, '/project/updatefile', endpoint='update_file')
-api.add_resource(FileSalt, '/file/salt/<int:file_id>', endpoint='file_salt')
-api.add_resource(DeliveryDate, '/delivery/date/', endpoint='delivery_date')
-api.add_resource(S3Info, '/s3info', endpoint="s3info")
+api.add_resource(files.FileUpdate, '/project/updatefile',
+                 endpoint='update_file')
+api.add_resource(files.FileSalt, '/file/salt/<int:file_id>',
+                 endpoint='file_salt')
+api.add_resource(files.DeliveryDate, '/delivery/date/',
+                 endpoint='delivery_date')
+api.add_resource(s3.S3Info, '/s3info', endpoint="s3info")
 
 # Key
-api.add_resource(ProjectKey, '/project/<int:project>/key/<string:token>',
+api.add_resource(project.ProjectKey,
+                 '/project/<int:project>/key/<string:token>',
                  endpoint='key')
