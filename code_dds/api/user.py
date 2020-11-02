@@ -41,56 +41,62 @@ class LoginUser(flask_restful.Resource):
 
         # Get args from request
         user_info = flask.request.args
+        print(user_info, flush=True)
 
         # Look for user in database
-        ok, uid, error = login.ds_access(username=user_info["username"],
-                                   password=user_info["password"],
-                                   role=0)
-        if not ok:  # Access denied
+        ok_, uid, error = login.ds_access(username=user_info["username"],
+                                          password=user_info["password"],
+                                          role=user_info["role"])
+        if not ok_:  # Access denied
             return flask.jsonify(access=False,
-                           user_id=uid,
-                           s3_id="",
-                           public_key=None,
-                           error=error,
-                           project_id=user_info["project"],
-                           token="")
+                                 user_id=uid,
+                                 s3_id="",
+                                 public_key=None,
+                                 error=error,
+                                 project_id=user_info["project"],
+                                 token="")
 
         # Look for project in database
-        ok, public_key, error = login.project_access(uid=uid,
-                                               project=user_info["project"],
-                                               owner=user_info["username"], 
-                                               role="user")
-        if not ok:  # Access denied
+        print(user_info["role"])
+        ok_, public_key, error = login.project_access(
+            uid=uid,
+            project=user_info["project"],
+            owner=(user_info["owner"] if "owner" in user_info
+                   and user_info["role"] == "facility"
+                   else user_info["username"]),
+            role=user_info["role"]
+        )
+        if not ok_:  # Access denied
             return flask.jsonify(access=False,
-                           user_id=uid,
-                           s3_id="",
-                           public_key=None,
-                           error=error,
-                           project_id=user_info["project"],
-                           token="")
+                                 user_id=uid,
+                                 s3_id="",
+                                 public_key=None,
+                                 error=error,
+                                 project_id=user_info["project"],
+                                 token="")
 
         # Get S3 project ID for project
-        ok, s3_id, error = login.cloud_access(project=user_info["project"])
-        if not ok:  # Access denied
+        ok_, s3_id, error = login.cloud_access(project=user_info["project"])
+        if not ok_:  # Access denied
             return flask.jsonify(access=False,
-                           user_id=uid,
-                           s3_id=s3_id,
-                           public_key=None,
-                           error=error,
-                           project_id=user_info["project"],
-                           token="")
+                                 user_id=uid,
+                                 s3_id=s3_id,
+                                 public_key=None,
+                                 error=error,
+                                 project_id=user_info["project"],
+                                 token="")
 
         # Generate delivery token
         token = login.gen_access_token(project=user_info["project"])
 
         # Access approved
         return flask.jsonify(access=True,
-                       user_id=uid,
-                       s3_id=s3_id,
-                       public_key=public_key,
-                       error="",
-                       project_id=user_info["project"],
-                       token=token)
+                             user_id=uid,
+                             s3_id=s3_id,
+                             public_key=public_key,
+                             error="",
+                             project_id=user_info["project"],
+                             token=token)
 
 
 class ListUsers(flask_restful.Resource):

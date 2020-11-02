@@ -58,9 +58,9 @@ def ds_access(username, password, role) -> (bool, int, str):
         tuple:  If access to DS granted, facility/user ID and error message
 
     """
-    if role == 1:
+    if role == "facility":
         table = Facility
-    elif role == 0:
+    elif role == "user":
         table = User
     else:
         pass    # custom error here?
@@ -96,8 +96,6 @@ def project_access(uid, project, owner, role="facility") -> (bool, str):
     Returns:
         tuple:  access and error message
     """
-
-    print(f"uid: {uid}, owner: {owner}, {uid==owner}", flush=True)
 
     if role == "facility":
         # Get project info if owner and facility matches
