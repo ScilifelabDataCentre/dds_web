@@ -25,26 +25,26 @@ from code_dds import db, C_TZ
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
 
-def cloud_access(project):
-    """Gets the S3 project ID (bucket ID).
+# def cloud_access(project):
+#     """Gets the S3 project ID (bucket ID).
 
-    Args:
-        project:    Specified project ID used in current delivery
+#     Args:
+#         project:    Specified project ID used in current delivery
 
-    Returns:
-        tuple:  access, s3 project ID and error message
-    """
+#     Returns:
+#         tuple:  access, s3 project ID and error message
+#     """
 
-    # Get s3 info if project in database
-    s3_info = S3Project.query.filter_by(project_id=project).first()
+#     # Get s3 info if project in database
+#     s3_info = S3Project.query.filter_by(project_id=project).first()
 
-    # Return error if s3 info not found
-    if s3_info is None:
-        return False, "", "There is no recorded S3 project for the " + \
-            "specified project"
+#     # Return error if s3 info not found
+#     if s3_info is None:
+#         return False, "", "There is no recorded S3 project for the " + \
+#             "specified project"
 
-    # Access granted, S3 ID and no error message
-    return True, s3_info.id, ""
+#     # Access granted, S3 ID and no error message
+#     return True, s3_info.id, ""
 
 
 def ds_access(username, password, role) -> (bool, int, str):
@@ -65,24 +65,27 @@ def ds_access(username, password, role) -> (bool, int, str):
     else:
         pass    # custom error here?
 
-    print(table, flush=True)
-
     # Get user from database
-    user = table.query.filter_by(username=username).first()
+    try:
+        user = table.query.filter_by(username=username).\
+            with_entities(table.id, table.password, table.settings).first()
+    except sqlalchemy.exc.SQLAlchemyError as e:
+        print(str(e), flush=True)
+
     # Return error if username doesn't exist in database
     if user is None:
         return False, 0, "The user does not exist"
 
     # Get password info in response and
     # calculate secure password hash with Scrypt
-    sec_pw = secure_password_hash(password_settings=user.settings,
+    sec_pw = secure_password_hash(password_settings=user[2],
                                   password_entered=password)
 
     # Return error if the password doesn't match
-    if sec_pw != user.password:
+    if sec_pw != user[1]:
         return False, 0, "Incorrect password!"
 
-    return True, user.id, ""
+    return True, user[0], ""
 
 
 def project_access(uid, project, owner, role="facility") -> (bool, str):
@@ -99,25 +102,28 @@ def project_access(uid, project, owner, role="facility") -> (bool, str):
 
     if role == "facility":
         # Get project info if owner and facility matches
-        project_info = Project.query.filter_by(id=project, owner=owner,
-                                               facility=uid).first()
+        project_info = Project.query.\
+            filter_by(id=project, owner=owner, facility=uid).\
+            with_entities(Project.delivery_option, Project.public_key).\
+            first()
     else:
         # Get project info if owner matches
         # TODO (ina): possibly another check here
-        project_info = Project.query.filter_by(id=project, owner=owner).first()
+        project_info = Project.query.filter_by(id=project, owner=owner).\
+            with_entities(Project.delivery_option, Project.public_key).first()
 
     # Return error if project not found
     if project_info is None:
         return False, None, "The project doesn't exist or you don't have access"
 
     # Return error if project doesn't have access to S3
-    if project_info.delivery_option != "S3":
+    if project_info[0] != "S3":
         return False, None, "The project does not have S3 access"
 
     # Check length of public key and quit if wrong
     # ---- here ----
 
-    return True, project_info.public_key, ""
+    return True, project_info[1], ""
 
 
 def secure_password_hash(password_settings: str,
