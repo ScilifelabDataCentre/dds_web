@@ -140,7 +140,7 @@ class ProjectKey(flask_restful.Resource):
 class ProjectFiles(flask_restful.Resource):
     """Endpoint for getting files connected to a specific project."""
 
-    def get(self, project, token):
+    def get(self):
         """Get all files for a specific project.
 
         Args:
@@ -150,15 +150,18 @@ class ProjectFiles(flask_restful.Resource):
             List of files in db
         """
 
+        proj_info = flask.request.args
         # Check if token is valid and cancel delivery if not
-        ok_ = login.validate_token(token=token, project_id=project)
+        ok_ = login.validate_token(token=proj_info["token"],
+                                   project_id=proj_info["project"])
         if not ok_:
             return flask.jsonify(access_granted=False,
                                  message="Token expired. Access denied.",
                                  files=[])
 
         # Get all files belonging to project
-        file_info = models.File.query.filter_by(project_id=project).all()
+        file_info = models.File.query.\
+            filter_by(project_id=proj_info["project"]).all()
 
         # Return empty list if no files have been delivered
         if file_info is None:

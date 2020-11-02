@@ -1,6 +1,6 @@
 """USED ONLY DURING DEVELOPMENT! Adds test data to the database."""
 
-from code_dds.models import User, Project, Facility, S3Project, File, Tokens
+from code_dds.models import User, Project, Facility, File, Tokens
 from code_dds import db
 from sqlalchemy import func
 import os
@@ -24,29 +24,31 @@ def fill_db():
                          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
                          email="supprt@fac.se", phone="08 000 00 00")
 
-    project1 = Project(title="Project1", category="Category1",
+    project1 = Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
+                       category="Category1",
                        order_date=func.now(), delivery_date=None,
                        status="Ongoing", sensitive=True, description="test",
                        pi="", owner=user1, facility=facility1, size=0,
                        size_enc=0, delivery_option="S3",
-                       public_key=("304F3C52DBD6E502DC3BE1EAB361605D2D00077592"
-                                   "2ECE9AA5875933FACA6157"),
+                       public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
+                       "7EFECAB889829253136B33"),
                        private_key=(
-                           "B72DD6FCA04E22D0D47D8F8E5A943EC3564D6F1AE"
-                           "A493E30A0B25F0B83B947A45BC5D55AB67B393B5A"
-                           "2543E3A6C4F1725C9AF3C8163004CFA3046A1019F8"
-                       ),
-                       salt="026937046F41A071ECE8F438CF9CC1CB",
-                       nonce="B917F9CEA1254CC82F0A7EFE")
+                           "83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
+                           "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
+                           "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
+                           "A1BE27E07B9694061DADBD2B581E0AB0D8"
+    ),
+        salt="9A2694986A488E438DA998E73E93E9C4",
+        nonce="D55240DB506C2C22CF248F18")
 
-    s3proj1 = S3Project(id="s3proj1", project_id=project1)
+    # s3proj1 = S3Project(id="s3proj1", project_id=project1)
 
     token = Tokens(token=os.urandom(16).hex(), project_id=project1)
 
     # Foreign key/relationship updates
     user1.user_projects.append(project1)
     facility1.fac_projects.append(project1)
-    project1.project_s3.append(s3proj1)
+    # project1.project_s3.append(s3proj1)
     # project1.project_files.append(file1)
     project1.project_tokens.append(token)
 

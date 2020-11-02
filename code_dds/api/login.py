@@ -17,8 +17,9 @@ import cryptography.hazmat.backends as backends
 import sqlalchemy
 
 # Own modules
-from code_dds.models import Facility, User, Project, S3Project, Tokens
-from code_dds import db, C_TZ
+from code_dds import C_TZ
+from code_dds import db
+from code_dds import models
 
 
 ###############################################################################
@@ -59,9 +60,9 @@ def ds_access(username, password, role) -> (bool, int, str):
 
     """
     if role == "facility":
-        table = Facility
+        table = models.Facility
     elif role == "user":
-        table = User
+        table = models.User
     else:
         pass    # custom error here?
 
@@ -102,15 +103,15 @@ def project_access(uid, project, owner, role="facility") -> (bool, str):
 
     if role == "facility":
         # Get project info if owner and facility matches
-        project_info = Project.query.\
+        project_info = models.Project.query.\
             filter_by(id=project, owner=owner, facility=uid).\
-            with_entities(Project.delivery_option, Project.public_key).\
+            with_entities(models.Project.delivery_option, models.Project.public_key).\
             first()
     else:
         # Get project info if owner matches
         # TODO (ina): possibly another check here
-        project_info = Project.query.filter_by(id=project, owner=owner).\
-            with_entities(Project.delivery_option, Project.public_key).first()
+        project_info = models.Project.query.filter_by(id=project, owner=owner).\
+            with_entities(models.Project.delivery_option, models.Project.public_key).first()
 
     # Return error if project not found
     if project_info is None:
@@ -172,13 +173,13 @@ def gen_access_token(project, length: int = 16) -> (str):
     token = os.urandom(length).hex()
 
     # Check if token exists in token db and generate new token until not in db
-    curr_token = Tokens.query.filter_by(token=token).first()
+    curr_token = models.Tokens.query.filter_by(token=token).first()
     while curr_token is not None:
         token = os.urandom(length).hex()
-        curr_token = Tokens.query.filter_by(token=token).first()
+        curr_token = models.Tokens.query.filter_by(token=token).first()
 
     # Create new token object for db and add it
-    new_token = Tokens(token=token, project_id=project)
+    new_token = models.Tokens(token=token, project_id=project)
     db.session.add(new_token)
     db.session.commit()
 
@@ -199,7 +200,7 @@ def validate_token(token: str, project_id):
 
     # Get token from db matching the specified token in request
     try:
-        token_info = Tokens.query.filter_by(
+        token_info = models.Tokens.query.filter_by(
             token=token, project_id=project_id).first()
     except sqlalchemy.exc.SQLAlchemyError as e:
         print(e, flush=True)

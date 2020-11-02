@@ -37,8 +37,7 @@ api.add_resource(user.LoginUser, '/user/login', endpoint='u_login')
 # List
 api.add_resource(user.ListUsers, '/listusers', endpoint='list_users')
 api.add_resource(facility.ListFacilities, '/listfacs', endpoint='list_facs')
-api.add_resource(project.ProjectFiles,
-                 '/project/listfiles/<int:project>/<string:token>',
+api.add_resource(project.ProjectFiles,  '/project/listfiles',
                  endpoint='project_files')
 api.add_resource(files.ListFiles, '/listfiles', endpoint='list_files')
 api.add_resource(s3.ListS3, '/lists3', endpoint='list_s3')
@@ -54,5 +53,5 @@ api.add_resource(s3.S3Info, '/s3info', endpoint="s3info")
 
 # Key
 api.add_resource(project.ProjectKey,
-                 '/project/<int:project>/key/<string:token>',
+                 '/project/<string:project>/key/<string:token>',
                  endpoint='key')

@@ -29,7 +29,7 @@ class Tokens(db.Model):
                         server_default=timestamp())
     expires = db.Column(db.String(50), unique=False, nullable=False,
                         server_default=token_expiration())
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'),
+    project_id = db.Column(db.String(32), db.ForeignKey('projects.id'),
                            unique=False, nullable=False)
 
 
@@ -96,7 +96,7 @@ class Project(db.Model):
     __table_args__ = {'extend_existing': True}
 
     # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.String(32), primary_key=True)
     title = db.Column(db.String(100), unique=False, nullable=False)
     category = db.Column(db.String(40), unique=False, nullable=False)
     order_date = db.Column(db.String(50), nullable=False)
@@ -118,8 +118,8 @@ class Project(db.Model):
     nonce = db.Column(db.String(24), nullable=False)
 
     # Relationships
-    project_s3 = db.relationship('S3Project', backref='s3_project', lazy=True,
-                                 foreign_keys='S3Project.project_id')
+    # project_s3 = db.relationship('S3Project', backref='s3_project', lazy=True,
+    #                              foreign_keys='S3Project.project_id')
     project_files = db.relationship('File', backref='file_project', lazy=True,
                                     foreign_keys='File.project_id')
     project_tokens = db.relationship('Tokens', backref='token_project',
@@ -131,22 +131,22 @@ class Project(db.Model):
         return f'<Project {self.id}>'
 
 
-class S3Project(db.Model):
-    """Data model for S3 project info."""
+# class S3Project(db.Model):
+#     """Data model for S3 project info."""
 
-    # Table setup
-    __tablename__ = 'S3Projects'
-    __table_args__ = {'extend_existing': True}
+#     # Table setup
+#     __tablename__ = 'S3Projects'
+#     __table_args__ = {'extend_existing': True}
 
-    # Columns
-    id = db.Column(db.String(10), primary_key=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'),
-                           unique=False, nullable=False)
+#     # Columns
+#     id = db.Column(db.String(10), primary_key=True)
+#     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'),
+#                            unique=False, nullable=False)
 
-    def __repr__(self):
-        """Called by print, creates representation of object"""
+#     def __repr__(self):
+#         """Called by print, creates representation of object"""
 
-        return f'<S3Project {self.id}>'
+#         return f'<S3Project {self.id}>'
 
 
 class File(db.Model):
@@ -168,7 +168,7 @@ class File(db.Model):
     salt = db.Column(db.String(50), unique=False, nullable=False)
     date_uploaded = db.Column(db.String(50), unique=False, nullable=False,
                               server_default=timestamp())
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'),
+    project_id = db.Column(db.String(32), db.ForeignKey('projects.id'),
                            unique=False, nullable=False)
     latest_download = db.Column(db.String(50), unique=False, nullable=True)
 

@@ -146,7 +146,7 @@ class FileUpdate(flask_restful.Resource):
                         compressed=bool(all_["ds_compressed"] == "True"),
                         public_key=all_["key"],
                         salt=all_["salt"],
-                        project_id=int(all_["project"])
+                        project_id=all_["project"]
                     )
                 except sqlalchemy.exc.SQLAlchemyError as e:
                     return flask.jsonify(access_granted=True, updated=False,
