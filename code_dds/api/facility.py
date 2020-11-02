@@ -58,9 +58,11 @@ class LoginFacility(flask_restful.Resource):
                                  token="")
 
         # Look for project in database
-        ok_, public_key, error = login.project_access(uid=fac_id,
-                                                      project=user_info["project"],
-                                                      owner=user_info["owner"])
+        ok_, public_key, error = login.project_access(
+            uid=fac_id,
+            project=user_info["project"],
+            owner=user_info["owner"]
+        )
         if not ok_:  # Access denied
             return flask.jsonify(access=False,
                                  user_id=fac_id,
