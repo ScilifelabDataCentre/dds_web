@@ -37,18 +37,18 @@ class ListFiles(flask_restful.Resource):
         return marmal.files_schema.dump(all_files)
 
 
-class FileSalt(flask_restful.Resource):
-    """Gets the salt used to derive decryption key."""
+# class FileSalt(flask_restful.Resource):
+#     """Gets the salt used to derive decryption key."""
 
-    def get(self, file_id):
-        """Gets salt from db and returns response in json."""
+#     def get(self, file_id):
+#         """Gets salt from db and returns response in json."""
 
-        file_salt = models.File.query.filter_by(id=file_id)
+#         file_salt = models.File.query.filter_by(id=file_id)
 
-        if file_salt is None:
-            return flask.jsonify(found=False, salt="")
+#         if file_salt is None:
+#             return flask.jsonify(found=False, salt="")
 
-        return flask.jsonify(found=True, salt=file_salt.salt)
+#         return flask.jsonify(found=True, salt=file_salt.salt)
 
 
 class DeliveryDate(flask_restful.Resource):
@@ -111,10 +111,10 @@ class FileUpdate(flask_restful.Resource):
         """
 
         # Get all params from request
-        all_ = flask.request.args
+        file_info = flask.request.args
 
         # Validate token and cancel delivery if not valid
-        ok_ = login.validate_token(all_["token"], all_["project"])
+        ok_ = login.validate_token(file_info["token"], file_info["project"])
         if not ok_:
             return flask.jsonify(access_granted=False,
                                  updated=False,
@@ -124,29 +124,29 @@ class FileUpdate(flask_restful.Resource):
         try:
             # Get existing file
             existing_file = models.File.query.filter_by(
-                name=all_["file"], project_id=all_["project"]
+                name=file_info["file"], project_id=file_info["project"]
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as e:
             print("\nError occurred! {e}\n", flush=True)
             return flask.jsonify(access_granted=True, updated=False,
                                  message=str(e))
         else:
-            size = int(all_["size"])            # File size
-            size_enc = int(all_["size_enc"])    # Encrypted file size
+            size = int(file_info["size"])            # File size
+            size_enc = int(file_info["size_enc"])    # Encrypted file size
 
             # Add new file if it doesn't already exist in db
             if existing_file is None:
                 try:
                     new_file = models.File(
-                        name=all_["file"],
-                        directory_path=all_["directory_path"],
+                        name=file_info["file"],
+                        directory_path=file_info["directory_path"],
                         size=size,
                         size_enc=size_enc,
-                        extension=all_["extension"],
-                        compressed=bool(all_["ds_compressed"] == "True"),
-                        public_key=all_["key"],
-                        salt=all_["salt"],
-                        project_id=all_["project"]
+                        extension=file_info["extension"],
+                        compressed=bool(file_info["ds_compressed"] == "True"),
+                        public_key=file_info["key"],
+                        salt=file_info["salt"],
+                        project_id=file_info["project"]
                     )
                 except sqlalchemy.exc.SQLAlchemyError as e:
                     return flask.jsonify(access_granted=True, updated=False,
@@ -157,7 +157,7 @@ class FileUpdate(flask_restful.Resource):
 
                     # Update project size
                     proj_updated, error = project.update_project_size(
-                        proj_id=all_["project"],
+                        proj_id=file_info["project"],
                         altered_size=size,
                         altered_enc_size=size_enc,
                         method="insert"
@@ -180,22 +180,22 @@ class FileUpdate(flask_restful.Resource):
                                              updated=False,
                                              message=error)
             else:
-                if all_["overwrite"]:
+                if file_info["overwrite"]:
                     old_size = existing_file.size   # Curr file size in db
                     old_enc_size = existing_file.size_enc   # Curr enc size db
 
                     # Update file if it exists in db
                     try:
-                        existing_file.name = all_["file"]
-                        existing_file.directory_path = all_["directory_path"]
+                        existing_file.name = file_info["file"]
+                        existing_file.directory_path = file_info["directory_path"]
                         existing_file.size = size
                         existing_file.size_enc = size_enc
-                        existing_file.extension = all_["extension"]
-                        existing_file.compressed = bool(all_["ds_compressed"])
+                        existing_file.extension = file_info["extension"]
+                        existing_file.compressed = bool(file_info["ds_compressed"])
                         existing_file.date_uploaded = timestamp()
-                        existing_file.public_key = all_["key"]
-                        existing_file.salt = all_["salt"]
-                        existing_file.project_id = int(all_["project"])
+                        existing_file.public_key = file_info["key"]
+                        existing_file.salt = file_info["salt"]
+                        existing_file.project_id = int(file_info["project"])
                     except sqlalchemy.exc.SQLAlchemyError as e:
                         return flask.jsonify(access_granted=True,
                                              updated=False,
@@ -203,7 +203,7 @@ class FileUpdate(flask_restful.Resource):
                     else:
                         # Update project size
                         proj_updated, error = project.update_project_size(
-                            proj_id=all_["project"],
+                            proj_id=file_info["project"],
                             altered_size=size,
                             altered_enc_size=size_enc,
                             method="update",

@@ -37,7 +37,7 @@ def get_passphrase():
 
 
 def update_project_size(proj_id, altered_size, altered_enc_size,
-                        method, old_size: int = 0):
+                        method, old_size: int = 0, old_enc_size: int = 0):
     """Updates the specified project size"""
 
     try:
@@ -55,7 +55,7 @@ def update_project_size(proj_id, altered_size, altered_enc_size,
         elif method == "update":
             # Existing file --> update project with file size
             current_project.size += (altered_size - old_size)
-            current_project.size_enc += (altered_size - old_size)
+            current_project.size_enc += (altered_size - old_enc_size)
         else:
             # User tried an unspecified method
             return False, (f"Method {method} not applicable when "
@@ -88,7 +88,7 @@ class ListProjects(flask_restful.Resource):
 class ProjectKey(flask_restful.Resource):
     """Endpoint for getting the project specific key."""
 
-    def get(self, project, token):
+    def get(self, project):
         """Get project private key from database.
 
         Args:
@@ -99,6 +99,7 @@ class ProjectKey(flask_restful.Resource):
             json:   Error message, project ID, key, salt and nonce
         """
 
+        token = flask.request.args["token"]
         # Validate token
         ok_ = login.validate_token(token, project)
         if not ok_:
@@ -140,7 +141,7 @@ class ProjectKey(flask_restful.Resource):
 class ProjectFiles(flask_restful.Resource):
     """Endpoint for getting files connected to a specific project."""
 
-    def get(self):
+    def get(self, proj_id):
         """Get all files for a specific project.
 
         Args:
@@ -150,18 +151,18 @@ class ProjectFiles(flask_restful.Resource):
             List of files in db
         """
 
-        proj_info = flask.request.args
+        token = flask.request.args["token"]
+
         # Check if token is valid and cancel delivery if not
-        ok_ = login.validate_token(token=proj_info["token"],
-                                   project_id=proj_info["project"])
+        ok_ = login.validate_token(token=token,
+                                   project_id=proj_id)
         if not ok_:
             return flask.jsonify(access_granted=False,
                                  message="Token expired. Access denied.",
                                  files=[])
 
         # Get all files belonging to project
-        file_info = models.File.query.\
-            filter_by(project_id=proj_info["project"]).all()
+        file_info = models.File.query.filter_by(project_id=proj_id).all()
 
         # Return empty list if no files have been delivered
         if file_info is None:

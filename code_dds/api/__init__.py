@@ -23,7 +23,7 @@ from code_dds.api import user
 # BLUEPRINTS ##################################################### BLUEPRINTS #
 ###############################################################################
 
-api_blueprint = flask.Blueprint('api_blueprint', __name__)
+api_blueprint = flask.Blueprint("api_blueprint", __name__)
 api = flask_restful.Api(api_blueprint)
 
 
@@ -31,27 +31,30 @@ api = flask_restful.Api(api_blueprint)
 # RESOURCES ####################################################### RESOURCES #
 ###############################################################################
 
-# Login/access
-api.add_resource(user.LoginUser, '/user/login', endpoint='u_login')
+# Login/access ################################################# Login/access #
+api.add_resource(user.LoginUser, "/user/login", endpoint="u_login")  # params
 
-# List
-api.add_resource(user.ListUsers, '/listusers', endpoint='list_users')
-api.add_resource(facility.ListFacilities, '/listfacs', endpoint='list_facs')
-api.add_resource(project.ProjectFiles,  '/project/listfiles',
-                 endpoint='project_files')
-api.add_resource(files.ListFiles, '/listfiles', endpoint='list_files')
-api.add_resource(s3.ListS3, '/lists3', endpoint='list_s3')
+# List ################################################################# List #
+# Development only
+api.add_resource(user.ListUsers, "/listusers", endpoint="list_users")
+api.add_resource(facility.ListFacilities, "/listfacs", endpoint="list_facs")
+api.add_resource(files.ListFiles, "/listfiles", endpoint="list_files")
+api.add_resource(s3.ListS3, "/lists3", endpoint="list_s3")
 
-# Delivery
-api.add_resource(files.FileUpdate, '/project/updatefile',
-                 endpoint='update_file')
-api.add_resource(files.FileSalt, '/file/salt/<int:file_id>',
-                 endpoint='file_salt')
-api.add_resource(files.DeliveryDate, '/delivery/date/',
-                 endpoint='delivery_date')
-api.add_resource(s3.S3Info, '/s3info', endpoint="s3info")
+# Used
+api.add_resource(project.ProjectFiles, "/project/<string:proj_id>/listfiles",
+                 endpoint="project_files")  # args & params
+
+# Delivery ######################################################### Delivery #
+# Update db
+api.add_resource(files.FileUpdate, "/updatefile",
+                 endpoint="update_file")    # params
+api.add_resource(files.DeliveryDate, "/delivery/date/",
+                 endpoint="delivery_date")  # params
+
+# Get info
+api.add_resource(s3.S3Info, "/s3info", endpoint="s3info") # atm no args
 
 # Key
-api.add_resource(project.ProjectKey,
-                 '/project/<string:project>/key/<string:token>',
-                 endpoint='key')
+api.add_resource(project.ProjectKey, "/project/<string:project>/key",
+                 endpoint="key")  # args & params

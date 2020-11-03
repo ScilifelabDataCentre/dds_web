@@ -3,8 +3,8 @@
 # IMPORTS ########################################################### IMPORTS #
 
 # Standard library
-import pytz
 from datetime import datetime, timedelta
+import pytz
 
 # Installed
 from flask import Flask, g
@@ -42,7 +42,7 @@ def create_app():
         from code_dds.development.db_init import fill_db
         fill_db()           # Fill db with initial entries (for development)
 
-        from api import api_blueprint
+        from code_dds.api import api_blueprint
         app.register_blueprint(api_blueprint, url_prefix='/api/v1')
 
         return app
