@@ -24,14 +24,17 @@ from code_dds.api import login
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
 
-def get_passphrase():
+def get_passphrase(project_id):
     """Gets the passphrase used for encrypting the private key."""
 
     # TODO (ina): Change this!!!
     passp_path = pathlib.Path.cwd() / \
-        pathlib.Path("sensitive/passphrase.json")
-    with passp_path.open(mode="r") as f:
-        passp_info = json.load(f)
+        pathlib.Path(f"sensitive/passphrase_{project_id}.json")
+    try:
+        with passp_path.open(mode="r") as f:
+            passp_info = json.load(f)
+    except IOError as ioe:
+        print(ioe, flush=True)
 
     return passp_info
 
@@ -129,7 +132,7 @@ class ProjectKey(flask_restful.Resource):
         # both?) do encrypt the private key, which in the cli is decrypted and
         # then can be used.
         # TODO (ina): This should NOT be in the same request later.
-        passp = get_passphrase()
+        passp = get_passphrase(project)
 
         return flask.jsonify(access_granted=True,
                              message="", project=project,
