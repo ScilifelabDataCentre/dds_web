@@ -1,3 +1,5 @@
+"""USED ONLY DURING DEVELOPMENT! Adds test data to the database."""
+
 from code_dds.models import User, Project, Facility, S3Project, File, Tokens
 from code_dds import db
 from sqlalchemy import func
@@ -7,14 +9,18 @@ import os
 def fill_db():
     """Fills the database with initial entries used for development."""
 
-    user1 = User(first_name="FirstName", last_name="LastName", username="username1",
-                 password="9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8c27a8efd774bc5",
+    user1 = User(first_name="FirstName", last_name="LastName",
+                 username="username1",
+                 password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
+                           "c27a8efd774bc5"),
                  settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
                  email="user@email.com", phone="070-000 00 01",
                  admin=False)
 
     facility1 = Facility(name="Facility1", internal_ref="fac1",
-                         username="fac1_username", password="b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258095735f5a395e9013d70ec",
+                         username="fac1_username",
+                         password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
+                                   "095735f5a395e9013d70ec"),
                          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
                          email="supprt@fac.se", phone="08 000 00 00")
 
@@ -22,15 +28,18 @@ def fill_db():
                        order_date=func.now(), delivery_date=None,
                        status="Ongoing", sensitive=True, description="test",
                        pi="", owner=user1, facility=facility1, size=0,
-                       size_enc=0, delivery_option="S3", public_key="09025813E230038449E635E8006D9FB9A3E02B0E41115B92A036274896EAB912",
-                       private_key="DDDE5F608FA19E58B9F2D501900FED90D3672FC999E786EC89C76281F4CCDC9C9B55FBB733B4245273CB6D25A8ADE9F4F21F1B172600F1C6A8F09FCA8579",
-                       salt="B686A3EB696AB3FB82043698831CA02F", nonce="EDAAE37DD295AF3A741C5156")
+                       size_enc=0, delivery_option="S3",
+                       public_key=("304F3C52DBD6E502DC3BE1EAB361605D2D00077592"
+                                   "2ECE9AA5875933FACA6157"),
+                       private_key=(
+                           "B72DD6FCA04E22D0D47D8F8E5A943EC3564D6F1AE"
+                           "A493E30A0B25F0B83B947A45BC5D55AB67B393B5A"
+                           "2543E3A6C4F1725C9AF3C8163004CFA3046A1019F8"
+                       ),
+                       salt="026937046F41A071ECE8F438CF9CC1CB",
+                       nonce="B917F9CEA1254CC82F0A7EFE")
 
     s3proj1 = S3Project(id="s3proj1", project_id=project1)
-
-    # file1 = File(name="testfile1.fna", directory_path=".", size=1, size_enc=1,
-    #              extension="", compressed=False, public_key="publickey",
-    #              salt="salt", project_id=project1)
 
     token = Tokens(token=os.urandom(16).hex(), project_id=project1)
 

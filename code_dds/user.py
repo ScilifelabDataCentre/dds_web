@@ -6,17 +6,14 @@ import re
 
 from flask import (Blueprint, render_template,
                    request, session, redirect, url_for, g, current_app)
-# import flask_mail
+
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from code_dds.api.login import ds_access
 
-#from code_dds import utils
 
-KEYS = ["ID", "Firstname", "Lastname", "Username", "Password", "Settings",
-        "Email", "Phone"]
 
-user_blueprint = Blueprint("user", __name__, url_prefix="/user")
+user_blueprint = Blueprint("user", __name__)
 
 
 @user_blueprint.route("/login", methods=["GET", "POST"])

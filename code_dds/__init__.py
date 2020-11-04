@@ -48,10 +48,10 @@ def create_app():
         fill_db()           # Fill db with initial entries (for development)
 
         from api import api_blueprint
-        app.register_blueprint(api_blueprint)
+        app.register_blueprint(api_blueprint, url_prefix='/api/v1')
         
         from user import user_blueprint
-        app.register_blueprint(user_blueprint)
+        app.register_blueprint(user_blueprint, url_prefix="/user")
 
         return app
 
@@ -65,16 +65,9 @@ def timestamp(dts = None) -> (str):
     '''
 
     now = datetime.now(tz=C_TZ) if dts is None else dts
-    ts = str(now.strftime('%Y-%m-%d %H:%M:%S.%f%z'))
-    
-    # for t in (now.year, "-", now.month, "-", now.day, " ",
-    #           now.hour, ":", now.minute, ":", now.second):
-    #     if len(str(t)) == 1 and isinstance(t, int):
-    #         timestamp += f"0{t}"
-    #     else:
-    #         timestamp += f"{t}"
+    t_s = str(now.strftime('%Y-%m-%d %H:%M:%S.%f%z'))
 
-    return ts
+    return t_s
 
 
 def token_expiration(valid_time: int = 48):

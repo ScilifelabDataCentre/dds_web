@@ -105,7 +105,7 @@ class Project(db.Model):
     sensitive = db.Column(db.Boolean, nullable=False)
     description = db.Column(db.Text)
     pi = db.Column(db.String(50), unique=False, nullable=False)
-    owner = db.Column(db.Integer, db.ForeignKey('users.id'),
+    owner = db.Column(db.String(20), db.ForeignKey('users.username'),
                       unique=False, nullable=False)
     facility = db.Column(db.Integer, db.ForeignKey('facilities.id'),
                          unique=False, nullable=False)

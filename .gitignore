@@ -15,3 +15,5 @@ files
 test*
 dp_venv
 *settings.json*
+*info.md*
+create_account.py
