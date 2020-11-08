@@ -18,13 +18,14 @@ def fill_db():
                  admin=False)
 
     facility1 = Facility(name="Facility1", internal_ref="fac1",
-                         username="fac1_username",
+                         username="facility1",
                          password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
                                    "095735f5a395e9013d70ec"),
                          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
                          email="supprt@fac.se", phone="08 000 00 00")
 
-    project1 = Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
+
+    project1 = Project(id="prj1", title="Project1",
                        category="Category1",
                        order_date=func.now(), delivery_date=None,
                        status="Ongoing", sensitive=True, description="test",

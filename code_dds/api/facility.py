@@ -21,6 +21,7 @@ from code_dds import models
 class ListFacilities(flask_restful.Resource):
     """Lists all facilities in database."""
 
+
     def get(self):
         """Gets all facilities from db and return them in response."""
 

@@ -59,6 +59,7 @@ def ds_access(username, password, role) -> (bool, int, str):
         tuple:  If access to DS granted, facility/user ID and error message
 
     """
+    
     if role == "facility":
         table = models.Facility
     elif role == "user":

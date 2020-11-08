@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<table class="table table-striped">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Title</th>
+            <th scope="col">Category</th>
+            <th scope="col">Facility</th>
+            <th scope="col">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for project in projects_list %}
+        <tr>
+            <td><a href="{{ url_for('project.project_info', project_id=project['id']) }}">{{ project['id'] }}</a></td>
+            <td>{{ project['title'] }}</td>
+            <td>{{ project['category'] }}</td>
+            <td>{{ project['facility'] }}</td>
+            <td>{{ project['status'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

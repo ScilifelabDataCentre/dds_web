@@ -55,6 +55,7 @@ class LoginUser(flask_restful.Resource):
                                  project_id=user_info["project"],
                                  token="")
 
+
         # Look for project in database
         ok_, public_key, error = login.project_access(
             uid=uid,
