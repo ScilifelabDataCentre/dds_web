@@ -24,6 +24,7 @@ def fill_db():
                          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
                          email="supprt@fac.se", phone="08 000 00 00")
 
+
     project1 = Project(id="prj1", title="Project1",
                        category="Category1",
                        order_date=func.now(), delivery_date=None,
