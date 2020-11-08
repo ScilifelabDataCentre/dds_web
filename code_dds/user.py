@@ -1,17 +1,12 @@
 "User display and login/logout HTMl endpoints."
 
-import http.client
-import json
-import re
-
-from flask import (Blueprint, render_template,
-                   request, session, redirect, url_for, g, current_app)
-
-from werkzeug.security import check_password_hash, generate_password_hash
+from flask import (Blueprint, render_template, request,
+                   session, redirect, url_for)
 
 from code_dds.api.login import ds_access
-
-
+from code_dds import models
+from code_dds import marshmallows as marmal
+from code_dds.utils import login_required
 
 user_blueprint = Blueprint("user", __name__)
 
@@ -21,7 +16,7 @@ def login():
     """Login to a user account"""
 
     if request.method == "GET":
-        return render_template('user/login.html')
+        return render_template('user/login.html', next=request.args.get('next'))
     if request.method == "POST":
         username = request.form.get('username')
         password = request.form.get('password')
@@ -30,7 +25,11 @@ def login():
         if valid_user:
             session['current_user'] = "username1"
             session['modified'] = True
-            return redirect(url_for('user.userhome'))
+            if request.form.get('next'):
+                to_go_url = request.form.get('next')
+            else:
+                to_go_url = url_for('home')
+            return redirect(to_go_url)
         else:
             raise ValueError
 
@@ -41,18 +40,21 @@ def logout():
     session.pop('current_user', None)
     return redirect(url_for('home'))
 
-@user_blueprint.route("/userhome", methods=["GET"])
-def userhome():
+
+@user_blueprint.route("/<username>", methods=["GET"])
+@login_required
+def user_page(username=None):
     """User home page"""
-    from code_dds.development.dds_mock_data import projects_list
+    
+    projects_list = models.Project.query.filter_by(owner=username).all()
     return render_template('project/list_project.html', projects_list=projects_list)
 
 
-@user_blueprint.route("/signup", methods=["GET", "POST"])
-def signup():
-    """Signup a user account"""
-
-    if request.method == "GET":
-        return render_template('user/signup.html', title='Signup')
-    if request.method == "POST":
-        pass
+# @user_blueprint.route("/signup", methods=["GET", "POST"])
+# def signup():
+#     """Signup a user account"""
+#
+#     if request.method == "GET":
+#         return render_template('user/signup.html', title='Signup')
+#     if request.method == "POST":
+#         pass

@@ -41,7 +41,6 @@ class LoginUser(flask_restful.Resource):
 
         # Get args from request
         user_info = flask.request.args
-        print(user_info, flush=True)
 
         # Look for user in database
         ok_, uid, error = login.ds_access(username=user_info["username"],
@@ -58,7 +57,6 @@ class LoginUser(flask_restful.Resource):
 
 
         # Look for project in database
-        print(user_info["role"])
         ok_, public_key, error = login.project_access(
             uid=uid,
             project=user_info["project"],
@@ -77,15 +75,15 @@ class LoginUser(flask_restful.Resource):
                                  token="")
 
         # Get S3 project ID for project
-        ok_, s3_id, error = login.cloud_access(project=user_info["project"])
-        if not ok_:  # Access denied
-            return flask.jsonify(access=False,
-                                 user_id=uid,
-                                 s3_id=s3_id,
-                                 public_key=None,
-                                 error=error,
-                                 project_id=user_info["project"],
-                                 token="")
+        # ok_, s3_id, error = login.cloud_access(project=user_info["project"])
+        # if not ok_:  # Access denied
+        #     return flask.jsonify(access=False,
+        #                          user_id=uid,
+        #                          s3_id=s3_id,
+        #                          public_key=None,
+        #                          error=error,
+        #                          project_id=user_info["project"],
+        #                          token="")
 
         # Generate delivery token
         token = login.gen_access_token(project=user_info["project"])
@@ -93,7 +91,7 @@ class LoginUser(flask_restful.Resource):
         # Access approved
         return flask.jsonify(access=True,
                              user_id=uid,
-                             s3_id=s3_id,
+                             s3_id=user_info["project"],
                              public_key=public_key,
                              error="",
                              project_id=user_info["project"],

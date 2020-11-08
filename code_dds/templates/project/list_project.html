@@ -15,11 +15,11 @@
     <tbody>
         {% for project in projects_list %}
         <tr>
-            <td>{{ projects_list[project]['id'] }}</td>
-            <td>{{ projects_list[project]['title'] }}</td>
-            <td>{{ projects_list[project]['category'] }}</td>
-            <td>{{ projects_list[project]['facility'] }}</td>
-            <td>{{ projects_list[project]['status'] }}</td>
+            <td><a href="{{ url_for('project.project_info', project_id=project['id']) }}">{{ project['id'] }}</a></td>
+            <td>{{ project['title'] }}</td>
+            <td>{{ project['category'] }}</td>
+            <td>{{ project['facility'] }}</td>
+            <td>{{ project['status'] }}</td>
         </tr>
         {% endfor %}
     </tbody>

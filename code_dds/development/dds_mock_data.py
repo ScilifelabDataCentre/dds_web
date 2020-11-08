@@ -1,5 +1,5 @@
-projects_list = {
-'prj1' : {
+projects_list = [
+    {
         'id' : 'prj1',
         'title' : 'RNA-seq study',
         'category' : 'Genomics',
@@ -18,7 +18,7 @@ projects_list = {
         'salt' : 'salt',
         'nonce' : 'nonce'
     },
-'prj2' : {
+    {
         'id' : 'prj2',
         'title' : 'Whole genome reseq',
         'category' : 'Genomics',
@@ -37,7 +37,7 @@ projects_list = {
         'salt' : 'salt',
         'nonce' : 'nonce'
     },
-'prj3' : {
+    {
         'id' : 'prj3',
         'title' : 'Protein structure modelling',
         'category' : 'Proteomics',
@@ -56,7 +56,7 @@ projects_list = {
         'salt' : 'salt',
         'nonce' : 'nonce'
     },
-'prj4' : {
+    {
         'id' : 'prj4',
         'title' : 'Corona expression study',
         'category' : 'Genomics',
@@ -75,4 +75,60 @@ projects_list = {
         'salt' : 'salt',
         'nonce' : 'nonce'
     }
-}
+]
+
+files_list = [
+    {
+       'name': 'description.txt',
+       'dpath': '',
+       'size': '146 kb' 
+    },
+    {
+        'name': 'Sample_1/data.txt',
+        'dpath': 'Sample_1',
+        'size': '10.3 mb'
+    },
+    {
+        'name': 'Sample_1/source.txt',
+        'dpath': 'Sample_1',
+        'size': '257 kb'
+    },
+    {
+        'name': 'Sample_1/meta/info.txt',
+        'dpath': 'Sample_1/meta',
+        'size': '96 kb'
+    },
+    {
+        'name': 'Sample_2/data.txt',
+        'dpath': 'Sample_2',
+        'size': '8.7 mb'
+    },
+    {
+        'name': 'Sample_2/source.txt',
+        'dpath': 'Sample_2',
+        'size': '350 kb'
+    },
+    {
+        'name': 'Sample_2/meta/info.txt',
+        'dpath': 'Sample_2/meta',
+        'size': '67 kb'
+    },
+    {
+        'name': 'sample_list.txt',
+        'dpath': '',
+        'size': '18 kb'
+    },
+    {
+        'name': 'Plates/Sample_1/layout.txt',
+        'dpath': 'Plates/Sample_1',
+        'size': '79 kb'
+    },
+    {
+        'name': 'Plates/Sample_2/layout.txt',
+        'dpath': 'Plates/Sample_2',
+        'size': '95 kb'
+    }
+]
+
+
+

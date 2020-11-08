@@ -24,20 +24,23 @@ from code_dds.api import login
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
 
-def get_passphrase():
+def get_passphrase(project_id):
     """Gets the passphrase used for encrypting the private key."""
 
     # TODO (ina): Change this!!!
     passp_path = pathlib.Path.cwd() / \
-        pathlib.Path("sensitive/passphrase.json")
-    with passp_path.open(mode="r") as f:
-        passp_info = json.load(f)
+        pathlib.Path(f"sensitive/passphrase_{project_id}.json")
+    try:
+        with passp_path.open(mode="r") as f:
+            passp_info = json.load(f)
+    except IOError as ioe:
+        print(ioe, flush=True)
 
     return passp_info
 
 
 def update_project_size(proj_id, altered_size, altered_enc_size,
-                        method, old_size: int = 0):
+                        method, old_size: int = 0, old_enc_size: int = 0):
     """Updates the specified project size"""
 
     try:
@@ -55,7 +58,7 @@ def update_project_size(proj_id, altered_size, altered_enc_size,
         elif method == "update":
             # Existing file --> update project with file size
             current_project.size += (altered_size - old_size)
-            current_project.size_enc += (altered_size - old_size)
+            current_project.size_enc += (altered_size - old_enc_size)
         else:
             # User tried an unspecified method
             return False, (f"Method {method} not applicable when "
@@ -88,7 +91,7 @@ class ListProjects(flask_restful.Resource):
 class ProjectKey(flask_restful.Resource):
     """Endpoint for getting the project specific key."""
 
-    def get(self, project, token):
+    def get(self, project):
         """Get project private key from database.
 
         Args:
@@ -99,6 +102,7 @@ class ProjectKey(flask_restful.Resource):
             json:   Error message, project ID, key, salt and nonce
         """
 
+        token = flask.request.args["token"]
         # Validate token
         ok_ = login.validate_token(token, project)
         if not ok_:
@@ -128,7 +132,7 @@ class ProjectKey(flask_restful.Resource):
         # both?) do encrypt the private key, which in the cli is decrypted and
         # then can be used.
         # TODO (ina): This should NOT be in the same request later.
-        passp = get_passphrase()
+        passp = get_passphrase(project)
 
         return flask.jsonify(access_granted=True,
                              message="", project=project,
@@ -140,7 +144,7 @@ class ProjectKey(flask_restful.Resource):
 class ProjectFiles(flask_restful.Resource):
     """Endpoint for getting files connected to a specific project."""
 
-    def get(self, project, token):
+    def get(self, proj_id):
         """Get all files for a specific project.
 
         Args:
@@ -150,15 +154,18 @@ class ProjectFiles(flask_restful.Resource):
             List of files in db
         """
 
+        token = flask.request.args["token"]
+
         # Check if token is valid and cancel delivery if not
-        ok_ = login.validate_token(token=token, project_id=project)
+        ok_ = login.validate_token(token=token,
+                                   project_id=proj_id)
         if not ok_:
             return flask.jsonify(access_granted=False,
                                  message="Token expired. Access denied.",
                                  files=[])
 
         # Get all files belonging to project
-        file_info = models.File.query.filter_by(project_id=project).all()
+        file_info = models.File.query.filter_by(project_id=proj_id).all()
 
         # Return empty list if no files have been delivered
         if file_info is None:

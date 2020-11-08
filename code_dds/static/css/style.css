@@ -89,7 +89,17 @@ h1.title {
     display: inline-block;
     margin-top: 11px;
  }
-  
+ 
+ h2.project_title {
+     text-align: center;
+     border-bottom: 1px solid #000;
+     padding-bottom: 3px;
+ }
+
+ .tcenter {
+     text-align: center;
+ }
+
 button.navbar-toggler {
     /* display: inline-block; */
     float: right;
