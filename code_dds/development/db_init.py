@@ -4,6 +4,7 @@ from code_dds.models import User, Project, Facility, File, Tokens
 from code_dds import db
 from sqlalchemy import func
 import os
+from code_dds import timestamp
 
 
 def fill_db():
@@ -25,9 +26,9 @@ def fill_db():
                          email="supprt@fac.se", phone="08 000 00 00")
 
 
-    project1 = Project(id="prj1", title="Project1",
+    project1 = Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
                        category="Category1",
-                       order_date=func.now(), delivery_date=None,
+                       order_date=timestamp(), delivery_date=None,
                        status="Ongoing", sensitive=True, description="test",
                        pi="", owner=user1, facility=facility1, size=0,
                        size_enc=0, delivery_option="S3",
