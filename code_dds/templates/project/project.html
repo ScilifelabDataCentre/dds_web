@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-{% if g.current_user in [project['owner'], project['facility']] %}
+{% if g.current_user == project['owner'] or g.current_user_id == project['facility'] %}
     <h2 class="project_title">{{ project['title'] }}</h2>
     <br><br>
     <table class="table table-bordered">

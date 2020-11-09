@@ -99,6 +99,11 @@ h1.title {
  .tcenter {
      text-align: center;
  }
+ 
+ .error_msg{
+     color: red;
+     text-align: center;
+ }
 
 button.navbar-toggler {
     /* display: inline-block; */

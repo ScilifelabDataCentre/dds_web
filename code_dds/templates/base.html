@@ -41,7 +41,7 @@
                  </li>
                  {% if g.current_user %}
                  <li class="nav-item">
-                   <a class="nav-link nav_color" href="{{ url_for('user.user_page', username=g.current_user) }}">{{ g.current_user }}</a>
+                   <a class="nav-link nav_color" href="{{ url_for('user.user_page', loginname=g.current_user) }}">{{ g.current_user }}</a>
                  </li>
                  <li class="nav-item">
                    <a class="nav-link nav_color" href="{{ url_for('user.logout') }}">Logout</a>

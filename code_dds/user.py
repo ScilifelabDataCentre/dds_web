@@ -20,18 +20,19 @@ def login():
     if request.method == "POST":
         username = request.form.get('username')
         password = request.form.get('password')
-        role = 'facility' if request.form.get('facility') == 'on' else 'user'
+        role, is_facility = ('facility', True) if request.form.get('facility') == 'on' else ('user', False)
         valid_user, user_id, message = ds_access(username, password, role)
         if valid_user:
-            session['current_user'] = "username1"
-            session['modified'] = True
+            session['current_user'] = request.form.get('username')
+            session['current_user_id'] = user_id
+            session['is_facility'] = is_facility
             if request.form.get('next'):
                 to_go_url = request.form.get('next')
             else:
-                to_go_url = url_for('home')
+                to_go_url = url_for('user.user_page', loginname=request.form.get('username'))
             return redirect(to_go_url)
         else:
-            raise ValueError
+            return render_template('user/login.html', next=request.form.get('next'), login_error_message=message)
 
 
 @user_blueprint.route("/logout", methods=["GET"])
@@ -41,12 +42,14 @@ def logout():
     return redirect(url_for('home'))
 
 
-@user_blueprint.route("/<username>", methods=["GET"])
+@user_blueprint.route("/<loginname>", methods=["GET"])
 @login_required
-def user_page(username=None):
+def user_page(loginname=None):
     """User home page"""
-    
-    projects_list = models.Project.query.filter_by(owner=username).all()
+    if session['is_facility']:
+        projects_list = models.Project.query.filter_by(facility=session['current_user_id']).all()
+    else:
+        projects_list = models.Project.query.filter_by(owner=loginname).all()
     return render_template('project/list_project.html', projects_list=projects_list)
 
 
