@@ -169,8 +169,7 @@ class ProjectFiles(flask_restful.Resource):
 
         # Return empty list if no files have been delivered
         if file_info is None:
-            # print("HERE", flush=True)
-            return flask.jsonify(access_granted=False,
+            return flask.jsonify(access_granted=True,
                                  message="There are no files in project",
                                  files=[])
 

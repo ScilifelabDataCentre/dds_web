@@ -90,17 +90,21 @@ h1.title {
     margin-top: 11px;
  }
  
- h2.project_title {
+.title_underlined {
      text-align: center;
      border-bottom: 1px solid #000;
      padding-bottom: 3px;
  }
 
- .tcenter {
+ol.nonumber {
+     list-style-type: circle;
+ }
+
+.tcenter {
      text-align: center;
  }
  
- .error_msg{
+.error_msg{
      color: red;
      text-align: center;
  }

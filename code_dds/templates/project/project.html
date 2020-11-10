@@ -2,8 +2,8 @@
 
 {% block body %}
 {% if g.current_user == project['owner'] or g.current_user_id == project['facility'] %}
-    <h2 class="project_title">{{ project['title'] }}</h2>
-    <br><br>
+    <h2 class="title_underlined">{{ project['title'] }}</h2>
+    <br>
     <table class="table table-bordered">
         <thead>
             <th colspan="2" class="tcenter">Project Info</th>
@@ -53,6 +53,13 @@
             {% endif %}
         </tbody>
     </table>
+    
+    <br>
+    {% if uploaded_data %}
+        <h5 class="title_underlined">Files Uploaded</h5>
+        <br>
+        {{ uploaded_data|safe }}
+    {% endif %}
 {% else %}
     <p>You don't have access to this project, if you think you should contact Data Centre</p>
 {% endif %}

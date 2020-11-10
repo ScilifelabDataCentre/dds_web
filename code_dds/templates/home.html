@@ -15,38 +15,5 @@
         <div id="data-bar" class="half-plot"></div>
     </div>
     </div>
-    
-    <!-- A temporary hardcode demo -->
-    <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
-    <script>
-        var trace1 = {
-          x: ['Oct1', 'Oct2', 'Oct3', 'Oct4', 'Oct5', 'Oct6'],
-          y: [8.0, 8.0, 12.0, 12.0, 13.0, 20.0],
-          type: 'bar',
-          marker: {
-            color: '#BDD775'
-          }
-        };
-
-        var data = [trace1];
-
-        var layout = {
-          title: 'Data per day',
-          font:{
-            family: 'Raleway, sans-serif'
-          },
-          showlegend: false,
-          xaxis: {
-            tickangle: -45
-          },
-          yaxis: {
-            zeroline: false,
-            gridwidth: 2
-          },
-          bargap :0.05
-        };
-
-        Plotly.newPlot('data-bar', data, layout);
-    </script>
   </main>
 {% endblock %}

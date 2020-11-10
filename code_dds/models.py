@@ -157,7 +157,7 @@ class File(db.Model):
     __table_args__ = {'extend_existing': True}
 
     # Columns
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     directory_path = db.Column(db.String(500), unique=False, nullable=False)
     size = db.Column(db.BigInteger, unique=False, nullable=False)
