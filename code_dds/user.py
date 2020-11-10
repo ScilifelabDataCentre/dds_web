@@ -46,6 +46,8 @@ def logout():
 @login_required
 def user_page(loginname=None):
     """User home page"""
+    
+    #from code_dds.development.dds_mock_data import projects_list
     if session['is_facility']:
         projects_list = models.Project.query.filter_by(facility=session['current_user_id']).all()
     else:
