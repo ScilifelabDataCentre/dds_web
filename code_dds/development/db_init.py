@@ -2,7 +2,7 @@
 
 import os
 
-from code_dds.models import User, Project, Facility, File, Tokens
+from code_dds.db_code.models import User, Project, Facility, File, Tokens
 from code_dds import db
 from code_dds import timestamp
 
@@ -315,7 +315,6 @@ def fill_db():
                            nonce="D55240DB506C2C22CF248F18")
                 ]
 
-
     # Foreign key/relationship updates
     users[0].user_projects.append(projects[0])
     for ind in [1, 3, 4, 6, 9]:
@@ -328,9 +327,6 @@ def fill_db():
         facilities[1].fac_projects.append(projects[ind])
     for ind in [6, 7, 8, 9, 10]:
         facilities[2].fac_projects.append(projects[ind])
-    
-    token = Tokens(token=os.urandom(16).hex(), project_id=projects[0])
-    projects[0].project_tokens.append(token)
     
     for prj in projects[1:]:
         if prj.status == "Delivered":

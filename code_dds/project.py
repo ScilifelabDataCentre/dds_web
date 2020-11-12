@@ -3,8 +3,8 @@
 from flask import (Blueprint, render_template, request,
                    session, redirect, url_for)
 
-from code_dds import models
-from code_dds import marshmallows as marmal
+from code_dds.db_code import models
+from code_dds.db_code import marshmallows as marmal
 from code_dds.utils import login_required
 
 project_blueprint = Blueprint("project", __name__)

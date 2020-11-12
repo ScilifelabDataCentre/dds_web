@@ -42,7 +42,8 @@ def create_app():
 
     with app.app_context():     # Everything in here has access to sessions        
         from code_dds import routes  # Import routes
-
+        from code_dds.db_code import models
+        
         db.drop_all()       # Make sure it's the latest db
         db.create_all()     # Create database tables for our data models
 

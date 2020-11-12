@@ -4,8 +4,8 @@ from flask import (Blueprint, render_template, request,
                    session, redirect, url_for)
 
 from code_dds.api.login import ds_access
-from code_dds import models
-from code_dds import marshmallows as marmal
+from code_dds.db_code import models
+from code_dds.db_code import marshmallows as marmal
 from code_dds.utils import login_required
 
 user_blueprint = Blueprint("user", __name__)
@@ -47,7 +47,6 @@ def logout():
 def user_page(loginname=None):
     """User home page"""
     
-    #from code_dds.development.dds_mock_data import projects_list
     if session['is_facility']:
         projects_list = models.Project.query.filter_by(facility=session['current_user_id']).all()
     else:
