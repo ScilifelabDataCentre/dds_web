@@ -8,7 +8,13 @@ venv
 *.egg*
 .vscode
 .Rproj.user
-settings*
-test*
 passphrase*
-*sensitive*
+sensitive
+filenumber*
+testfile*
+files
+test*
+dp_venv
+*settings.json*
+*info.md*
+create_account.py

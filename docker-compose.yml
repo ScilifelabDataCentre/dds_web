@@ -1,40 +1,27 @@
-version: "3.7"
+version: "3.2"
 services:
   db:
     build:
       context: ./
       dockerfile: ./Dockerfiles/Dockerfile-database
     restart: on-failure
-    volumes:
-      - ./couchdb-data:/opt/couchdb/data
+    # volumes:
+      # - ./code_dds/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      # - ./db-data:/data/db
     ports:
-      - 5984:5984
-  web:
+      - 127.0.0.1:3306:3306
+  backend:
+    environment: 
+      - DDS_SETTINGS_FILEPATH=/code/settings.json
     build:
       context: ./
-      dockerfile: ./Dockerfiles/Dockerfile-portal
+      dockerfile: ./Dockerfiles/Dockerfile-backend
     depends_on:
       - db
-    ports:
-      - 8888:8888
     restart: on-failure
+    ports:
+      - 127.0.0.1:5000:5000
     volumes:
       - type: bind
         source: ./
-        target: /Data-Delivery-Portal
-  # s3-backend:
-  #   command: server /data
-  #   container_name: s3
-  #   environment:
-  #     - MINIO_ACCESS_KEY=ElexirID
-  #     - MINIO_SECRET_KEY=987654321
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-  #     interval: 30s
-  #     timeout: 20s
-  #     retries: 3
-  #   image: minio/minio:RELEASE.2019-10-12T01-39-57Z
-  #   ports:
-  #     - "9000:9000"
-  #   volumes:
-  #     - "/tmp/data:/data"
+        target: /code
