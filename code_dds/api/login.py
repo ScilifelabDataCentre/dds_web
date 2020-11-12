@@ -19,7 +19,7 @@ import sqlalchemy
 # Own modules
 from code_dds import C_TZ
 from code_dds import db
-from code_dds import models
+from code_dds.db_code import models
 
 
 ###############################################################################

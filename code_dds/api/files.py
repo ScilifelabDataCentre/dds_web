@@ -16,8 +16,8 @@ import flask_restful
 
 # Own modules
 from code_dds import db
-from code_dds import models
-from code_dds import marshmallows as marmal
+from code_dds.db_code import models
+from code_dds.db_code import marshmallows as marmal
 from code_dds import timestamp
 from code_dds.api import login
 from code_dds.api import project  # import update_project_size
