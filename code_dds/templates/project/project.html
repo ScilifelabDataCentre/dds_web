@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block body %}
+{% if g.current_user == project['owner'] or g.current_user_id == project['facility'] %}
+    <h2 class="title_underlined">{{ project['title'] }}</h2>
+    <br>
+    <table class="table table-bordered">
+        <thead>
+            <th colspan="2" class="tcenter">Project Info</th>
+        </thead>
+        <tbody>
+            <tr>
+                <th>Description</th>
+                <td>{{ project['description'] }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Category</th>
+                <td>{{ project['category'] }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Sensitive project</th>
+                <td>{{ project['sensitive'] }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Owner</th>
+                <td>{{ project['owner'] }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Facility</th>
+                <td>{{ project['facility'] }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Delivery option</th>
+                <td>{{ project['delivery_option'] }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Status</th>
+                <td>{{ project['status'] }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Order date</th>
+                <td>{{ project['order_date'] }}</td>
+            </tr>
+            {% if project['delivery_date'] %}
+            <tr>
+                <th scope="row">Delivery date</th>
+                <td>{{ project['delivery_date'] }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Data size</th>
+                <td>{{ project['size'] }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    
+    <br>
+    {% if uploaded_data %}
+        <h5 class="title_underlined">Files Uploaded</h5>
+        <br>
+        {{ uploaded_data|safe }}
+    {% endif %}
+{% else %}
+    <p>You don't have access to this project, if you think you should contact Data Centre</p>
+{% endif %}
+{% endblock %}
