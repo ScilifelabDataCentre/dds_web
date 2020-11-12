@@ -329,7 +329,7 @@ def fill_db():
     for ind in [6, 7, 8, 9, 10]:
         facilities[2].fac_projects.append(projects[ind])
     
-    token = Tokens(token=os.urandom(16).hex(), project_id=projects[0])    
+    token = Tokens(token=os.urandom(16).hex(), project_id=projects[0])
     projects[0].project_tokens.append(token)
     
     for prj in projects[1:]:

@@ -195,7 +195,7 @@ class FileUpdate(flask_restful.Resource):
                         existing_file.date_uploaded = timestamp()
                         existing_file.public_key = file_info["key"]
                         existing_file.salt = file_info["salt"]
-                        existing_file.project_id = int(file_info["project"])
+                        existing_file.project_id = file_info["project"]
                     except sqlalchemy.exc.SQLAlchemyError as e:
                         return flask.jsonify(access_granted=True,
                                              updated=False,
