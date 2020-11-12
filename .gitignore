@@ -8,3 +8,7 @@ venv
 *.egg*
 .vscode
 .Rproj.user
+settings*
+test*
+passphrase*
+*sensitive*
