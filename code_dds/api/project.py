@@ -27,16 +27,28 @@ from code_dds.api import login
 def get_passphrase(project_id):
     """Gets the passphrase used for encrypting the private key."""
 
-    # TODO (ina): Change this!!!
-    passp_path = pathlib.Path.cwd() / \
-        pathlib.Path(f"sensitive/passphrase_{project_id}.json")
     try:
-        with passp_path.open(mode="r") as f:
-            passp_info = json.load(f)
-    except IOError as ioe:
-        print(ioe, flush=True)
+        passphrase = models.Project.query.filter_by(
+            id=project_id).with_entities(models.Project.passphrase).first()
+    except sqlalchemy.exc.SQLAlchemyError as e:
+        print(str(e), flush=True)
+        return {"error": str(e), "PRIVKEY_ENC_PASSPHRASE": ""}
 
-    return passp_info
+    if passphrase is None:
+        return {"error": "There is no passphrase for the current project.",
+                "PRIVKEY_ENC_PASSPHRASE": ""}
+
+    return {"PRIVKEY_ENC_PASSPHRASE": passphrase[0], "error": ""}
+    # TODO (ina): Change this!!!
+    # passp_path = pathlib.Path.cwd() / \
+    #     pathlib.Path(f"sensitive/passphrase_{project_id}.json")
+    # try:
+    #     with passp_path.open(mode="r") as f:
+    #         passp_info = json.load(f)
+    # except IOError as ioe:
+    #     print(ioe, flush=True)
+
+    # return passp_info
 
 
 def update_project_size(proj_id, altered_size, altered_enc_size,
@@ -133,6 +145,12 @@ class ProjectKey(flask_restful.Resource):
         # then can be used.
         # TODO (ina): This should NOT be in the same request later.
         passp = get_passphrase(project)
+
+        if passp["error"] != "":
+            return flask.jsonify(access_granted=False,
+                                 message=passp["error"],
+                                 project=project, encrypted_key="", salt="",
+                                 nonce="", passphrase="")
 
         return flask.jsonify(access_granted=True,
                              message="", project=project,

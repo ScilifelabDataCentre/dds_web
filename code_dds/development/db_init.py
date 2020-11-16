@@ -152,7 +152,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
                     
                     Project(id="GEN001", title="RNA-seq study",
                            category="Genomics",
@@ -168,7 +169,9 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"
+                           ),
                     
                     Project(id="GEN002", title="Whole genome reseq",
                            category="Genomics",
@@ -184,7 +187,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
                     
                     Project(id="GEN003", title="Interspecific gene flow",
                            category="Genomics",
@@ -200,7 +204,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
                     
                     Project(id="GEN004", title="Corona expression study",
                            category="Genomics",
@@ -216,7 +221,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
                     
                     Project(id="GEN005", title="Gastric microbiota",
                            category="Genomics",
@@ -232,7 +238,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
                     
                     Project(id="IMG001", title="Mitochondrial translation",
                            category="Imaging",
@@ -248,7 +255,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
                     
                     Project(id="IMG002", title="DNA polymerases",
                            category="Imaging",
@@ -264,7 +272,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
                     
                     Project(id="IMG003", title="Type III ATP syntase",
                            category="Imaging",
@@ -280,7 +289,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
                     
                     Project(id="IMG004", title="Proton exchanger NHE9",
                            category="Imaging",
@@ -296,7 +306,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18"),
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
                     
                     Project(id="IMG005", title="Mitochondrial translation",
                            category="Imaging",
@@ -312,7 +323,8 @@ def fill_db():
                                         "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
                                         "A1BE27E07B9694061DADBD2B581E0AB0D8"),
                            salt="9A2694986A488E438DA998E73E93E9C4",
-                           nonce="D55240DB506C2C22CF248F18")
+                           nonce="D55240DB506C2C22CF248F18", 
+                           passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937")
                 ]
 
     # Foreign key/relationship updates
