@@ -116,6 +116,7 @@ class Project(db.Model):
     private_key = db.Column(db.String(200), nullable=False)
     salt = db.Column(db.String(32), nullable=False)
     nonce = db.Column(db.String(24), nullable=False)
+    passphrase = db.Column(db.String(64), nullable=False)   # TODO (senthil, ina): put somewhere else, sensitive info and should not be in same place as private key.
 
     # Relationships
     # project_s3 = db.relationship('S3Project', backref='s3_project', lazy=True,
