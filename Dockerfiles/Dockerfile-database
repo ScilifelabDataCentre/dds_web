@@ -1,11 +1,4 @@
 # Defines base image to start the build process from
 FROM mariadb:latest
 
-# Copy file from <src> (code/sql/*) to <dest> (/docker-entrypoint-initdb.d/)
-# COPY code_dds/db/* /docker-entrypoint-initdb.d/
-
-# Sets the environment variables (one or more)
-ENV MYSQL_ROOT_PASSWORD rootpwd
-ENV MYSQL_USER apiuser
-ENV MYSQL_PASSWORD apipass
-ENV MYSQL_DATABASE DeliverySystem
+# Schemas to come soon, currently fixed in the code itself

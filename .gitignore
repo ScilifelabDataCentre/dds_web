@@ -20,3 +20,4 @@ create_account.py
 demo
 passphrase*
 *DataDelivery*
+docker-compose.yml
