@@ -33,5 +33,8 @@ class Config:
     SQLALCHEMY_DATABASE_URI = environ.get("SQLALCHEMY_DATABASE_URI")
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # For dev purpose, should be removed later
+    USE_LOCAL_DB = environ.get('USE_LOCAL_DB')
 
     SITE_NAME = 'Data Delivery System'

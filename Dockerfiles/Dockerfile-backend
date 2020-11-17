@@ -4,20 +4,21 @@ FROM python:latest
 # Copy the requirements file to the current location in container
 COPY requirements.txt /requirements.txt
 
-# Set as development environment
-ENV FLASK_ENV development
-ENV SECRET_KEY mysecretkey
-ENV SQLALCHEMY_DATABASE_URI mysql+pymysql://apiuser:apipass@db/DeliverySystem
-ENV PYTHONPATH /code
-
 # Install all dependencies
 RUN pip3 install -r /requirements.txt
+RUN pip3 install gunicorn
 
 # Make a code directory in container
 RUN mkdir /code
+
+# Add code directory in pythonpath
+ENV PYTHONPATH /code
+
+# Add parameters for gunicorn
+ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class=gthread --forwarded-allow-ips='*' --access-logfile -"
 
 # Set working directory - 'code' dir in container, 'code' dir locally (in code)
 WORKDIR /code/code_dds
 
 # Run app -- needs to be in WORKDIR
-CMD ["python3", "app.py"]
+CMD ["gunicorn", "app:app"]
