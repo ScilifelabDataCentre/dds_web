@@ -3,7 +3,7 @@
 **/__pycache__
 couchdb-data
 venv
-sensitive
+**/sensitive
 filenumber*
 testfile*
 files
@@ -14,5 +14,5 @@ create_account.py
 demo
 passphrase*
 **/*DataDelivery*
-docker-compose*.yml
+**/docker-compose*.yml
 DS_CLI
