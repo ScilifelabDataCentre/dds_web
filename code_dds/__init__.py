@@ -46,9 +46,15 @@ def create_app():
         
         ##db.drop_all()       # Make sure it's the latest db
         db.create_all()     # Create database tables for our data models
-
-        from code_dds.development.db_init import fill_db
-        fill_db()           # Fill db with initial entries (for development)
+        
+        # puts in test info for local DB, will be removed later
+        if app.config['USE_LOCAL_DB']:
+            try:
+                from code_dds.development.db_init import fill_db
+                fill_db()
+            except:
+                #don't care why, this will be removed soon anyway
+                pass
 
         from code_dds.api import api_blueprint
         app.register_blueprint(api_blueprint, url_prefix='/api/v1')
