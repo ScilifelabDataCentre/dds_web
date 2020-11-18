@@ -1,19 +1,16 @@
 # Set official image -- parent image
 FROM python:latest
 
-# Copy the requirements file to the current location in container
-COPY requirements.txt /requirements.txt
+# Copy the content to a code folder in container
+COPY . /code
 
 # Install some necessary systems packages
 RUN apt-get update
 RUN apt-get install -y gfortran libopenblas-dev liblapack-dev
 
 # Install all dependencies
-RUN pip3 install -r /requirements.txt
+RUN pip3 install -r /code/requirements.txt
 RUN pip3 install gunicorn
-
-# Make a code directory in container
-RUN mkdir /code
 
 # Add code directory in pythonpath
 ENV PYTHONPATH /code
