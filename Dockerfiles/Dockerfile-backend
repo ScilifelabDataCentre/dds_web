@@ -4,6 +4,10 @@ FROM python:latest
 # Copy the requirements file to the current location in container
 COPY requirements.txt /requirements.txt
 
+# Install some necessary systems packages
+RUN apt-get update
+RUN apt-get install -y gfortran libopenblas-dev liblapack-dev
+
 # Install all dependencies
 RUN pip3 install -r /requirements.txt
 RUN pip3 install gunicorn
