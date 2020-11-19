@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+{% if g.is_facility %}
+    <div class="d-flex justify-content-center h-100">
+        <div class="panel">
+            <div class="panel-header">
+                <h3>Add project</h3>
+            </div>
+            <div class="panel-body">
+                <div class="container">
+                    <form method="POST" action="{{ url_for('project.add_project') }}">
+                        <div class="row">
+                            <div class="col input-group form-group">
+                            	<input type="text" class="form-control" name="title" placeholder="Project tile">		
+                            </div>
+            				<div class="col input-group form-group">
+            					<input type="text" class="form-control" name="owner" placeholder="Project owner i.e. data recipient">
+            				</div>
+                        </div>
+        				<div class="input-group form-group">
+        					<input type="text" class="form-control" name="description" placeholder="Project description text">
+        				</div>
+                        {% if error_message %}
+                            <div class="error_msg">
+                                <p>{{ error_message }}</p>
+                            </div>
+                        {% endif %}
+                        <div class="form-group d-flex justify-content-center">
+                        	<input type="submit" value="Create" class="btn submit_btn">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <p>Only facility can add projects at the moment</p>
+{% endif %}
+
+{% endblock %}

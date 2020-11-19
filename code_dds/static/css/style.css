@@ -20,7 +20,7 @@ div.nav_header {
 .material-icons.md20 { font-size: 20px; }
 
 div.panel {
-    width: 70%;
+    width: 80%;
     padding: 15px 40px;
     background-color: #f0f0f0;
     align-content: center;
@@ -29,6 +29,7 @@ div.panel {
 
 div.panel-header {
     text-align: center;
+    padding: 15px;
 }
 
 div.place-center {
@@ -71,17 +72,6 @@ body {
 div.temp-holder {
     text-align: center;
 }
-
-div.plot-container {
-    width: 100%;
-    align-content: center;
-}
-
-div.half-plot {
-    width: 800px;
-    height: 550px;
-    margin: auto;
-}
   
 h1.title {
     font-size: 60px;
@@ -110,8 +100,11 @@ ol.nonumber {
  }
 
 button.navbar-toggler {
-    /* display: inline-block; */
     float: right;
     margin-top: 20px;
  }
 
+ div.add_project_button_container {
+     float:right;
+     padding-bottom: 20px;
+ }

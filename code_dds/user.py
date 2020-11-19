@@ -5,6 +5,7 @@ from flask import (Blueprint, render_template, request,
 
 from code_dds.api.login import ds_access
 from code_dds.db_code import models
+from code_dds.db_code import db_utils
 from code_dds.db_code import marshmallows as marmal
 from code_dds.utils import login_required
 
@@ -26,6 +27,8 @@ def login():
             session['current_user'] = request.form.get('username')
             session['current_user_id'] = user_id
             session['is_facility'] = is_facility
+            if is_facility:
+                session['facility_name'] = db_utils.get_facility_column(fid=user_id, column='name')
             if request.form.get('next'):
                 to_go_url = request.form.get('next')
             else:
@@ -39,6 +42,9 @@ def login():
 def logout():
     """Logout of a user account"""
     session.pop('current_user', None)
+    session.pop('current_user_id', None)
+    session.pop('is_facility', None)
+    session.pop('facility_name', None)
     return redirect(url_for('home'))
 
 
