@@ -1,15 +1,10 @@
 "Various utility functions and classes."
 
-# IMPORTS ########################################################### IMPORTS #
-
-
 import functools
 
 from flask import (g, request, redirect, url_for)
 
-
-# FUNCTIONS ####################################################### FUNCTIONS #
-
+# DECORATORS ####################################################### DECORATERS #
 
 # Decorators for endpoints, taken from Per's Anubis package
 def login_required(f):

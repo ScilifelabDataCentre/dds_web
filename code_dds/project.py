@@ -1,13 +1,44 @@
 " Project info related endpoints "
 
-from flask import (Blueprint, render_template, request,
-                   session, redirect, url_for)
+from datetime import date
+from random import randrange
 
+from flask import (Blueprint, render_template, request,
+                   session, redirect, url_for, g)
+
+from code_dds import db
 from code_dds.db_code import models
+from code_dds.db_code import db_utils
 from code_dds.db_code import marshmallows as marmal
+from code_dds.key_gen import project_keygen
 from code_dds.utils import login_required
 
 project_blueprint = Blueprint("project", __name__)
+
+@project_blueprint.route("/add_project", methods=["GET", "POST"])
+@login_required
+def add_project():
+    """ Add new project to the database """
+    if request.method == "GET":
+        return render_template("project/add_project.html")
+    if request.method == "POST":
+        # Check no empty field from form
+        for k in ['title', 'owner', 'description']:
+            if not request.form.get(k):
+                return render_template("project/add_project.html",
+                                        error_message="Field '{}' should not be empty".format(k))
+        
+        # Check if the user actually exists
+        if request.form.get('owner') not in db_utils.get_full_column_from_table(table='User', column='username'):
+            return render_template("project/add_project.html",
+                                    error_message="Given username '{}' does not exist".format(request.form.get('owner')))
+        
+        project_inst = create_project_instance(request.form)
+        # This part should be moved elsewhere to dedicated DB handling script
+        new_project = models.Project(**project_inst.project_info)
+        db.session.add(new_project)
+        db.session.commit()
+        return redirect(url_for('project.project_info', project_id=new_project.id))
 
 @project_blueprint.route("/<project_id>", methods=["GET"])
 @login_required
@@ -24,6 +55,42 @@ def project_info(project_id=None):
 
 
 ########## HELPER CLASSES AND FUNCTIONS ##########
+
+
+class create_project_instance(object):
+    """ Creates a project instance to """
+    def __init__(self, project_info):
+        self.project_info = {
+            'id' : self.get_new_id(),
+            'title': project_info['title'],
+            'description' : project_info['description'],
+            'owner': project_info['owner'],
+            'category' : 'alphatest',
+            'sensitive' : False,
+            'delivery_option': 'S3',
+            'facility' : g.current_user_id,
+            'status': 'In facility',
+            'order_date': date.today().strftime("%Y-%m-%d"),
+            'pi' : 'NA',
+            'size': 0,
+            'size_enc': 0,
+            'delivery_date': None
+        }
+        pkg = project_keygen(self.project_info['id'])
+        self.project_info.update(pkg.get_key_info_dict())
+    
+    def get_new_id(self, id=None):
+        facility_ref = db_utils.get_facility_column(fid=session.get('current_user_id'), column='internal_ref')
+        new_id = "{}{:3}".format(facility_ref, randrange(1, 10**3))
+        while not self.__is_column_value_uniq(table='Project', column='id', value=new_id):
+            new_id = "{}{:3}".format(facility_ref, randrange(1, 10**3))
+        return new_id
+        
+    def __is_column_value_uniq(self, table, column, value):
+        """ See that the value is unique in DB """
+        all_column_values = db_utils.get_full_column_from_table(table=table, column=column)
+        return value not in all_column_values
+    
 
 class folder(object):
     """ A class to parse the file list and do appropriate ops """
