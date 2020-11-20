@@ -31,6 +31,8 @@ def prepare():
     g.current_user = session.get('current_user')
     g.current_user_id = session.get('current_user_id')
     g.is_facility = session.get('is_facility')
+    if g.is_facility:
+        g.facility_name = session.get('facility_name')
 
 def create_app():
     """Construct the core application."""

@@ -45,8 +45,10 @@ lazy-object-proxy==1.4.3
 mariadb==1.0.1
 MarkupSafe==1.1.1
 marshmallow==3.8.0
+marshmallow-sqlalchemy==0.24.1
 matplotlib==3.3.2
 mccabe==0.6.1
+PyNaCl==1.4.0
 numpy==1.19.2
 packaging==20.4
 pandas==1.1.3
