@@ -10,7 +10,7 @@ import pytz
 from sqlalchemy import func, DDL, event
 
 # Own modules
-from code_dds import db, timestamp, token_expiration
+from code_dds import db
 
 # CLASSES ########################################################### CLASSES #
 
@@ -25,10 +25,8 @@ class Tokens(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     token = db.Column(db.String(50), unique=True, nullable=False)
-    created = db.Column(db.String(50), unique=False, nullable=False,
-                        server_default=timestamp())
-    expires = db.Column(db.String(50), unique=False, nullable=False,
-                        server_default=token_expiration())
+    created = db.Column(db.String(50), unique=False, nullable=False)
+    expires = db.Column(db.String(50), unique=False, nullable=False)
     project_id = db.Column(db.String(32), db.ForeignKey('projects.id'),
                            unique=False, nullable=False)
 
@@ -167,8 +165,7 @@ class File(db.Model):
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
-    date_uploaded = db.Column(db.String(50), unique=False, nullable=False,
-                              server_default=timestamp())
+    date_uploaded = db.Column(db.String(50), unique=False, nullable=False)
     project_id = db.Column(db.String(32), db.ForeignKey('projects.id'),
                            unique=False, nullable=False)
     latest_download = db.Column(db.String(50), unique=False, nullable=True)
