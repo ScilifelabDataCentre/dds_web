@@ -15,7 +15,7 @@ import flask
 import flask_restful
 
 # Own modules
-from code_dds import db
+from code_dds import db, timestamp
 from code_dds.db_code import models
 from code_dds.db_code import marshmallows as marmal
 from code_dds import timestamp
@@ -146,7 +146,8 @@ class FileUpdate(flask_restful.Resource):
                         compressed=bool(file_info["ds_compressed"] == "True"),
                         public_key=file_info["key"],
                         salt=file_info["salt"],
-                        project_id=file_info["project"]
+                        project_id=file_info["project"],
+                        date_uploaded=timestamp()
                     )
                 except sqlalchemy.exc.SQLAlchemyError as e:
                     return flask.jsonify(access_granted=True, updated=False,
