@@ -18,7 +18,7 @@ import sqlalchemy
 
 # Own modules
 from code_dds import C_TZ
-from code_dds import db
+from code_dds import db, timestamp, token_expiration
 from code_dds.db_code import models
 from code_dds.db_code import db_utils
 
@@ -181,7 +181,9 @@ def gen_access_token(project, length: int = 16) -> (str):
         curr_token = models.Tokens.query.filter_by(token=token).first()
 
     # Create new token object for db and add it
-    new_token = models.Tokens(token=token, project_id=project)
+    new_token = models.Tokens(token=token, project_id=project,
+                              created=timestamp(),
+                              expires=token_expiration())
     db.session.add(new_token)
     db.session.commit()
 
