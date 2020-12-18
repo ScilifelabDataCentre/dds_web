@@ -1,7 +1,7 @@
 # Data Delivery System -- **WIP**
 A a single cloud-based system for all SciLifeLab facilities, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way. 
 
-This project is supported by EIT Digital, activity number 19390. This deliverable consists of design document and implementation report of application and validation of VEIL.AI technology in SciLifeLab context in Sweden.
+**_This project is supported by EIT Digital, activity number 19390. This deliverable consists of design document and implementation report of application and validation of VEIL.AI technology in SciLifeLab context in Sweden._** 
 
 The Delivery Portal consists of two components:
 * The **web interface** where the research groups and facilities will be able to follow the data
