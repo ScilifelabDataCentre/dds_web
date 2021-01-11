@@ -5,6 +5,8 @@ couchdb-data
 dportal.yaml
 dportal.yaml.sample
 venv
+ds_venv
+cli_venv
 *.egg*
 .vscode
 .Rproj.user
