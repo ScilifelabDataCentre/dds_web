@@ -66,7 +66,7 @@ def ds_access(username, password, role) -> (bool, int, str):
     elif role == "user":
         table = models.User
     else:
-        pass    # custom error here?
+        pass    # TODO (ina/senthil) : cancel/custom error here?
 
     # Get user from database
     try:
