@@ -203,3 +203,19 @@ class ProjectFiles(flask_restful.Resource):
                                 "salt": file.salt}
 
         return flask.jsonify(access_granted=True, message="", files=files)
+
+    def post(self, proj_id):
+
+        token = flask.request.args["token"]
+
+        # Check if token is valid and cancel delivery if not
+        ok_ = login.validate_token(token=token,
+                                   project_id=proj_id)
+        if not ok_:
+            return flask.jsonify(access_granted=False,
+                                 message="Token expired. Access denied.",
+                                 files=[])
+
+        # print(flask.request.data, flush=True)
+        print("loloolloodofokgo", flush=True)
+

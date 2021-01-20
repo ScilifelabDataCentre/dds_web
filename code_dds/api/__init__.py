@@ -54,6 +54,7 @@ api.add_resource(files.DeliveryDate, "/delivery/date/",
 
 # Get info
 api.add_resource(s3.S3Info, "/s3info", endpoint="s3info") # atm no args
+# api.add_resource(project.CheckFiles, "/project/<string:proj_id>/checkfiles", endpoint="check_proj_files")
 
 # Key
 api.add_resource(project.ProjectKey, "/project/<string:project>/key",
