@@ -2,7 +2,6 @@
 
 from os import environ
 
-
 class Config:
     """Set Flask configuration from ENV variables"""
 
