@@ -216,6 +216,22 @@ class ProjectFiles(flask_restful.Resource):
                                  message="Token expired. Access denied.",
                                  files=[])
 
-        # print(flask.request.data, flush=True)
-        print("lololollollololol", flush=True)
-
+        # Get all files and iterate through the files from CLI
+        # NOTE: Atm this is the fastest method. Test to iterate through files
+        # and perform queries each time later when DB is full with files.
+        # Faster? Doubt it but check.
+        files = {}
+        try:
+            all_files = models.File.query.filter_by(project_id=proj_id).all()
+        except sqlalchemy.exc.SQLAlchemyError as e:
+            print(str(e), flush=True)
+        else:
+            if all_files is None:
+                return flask.jsonify(access_granted=True, message="Currently "
+                                     "no files uploaded in project.", 
+                                     files=[])
+            for x in flask.request.json:
+                if x in all_files:
+                    files[x] = all_files[x]
+        
+        return flask.jsonify(access_granted=True, message="", files=files)
