@@ -7,3 +7,4 @@ marshmallow-sqlalchemy==0.24.1
 PyMySQL==0.10.1
 PyNaCl==1.4.0
 pytz==2020.1
+zstandard
