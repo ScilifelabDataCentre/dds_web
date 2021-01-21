@@ -230,6 +230,7 @@ class ProjectFiles(flask_restful.Resource):
                 return flask.jsonify(access_granted=True, message="Currently "
                                      "no files uploaded in project.", 
                                      files=[])
+            # save and return the previously uploaded
             for x in flask.request.json:
                 if x in all_files:
                     files[x] = all_files[x]
