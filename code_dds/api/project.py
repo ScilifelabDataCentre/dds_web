@@ -205,8 +205,10 @@ class ProjectFiles(flask_restful.Resource):
         return flask.jsonify(access_granted=True, message="", files=files)
 
     def post(self, proj_id):
+        """Docstring"""
 
-        token = flask.request.args["token"]
+        # Get token from request header
+        token = flask.request.headers["token"]
 
         # Check if token is valid and cancel delivery if not
         ok_ = login.validate_token(token=token,
@@ -220,19 +222,61 @@ class ProjectFiles(flask_restful.Resource):
         # NOTE: Atm this is the fastest method. Test to iterate through files
         # and perform queries each time later when DB is full with files.
         # Faster? Doubt it but check.
-        files = {}
+        prevup_files = list()
+        matching_files = dict()
+        files = dict()
+
+        # if flask.request.headers["method"] == "put":
         try:
-            all_files = models.File.query.filter_by(project_id=proj_id).all()
+            # Get all files from db which are in the files set from CLI
+            # and belong to the current project
+            prevup_files = models.File.query.filter(
+                models.File.name.in_(flask.request.json)
+            ).filter_by(project_id=proj_id).all()
+
+            print(
+                f"All files: {prevup_files}, type: {type(prevup_files)}", flush=True)
         except sqlalchemy.exc.SQLAlchemyError as e:
+            # TODO (ina): Add real error message
+            # return flask.jsonify(message="FAILED - ADD NEW MESSAGE HERE")
             print(str(e), flush=True)
         else:
-            if all_files is None:
-                return flask.jsonify(access_granted=True, message="Currently "
-                                     "no files uploaded in project.", 
-                                     files=[])
-            # save and return the previously uploaded
-            for x in flask.request.json:
-                if x in all_files:
-                    files[x] = all_files[x]
-        
-        return flask.jsonify(access_granted=True, message="", files=files)
+            # Do additional checks if no matching files were found
+            if not prevup_files or prevup_files is None:
+                if flask.request.headers["method"] == "put":
+                    return flask.jsonify(
+                        access_granted=True,
+                        message="Currently no files uploaded in project.",
+                        files=[]
+                    )
+                
+                # Get: Check if the path is a folder (directory_path
+                # beginning with path)
+                try:
+                    prevup_files = models.File.query.filter(
+                        models.File.directory_path.like(
+                            [f"{x}%" for x in flask.request.json]
+                        )
+                    ).filter_by(project_id=proj_id).all()
+                except sqlalchemy.exc.SQLAlchemyError as e:
+                    print(str(e), flush=True)
+
+            matching_files = {x.name: {"id": x.id,
+                                  "directory_path": x.directory_path,
+                                  "size": x.size,
+                                  "size_enc": x.size_enc,
+                                  "compressed": x.compressed,
+                                  "extension": x.extension,
+                                  "public_key": x.public_key,
+                                  "salt": x.salt} for x in prevup_files}
+
+        # Save and return the previously uploaded
+        # for x in flask.request.json:
+        #     # Remove filename from matching files and put into
+        #     # new file dict if file from CLI request in the matching paths
+        #     if x in matching_files:
+        #         files[x] = matching_files.pop(x)
+
+        # matching_files = None
+
+        return flask.jsonify(access_granted=True, message="", files=matching_files)
