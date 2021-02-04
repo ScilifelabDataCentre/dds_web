@@ -1,7 +1,7 @@
 """ Utility function that makes DB calls """
 
 from code_dds import db
-from code_dds.db_code import models
+from code_dds.common.db_code import models
 
 def get_facility_column(fid, column) -> (str):
     """ Gets the columns value from DB for given facility ID """

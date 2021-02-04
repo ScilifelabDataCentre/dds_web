@@ -27,12 +27,13 @@ C_TZ = pytz.timezone('Europe/Stockholm')
 
 @app.before_request
 def prepare():
-    ## Test line for global
+    # Test line for global
     g.current_user = session.get('current_user')
     g.current_user_id = session.get('current_user_id')
     g.is_facility = session.get('is_facility')
     if g.is_facility:
         g.facility_name = session.get('facility_name')
+
 
 def create_app():
     """Construct the core application."""
@@ -42,35 +43,35 @@ def create_app():
     db.init_app(app)    # Initialize database
     ma.init_app(app)
 
-    with app.app_context():     # Everything in here has access to sessions        
+    with app.app_context():     # Everything in here has access to sessions
         from code_dds import routes  # Import routes
-        from code_dds.db_code import models
-        
-        ##db.drop_all()       # Make sure it's the latest db
+        from code_dds.common.db_code import models
+
+        # db.drop_all()       # Make sure it's the latest db
         db.create_all()     # Create database tables for our data models
-        
+
         # puts in test info for local DB, will be removed later
         if app.config['USE_LOCAL_DB']:
             try:
                 from code_dds.development.db_init import fill_db
                 fill_db()
             except:
-                #don't care why, this will be removed soon anyway
+                # don't care why, this will be removed soon anyway
                 pass
 
         from code_dds.api import api_blueprint
         app.register_blueprint(api_blueprint, url_prefix='/api/v1')
-        
+
         from user import user_blueprint
         app.register_blueprint(user_blueprint, url_prefix='/user')
-        
+
         from project import project_blueprint
         app.register_blueprint(project_blueprint, url_prefix='/project')
 
         return app
 
 
-def timestamp(dts = None) -> (str):
+def timestamp(dts=None) -> (str):
     '''Gets the current time. Formats timestamp.
 
     Returns:
@@ -87,6 +88,5 @@ def timestamp(dts = None) -> (str):
 def token_expiration(valid_time: int = 48):
     now = datetime.now(tz=C_TZ)
     expire = now + timedelta(hours=valid_time)
-    
+
     return timestamp(dts=expire)
-    

@@ -19,8 +19,8 @@ import sqlalchemy
 # Own modules
 from code_dds import C_TZ
 from code_dds import db, timestamp, token_expiration
-from code_dds.db_code import models
-from code_dds.db_code import db_utils
+from code_dds.common.db_code import models
+from code_dds.common.db_code import db_utils
 
 
 ###############################################################################
@@ -60,7 +60,7 @@ def ds_access(username, password, role) -> (bool, int, str):
         tuple:  If access to DS granted, facility/user ID and error message
 
     """
-    
+
     if role == "facility":
         table = models.Facility
     elif role == "user":
@@ -113,7 +113,8 @@ def project_access(uid, project, owner, role="facility") -> (bool, str):
         # Get project info if owner matches
         # TODO (ina): possibly another check here
         project_info = models.Project.query.filter_by(id=project, owner=owner).\
-            with_entities(models.Project.delivery_option, models.Project.public_key).first()
+            with_entities(models.Project.delivery_option,
+                          models.Project.public_key).first()
 
     # Return error if project not found
     if project_info is None:

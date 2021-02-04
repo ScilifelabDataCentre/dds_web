@@ -4,9 +4,9 @@ from flask import (Blueprint, render_template, request,
                    session, redirect, url_for)
 
 from code_dds.api.login import ds_access
-from code_dds.db_code import models
-from code_dds.db_code import db_utils
-from code_dds.db_code import marshmallows as marmal
+from code_dds.common.db_code import models
+from code_dds.common.db_code import db_utils
+from code_dds.common.db_code import marshmallows as marmal
 from code_dds.utils import login_required
 
 user_blueprint = Blueprint("user", __name__)

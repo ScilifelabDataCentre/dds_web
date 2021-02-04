@@ -73,7 +73,10 @@ def create_files_for_project(project):
 def fill_db():
     """Fills the database with initial entries used for development."""
 
-    users = [
+    users = [   User(username="username",
+                    password="password",
+                    admin=False),
+
                 User(first_name="FirstName", last_name="LastName",
                     username="username1",
                     password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
