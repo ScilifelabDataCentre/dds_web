@@ -10,6 +10,7 @@ import flask_restful
 
 # Own modules
 from code_dds.api import user
+from code_dds.api import project
 
 
 ###############################################################################
@@ -25,4 +26,6 @@ api = flask_restful.Api(api_blueprint)
 ###############################################################################
 
 # Login/access ################################################# Login/access #
-api.add_resource(user.AuthenticateUser, "/user/auth", endpoint="auth")  # params
+api.add_resource(user.AuthenticateUser, "/user/auth", endpoint="auth")
+api.add_resource(project.ProjectAccess,
+                 "/proj/auth", endpoint="proj_auth")

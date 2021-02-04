@@ -29,13 +29,13 @@ def token_required(f):
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        
+
         # Get the token from the header
         if "x-access-token" in flask.request.headers:
             token = flask.request.headers["x-access-token"]
 
         # Deny access if token is missing
-        if not token:
+        if token is None or not token:
             return flask.jsonify({"message": "Token is missing!"}), 401
 
         # Verify the token
@@ -43,11 +43,12 @@ def token_required(f):
             data = jwt.decode(token, app.config["SECRET_KEY"])
             current_user = models.User.query.filter_by(
                 public_id=data["public_id"]
-            )
+            ).first()
+            print("HERE ----------------", flush=True)
         except Exception:
             return flask.jsonify({"message": "Token is invalid!"}), 401
 
-        return f(current_user, *args, **kwargs)
+        return f(*args, **kwargs)
 
     return decorated
 
@@ -55,7 +56,7 @@ def token_required(f):
 class AuthenticateUser(flask_restful.Resource):
     """Handles the authentication of the user."""
 
-    def post(self):
+    def get(self):
         """Checks the username, password and generates the token."""
 
         # Get username and password from CLI request
@@ -87,3 +88,4 @@ class AuthenticateUser(flask_restful.Resource):
             return flask.jsonify({"token": token.decode("UTF-8")})
 
         return flask.make_response("Could not verify", 401)
+
