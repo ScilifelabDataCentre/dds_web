@@ -31,6 +31,6 @@ class ProjectAccess(flask_restful.Resource):
             return flask.make_response("Invalid request", 500)
 
         if args["project"] in [x.id for x in current_user.user_projects]:
-            flask.jsonify({"dds-access-granted": True})
+            return flask.jsonify({"dds-access-granted": True})
 
         return flask.make_response("Project access denied", 401)
