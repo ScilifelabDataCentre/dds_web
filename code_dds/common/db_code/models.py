@@ -40,7 +40,7 @@ class User(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(50), unique=True)
+    public_id = db.Column(db.String(50), unique=True, nullable=False)
     # first_name = db.Column(db.String(50), unique=False, nullable=False)
     # last_name = db.Column(db.String(50), unique=False, nullable=False)
     username = db.Column(db.String(20), unique=True, nullable=False)
@@ -60,31 +60,32 @@ class User(db.Model):
         return f'<User {self.username}>'
 
 
-# class Facility(db.Model):
-#     """Data model for facility accounts."""
+class Facility(db.Model):
+    """Data model for facility accounts."""
 
-#     # Table setup
-#     __tablename__ = 'facilities'
-#     __table_args__ = {'extend_existing': True}
+    # Table setup
+    __tablename__ = 'facilities'
+    __table_args__ = {'extend_existing': True}
 
-#     # Columns
-#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     name = db.Column(db.String(100), unique=True, nullable=False)
-#     internal_ref = db.Column(db.String(10), unique=True, nullable=False)
-#     username = db.Column(db.String(20), unique=True, nullable=False)
-#     password = db.Column(db.String(120), unique=False, nullable=False)
-#     settings = db.Column(db.String(50), unique=False, nullable=False)
-#     email = db.Column(db.String(80), unique=True, nullable=False)
-#     phone = db.Column(db.String(20), unique=False, nullable=True)
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    public_id = db.Column(db.String(50), unique=True, nullable=False)
+    # name = db.Column(db.String(100), unique=True, nullable=False)
+    # internal_ref = db.Column(db.String(10), unique=True, nullable=False)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    password = db.Column(db.String(120), unique=False, nullable=False)
+    # settings = db.Column(db.String(50), unique=False, nullable=False)
+    # email = db.Column(db.String(80), unique=True, nullable=False)
+    # phone = db.Column(db.String(20), unique=False, nullable=True)
 
-#     # Relationships
-#     fac_projects = db.relationship('Project', backref='project_facility',
-#                                    lazy=True, foreign_keys='Project.facility')
+    # Relationships
+    user_projects = db.relationship('Project', backref='project_facility',
+                                   lazy=True, foreign_keys='Project.facility')
 
-#     def __repr__(self):
-#         """Called by print, creates representation of object"""
+    def __repr__(self):
+        """Called by print, creates representation of object"""
 
-#         return f'<Facility {self.username}>'
+        return f'<Facility {self.username}>'
 
 
 class Project(db.Model):
@@ -104,9 +105,9 @@ class Project(db.Model):
 #     sensitive = db.Column(db.Boolean, nullable=False)
 #     description = db.Column(db.Text)
 #     pi = db.Column(db.String(50), unique=False, nullable=False)
-    owner = db.Column(db.String(20), db.ForeignKey('users.username'),
+    owner = db.Column(db.String(50), db.ForeignKey('users.public_id'),
                       unique=False, nullable=False)
-    facility = db.Column(db.Integer,
+    facility = db.Column(db.String(50), db.ForeignKey('facilities.public_id'),
                          unique=False, nullable=False)
 #     size = db.Column(db.BigInteger, unique=False, nullable=False)
 #     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)

@@ -41,10 +41,12 @@ def token_required(f):
         # Verify the token
         try:
             data = jwt.decode(token, app.config["SECRET_KEY"])
-            current_user = models.User.query.filter_by(
+            table = models.Facility if data["facility"] == "True" \
+                else models.User
+            current_user = table.query.filter_by(
                 public_id=data["public_id"]
             ).first()
-            print(f"current user: {current_user}", flush=True)
+            print(f"Current user {current_user}", flush=True)
         except Exception:
             return flask.jsonify({"message": "Token is invalid!"}), 401
 
@@ -64,11 +66,19 @@ class AuthenticateUser(flask_restful.Resource):
         if not auth or not auth.username or not auth.password:
             return flask.make_response("Could not verify", 401)
 
+        args = flask.request.args
+        if "facility" not in args:
+            return flask.make_response("Could not verify, missing information",
+                                       401)
+
         # Get user from DB matching the username
         try:
-            user = models.User.query.filter_by(username=auth.username).first()
+            table = models.Facility if args["facility"] == "True" \
+                else models.User
+            user = table.query.filter_by(username=auth.username).first()
+
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            return flask.make_response("Database connection failed", 500)
+            return flask.make_response(f"Database connection failed - {sqlerr}", 500)
 
         # Deny access if there is no such user
         if not user:
@@ -80,6 +90,7 @@ class AuthenticateUser(flask_restful.Resource):
         if user.password == auth.password:
             token = jwt.encode(
                 {"public_id": user.public_id,
+                 "facility": args["facility"],
                  "exp": datetime.datetime.utcnow() +
                  datetime.timedelta(hours=48)},
                 app.config["SECRET_KEY"]
@@ -88,4 +99,3 @@ class AuthenticateUser(flask_restful.Resource):
             return flask.jsonify({"token": token.decode("UTF-8")})
 
         return flask.make_response("Could not verify", 401)
-
