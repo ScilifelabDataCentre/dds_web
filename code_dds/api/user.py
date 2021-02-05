@@ -44,11 +44,11 @@ def token_required(f):
             current_user = models.User.query.filter_by(
                 public_id=data["public_id"]
             ).first()
-            print("HERE ----------------", flush=True)
+            print(f"current user: {current_user}", flush=True)
         except Exception:
             return flask.jsonify({"message": "Token is invalid!"}), 401
 
-        return f(*args, **kwargs)
+        return f(current_user, *args, **kwargs)
 
     return decorated
 
