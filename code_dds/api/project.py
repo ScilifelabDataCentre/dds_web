@@ -12,6 +12,7 @@ import flask
 
 # Own modules
 from code_dds.api.user import token_required
+from code_dds.common.db_code import models
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -22,8 +23,13 @@ class ProjectAccess(flask_restful.Resource):
     """Checks a users access to a specific project."""
     method_decorators = [token_required]
 
-    def post(self, current_user):
+    def get(self, current_user):
         """Docstring"""
 
-        print(f"Current user: {current_user.admin}", flush=True)
+        args = flask.request.args
+        print(f"Project: {args['project']}", flush=True)
+        
+        # project_info = models
+
+
         return flask.make_response("Testing", 200)

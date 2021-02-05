@@ -51,8 +51,8 @@ class User(db.Model):
     admin = db.Column(db.Boolean, unique=False, nullable=False)
 
     # Relationships
-    # user_projects = db.relationship('Project', backref='project_user',
-    #                                 lazy=True, foreign_keys='Project.owner')
+    user_projects = db.relationship('Project', backref='project_user',
+                                    lazy=True, foreign_keys='Project.owner')
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -87,16 +87,16 @@ class User(db.Model):
 #         return f'<Facility {self.username}>'
 
 
-# class Project(db.Model):
-#     """Data model for projects."""
+class Project(db.Model):
+    """Data model for projects."""
 
-#     # Table setup
-#     __tablename__ = 'projects'
-#     __table_args__ = {'extend_existing': True}
+    # Table setup
+    __tablename__ = 'projects'
+    __table_args__ = {'extend_existing': True}
 
-#     # Columns
-#     id = db.Column(db.String(32), primary_key=True)
-#     title = db.Column(db.String(100), unique=False, nullable=False)
+    # Columns
+    id = db.Column(db.String(32), primary_key=True)
+    title = db.Column(db.String(100), unique=False, nullable=False)
 #     category = db.Column(db.String(40), unique=False, nullable=False)
 #     order_date = db.Column(db.String(50), nullable=False)
 #     delivery_date = db.Column(db.String(50), nullable=True)
@@ -104,10 +104,10 @@ class User(db.Model):
 #     sensitive = db.Column(db.Boolean, nullable=False)
 #     description = db.Column(db.Text)
 #     pi = db.Column(db.String(50), unique=False, nullable=False)
-#     owner = db.Column(db.String(20), db.ForeignKey('users.username'),
-#                       unique=False, nullable=False)
-#     facility = db.Column(db.Integer, db.ForeignKey('facilities.id'),
-#                          unique=False, nullable=False)
+    owner = db.Column(db.String(20), db.ForeignKey('users.username'),
+                      unique=False, nullable=False)
+    facility = db.Column(db.Integer,
+                         unique=False, nullable=False)
 #     size = db.Column(db.BigInteger, unique=False, nullable=False)
 #     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)
 #     delivery_option = db.Column(db.String(10), unique=False, nullable=False)
@@ -125,10 +125,10 @@ class User(db.Model):
 #     project_tokens = db.relationship('Tokens', backref='token_project',
 #                                      lazy=True, foreign_keys='Tokens.project_id')
 
-#     def __repr__(self):
-#         """Called by print, creates representation of object"""
+    def __repr__(self):
+        """Called by print, creates representation of object"""
 
-#         return f'<Project {self.id}>'
+        return f'<Project {self.id}>'
 
 
 # class S3Project(db.Model):
