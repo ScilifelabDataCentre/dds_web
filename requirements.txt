@@ -9,3 +9,4 @@ PyNaCl==1.4.0
 pytz==2020.1
 zstandard
 PyJWT==v1.7.1
+argon2_cffi
