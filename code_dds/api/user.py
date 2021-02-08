@@ -60,6 +60,7 @@ def token_required(f):
 def gen_argon2hash(password, time_cost=2, memory_cost=102400, parallelism=8,
                    hash_len=32, salt_len=16, encoding="utf-8",
                    version=argon2.low_level.Type.ID):
+    """Generates Argon2id password hash to store in DB."""
 
     pw_hasher = argon2.PasswordHasher(time_cost=time_cost,
                                       memory_cost=memory_cost,
@@ -68,8 +69,8 @@ def gen_argon2hash(password, time_cost=2, memory_cost=102400, parallelism=8,
                                       salt_len=salt_len,
                                       encoding=encoding,
                                       type=version)
-
     formated_hash = pw_hasher.hash(password)
+
     return formated_hash
 
 
@@ -134,5 +135,7 @@ def verify_password_argon2id(db_pw, input_pw):
             argon2.exceptions.InvalidHash) as err:
         print(err, flush=True)
         return False
+
+    # TODO: Add check_needs_rehash?
 
     return True
