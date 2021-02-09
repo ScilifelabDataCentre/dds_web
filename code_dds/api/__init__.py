@@ -11,6 +11,7 @@ import flask_restful
 # Own modules
 from code_dds.api import user
 from code_dds.api import project
+from code_dds.api import s3
 
 
 ###############################################################################
@@ -29,3 +30,7 @@ api = flask_restful.Api(api_blueprint)
 api.add_resource(user.AuthenticateUser, "/user/auth", endpoint="auth")
 api.add_resource(project.ProjectAccess,
                  "/proj/auth", endpoint="proj_auth")
+
+# 
+api.add_resource(s3.S3Info, "/s3/proj", endpoint="proj_s3_info")
+

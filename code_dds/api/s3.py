@@ -1,4 +1,4 @@
-"""Project module."""
+"""S3 module"""
 
 ###############################################################################
 # IMPORTS ########################################################### IMPORTS #
@@ -19,20 +19,22 @@ from code_dds.common.db_code import models
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
 
-
-class ProjectAccess(flask_restful.Resource):
-    """Checks a users access to a specific project."""
+class S3Info(flask_restful.Resource):
+    """Gets the projects S3 keys"""
     method_decorators = [token_required]
 
     def get(self, current_user):
-        """Docstring"""
+        """Get the safespring project"""
 
-        args = flask.request.args
-        if "project" not in args:
+        # Get project ID
+        project = flask.request.args
+        if "project" not in project:
             return flask.make_response("Invalid request", 500)
 
-        if args["project"] in [x.id for x in current_user.user_projects]:
-            return flask.jsonify({"dds-access-granted": True})
+        # Extra check for project access
+        if project["project"] not in [x.id for x in current_user.user_projects]:
+            return flask.make_response("Project access denied!", 401)
 
-        return flask.make_response("Project access denied", 401)
-
+        # Get Safespring project
+        print(current_user.safespring, flush=True)
+        return flask.jsonify({"safespring_project": current_user.safespring})
