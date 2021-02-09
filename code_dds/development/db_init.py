@@ -355,9 +355,9 @@ def fill_db():
     # for ind in [6, 7, 8, 9, 10]:
     #     facilities[2].fac_projects.append(projects[ind])
 
-    for prj in projects[1:]:
-        if prj.status == "Delivered":
-            create_files_for_project(prj)
+    # for prj in projects[1:]:
+    #     if prj.status == "Delivered":
+    #         create_files_for_project(prj)
 
     # Add user and facility, the rest is automatically added and commited
     db.session.add_all(users)
