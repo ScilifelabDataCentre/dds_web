@@ -39,9 +39,8 @@ class S3Info(flask_restful.Resource):
             return flask.make_response("Project access denied!", 401)
 
         # Get Safespring project
-        print(current_user.safespring, flush=True)
-
         try:
+            # TODO (ina): Change -- these should not be saved in file
             s3path = pathlib.Path.cwd() / \
                 pathlib.Path("sensitive/s3_config.json")
             with s3path.open(mode="r") as f:
@@ -49,8 +48,17 @@ class S3Info(flask_restful.Resource):
         except IOError as err:
             return flask.make_response(f"Failed getting keys! {err}", 500)
 
+        # Get Safespring endpoint url
+        try:
+            with s3path.open(mode="r") as f:
+                endpoint_url = json.load(f)["endpoint_url"]
+        except IOError as err:
+            return flask.make_response(f"Failed getting safespring url! {err}",
+                                       500)
+
         if not all(x in s3keys for x in ["access_key", "secret_key"]):
             return flask.make_response("Keys not found!", 500)
 
         return flask.jsonify({"safespring_project": current_user.safespring,
-                              "keys": s3keys})
+                              "keys": s3keys,
+                              "url": endpoint_url})
