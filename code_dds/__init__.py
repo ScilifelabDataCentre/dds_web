@@ -41,7 +41,7 @@ def create_app():
     app.config.from_object('config.Config')
 
     db.init_app(app)    # Initialize database
-    ma.init_app(app)
+    # ma.init_app(app)
 
     with app.app_context():     # Everything in here has access to sessions
         from code_dds import routes  # Import routes
@@ -55,9 +55,9 @@ def create_app():
             try:
                 from code_dds.development.db_init import fill_db
                 fill_db()
-            except:
+            except Exception as err:
                 # don't care why, this will be removed soon anyway
-                pass
+                print(f"-----------------{err}", flush=True)
 
         from code_dds.api import api_blueprint
         app.register_blueprint(api_blueprint, url_prefix='/api/v1')

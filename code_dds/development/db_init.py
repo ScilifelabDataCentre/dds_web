@@ -2,74 +2,74 @@
 
 import os
 
-from code_dds.db_code.models import User, Project, Facility, File, Tokens
+from code_dds.common.db_code.models import User, Project, Facility
 from code_dds import db
 from code_dds import timestamp
 
 
-def create_files_for_project(project):
-    """ Get a project model and creates dummy test file structure for it """
+# def create_files_for_project(project):
+#     """ Get a project model and creates dummy test file structure for it """
 
-    files_list = [
-        {
-            'name': '{}_description.txt',
-            'dpath': '',
-            'size': '146 kb'
-        },
-        {
-            'name': 'Sample_1/{}_data.txt',
-            'dpath': 'Sample_1',
-            'size': '10.3 mb'
-        },
-        {
-            'name': 'Sample_1/{}_source.txt',
-            'dpath': 'Sample_1',
-            'size': '257 kb'
-        },
-        {
-            'name': 'Sample_1/meta/{}_info.txt',
-            'dpath': 'Sample_1/meta',
-            'size': '96 kb'
-        },
-        {
-            'name': 'Sample_2/{}_data.txt',
-            'dpath': 'Sample_2',
-            'size': '8.7 mb'
-        },
-        {
-            'name': 'Sample_2/{}_source.txt',
-            'dpath': 'Sample_2',
-            'size': '350 kb'
-        },
-        {
-            'name': 'Sample_2/meta/{}_info.txt',
-            'dpath': 'Sample_2/meta',
-            'size': '67 kb'
-        },
-        {
-            'name': '{}_sample_list.txt',
-            'dpath': '',
-            'size': '18 kb'
-        },
-        {
-            'name': 'Plates/Sample_1/{}_layout.txt',
-            'dpath': 'Plates/Sample_1',
-            'size': '79 kb'
-        },
-        {
-            'name': 'Plates/Sample_2/{}_layout.txt',
-            'dpath': 'Plates/Sample_2',
-            'size': '95 kb'
-        }
-    ]
+#     files_list = [
+#         {
+#             'name': '{}_description.txt',
+#             'dpath': '',
+#             'size': '146 kb'
+#         },
+#         {
+#             'name': 'Sample_1/{}_data.txt',
+#             'dpath': 'Sample_1',
+#             'size': '10.3 mb'
+#         },
+#         {
+#             'name': 'Sample_1/{}_source.txt',
+#             'dpath': 'Sample_1',
+#             'size': '257 kb'
+#         },
+#         {
+#             'name': 'Sample_1/meta/{}_info.txt',
+#             'dpath': 'Sample_1/meta',
+#             'size': '96 kb'
+#         },
+#         {
+#             'name': 'Sample_2/{}_data.txt',
+#             'dpath': 'Sample_2',
+#             'size': '8.7 mb'
+#         },
+#         {
+#             'name': 'Sample_2/{}_source.txt',
+#             'dpath': 'Sample_2',
+#             'size': '350 kb'
+#         },
+#         {
+#             'name': 'Sample_2/meta/{}_info.txt',
+#             'dpath': 'Sample_2/meta',
+#             'size': '67 kb'
+#         },
+#         {
+#             'name': '{}_sample_list.txt',
+#             'dpath': '',
+#             'size': '18 kb'
+#         },
+#         {
+#             'name': 'Plates/Sample_1/{}_layout.txt',
+#             'dpath': 'Plates/Sample_1',
+#             'size': '79 kb'
+#         },
+#         {
+#             'name': 'Plates/Sample_2/{}_layout.txt',
+#             'dpath': 'Plates/Sample_2',
+#             'size': '95 kb'
+#         }
+#     ]
 
-    for fnum, finfo in enumerate(files_list):
-        mfile = File(name=finfo['name'].format(project.id), directory_path=finfo['dpath'],
-                     size=1, size_enc=1, extension='ext', compressed=True,
-                     public_key='public_key', salt='salt',
-                     date_uploaded='2020-05-25', project_id=project
-                     )
-        project.project_files.append(mfile)
+    # for fnum, finfo in enumerate(files_list):
+    #     mfile = File(name=finfo['name'].format(project.id), directory_path=finfo['dpath'],
+    #                  size=1, size_enc=1, extension='ext', compressed=True,
+    #                  public_key='public_key', salt='salt',
+    #                  date_uploaded='2020-05-25', project_id=project
+    #                  )
+    #     project.project_files.append(mfile)
 
 
 def fill_db():
@@ -349,7 +349,7 @@ def fill_db():
     # for ind in [2, 5, 7, 8, 10]:
     #     users[3].user_projects.append(projects[ind])
 
-    facilities[0].fac_projects.append(projects[0])
+    facilities[0].user_projects.append(projects[0])
     # for ind in [1, 2, 3, 4, 5]:
     #     facilities[1].fac_projects.append(projects[ind])
     # for ind in [6, 7, 8, 9, 10]:
