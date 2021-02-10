@@ -5,11 +5,13 @@
 ###############################################################################
 
 # Standard library
+import pathlib
 
 # Installed
 import flask_restful
 import flask
 import sqlalchemy
+import json
 
 # Own modules
 from code_dds.api.user import token_required
@@ -18,6 +20,7 @@ from code_dds.common.db_code import models
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
+
 
 class S3Info(flask_restful.Resource):
     """Gets the projects S3 keys"""
@@ -37,4 +40,17 @@ class S3Info(flask_restful.Resource):
 
         # Get Safespring project
         print(current_user.safespring, flush=True)
-        return flask.jsonify({"safespring_project": current_user.safespring})
+
+        try:
+            s3path = pathlib.Path.cwd() / \
+                pathlib.Path("sensitive/s3_config.json")
+            with s3path.open(mode="r") as f:
+                s3keys = json.load(f)["sfsp_keys"][current_user.safespring]
+        except IOError as err:
+            return flask.make_response(f"Failed getting keys! {err}", 500)
+
+        if not all(x in s3keys for x in ["access_key", "secret_key"]):
+            return flask.make_response("Keys not found!", 500)
+
+        return flask.jsonify({"safespring_project": current_user.safespring,
+                              "keys": s3keys})
