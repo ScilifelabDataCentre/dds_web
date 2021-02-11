@@ -1,6 +1,7 @@
 """USED ONLY DURING DEVELOPMENT! Adds test data to the database."""
 
 import os
+import uuid
 
 from code_dds.common.db_code.models import User, Project, Facility
 from code_dds import db
@@ -152,7 +153,7 @@ def fill_db():
                 title="project_title",
                 owner=users[0],
                 facility=facilities[0],
-                bucket=os.urandom(16).hex())
+                bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}")
 
         # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
         #         category="Category1",

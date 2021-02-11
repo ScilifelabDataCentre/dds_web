@@ -59,6 +59,20 @@ class S3Info(flask_restful.Resource):
         if not all(x in s3keys for x in ["access_key", "secret_key"]):
             return flask.make_response("Keys not found!", 500)
 
+        # Get bucket name
+        try:
+            bucket = models.Project.query.filter_by(id=project["project"]).\
+                with_entities(models.Project.bucket).first()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(
+                "Failed to get project bucket name! {err}", 500
+            )
+        
+        if not bucket or bucket is None:
+            return flask.make_response("Project bucket not found!", 500)
+
+
         return flask.jsonify({"safespring_project": current_user.safespring,
                               "keys": s3keys,
-                              "url": endpoint_url})
+                              "url": endpoint_url,
+                              "bucket": bucket[0]})
