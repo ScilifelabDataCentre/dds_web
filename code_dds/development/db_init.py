@@ -3,7 +3,7 @@
 import os
 import uuid
 
-from code_dds.common.db_code.models import User, Project, Facility
+from code_dds.common.db_code.models import User, Project, Facility, File
 from code_dds import db
 from code_dds import timestamp
 
@@ -64,13 +64,13 @@ from code_dds import timestamp
 #         }
 #     ]
 
-    # for fnum, finfo in enumerate(files_list):
-    #     mfile = File(name=finfo['name'].format(project.id), directory_path=finfo['dpath'],
-    #                  size=1, size_enc=1, extension='ext', compressed=True,
-    #                  public_key='public_key', salt='salt',
-    #                  date_uploaded='2020-05-25', project_id=project
-    #                  )
-    #     project.project_files.append(mfile)
+# for fnum, finfo in enumerate(files_list):
+#     mfile = File(name=finfo['name'].format(project.id), directory_path=finfo['dpath'],
+#                  size=1, size_enc=1, extension='ext', compressed=True,
+#                  public_key='public_key', salt='salt',
+#                  date_uploaded='2020-05-25', project_id=project
+#                  )
+#     project.project_files.append(mfile)
 
 
 def fill_db():
@@ -343,6 +343,11 @@ def fill_db():
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937")
     ]
 
+    files = [
+        File(name="notafile.txt",
+             name_in_bucket="testtesttest.txt",
+             project_id=projects[0])
+    ]
     # Foreign key/relationship updates
     users[0].user_projects.append(projects[0])
     # for ind in [1, 3, 4, 6, 9]:
@@ -356,6 +361,7 @@ def fill_db():
     # for ind in [6, 7, 8, 9, 10]:
     #     facilities[2].fac_projects.append(projects[ind])
 
+    projects[0].project_files.append(files[0])
     # for prj in projects[1:]:
     #     if prj.status == "Delivered":
     #         create_files_for_project(prj)
@@ -363,6 +369,7 @@ def fill_db():
     # Add user and facility, the rest is automatically added and commited
     db.session.add_all(users)
     db.session.add_all(facilities)
+    db.session.add_all(projects)
 
     # Required for change in db
     db.session.commit()
