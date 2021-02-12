@@ -12,6 +12,7 @@ import flask_restful
 from code_dds.api import user
 from code_dds.api import project
 from code_dds.api import s3
+from code_dds.api import files
 
 
 ###############################################################################
@@ -31,6 +32,9 @@ api.add_resource(user.AuthenticateUser, "/user/auth", endpoint="auth")
 api.add_resource(project.ProjectAccess,
                  "/proj/auth", endpoint="proj_auth")
 
-# 
+# S3
 api.add_resource(s3.S3Info, "/s3/proj", endpoint="proj_s3_info")
+
+# Files
+api.add_resource(files.NewFile, "/file/new", endpoint="new_file")
 
