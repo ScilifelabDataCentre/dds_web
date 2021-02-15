@@ -34,10 +34,20 @@ class NewFile(flask_restful.Resource):
                                        "cannot add file to database.", 500)
 
         try:
+            # Check if file already in db
+            existing_file = models.File.query.filter_by(
+                name=args["name"], project_id=args["project"]
+            ).with_entities(models.File.id).first()
+
+            if existing_file or existing_file is not None:
+                return flask.make_response(f"File '{args['name']}' already "
+                                           "exists in the database!", 500)
+
+            # Add new file to db
             new_file = models.File(name=args["name"],
-                                   name_in_bucket=args["name_in_bucket"],
-                                   subpath=args["subpath"],
-                                   project_id=args["project"])
+                                    name_in_bucket=args["name_in_bucket"],
+                                    subpath=args["subpath"],
+                                    project_id=args["project"])
             db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
