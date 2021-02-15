@@ -346,6 +346,7 @@ def fill_db():
     files = [
         File(name="notafile.txt",
              name_in_bucket="testtesttest.txt",
+             subpath="subpath",
              project_id=projects[0])
     ]
     # Foreign key/relationship updates

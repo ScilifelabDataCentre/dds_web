@@ -162,7 +162,7 @@ class File(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(200), unique=False, nullable=False)
     name_in_bucket = db.Column(db.String(200), unique=False, nullable=False)
-#     directory_path = db.Column(db.String(500), unique=False, nullable=False)
+    subpath = db.Column(db.String(500), unique=False, nullable=False)
 #     size = db.Column(db.BigInteger, unique=False, nullable=False)
 #     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)
 #     extension = db.Column(db.String(15), unique=False, nullable=False)
