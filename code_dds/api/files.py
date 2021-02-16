@@ -56,4 +56,4 @@ class NewFile(flask_restful.Resource):
                 500
             )
 
-        return flask.jsonify({"message": "creating new file"})
+        return flask.jsonify({"message": f"File '{args['name']}' added to db."})
