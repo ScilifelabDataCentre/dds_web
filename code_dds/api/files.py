@@ -22,7 +22,7 @@ from code_dds import db
 
 
 class NewFile(flask_restful.Resource):
-    """Checks a users access to a specific project."""
+    """Inserts a file into the database"""
     method_decorators = [token_required]
 
     def post(self, current_user):
@@ -45,9 +45,9 @@ class NewFile(flask_restful.Resource):
 
             # Add new file to db
             new_file = models.File(name=args["name"],
-                                    name_in_bucket=args["name_in_bucket"],
-                                    subpath=args["subpath"],
-                                    project_id=args["project"])
+                                   name_in_bucket=args["name_in_bucket"],
+                                   subpath=args["subpath"],
+                                   project_id=args["project"])
             db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -57,3 +57,36 @@ class NewFile(flask_restful.Resource):
             )
 
         return flask.jsonify({"message": f"File '{args['name']}' added to db."})
+
+
+class MatchFiles(flask_restful.Resource):
+    """Checks for matching files in database"""
+    method_decorators = [token_required]
+
+    def get(self, current_user):
+        """Matches specified files to files in db."""
+
+        args = flask.request.args
+        if "project" not in args:
+            return flask.make_response("Project ID missing, cannot perform "
+                                       "file check.", 500)
+
+        try:
+            matching_files = models.File.query.filter(
+                models.File.name.in_(flask.request.json)
+            ).filter_by(project_id=args["project"]).all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(
+                f"Failed to get matching files in db: {err}", 500
+            )
+
+        if not matching_files or matching_files is None:
+            return flask.jsonify({"files": None})
+
+        # Return files NOT in db
+        files = list(
+            set(flask.request.json)
+            .difference(set(x.name for x in matching_files))
+        )
+
+        return flask.jsonify({"files": files})

@@ -37,4 +37,4 @@ api.add_resource(s3.S3Info, "/s3/proj", endpoint="proj_s3_info")
 
 # Files
 api.add_resource(files.NewFile, "/file/new", endpoint="new_file")
-
+api.add_resource(files.MatchFiles, "/file/match", endpoint="match_files")
