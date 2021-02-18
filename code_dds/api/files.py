@@ -80,13 +80,8 @@ class MatchFiles(flask_restful.Resource):
                 f"Failed to get matching files in db: {err}", 500
             )
 
+        # The files checked are not in the db
         if not matching_files or matching_files is None:
             return flask.jsonify({"files": None})
 
-        # Return files NOT in db
-        files = list(
-            set(flask.request.json)
-            .difference(set(x.name for x in matching_files))
-        )
-
-        return flask.jsonify({"files": files})
+        return flask.jsonify({"files": list(x.name for x in matching_files)})
