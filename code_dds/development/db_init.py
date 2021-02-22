@@ -3,7 +3,7 @@
 import os
 import uuid
 
-from code_dds.common.db_code.models import User, Project, Facility, File
+from code_dds.common.db_code.models import User, Project, Facility, File, Role
 from code_dds import db
 from code_dds import timestamp
 
@@ -343,6 +343,11 @@ def fill_db():
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937")
     ]
 
+    roles = [
+        Role(username=users[0].username, facility=False),
+        Role(username=facilities[0].username, facility=True)
+    ]
+
     files = [
         File(name="notafile.txt",
              name_in_bucket="testtesttest.txt",
@@ -370,6 +375,7 @@ def fill_db():
     # Add user and facility, the rest is automatically added and commited
     db.session.add_all(users)
     db.session.add_all(facilities)
+    db.session.add_all(roles)
     db.session.add_all(projects)
 
     # Required for change in db

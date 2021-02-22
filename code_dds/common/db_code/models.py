@@ -89,6 +89,18 @@ class Facility(db.Model):
         return f'<Facility {self.username}>'
 
 
+class Role(db.Model):
+    """Data model for roles - used to find correct table."""
+    # Table setup
+    __tablename__ = 'roles'
+    __table_args__ = {'extend_existing': True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    facility = db.Column(db.Boolean, unique=False, nullable=False)
+
+
 class Project(db.Model):
     """Data model for projects."""
 

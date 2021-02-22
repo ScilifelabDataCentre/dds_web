@@ -43,8 +43,7 @@ def token_required(f):
         # Verify the token
         try:
             data = jwt.decode(token, app.config["SECRET_KEY"])
-            table = models.Facility if data["facility"] == "True" \
-                else models.User
+            table = models.Facility if data["facility"] else models.User
             current_user = table.query.filter_by(
                 public_id=data["public_id"]
             ).first()
@@ -85,17 +84,24 @@ class AuthenticateUser(flask_restful.Resource):
         if not auth or not auth.username or not auth.password:
             return flask.make_response("Could not verify", 401)
 
-        args = flask.request.args
-        if "facility" not in args:
-            return flask.make_response("Could not verify, missing information",
+        # Check for user and which table to work in
+        try:
+            role = models.Role.query.filter_by(username=auth.username).\
+                with_entities(models.Role.facility).first()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            return flask.make_response(
+                f"Database connection failed - {sqlerr}", 500
+            )
+
+        # Deny access if there is no such user
+        if not role:
+            return flask.make_response(f"User does not exist: {auth.username}",
                                        401)
 
         # Get user from DB matching the username
         try:
-            table = models.Facility if args["facility"] == "True" \
-                else models.User
+            table = models.Facility if role[0] else models.User
             user = table.query.filter_by(username=auth.username).first()
-
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             return flask.make_response(
                 f"Database connection failed - {sqlerr}", 500
@@ -103,13 +109,17 @@ class AuthenticateUser(flask_restful.Resource):
 
         # Deny access if there is no such user
         if not user:
-            return flask.make_response(f"User does not exist: {auth.username}",
-                                       401)
+            return flask.make_response(
+                f"User role registered as '{'facility' if role[0] else 'user'}'"
+                " but user account not found! User denied access: "
+                f"{auth.username}", 401
+            )
 
+        # Verify user password and generate token
         if verify_password_argon2id(user.password, auth.password):
             token = jwt.encode(
                 {"public_id": user.public_id,
-                 "facility": args["facility"],
+                 "facility": role[0],
                  "exp": datetime.datetime.utcnow() +
                  datetime.timedelta(hours=48)},
                 app.config["SECRET_KEY"]
