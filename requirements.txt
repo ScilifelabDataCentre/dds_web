@@ -11,3 +11,4 @@ zstandard
 PyJWT==v1.7.1
 argon2_cffi
 immutabledict
+rich
