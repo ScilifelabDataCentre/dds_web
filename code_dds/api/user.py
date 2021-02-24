@@ -20,18 +20,19 @@ import functools
 from code_dds import app
 from code_dds.common.db_code import models
 
+###############################################################################
+# DECORATORS ##################################################### DECORATORS #
+###############################################################################
 
-###############################################################################
-# ENDPOINTS ####################################################### ENDPOINTS #
-###############################################################################
 
 def token_required(f):
     """Decorator function for verifying the JWT tokens in requests."""
 
     @functools.wraps(f)
-    def decorated(*args, **kwargs):
+    def validate_token(*args, **kwargs):
         token = None
 
+        print("IN -- validate_token", flush=True)
         # Get the token from the header
         if "x-access-token" in flask.request.headers:
             token = flask.request.headers["x-access-token"]
@@ -42,18 +43,28 @@ def token_required(f):
 
         # Verify the token
         try:
+            # Decode
             data = jwt.decode(token, app.config["SECRET_KEY"])
+
+            # Get table and user
             table = models.Facility if data["facility"] else models.User
             current_user = table.query.filter_by(
                 public_id=data["public_id"]
             ).first()
+
+            project = data["project"]
             print(f"Current user {current_user}", flush=True)
+            print(f"Project: {project}", flush=True)
         except Exception:
             return flask.jsonify({"message": "Token is invalid!"}), 401
 
-        return f(current_user, *args, **kwargs)
+        return f(current_user, project, *args, **kwargs)
 
-    return decorated
+    return validate_token
+
+###############################################################################
+# FUNCTIONS ####################################################### FUNCTIONS #
+###############################################################################
 
 
 def gen_argon2hash(password, time_cost=2, memory_cost=102400, parallelism=8,
@@ -71,63 +82,6 @@ def gen_argon2hash(password, time_cost=2, memory_cost=102400, parallelism=8,
     formated_hash = pw_hasher.hash(password)
 
     return formated_hash
-
-
-class AuthenticateUser(flask_restful.Resource):
-    """Handles the authentication of the user."""
-
-    def get(self):
-        """Checks the username, password and generates the token."""
-
-        # Get username and password from CLI request
-        auth = flask.request.authorization
-        if not auth or not auth.username or not auth.password:
-            return flask.make_response("Could not verify", 401)
-
-        # Check for user and which table to work in
-        try:
-            role = models.Role.query.filter_by(username=auth.username).\
-                with_entities(models.Role.facility).first()
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            return flask.make_response(
-                f"Database connection failed - {sqlerr}", 500
-            )
-
-        # Deny access if there is no such user
-        if not role:
-            return flask.make_response(f"User does not exist: {auth.username}",
-                                       401)
-
-        # Get user from DB matching the username
-        try:
-            table = models.Facility if role[0] else models.User
-            user = table.query.filter_by(username=auth.username).first()
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            return flask.make_response(
-                f"Database connection failed - {sqlerr}", 500
-            )
-
-        # Deny access if there is no such user
-        if not user:
-            return flask.make_response(
-                f"User role registered as '{'facility' if role[0] else 'user'}'"
-                " but user account not found! User denied access: "
-                f"{auth.username}", 401
-            )
-
-        # Verify user password and generate token
-        if verify_password_argon2id(user.password, auth.password):
-            token = jwt.encode(
-                {"public_id": user.public_id,
-                 "facility": role[0],
-                 "exp": datetime.datetime.utcnow() +
-                 datetime.timedelta(hours=48)},
-                app.config["SECRET_KEY"]
-            )
-
-            return flask.jsonify({"token": token.decode("UTF-8")})
-
-        return flask.make_response("Incorrect password!", 401)
 
 
 def verify_password_argon2id(db_pw, input_pw):
@@ -149,3 +103,92 @@ def verify_password_argon2id(db_pw, input_pw):
     # TODO: Add check_needs_rehash?
 
     return True
+
+
+def is_facility(username):
+    """Checks if the user is a facility or not."""
+
+    # Check for user and which table to work in
+    try:
+        role = models.Role.query.filter_by(username=username).\
+            with_entities(models.Role.facility).first()
+    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+        return flask.make_response(
+            f"Database connection failed - {sqlerr}", 500
+        )
+
+    # Deny access if there is no such user
+    if not role or role is None:
+        return None
+
+    return role[0]
+
+
+def jwt_token(user_id, is_fac, project_id, project_access=False):
+    """Generates and encodes a JWT token."""
+
+    token = jwt.encode(
+        {"public_id": user_id,
+         "facility": is_fac,
+         "project": {"id": project_id, "verified": project_access},
+         "exp": datetime.datetime.utcnow() +
+         datetime.timedelta(hours=48)},
+        app.config["SECRET_KEY"]
+    )
+
+    return token
+
+
+###############################################################################
+# ENDPOINTS ####################################################### ENDPOINTS #
+###############################################################################
+
+
+class AuthenticateUser(flask_restful.Resource):
+    """Handles the authentication of the user."""
+
+    def get(self):
+        """Checks the username, password and generates the token."""
+
+        # Get username and password from CLI request
+        auth = flask.request.authorization
+        if not auth or not auth.username or not auth.password:
+            return flask.make_response("Could not verify", 401)
+
+        args = flask.request.args
+        if "project" not in args:
+            project = None
+        else:
+            project = args["project"]
+
+        user_is_fac = is_facility(username=auth.username)
+        if user_is_fac is None:
+            return flask.make_response(f"User does not exist: {auth.username}",
+                                       401)
+
+        # Get user from DB matching the username
+        try:
+            table = models.Facility if user_is_fac else models.User
+            user = table.query.filter_by(username=auth.username).first()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            return flask.make_response(
+                f"Database connection failed - {sqlerr}", 500
+            )
+
+        # Deny access if there is no such user
+        if not user:
+            return flask.make_response(
+                f"User role registered as '{'facility' if user_is_fac else 'user'}'"
+                " but user account not found! User denied access: "
+                f"{auth.username}", 401
+            )
+
+        # Verify user password and generate token
+        if verify_password_argon2id(user.password, auth.password):
+            token = jwt_token(user_id=user.public_id,
+                              is_fac=user_is_fac,
+                              project_id=project)
+
+            return flask.jsonify({"token": token.decode("UTF-8")})
+
+        return flask.make_response("Incorrect password!", 401)
