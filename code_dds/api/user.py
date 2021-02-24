@@ -127,7 +127,7 @@ class AuthenticateUser(flask_restful.Resource):
 
             return flask.jsonify({"token": token.decode("UTF-8")})
 
-        return flask.make_response("Could not verify", 401)
+        return flask.make_response("Incorrect password!", 401)
 
 
 def verify_password_argon2id(db_pw, input_pw):
