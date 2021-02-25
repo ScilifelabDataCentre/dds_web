@@ -23,17 +23,26 @@ from code_dds.common.db_code import models
 ###############################################################################
 
 
-def is_verified(project):
-    """Verifies that the user has been granted access to the project."""
+def project_access_required(f):
 
-    if project["id"] is None:
-        return False, "Project ID missing. Cannot proceed.."
+    @functools.wraps(f)
+    def verify_project_access(current_user, project, *args, **kwargs):
+        """Verifies that the user has been granted access to the project."""
 
-    if not project["verified"]:
-        return False, f"Access to project {project['id']} not yet verified. " \
-            "Checkout token settings."
+        if project["id"] is None:
+            return flask.make_response(
+                "Project ID missing. Cannot proceed", 401
+            )
 
-    return True, ""
+        if not project["verified"]:
+            return flask.make_response(
+                f"Access to project {project['id']} not yet verified. "
+                "Checkout token settings.", 401
+            )
+
+        return f(current_user, project, *args, **kwargs)
+
+    return verify_project_access
 
 
 class ProjectAccess(flask_restful.Resource):

@@ -16,7 +16,7 @@ import json
 # Own modules
 from code_dds.api.user import token_required
 from code_dds.common.db_code import models
-from code_dds.api.project import is_verified
+from code_dds.api.project import project_access_required
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -25,14 +25,10 @@ from code_dds.api.project import is_verified
 
 class S3Info(flask_restful.Resource):
     """Gets the projects S3 keys"""
-    method_decorators = [token_required]
+    method_decorators = [project_access_required, token_required]
 
     def get(self, current_user, project, *args, **kwargs):
         """Get the safespring project"""
-
-        project_verified, message = is_verified(project=project)
-        if not project_verified:
-            return flask.make_response(message, 401)
 
         # Get Safespring project
         try:
@@ -63,10 +59,9 @@ class S3Info(flask_restful.Resource):
             return flask.make_response(
                 "Failed to get project bucket name! {err}", 500
             )
-        
+
         if not bucket or bucket is None:
             return flask.make_response("Project bucket not found!", 500)
-
 
         return flask.jsonify({"safespring_project": current_user.safespring,
                               "keys": s3keys,

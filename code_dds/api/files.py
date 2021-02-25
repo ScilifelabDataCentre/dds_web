@@ -15,7 +15,7 @@ import sqlalchemy
 from code_dds.api.user import token_required
 from code_dds.common.db_code import models
 from code_dds import db
-from code_dds.api.project import is_verified
+from code_dds.api.project import project_access_required
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -24,14 +24,10 @@ from code_dds.api.project import is_verified
 
 class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
-    method_decorators = [token_required]
+    method_decorators = [project_access_required, token_required]  # 2, 1
 
     def post(self, current_user, project):
         """Add new file to DB"""
-
-        project_verified, message = is_verified(project=project)
-        if not project_verified:
-            return flask.make_response(message, 401)
 
         args = flask.request.args
         if not all(x in args for x in ["name", "name_in_bucket", "subpath"]):
@@ -66,14 +62,10 @@ class NewFile(flask_restful.Resource):
 
 class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
-    method_decorators = [token_required]
+    method_decorators = [project_access_required, token_required]  # 2, 1
 
     def get(self, current_user, project):
         """Matches specified files to files in db."""
-
-        project_verified, message = is_verified(project=project)
-        if not project_verified:
-            return flask.make_response(message, 401)
 
         try:
             matching_files = models.File.query.filter(

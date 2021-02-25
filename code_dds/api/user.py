@@ -32,7 +32,6 @@ def token_required(f):
     def validate_token(*args, **kwargs):
         token = None
 
-        print("IN -- validate_token", flush=True)
         # Get the token from the header
         if "x-access-token" in flask.request.headers:
             token = flask.request.headers["x-access-token"]
@@ -53,8 +52,6 @@ def token_required(f):
             ).first()
 
             project = data["project"]
-            print(f"Current user {current_user}", flush=True)
-            print(f"Project: {project}", flush=True)
         except Exception:
             return flask.jsonify({"message": "Token is invalid!"}), 401
 
@@ -155,12 +152,14 @@ class AuthenticateUser(flask_restful.Resource):
         if not auth or not auth.username or not auth.password:
             return flask.make_response("Could not verify", 401)
 
+        # Project not required, will be checked for future operations
         args = flask.request.args
         if "project" not in args:
             project = None
         else:
             project = args["project"]
 
+        # Check if user has facility role
         user_is_fac = is_facility(username=auth.username)
         if user_is_fac is None:
             return flask.make_response(f"User does not exist: {auth.username}",
@@ -178,9 +177,9 @@ class AuthenticateUser(flask_restful.Resource):
         # Deny access if there is no such user
         if not user:
             return flask.make_response(
-                f"User role registered as '{'facility' if user_is_fac else 'user'}'"
-                " but user account not found! User denied access: "
-                f"{auth.username}", 401
+                "User role registered as "
+                f"'{'facility' if user_is_fac else 'user'}' but user account "
+                f"not found! User denied access: {auth.username}", 401
             )
 
         # Verify user password and generate token
