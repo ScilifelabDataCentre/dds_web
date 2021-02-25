@@ -151,8 +151,25 @@ def fill_db():
     projects = [
         Project(id="ProjectID",
                 title="project_title",
+                category="Category",
+                date_created=timestamp(),
+                date_updated=timestamp(),
+                status="Ongoing",
+                pi="PI",
                 owner=users[0],
                 facility=facilities[0],
+                size=7357,
+                bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}"),
+        Project(id="ProjectID_2",
+                title="project_title_2",
+                category="Category_2",
+                date_created=timestamp(),
+                date_updated=timestamp(),
+                status="Ongoing",
+                pi="PI_2",
+                owner=users[0],
+                facility=facilities[0],
+                size=7357,
                 bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}")
 
         # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
@@ -355,13 +372,15 @@ def fill_db():
              project_id=projects[0])
     ]
     # Foreign key/relationship updates
-    users[0].user_projects.append(projects[0])
+    for x in projects:
+        users[0].user_projects.append(x)
     # for ind in [1, 3, 4, 6, 9]:
     #     users[1].user_projects.append(projects[ind])
     # for ind in [2, 5, 7, 8, 10]:
     #     users[3].user_projects.append(projects[ind])
 
-    facilities[0].user_projects.append(projects[0])
+    for x in projects:
+        facilities[0].user_projects.append(x)
     # for ind in [1, 2, 3, 4, 5]:
     #     facilities[1].fac_projects.append(projects[ind])
     # for ind in [6, 7, 8, 9, 10]:

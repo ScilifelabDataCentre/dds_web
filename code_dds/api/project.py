@@ -17,9 +17,10 @@ from code_dds.api.user import token_required
 from code_dds.api.user import jwt_token
 from code_dds.api.user import is_facility
 from code_dds.common.db_code import models
+from code_dds import timestamp
 
 ###############################################################################
-# FUNCTIONS ####################################################### FUNCTIONS #
+# DECORATORS ##################################################### DECORATORS #
 ###############################################################################
 
 
@@ -43,6 +44,11 @@ def project_access_required(f):
         return f(current_user, project, *args, **kwargs)
 
     return verify_project_access
+
+
+###############################################################################
+# ENDPOINTS ####################################################### ENDPOINTS #
+###############################################################################
 
 
 class ProjectAccess(flask_restful.Resource):
@@ -82,3 +88,32 @@ class ProjectAccess(flask_restful.Resource):
             return flask.jsonify({"dds-access-granted": True, "token": token.decode("UTF-8")})
 
         return flask.make_response("Project access denied", 401)
+
+
+class UserProjects(flask_restful.Resource):
+    """Gets all projects registered to a specific user."""
+    method_decorators = [token_required]
+
+    def get(self, current_user, *args):
+        """Get info regarding all projects which user is involved in."""
+
+        # TODO: Return different things depending on if facility or not
+        print(current_user.user_projects, flush=True)
+        user_is_fac = is_facility(username=current_user.username)
+        if user_is_fac is None:
+            return flask.make_response(
+                f"User does not exist: {current_user.username}", 401
+            )
+
+        all_projects = list()
+        columns = ["Project ID", "Title", "PI", "Status", "Last updated"]
+        for x in current_user.user_projects:
+            all_projects.append({columns[0]: x.id,
+                                 columns[1]: x.title,
+                                 columns[2]: x.pi,
+                                 columns[3]: x.status,
+                                 columns[4]: timestamp(
+                                     datetime_string=x.date_updated
+                                     )}
+            )
+        return flask.jsonify({"all_projects": all_projects, "columns": columns})
