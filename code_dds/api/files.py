@@ -81,3 +81,106 @@ class MatchFiles(flask_restful.Resource):
             return flask.jsonify({"files": None})
 
         return flask.jsonify({"files": list(x.name for x in matching_files)})
+
+
+class ListFiles(flask_restful.Resource):
+    """Lists files within a project"""
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, current_user, project):
+        """Get a list of files within the specified folder."""
+
+        args = flask.request.args
+        show_size = False
+        if "show_size" in args and args["show_size"]:
+            show_size = True
+
+        subpath = ""
+        if "subpath" not in args:
+            distinct_files, distinct_folders = items_in_root(project=project)
+
+        else:
+            subpath = args["subpath"]
+            distinct_files, distinct_folders = items_in_folder(project=project,
+                                                               subpath=subpath)
+
+        # Collect file and folder info to return to CLI
+        files_folders = list()
+        if distinct_files:
+            for x in distinct_files:
+                files_folders.append(
+                    {"name": x.name if subpath == ""
+                     else x.name.split(subpath + "/")[-1],
+                     "folder": False}
+                )
+        if distinct_folders:
+            for x in distinct_folders:
+                files_folders.append(
+                    {"name": x[0] if subpath == ""
+                     else x[0].split(subpath + "/")[-1],
+                     "folder": True}
+                )
+
+        return flask.jsonify({"files_folders": files_folders})
+
+
+def items_in_root(project):
+    """Get all items in root folder of project"""
+
+    # Get everything in root:
+    # Files have subpath "." and folders do not have child folders
+    try:
+        # All files in project
+        files = models.File.query.filter_by(
+            project_id=project["id"]
+        )
+
+        # File names in root
+        distinct_files = files.filter(models.File.subpath == ".").all()
+
+        # Folder names in root (unique)
+        distinct_folders = files.filter(
+            sqlalchemy.and_(
+                ~models.File.subpath.contains(["/"]),
+                models.File.subpath != "."
+            )
+        ).with_entities(models.File.subpath).distinct().all()
+    except sqlalchemy.exc.SQLAlchemyError as err:
+        return flask.make_response(
+            f"Failed to get files from database: {err}", 500
+        )
+
+    return distinct_files, distinct_folders
+
+
+def items_in_folder(project, subpath):
+    """Get all items in a folder within the project."""
+
+    # Get everything in subpath:
+    # Files have subpath == subpath and folders have child folders
+    try:
+        # All files in project
+        files = models.File.query.filter_by(
+            project_id=project["id"]
+        )
+
+        # File names in subpath
+        distinct_files = files.filter(
+            models.File.subpath == subpath
+        ).all()
+
+        # Folder names in subpath
+        distinct_folders = files.filter(
+            sqlalchemy.and_(
+                models.File.subpath.op("regexp")(
+                    f"^{subpath}(\/[^\/]+)?$"
+                ),
+                models.File.subpath != subpath
+            )
+        ).with_entities(models.File.subpath).distinct().all()
+    except sqlalchemy.exc.SQLAlchemyError as err:
+        return flask.make_response(
+            f"Failed to get files from database: {err}", 500
+        )
+
+    return distinct_files, distinct_folders

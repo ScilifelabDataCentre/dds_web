@@ -25,6 +25,7 @@ from code_dds import timestamp
 
 
 def project_access_required(f):
+    """Decorator function to verify the users access to the project."""
 
     @functools.wraps(f)
     def verify_project_access(current_user, project, *args, **kwargs):
@@ -73,8 +74,8 @@ class ProjectAccess(flask_restful.Resource):
 
         # Facilities can upload and list, users can download and list
         # TODO (ina): Add allowed actions to DB instead of hard coding
-        if (user_is_fac and args["method"] not in ["put"]) or \
-                (not user_is_fac and args["method"] not in ["get"]):
+        if (user_is_fac and args["method"] not in ["put", "ls"]) or \
+                (not user_is_fac and args["method"] not in ["get", "ls"]):
             return flask.make_response(
                 f"Attempted to {args['method']} in project {project['id']}. "
                 "Permission denied.", 401
