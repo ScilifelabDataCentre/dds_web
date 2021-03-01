@@ -42,4 +42,4 @@ api.add_resource(files.ListFiles, "/files/list", endpoint="list_files")
 
 # Projects
 api.add_resource(project.UserProjects, "/proj/list", endpoint="list_projects")
-
+api.add_resource(project.RemoveContents, "/proj/rm/", endpoint="remove_contents")

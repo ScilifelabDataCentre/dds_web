@@ -17,6 +17,7 @@ import json
 from code_dds.api.user import token_required
 from code_dds.common.db_code import models
 from code_dds.api.project import project_access_required
+from code_dds.api import api_s3_connector
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -30,40 +31,21 @@ class S3Info(flask_restful.Resource):
     def get(self, current_user, project, *args, **kwargs):
         """Get the safespring project"""
 
-        # Get Safespring project
-        try:
-            # TODO (ina): Change -- these should not be saved in file
-            s3path = pathlib.Path.cwd() / \
-                pathlib.Path("sensitive/s3_config.json")
-            with s3path.open(mode="r") as f:
-                s3keys = json.load(f)["sfsp_keys"][current_user.safespring]
-        except IOError as err:
-            return flask.make_response(f"Failed getting keys! {err}", 500)
+        s3conn = api_s3_connector.ApiS3Connector(
+            safespring_project=current_user.safespring,
+            project=project
+        )
 
-        # Get Safespring endpoint url
-        try:
-            with s3path.open(mode="r") as f:
-                endpoint_url = json.load(f)["endpoint_url"]
-        except IOError as err:
-            return flask.make_response(f"Failed getting safespring url! {err}",
-                                       500)
-
-        if not all(x in s3keys for x in ["access_key", "secret_key"]):
-            return flask.make_response("Keys not found!", 500)
-
-        # Get bucket name
-        try:
-            bucket = models.Project.query.filter_by(id=project["id"]).\
-                with_entities(models.Project.bucket).first()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
             return flask.make_response(
-                "Failed to get project bucket name! {err}", 500
+                "No s3 info returned! " + s3conn.message, 500
             )
 
-        if not bucket or bucket is None:
-            return flask.make_response("Project bucket not found!", 500)
+        response = {"safespring_project": current_user.safespring,
+                    "url": s3conn.url,
+                    "keys": s3conn.keys,
+                    "bucket": s3conn.bucketname}
 
-        return flask.jsonify({"safespring_project": current_user.safespring,
-                              "keys": s3keys,
-                              "url": endpoint_url,
-                              "bucket": bucket[0]})
+        s3conn = None
+
+        return flask.jsonify(response)

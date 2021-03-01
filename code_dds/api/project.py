@@ -11,13 +11,19 @@ import functools
 import flask_restful
 import flask
 import sqlalchemy
+import pathlib
+import json
+import boto3
+import botocore
 
 # Own modules
+from code_dds import db
 from code_dds.api.user import token_required
 from code_dds.api.user import jwt_token
 from code_dds.api.user import is_facility
 from code_dds.common.db_code import models
 from code_dds import timestamp
+from code_dds.api import api_s3_connector
 
 ###############################################################################
 # DECORATORS ##################################################### DECORATORS #
@@ -74,7 +80,7 @@ class ProjectAccess(flask_restful.Resource):
 
         # Facilities can upload and list, users can download and list
         # TODO (ina): Add allowed actions to DB instead of hard coding
-        if (user_is_fac and args["method"] not in ["put", "ls"]) or \
+        if (user_is_fac and args["method"] not in ["put", "ls", "rm"]) or \
                 (not user_is_fac and args["method"] not in ["get", "ls"]):
             return flask.make_response(
                 f"Attempted to {args['method']} in project {project['id']}. "
@@ -115,6 +121,60 @@ class UserProjects(flask_restful.Resource):
                                  columns[3]: x.status,
                                  columns[4]: timestamp(
                                      datetime_string=x.date_updated
-                                     )}
+            )}
             )
         return flask.jsonify({"all_projects": all_projects, "columns": columns})
+
+
+class RemoveContents(flask_restful.Resource):
+    """Removes all project contents."""
+    method_decorators = [project_access_required, token_required]
+
+    def delete(self, current_user, project):
+        """Removes all project contents."""
+
+        # Get project files
+        try:
+            project_files = models.File.query.filter_by(
+                project_id=project['id']
+            ).with_entities(
+                models.File.id, models.File.name, models.File.name_in_bucket
+            ).all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(
+                f"Failed to get file names within project {project['id']}: "
+                f"{err}", 500
+            )
+
+        if not project_files or project_files is None:
+            return flask.make_response(
+                "There are no files within project {project['id']}.", 401
+            )
+
+        print(project_files, flush=True)
+
+        # Delete files from bucket
+        removed = False
+        message = ""
+        with api_s3_connector.ApiS3Connector(
+            project=project, safespring_project=current_user.safespring
+        ) as s3conn:
+            if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+                return flask.make_response(
+                    "No s3 info returned! " + s3conn.message, 500
+                )
+
+            removed, message = s3conn.remove_all()
+
+        # Delete all from database
+        if removed:
+            try:
+                models.File.query.filter_by(project_id=project["id"]).delete()
+                db.session.commit()
+            except sqlalchemy.exc.SQLAlchemyError as err:
+                removed, message = (
+                    False, f"Failed removing files from database: {err}"
+                )
+                db.session.rollback()
+
+        return flask.jsonify({"removed": removed, "message": message})
