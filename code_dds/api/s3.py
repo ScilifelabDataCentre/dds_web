@@ -12,6 +12,7 @@ import flask_restful
 import flask
 import sqlalchemy
 import json
+import botocore
 
 # Own modules
 from code_dds.api.user import token_required
@@ -31,21 +32,15 @@ class S3Info(flask_restful.Resource):
     def get(self, current_user, project, *args, **kwargs):
         """Get the safespring project"""
 
-        s3conn = api_s3_connector.ApiS3Connector(
+        url, keys, bucketname, message = api_s3_connector.ApiS3Connector.get_s3_info(
             safespring_project=current_user.safespring,
-            project=project
+            project_id=project["id"]
         )
 
-        if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-            return flask.make_response(
-                "No s3 info returned! " + s3conn.message, 500
-            )
+        if any(x is None for x in [url, keys, bucketname]):
+            return flask.make_response(f"No s3 info returned! {message}", 500)
 
-        response = {"safespring_project": current_user.safespring,
-                    "url": s3conn.url,
-                    "keys": s3conn.keys,
-                    "bucket": s3conn.bucketname}
-
-        s3conn = None
-
-        return flask.jsonify(response)
+        return flask.jsonify({"safespring_project": current_user.safespring,
+                              "url": url,
+                              "keys": keys,
+                              "bucket": bucketname})

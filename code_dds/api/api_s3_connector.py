@@ -80,25 +80,21 @@ def bucket_must_exists(func):
 ###############################################################################
 
 
+@dataclasses.dataclass
 class ApiS3Connector:
     """Connects to Simple Storage Service."""
 
-    def __init__(self, safespring_project, project):
-        s3_info = self.get_s3_info(safespring_project=safespring_project,
-                                   project=project)
+    project_id: dataclasses.InitVar[str]
+    safespring_project: str
+    keys: dict = dataclasses.field(init=False)
+    url: str = dataclasses.field(init=False)
+    bucketname: str = dataclasses.field(init=False)
+    resource = None
 
-        # Check that we have all information
-        if not all(x in s3_info for x in ["keys", "url", "bucket"]):
-            self.url = None
-            self.keys = None
-            self.bucketname = None
-        else:
-            self.url = s3_info["url"]
-            self.keys = s3_info["keys"]
-            self.bucketname = s3_info["bucket"]
-
-        self.resource = None
-        self.message = s3_info["message"] if "message" in s3_info else ""
+    def __post_init__(self, project_id):
+        self.keys, self.url, self.bucketname = \
+            self.get_s3_info(safespring_project=self.safespring_project,
+                             project_id=project_id)
 
     @connect_cloud
     def __enter__(self):
@@ -112,7 +108,7 @@ class ApiS3Connector:
         return True
 
     @staticmethod
-    def get_s3_info(safespring_project, project):
+    def get_s3_info(safespring_project, project_id):
         """Get information required to connect to cloud."""
 
         # Get keys
@@ -123,30 +119,32 @@ class ApiS3Connector:
             with s3path.open(mode="r") as f:
                 s3keys = json.load(f)["sfsp_keys"][safespring_project]
         except IOError as err:
-            return {"message": f"Failed getting keys! {err}"}
+            return None, None, None, f"Failed getting keys! {err}"
 
         # Get endpoint url
         try:
             with s3path.open(mode="r") as f:
                 endpoint_url = json.load(f)["endpoint_url"]
         except IOError as err:
-            return {"message": f"Failed getting safespring url! {err}"}
+            return None, None, None, f"Failed getting safespring url! {err}"
 
         if not all(x in s3keys for x in ["access_key", "secret_key"]):
-            return {"message": "Keys not found!"}
+            return None, None, None, "Keys not found!"
 
         # Get bucket name
         try:
-            bucket = models.Project.query.filter_by(id=project["id"]).\
-                with_entities(models.Project.bucket).first()
+            bucket = models.Project.query.filter_by(
+                id=project_id
+            ).with_entities(
+                models.Project.bucket
+            ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return {"message": "Failed to get project bucket name! {err}"}
+            return None, None, None, f"Failed to get project bucket name! {err}"
 
         if not bucket or bucket is None:
-            return {"message": "Project bucket not found!"}
+            return None, None, None, "Project bucket not found!"
 
-        return {"keys": s3keys, "url": endpoint_url,
-                "bucket": bucket[0], "message": ""}
+        return s3keys, endpoint_url, bucket[0]
 
     @bucket_must_exists
     def remove_all(self, *args, **kwargs):
