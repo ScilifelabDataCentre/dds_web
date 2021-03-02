@@ -81,7 +81,7 @@ class ProjectAccess(flask_restful.Resource):
         # Facilities can upload and list, users can download and list
         # TODO (ina): Add allowed actions to DB instead of hard coding
         if (user_is_fac and args["method"] not in ["put", "ls", "rm"]) or \
-                (not user_is_fac and args["method"] not in ["get", "ls"]):
+                (not user_is_fac and args["method"] not in ["get", "ls", "rm"]):
             return flask.make_response(
                 f"Attempted to {args['method']} in project {project['id']}. "
                 "Permission denied.", 401
@@ -151,13 +151,11 @@ class RemoveContents(flask_restful.Resource):
                 "There are no files within project {project['id']}.", 401
             )
 
-        print(project_files, flush=True)
-
         # Delete files from bucket
         removed = False
         message = ""
         with api_s3_connector.ApiS3Connector(
-            project=project, safespring_project=current_user.safespring
+            project_id=project["id"], safespring_project=current_user.safespring
         ) as s3conn:
             if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
                 return flask.make_response(

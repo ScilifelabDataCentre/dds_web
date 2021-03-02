@@ -39,7 +39,8 @@ api.add_resource(s3.S3Info, "/s3/proj", endpoint="proj_s3_info")
 api.add_resource(files.NewFile, "/file/new", endpoint="new_file")
 api.add_resource(files.MatchFiles, "/file/match", endpoint="match_files")
 api.add_resource(files.ListFiles, "/files/list", endpoint="list_files")
+api.add_resource(files.RemoveFile, "/file/rm", endpoint="remove_file")
 
 # Projects
 api.add_resource(project.UserProjects, "/proj/list", endpoint="list_projects")
-api.add_resource(project.RemoveContents, "/proj/rm/", endpoint="remove_contents")
+api.add_resource(project.RemoveContents, "/proj/rm", endpoint="remove_contents")

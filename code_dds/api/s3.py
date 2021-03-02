@@ -32,10 +32,11 @@ class S3Info(flask_restful.Resource):
     def get(self, current_user, project, *args, **kwargs):
         """Get the safespring project"""
 
-        url, keys, bucketname, message = api_s3_connector.ApiS3Connector.get_s3_info(
-            safespring_project=current_user.safespring,
-            project_id=project["id"]
-        )
+        keys, url, bucketname, message = \
+            api_s3_connector.ApiS3Connector.get_s3_info(
+                safespring_project=current_user.safespring,
+                project_id=project["id"]
+            )
 
         if any(x is None for x in [url, keys, bucketname]):
             return flask.make_response(f"No s3 info returned! {message}", 500)

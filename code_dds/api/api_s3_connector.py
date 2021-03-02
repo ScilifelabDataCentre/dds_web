@@ -1,4 +1,4 @@
-"""S3 Connector module"""
+"""API S3 Connector module"""
 
 ###############################################################################
 # IMPORTS ########################################################### IMPORTS #
@@ -41,18 +41,25 @@ def connect_cloud(func):
     @functools.wraps(func)
     def init_resource(self, *args, **kwargs):
 
-        # Connect to service
-        try:
-            session = boto3.session.Session()
-
-            self.resource = session.resource(
-                service_name="s3",
-                endpoint_url=self.url,
-                aws_access_key_id=self.keys["access_key"],
-                aws_secret_access_key=self.keys["secret_key"]
+        if None in [self.keys, self.url]:
+            self.keys, self.url, self.bucketname, self.message = (
+                None, None, None, self.message
             )
-        except botocore.client.ClientError:
-            return None
+        else:
+            # Connect to service
+            try:
+                session = boto3.session.Session()
+
+                self.resource = session.resource(
+                    service_name="s3",
+                    endpoint_url=self.url,
+                    aws_access_key_id=self.keys["access_key"],
+                    aws_secret_access_key=self.keys["secret_key"]
+                )
+            except botocore.client.ClientError as err:
+                self.keys, self.url, self.bucketname, self.message = (
+                    None, None, None, err
+                )
 
         return func(self, *args, **kwargs)
 
@@ -92,7 +99,7 @@ class ApiS3Connector:
     resource = None
 
     def __post_init__(self, project_id):
-        self.keys, self.url, self.bucketname = \
+        self.keys, self.url, self.bucketname, self.message = \
             self.get_s3_info(safespring_project=self.safespring_project,
                              project_id=project_id)
 
@@ -111,7 +118,7 @@ class ApiS3Connector:
     def get_s3_info(safespring_project, project_id):
         """Get information required to connect to cloud."""
 
-        # Get keys
+        # 1. Get keys
         try:
             # TODO (ina): Change -- these should not be saved in file
             s3path = pathlib.Path.cwd() / \
@@ -121,7 +128,7 @@ class ApiS3Connector:
         except IOError as err:
             return None, None, None, f"Failed getting keys! {err}"
 
-        # Get endpoint url
+        # 2. Get endpoint url
         try:
             with s3path.open(mode="r") as f:
                 endpoint_url = json.load(f)["endpoint_url"]
@@ -131,7 +138,7 @@ class ApiS3Connector:
         if not all(x in s3keys for x in ["access_key", "secret_key"]):
             return None, None, None, "Keys not found!"
 
-        # Get bucket name
+        # 3. Get bucket name
         try:
             bucket = models.Project.query.filter_by(
                 id=project_id
@@ -144,7 +151,7 @@ class ApiS3Connector:
         if not bucket or bucket is None:
             return None, None, None, "Project bucket not found!"
 
-        return s3keys, endpoint_url, bucket[0]
+        return s3keys, endpoint_url, bucket[0], ""
 
     @bucket_must_exists
     def remove_all(self, *args, **kwargs):
@@ -155,5 +162,19 @@ class ApiS3Connector:
             bucket.objects.all().delete()
         except botocore.client.ClientError as err:
             return False, f"Failed removing all items from project: {err}"
+
+        return True, ""
+
+    @bucket_must_exists
+    def remove_one(self, file, *args, **kwargs):
+        """Removes file from s3"""
+
+        try:
+            response = self.resource.meta.client.delete_object(
+                Bucket=self.bucketname,
+                Key=file
+            )
+        except botocore.client.ClientError as err:
+            return False, f"Failed to remove item {file}: {err}"
 
         return True, ""
