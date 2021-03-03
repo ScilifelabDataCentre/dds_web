@@ -27,7 +27,7 @@ class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
     method_decorators = [project_access_required, token_required]  # 2, 1
 
-    def post(self, current_user, project):
+    def post(self, _, project):
         """Add new file to DB"""
 
         args = flask.request.args
@@ -105,22 +105,27 @@ class ListFiles(flask_restful.Resource):
         if "subpath" in args:
             subpath = args["subpath"]
 
+        files_folders = list()
+
         # Check project not empty
         with DBConnector() as dbconn:
             num_files, error = dbconn.project_size()
             if num_files == 0:
-                return flask.make_response(error, 500) if error != "" else \
-                    flask.jsonify(
+                if error == "":
+                    return flask.make_response(error, 500)
+
+                return flask.jsonify(
                     {"num_items": num_files,
                      "message": f"The project {project['id']} is empty."}
                 )
 
             # Get files and folders
-            distinct_files, distinct_folders = \
+            distinct_files, distinct_folders, error = \
                 dbconn.items_in_subpath(folder=subpath)
+            if error != "":
+                return flask.make_response(error, 500)
 
             # Collect file and folder info to return to CLI
-            files_folders = list()
             if distinct_files:
                 for x in distinct_files:
                     info = {"name": x[0] if subpath == "."
@@ -137,7 +142,11 @@ class ListFiles(flask_restful.Resource):
                             else x[0].split(subpath + "/")[-1],
                             "folder": True}
                     if show_size:
-                        folder_size = dbconn.folder_size(folder_name=x[0])
+                        folder_size, error = dbconn.folder_size(
+                            folder_name=x[0])
+                        if folder_size is None:
+                            return flask.make_response(error, 500)
+
                         info.update(
                             {"size": self.fix_size_format(
                                 num_bytes=folder_size
@@ -178,7 +187,8 @@ class RemoveFile(flask_restful.Resource):
     def delete(self, current_user, project):
         """Deletes the files"""
 
-        removed_dict, error = ({}, "")
+        removed_list, not_removed_dict, not_exist_list, error = (
+            [], {}, [], "")
         with DBConnector() as dbconn:
             with ApiS3Connector() as s3conn:
                 if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
@@ -187,20 +197,43 @@ class RemoveFile(flask_restful.Resource):
                     )
 
                 for x in flask.request.json:
-                    removed, error = dbconn.delete_one(filename=x)
-                    if not removed:
-                        db.session.rollback()
-                        removed_dict[x] = {"removed": removed, "error": error}
+                    was_in_db, removed, name_in_bucket, error = \
+                        dbconn.delete_one(filename=x)
 
-                    removed, error = s3conn.remove_one(file=x)
+                    if not was_in_db:
+                        not_exist_list.append(x)
+                        continue
+
+                    if not removed or name_in_bucket is None:
+                        db.session.rollback()
+                        not_removed_dict[x] = {"error": error}
+                        continue
+
+                    removed, error = s3conn.remove_one(file=name_in_bucket)
                     if not removed:
                         db.session.rollback()
-                        removed_dict[x] = {"removed": removed, "error": error}
+                        not_removed_dict[x] = {"error": error}
+                        continue
 
                     try:
                         db.session.commit()
                     except sqlalchemy.exc.SQLAlchemyError as err:
                         db.session.rollback()
-                        removed_dict[x] = {"removed": False, "error": str(err)}
+                        not_removed_dict[x] = {"error": str(err)}
+                        continue
+                    else:
+                        removed_list.append(x)
 
-        return flask.jsonify({"removed": removed_dict})
+        return flask.jsonify({"successful": removed_list,
+                              "not_removed": not_removed_dict,
+                              "not_exists": not_exist_list})
+
+
+class RemoveDir(flask_restful.Resource):
+    """Removes one or more full directories from the database and s3."""
+    method_decorators = [project_access_required, token_required]
+
+    def delete(self, current_user, project):
+        """Deletes the folders."""
+
+        return flask.jsonify({"test": "test"})

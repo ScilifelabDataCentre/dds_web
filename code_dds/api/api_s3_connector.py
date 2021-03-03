@@ -126,6 +126,6 @@ class ApiS3Connector:
         except botocore.client.ClientError as err:
             error = str(err)
         else:
-            removed = False
+            removed = True
         
         return removed, error

@@ -61,6 +61,23 @@ class DBConnector:
 
         return bucketname, error
 
+    def filename_in_bucket(self, filename):
+        """Get filename in bucket."""
+
+        print(f"File in db: {filename}", flush=True)
+        name_in_bucket, error = (None, "")
+        try:
+            file = models.File.query.filter_by(
+                project_id=self.project["id"]
+            ).all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            error = str(err)
+            print(error, flush=True)
+        else:
+            name_in_bucket = file[0]
+
+        return name_in_bucket, error
+
     def project_size(self):
         """Get size of project"""
 
@@ -77,6 +94,7 @@ class DBConnector:
     def items_in_subpath(self, folder="."):
         """Get all items in root folder of project"""
 
+        distinct_files, distinct_folders, error = ([], [], "")
         # Get everything in root:
         # Files have subpath "." and folders do not have child folders
         # Get everything in folder:
@@ -104,13 +122,14 @@ class DBConnector:
                 )
             ).with_entities(models.File.subpath).distinct().all()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DBFileError from err
+            error = str(err)
 
-        return distinct_files, distinct_folders
+        return distinct_files, distinct_folders, error
 
     def folder_size(self, folder_name="."):
         """Get total size of folder"""
 
+        tot_file_size, error = (None, "")
         try:
             file_info = models.File.query.with_entities(
                 sqlalchemy.func.sum(models.File.size).label("sizeSum")
@@ -121,9 +140,11 @@ class DBConnector:
                 )
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            raise FolderSizeError from err
+            error = str(err)
+        else:
+            tot_file_size = file_info.sizeSum
 
-        return file_info.sizeSum
+        return tot_file_size, error
 
     def delete_all(self):
         """Delete all files in project."""
@@ -142,7 +163,7 @@ class DBConnector:
     def delete_one(self, filename):
         """Delete all files in project."""
 
-        deleted, error = (False, "")
+        exists, deleted, name_in_bucket, error = (False, False, None, "")
         try:
             file = models.File.query.filter_by(
                 name=filename,
@@ -150,8 +171,9 @@ class DBConnector:
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
-                
+        
         if file and file is not None:
+            exists, name_in_bucket = (True, file.name_in_bucket)
             try:
                 db.session.delete(file)
             except sqlalchemy.exc.SQLAlchemyError as err:
@@ -160,5 +182,4 @@ class DBConnector:
             else:
                 deleted = True
 
-        return deleted, error
-    
+        return exists, deleted, name_in_bucket, error

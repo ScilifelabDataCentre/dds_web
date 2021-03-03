@@ -41,6 +41,7 @@ api.add_resource(files.NewFile, "/file/new", endpoint="new_file")
 api.add_resource(files.MatchFiles, "/file/match", endpoint="match_files")
 api.add_resource(files.ListFiles, "/files/list", endpoint="list_files")
 api.add_resource(files.RemoveFile, "/file/rm", endpoint="remove_file")
+api.add_resource(files.RemoveDir, "/file/rmdir", endpoint="remove_dir")
 
 # Projects
 api.add_resource(project.UserProjects, "/proj/list", endpoint="list_projects")

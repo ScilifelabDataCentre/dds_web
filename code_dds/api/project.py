@@ -61,11 +61,11 @@ class ProjectAccess(flask_restful.Resource):
         # Check if user has access to project
         if project["id"] in [x.id for x in current_user.user_projects]:
             token, error = jwt_token(user_id=current_user.public_id,
-                              is_fac=user_is_fac, project_id=project["id"],
-                              project_access=True)
+                                     is_fac=user_is_fac, project_id=project["id"],
+                                     project_access=True)
             if token is None:
                 return flask.make_response(error, 500)
-                
+
             return flask.jsonify({"dds-access-granted": True, "token": token.decode("UTF-8")})
 
         return flask.make_response("Project access denied", 401)
@@ -79,11 +79,9 @@ class UserProjects(flask_restful.Resource):
         """Get info regarding all projects which user is involved in."""
 
         # TODO: Return different things depending on if facility or not
-        user_is_fac = is_facility(username=current_user.username)
+        user_is_fac, error = is_facility(username=current_user.username)
         if user_is_fac is None:
-            return flask.make_response(
-                f"User does not exist: {current_user.username}", 401
-            )
+            return flask.make_response(error, 401)
 
         all_projects = list()
         columns = ["Project ID", "Title", "PI", "Status", "Last updated"]
@@ -128,7 +126,7 @@ class RemoveContents(flask_restful.Resource):
         removed, error = (False, "")
         with DBConnector() as dbconn:
             removed, error = dbconn.delete_all()
-            
+
             # Return error if contents not deleted from db
             if not removed:
                 return flask.make_response(error, 500)
@@ -146,12 +144,11 @@ class RemoveContents(flask_restful.Resource):
                 if not removed:
                     db.session.rollback()
                     return flask.make_response(error, 500)
-                
+
                 # Commit changes to db
                 try:
                     db.session.commit()
                 except sqlalchemy.exc.SQLAlchemyError as err:
                     return flask.make_response(str(err), 500)
-
 
         return flask.jsonify({"removed": removed, "error": error})
