@@ -19,9 +19,14 @@ import json
 import boto3
 import botocore
 import sqlalchemy
+import flask
 
 # Own modules
 from code_dds.common.db_code import models
+from code_dds.api.db_connector import DBConnector
+from code_dds.api.dds_decorators import connect_cloud, bucket_must_exists, token_required, \
+    project_access_required
+from code_dds.api.errors import ItemDeletionError
 
 ###############################################################################
 # LOGGING ########################################################### LOGGING #
@@ -31,77 +36,24 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 ###############################################################################
-# DECORATORS ##################################################### DECORATORS #
-###############################################################################
-
-
-def connect_cloud(func):
-    """Connect to S3"""
-
-    @functools.wraps(func)
-    def init_resource(self, *args, **kwargs):
-
-        if None in [self.keys, self.url]:
-            self.keys, self.url, self.bucketname, self.message = (
-                None, None, None, self.message
-            )
-        else:
-            # Connect to service
-            try:
-                session = boto3.session.Session()
-
-                self.resource = session.resource(
-                    service_name="s3",
-                    endpoint_url=self.url,
-                    aws_access_key_id=self.keys["access_key"],
-                    aws_secret_access_key=self.keys["secret_key"]
-                )
-            except botocore.client.ClientError as err:
-                self.keys, self.url, self.bucketname, self.message = (
-                    None, None, None, err
-                )
-
-        return func(self, *args, **kwargs)
-
-    return init_resource
-
-
-def bucket_must_exists(func):
-    """Checks if the bucket exists"""
-
-    @functools.wraps(func)
-    def check_bucket_exists(self, *args, **kwargs):
-        try:
-            self.resource.meta.client.head_bucket(Bucket=self.bucketname)
-        except botocore.client.ClientError:
-            return False,  f"Project does not yet have a " \
-                "dedicated bucket in the S3 instance."
-
-        return func(self, *args, **kwargs)
-
-    return check_bucket_exists
-
-
-###############################################################################
 # CLASSES ########################################################### CLASSES #
 ###############################################################################
 
 
-@dataclasses.dataclass
+@token_required
+@project_access_required
 class ApiS3Connector:
     """Connects to Simple Storage Service."""
 
-    project_id: dataclasses.InitVar[str]
-    safespring_project: str
-    keys: dict = dataclasses.field(init=False)
-    url: str = dataclasses.field(init=False)
-    bucketname: str = dataclasses.field(init=False)
-    resource = None
+    def __init__(self, *args, **kwargs):
+        try:
+            self.current_user, self.project = args
+            print(self.current_user, flush=True)
+        except ValueError as err:
+            flask.abort(500, str(err))
 
-    def __post_init__(self, project_id):
-        self.keys, self.url, self.bucketname, self.message = \
-            self.get_s3_info(safespring_project=self.safespring_project,
-                             project_id=project_id)
+        self.keys, self.url, self.bucketname, self.message = self.get_s3_info()
+        self.resource = None
 
     @connect_cloud
     def __enter__(self):
@@ -114,8 +66,7 @@ class ApiS3Connector:
 
         return True
 
-    @staticmethod
-    def get_s3_info(safespring_project, project_id):
+    def get_s3_info(self):
         """Get information required to connect to cloud."""
 
         # 1. Get keys
@@ -124,7 +75,9 @@ class ApiS3Connector:
             s3path = pathlib.Path.cwd() / \
                 pathlib.Path("sensitive/s3_config.json")
             with s3path.open(mode="r") as f:
-                s3keys = json.load(f)["sfsp_keys"][safespring_project]
+                s3keys = json.load(f)["sfsp_keys"][
+                    self.current_user.safespring
+                ]
         except IOError as err:
             return None, None, None, f"Failed getting keys! {err}"
 
@@ -138,18 +91,12 @@ class ApiS3Connector:
         if not all(x in s3keys for x in ["access_key", "secret_key"]):
             return None, None, None, "Keys not found!"
 
-        # 3. Get bucket name
-        try:
-            bucket = models.Project.query.filter_by(
-                id=project_id
-            ).with_entities(
-                models.Project.bucket
-            ).first()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            return None, None, None, f"Failed to get project bucket name! {err}"
+        with DBConnector() as dbconn:
+            # 3. Get bucket name
+            bucket = dbconn.get_bucket_name()
 
-        if not bucket or bucket is None:
-            return None, None, None, "Project bucket not found!"
+            if not bucket or bucket is None:
+                return None, None, None, "Project bucket not found!"
 
         return s3keys, endpoint_url, bucket[0], ""
 
@@ -157,24 +104,30 @@ class ApiS3Connector:
     def remove_all(self, *args, **kwargs):
         """Removes all contents from the project specific s3 bucket."""
 
+        removed, error = (False, "")
         try:
             bucket = self.resource.Bucket(self.bucketname)
             bucket.objects.all().delete()
         except botocore.client.ClientError as err:
-            return False, f"Failed removing all items from project: {err}"
+            error = str(err)
+        else:
+            removed = True
 
-        return True, ""
+        return removed, error
 
     @bucket_must_exists
     def remove_one(self, file, *args, **kwargs):
         """Removes file from s3"""
 
+        removed, error = (False, "")
         try:
             response = self.resource.meta.client.delete_object(
                 Bucket=self.bucketname,
                 Key=file
             )
         except botocore.client.ClientError as err:
-            return False, f"Failed to remove item {file}: {err}"
-
-        return True, ""
+            error = str(err)
+        else:
+            removed = False
+        
+        return removed, error

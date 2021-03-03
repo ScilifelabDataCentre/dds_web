@@ -13,6 +13,7 @@ from code_dds.api import user
 from code_dds.api import project
 from code_dds.api import s3
 from code_dds.api import files
+from code_dds.api.errors import errors
 
 
 ###############################################################################
@@ -20,7 +21,7 @@ from code_dds.api import files
 ###############################################################################
 
 api_blueprint = flask.Blueprint("api_blueprint", __name__)
-api = flask_restful.Api(api_blueprint)
+api = flask_restful.Api(api_blueprint, errors=errors)
 
 
 ###############################################################################
@@ -43,4 +44,5 @@ api.add_resource(files.RemoveFile, "/file/rm", endpoint="remove_file")
 
 # Projects
 api.add_resource(project.UserProjects, "/proj/list", endpoint="list_projects")
-api.add_resource(project.RemoveContents, "/proj/rm", endpoint="remove_contents")
+api.add_resource(project.RemoveContents, "/proj/rm",
+                 endpoint="remove_contents")

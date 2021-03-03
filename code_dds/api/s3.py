@@ -15,10 +15,9 @@ import json
 import botocore
 
 # Own modules
-from code_dds.api.user import token_required
 from code_dds.common.db_code import models
-from code_dds.api.project import project_access_required
-from code_dds.api import api_s3_connector
+from code_dds.api.api_s3_connector import ApiS3Connector
+from code_dds.api.dds_decorators import token_required, project_access_required
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -32,11 +31,7 @@ class S3Info(flask_restful.Resource):
     def get(self, current_user, project, *args, **kwargs):
         """Get the safespring project"""
 
-        keys, url, bucketname, message = \
-            api_s3_connector.ApiS3Connector.get_s3_info(
-                safespring_project=current_user.safespring,
-                project_id=project["id"]
-            )
+        keys, url, bucketname, message = ApiS3Connector().get_s3_info()
 
         if any(x is None for x in [url, keys, bucketname]):
             return flask.make_response(f"No s3 info returned! {message}", 500)

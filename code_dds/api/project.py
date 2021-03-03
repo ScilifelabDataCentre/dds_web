@@ -18,39 +18,13 @@ import botocore
 
 # Own modules
 from code_dds import db
-from code_dds.api.user import token_required
 from code_dds.api.user import jwt_token
 from code_dds.api.user import is_facility
 from code_dds.common.db_code import models
 from code_dds import timestamp
-from code_dds.api import api_s3_connector
-
-###############################################################################
-# DECORATORS ##################################################### DECORATORS #
-###############################################################################
-
-
-def project_access_required(f):
-    """Decorator function to verify the users access to the project."""
-
-    @functools.wraps(f)
-    def verify_project_access(current_user, project, *args, **kwargs):
-        """Verifies that the user has been granted access to the project."""
-
-        if project["id"] is None:
-            return flask.make_response(
-                "Project ID missing. Cannot proceed", 401
-            )
-
-        if not project["verified"]:
-            return flask.make_response(
-                f"Access to project {project['id']} not yet verified. "
-                "Checkout token settings.", 401
-            )
-
-        return f(current_user, project, *args, **kwargs)
-
-    return verify_project_access
+from code_dds.api.api_s3_connector import ApiS3Connector
+from code_dds.api.db_connector import DBConnector
+from code_dds.api.dds_decorators import token_required, project_access_required
 
 
 ###############################################################################
@@ -64,7 +38,6 @@ class ProjectAccess(flask_restful.Resource):
 
     def get(self, current_user, project):
         """Checks the users access to a specific project and action."""
-
         args = flask.request.args
 
         # Deny access if project or method not specified
@@ -105,7 +78,6 @@ class UserProjects(flask_restful.Resource):
         """Get info regarding all projects which user is involved in."""
 
         # TODO: Return different things depending on if facility or not
-        print(current_user.user_projects, flush=True)
         user_is_fac = is_facility(username=current_user.username)
         if user_is_fac is None:
             return flask.make_response(
@@ -130,7 +102,7 @@ class RemoveContents(flask_restful.Resource):
     """Removes all project contents."""
     method_decorators = [project_access_required, token_required]
 
-    def delete(self, current_user, project):
+    def delete(self, _, project):
         """Removes all project contents."""
 
         # Get project files
@@ -148,31 +120,37 @@ class RemoveContents(flask_restful.Resource):
 
         if not project_files or project_files is None:
             return flask.make_response(
-                "There are no files within project {project['id']}.", 401
+                f"There are no files within project {project['id']}.", 401
             )
 
-        # Delete files from bucket
-        removed = False
-        message = ""
-        with api_s3_connector.ApiS3Connector(
-            project_id=project["id"], safespring_project=current_user.safespring
-        ) as s3conn:
-            if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                return flask.make_response(
-                    "No s3 info returned! " + s3conn.message, 500
-                )
+        # Delete files
+        removed, error = (False, "")
+        with DBConnector() as dbconn:
+            removed, error = dbconn.delete_all()
+            
+            # Return error if contents not deleted from db
+            if not removed:
+                return flask.make_response(error, 500)
 
-            removed, message = s3conn.remove_all()
+            # Delete from bucket
+            with ApiS3Connector() as s3conn:
+                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+                    return flask.make_response(
+                        "No s3 info returned! " + s3conn.message, 500
+                    )
 
-        # Delete all from database
-        if removed:
-            try:
-                models.File.query.filter_by(project_id=project["id"]).delete()
-                db.session.commit()
-            except sqlalchemy.exc.SQLAlchemyError as err:
-                removed, message = (
-                    False, f"Failed removing files from database: {err}"
-                )
-                db.session.rollback()
+                removed, error = s3conn.remove_all()
 
-        return flask.jsonify({"removed": removed, "message": message})
+                # Return error if contents not deleted from s3 bucket
+                if not removed:
+                    db.session.rollback()
+                    return flask.make_response(error, 500)
+                
+                # Commit changes to db
+                try:
+                    db.session.commit()
+                except sqlalchemy.exc.SQLAlchemyError as err:
+                    return flask.make_response(str(err), 500)
+
+
+        return flask.jsonify({"removed": removed, "error": error})

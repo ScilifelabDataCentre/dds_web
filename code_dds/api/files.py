@@ -12,12 +12,11 @@ import flask
 import sqlalchemy
 
 # Own modules
-from code_dds.api.user import token_required
 from code_dds.common.db_code import models
 from code_dds import db
-from code_dds.api.project import project_access_required
-from code_dds.api import api_s3_connector
-from code_dds.api import db_connector
+from code_dds.api.api_s3_connector import ApiS3Connector
+from code_dds.api.db_connector import DBConnector
+from code_dds.api.dds_decorators import token_required, project_access_required
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -55,6 +54,7 @@ class NewFile(flask_restful.Resource):
             db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
             return flask.make_response(
                 f"Failed to add new file '{args['name']}' to database: {err}",
                 500
@@ -95,16 +95,6 @@ class ListFiles(flask_restful.Resource):
 
         args = flask.request.args
 
-        # Check project not empty
-        num_files, message = self.project_size(project=project["id"])
-        if message != "":
-            return flask.make_response(message, 500)
-        if num_files == 0:
-            return flask.jsonify(
-                {"num_items": num_files,
-                 "message": f"The project {project['id']} is empty."}
-            )
-
         # Check if to return file size
         show_size = False
         if "show_size" in args and args["show_size"] == "True":
@@ -115,103 +105,46 @@ class ListFiles(flask_restful.Resource):
         if "subpath" in args:
             subpath = args["subpath"]
 
-        # Get files and folders
-        distinct_files, distinct_folders = self.items_in_subpath(project=project,
-                                                                 folder=subpath)
+        # Check project not empty
+        with DBConnector() as dbconn:
+            num_files = dbconn.project_size()
+            if num_files == 0:
+                return flask.jsonify(
+                    {"num_items": num_files,
+                     "message": f"The project {project['id']} is empty."}
+                )
 
-        # Collect file and folder info to return to CLI
-        files_folders = list()
-        if distinct_files:
-            for x in distinct_files:
-                info = {"name": x[0] if subpath == "."
-                        else x[0].split(subpath + "/")[-1],
-                        "folder": False}
-                if show_size:
-                    info.update({"size": self.fix_size_format(num_bytes=x[1])})
-                files_folders.append(info)
-        if distinct_folders:
-            for x in distinct_folders:
-                info = {"name": x[0] if subpath == "."
-                        else x[0].split(subpath + "/")[-1],
-                        "folder": True}
-                if show_size:
-                    folder_size = self.folder_size(project=project["id"],
-                                                   folder_name=x[0])
-                    info.update(
-                        {"size": fix_size_format(num_bytes=folder_size)}
-                    )
-                files_folders.append(info)
+            # Get files and folders
+            distinct_files, distinct_folders = \
+                dbconn.items_in_subpath(folder=subpath)
+
+            # Collect file and folder info to return to CLI
+            files_folders = list()
+            if distinct_files:
+                for x in distinct_files:
+                    info = {"name": x[0] if subpath == "."
+                            else x[0].split(subpath + "/")[-1],
+                            "folder": False}
+                    if show_size:
+                        info.update(
+                            {"size": self.fix_size_format(num_bytes=x[1])}
+                        )
+                    files_folders.append(info)
+            if distinct_folders:
+                for x in distinct_folders:
+                    info = {"name": x[0] if subpath == "."
+                            else x[0].split(subpath + "/")[-1],
+                            "folder": True}
+                    if show_size:
+                        folder_size = dbconn.folder_size(folder_name=x[0])
+                        info.update(
+                            {"size": self.fix_size_format(
+                                num_bytes=folder_size
+                            )}
+                        )
+                    files_folders.append(info)
 
         return flask.jsonify({"files_folders": files_folders})
-
-    @staticmethod
-    def items_in_subpath(project, folder="."):
-        """Get all items in root folder of project"""
-
-        # Get everything in root:
-        # Files have subpath "." and folders do not have child folders
-        # Get everything in folder:
-        # Files have subpath == folder and folders have child folders (regexp)
-        try:
-            # All files in project
-            files = models.File.query.filter_by(
-                project_id=project["id"]
-            )
-
-            # File names in root
-            distinct_files = files.filter(
-                models.File.subpath == folder
-            ).with_entities(
-                models.File.name, models.File.size
-            ).all()
-
-            # Folder names in folder (or root)
-            distinct_folders = files.filter(
-                sqlalchemy.and_(
-                    (~models.File.subpath.contains(["/"]) if folder == "."
-                     else
-                     models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)?$")),
-                    models.File.subpath != folder
-                )
-            ).with_entities(models.File.subpath).distinct().all()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(
-                f"Failed to get files from database: {err}", 500
-            )
-
-        return distinct_files, distinct_folders
-
-    @staticmethod
-    def folder_size(project, folder_name="."):
-        """Get total size of folder"""
-
-        try:
-            file_info = models.File.query.with_entities(
-                sqlalchemy.func.sum(models.File.size).label("sizeSum")
-            ).filter(
-                sqlalchemy.and_(
-                    models.File.project_id == project,
-                    models.File.subpath.like(f"{folder_name}%")
-                )
-            ).first()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(
-                f"Failed to get project info from database: {err}", 500
-            )
-
-        return file_info.sizeSum
-
-    @staticmethod
-    def project_size(project):
-        """Get size of project"""
-
-        try:
-            num_proj_files = models.Project.query.filter_by(id=project)\
-                .with_entities(models.Project.project_files).count()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            return 0, err
-
-        return num_proj_files, ""
 
     @staticmethod
     def fix_size_format(num_bytes):
@@ -222,8 +155,6 @@ class ListFiles(flask_restful.Resource):
         MB = 1e6
         GB = 1e9
 
-        print(num_bytes, flush=True)
-        print(f"type: {type(num_bytes)}", flush=True)
         num_bytes = int(num_bytes)
         chosen_format = [None, ""]
         if num_bytes > GB:
@@ -246,27 +177,29 @@ class RemoveFile(flask_restful.Resource):
     def delete(self, current_user, project):
         """Deletes the files"""
 
-        print(flask.request.json, flush=True)
-
-        with api_s3_connector.ApiS3Connector(
-            project_id=project["id"], safespring_project=current_user.safespring
-        ) as s3conn:
-            if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+        removed_dict, error = ({}, "")
+        with DBConnector() as dbconn:
+            with ApiS3Connector() as s3conn:
+                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
                     return flask.make_response(
                         "No s3 info returned! " + s3conn.message, 500
                     )
-            
-            for x in flask.request.json:
-                # 1- Remove from db
-                
-                # 2. Remove from s3
-                removed, message = s3conn.remove_one(file=x)
 
-                # commit db
+                for x in flask.request.json:
+                    removed, error = dbconn.delete_one(filename=x)
+                    if not removed:
+                        db.session.rollback()
+                        removed_dict[x] = {"removed": removed, "error": error}
 
-                # if issue rollbakc
+                    removed, error = s3conn.remove_one(file=x)
+                    if not removed:
+                        db.session.rollback()
+                        removed_dict[x] = {"removed": removed, "error": error}
 
+                    try:
+                        db.session.commit()
+                    except sqlalchemy.exc.SQLAlchemyError as err:
+                        db.session.rollback()
+                        removed_dict[x] = {"removed": False, "error": str(err)}
 
-
-
-        return flask.jsonify({"test": "test"})
+        return flask.jsonify({"removed": removed_dict})

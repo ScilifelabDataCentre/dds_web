@@ -21,45 +21,6 @@ from code_dds import app
 from code_dds.common.db_code import models
 
 ###############################################################################
-# DECORATORS ##################################################### DECORATORS #
-###############################################################################
-
-
-def token_required(f):
-    """Decorator function for verifying the JWT tokens in requests."""
-
-    @functools.wraps(f)
-    def validate_token(*args, **kwargs):
-        token = None
-
-        # Get the token from the header
-        if "x-access-token" in flask.request.headers:
-            token = flask.request.headers["x-access-token"]
-
-        # Deny access if token is missing
-        if token is None or not token:
-            return flask.jsonify({"message": "Token is missing!"}), 401
-
-        # Verify the token
-        try:
-            # Decode
-            data = jwt.decode(token, app.config["SECRET_KEY"])
-
-            # Get table and user
-            table = models.Facility if data["facility"] else models.User
-            current_user = table.query.filter_by(
-                public_id=data["public_id"]
-            ).first()
-
-            project = data["project"]
-        except Exception:
-            return flask.jsonify({"message": "Token is invalid!"}), 401
-
-        return f(current_user, project, *args, **kwargs)
-
-    return validate_token
-
-###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
 
@@ -146,7 +107,7 @@ class AuthenticateUser(flask_restful.Resource):
 
     def get(self):
         """Checks the username, password and generates the token."""
-
+        print("auth start", flush=True)
         # Get username and password from CLI request
         auth = flask.request.authorization
         if not auth or not auth.username or not auth.password:
@@ -187,7 +148,6 @@ class AuthenticateUser(flask_restful.Resource):
             token = jwt_token(user_id=user.public_id,
                               is_fac=user_is_fac,
                               project_id=project)
-
             return flask.jsonify({"token": token.decode("UTF-8")})
-
+        
         return flask.make_response("Incorrect password!", 401)
