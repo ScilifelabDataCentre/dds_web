@@ -28,7 +28,7 @@ class S3Info(flask_restful.Resource):
     """Gets the projects S3 keys"""
     method_decorators = [project_access_required, token_required]
 
-    def get(self, current_user, project, *args, **kwargs):
+    def get(self, current_user, _):
         """Get the safespring project"""
 
         keys, url, bucketname, message = ApiS3Connector().get_s3_info()

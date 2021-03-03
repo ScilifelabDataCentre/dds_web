@@ -47,6 +47,7 @@ class DBConnector:
     def get_bucket_name(self):
         """Get bucket name from database"""
 
+        bucketname, error = (None, "")
         try:
             bucket = models.Project.query.filter_by(
                 id=self.project["id"]
@@ -54,21 +55,24 @@ class DBConnector:
                 models.Project.bucket
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            raise BucketNameNotFoundError from err
+            error = str(err)
+        else:
+            bucketname = bucket[0]
 
-        return bucket
+        return bucketname, error
 
     def project_size(self):
         """Get size of project"""
 
+        num_proj_files, error = (0, "")
         try:
             num_proj_files = models.Project.query.filter_by(
                 id=self.project["id"]
             ).with_entities(models.Project.project_files).count()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            raise ProjectSizeError from err
+            error = str(err)
 
-        return num_proj_files
+        return num_proj_files, error
 
     def items_in_subpath(self, folder="."):
         """Get all items in root folder of project"""
@@ -157,3 +161,4 @@ class DBConnector:
                 deleted = True
 
         return deleted, error
+    

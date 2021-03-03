@@ -69,6 +69,7 @@ class ApiS3Connector:
     def get_s3_info(self):
         """Get information required to connect to cloud."""
 
+        s3keys, url, bucketname, error = (None, )*3 + ("", )
         # 1. Get keys
         try:
             # TODO (ina): Change -- these should not be saved in file
@@ -79,26 +80,23 @@ class ApiS3Connector:
                     self.current_user.safespring
                 ]
         except IOError as err:
-            return None, None, None, f"Failed getting keys! {err}"
+            return s3keys, url, bucketname, f"Failed getting keys: {err}"
 
         # 2. Get endpoint url
         try:
             with s3path.open(mode="r") as f:
                 endpoint_url = json.load(f)["endpoint_url"]
         except IOError as err:
-            return None, None, None, f"Failed getting safespring url! {err}"
+            return s3keys, url, bucketname, f"Failed getting url! {err}"
 
         if not all(x in s3keys for x in ["access_key", "secret_key"]):
-            return None, None, None, "Keys not found!"
+            return s3keys, url, bucketname, "Keys not found!"
 
         with DBConnector() as dbconn:
             # 3. Get bucket name
-            bucket = dbconn.get_bucket_name()
+            bucketname, error = dbconn.get_bucket_name()
 
-            if not bucket or bucket is None:
-                return None, None, None, "Project bucket not found!"
-
-        return s3keys, endpoint_url, bucket[0], ""
+        return s3keys, endpoint_url, bucketname, error
 
     @bucket_must_exists
     def remove_all(self, *args, **kwargs):

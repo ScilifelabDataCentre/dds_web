@@ -66,35 +66,41 @@ def verify_password_argon2id(db_pw, input_pw):
 def is_facility(username):
     """Checks if the user is a facility or not."""
 
+    is_fac, error = (False, "")
+
     # Check for user and which table to work in
     try:
         role = models.Role.query.filter_by(username=username).\
             with_entities(models.Role.facility).first()
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        return flask.make_response(
-            f"Database connection failed - {sqlerr}", 500
-        )
+        error = f"Database connection failed - {sqlerr}" + str(sqlerr)
+    else:
+        # Deny access if there is no such user
+        if not role or role is None:
+            is_fac, error = (None, "The user doesn't exist.")
+        else:
+            is_fac = role[0]
 
-    # Deny access if there is no such user
-    if not role or role is None:
-        return None
-
-    return role[0]
+    return is_fac, error
 
 
 def jwt_token(user_id, is_fac, project_id, project_access=False):
     """Generates and encodes a JWT token."""
+    
+    error = ""
+    try:
+        token = jwt.encode(
+            {"public_id": user_id,
+            "facility": is_fac,
+            "project": {"id": project_id, "verified": project_access},
+            "exp": datetime.datetime.utcnow() +
+            datetime.timedelta(hours=48)},
+            app.config["SECRET_KEY"]
+        )
+    except Exception as err:
+        token, error = (None, str(err))
 
-    token = jwt.encode(
-        {"public_id": user_id,
-         "facility": is_fac,
-         "project": {"id": project_id, "verified": project_access},
-         "exp": datetime.datetime.utcnow() +
-         datetime.timedelta(hours=48)},
-        app.config["SECRET_KEY"]
-    )
-
-    return token
+    return token, error
 
 
 ###############################################################################
@@ -107,7 +113,7 @@ class AuthenticateUser(flask_restful.Resource):
 
     def get(self):
         """Checks the username, password and generates the token."""
-        print("auth start", flush=True)
+
         # Get username and password from CLI request
         auth = flask.request.authorization
         if not auth or not auth.username or not auth.password:
@@ -121,10 +127,9 @@ class AuthenticateUser(flask_restful.Resource):
             project = args["project"]
 
         # Check if user has facility role
-        user_is_fac = is_facility(username=auth.username)
+        user_is_fac, error = is_facility(username=auth.username)
         if user_is_fac is None:
-            return flask.make_response(f"User does not exist: {auth.username}",
-                                       401)
+            return flask.make_response(error, 401)
 
         # Get user from DB matching the username
         try:
@@ -132,7 +137,7 @@ class AuthenticateUser(flask_restful.Resource):
             user = table.query.filter_by(username=auth.username).first()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             return flask.make_response(
-                f"Database connection failed - {sqlerr}", 500
+                f"Database connection failed: {sqlerr}", 500
             )
 
         # Deny access if there is no such user
@@ -145,9 +150,12 @@ class AuthenticateUser(flask_restful.Resource):
 
         # Verify user password and generate token
         if verify_password_argon2id(user.password, auth.password):
-            token = jwt_token(user_id=user.public_id,
+            token, error = jwt_token(user_id=user.public_id,
                               is_fac=user_is_fac,
                               project_id=project)
+            if token is None:
+                return flask.make_response(error, 500)
+
             return flask.jsonify({"token": token.decode("UTF-8")})
         
         return flask.make_response("Incorrect password!", 401)

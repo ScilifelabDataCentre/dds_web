@@ -45,11 +45,9 @@ class ProjectAccess(flask_restful.Resource):
             return flask.make_response("Invalid request", 500)
 
         # Check if user is allowed to performed attempted operation
-        user_is_fac = is_facility(username=current_user.username)
+        user_is_fac, error = is_facility(username=current_user.username)
         if user_is_fac is None:
-            return flask.make_response(
-                f"User does not exist: {current_user.username}", 401
-            )
+            return flask.make_response(error, 401)
 
         # Facilities can upload and list, users can download and list
         # TODO (ina): Add allowed actions to DB instead of hard coding
@@ -62,9 +60,12 @@ class ProjectAccess(flask_restful.Resource):
 
         # Check if user has access to project
         if project["id"] in [x.id for x in current_user.user_projects]:
-            token = jwt_token(user_id=current_user.public_id,
+            token, error = jwt_token(user_id=current_user.public_id,
                               is_fac=user_is_fac, project_id=project["id"],
                               project_access=True)
+            if token is None:
+                return flask.make_response(error, 500)
+                
             return flask.jsonify({"dds-access-granted": True, "token": token.decode("UTF-8")})
 
         return flask.make_response("Project access denied", 401)

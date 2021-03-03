@@ -67,7 +67,7 @@ class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
     method_decorators = [project_access_required, token_required]  # 2, 1
 
-    def get(self, current_user, project):
+    def get(self, _, project):
         """Matches specified files to files in db."""
 
         try:
@@ -90,7 +90,7 @@ class ListFiles(flask_restful.Resource):
     """Lists files within a project"""
     method_decorators = [project_access_required, token_required]
 
-    def get(self, current_user, project):
+    def get(self, _, project):
         """Get a list of files within the specified folder."""
 
         args = flask.request.args
@@ -107,9 +107,10 @@ class ListFiles(flask_restful.Resource):
 
         # Check project not empty
         with DBConnector() as dbconn:
-            num_files = dbconn.project_size()
+            num_files, error = dbconn.project_size()
             if num_files == 0:
-                return flask.jsonify(
+                return flask.make_response(error, 500) if error != "" else \
+                    flask.jsonify(
                     {"num_items": num_files,
                      "message": f"The project {project['id']} is empty."}
                 )
