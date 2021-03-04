@@ -209,36 +209,53 @@ class RemoveDir(flask_restful.Resource):
 
         print(flask.request.json, flush=True)
 
-        removed_dict, not_removed_dict, not_exist_list = (
-            {}, {}, [])
+        info_dict = {"full_removal": [],
+                     "full_fail": [],
+                     "removed": {},
+                     "not_removed": {},
+                     "not_exist": []}
+
+        # removed_dict, not_removed_dict, not_exist_list = (
+        #     {}, {}, [])
 
         with DBConnector() as dbconn:
 
             for x in flask.request.json:
+                print(f"\n{x}", flush=True)
+                # Get all files in the folder
                 distinct_files, _, error = \
                     dbconn.items_in_subpath(folder=x)
 
                 print(distinct_files, flush=True)
-                
+                print(error, flush=True)
+                # Error with db --> folder error
                 if error != "":
-                    not_removed_dict[x] = error
-                    continue
-                    
-                if not distinct_files:
-                    not_exist_list.append(x)
+                    info_dict["not_removed"][x] = {"dir_error": error}
                     continue
 
-                removed, not_removed, _, error = \
+                # No files --> folder does not exist
+                if not distinct_files:
+                    info_dict["not_exist"].append(x)
+                    continue
+
+                # Delete files
+                removed, not_removed, _, _ = \
                     dbconn.delete_multiple(
                         files=[y[0] for y in distinct_files])
 
-                if not any([removed, not_removed]) and error != "":
-                    not_removed_dict[x] = error
+                print(removed, flush=True)
+
+                # Check if error with S3 connection
+                if None in [removed, not_removed] and error != "":
+                    info_dict[x]["dir_error"] = error
                     continue
 
-                removed_dict[x] = removed
-                not_removed_dict[x] = not_removed
+                if len(removed) == len(distinct_files):
+                    info_dict["full_removal"].append(x)
+                elif len(not_removed) == len(distinct_files):
+                    info_dict["full_fail"].append(x)
+                else:
+                    info_dict["removed"][x] = removed
+                    info_dict["not_removed"][x] = not_removed
 
-        return flask.jsonify({"successful": removed_dict,
-                              "not_removed": not_removed_dict, 
-                              "not_exist": not_exist_list})
+        return flask.jsonify(info_dict)

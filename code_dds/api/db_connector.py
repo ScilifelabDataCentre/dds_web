@@ -176,11 +176,12 @@ class DBConnector:
                 # Delete from db
                 was_in_db, removed, name_in_bucket, error = \
                     self.delete_one(filename=x)
+                print(f"File: {x} - In db: {was_in_db}", flush=True)
 
                 # Non existant files cannot be deleted
                 if not was_in_db:
                     not_exist_list.append(x)
-                    continue
+                    continue                
 
                 # Failure to delete
                 if not removed or name_in_bucket is None:
@@ -190,6 +191,7 @@ class DBConnector:
 
                 # Remove from s3 bucket
                 removed, error = s3conn.remove_one(file=name_in_bucket)
+                print(removed, flush=True)
                 if not removed:
                     db.session.rollback()
                     not_removed_dict[x] = {"error": error}
@@ -197,7 +199,8 @@ class DBConnector:
 
                 # Commit to db if ok
                 try:
-                    db.session.commit()
+                    # db.session.commit()
+                    pass
                 except sqlalchemy.exc.SQLAlchemyError as err:
                     db.session.rollback()
                     not_removed_dict[x] = {"error": str(err)}
@@ -205,6 +208,8 @@ class DBConnector:
                 else:
                     removed_list.append(x)
 
+        print(removed_list, flush=True)
+       
         return removed_list, not_removed_dict, not_exist_list, error
 
     def delete_one(self, filename):
