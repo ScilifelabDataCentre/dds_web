@@ -120,9 +120,9 @@ def bucket_must_exists(func):
     def check_bucket_exists(self, *args, **kwargs):
         try:
             self.resource.meta.client.head_bucket(Bucket=self.bucketname)
-        except botocore.client.ClientError:
+        except botocore.client.ClientError as err:
             return False,  f"Project does not yet have a " \
-                "dedicated bucket in the S3 instance."
+                f"dedicated bucket in the S3 instance: {err}"
 
         return func(self, *args, **kwargs)
 

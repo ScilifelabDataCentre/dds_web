@@ -184,45 +184,16 @@ class RemoveFile(flask_restful.Resource):
     """Removes files from the database and s3 with boto3."""
     method_decorators = [project_access_required, token_required]
 
-    def delete(self, current_user, project):
+    def delete(self, _, project):
         """Deletes the files"""
 
-        removed_list, not_removed_dict, not_exist_list, error = (
-            [], {}, [], "")
         with DBConnector() as dbconn:
-            with ApiS3Connector() as s3conn:
-                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                    return flask.make_response(
-                        "No s3 info returned! " + s3conn.message, 500
-                    )
+            removed_list, not_removed_dict, not_exist_list, error = \
+                dbconn.delete_multiple(files=flask.request.json)
 
-                for x in flask.request.json:
-                    was_in_db, removed, name_in_bucket, error = \
-                        dbconn.delete_one(filename=x)
-
-                    if not was_in_db:
-                        not_exist_list.append(x)
-                        continue
-
-                    if not removed or name_in_bucket is None:
-                        db.session.rollback()
-                        not_removed_dict[x] = {"error": error}
-                        continue
-
-                    removed, error = s3conn.remove_one(file=name_in_bucket)
-                    if not removed:
-                        db.session.rollback()
-                        not_removed_dict[x] = {"error": error}
-                        continue
-
-                    try:
-                        db.session.commit()
-                    except sqlalchemy.exc.SQLAlchemyError as err:
-                        db.session.rollback()
-                        not_removed_dict[x] = {"error": str(err)}
-                        continue
-                    else:
-                        removed_list.append(x)
+            if not any([removed_list, not_removed_dict, not_exist_list]) and \
+                    error != "":
+                return flask.make_response(error, 500)
 
         return flask.jsonify({"successful": removed_list,
                               "not_removed": not_removed_dict,
@@ -236,4 +207,38 @@ class RemoveDir(flask_restful.Resource):
     def delete(self, current_user, project):
         """Deletes the folders."""
 
-        return flask.jsonify({"test": "test"})
+        print(flask.request.json, flush=True)
+
+        removed_dict, not_removed_dict, not_exist_list = (
+            {}, {}, [])
+
+        with DBConnector() as dbconn:
+
+            for x in flask.request.json:
+                distinct_files, _, error = \
+                    dbconn.items_in_subpath(folder=x)
+
+                print(distinct_files, flush=True)
+                
+                if error != "":
+                    not_removed_dict[x] = error
+                    continue
+                    
+                if not distinct_files:
+                    not_exist_list.append(x)
+                    continue
+
+                removed, not_removed, _, error = \
+                    dbconn.delete_multiple(
+                        files=[y[0] for y in distinct_files])
+
+                if not any([removed, not_removed]) and error != "":
+                    not_removed_dict[x] = error
+                    continue
+
+                removed_dict[x] = removed
+                not_removed_dict[x] = not_removed
+
+        return flask.jsonify({"successful": removed_dict,
+                              "not_removed": not_removed_dict, 
+                              "not_exist": not_exist_list})

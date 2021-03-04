@@ -17,6 +17,7 @@ from code_dds.api.errors import BucketNameNotFoundError, ProjectSizeError, \
 from code_dds.common.db_code import models
 from code_dds import db
 from code_dds.api.dds_decorators import token_required
+from code_dds.api.api_s3_connector import ApiS3Connector
 
 ###############################################################################
 # CLASSES ########################################################### CLASSES #
@@ -64,7 +65,6 @@ class DBConnector:
     def filename_in_bucket(self, filename):
         """Get filename in bucket."""
 
-        print(f"File in db: {filename}", flush=True)
         name_in_bucket, error = (None, "")
         try:
             file = models.File.query.filter_by(
@@ -72,7 +72,6 @@ class DBConnector:
             ).all()
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
-            print(error, flush=True)
         else:
             name_in_bucket = file[0]
 
@@ -160,8 +159,56 @@ class DBConnector:
 
         return deleted, error
 
+    def delete_multiple(self, files):
+        """Delete multiple files."""
+
+        removed_list, not_removed_dict, not_exist_list, error = \
+            ([], {}, [], "")
+
+        with ApiS3Connector() as s3conn:
+            # Error if not enough info
+            if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+                return removed_list, not_removed_dict, not_exist_list, \
+                    "No s3 info returned! " + s3conn.message
+
+            # Delete each file
+            for x in files:
+                # Delete from db
+                was_in_db, removed, name_in_bucket, error = \
+                    self.delete_one(filename=x)
+
+                # Non existant files cannot be deleted
+                if not was_in_db:
+                    not_exist_list.append(x)
+                    continue
+
+                # Failure to delete
+                if not removed or name_in_bucket is None:
+                    db.session.rollback()
+                    not_removed_dict[x] = {"error": error}
+                    continue
+
+                # Remove from s3 bucket
+                removed, error = s3conn.remove_one(file=name_in_bucket)
+                if not removed:
+                    db.session.rollback()
+                    not_removed_dict[x] = {"error": error}
+                    continue
+
+                # Commit to db if ok
+                try:
+                    db.session.commit()
+                except sqlalchemy.exc.SQLAlchemyError as err:
+                    db.session.rollback()
+                    not_removed_dict[x] = {"error": str(err)}
+                    continue
+                else:
+                    removed_list.append(x)
+
+        return removed_list, not_removed_dict, not_exist_list, error
+
     def delete_one(self, filename):
-        """Delete all files in project."""
+        """Delete a single file in project."""
 
         exists, deleted, name_in_bucket, error = (False, False, None, "")
         try:
@@ -171,8 +218,8 @@ class DBConnector:
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
-        
-        if file and file is not None:
+
+        if file or file is not None:
             exists, name_in_bucket = (True, file.name_in_bucket)
             try:
                 db.session.delete(file)
@@ -183,3 +230,36 @@ class DBConnector:
                 deleted = True
 
         return exists, deleted, name_in_bucket, error
+
+    def delete_dir(self, foldername):
+        """Delete all files in a folder"""
+
+        exists, deleted, errors = (False, None, None)
+
+        # Get files in folder
+        try:
+            files_in_folder = models.File.query.filter_by(
+                project_id=self.project["id"],
+                subpath=foldername
+            ).all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            error = str(err)
+
+        # Get bucket info and delete files
+        if files_in_folder or files_in_folder is not None:
+            exists, deleted, errors = (True, {}, {})
+
+            for x in files_in_folder:
+                print(x, flush=True)
+                filename = x.name
+                nameinbucket = x.name_in_bucket
+
+                try:
+                    db.session.delete(x)
+                except sqlalchemy.exc.SQLAlchemyError as err:
+                    db.session.rollback()
+                    errors[filename] = str(err)
+                else:
+                    deleted[filename] = {"name_in_bucket": nameinbucket}
+
+        return exists, deleted, errors

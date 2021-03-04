@@ -23,7 +23,6 @@ import flask
 
 # Own modules
 from code_dds.common.db_code import models
-from code_dds.api.db_connector import DBConnector
 from code_dds.api.dds_decorators import connect_cloud, bucket_must_exists, token_required, \
     project_access_required
 from code_dds.api.errors import ItemDeletionError
@@ -92,6 +91,7 @@ class ApiS3Connector:
         if not all(x in s3keys for x in ["access_key", "secret_key"]):
             return s3keys, url, bucketname, "Keys not found!"
 
+        from code_dds.api.db_connector import DBConnector
         with DBConnector() as dbconn:
             # 3. Get bucket name
             bucketname, error = dbconn.get_bucket_name()
@@ -119,7 +119,7 @@ class ApiS3Connector:
 
         removed, error = (False, "")
         try:
-            response = self.resource.meta.client.delete_object(
+            _ = self.resource.meta.client.delete_object(
                 Bucket=self.bucketname,
                 Key=file
             )
@@ -127,5 +127,5 @@ class ApiS3Connector:
             error = str(err)
         else:
             removed = True
-        
+
         return removed, error
