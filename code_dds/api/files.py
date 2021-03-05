@@ -188,17 +188,16 @@ class RemoveFile(flask_restful.Resource):
         """Deletes the files"""
 
         with DBConnector() as dbconn:
-            removed_list, not_removed_dict, not_exist_list, error = \
+            not_removed_dict, not_exist_list, error = \
                 dbconn.delete_multiple(files=flask.request.json)
 
             # S3 connection error
-            if not any([removed_list, not_removed_dict, not_exist_list]) and \
+            if not any([not_removed_dict, not_exist_list]) and \
                     error != "":
                 return flask.make_response(error, 500)
 
         # Return deleted and not deleted files
-        return flask.jsonify({"successful": removed_list,
-                              "not_removed": not_removed_dict,
+        return flask.jsonify({"not_removed": not_removed_dict,
                               "not_exists": not_exist_list})
 
 
@@ -209,55 +208,45 @@ class RemoveDir(flask_restful.Resource):
     def delete(self, current_user, project):
         """Deletes the folders."""
 
-        print(flask.request.json, flush=True)
-
-        info_dict = {"full_removal": [],
-                     "full_fail": [],
-                     "removed": {},
-                     "not_removed": {},
-                     "not_exist": []}
-
-        # removed_dict, not_removed_dict, not_exist_list = (
-        #     {}, {}, [])
+        not_removed_dict, not_exist_list = ({}, [])
 
         with DBConnector() as dbconn:
+            with ApiS3Connector() as s3conn:
+                # Error if not enough info
+                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+                    return not_removed_dict, not_exist_list, \
+                        "No s3 info returned! " + s3conn.message
 
-            for x in flask.request.json:
-                print(f"\n{x}", flush=True)
-                # Get all files in the folder
-                distinct_files, _, error = \
-                    dbconn.items_in_subpath(folder=x)
+                for x in flask.request.json:
+                    # Get all files in the folder
+                    in_db, folder_deleted, error = dbconn.delete_folder(folder=x)
 
-                print(distinct_files, flush=True)
-                print(error, flush=True)
-                # Error with db --> folder error
-                if error != "":
-                    info_dict["not_removed"][x] = {"dir_error": error}
-                    continue
+                    if not in_db:
+                        db.session.rollback()
+                        not_exist_list.append(x)
+                        continue
+                    
+                    # Error with db --> folder error
+                    if not folder_deleted:
+                        db.session.rollback()
+                        not_removed_dict[x] =  error
+                        continue
 
-                # No files --> folder does not exist
-                if not distinct_files:
-                    info_dict["not_exist"].append(x)
-                    continue
+                    # Delete from s3
+                    folder_deleted, error = s3conn.remove_folder(folder=x)
 
-                # Delete files
-                removed, not_removed, _, _ = \
-                    dbconn.delete_multiple(
-                        files=[y[0] for y in distinct_files])
+                    if not folder_deleted:
+                        db.session.rollback()
+                        not_removed_dict[x] = error
+                        continue
+                    
+                    # Commit to db if no error so far
+                    try:
+                        db.session.commit()
+                    except sqlalchemy.exc.SQLAlchemyError as err:
+                        db.session.rollback()
+                        not_removed_dict[x] = str(err)
+                        continue
 
-                print(removed, flush=True)
-
-                # Check if error with S3 connection
-                if None in [removed, not_removed] and error != "":
-                    info_dict[x]["dir_error"] = error
-                    continue
-
-                if len(removed) == len(distinct_files):
-                    info_dict["full_removal"].append(x)
-                elif len(not_removed) == len(distinct_files):
-                    info_dict["full_fail"].append(x)
-                else:
-                    info_dict["removed"][x] = removed
-                    info_dict["not_removed"][x] = not_removed
-
-        return flask.jsonify(info_dict)
+        return flask.jsonify({"not_removed": not_removed_dict,
+                              "not_exists": not_exist_list})

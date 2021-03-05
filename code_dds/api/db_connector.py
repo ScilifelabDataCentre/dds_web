@@ -150,7 +150,8 @@ class DBConnector:
 
         deleted, error = (False, "")
         try:
-            num_deleted = models.File.query.filter_by(project_id=self.project["id"]).delete()
+            num_deleted = models.File.query.filter_by(
+                project_id=self.project["id"]).delete()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             error = str(err)
@@ -163,16 +164,45 @@ class DBConnector:
 
         return deleted, error
 
+    def delete_folder(self, folder):
+        """Delete all items in folder"""
+
+        exists, deleted, error = (False, False, "")
+        try:
+            # File names in root
+            files = models.File.query.filter_by(
+                project_id=self.project["id"]
+            ).filter(
+                sqlalchemy.or_(
+                    models.File.subpath == folder,
+                    models.File.subpath.op("regexp")(
+                        f"^{folder}(\/[^\/]+)?$"
+                    )
+                )
+            ).all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            error = str(err)
+
+        if files and files is not None:
+            exists = True
+            try:
+                _ = [db.session.delete(x) for x in files]
+            except sqlalchemy.exc.SQLAlchemyError as err:
+                error = str(err)
+            else:
+                deleted = True
+
+        return exists, deleted, error
+
     def delete_multiple(self, files):
         """Delete multiple files."""
 
-        removed_list, not_removed_dict, not_exist_list, error = \
-            ([], {}, [], "")
+        not_removed_dict, not_exist_list, error = ({}, [], "")
 
         with ApiS3Connector() as s3conn:
             # Error if not enough info
             if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                return removed_list, not_removed_dict, not_exist_list, \
+                return not_removed_dict, not_exist_list, \
                     "No s3 info returned! " + s3conn.message
 
             # Delete each file
@@ -201,16 +231,13 @@ class DBConnector:
 
                 # Commit to db if ok
                 try:
-                    # db.session.commit()
-                    pass
+                    db.session.commit()
                 except sqlalchemy.exc.SQLAlchemyError as err:
                     db.session.rollback()
                     not_removed_dict[x] = str(err)
                     continue
-                else:
-                    removed_list.append(x)
 
-        return removed_list, not_removed_dict, not_exist_list, error
+        return not_removed_dict, not_exist_list, error
 
     def delete_one(self, filename):
         """Delete a single file in project."""
