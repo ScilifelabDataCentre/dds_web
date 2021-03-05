@@ -104,24 +104,6 @@ class RemoveContents(flask_restful.Resource):
     def delete(self, _, project):
         """Removes all project contents."""
 
-        # Get project files
-        try:
-            project_files = models.File.query.filter_by(
-                project_id=project['id']
-            ).with_entities(
-                models.File.id, models.File.name, models.File.name_in_bucket
-            ).all()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(
-                f"Failed to get file names within project {project['id']}: "
-                f"{err}", 500
-            )
-
-        if not project_files or project_files is None:
-            return flask.make_response(
-                f"There are no files within project {project['id']}.", 401
-            )
-
         # Delete files
         removed, error = (False, "")
         with DBConnector() as dbconn:

@@ -191,10 +191,12 @@ class RemoveFile(flask_restful.Resource):
             removed_list, not_removed_dict, not_exist_list, error = \
                 dbconn.delete_multiple(files=flask.request.json)
 
+            # S3 connection error
             if not any([removed_list, not_removed_dict, not_exist_list]) and \
                     error != "":
                 return flask.make_response(error, 500)
 
+        # Return deleted and not deleted files
         return flask.jsonify({"successful": removed_list,
                               "not_removed": not_removed_dict,
                               "not_exists": not_exist_list})

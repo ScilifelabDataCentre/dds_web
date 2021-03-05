@@ -150,12 +150,16 @@ class DBConnector:
 
         deleted, error = (False, "")
         try:
-            models.File.query.filter_by(project_id=self.project["id"]).delete()
+            num_deleted = models.File.query.filter_by(project_id=self.project["id"]).delete()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             error = str(err)
         else:
-            deleted = True
+            if num_deleted == 0:
+                error = f"There are no files within project {self.project['id']}."
+                deleted = False
+            else:
+                deleted = True
 
         return deleted, error
 
@@ -174,27 +178,25 @@ class DBConnector:
             # Delete each file
             for x in files:
                 # Delete from db
-                was_in_db, removed, name_in_bucket, error = \
+                in_db, delete_ok, name_in_bucket, error = \
                     self.delete_one(filename=x)
-                print(f"File: {x} - In db: {was_in_db}", flush=True)
 
                 # Non existant files cannot be deleted
-                if not was_in_db:
+                if not in_db:
                     not_exist_list.append(x)
-                    continue                
+                    continue
 
                 # Failure to delete
-                if not removed or name_in_bucket is None:
+                if not delete_ok or name_in_bucket is None:
                     db.session.rollback()
-                    not_removed_dict[x] = {"error": error}
+                    not_removed_dict[x] = error
                     continue
 
                 # Remove from s3 bucket
-                removed, error = s3conn.remove_one(file=name_in_bucket)
-                print(removed, flush=True)
-                if not removed:
+                delete_ok, error = s3conn.remove_one(file=name_in_bucket)
+                if not delete_ok:
                     db.session.rollback()
-                    not_removed_dict[x] = {"error": error}
+                    not_removed_dict[x] = error
                     continue
 
                 # Commit to db if ok
@@ -203,13 +205,11 @@ class DBConnector:
                     pass
                 except sqlalchemy.exc.SQLAlchemyError as err:
                     db.session.rollback()
-                    not_removed_dict[x] = {"error": str(err)}
+                    not_removed_dict[x] = str(err)
                     continue
                 else:
                     removed_list.append(x)
 
-        print(removed_list, flush=True)
-       
         return removed_list, not_removed_dict, not_exist_list, error
 
     def delete_one(self, filename):
