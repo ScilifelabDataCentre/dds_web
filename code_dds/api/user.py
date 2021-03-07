@@ -9,7 +9,6 @@ import datetime
 import binascii
 
 # Installed
-import argon2
 import flask
 import flask_restful
 import jwt
@@ -18,7 +17,8 @@ import functools
 
 # Own modules
 from code_dds import app
-from code_dds.common.db_code import models
+from code_dds.db_code import models
+from code_dds.crypt.auth import gen_argon2hash, verify_password_argon2id
 
 
 ###############################################################################
@@ -54,23 +54,6 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
 
     return decorated
-
-
-def gen_argon2hash(password, time_cost=2, memory_cost=102400, parallelism=8,
-                   hash_len=32, salt_len=16, encoding="utf-8",
-                   version=argon2.low_level.Type.ID):
-    """Generates Argon2id password hash to store in DB."""
-
-    pw_hasher = argon2.PasswordHasher(time_cost=time_cost,
-                                      memory_cost=memory_cost,
-                                      parallelism=parallelism,
-                                      hash_len=hash_len,
-                                      salt_len=salt_len,
-                                      encoding=encoding,
-                                      type=version)
-    formated_hash = pw_hasher.hash(password)
-
-    return formated_hash
 
 
 class AuthenticateUser(flask_restful.Resource):
@@ -128,24 +111,3 @@ class AuthenticateUser(flask_restful.Resource):
             return flask.jsonify({"token": token.decode("UTF-8")})
 
         return flask.make_response("Could not verify", 401)
-
-
-def verify_password_argon2id(db_pw, input_pw):
-    """Verifies that the password specified by the user matches
-    the encoded password in the database."""
-
-    # Setup Argon2 hasher
-    password_hasher = argon2.PasswordHasher()
-
-    # Verify the input password
-    try:
-        password_hasher.verify(db_pw, input_pw)
-    except (argon2.exceptions.VerifyMismatchError,
-            argon2.exceptions.VerificationError,
-            argon2.exceptions.InvalidHash) as err:
-        print(err, flush=True)
-        return False
-
-    # TODO: Add check_needs_rehash?
-
-    return True

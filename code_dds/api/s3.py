@@ -15,7 +15,7 @@ import json
 
 # Own modules
 from code_dds.api.user import token_required
-from code_dds.common.db_code import models
+from code_dds.db_code import models
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #

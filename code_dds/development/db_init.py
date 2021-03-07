@@ -3,7 +3,7 @@
 import os
 import uuid
 
-from code_dds.common.db_code.models import User, Project, Facility, File, Role
+from code_dds.db_code.models import User, Project, Facility, File, Role
 from code_dds import db
 from code_dds import timestamp
 
@@ -78,7 +78,7 @@ def fill_db():
 
     users = [User(public_id="public_user_id",
                   username="username",
-                  password="password",
+                  password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
                   admin=False)
 
              #     User(first_name="FirstName", last_name="LastName",
