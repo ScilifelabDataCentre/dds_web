@@ -94,7 +94,7 @@ class ListFiles(flask_restful.Resource):
         """Get a list of files within the specified folder."""
 
         args = flask.request.args
-
+        print(args, flush=True)
         # Check if to return file size
         show_size = False
         if "show_size" in args and args["show_size"] == "True":
@@ -111,7 +111,7 @@ class ListFiles(flask_restful.Resource):
         with DBConnector() as dbconn:
             num_files, error = dbconn.project_size()
             if num_files == 0:
-                if error == "":
+                if error != "":
                     return flask.make_response(error, 500)
 
                 return flask.jsonify(
@@ -120,8 +120,11 @@ class ListFiles(flask_restful.Resource):
                 )
 
             # Get files and folders
+            print(subpath, flush=True)
             distinct_files, distinct_folders, error = \
                 dbconn.items_in_subpath(folder=subpath)
+            print(distinct_files, flush=True)
+            print(distinct_folders, flush=True)
             if error != "":
                 return flask.make_response(error, 500)
 
@@ -154,6 +157,7 @@ class ListFiles(flask_restful.Resource):
                         )
                     files_folders.append(info)
 
+        print(files_folders, flush=True)
         return flask.jsonify({"files_folders": files_folders})
 
     @staticmethod

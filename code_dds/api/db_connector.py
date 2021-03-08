@@ -6,6 +6,7 @@
 
 # Standard library
 import traceback
+import os
 
 # Installed
 import flask
@@ -82,9 +83,9 @@ class DBConnector:
 
         num_proj_files, error = (0, "")
         try:
-            num_proj_files = models.Project.query.filter_by(
-                id=self.project["id"]
-            ).with_entities(models.Project.project_files).count()
+            num_proj_files = models.File.query.filter_by(
+                project_id=self.project["id"]
+            ).count()
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
 
@@ -123,7 +124,51 @@ class DBConnector:
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
 
+        if not any([distinct_files, distinct_folders]):
+            # longest, error = self.longest_folder_path()
+            distinct_folders, error = self.shortest_next_folder()
+
         return distinct_files, distinct_folders, error
+
+    def longest_folder_path(self):
+
+        longest, error = (0, "")
+        try:
+            # All files in project
+            folders = models.File.query.filter_by(
+                project_id=self.project["id"]
+            ).with_entities(models.File.subpath).distinct().all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            error = str(err)
+
+        if folders:
+            longest = max([len(x[0].split(os.sep)) for x in folders])
+        
+        return longest, error
+
+    def shortest_next_folder(self, level=0):
+
+        distinct_folders, error = ([], "")
+        regex = ""
+        regex = "^[^\/]+" + level * "\/[^\/]+" + "$"
+
+        try:
+            files = models.File.query.filter_by(
+                project_id=self.project["id"]
+            )
+
+            all_folders = files.filter(
+                models.File.subpath.op("regexp")(
+                    regex
+                )
+            ).with_entities(models.File.subpath).distinct().all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            error = str(err)
+        
+        if not all_folders:
+            all_folders, error = self.shortest_next_folder(level=level+1)
+
+        return all_folders, error
 
     def folder_size(self, folder_name="."):
         """Get total size of folder"""
