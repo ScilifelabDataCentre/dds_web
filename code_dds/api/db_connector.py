@@ -13,8 +13,14 @@ import flask
 import sqlalchemy
 
 # Own modules
-from code_dds.api.errors import BucketNameNotFoundError, ProjectSizeError, \
-    DBFileError, FolderSizeError, FileDeletionError, FileRetrievalError
+from code_dds.api.errors import (
+    BucketNameNotFoundError,
+    ProjectSizeError,
+    DBFileError,
+    FolderSizeError,
+    FileDeletionError,
+    FileRetrievalError,
+)
 from code_dds.common.db_code import models
 from code_dds import db
 from code_dds.api.dds_decorators import token_required
@@ -51,11 +57,11 @@ class DBConnector:
 
         bucketname, error = (None, "")
         try:
-            bucket = models.Project.query.filter_by(
-                id=self.project["id"]
-            ).with_entities(
-                models.Project.bucket
-            ).first()
+            bucket = (
+                models.Project.query.filter_by(id=self.project["id"])
+                .with_entities(models.Project.bucket)
+                .first()
+            )
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
         else:
@@ -68,9 +74,7 @@ class DBConnector:
 
         name_in_bucket, error = (None, "")
         try:
-            file = models.File.query.filter_by(
-                project_id=self.project["id"]
-            ).all()
+            file = models.File.query.filter_by(project_id=self.project["id"]).all()
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
         else:
@@ -101,88 +105,70 @@ class DBConnector:
         # Files have subpath == folder and folders have child folders (regexp)
         try:
             # All files in project
-            files = models.File.query.filter_by(
-                project_id=self.project["id"]
-            )
+            files = models.File.query.filter_by(project_id=self.project["id"])
 
             # File names in root
-            distinct_files = files.filter(
-                models.File.subpath == folder
-            ).with_entities(
-                models.File.name, models.File.size
-            ).all()
-
-            # Folder names in folder (or root)
-            distinct_folders = files.filter(
-                sqlalchemy.and_(
-                    (~models.File.subpath.contains(["/"]) if folder == "."
-                     else
-                     models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)?$")),
-                    models.File.subpath != folder
-                )
-            ).with_entities(models.File.subpath).distinct().all()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-
-        if not any([distinct_files, distinct_folders]):
-            # longest, error = self.longest_folder_path()
-            distinct_folders, error = self.shortest_next_folder()
-
-        return distinct_files, distinct_folders, error
-
-    def longest_folder_path(self):
-
-        longest, error = (0, "")
-        try:
-            # All files in project
-            folders = models.File.query.filter_by(
-                project_id=self.project["id"]
-            ).with_entities(models.File.subpath).distinct().all()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-
-        if folders:
-            longest = max([len(x[0].split(os.sep)) for x in folders])
-        
-        return longest, error
-
-    def shortest_next_folder(self, level=0):
-
-        distinct_folders, error = ([], "")
-        regex = ""
-        regex = "^[^\/]+" + level * "\/[^\/]+" + "$"
-
-        try:
-            files = models.File.query.filter_by(
-                project_id=self.project["id"]
+            distinct_files = (
+                files.filter(models.File.subpath == folder)
+                .with_entities(models.File.name, models.File.size)
+                .all()
             )
 
-            all_folders = files.filter(
-                models.File.subpath.op("regexp")(
-                    regex
+            # Folder names in folder (or root)
+            if folder == ".":
+                distinct_folders = (
+                    files.filter(models.File.subpath != folder)
+                    .with_entities(models.File.subpath)
+                    .distinct()
+                    .all()
                 )
-            ).with_entities(models.File.subpath).distinct().all()
+                print(f"All folders: {distinct_folders}", flush=True)
+
+                first_parts = set(x[0].split(os.sep)[0] for x in distinct_folders)
+                print(f"First parts: {first_parts}", flush=True)
+
+                distinct_folders = list(first_parts)
+            else:
+                distinct_folders = (
+                    files.filter(
+                        models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)+$")
+                    )
+                    .with_entities(models.File.subpath)
+                    .distinct()
+                    .all()
+                )
+
+                len_folder = len(folder.split(os.sep))
+
+                split_paths = set(
+                    f"{os.sep}".join(x[0].split(os.sep)[: len_folder + 1])
+                    for x in distinct_folders
+                )
+
+                distinct_folders = list(split_paths)
+
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
-        
-        if not all_folders:
-            all_folders, error = self.shortest_next_folder(level=level+1)
 
-        return all_folders, error
+        return distinct_files, distinct_folders, error
 
     def folder_size(self, folder_name="."):
         """Get total size of folder"""
 
         tot_file_size, error = (None, "")
         try:
-            file_info = models.File.query.with_entities(
-                sqlalchemy.func.sum(models.File.size).label("sizeSum")
-            ).filter(
-                sqlalchemy.and_(
-                    models.File.project_id == self.project["id"],
-                    models.File.subpath.like(f"{folder_name}%")
+            file_info = (
+                models.File.query.with_entities(
+                    sqlalchemy.func.sum(models.File.size).label("sizeSum")
                 )
-            ).first()
+                .filter(
+                    sqlalchemy.and_(
+                        models.File.project_id == self.project["id"],
+                        models.File.subpath.like(f"{folder_name}%"),
+                    )
+                )
+                .first()
+            )
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
         else:
@@ -196,7 +182,8 @@ class DBConnector:
         deleted, error = (False, "")
         try:
             num_deleted = models.File.query.filter_by(
-                project_id=self.project["id"]).delete()
+                project_id=self.project["id"]
+            ).delete()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             error = str(err)
@@ -215,16 +202,16 @@ class DBConnector:
         exists, deleted, error = (False, False, "")
         try:
             # File names in root
-            files = models.File.query.filter_by(
-                project_id=self.project["id"]
-            ).filter(
-                sqlalchemy.or_(
-                    models.File.subpath == folder,
-                    models.File.subpath.op("regexp")(
-                        f"^{folder}(\/[^\/]+)?$"
+            files = (
+                models.File.query.filter_by(project_id=self.project["id"])
+                .filter(
+                    sqlalchemy.or_(
+                        models.File.subpath == folder,
+                        models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)?$"),
                     )
                 )
-            ).all()
+                .all()
+            )
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
 
@@ -247,14 +234,16 @@ class DBConnector:
         with ApiS3Connector() as s3conn:
             # Error if not enough info
             if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                return not_removed_dict, not_exist_list, \
-                    "No s3 info returned! " + s3conn.message
+                return (
+                    not_removed_dict,
+                    not_exist_list,
+                    "No s3 info returned! " + s3conn.message,
+                )
 
             # Delete each file
             for x in files:
                 # Delete from db
-                in_db, delete_ok, name_in_bucket, error = \
-                    self.delete_one(filename=x)
+                in_db, delete_ok, name_in_bucket, error = self.delete_one(filename=x)
 
                 # Non existant files cannot be deleted
                 if not in_db:
@@ -290,8 +279,7 @@ class DBConnector:
         exists, deleted, name_in_bucket, error = (False, False, None, "")
         try:
             file = models.File.query.filter_by(
-                name=filename,
-                project_id=self.project["id"]
+                name=filename, project_id=self.project["id"]
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
@@ -316,8 +304,7 @@ class DBConnector:
         # Get files in folder
         try:
             files_in_folder = models.File.query.filter_by(
-                project_id=self.project["id"],
-                subpath=foldername
+                project_id=self.project["id"], subpath=foldername
             ).all()
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)

@@ -5,6 +5,7 @@
 ###############################################################################
 
 # Standard library
+import os
 
 # Installed
 import flask_restful
@@ -25,6 +26,7 @@ from code_dds.api.dds_decorators import token_required, project_access_required
 
 class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
+
     method_decorators = [project_access_required, token_required]  # 2, 1
 
     def post(self, _, project):
@@ -32,32 +34,37 @@ class NewFile(flask_restful.Resource):
 
         args = flask.request.args
         if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
-            return flask.make_response("Information missing, "
-                                       "cannot add file to database.", 500)
+            return flask.make_response(
+                "Information missing, " "cannot add file to database.", 500
+            )
 
         try:
             # Check if file already in db
-            existing_file = models.File.query.filter_by(
-                name=args["name"], project_id=project["id"]
-            ).with_entities(models.File.id).first()
+            existing_file = (
+                models.File.query.filter_by(name=args["name"], project_id=project["id"])
+                .with_entities(models.File.id)
+                .first()
+            )
 
             if existing_file or existing_file is not None:
-                return flask.make_response(f"File '{args['name']}' already "
-                                           "exists in the database!", 500)
+                return flask.make_response(
+                    f"File '{args['name']}' already " "exists in the database!", 500
+                )
 
             # Add new file to db
-            new_file = models.File(name=args["name"],
-                                   name_in_bucket=args["name_in_bucket"],
-                                   subpath=args["subpath"],
-                                   size=args["size"],
-                                   project_id=project["id"])
+            new_file = models.File(
+                name=args["name"],
+                name_in_bucket=args["name_in_bucket"],
+                subpath=args["subpath"],
+                size=args["size"],
+                project_id=project["id"],
+            )
             db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             return flask.make_response(
-                f"Failed to add new file '{args['name']}' to database: {err}",
-                500
+                f"Failed to add new file '{args['name']}' to database: {err}", 500
             )
 
         return flask.jsonify({"message": f"File '{args['name']}' added to db."})
@@ -65,15 +72,18 @@ class NewFile(flask_restful.Resource):
 
 class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
+
     method_decorators = [project_access_required, token_required]  # 2, 1
 
     def get(self, _, project):
         """Matches specified files to files in db."""
 
         try:
-            matching_files = models.File.query.filter(
-                models.File.name.in_(flask.request.json)
-            ).filter_by(project_id=project["id"]).all()
+            matching_files = (
+                models.File.query.filter(models.File.name.in_(flask.request.json))
+                .filter_by(project_id=project["id"])
+                .all()
+            )
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(
                 f"Failed to get matching files in db: {err}", 500
@@ -88,6 +98,7 @@ class MatchFiles(flask_restful.Resource):
 
 class ListFiles(flask_restful.Resource):
     """Lists files within a project"""
+
     method_decorators = [project_access_required, token_required]
 
     def get(self, _, project):
@@ -115,49 +126,48 @@ class ListFiles(flask_restful.Resource):
                     return flask.make_response(error, 500)
 
                 return flask.jsonify(
-                    {"num_items": num_files,
-                     "message": f"The project {project['id']} is empty."}
+                    {
+                        "num_items": num_files,
+                        "message": f"The project {project['id']} is empty.",
+                    }
                 )
 
             # Get files and folders
-            print(subpath, flush=True)
-            distinct_files, distinct_folders, error = \
-                dbconn.items_in_subpath(folder=subpath)
-            print(distinct_files, flush=True)
-            print(distinct_folders, flush=True)
+            distinct_files, distinct_folders, error = dbconn.items_in_subpath(
+                folder=subpath
+            )
+
             if error != "":
                 return flask.make_response(error, 500)
 
             # Collect file and folder info to return to CLI
             if distinct_files:
                 for x in distinct_files:
-                    info = {"name": x[0] if subpath == "."
-                            else x[0].split(subpath + "/")[-1],
-                            "folder": False}
+                    print(x, flush=True)
+                    info = {
+                        "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
+                        "folder": False,
+                    }
                     if show_size:
-                        info.update(
-                            {"size": self.fix_size_format(num_bytes=x[1])}
-                        )
+                        info.update({"size": self.fix_size_format(num_bytes=x[1])})
                     files_folders.append(info)
             if distinct_folders:
                 for x in distinct_folders:
-                    info = {"name": x[0] if subpath == "."
-                            else x[0].split(subpath + "/")[-1],
-                            "folder": True}
+                    info = {
+                        "name": x if subpath == "." else x.split(os.sep)[-1],
+                        "folder": True,
+                    }
+
                     if show_size:
-                        folder_size, error = dbconn.folder_size(
-                            folder_name=x[0])
+                        folder_size, error = dbconn.folder_size(folder_name=x)
                         if folder_size is None:
                             return flask.make_response(error, 500)
 
                         info.update(
-                            {"size": self.fix_size_format(
-                                num_bytes=folder_size
-                            )}
+                            {"size": self.fix_size_format(num_bytes=folder_size)}
                         )
                     files_folders.append(info)
 
-        print(files_folders, flush=True)
         return flask.jsonify({"files_folders": files_folders})
 
     @staticmethod
@@ -180,33 +190,36 @@ class ListFiles(flask_restful.Resource):
         else:
             chosen_format = [BYTES, "bytes"]
 
-        altered = int(num_bytes/chosen_format[0])
+        altered = int(round(num_bytes / chosen_format[0]))
         return str(altered), chosen_format[-1]
 
 
 class RemoveFile(flask_restful.Resource):
     """Removes files from the database and s3 with boto3."""
+
     method_decorators = [project_access_required, token_required]
 
     def delete(self, _, project):
         """Deletes the files"""
 
         with DBConnector() as dbconn:
-            not_removed_dict, not_exist_list, error = \
-                dbconn.delete_multiple(files=flask.request.json)
+            not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
+                files=flask.request.json
+            )
 
             # S3 connection error
-            if not any([not_removed_dict, not_exist_list]) and \
-                    error != "":
+            if not any([not_removed_dict, not_exist_list]) and error != "":
                 return flask.make_response(error, 500)
 
         # Return deleted and not deleted files
-        return flask.jsonify({"not_removed": not_removed_dict,
-                              "not_exists": not_exist_list})
+        return flask.jsonify(
+            {"not_removed": not_removed_dict, "not_exists": not_exist_list}
+        )
 
 
 class RemoveDir(flask_restful.Resource):
     """Removes one or more full directories from the database and s3."""
+
     method_decorators = [project_access_required, token_required]
 
     def delete(self, current_user, project):
@@ -218,8 +231,11 @@ class RemoveDir(flask_restful.Resource):
             with ApiS3Connector() as s3conn:
                 # Error if not enough info
                 if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                    return not_removed_dict, not_exist_list, \
-                        "No s3 info returned! " + s3conn.message
+                    return (
+                        not_removed_dict,
+                        not_exist_list,
+                        "No s3 info returned! " + s3conn.message,
+                    )
 
                 for x in flask.request.json:
                     # Get all files in the folder
@@ -229,11 +245,11 @@ class RemoveDir(flask_restful.Resource):
                         db.session.rollback()
                         not_exist_list.append(x)
                         continue
-                    
+
                     # Error with db --> folder error
                     if not folder_deleted:
                         db.session.rollback()
-                        not_removed_dict[x] =  error
+                        not_removed_dict[x] = error
                         continue
 
                     # Delete from s3
@@ -243,7 +259,7 @@ class RemoveDir(flask_restful.Resource):
                         db.session.rollback()
                         not_removed_dict[x] = error
                         continue
-                    
+
                     # Commit to db if no error so far
                     try:
                         db.session.commit()
@@ -252,5 +268,6 @@ class RemoveDir(flask_restful.Resource):
                         not_removed_dict[x] = str(err)
                         continue
 
-        return flask.jsonify({"not_removed": not_removed_dict,
-                              "not_exists": not_exist_list})
+        return flask.jsonify(
+            {"not_removed": not_removed_dict, "not_exists": not_exist_list}
+        )
