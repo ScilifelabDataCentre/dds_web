@@ -69,6 +69,37 @@ class NewFile(flask_restful.Resource):
 
         return flask.jsonify({"message": f"File '{args['name']}' added to db."})
 
+    def put(self, _, project):
+
+        args = flask.request.args
+        if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
+            return flask.make_response(
+                "Information missing, " "cannot add file to database.", 500
+            )
+
+        try:
+            # Check if file already in db
+            existing_file = models.File.query.filter_by(
+                name=args["name"], project_id=project["id"]
+            ).first()
+
+            # Error if not found
+            if not existing_file or existing_file is None:
+                return flask.make_response(
+                    f"Cannot update non-existent file '{args['name']}' in the database!",
+                    500,
+                )
+
+            # Update file info
+            existing_file.subpath = args["subpath"]
+            existing_file.size = args["size"]
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            return flask.make_response(f"Failed updating file information: {err}", 500)
+
+        return flask.jsonify({"message": f"File '{args['name']}' updated in db."})
+
 
 class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
@@ -93,7 +124,9 @@ class MatchFiles(flask_restful.Resource):
         if not matching_files or matching_files is None:
             return flask.jsonify({"files": None})
 
-        return flask.jsonify({"files": list(x.name for x in matching_files)})
+        return flask.jsonify(
+            {"files": {x.name: x.name_in_bucket for x in matching_files}}
+        )
 
 
 class ListFiles(flask_restful.Resource):
@@ -114,12 +147,13 @@ class ListFiles(flask_restful.Resource):
         # Check if to get from root or folder
         subpath = "."
         if "subpath" in args:
-            subpath = args["subpath"]
+            subpath = args["subpath"].rstrip(os.sep)
 
         files_folders = list()
 
         # Check project not empty
         with DBConnector() as dbconn:
+            # Get number of files in project and return if empty or error
             num_files, error = dbconn.project_size()
             if num_files == 0:
                 if error != "":
@@ -143,7 +177,6 @@ class ListFiles(flask_restful.Resource):
             # Collect file and folder info to return to CLI
             if distinct_files:
                 for x in distinct_files:
-                    print(x, flush=True)
                     info = {
                         "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
                         "folder": False,

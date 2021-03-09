@@ -116,19 +116,19 @@ class DBConnector:
 
             # Folder names in folder (or root)
             if folder == ".":
+                # Get distinct folders in root, subpath should not be "."
                 distinct_folders = (
                     files.filter(models.File.subpath != folder)
                     .with_entities(models.File.subpath)
                     .distinct()
                     .all()
                 )
-                print(f"All folders: {distinct_folders}", flush=True)
 
+                # Get first subpath (may be many and first may not have files in)
                 first_parts = set(x[0].split(os.sep)[0] for x in distinct_folders)
-                print(f"First parts: {first_parts}", flush=True)
-
                 distinct_folders = list(first_parts)
             else:
+                # Get distinct sub folders in specific folder with regex
                 distinct_folders = (
                     files.filter(
                         models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)+$")
@@ -138,13 +138,14 @@ class DBConnector:
                     .all()
                 )
 
+                # Get length of specified folder
                 len_folder = len(folder.split(os.sep))
 
+                # Get subfolders in level under specified folder
                 split_paths = set(
                     f"{os.sep}".join(x[0].split(os.sep)[: len_folder + 1])
                     for x in distinct_folders
                 )
-
                 distinct_folders = list(split_paths)
 
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -277,6 +278,8 @@ class DBConnector:
         """Delete a single file in project."""
 
         exists, deleted, name_in_bucket, error = (False, False, None, "")
+
+        # Get matching files in project
         try:
             file = models.File.query.filter_by(
                 name=filename, project_id=self.project["id"]
@@ -284,6 +287,7 @@ class DBConnector:
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
 
+        # Delete if found, but do not commit yet
         if file or file is not None:
             exists, name_in_bucket = (True, file.name_in_bucket)
             try:
@@ -314,7 +318,6 @@ class DBConnector:
             exists, deleted, errors = (True, {}, {})
 
             for x in files_in_folder:
-                print(x, flush=True)
                 filename = x.name
                 nameinbucket = x.name_in_bucket
 
