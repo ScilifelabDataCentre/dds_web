@@ -11,6 +11,7 @@ import traceback
 import sys
 import dataclasses
 import functools
+
 # import requests
 import pathlib
 import json
@@ -22,9 +23,13 @@ import sqlalchemy
 import flask
 
 # Own modules
-from code_dds.common.db_code import models
-from code_dds.api.dds_decorators import connect_cloud, bucket_must_exists, token_required, \
-    project_access_required
+from code_dds.db_code import models
+from code_dds.api.dds_decorators import (
+    connect_cloud,
+    bucket_must_exists,
+    token_required,
+    project_access_required,
+)
 from code_dds.api.errors import ItemDeletionError
 
 ###############################################################################
@@ -68,16 +73,13 @@ class ApiS3Connector:
     def get_s3_info(self):
         """Get information required to connect to cloud."""
 
-        s3keys, url, bucketname, error = (None, )*3 + ("", )
+        s3keys, url, bucketname, error = (None,) * 3 + ("",)
         # 1. Get keys
         try:
             # TODO (ina): Change -- these should not be saved in file
-            s3path = pathlib.Path.cwd() / \
-                pathlib.Path("sensitive/s3_config.json")
+            s3path = pathlib.Path.cwd() / pathlib.Path("sensitive/s3_config.json")
             with s3path.open(mode="r") as f:
-                s3keys = json.load(f)["sfsp_keys"][
-                    self.current_user.safespring
-                ]
+                s3keys = json.load(f)["sfsp_keys"][self.current_user.safespring]
         except IOError as err:
             return s3keys, url, bucketname, f"Failed getting keys: {err}"
 
@@ -92,6 +94,7 @@ class ApiS3Connector:
             return s3keys, url, bucketname, "Keys not found!"
 
         from code_dds.api.db_connector import DBConnector
+
         with DBConnector() as dbconn:
             # 3. Get bucket name
             bucketname, error = dbconn.get_bucket_name()
@@ -126,7 +129,7 @@ class ApiS3Connector:
             error = str(err)
         else:
             removed = True
-        
+
         return removed, error
 
     @bucket_must_exists
@@ -136,8 +139,7 @@ class ApiS3Connector:
         removed, error = (False, "")
         try:
             _ = self.resource.meta.client.delete_object(
-                Bucket=self.bucketname,
-                Key=file
+                Bucket=self.bucketname, Key=file
             )
         except botocore.client.ClientError as err:
             error = str(err)
