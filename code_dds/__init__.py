@@ -71,7 +71,8 @@ def create_app():
         return app
 
 
-def timestamp(dts=None) -> (str):
+def timestamp(dts=None, datetime_string=None,
+              ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
     '''Gets the current time. Formats timestamp.
 
     Returns:
@@ -79,9 +80,12 @@ def timestamp(dts=None) -> (str):
 
     '''
 
-    now = datetime.now(tz=C_TZ) if dts is None else dts
-    t_s = str(now.strftime('%Y-%m-%d %H:%M:%S.%f%z'))
+    if datetime_string is not None:
+        datetime_stamp = datetime.strptime(datetime_string, ts_format)
+        return str(datetime_stamp.date())
 
+    now = datetime.now(tz=C_TZ) if dts is None else dts
+    t_s = str(now.strftime(ts_format))
     return t_s
 
 
