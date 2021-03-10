@@ -15,7 +15,6 @@ import json
 import botocore
 
 # Own modules
-from code_dds.api.user import token_required
 from code_dds.db_code import models
 from code_dds.api.api_s3_connector import ApiS3Connector
 from code_dds.api.dds_decorators import token_required, project_access_required
