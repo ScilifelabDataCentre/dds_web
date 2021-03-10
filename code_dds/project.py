@@ -7,10 +7,10 @@ from flask import (Blueprint, render_template, request,
                    session, redirect, url_for, g)
 
 from code_dds import db
-from code_dds.common.db_code import models
-from code_dds.common.db_code import db_utils
-from code_dds.common.db_code import marshmallows as marmal
-from code_dds.key_gen import project_keygen
+from code_dds.db_code import models
+from code_dds.db_code import db_utils
+from code_dds.db_code import marshmallows as marmal
+from code_dds.crypt.key_gen import project_keygen
 from code_dds.utils import login_required
 
 project_blueprint = Blueprint("project", __name__)

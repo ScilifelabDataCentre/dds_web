@@ -13,7 +13,7 @@ import flask
 import sqlalchemy
 
 # Own modules
-from code_dds.common.db_code import models
+from code_dds.db_code import models
 from code_dds import db
 from code_dds.api.api_s3_connector import ApiS3Connector
 from code_dds.api.db_connector import DBConnector
