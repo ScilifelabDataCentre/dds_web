@@ -22,9 +22,6 @@
                     {% if next %}
                       <input type="hidden" name="next" value="{{ next }}">
                     {% endif %}
-                    <div class="row align-items-center facility-box">
-                    	<input type="checkbox" name="facility"> Facility account
-                    </div>
                     {% if login_error_message %}
                     <div class="error_msg">
                         <p>{{ login_error_message }}</p>

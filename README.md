@@ -44,15 +44,15 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 
 **4. After changing DB**
 To rebuild the database after a change, you need to: 
-1. Delete the `db-data` folder
-2. Run 
+
+1. Run 
 	```
 	docker rm $(docker ps -a -q) -f
 	docker volume prune
 	```
-3. Run 
+2. Run 
 	```
 	docker-compose build --no-cache
 	```
-4. Run `docker-compose up` as described above.
-5. If there are still issues, try deleting the pycache folders and repeat the steps. 
+3. Run `docker-compose up` as described above.
+4. If there are still issues, try deleting the pycache folders and repeat the steps. 
