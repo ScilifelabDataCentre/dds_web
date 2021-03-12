@@ -101,6 +101,9 @@ class ApiS3Connector:
 
         return s3keys, endpoint_url, bucketname, error
 
+    def get_safespring_project(self):
+        """Get the safespring project"""
+
     @bucket_must_exists
     def remove_all(self, *args, **kwargs):
         """Removes all contents from the project specific s3 bucket."""

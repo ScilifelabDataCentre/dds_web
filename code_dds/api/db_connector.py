@@ -322,3 +322,32 @@ class DBConnector:
                     deleted[filename] = {"name_in_bucket": nameinbucket}
 
         return exists, deleted, errors
+
+    def get_download_info(self, paths):
+        """Get required info on specified files."""
+
+        files, files_in_folders, error = ([], {}, "")
+        try:
+            files_in_proj = models.File.query.filter_by(project_id=self.project["id"])
+            files = (
+                files_in_proj.filter(models.File.name.in_(paths))
+                .with_entities(models.File.name, models.File.name_in_bucket)
+                .all()
+            )
+            for x in paths:
+                if x not in [f[0] for f in files]:
+                    files_in_folders[x] = (
+                        files_in_proj.filter(
+                            models.File.subpath.like(f"{x.rstrip(os.sep)}%")
+                        )
+                        .with_entities(models.File.name, models.File.name_in_bucket)
+                        .all()
+                    )
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            error = str(err)
+
+        print(f"Files: {files}", flush=True)
+        print(f"Folders: {files_in_folders}", flush=True)
+
+        return files, files_in_folders, error

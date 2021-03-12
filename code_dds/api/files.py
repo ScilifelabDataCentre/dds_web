@@ -304,3 +304,20 @@ class RemoveDir(flask_restful.Resource):
         return flask.jsonify(
             {"not_removed": not_removed_dict, "not_exists": not_exist_list}
         )
+
+
+class FileInfo(flask_restful.Resource):
+    """Get file info on files to download."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, current_user, project):
+        """Checks which files can be downloaded, and get their info."""
+
+        files = flask.request.json
+        print(files, flush=True)
+
+        with DBConnector() as dbconn:
+            file_info, files_in_folder, error = dbconn.get_download_info(paths=files)
+
+        return flask.jsonify({"files": file_info, "folders": files_in_folder})
