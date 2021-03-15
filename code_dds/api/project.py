@@ -39,6 +39,7 @@ class ProjectAccess(flask_restful.Resource):
 
     def get(self, current_user, project):
         """Checks the users access to a specific project and action."""
+
         args = flask.request.args
 
         # Deny access if project or method not specified

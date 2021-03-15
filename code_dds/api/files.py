@@ -14,7 +14,7 @@ import sqlalchemy
 
 # Own modules
 from code_dds.db_code import models
-from code_dds import db
+from code_dds import db, timestamp
 from code_dds.api.api_s3_connector import ApiS3Connector
 from code_dds.api.db_connector import DBConnector
 from code_dds.api.dds_decorators import token_required, project_access_required
@@ -314,10 +314,80 @@ class FileInfo(flask_restful.Resource):
     def get(self, current_user, project):
         """Checks which files can be downloaded, and get their info."""
 
-        files = flask.request.json
-        print(files, flush=True)
+        # Get files and folders requested by CLI
+        paths = flask.request.json
 
-        with DBConnector() as dbconn:
-            file_info, files_in_folder, error = dbconn.get_download_info(paths=files)
+        files_single, files_in_folders = ({}, {})
 
-        return flask.jsonify({"files": file_info, "folders": files_in_folder})
+        # Get info on files and folders
+        try:
+            # Get all files in project
+            files_in_proj = models.File.query.filter_by(project_id=project["id"])
+
+            # All files matching the path -- single files
+            files = (
+                files_in_proj.filter(models.File.name.in_(paths))
+                .with_entities(
+                    models.File.name, models.File.name_in_bucket, models.File.subpath
+                )
+                .all()
+            )
+
+            # All paths which start with the subpath are within a folder
+            for x in paths:
+                if x not in [f[0] for f in files]:
+                    files_in_folders[x] = (
+                        files_in_proj.filter(
+                            models.File.subpath.like(f"{x.rstrip(os.sep)}%")
+                        )
+                        .with_entities(
+                            models.File.name,
+                            models.File.name_in_bucket,
+                            models.File.subpath,
+                        )
+                        .all()
+                    )
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+            # Make dict for files with info
+            files_single = {
+                x[0]: {"name_in_bucket": x[1], "subpath": x[2]} for x in files
+            }
+
+        return flask.jsonify({"files": files_single, "folders": files_in_folders})
+
+
+class UpdateFile(flask_restful.Resource):
+    """Update file info after download"""
+
+    method_decorators = [project_access_required, token_required]
+
+    def put(self, current_user, project):
+        """Update info in db."""
+
+        # Get file name from request from CLI
+        file_name = flask.request.args
+        if "name" not in file_name:
+            return flask.make_response(
+                "No file name specified. Cannot update file.", 500
+            )
+
+        # Update file info
+        try:
+            file = models.File.query.filter_by(
+                project_id=project["id"], name=file_name["name"]
+            ).first()
+
+            if not file or file is None:
+                return flask.make_response(f"No such file: {file_name['name']}", 500)
+
+            file.latest_download = timestamp()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            return flask.make_response(str(err), 500)
+        else:
+            db.session.commit()
+
+        return flask.jsonify({"message": "File info updated."})

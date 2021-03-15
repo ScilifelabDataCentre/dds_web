@@ -323,31 +323,31 @@ class DBConnector:
 
         return exists, deleted, errors
 
-    def get_download_info(self, paths):
-        """Get required info on specified files."""
+    def cloud_project(self):
+        """Get safespring project"""
 
-        files, files_in_folders, error = ([], {}, "")
+        sfsp_proj, error = ("", "")
+        if hasattr(self.current_user, "safespring"):
+            return self.current_user.safespring, error
+
         try:
-            files_in_proj = models.File.query.filter_by(project_id=self.project["id"])
-            files = (
-                files_in_proj.filter(models.File.name.in_(paths))
-                .with_entities(models.File.name, models.File.name_in_bucket)
-                .all()
+            proj_fac = (
+                models.Project.query.filter_by(id=self.project["id"])
+                .with_entities(models.Project.facility)
+                .first()
             )
-            for x in paths:
-                if x not in [f[0] for f in files]:
-                    files_in_folders[x] = (
-                        files_in_proj.filter(
-                            models.File.subpath.like(f"{x.rstrip(os.sep)}%")
-                        )
-                        .with_entities(models.File.name, models.File.name_in_bucket)
-                        .all()
-                    )
 
+            print(proj_fac, flush=True)
+
+            sfsp_proj_info = (
+                models.Facility.query.filter_by(public_id=proj_fac[0])
+                .with_entities(models.Facility.safespring)
+                .first()
+            )
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
+        else:
+            sfsp_proj = sfsp_proj_info[0]
+            print(f"project: {sfsp_proj}", flush=True)
 
-        print(f"Files: {files}", flush=True)
-        print(f"Folders: {files_in_folders}", flush=True)
-
-        return files, files_in_folders, error
+        return sfsp_proj, error
