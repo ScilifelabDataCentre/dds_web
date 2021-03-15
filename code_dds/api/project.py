@@ -76,10 +76,12 @@ class ProjectAccess(flask_restful.Resource):
             if token is None:
                 return flask.make_response(error, 500)
 
+            # Project access granted
             return flask.jsonify(
                 {"dds-access-granted": True, "token": token.decode("UTF-8")}
             )
 
+        # Project access denied
         return flask.make_response("Project access denied", 401)
 
 

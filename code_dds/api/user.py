@@ -52,7 +52,7 @@ def is_facility(username):
 def jwt_token(user_id, is_fac, project_id, project_access=False):
     """Generates and encodes a JWT token."""
 
-    error = ""
+    token, error = (None, "")
     try:
         token = jwt.encode(
             {
@@ -95,7 +95,7 @@ class AuthenticateUser(flask_restful.Resource):
         # Check if user has facility role
         user_is_fac, error = is_facility(username=auth.username)
         if user_is_fac is None:
-            return flask.make_response(error, 401)
+            return flask.make_response(error, 500)
 
         # Get user from DB matching the username
         try:
@@ -105,12 +105,12 @@ class AuthenticateUser(flask_restful.Resource):
             return flask.make_response(f"Database connection failed: {sqlerr}", 500)
 
         # Deny access if there is no such user
-        if not user:
+        if not user or user is None:
             return flask.make_response(
                 "User role registered as "
                 f"'{'facility' if user_is_fac else 'user'}' but user account "
                 f"not found! User denied access: {auth.username}",
-                401,
+                500,
             )
 
         # Verify user password and generate token
@@ -121,6 +121,8 @@ class AuthenticateUser(flask_restful.Resource):
             if token is None:
                 return flask.make_response(error, 500)
 
+            # Success - return token
             return flask.jsonify({"token": token.decode("UTF-8")})
 
+        # Failed - incorrect password
         return flask.make_response("Incorrect password!", 401)
