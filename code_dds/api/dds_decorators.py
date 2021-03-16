@@ -35,7 +35,7 @@ def token_required(f):
 
         # Deny access if token is missing
         if token is None or not token:
-            return flask.jsonify({"message": "Token is missing!"}), 401
+            return flask.make_response("Token is missing!", 401)
 
         # Verify the token
         try:
@@ -48,7 +48,7 @@ def token_required(f):
 
             project = data["project"]
         except Exception:
-            return flask.jsonify({"message": "Token is invalid!"}), 401
+            return flask.make_response("Token is invalid!", 401)
 
         return f(current_user, project, *args, **kwargs)
 

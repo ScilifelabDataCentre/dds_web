@@ -335,6 +335,7 @@ class FileInfo(flask_restful.Resource):
 
             # All paths which start with the subpath are within a folder
             for x in paths:
+                # Only try to match those not already saved in files
                 if x not in [f[0] for f in files]:
                     files_in_folders[x] = (
                         files_in_proj.filter(
