@@ -337,7 +337,7 @@ class FileInfo(flask_restful.Resource):
             for x in paths:
                 # Only try to match those not already saved in files
                 if x not in [f[0] for f in files]:
-                    files_in_folders[x] = (
+                    list_of_files = (
                         files_in_proj.filter(
                             models.File.subpath.like(f"{x.rstrip(os.sep)}%")
                         )
@@ -348,6 +348,8 @@ class FileInfo(flask_restful.Resource):
                         )
                         .all()
                     )
+                    if list_of_files:
+                        files_in_folders[x] = list_of_files
 
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(str(err), 500)
