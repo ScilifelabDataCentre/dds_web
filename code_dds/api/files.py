@@ -362,6 +362,36 @@ class FileInfo(flask_restful.Resource):
         return flask.jsonify({"files": files_single, "folders": files_in_folders})
 
 
+class FileInfoAll(flask_restful.Resource):
+    """Get info on all project files."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, current_user, project):
+        """Get file info."""
+
+        files = {}
+        try:
+            all_files = (
+                models.File.query.filter_by(project_id=project["id"])
+                .with_entities(
+                    models.File.name, models.File.name_in_bucket, models.File.subpath
+                )
+                .all()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+            if all_files is None or not all_files:
+                return flask.make_response(
+                    f"The project {project['id']} is empty.", 401
+                )
+
+            files = {x[0]: {"name_in_bucket": x[1], "subpath": x[2]} for x in all_files}
+
+        return flask.jsonify({"files": files})
+
+
 class UpdateFile(flask_restful.Resource):
     """Update file info after download"""
 
