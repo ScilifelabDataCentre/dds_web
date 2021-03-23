@@ -328,7 +328,10 @@ class FileInfo(flask_restful.Resource):
             files = (
                 files_in_proj.filter(models.File.name.in_(paths))
                 .with_entities(
-                    models.File.name, models.File.name_in_bucket, models.File.subpath
+                    models.File.name,
+                    models.File.name_in_bucket,
+                    models.File.subpath,
+                    models.File.size,
                 )
                 .all()
             )
@@ -345,6 +348,7 @@ class FileInfo(flask_restful.Resource):
                             models.File.name,
                             models.File.name_in_bucket,
                             models.File.subpath,
+                            models.File.size,
                         )
                         .all()
                     )
@@ -356,7 +360,8 @@ class FileInfo(flask_restful.Resource):
         else:
             # Make dict for files with info
             files_single = {
-                x[0]: {"name_in_bucket": x[1], "subpath": x[2]} for x in files
+                x[0]: {"name_in_bucket": x[1], "subpath": x[2], "size": x[3]}
+                for x in files
             }
 
         return flask.jsonify({"files": files_single, "folders": files_in_folders})
@@ -375,7 +380,10 @@ class FileInfoAll(flask_restful.Resource):
             all_files = (
                 models.File.query.filter_by(project_id=project["id"])
                 .with_entities(
-                    models.File.name, models.File.name_in_bucket, models.File.subpath
+                    models.File.name,
+                    models.File.name_in_bucket,
+                    models.File.subpath,
+                    models.File.size,
                 )
                 .all()
             )
@@ -387,7 +395,10 @@ class FileInfoAll(flask_restful.Resource):
                     f"The project {project['id']} is empty.", 401
                 )
 
-            files = {x[0]: {"name_in_bucket": x[1], "subpath": x[2]} for x in all_files}
+            files = {
+                x[0]: {"name_in_bucket": x[1], "subpath": x[2], "size": x[3]}
+                for x in all_files
+            }
 
         return flask.jsonify({"files": files})
 
