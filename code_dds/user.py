@@ -18,7 +18,10 @@ def login():
     """Login to a user account"""
 
     if request.method == "GET":
-        return render_template('user/login.html', next=request.args.get('next'))
+        if session.get('current_user'):
+            return redirect(url_for('user.user_page', loginname=session['current_user']))
+        else:
+            return render_template('user/login.html', next=request.args.get('next'))
         
     if request.method == "POST":
         username = request.form.get('username')
@@ -55,7 +58,7 @@ def user_page(loginname=None):
     if session['is_facility']:
         projects_list = models.Project.query.filter_by(facility=session['current_user_id']).all()
     else:
-        projects_list = models.Project.query.filter_by(owner=loginname).all()
+        projects_list = models.Project.query.filter_by(owner=session['current_user_id']).all()
     return render_template('project/list_project.html', projects_list=projects_list)
 
 

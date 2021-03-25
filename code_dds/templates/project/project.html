@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
 {% block body %}
-{% if g.current_user == project['owner'] or g.current_user_id == project['facility'] %}
-    <h2 class="title_underlined">{{ project['title'] }}</h2>
+{% if g.current_user_id in [project['owner'], project['facility']] %}
+    <h2 class="underlined tcenter">{{ project['title'] }}</h2>
     <br>
     <table class="table table-bordered">
         <thead>
@@ -39,12 +39,12 @@
             </tr>
             <tr>
                 <th scope="row">Creation date</th>
-                <td>{{ project['order_date'] }}</td>
+                <td>{{ project['date_created'] }}</td>
             </tr>
-            {% if project['delivery_date'] %}
+            {% if project['date_updated'] %}
             <tr>
                 <th scope="row">Delivery date</th>
-                <td>{{ project['delivery_date'] }}</td>
+                <td>{{ project['date_updated'] }}</td>
             </tr>
             <tr>
                 <th scope="row">Data size</th>
@@ -56,7 +56,25 @@
     
     <br>
     {% if uploaded_data %}
-        <h5 class="title_underlined">Files Uploaded</h5>
+        <input id="demo" type="hidden" value="dds get --source ProjectID">
+        {% if not g.is_facility %}
+            <div class="clipboard-row underlined">
+                <h5 class="copy-icon-followed tcenter">Files Uploaded</h5>
+                <div class="copy-icon hover-box" data-clipboard-target="#demo">
+                    <img class="md-icon" src="{{ url_for('static', filename='img/clipboard.svg') }}" alt="Icon not found">
+                </div>
+            </div>
+        {% else %}
+            <div class="upload-row underlined">
+                <div class="upload-followed tcenter">
+                    <h5>Files Uploaded</h5>
+                </div>
+                <div class="upload-span">
+                    <input type="file" id="upload" hidden/>
+                    <label class="upload-label" for="upload">Upload files</label>
+                </div>
+            </div>
+        {% endif %}
         <br>
         {{ uploaded_data|safe }}
     {% endif %}

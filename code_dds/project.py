@@ -1,6 +1,6 @@
 " Project info related endpoints "
 
-from datetime import date
+import datetime
 from random import randrange
 
 from flask import (Blueprint, render_template, request,
@@ -60,7 +60,7 @@ def project_info(project_id=None):
 
 
 class create_project_instance(object):
-    """ Creates a project instance to """
+    """ Creates a project instance to add in DB"""
 
     def __init__(self, project_info):
         self.project_info = {
@@ -73,7 +73,7 @@ class create_project_instance(object):
             'delivery_option': 'S3',
             'facility': g.current_user_id,
             'status': 'In facility',
-            'order_date': date.today().strftime("%Y-%m-%d"),
+            'order_date': datetime.datetime.now().strftime("%Y-%m-%d"),
             'pi': 'NA',
             'size': 0,
             'size_enc': 0,
@@ -134,8 +134,11 @@ class folder(object):
         _html_string = ""
         for _key, _value in file_dict.items():
             if isinstance(_value, dict):
-                _html_string += "<li> {_k} {_v} </li>".format(
-                    _k=_key, _v=self.__make_html_string_from_file_dict(_value))
+                div_id = "d{}".format(datetime.datetime.now().strftime("%y%m%d%H%M%S%f"))
+                _html_string += ("<li> <a class='folder' data-toggle='collapse' href='#{did}' aria-expanded='false' aria-controls='{did}'>{_k}</a> "
+                                 "<div class='collapse' id='{did}'>{_v}</div> "
+                                 "</li>").format(did=div_id, _k=_key, 
+                                 _v=self.__make_html_string_from_file_dict(_value))
             else:
-                _html_string += "<li> {_k} </li>".format(_k=_key)
-        return '<ol class="nonumber"> {} </ol>'.format(_html_string)
+                _html_string += "<li><div class='hovertip'>{_k} <span class='hovertiptext'> {_v}Kb </span></div></li>".format(_k=_key, _v=_value)
+        return '<ul style="list-style: none;"> {} </ul>'.format(_html_string)

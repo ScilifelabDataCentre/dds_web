@@ -68,9 +68,9 @@ def validate_user_credentials(username, password):
     if not verify_password_argon2id(uaccount.password, password):
         return (False, None, "Password din't match", None)
     
-    uinfo = {'username': uaccount.username, 'id': uaccount.id}
+    uinfo = {'username': uaccount.username, 'id': uaccount.public_id}
     if is_facility:
-        uinfo['facility_name'] = uaccount.public_id
+        uinfo['facility_name'] = uaccount.name
     
     return (True, is_facility, "Validate successful", uinfo)
     

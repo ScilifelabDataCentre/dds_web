@@ -13,7 +13,7 @@ import botocore
 
 # Own modules
 from code_dds import app
-from code_dds.common.db_code import models
+from code_dds.db_code import models
 
 ###############################################################################
 # DECORATORS ##################################################### DECORATORS #

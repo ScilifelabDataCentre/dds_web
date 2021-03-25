@@ -21,7 +21,7 @@ from code_dds.api.errors import (
     FileDeletionError,
     FileRetrievalError,
 )
-from code_dds.common.db_code import models
+from code_dds.db_code import models
 from code_dds import db
 from code_dds.api.dds_decorators import token_required
 from code_dds.api.api_s3_connector import ApiS3Connector

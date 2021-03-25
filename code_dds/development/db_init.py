@@ -118,6 +118,7 @@ def fill_db():
         Facility(public_id="public_facility_id",
                  username="facility",
                  password="$argon2id$v=19$m=102400,t=2,p=8$mgkOMH/4B16suy5TMw+4KQ$7j5eT0zMOmdUj2q1A+dcgC9TM4QOl39GeHWdYh+QdEE",
+                 name="Facility 1",
                  safespring="redacted")
         # Facility(name="Facility1", internal_ref="fac1",
         #          username="facility1",
@@ -152,24 +153,16 @@ def fill_db():
         Project(id="ProjectID",
                 title="project_title",
                 category="Category",
-                date_created=timestamp(),
-                date_updated=timestamp(),
-                status="Ongoing",
+                status="Delivered",
                 pi="PI",
                 owner=users[0],
                 facility=facilities[0],
-                size=7357,
-                bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}"),
-        Project(id="ProjectID_2",
-                title="project_title_2",
-                category="Category_2",
-                date_created=timestamp(),
-                date_updated=timestamp(),
-                status="Ongoing",
-                pi="PI_2",
-                owner=users[0],
-                facility=facilities[0],
-                size=7357,
+                size=40000000000,
+                description="This is a test project",
+                delivery_option="S3",
+                sensitive=True,
+                date_created="2021-02-15",
+                date_updated="2021-03-11",
                 bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}")
 
         # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
@@ -366,12 +359,67 @@ def fill_db():
     ]
 
     files = [
-        File(name="notafile.txt",
-             name_in_bucket="testtesttest.txt",
-             subpath="subpath",
-             size=0,  # bytes
-             project_id=projects[0])
+        File(name= 'description.txt',
+           name_in_bucket= 'description.txt',
+           subpath= '',
+           size=254,
+           project_id=projects[0] ),
+       
+        File(name= 'Sample_1/data.txt',
+            name_in_bucket= 'Sample_1/data.txt',
+            subpath= 'Sample_1',
+            size=189,
+            project_id=projects[0]),
+        
+        File(name= 'Sample_1/source.txt',
+            name_in_bucket= 'Sample_1/source.txt',
+            subpath= 'Sample_1',
+            size=754,
+            project_id=projects[0]),
+        
+        File(name= 'Sample_1/meta/info.txt',
+            name_in_bucket= 'Sample_1/meta/info.txt',
+            subpath= 'Sample_1/meta',
+            size=65,
+            project_id=projects[0]),
+        
+        File(name= 'Sample_2/data.txt',
+            name_in_bucket= 'Sample_2/data.txt',
+            subpath= 'Sample_2',
+            size=399,
+            project_id=projects[0]),
+        
+        File(name= 'Sample_2/source.txt',
+            name_in_bucket= 'Sample_2/source.txt',
+            subpath= 'Sample_2',
+            size=420,
+            project_id=projects[0]),
+        
+        File(name= 'Sample_2/meta/info.txt',
+            name_in_bucket= 'Sample_2/meta/info.txt',
+            subpath= 'Sample_2/meta',
+            size=241,
+            project_id=projects[0]),
+        
+        File(name= 'sample_list.txt',
+            name_in_bucket= 'sample_list.txt',
+            subpath= '',
+            size=97,
+            project_id=projects[0]),
+        
+        File(name= 'Plates/Sample_1/layout.txt',
+            name_in_bucket= 'Sample_1/layout.txt',
+            subpath= 'Plates/Sample_1',
+            size=136,
+            project_id=projects[0]),
+        
+        File(name= 'Plates/Sample_2/layout.txt',
+            name_in_bucket= 'Sample_2/layout.txt',
+            subpath= 'Plates/Sample_2',
+            size=125,
+            project_id=projects[0])
     ]
+    
     # Foreign key/relationship updates
     for x in projects:
         users[0].user_projects.append(x)
@@ -387,7 +435,8 @@ def fill_db():
     # for ind in [6, 7, 8, 9, 10]:
     #     facilities[2].fac_projects.append(projects[ind])
 
-    projects[0].project_files.append(files[0])
+    for fl in files:
+        projects[0].project_files.append(fl)
     # for prj in projects[1:]:
     #     if prj.status == "Delivered":
     #         create_files_for_project(prj)

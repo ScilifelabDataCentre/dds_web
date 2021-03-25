@@ -22,7 +22,7 @@ import sqlalchemy
 import flask
 
 # Own modules
-from code_dds.common.db_code import models
+from code_dds.db_code import models
 from code_dds.api.dds_decorators import connect_cloud, bucket_must_exists, token_required, \
     project_access_required
 from code_dds.api.errors import ItemDeletionError
