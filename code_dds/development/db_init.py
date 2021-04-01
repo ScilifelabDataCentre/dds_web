@@ -150,7 +150,7 @@ def fill_db():
     ]
 
     projects = [
-        Project(id="ProjectID",
+        Project(id="Project01",
                 title="project_title",
                 category="Category",
                 status="Delivered",
@@ -163,7 +163,21 @@ def fill_db():
                 sensitive=True,
                 date_created="2021-02-15",
                 date_updated="2021-03-11",
-                bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}")
+                bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}"),
+        
+        Project(id="Project02",
+                title="project_title",
+                category="Category",
+                status="Ongoing",
+                pi="PI",
+                owner=users[0],
+                facility=facilities[0],
+                size=40000000000,
+                description="This is a test project",
+                delivery_option="S3",
+                sensitive=True,
+                date_created="2021-02-15",
+                bucket=f"ProjectID_202121185120157663_{str(uuid.uuid4())}")
 
         # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
         #         category="Category1",

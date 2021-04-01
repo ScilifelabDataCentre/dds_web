@@ -12,7 +12,7 @@ from code_dds.db_code import db_utils
 from code_dds.db_code import marshmallows as marmal
 from code_dds.crypt.key_gen import project_keygen
 from code_dds.utils import login_required
-
+from werkzeug.utils import secure_filename
 project_blueprint = Blueprint("project", __name__)
 
 
@@ -56,6 +56,21 @@ def project_info(project_id=None):
     return render_template("project/project.html", project=project_info, uploaded_data=uploaded_data)
 
 
+@project_blueprint.route("/<project_id>/upload", methods=["POST"])
+@login_required
+def data_upload(project_id=None, project_info=None):
+    if 'file' not in request.files:
+        flash('No file part')
+    elif request.files['file'].filename == '':
+        flash('No file selected')
+        return redirect(request.url)
+    elif request.files['file']:
+        in_file = request.files['file']
+        filename = secure_filename(in_file.filename)
+        in_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        flash('File uploaded')
+    return redirect('request.url')
+
 ########## HELPER CLASSES AND FUNCTIONS ##########
 
 
@@ -92,8 +107,7 @@ class create_project_instance(object):
 
     def __is_column_value_uniq(self, table, column, value):
         """ See that the value is unique in DB """
-        all_column_values = db_utils.get_full_column_from_table(
-            table=table, column=column)
+        all_column_values = db_utils.get_full_column_from_table(table=table, column=column)
         return value not in all_column_values
 
 

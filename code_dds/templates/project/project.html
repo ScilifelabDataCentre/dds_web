@@ -65,18 +65,27 @@
                 </div>
             </div>
         {% else %}
-            <div class="upload-row underlined">
-                <div class="upload-followed tcenter">
-                    <h5>Files Uploaded</h5>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="upload-row underlined">
+                    <div class="upload-followed tcenter">
+                        <h5>Files Uploaded</h5>
+                    </div>
+                    <div class="upload-span">
+                        <input type="file" id="upload" hidden/>
+                        <label class="upload-label" for="upload">Upload files</label>
+                    </div>
                 </div>
-                <div class="upload-span">
-                    <input type="file" id="upload" hidden/>
-                    <label class="upload-label" for="upload">Upload files</label>
-                </div>
-            </div>
+            </form>
         {% endif %}
         <br>
         {{ uploaded_data|safe }}
+    {% else %}
+        <form method="POST" enctype="multipart/form-data">
+            <div class="tcenter">
+                <input type="file" id="upload" hidden/>
+                <label class="upload-label" for="upload">Upload files</label>
+            </div>
+        </form>
     {% endif %}
 {% else %}
     <p>You don't have access to this project, if you think you should contact Data Centre</p>
