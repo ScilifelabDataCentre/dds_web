@@ -159,6 +159,7 @@ def fill_db():
             facility=facilities[0],
             size=7357,
             bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}",
+            public_key="E722EB3CAE8C136CD9D36DDB219C0A396C90B85FCBDB36EC14DE9289D79A9002",
         ),
         Project(
             id="ProjectID_2",
@@ -172,6 +173,7 @@ def fill_db():
             facility=facilities[0],
             size=7357,
             bucket=f"ProjectID_2_202121185120157665_{str(uuid.uuid4())}",
+            public_key="E722EB3CAE8C136CD9D36DDB219C0A396C90B85FCBDB36EC14DE9289D79A9002",
         )
         # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
         #         category="Category1",
