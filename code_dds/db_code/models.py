@@ -7,7 +7,7 @@
 # import pytz
 
 # Installed
-from sqlalchemy import func, DDL, event
+# from sqlalchemy import func, DDL, event
 
 # Own modules
 from code_dds import db
@@ -136,12 +136,12 @@ class Project(db.Model):
     size = db.Column(db.BigInteger, unique=False, nullable=False)
     #     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)
     #     delivery_option = db.Column(db.String(10), unique=False, nullable=False)
-    #     private_key = db.Column(db.String(200), nullable=False)
     #     salt = db.Column(db.String(32), nullable=False)
     #     nonce = db.Column(db.String(24), nullable=False)
     #     passphrase = db.Column(db.String(64), nullable=False)   # TODO (senthil, ina): put somewhere else, sensitive info and should not be in same place as private key.
     bucket = db.Column(db.String(100), unique=True, nullable=False)
     public_key = db.Column(db.String(64), nullable=False)
+    private_key = db.Column(db.String(200), nullable=False)
 
     #     # Relationships
     #     # project_s3 = db.relationship('S3Project', backref='s3_project', lazy=True,
@@ -191,13 +191,13 @@ class File(db.Model):
     size = db.Column(db.BigInteger, unique=False, nullable=False)
     #     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)
     #     extension = db.Column(db.String(15), unique=False, nullable=False)
-    #     compressed = db.Column(db.Boolean, nullable=False)
-    #     public_key = db.Column(db.String(64), unique=False, nullable=False)
-    #     salt = db.Column(db.String(50), unique=False, nullable=False)
-    #     date_uploaded = db.Column(db.String(50), unique=False, nullable=False)
+    compressed = db.Column(db.Boolean, nullable=False)
+    public_key = db.Column(db.String(64), unique=False, nullable=False)
+    salt = db.Column(db.String(50), unique=False, nullable=False)
     project_id = db.Column(
         db.String(32), db.ForeignKey("projects.id"), unique=False, nullable=False
     )
+    date_uploaded = db.Column(db.String(50), unique=False, nullable=False)
     latest_download = db.Column(db.String(50), unique=False, nullable=True)
 
     def __repr__(self):

@@ -13,6 +13,7 @@ import flask
 import sqlalchemy
 
 # Own modules
+from code_dds import timestamp
 from code_dds.db_code import models
 from code_dds import db, timestamp
 from code_dds.api.api_s3_connector import ApiS3Connector
@@ -33,9 +34,20 @@ class NewFile(flask_restful.Resource):
         """Add new file to DB"""
 
         args = flask.request.args
-        if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
+        if not all(
+            x in args
+            for x in [
+                "name",
+                "name_in_bucket",
+                "subpath",
+                "size",
+                "compressed",
+                "salt",
+                "public_key",
+            ]
+        ):
             return flask.make_response(
-                "Information missing, " "cannot add file to database.", 500
+                "Information missing, cannot add file to database.", 500
             )
 
         try:
@@ -58,6 +70,10 @@ class NewFile(flask_restful.Resource):
                 subpath=args["subpath"],
                 size=args["size"],
                 project_id=project["id"],
+                compressed=bool(args["compressed"] == "True"),
+                salt=args["salt"],
+                public_key=args["public_key"],
+                date_uploaded=timestamp(),
             )
             db.session.add(new_file)
             db.session.commit()

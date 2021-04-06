@@ -48,3 +48,4 @@ api.add_resource(files.UpdateFile, "/file/update", endpoint="update_file")
 # Projects
 api.add_resource(project.UserProjects, "/proj/list", endpoint="list_projects")
 api.add_resource(project.RemoveContents, "/proj/rm", endpoint="remove_contents")
+api.add_resource(project.GetPublic, "/proj/public", endpoint="public_key")

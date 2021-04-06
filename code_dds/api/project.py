@@ -78,11 +78,34 @@ class ProjectAccess(flask_restful.Resource):
 
             # Project access granted
             return flask.jsonify(
-                {"dds-access-granted": True, "token": token.decode("UTF-8")}
+                {
+                    "dds-access-granted": True,
+                    "token": token.decode("UTF-8"),
+                }
             )
 
         # Project access denied
         return flask.make_response("Project access denied", 401)
+
+
+class GetPublic(flask_restful.Resource):
+    """Gets the public key beloning to the current project."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, _, project):
+        """Get public key from database."""
+
+        try:
+            proj_pub = (
+                models.Project.query.filter_by(id=project["id"])
+                .with_entities(models.Project.public_key)
+                .first()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+            return flask.jsonify({"public": proj_pub[0]})
 
 
 class UserProjects(flask_restful.Resource):
