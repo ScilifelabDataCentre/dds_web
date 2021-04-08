@@ -108,6 +108,28 @@ class GetPublic(flask_restful.Resource):
             return flask.jsonify({"public": proj_pub[0]})
 
 
+class GetPrivate(flask_restful.Resource):
+    """Gets the private key belonging to the current project."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, _, project):
+        """Get private key from database"""
+
+        # TODO (ina): Change handling of private key -- not secure
+
+        try:
+            proj_priv = (
+                models.Project.query.filter_by(id=project["id"])
+                .with_entities(models.Project.private_key)
+                .first()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+            return flask.jsonify({"private": proj_priv[0]})
+
+
 class UserProjects(flask_restful.Resource):
     """Gets all projects registered to a specific user."""
 

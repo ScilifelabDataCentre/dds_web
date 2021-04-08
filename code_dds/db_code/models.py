@@ -189,7 +189,7 @@ class File(db.Model):
     name_in_bucket = db.Column(db.String(200), unique=False, nullable=False)
     subpath = db.Column(db.String(500), unique=False, nullable=False)
     size = db.Column(db.BigInteger, unique=False, nullable=False)
-    #     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)
+    size_encrypted = db.Column(db.BigInteger, unique=False, nullable=False)
     #     extension = db.Column(db.String(15), unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)

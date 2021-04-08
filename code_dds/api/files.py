@@ -41,6 +41,7 @@ class NewFile(flask_restful.Resource):
                 "name_in_bucket",
                 "subpath",
                 "size",
+                "size_processed",
                 "compressed",
                 "salt",
                 "public_key",
@@ -69,6 +70,7 @@ class NewFile(flask_restful.Resource):
                 name_in_bucket=args["name_in_bucket"],
                 subpath=args["subpath"],
                 size=args["size"],
+                size_encrypted=args["size_processed"],
                 project_id=project["id"],
                 compressed=bool(args["compressed"] == "True"),
                 salt=args["salt"],
@@ -333,6 +335,8 @@ class FileInfo(flask_restful.Resource):
         # Get files and folders requested by CLI
         paths = flask.request.json
 
+        print(f"Paths: {paths}", flush=True)
+
         files_single, files_in_folders = ({}, {})
 
         # Get info on files and folders
@@ -348,6 +352,9 @@ class FileInfo(flask_restful.Resource):
                     models.File.name_in_bucket,
                     models.File.subpath,
                     models.File.size,
+                    models.File.size_encrypted,
+                    models.File.salt,
+                    models.File.public_key,
                 )
                 .all()
             )
@@ -365,22 +372,37 @@ class FileInfo(flask_restful.Resource):
                             models.File.name_in_bucket,
                             models.File.subpath,
                             models.File.size,
+                            models.File.size_encrypted,
+                            models.File.salt,
+                            models.File.public_key,
                         )
                         .all()
                     )
+
                     if list_of_files:
-                        files_in_folders[x] = list_of_files
+                        files_in_folders[x] = [tuple(x) for x in list_of_files]
 
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(str(err), 500)
         else:
+
             # Make dict for files with info
             files_single = {
-                x[0]: {"name_in_bucket": x[1], "subpath": x[2], "size": x[3]}
+                x[0]: {
+                    "name_in_bucket": x[1],
+                    "subpath": x[2],
+                    "size": x[3],
+                    "size_encrypted": x[4],
+                    "key_salt": x[5],
+                    "public_key": x[6],
+                }
                 for x in files
             }
 
-        return flask.jsonify({"files": files_single, "folders": files_in_folders})
+        try:
+            return flask.jsonify({"files": files_single, "folders": files_in_folders})
+        except Exception as err:
+            print(str(err), flush=True)
 
 
 class FileInfoAll(flask_restful.Resource):
@@ -400,6 +422,9 @@ class FileInfoAll(flask_restful.Resource):
                     models.File.name_in_bucket,
                     models.File.subpath,
                     models.File.size,
+                    models.File.size_encrypted,
+                    models.File.salt,
+                    models.File.public_key,
                 )
                 .all()
             )
@@ -412,7 +437,14 @@ class FileInfoAll(flask_restful.Resource):
                 )
 
             files = {
-                x[0]: {"name_in_bucket": x[1], "subpath": x[2], "size": x[3]}
+                x[0]: {
+                    "name_in_bucket": x[1],
+                    "subpath": x[2],
+                    "size": x[3],
+                    "size_encrypted": x[4],
+                    "key_salt": x[5],
+                    "public_key": x[6],
+                }
                 for x in all_files
             }
 
