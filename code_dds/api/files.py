@@ -358,6 +358,7 @@ class FileInfo(flask_restful.Resource):
                     models.File.salt,
                     models.File.public_key,
                     models.File.checksum,
+                    models.File.compressed,
                 )
                 .all()
             )
@@ -379,6 +380,7 @@ class FileInfo(flask_restful.Resource):
                             models.File.salt,
                             models.File.public_key,
                             models.File.checksum,
+                            models.File.compressed,
                         )
                         .all()
                     )
@@ -400,6 +402,7 @@ class FileInfo(flask_restful.Resource):
                     "key_salt": x[5],
                     "public_key": x[6],
                     "checksum": x[7],
+                    "compressed": x[8],
                 }
                 for x in files
             }
@@ -431,6 +434,7 @@ class FileInfoAll(flask_restful.Resource):
                     models.File.salt,
                     models.File.public_key,
                     models.File.checksum,
+                    models.File.compressed,
                 )
                 .all()
             )
@@ -451,6 +455,7 @@ class FileInfoAll(flask_restful.Resource):
                     "key_salt": x[5],
                     "public_key": x[6],
                     "checksum": x[7],
+                    "compressed": x[8],
                 }
                 for x in all_files
             }
