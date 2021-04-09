@@ -45,6 +45,7 @@ class NewFile(flask_restful.Resource):
                 "compressed",
                 "salt",
                 "public_key",
+                "checksum",
             ]
         ):
             return flask.make_response(
@@ -76,6 +77,7 @@ class NewFile(flask_restful.Resource):
                 salt=args["salt"],
                 public_key=args["public_key"],
                 date_uploaded=timestamp(),
+                checksum=args["checksum"],
             )
             db.session.add(new_file)
             db.session.commit()
@@ -355,6 +357,7 @@ class FileInfo(flask_restful.Resource):
                     models.File.size_encrypted,
                     models.File.salt,
                     models.File.public_key,
+                    models.File.checksum,
                 )
                 .all()
             )
@@ -375,6 +378,7 @@ class FileInfo(flask_restful.Resource):
                             models.File.size_encrypted,
                             models.File.salt,
                             models.File.public_key,
+                            models.File.checksum,
                         )
                         .all()
                     )
@@ -395,6 +399,7 @@ class FileInfo(flask_restful.Resource):
                     "size_encrypted": x[4],
                     "key_salt": x[5],
                     "public_key": x[6],
+                    "checksum": x[7],
                 }
                 for x in files
             }
@@ -425,6 +430,7 @@ class FileInfoAll(flask_restful.Resource):
                     models.File.size_encrypted,
                     models.File.salt,
                     models.File.public_key,
+                    models.File.checksum,
                 )
                 .all()
             )
@@ -444,6 +450,7 @@ class FileInfoAll(flask_restful.Resource):
                     "size_encrypted": x[4],
                     "key_salt": x[5],
                     "public_key": x[6],
+                    "checksum": x[7],
                 }
                 for x in all_files
             }

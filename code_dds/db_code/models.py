@@ -194,6 +194,7 @@ class File(db.Model):
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
+    checksum = db.Column(db.String(64), unique=False, nullable=False)
     project_id = db.Column(
         db.String(32), db.ForeignKey("projects.id"), unique=False, nullable=False
     )

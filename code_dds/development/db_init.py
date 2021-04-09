@@ -370,6 +370,7 @@ def fill_db():
             compressed=False,
             public_key="test",
             salt="test",
+            checksum="",
             project_id=projects[0],
             date_uploaded=timestamp(),
         )
