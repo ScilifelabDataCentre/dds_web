@@ -113,6 +113,12 @@ class NewFile(flask_restful.Resource):
             # Update file info
             existing_file.subpath = args["subpath"]
             existing_file.size = args["size"]
+            existing_file.size_encrypted = args["size_processed"]
+            existing_file.compressed = bool(args["compressed"] == "True")
+            existing_file.salt = args["salt"]
+            existing_file.public_key = args["public_key"]
+            existing_file.date_uploaded = timestamp()
+            existing_file.checksum = args["checksum"]
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
