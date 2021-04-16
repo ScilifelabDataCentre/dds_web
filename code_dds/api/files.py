@@ -62,7 +62,7 @@ class NewFile(flask_restful.Resource):
 
             if existing_file or existing_file is not None:
                 return flask.make_response(
-                    f"File '{args['name']}' already " "exists in the database!", 500
+                    f"File '{args['name']}' already exists in the database!", 500
                 )
 
             # Add new file to db
