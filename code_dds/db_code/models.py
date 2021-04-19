@@ -71,7 +71,7 @@ class Facility(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(50), unique=True, nullable=False)
-    # name = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)
     # internal_ref = db.Column(db.String(10), unique=True, nullable=False)
     username = db.Column(db.String(20), unique=True, nullable=False)
     password = db.Column(db.String(120), unique=False, nullable=False)
@@ -121,8 +121,8 @@ class Project(db.Model):
     date_created = db.Column(db.String(50), nullable=False)
     date_updated = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20), nullable=False)
-    #     sensitive = db.Column(db.Boolean, nullable=False)
-    #     description = db.Column(db.Text)
+    #    sensitive = db.Column(db.Boolean, nullable=False)
+    description = db.Column(db.Text)
     pi = db.Column(db.String(50), unique=False, nullable=False)
     owner = db.Column(
         db.String(50), db.ForeignKey("users.public_id"), unique=False, nullable=False
@@ -135,6 +135,7 @@ class Project(db.Model):
     )
     size = db.Column(db.BigInteger, unique=False, nullable=False)
     #     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)
+    #     delivery_option = db.Column(db.String(10), unique=False, nullable=False)
     #     delivery_option = db.Column(db.String(10), unique=False, nullable=False)
     #     salt = db.Column(db.String(32), nullable=False)
     #     nonce = db.Column(db.String(24), nullable=False)
