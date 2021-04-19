@@ -160,9 +160,7 @@ def fill_db():
             bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}",
             public_key="D92950F6755889FA22408B328B733ACD2242BCE570292540564AEC6E7A1B2626",
             private_key="78C784A9E6A3745E23E8199EB0310884A0696FC9A999EFE24889686C5815F073",
-            description="This is a test project",
-            delivery_option="S3",
-            sensitive=True
+            description="This is a test project"
         ),
         Project(
             id="ProjectID_2",
@@ -178,9 +176,7 @@ def fill_db():
             bucket=f"ProjectID_2_202121185120157665_{str(uuid.uuid4())}",
             public_key="D92950F6755889FA22408B328B733ACD2242BCE570292540564AEC6E7A1B2626",
             private_key="78C784A9E6A3745E23E8199EB0310884A0696FC9A999EFE24889686C5815F073",
-            description="This is a test project",
-            delivery_option="S3",
-            sensitive=True
+            description="This is a test project"
         )
         # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
         #         category="Category1",
