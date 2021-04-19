@@ -13,8 +13,9 @@ import flask
 import sqlalchemy
 
 # Own modules
+from code_dds import timestamp
 from code_dds.db_code import models
-from code_dds import db
+from code_dds import db, timestamp
 from code_dds.api.api_s3_connector import ApiS3Connector
 from code_dds.api.db_connector import DBConnector
 from code_dds.api.dds_decorators import token_required, project_access_required
@@ -33,9 +34,22 @@ class NewFile(flask_restful.Resource):
         """Add new file to DB"""
 
         args = flask.request.args
-        if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
+        if not all(
+            x in args
+            for x in [
+                "name",
+                "name_in_bucket",
+                "subpath",
+                "size",
+                "size_processed",
+                "compressed",
+                "salt",
+                "public_key",
+                "checksum",
+            ]
+        ):
             return flask.make_response(
-                "Information missing, " "cannot add file to database.", 500
+                "Information missing, cannot add file to database.", 500
             )
 
         try:
@@ -48,7 +62,7 @@ class NewFile(flask_restful.Resource):
 
             if existing_file or existing_file is not None:
                 return flask.make_response(
-                    f"File '{args['name']}' already " "exists in the database!", 500
+                    f"File '{args['name']}' already exists in the database!", 500
                 )
 
             # Add new file to db
@@ -57,9 +71,24 @@ class NewFile(flask_restful.Resource):
                 name_in_bucket=args["name_in_bucket"],
                 subpath=args["subpath"],
                 size=args["size"],
+                size_encrypted=args["size_processed"],
                 project_id=project["id"],
+                compressed=bool(args["compressed"] == "True"),
+                salt=args["salt"],
+                public_key=args["public_key"],
+                date_uploaded=timestamp(),
+                checksum=args["checksum"],
             )
             db.session.add(new_file)
+
+            # Increase project size
+            # TODO (ina): put in class
+            current_project = models.Project.query.filter_by(id=project["id"]).first()
+            if not current_project or current_project is None:
+                return flask.make_response(f"Could not find project {project['id']}!")
+
+            current_project.size += int(args["size"])
+
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
@@ -90,9 +119,25 @@ class NewFile(flask_restful.Resource):
                     500,
                 )
 
+            old_size = existing_file.size
+
             # Update file info
             existing_file.subpath = args["subpath"]
             existing_file.size = args["size"]
+            existing_file.size_encrypted = args["size_processed"]
+            existing_file.compressed = bool(args["compressed"] == "True")
+            existing_file.salt = args["salt"]
+            existing_file.public_key = args["public_key"]
+            existing_file.date_uploaded = timestamp()
+            existing_file.checksum = args["checksum"]
+
+            # Increase project size
+            # TODO (ina): put in class
+            current_project = models.Project.query.filter_by(id=project["id"]).first()
+            if not current_project or current_project is None:
+                return flask.make_response(f"Could not find project {project['id']}!")
+            current_project.size += old_size - int(args["size"])
+
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
@@ -304,3 +349,174 @@ class RemoveDir(flask_restful.Resource):
         return flask.jsonify(
             {"not_removed": not_removed_dict, "not_exists": not_exist_list}
         )
+
+
+class FileInfo(flask_restful.Resource):
+    """Get file info on files to download."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, current_user, project):
+        """Checks which files can be downloaded, and get their info."""
+
+        # Get files and folders requested by CLI
+        paths = flask.request.json
+
+        print(f"Paths: {paths}", flush=True)
+
+        files_single, files_in_folders = ({}, {})
+
+        # Get info on files and folders
+        try:
+            # Get all files in project
+            files_in_proj = models.File.query.filter_by(project_id=project["id"])
+
+            # All files matching the path -- single files
+            files = (
+                files_in_proj.filter(models.File.name.in_(paths))
+                .with_entities(
+                    models.File.name,
+                    models.File.name_in_bucket,
+                    models.File.subpath,
+                    models.File.size,
+                    models.File.size_encrypted,
+                    models.File.salt,
+                    models.File.public_key,
+                    models.File.checksum,
+                    models.File.compressed,
+                )
+                .all()
+            )
+
+            # All paths which start with the subpath are within a folder
+            for x in paths:
+                # Only try to match those not already saved in files
+                if x not in [f[0] for f in files]:
+                    list_of_files = (
+                        files_in_proj.filter(
+                            models.File.subpath.like(f"{x.rstrip(os.sep)}%")
+                        )
+                        .with_entities(
+                            models.File.name,
+                            models.File.name_in_bucket,
+                            models.File.subpath,
+                            models.File.size,
+                            models.File.size_encrypted,
+                            models.File.salt,
+                            models.File.public_key,
+                            models.File.checksum,
+                            models.File.compressed,
+                        )
+                        .all()
+                    )
+
+                    if list_of_files:
+                        files_in_folders[x] = [tuple(x) for x in list_of_files]
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+
+            # Make dict for files with info
+            files_single = {
+                x[0]: {
+                    "name_in_bucket": x[1],
+                    "subpath": x[2],
+                    "size": x[3],
+                    "size_encrypted": x[4],
+                    "key_salt": x[5],
+                    "public_key": x[6],
+                    "checksum": x[7],
+                    "compressed": x[8],
+                }
+                for x in files
+            }
+
+        try:
+            return flask.jsonify({"files": files_single, "folders": files_in_folders})
+        except Exception as err:
+            print(str(err), flush=True)
+
+
+class FileInfoAll(flask_restful.Resource):
+    """Get info on all project files."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, current_user, project):
+        """Get file info."""
+
+        files = {}
+        try:
+            all_files = (
+                models.File.query.filter_by(project_id=project["id"])
+                .with_entities(
+                    models.File.name,
+                    models.File.name_in_bucket,
+                    models.File.subpath,
+                    models.File.size,
+                    models.File.size_encrypted,
+                    models.File.salt,
+                    models.File.public_key,
+                    models.File.checksum,
+                    models.File.compressed,
+                )
+                .all()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+            if all_files is None or not all_files:
+                return flask.make_response(
+                    f"The project {project['id']} is empty.", 401
+                )
+
+            files = {
+                x[0]: {
+                    "name_in_bucket": x[1],
+                    "subpath": x[2],
+                    "size": x[3],
+                    "size_encrypted": x[4],
+                    "key_salt": x[5],
+                    "public_key": x[6],
+                    "checksum": x[7],
+                    "compressed": x[8],
+                }
+                for x in all_files
+            }
+
+        return flask.jsonify({"files": files})
+
+
+class UpdateFile(flask_restful.Resource):
+    """Update file info after download"""
+
+    method_decorators = [project_access_required, token_required]
+
+    def put(self, current_user, project):
+        """Update info in db."""
+
+        # Get file name from request from CLI
+        file_name = flask.request.args
+        if "name" not in file_name:
+            return flask.make_response(
+                "No file name specified. Cannot update file.", 500
+            )
+
+        # Update file info
+        try:
+            file = models.File.query.filter_by(
+                project_id=project["id"], name=file_name["name"]
+            ).first()
+
+            if not file or file is None:
+                return flask.make_response(f"No such file: {file_name['name']}", 500)
+
+            file.latest_download = timestamp()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            return flask.make_response(str(err), 500)
+        else:
+            db.session.commit()
+
+        return flask.jsonify({"message": "File info updated."})

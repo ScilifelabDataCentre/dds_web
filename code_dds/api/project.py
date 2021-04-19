@@ -34,10 +34,12 @@ from code_dds.api.dds_decorators import token_required, project_access_required
 
 class ProjectAccess(flask_restful.Resource):
     """Checks a users access to a specific project."""
+
     method_decorators = [token_required]
 
     def get(self, current_user, project):
         """Checks the users access to a specific project and action."""
+
         args = flask.request.args
 
         # Deny access if project or method not specified
@@ -51,28 +53,86 @@ class ProjectAccess(flask_restful.Resource):
 
         # Facilities can upload and list, users can download and list
         # TODO (ina): Add allowed actions to DB instead of hard coding
-        if (user_is_fac and args["method"] not in ["put", "ls", "rm"]) or \
-                (not user_is_fac and args["method"] not in ["get", "ls", "rm"]):
+        if (user_is_fac and args["method"] not in ["put", "ls", "rm"]) or (
+            not user_is_fac and args["method"] not in ["get", "ls", "rm"]
+        ):
             return flask.make_response(
                 f"Attempted to {args['method']} in project {project['id']}. "
-                "Permission denied.", 401
+                "Permission denied.",
+                401,
             )
 
         # Check if user has access to project
+        if project["id"] is None:
+            return flask.make_response("No project specified.", 401)
+
         if project["id"] in [x.id for x in current_user.user_projects]:
-            token, error = jwt_token(user_id=current_user.public_id,
-                                     is_fac=user_is_fac, project_id=project["id"],
-                                     project_access=True)
+            token, error = jwt_token(
+                user_id=current_user.public_id,
+                is_fac=user_is_fac,
+                project_id=project["id"],
+                project_access=True,
+            )
             if token is None:
                 return flask.make_response(error, 500)
 
-            return flask.jsonify({"dds-access-granted": True, "token": token.decode("UTF-8")})
+            # Project access granted
+            return flask.jsonify(
+                {
+                    "dds-access-granted": True,
+                    "token": token.decode("UTF-8"),
+                }
+            )
 
+        # Project access denied
         return flask.make_response("Project access denied", 401)
+
+
+class GetPublic(flask_restful.Resource):
+    """Gets the public key beloning to the current project."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, _, project):
+        """Get public key from database."""
+
+        try:
+            proj_pub = (
+                models.Project.query.filter_by(id=project["id"])
+                .with_entities(models.Project.public_key)
+                .first()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+            return flask.jsonify({"public": proj_pub[0]})
+
+
+class GetPrivate(flask_restful.Resource):
+    """Gets the private key belonging to the current project."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, _, project):
+        """Get private key from database"""
+
+        # TODO (ina): Change handling of private key -- not secure
+
+        try:
+            proj_priv = (
+                models.Project.query.filter_by(id=project["id"])
+                .with_entities(models.Project.private_key)
+                .first()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+            return flask.jsonify({"private": proj_priv[0]})
 
 
 class UserProjects(flask_restful.Resource):
     """Gets all projects registered to a specific user."""
+
     method_decorators = [token_required]
 
     def get(self, current_user, *args):
@@ -86,19 +146,21 @@ class UserProjects(flask_restful.Resource):
         all_projects = list()
         columns = ["Project ID", "Title", "PI", "Status", "Last updated"]
         for x in current_user.user_projects:
-            all_projects.append({columns[0]: x.id,
-                                 columns[1]: x.title,
-                                 columns[2]: x.pi,
-                                 columns[3]: x.status,
-                                 columns[4]: timestamp(
-                                     datetime_string=x.date_updated
-            )}
+            all_projects.append(
+                {
+                    columns[0]: x.id,
+                    columns[1]: x.title,
+                    columns[2]: x.pi,
+                    columns[3]: x.status,
+                    columns[4]: timestamp(datetime_string=x.date_updated),
+                }
             )
         return flask.jsonify({"all_projects": all_projects, "columns": columns})
 
 
 class RemoveContents(flask_restful.Resource):
     """Removes all project contents."""
+
     method_decorators = [project_access_required, token_required]
 
     def delete(self, _, project):
@@ -134,3 +196,12 @@ class RemoveContents(flask_restful.Resource):
                     return flask.make_response(str(err), 500)
 
         return flask.jsonify({"removed": removed, "error": error})
+
+
+class UpdateProjectSize(flask_restful.Resource):
+
+    method_decorators = [project_access_required, token_required]
+
+    def put(self, _, project):
+
+        print("Testing testing", flush=True)
