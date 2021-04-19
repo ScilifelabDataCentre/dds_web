@@ -76,43 +76,42 @@ from code_dds import timestamp
 def fill_db():
     """Fills the database with initial entries used for development."""
 
-    users = [User(public_id="public_user_id",
-                  username="username",
-                  password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
-                  admin=False)
-
-             #     User(first_name="FirstName", last_name="LastName",
-             #         username="username1",
-             #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
-             #                   "c27a8efd774bc5"),
-             #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-             #         email="user1@email.com", phone="070-000 00 01",
-             #         admin=False),
-
-             #     User(first_name="Han", last_name="Solo",
-             #         username="hanflysolo",
-             #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
-             #                   "c27a8efd774bc5"),
-             #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-             #         email="user2@email.com", phone="070-000 00 01",
-             #         admin=False),
-
-             #     User(first_name="Tony", last_name="Stark",
-             #         username="tonyistony",
-             #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
-             #                   "c27a8efd774bc5"),
-             #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-             #         email="user3@email.com", phone="070-000 00 01",
-             #         admin=False),
-
-             #     User(first_name="Katniss", last_name="Everdeen",
-             #         username="katever",
-             #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
-             #                   "c27a8efd774bc5"),
-             #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-             #         email="user4@email.com", phone="070-000 00 01",
-             #         admin=False)
-             ]
+    users = [
+        User(
+            public_id="public_user_id",
+            username="username",
+            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
+            admin=False,
+        )
+        #     User(first_name="FirstName", last_name="LastName",
+        #         username="username1",
+        #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
+        #                   "c27a8efd774bc5"),
+        #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
+        #         email="user1@email.com", phone="070-000 00 01",
+        #         admin=False),
+        #     User(first_name="Han", last_name="Solo",
+        #         username="hanflysolo",
+        #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
+        #                   "c27a8efd774bc5"),
+        #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
+        #         email="user2@email.com", phone="070-000 00 01",
+        #         admin=False),
+        #     User(first_name="Tony", last_name="Stark",
+        #         username="tonyistony",
+        #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
+        #                   "c27a8efd774bc5"),
+        #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
+        #         email="user3@email.com", phone="070-000 00 01",
+        #         admin=False),
+        #     User(first_name="Katniss", last_name="Everdeen",
+        #         username="katever",
+        #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
+        #                   "c27a8efd774bc5"),
+        #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
+        #         email="user4@email.com", phone="070-000 00 01",
+        #         admin=False)
+    ]
 
     facilities = [
         Facility(public_id="public_facility_id",
@@ -126,21 +125,18 @@ def fill_db():
         #                    "095735f5a395e9013d70ec"),
         #          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
         #          email="supprt@fac.se", phone="08 000 00 00"),
-
         # Facility(name="Genome facility", internal_ref="fac2",
         #          username="genome_fac",
         #          password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
         #                    "095735f5a395e9013d70ec"),
         #          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
         #          email="supprt@genome.se", phone="08 000 00 00"),
-
         # Facility(name="Imaging facility", internal_ref="fac3",
         #          username="image_fac",
         #          password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
         #                    "095735f5a395e9013d70ec"),
         #          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
         #          email="supprt@imaging.se", phone="08 000 00 00"),
-
         # Facility(name="Proteomics facility", internal_ref="fac4",
         #          username="proteome_fac",
         #          password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
@@ -150,35 +146,42 @@ def fill_db():
     ]
 
     projects = [
-        Project(id="Project01",
-                title="project_title",
-                category="Category",
-                status="Delivered",
-                pi="PI",
-                owner=users[0],
-                facility=facilities[0],
-                size=40000000000,
-                description="This is a test project",
-                delivery_option="S3",
-                sensitive=True,
-                date_created="2021-02-15",
-                date_updated="2021-03-11",
-                bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}"),
-        
-        Project(id="Project02",
-                title="project_title",
-                category="Category",
-                status="Ongoing",
-                pi="PI",
-                owner=users[0],
-                facility=facilities[0],
-                size=40000000000,
-                description="This is a test project",
-                delivery_option="S3",
-                sensitive=True,
-                date_created="2021-02-15",
-                bucket=f"ProjectID_202121185120157663_{str(uuid.uuid4())}")
-
+        Project(
+            id="ProjectID",
+            title="project_title",
+            category="Category",
+            date_created=timestamp(),
+            date_updated=timestamp(),
+            status="Ongoing",
+            pi="PI",
+            owner=users[0],
+            facility=facilities[0],
+            size=7357,
+            bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}",
+            public_key="D92950F6755889FA22408B328B733ACD2242BCE570292540564AEC6E7A1B2626",
+            private_key="78C784A9E6A3745E23E8199EB0310884A0696FC9A999EFE24889686C5815F073",
+            description="This is a test project",
+            delivery_option="S3",
+            sensitive=True
+        ),
+        Project(
+            id="ProjectID_2",
+            title="project_title_2",
+            category="Category_2",
+            date_created=timestamp(),
+            date_updated=timestamp(),
+            status="Ongoing",
+            pi="PI_2",
+            owner=users[0],
+            facility=facilities[0],
+            size=7357,
+            bucket=f"ProjectID_2_202121185120157665_{str(uuid.uuid4())}",
+            public_key="D92950F6755889FA22408B328B733ACD2242BCE570292540564AEC6E7A1B2626",
+            private_key="78C784A9E6A3745E23E8199EB0310884A0696FC9A999EFE24889686C5815F073",
+            description="This is a test project",
+            delivery_option="S3",
+            sensitive=True
+        )
         # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
         #         category="Category1",
         #         order_date=timestamp(), delivery_date=None,
@@ -194,7 +197,6 @@ def fill_db():
         #         salt="9A2694986A488E438DA998E73E93E9C4",
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-
         # Project(id="GEN001", title="RNA-seq study",
         #         category="Genomics",
         #         order_date="2020-06-27", delivery_date="2020-08-19",
@@ -212,7 +214,6 @@ def fill_db():
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"
         #         ),
-
         # Project(id="GEN002", title="Whole genome reseq",
         #         category="Genomics",
         #         order_date="2020-07-14", delivery_date="2020-10-09",
@@ -229,7 +230,6 @@ def fill_db():
         #         salt="9A2694986A488E438DA998E73E93E9C4",
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-
         # Project(id="GEN003", title="Interspecific gene flow",
         #         category="Genomics",
         #         order_date="2020-09-18", delivery_date="2019-10-12",
@@ -246,7 +246,6 @@ def fill_db():
         #         salt="9A2694986A488E438DA998E73E93E9C4",
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-
         # Project(id="GEN004", title="Corona expression study",
         #         category="Genomics",
         #         order_date="2020-10-10", delivery_date=None,
@@ -263,7 +262,6 @@ def fill_db():
         #         salt="9A2694986A488E438DA998E73E93E9C4",
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-
         # Project(id="GEN005", title="Gastric microbiota",
         #         category="Genomics",
         #         order_date="2020-10-27", delivery_date=None,
@@ -280,7 +278,6 @@ def fill_db():
         #         salt="9A2694986A488E438DA998E73E93E9C4",
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-
         # Project(id="IMG001", title="Mitochondrial translation",
         #         category="Imaging",
         #         order_date="2020-05-25", delivery_date="2020-07-12",
@@ -297,7 +294,6 @@ def fill_db():
         #         salt="9A2694986A488E438DA998E73E93E9C4",
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-
         # Project(id="IMG002", title="DNA polymerases",
         #         category="Imaging",
         #         order_date="2020-06-18", delivery_date="2020-08-25",
@@ -314,7 +310,6 @@ def fill_db():
         #         salt="9A2694986A488E438DA998E73E93E9C4",
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-
         # Project(id="IMG003", title="Type III ATP syntase",
         #         category="Imaging",
         #         order_date="2020-09-11", delivery_date="2020-10-05",
@@ -331,7 +326,6 @@ def fill_db():
         #         salt="9A2694986A488E438DA998E73E93E9C4",
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-
         # Project(id="IMG004", title="Proton exchanger NHE9",
         #         category="Imaging",
         #         order_date="2020-11-09", delivery_date=None,
@@ -348,7 +342,6 @@ def fill_db():
         #         salt="9A2694986A488E438DA998E73E93E9C4",
         #         nonce="D55240DB506C2C22CF248F18",
         #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-
         # Project(id="IMG005", title="Mitochondrial translation",
         #         category="Imaging",
         #         order_date="2020-11-11", delivery_date=None,
@@ -369,69 +362,144 @@ def fill_db():
 
     roles = [
         Role(username=users[0].username, facility=False),
-        Role(username=facilities[0].username, facility=True)
+        Role(username=facilities[0].username, facility=True),
     ]
 
     files = [
+        File(
+            name="notafile.txt",
+            name_in_bucket="testtesttest.txt",
+            subpath="subpath",
+            size=0,  # bytes
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            project_id=projects[0],
+            date_uploaded=timestamp())
+            ]
+        
+    files_more = [
         File(name= 'description.txt',
            name_in_bucket= 'description.txt',
            subpath= '',
            size=254,
-           project_id=projects[0] ),
+           project_id=projects[1],
+           size_encrypted=0,
+           compressed=False,
+           public_key="test",
+           salt="test",
+           checksum="",
+           date_uploaded=timestamp()),
        
         File(name= 'Sample_1/data.txt',
             name_in_bucket= 'Sample_1/data.txt',
             subpath= 'Sample_1',
             size=189,
-            project_id=projects[0]),
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
         
         File(name= 'Sample_1/source.txt',
             name_in_bucket= 'Sample_1/source.txt',
             subpath= 'Sample_1',
             size=754,
-            project_id=projects[0]),
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
         
         File(name= 'Sample_1/meta/info.txt',
             name_in_bucket= 'Sample_1/meta/info.txt',
             subpath= 'Sample_1/meta',
             size=65,
-            project_id=projects[0]),
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
         
         File(name= 'Sample_2/data.txt',
             name_in_bucket= 'Sample_2/data.txt',
             subpath= 'Sample_2',
             size=399,
-            project_id=projects[0]),
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
         
         File(name= 'Sample_2/source.txt',
             name_in_bucket= 'Sample_2/source.txt',
             subpath= 'Sample_2',
             size=420,
-            project_id=projects[0]),
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
         
         File(name= 'Sample_2/meta/info.txt',
             name_in_bucket= 'Sample_2/meta/info.txt',
             subpath= 'Sample_2/meta',
             size=241,
-            project_id=projects[0]),
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
         
         File(name= 'sample_list.txt',
             name_in_bucket= 'sample_list.txt',
             subpath= '',
             size=97,
-            project_id=projects[0]),
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
         
         File(name= 'Plates/Sample_1/layout.txt',
             name_in_bucket= 'Sample_1/layout.txt',
             subpath= 'Plates/Sample_1',
             size=136,
-            project_id=projects[0]),
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
         
         File(name= 'Plates/Sample_2/layout.txt',
             name_in_bucket= 'Sample_2/layout.txt',
             subpath= 'Plates/Sample_2',
             size=125,
-            project_id=projects[0])
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp())
     ]
     
     # Foreign key/relationship updates
@@ -454,6 +522,9 @@ def fill_db():
     # for prj in projects[1:]:
     #     if prj.status == "Delivered":
     #         create_files_for_project(prj)
+    
+    for fl in files_more:
+        projects[1].project_files.append(fl)
 
     # Add user and facility, the rest is automatically added and commited
     db.session.add_all(users)

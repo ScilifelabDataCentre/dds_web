@@ -24,6 +24,7 @@ from code_dds.crypt.auth import gen_argon2hash, verify_password_argon2id
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
 
+
 def is_facility(username):
     """Checks if the user is a facility or not."""
 
@@ -31,8 +32,11 @@ def is_facility(username):
 
     # Check for user and which table to work in
     try:
-        role = models.Role.query.filter_by(username=username).\
-            with_entities(models.Role.facility).first()
+        role = (
+            models.Role.query.filter_by(username=username)
+            .with_entities(models.Role.facility)
+            .first()
+        )
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
         error = f"Database connection failed - {sqlerr}" + str(sqlerr)
     else:
@@ -47,16 +51,17 @@ def is_facility(username):
 
 def jwt_token(user_id, is_fac, project_id, project_access=False):
     """Generates and encodes a JWT token."""
-    
-    error = ""
+
+    token, error = (None, "")
     try:
         token = jwt.encode(
-            {"public_id": user_id,
-            "facility": is_fac,
-            "project": {"id": project_id, "verified": project_access},
-            "exp": datetime.datetime.utcnow() +
-            datetime.timedelta(hours=48)},
-            app.config["SECRET_KEY"]
+            {
+                "public_id": user_id,
+                "facility": is_fac,
+                "project": {"id": project_id, "verified": project_access},
+                "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
+            },
+            app.config["SECRET_KEY"],
         )
     except Exception as err:
         token, error = (None, str(err))
@@ -67,6 +72,7 @@ def jwt_token(user_id, is_fac, project_id, project_access=False):
 ###############################################################################
 # ENDPOINTS ####################################################### ENDPOINTS #
 ###############################################################################
+
 
 class AuthenticateUser(flask_restful.Resource):
     """Handles the authentication of the user."""
@@ -89,33 +95,34 @@ class AuthenticateUser(flask_restful.Resource):
         # Check if user has facility role
         user_is_fac, error = is_facility(username=auth.username)
         if user_is_fac is None:
-            return flask.make_response(error, 401)
+            return flask.make_response(error, 500)
 
         # Get user from DB matching the username
         try:
             table = models.Facility if user_is_fac else models.User
             user = table.query.filter_by(username=auth.username).first()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            return flask.make_response(
-                f"Database connection failed: {sqlerr}", 500
-            )
+            return flask.make_response(f"Database connection failed: {sqlerr}", 500)
 
         # Deny access if there is no such user
-        if not user:
+        if not user or user is None:
             return flask.make_response(
                 "User role registered as "
                 f"'{'facility' if user_is_fac else 'user'}' but user account "
-                f"not found! User denied access: {auth.username}", 401
+                f"not found! User denied access: {auth.username}",
+                500,
             )
 
         # Verify user password and generate token
         if verify_password_argon2id(user.password, auth.password):
-            token, error = jwt_token(user_id=user.public_id,
-                              is_fac=user_is_fac,
-                              project_id=project)
+            token, error = jwt_token(
+                user_id=user.public_id, is_fac=user_is_fac, project_id=project
+            )
             if token is None:
                 return flask.make_response(error, 500)
 
+            # Success - return token
             return flask.jsonify({"token": token.decode("UTF-8")})
 
+        # Failed - incorrect password
         return flask.make_response("Incorrect password!", 401)
