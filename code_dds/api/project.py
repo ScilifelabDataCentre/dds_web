@@ -196,3 +196,12 @@ class RemoveContents(flask_restful.Resource):
                     return flask.make_response(str(err), 500)
 
         return flask.jsonify({"removed": removed, "error": error})
+
+
+class UpdateProjectSize(flask_restful.Resource):
+
+    method_decorators = [project_access_required, token_required]
+
+    def put(self, _, project):
+
+        print("Testing testing", flush=True)

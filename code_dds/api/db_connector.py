@@ -177,6 +177,15 @@ class DBConnector:
             num_deleted = models.File.query.filter_by(
                 project_id=self.project["id"]
             ).delete()
+
+            # TODO (ina): put in class
+            # change project size
+            current_project = models.Project.query.filter_by(
+                id=self.project["id"]
+            ).first()
+            current_project.size = 0
+
+            db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             error = str(err)
@@ -211,7 +220,16 @@ class DBConnector:
         if files and files is not None:
             exists = True
             try:
-                _ = [db.session.delete(x) for x in files]
+                current_project = models.Project.query.filter_by(
+                    id=self.project["id"]
+                ).first()
+                for x in files:
+                    old_size = x.size
+                    db.session.delete(x)
+                    current_project.size -= old_size
+                # _ = [db.session.delete(x) for x in files]
+                # _ = [current_project.size - x.size for x in files]
+
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)
             else:
@@ -276,6 +294,7 @@ class DBConnector:
             file = models.File.query.filter_by(
                 name=filename, project_id=self.project["id"]
             ).first()
+
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
 
@@ -283,7 +302,13 @@ class DBConnector:
         if file or file is not None:
             exists, name_in_bucket = (True, file.name_in_bucket)
             try:
+                # TODO (ina): put in own class
+                old_size = file.size
+                current_project = models.Project.query.filter_by(
+                    id=self.project["id"]
+                ).first()
                 db.session.delete(file)
+                current_project.size -= old_size
             except sqlalchemy.exc.SQLAlchemyError as err:
                 db.session.rollback()
                 error = str(err)

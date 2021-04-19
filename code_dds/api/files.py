@@ -80,6 +80,15 @@ class NewFile(flask_restful.Resource):
                 checksum=args["checksum"],
             )
             db.session.add(new_file)
+
+            # Increase project size
+            # TODO (ina): put in class
+            current_project = models.Project.query.filter_by(id=project["id"]).first()
+            if not current_project or current_project is None:
+                return flask.make_response(f"Could not find project {project['id']}!")
+
+            current_project.size += int(args["size"])
+
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
@@ -110,6 +119,8 @@ class NewFile(flask_restful.Resource):
                     500,
                 )
 
+            old_size = existing_file.size
+
             # Update file info
             existing_file.subpath = args["subpath"]
             existing_file.size = args["size"]
@@ -119,6 +130,14 @@ class NewFile(flask_restful.Resource):
             existing_file.public_key = args["public_key"]
             existing_file.date_uploaded = timestamp()
             existing_file.checksum = args["checksum"]
+
+            # Increase project size
+            # TODO (ina): put in class
+            current_project = models.Project.query.filter_by(id=project["id"]).first()
+            if not current_project or current_project is None:
+                return flask.make_response(f"Could not find project {project['id']}!")
+            current_project.size += old_size - int(args["size"])
+
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
