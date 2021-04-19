@@ -22,4 +22,4 @@ class Config:
     
     # File upload related
     UPLOAD_FOLDER = environ.get('DDS_UPLOAD_FOLDER')
-    MAX_CONTENT_LENGTH = environ.get('DDS_MAX_UPLOAD_SIZE')
+    MAX_CONTENT_LENGTH = int(environ.get('DDS_MAX_UPLOAD_SIZE'))
