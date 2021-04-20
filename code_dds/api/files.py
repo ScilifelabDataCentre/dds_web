@@ -33,23 +33,22 @@ class NewFile(flask_restful.Resource):
     def post(self, _, project):
         """Add new file to DB"""
 
+        required_info = [
+            "name",
+            "name_in_bucket",
+            "subpath",
+            "size",
+            "size_processed",
+            "compressed",
+            "salt",
+            "public_key",
+            "checksum",
+        ]
         args = flask.request.args
-        if not all(
-            x in args
-            for x in [
-                "name",
-                "name_in_bucket",
-                "subpath",
-                "size",
-                "size_processed",
-                "compressed",
-                "salt",
-                "public_key",
-                "checksum",
-            ]
-        ):
+        if not all(x in args for x in required_info):
+            missing = [x for x in required_info if x not in args]
             return flask.make_response(
-                "Information missing, cannot add file to database.", 500
+                f"Information missing ({missing}), cannot add file to database.", 500
             )
 
         try:
@@ -88,6 +87,7 @@ class NewFile(flask_restful.Resource):
                 return flask.make_response(f"Could not find project {project['id']}!")
 
             current_project.size += int(args["size"])
+            current_project.last_updated = timestamp()
 
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -137,7 +137,7 @@ class NewFile(flask_restful.Resource):
             if not current_project or current_project is None:
                 return flask.make_response(f"Could not find project {project['id']}!")
             current_project.size += old_size - int(args["size"])
-
+            current_project.last_updated = timestamp()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
