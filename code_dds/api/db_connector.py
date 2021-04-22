@@ -13,6 +13,7 @@ import flask
 import sqlalchemy
 
 # Own modules
+from code_dds import timestamp
 from code_dds.db_code import models
 from code_dds import db
 from code_dds.api.dds_decorators import token_required
@@ -184,7 +185,7 @@ class DBConnector:
                 id=self.project["id"]
             ).first()
             current_project.size = 0
-
+            current_project.last_updated = timestamp()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
@@ -229,7 +230,7 @@ class DBConnector:
                     current_project.size -= old_size
                 # _ = [db.session.delete(x) for x in files]
                 # _ = [current_project.size - x.size for x in files]
-
+                current_project.last_updated = timestamp()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)
             else:
@@ -309,6 +310,7 @@ class DBConnector:
                 ).first()
                 db.session.delete(file)
                 current_project.size -= old_size
+                current_project.last_updated = timestamp()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 db.session.rollback()
                 error = str(err)
@@ -333,19 +335,22 @@ class DBConnector:
         # Get bucket info and delete files
         if files_in_folder or files_in_folder is not None:
             exists, deleted, errors = (True, {}, {})
-
+            current_project = models.Project.query.filter_by(
+                id=self.project["id"]
+            ).first()
             for x in files_in_folder:
                 filename = x.name
                 nameinbucket = x.name_in_bucket
-
+                size = x.size
                 try:
                     db.session.delete(x)
                 except sqlalchemy.exc.SQLAlchemyError as err:
                     db.session.rollback()
                     errors[filename] = str(err)
                 else:
+                    current_project.size -= size
                     deleted[filename] = {"name_in_bucket": nameinbucket}
-
+            current_project.last_updated = timestamp()
         return exists, deleted, errors
 
     def cloud_project(self):

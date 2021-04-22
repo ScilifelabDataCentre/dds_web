@@ -24,3 +24,5 @@ passphrase*
 *DataDelivery*
 docker-compose*.yml
 old_version_files*
+temp_*
+my_*

@@ -93,7 +93,7 @@ class ApiS3Connector:
             # TODO (ina): Change -- these should not be saved in file
             s3path = pathlib.Path.cwd() / pathlib.Path("sensitive/s3_config.json")
             with s3path.open(mode="r") as f:
-                s3keys = json.load(f)["sfsp_keys"][safespring]
+                s3keys = json.load(f).get("sfsp_keys").get(safespring)
                 print(f"keys: {s3keys}", flush=True)
         except IOError as err:
             return s3keys, url, bucketname, f"Failed getting keys: {err}"

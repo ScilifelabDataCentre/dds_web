@@ -136,13 +136,14 @@ class Project(db.Model):
     size = db.Column(db.BigInteger, unique=False, nullable=False)
     #     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)
     #     delivery_option = db.Column(db.String(10), unique=False, nullable=False)
-    #     delivery_option = db.Column(db.String(10), unique=False, nullable=False)
-    #     salt = db.Column(db.String(32), nullable=False)
-    #     nonce = db.Column(db.String(24), nullable=False)
-    #     passphrase = db.Column(db.String(64), nullable=False)   # TODO (senthil, ina): put somewhere else, sensitive info and should not be in same place as private key.
     bucket = db.Column(db.String(100), unique=True, nullable=False)
     public_key = db.Column(db.String(64), nullable=False)
     private_key = db.Column(db.String(200), nullable=False)
+    # privkey_passphrase = db.Column(
+    #     db.String(64), nullable=False
+    # )  # TODO (senthil, ina): put somewhere else, sensitive info and should not be in same place as private key.
+    privkey_salt = db.Column(db.String(32), nullable=False)
+    privkey_nonce = db.Column(db.String(24), nullable=False)
 
     #     # Relationships
     #     # project_s3 = db.relationship('S3Project', backref='s3_project', lazy=True,
