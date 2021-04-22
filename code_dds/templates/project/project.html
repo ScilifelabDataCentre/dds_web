@@ -1,62 +1,66 @@
 {% extends 'base.html' %}
 
 {% block body %}
-{% if g.current_user == project['owner'] or g.current_user_id == project['facility'] %}
-    <h2 class="title_underlined">{{ project['title'] }}</h2>
-    <br>
-    <table class="table table-bordered">
-        <thead>
-            <th colspan="2" class="tcenter">Project Info</th>
-        </thead>
-        <tbody>
-            <tr>
-                <th>Description</th>
-                <td>{{ project['description'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Category</th>
-                <td>{{ project['category'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Sensitive project</th>
-                <td>{{ project['sensitive'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Owner</th>
-                <td>{{ project['owner'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Facility</th>
-                <td>{{ project['facility'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Delivery option</th>
-                <td>{{ project['delivery_option'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Status</th>
-                <td>{{ project['status'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Creation date</th>
-                <td>{{ project['order_date'] }}</td>
-            </tr>
-            {% if project['delivery_date'] %}
-            <tr>
-                <th scope="row">Delivery date</th>
-                <td>{{ project['delivery_date'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Data size</th>
-                <td>{{ project['size'] }}</td>
-            </tr>
-            {% endif %}
-        </tbody>
-    </table>
+{% if g.current_user_id in [project['owner'], project['facility']] %}
     
+    {% if g.is_facility %}
+        <div id="data-adder" class="right-button-container">
+            <form method="POST" enctype="multipart/form-data", action="{{ url_for('project.data_upload', project_id=project['id']) }}">
+                <input type="file" id="file-uploader" name="files" onchange="form.submit()" hidden multiple webkitdirectory mozdirectory>
+                <label class="upload-label" for="file-uploader">Add data</label>
+            </form>
+        </div>
+        <br><br><br>
+    {% endif %}
+
+    <div id="project-info">
+        <h2 class="underlined tcenter">{{ project['title'] }}</h2>
+        <br>
+        <table class="table table-bordered">
+            <thead>
+                <th colspan="2" class="tcenter">Project Info</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Description</th>
+                    <td>{{ project['description'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Category</th>
+                    <td>{{ project['category'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Owner</th>
+                    <td>{{ project['owner'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Facility</th>
+                    <td>{{ project['facility'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Status</th>
+                    <td>{{ project['status'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Creation date</th>
+                    <td>{{ project['date_created'] }}</td>
+                </tr>
+                {% if project['date_updated'] %}
+                <tr>
+                    <th scope="row">Delivery date</th>
+                    <td>{{ project['date_updated'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Data size</th>
+                    <td>{{ project['size'] }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
     <br>
     {% if uploaded_data %}
-        <h5 class="title_underlined">Files Uploaded</h5>
+        <h5 class="underlined tcenter">Files Uploaded</h5>
         <br>
         {{ uploaded_data|safe }}
     {% endif %}

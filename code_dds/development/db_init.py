@@ -114,12 +114,11 @@ def fill_db():
     ]
 
     facilities = [
-        Facility(
-            public_id="public_facility_id",
-            username="facility",
-            password="$argon2id$v=19$m=102400,t=2,p=8$mgkOMH/4B16suy5TMw+4KQ$7j5eT0zMOmdUj2q1A+dcgC9TM4QOl39GeHWdYh+QdEE",
-            safespring="redacted",
-        )
+        Facility(public_id="public_facility_id",
+                 username="facility",
+                 password="$argon2id$v=19$m=102400,t=2,p=8$mgkOMH/4B16suy5TMw+4KQ$7j5eT0zMOmdUj2q1A+dcgC9TM4QOl39GeHWdYh+QdEE",
+                 name="Facility 1",
+                 safespring="redacted")
         # Facility(name="Facility1", internal_ref="fac1",
         #          username="facility1",
         #          password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
@@ -164,6 +163,7 @@ def fill_db():
             # privkey_passphrase="C1AE3F7066E0A8910214D1FBB96D98DC",
             privkey_nonce="28AA12C63CBF19A22A335717",
             privkey_salt="986E510A3A175BAF7516838F0F16FC0F",
+            description="This is a test project"
         ),
         Project(
             id="ProjectID_2",
@@ -182,6 +182,8 @@ def fill_db():
             # privkey_passphrase="FDA4855F77751951A78A4B8D016F594D",
             privkey_nonce="DDD327ECCA6952DA2099AB2F",
             privkey_salt="2EED17EB920C5FAEB9DCBE41E782E492",
+            description="This is a test project"
+
         )
         # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
         #         category="Category1",
@@ -378,9 +380,131 @@ def fill_db():
             salt="test",
             checksum="",
             project_id=projects[0],
-            date_uploaded=timestamp(),
-        )
+            date_uploaded=timestamp())
+            ]
+        
+    files_more = [
+        File(name= 'description.txt',
+           name_in_bucket= 'description.txt',
+           subpath= '',
+           size=254,
+           project_id=projects[1],
+           size_encrypted=0,
+           compressed=False,
+           public_key="test",
+           salt="test",
+           checksum="",
+           date_uploaded=timestamp()),
+       
+        File(name= 'Sample_1/data.txt',
+            name_in_bucket= 'Sample_1/data.txt',
+            subpath= 'Sample_1',
+            size=189,
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
+        
+        File(name= 'Sample_1/source.txt',
+            name_in_bucket= 'Sample_1/source.txt',
+            subpath= 'Sample_1',
+            size=754,
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
+        
+        File(name= 'Sample_1/meta/info.txt',
+            name_in_bucket= 'Sample_1/meta/info.txt',
+            subpath= 'Sample_1/meta',
+            size=65,
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
+        
+        File(name= 'Sample_2/data.txt',
+            name_in_bucket= 'Sample_2/data.txt',
+            subpath= 'Sample_2',
+            size=399,
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
+        
+        File(name= 'Sample_2/source.txt',
+            name_in_bucket= 'Sample_2/source.txt',
+            subpath= 'Sample_2',
+            size=420,
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
+        
+        File(name= 'Sample_2/meta/info.txt',
+            name_in_bucket= 'Sample_2/meta/info.txt',
+            subpath= 'Sample_2/meta',
+            size=241,
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
+        
+        File(name= 'sample_list.txt',
+            name_in_bucket= 'sample_list.txt',
+            subpath= '',
+            size=97,
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
+        
+        File(name= 'Plates/Sample_1/layout.txt',
+            name_in_bucket= 'Sample_1/layout.txt',
+            subpath= 'Plates/Sample_1',
+            size=136,
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp()),
+        
+        File(name= 'Plates/Sample_2/layout.txt',
+            name_in_bucket= 'Sample_2/layout.txt',
+            subpath= 'Plates/Sample_2',
+            size=125,
+            project_id=projects[1],
+            size_encrypted=0,
+            compressed=False,
+            public_key="test",
+            salt="test",
+            checksum="",
+            date_uploaded=timestamp())
     ]
+    
     # Foreign key/relationship updates
     for x in projects:
         users[0].user_projects.append(x)
@@ -396,10 +520,14 @@ def fill_db():
     # for ind in [6, 7, 8, 9, 10]:
     #     facilities[2].fac_projects.append(projects[ind])
 
-    projects[0].project_files.append(files[0])
+    for fl in files:
+        projects[0].project_files.append(fl)
     # for prj in projects[1:]:
     #     if prj.status == "Delivered":
     #         create_files_for_project(prj)
+    
+    for fl in files_more:
+        projects[1].project_files.append(fl)
 
     # Add user and facility, the rest is automatically added and commited
     db.session.add_all(users)
