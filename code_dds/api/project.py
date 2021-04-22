@@ -15,8 +15,13 @@ import pathlib
 import json
 import boto3
 import botocore
+from cryptography.hazmat.primitives.kdf import scrypt
+from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
+from cryptography.hazmat import backends
+
 
 # Own modules
+from code_dds import app
 from code_dds import db
 from code_dds.api.user import jwt_token
 from code_dds.api.user import is_facility
@@ -121,13 +126,53 @@ class GetPrivate(flask_restful.Resource):
         try:
             proj_priv = (
                 models.Project.query.filter_by(id=project["id"])
-                .with_entities(models.Project.private_key)
+                .with_entities(
+                    models.Project.private_key,
+                    models.Project.privkey_nonce,
+                    models.Project.privkey_salt,
+                )
                 .first()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(str(err), 500)
         else:
-            return flask.jsonify({"private": proj_priv[0]})
+            print(proj_priv, flush=True)
+            app_secret = app.config["SECRET_KEY"]
+            print(f"Server secret (hex): {app_secret}", flush=True)
+            passphrase = bytes.fromhex(app_secret)
+            print(f"Sever secret (bytes): {passphrase}", flush=True)
+
+            enc_key = bytes.fromhex(proj_priv[0])
+            print(f"Encrypted key: {enc_key}", flush=True)
+
+            nonce = bytes.fromhex(proj_priv[1])
+            # print(nonce, flush=True)
+            salt = bytes.fromhex(proj_priv[2])
+            # print(salt, flush=True)
+
+            kdf = scrypt.Scrypt(
+                salt=salt,
+                length=32,
+                n=2 ** 14,
+                r=8,
+                p=1,
+                backend=backends.default_backend(),
+            )
+
+            # print(kdf, flush=True)
+            key_enc_key = kdf.derive(passphrase)
+            # print(key_enc_key, flush=True)
+            try:
+                decrypted_key = decrypt(
+                    ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key
+                )
+            except Exception as err:
+                print(str(err), flush=True)
+                return flask.make_response(str(err), 500)
+
+            # print(f"Decrypted key: {decrypted_key}", flush=True)
+
+            return flask.jsonify({"private": decrypted_key.hex().upper()})
 
 
 class UserProjects(flask_restful.Resource):

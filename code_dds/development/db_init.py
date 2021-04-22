@@ -159,8 +159,11 @@ def fill_db():
             facility=facilities[0],
             size=7357,
             bucket=f"ProjectID_202121185120157665_{str(uuid.uuid4())}",
-            public_key="D92950F6755889FA22408B328B733ACD2242BCE570292540564AEC6E7A1B2626",
-            private_key="78C784A9E6A3745E23E8199EB0310884A0696FC9A999EFE24889686C5815F073",
+            public_key="4428DB9D48CE12D811FE108303055F4A83DD9173568929908A8ED48AF3965B13",
+            private_key="F8467A0A237A9FA941A04F333B15D2EAB61D9E294F35A85A1A56751D3E3EF94D",
+            # privkey_passphrase="C1AE3F7066E0A8910214D1FBB96D98DC",
+            privkey_nonce="28AA12C63CBF19A22A335717",
+            privkey_salt="986E510A3A175BAF7516838F0F16FC0F",
             description="This is a test project"
         ),
         Project(
@@ -175,9 +178,13 @@ def fill_db():
             facility=facilities[0],
             size=7357,
             bucket=f"ProjectID_2_202121185120157665_{str(uuid.uuid4())}",
-            public_key="D92950F6755889FA22408B328B733ACD2242BCE570292540564AEC6E7A1B2626",
-            private_key="78C784A9E6A3745E23E8199EB0310884A0696FC9A999EFE24889686C5815F073",
+            public_key="9C6E45209EA7C7EF8B960D260195725FE92D23D117A6963E5590EEB4DFBC4217",
+            private_key="EC6CBE1EF63FA5B6A6D53261CA3000664F48797B81B239025AB7F59432C7A3E5E91323EB607E9CC0DA5D7054C99A23D2159ADDA4147CEE3DF7E310853A2B8C0827EDDF63BAF7A2",
+            # privkey_passphrase="FDA4855F77751951A78A4B8D016F594D",
+            privkey_nonce="DDD327ECCA6952DA2099AB2F",
+            privkey_salt="2EED17EB920C5FAEB9DCBE41E782E492",
             description="This is a test project"
+
         )
         # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
         #         category="Category1",
