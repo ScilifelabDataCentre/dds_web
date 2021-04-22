@@ -1,17 +1,20 @@
 " Project info related endpoints "
 
 import os
+import uuid
+import subprocess
+import shutil
 
-from random import randrange
 from flask import (Blueprint, render_template, request, current_app,
-                   session, redirect, url_for, g, flash)
+                   abort, session, redirect, url_for, g, jsonify,
+                   make_response)
 
-from code_dds import db
+from code_dds import db, timestamp
 from code_dds.db_code import models
 from code_dds.db_code import db_utils
 from code_dds.db_code import marshmallows as marmal
 from code_dds.crypt.key_gen import project_keygen
-from code_dds.utils import login_required, get_timestamp
+from code_dds.utils import login_required, working_directory
 from werkzeug.utils import secure_filename
 project_blueprint = Blueprint("project", __name__)
 
@@ -35,7 +38,7 @@ def add_project():
                                    error_message="Given username '{}' does not exist".format(request.form.get('owner')))
 
         project_inst = create_project_instance(request.form)
-        # This part should be moved elsewhere to dedicated DB handling script
+        # TO DO : This part should be moved elsewhere to dedicated DB handling script
         new_project = models.Project(**project_inst.project_info)
         db.session.add(new_project)
         db.session.commit()
@@ -46,46 +49,62 @@ def add_project():
 @login_required
 def project_info(project_id=None):
     """Get the given project's info"""
-
+    project_info = models.Project.query.filter_by(id=project_id).first()
+    if not project_info:
+        return abort(404)
+    proj_facility_name = db_utils.get_facility_column(fid=project_info.facility, column='name')
     files_list = models.File.query.filter_by(project_id=project_id).all()
     if files_list:
         uploaded_data = folder(files_list).generate_html_string()
     else:
         uploaded_data = None
-    project_info = models.Project.query.filter_by(id=project_id).first()
-    return render_template("project/project.html", project=project_info, uploaded_data=uploaded_data)
+    return render_template("project/project.html", project=project_info, uploaded_data=uploaded_data, proj_facility_name=proj_facility_name)
 
 
 @project_blueprint.route("upload", methods=["POST"])
 @login_required
-def data_upload():
-    project_id = request.args.get('project_id', None)
+def data_upload():   
+    project_id = request.form.get('project_id', None)
+    in_files = validate_file_list(request.files.getlist('files')) or validate_file_list(request.files.getlist('folder'))
+    upload_space = os.path.join(current_app.config['UPLOAD_FOLDER'], "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")))
     if project_id is None:
-        msg = "No project id provided"
-        return("No project id {}".format(project_id))
-    elif 'files' not in request.files:
-        msg = "No file part available"
-        return(request.form)
-    elif request.files['files'].filename == '':
-        msg = "No file uploaded"
-        return("No file selected")
-    elif request.files['files']:
-        in_files = request.files.getlist('files')
-        upload_file_dest = os.path.join(current_app.config['UPLOAD_FOLDER'], "{}_T{}".format(project_id, get_timestamp(tformat="%y%m%d%H%M%S%f")))
-        os.mkdir(upload_file_dest)
-        for in_file in in_files:
-            file_target_path = upload_file_dest
-            path_splitted = in_file.filename.split("/")
-            filename = secure_filename(path_splitted[-1])
-            if len(path_splitted) > 1:
-                for p in path_splitted[:-1]:
-                    file_target_path = os.path.join(file_target_path, p)
-                    if not os.path.exists(file_target_path):
-                        os.mkdir(file_target_path)
-            in_file.save(os.path.join(file_target_path, filename))
-        msg = "Files uploaded"
-        return("Files uploaded")
-    #return redirect(request.url)
+        status, message = (433, "Project ID not found in request")
+    elif not in_files:
+        status, message = (434, "No files/folder were selected")
+    else:
+        os.mkdir(upload_space)
+        with working_directory(upload_space):
+            upload_file_dest = os.path.join(upload_space, "data")
+            os.mkdir(upload_file_dest)
+            for in_file in in_files:
+                file_target_path = upload_file_dest
+                path_splitted = in_file.filename.split("/")
+                filename = path_splitted[-1] #TO DO: look into secure naming
+                if len(path_splitted) > 1:
+                    for p in path_splitted[:-1]:
+                        file_target_path = os.path.join(file_target_path, p)
+                        if not os.path.exists(file_target_path):
+                            os.mkdir(file_target_path)
+                in_file.save(os.path.join(file_target_path, filename))
+            
+            with open("data_to_upload.txt", "w") as dfl:
+                dfl.write("\n".join([os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)]))
+            
+            proc = subprocess.Popen(['dds', 'put', '-c', current_app.config['DDS_CLI_CONFIG'], '-p', project_id, '-spf', "data_to_upload.txt", '--overwrite'],
+                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = proc.communicate(input=None)
+        
+        if proc.returncode == 0:
+            status, message = (200, "Data susseccfully uploaded to S3")
+            try:
+                shutil.rmtree(upload_space)
+            except:
+                print("Couldn't remove upload space '{}'".format(upload_space))
+        else:
+            status, message = (515, "Couldn't send data to S3")
+    
+    return make_response(jsonify({'status': status, 'message': message}), status)
+
 
 ########## HELPER CLASSES AND FUNCTIONS ##########
 
@@ -98,28 +117,24 @@ class create_project_instance(object):
             'id': self.get_new_id(),
             'title': project_info['title'],
             'description': project_info['description'],
-            'owner': project_info['owner'],
-            'category': 'alphatest',
-            'sensitive': False,
-            'delivery_option': 'S3',
+            'owner': db_utils.get_user_column_by_username(project_info['owner'], "public_id"),
+            'category': 'testing',
             'facility': g.current_user_id,
-            'status': 'In facility',
-            'order_date': get_timestamp(tformat="%Y-%m-%d"),
+            'status': 'Ongoing',
+            'date_created': timestamp(ts_format="%Y-%m-%d"),
             'pi': 'NA',
-            'size': 0,
-            'size_enc': 0,
-            'delivery_date': None
+            'size': 0
         }
+        self.project_info['bucket']="{}_bucket".format(self.project_info['id'])
         pkg = project_keygen(self.project_info['id'])
-        self.project_info.update(pkg.get_key_info_dict())
+        prj_keys = pkg.get_key_info_dict()
+        self.project_info['public_key'] = prj_keys['public_key']
+        self.project_info['private_key'] = prj_keys['private_key']
 
     def get_new_id(self, id=None):
-        facility_ref = db_utils.get_facility_column(
-            fid=session.get('current_user_id'), column='internal_ref')
-        new_id = "{}{:3}".format(facility_ref, randrange(1, 10**3))
-        while not self.__is_column_value_uniq(table='Project', column='id', value=new_id):
-            new_id = "{}{:3}".format(facility_ref, randrange(1, 10**3))
-        return new_id
+        facility_ref = db_utils.get_facility_column(fid=session.get('current_user_id'), column='internal_ref')
+        facility_prjs = db_utils.get_facilty_projects(fid=session.get('current_user_id'), only_id=True)
+        return "{}{:03d}".format(facility_ref, len(facility_prjs)+1)
 
     def __is_column_value_uniq(self, table, column, value):
         """ See that the value is unique in DB """
@@ -164,7 +179,7 @@ class folder(object):
         _html_string = ""
         for _key, _value in file_dict.items():
             if isinstance(_value, dict):
-                div_id = "d{}".format(get_timestamp(tformat="%y%m%d%H%M%S%f"))
+                div_id = "d{}".format(timestamp(ts_format="%y%m%d%H%M%S%f"))
                 _html_string += ("<li> <a class='folder' data-toggle='collapse' href='#{did}' aria-expanded='false' aria-controls='{did}'>{_k}</a> "
                                  "<div class='collapse' id='{did}'>{_v}</div> "
                                  "</li>").format(did=div_id, _k=_key, 
@@ -172,3 +187,8 @@ class folder(object):
             else:
                 _html_string += "<li><div class='hovertip'>{_k} <span class='hovertiptext'> {_v}Kb </span></div></li>".format(_k=_key, _v=_value)
         return '<ul style="list-style: none;"> {} </ul>'.format(_html_string)
+
+
+def validate_file_list(flist):
+    """ Helper function to check if the file list from upload have files """
+    return False if (len(flist) == 1 and flist[0].filename == "") else flist

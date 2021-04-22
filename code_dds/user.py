@@ -59,7 +59,8 @@ def user_page(loginname=None):
         projects_list = models.Project.query.filter_by(facility=session['current_user_id']).all()
     else:
         projects_list = models.Project.query.filter_by(owner=session['current_user_id']).all()
-    return render_template('project/list_project.html', projects_list=projects_list)
+    # TO DO: change dbfunc passing in future
+    return render_template('project/list_project.html', projects_list=projects_list, dbfunc=db_utils.get_facility_column)
 
 
 # @user_blueprint.route("/signup", methods=["GET", "POST"])
