@@ -127,9 +127,7 @@ class create_project_instance(object):
         }
         self.project_info['bucket']="{}_bucket".format(self.project_info['id'])
         pkg = project_keygen(self.project_info['id'])
-        prj_keys = pkg.get_key_info_dict()
-        self.project_info['public_key'] = prj_keys['public_key']
-        self.project_info['private_key'] = prj_keys['private_key']
+        self.project_info.update(pkg.get_key_info_dict())
 
     def get_new_id(self, id=None):
         facility_ref = db_utils.get_facility_column(fid=session.get('current_user_id'), column='internal_ref')
