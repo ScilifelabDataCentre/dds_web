@@ -8,6 +8,7 @@ class Config:
     # General Config
     SECRET_KEY = environ.get('SECRET_KEY')
     SITE_NAME = 'Data Delivery System'
+    DDS_S3_CONFIG = environ.get('DDS_S3_CONFIG')
     
     # FLASK_APP = environ.get('FLASK_APP')
     FLASK_ENV = environ.get('FLASK_ENV')
@@ -21,5 +22,6 @@ class Config:
     USE_LOCAL_DB = environ.get('USE_LOCAL_DB')
     
     # File upload related
+    DDS_CLI_CONFIG = environ.get('DDS_CLI_CONFIG')
     UPLOAD_FOLDER = environ.get('DDS_UPLOAD_FOLDER')
     MAX_CONTENT_LENGTH = int(environ.get('DDS_MAX_UPLOAD_SIZE'))

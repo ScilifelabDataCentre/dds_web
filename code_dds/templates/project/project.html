@@ -4,11 +4,19 @@
 {% if g.current_user_id in [project['owner'], project['facility']] %}
     
     {% if g.is_facility %}
-        <div id="data-adder" class="right-button-container">
-            <form method="POST" enctype="multipart/form-data", action="{{ url_for('project.data_upload', project_id=project['id']) }}">
-                <input type="file" id="file-uploader" name="files" onchange="form.submit()" hidden multiple webkitdirectory mozdirectory>
-                <label class="upload-label" for="file-uploader">Add data</label>
+        <div id="data-adder" class="btn-group right-button-container">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Add data
+          </button>
+          <div class="dropdown-menu">
+            <form id="data-upload-form" method="POST" enctype="multipart/form-data", action="{{ url_for('project.data_upload') }}" autocomplete="off">
+                <input type="hidden" name="project_id" value="{{ project['id'] }}">
+                <input type="file" id="file-uploader" name="files" onchange="$(this).closest('form').submit()" hidden multiple/>
+                <label class="dropdown-item" for="file-uploader">Upload Files</label>
+                <input type="file" id="folder-uploader" name="folder" onchange="$(this).closest('form').submit()" hidden multiple webkitdirectory mozdirectory/>
+                <label class="dropdown-item" for="folder-uploader">Upload Folder</label>
             </form>
+          </div>
         </div>
         <br><br><br>
     {% endif %}
@@ -35,7 +43,7 @@
                 </tr>
                 <tr>
                     <th scope="row">Facility</th>
-                    <td>{{ project['facility'] }}</td>
+                    <td>{{ proj_facility_name }}</td>
                 </tr>
                 <tr>
                     <th scope="row">Status</th>
