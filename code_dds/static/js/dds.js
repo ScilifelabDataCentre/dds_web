@@ -21,18 +21,17 @@ $('#data-upload-form').submit(function (e) {
         processData: false,
         contentType: false,
         // function to execute before request
-        beforeSend: function () {
-            setModalData(modalElement, "progress");
+        beforeSend: function(){
+            setUploadModalData(modalElement, "progress");
             modalElement.modal('show');
         },
         // function to execute on success
-        success: function (resp) {
-            setModalData(modalElement, "success", false);
+        success: function(resp){
+            setUploadModalData(modalElement, "success", false);
         },
         // function to execute on failure
-        error: function (err) {
-            setModalData(modalElement, "error", false);
-            console.log(err);
+        error: function(err){
+            setUploadModalData(modalElement, "error", false);
         },
         // function to execute always
         complete: function () {
@@ -41,6 +40,19 @@ $('#data-upload-form').submit(function (e) {
     });
 });
 
+$('#download-button').click(function(e) {
+    buttonObj = $(this);
+    $.ajax({
+        url: buttonObj.data().action,
+        method: 'POST',
+        contentType: "application/json",
+        data: JSON.stringify({'project_id' : buttonObj.data().project_id}),
+        success: function(resp){
+            console.log('success');
+            alert(resp);
+        }
+    });
+});
 
 function getModalHtml(mId, mTitle) {
     modalHTMLTemplate = `
@@ -62,7 +74,7 @@ function getModalHtml(mId, mTitle) {
 }
 
 
-function setModalData(mElement, type, closeButtonDisabled = true) {
+function setUploadModalData(mElement, type, closeButtonDisabled=true){
     contentObject = {
         progress: {
             header: `

@@ -43,7 +43,7 @@
                 </tr>
                 <tr>
                     <th scope="row">Facility</th>
-                    <td>{{ proj_facility_name }}</td>
+                    <td>{{ project['facility_name'] }}</td>
                 </tr>
                 <tr>
                     <th scope="row">Status</th>
@@ -66,8 +66,21 @@
             </tbody>
         </table>
     </div>
-    <br>
+    
     {% if uploaded_data %}
+        <br><br>
+        {% if not g.is_facility %}
+            <div class="right-button-container">
+                <!--input class="btn btn-primary btn-custom" type="button" value="Ajax Download" id="download-button"
+                       data-project_id="{{ project['id'] }}" data-action="{{ url_for('project.data_download') }}">
+                       <br> <br-->
+                <form id="data-download-form" method="POST" enctype="multipart/form-data", action="{{ url_for('project.data_download') }}" autocomplete="off">
+                    <input type="hidden" name="project_id" value="{{ project['id'] }}">
+                    <input class="btn btn-primary btn-custom" type="submit" value="Form Download" id="download-button">
+                </form>
+            </div>
+            <br>
+        {% endif %}
         <h5 class="underlined tcenter">Files Uploaded</h5>
         <br>
         {{ uploaded_data|safe }}

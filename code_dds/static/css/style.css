@@ -103,8 +103,14 @@ button.navbar-toggler {
  }
 
 div.right-button-container {
-    float:right;
+    float: right;
     padding-bottom: 20px;
+ }
+
+.btn-custom {
+    padding: 7px 12px;
+    font-size: 16px;
+    border-radius: 3px;
  }
 
  /* Hover text related styles, taken from w3 examples */
@@ -174,34 +180,3 @@ div.right-button-container {
     grid-template-areas: "copy-icon-followed copy-icon";
 }
 
-/* for upload button */
-
-.upload-label{
-  display: inline-block;
-  background-color: #BDD775;
-  color: black;
-  padding: 0.5rem;
-  font-family: sans-serif;
-  border-radius: 0.3rem;
-  cursor: pointer;
-  margin-top: 1rem;
-  font-size: 14px;
-}
-
-.upload-span{
-    grid-area: upload-span;
-    padding-right: 0px;
-}
-
-.upload-followed {
-    grid-area: upload-followed;
-    padding-top: 25px;
-    padding-left: 110px;
-}
-
-.upload-row {
-    display: grid;
-    grid-gap: 3px;
-    grid-template-columns: auto 90px;
-    grid-template-areas: "upload-followed upload-span";
-}
