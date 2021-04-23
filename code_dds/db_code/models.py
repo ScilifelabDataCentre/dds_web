@@ -72,7 +72,7 @@ class Facility(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    # internal_ref = db.Column(db.String(10), unique=True, nullable=False)
+    internal_ref = db.Column(db.String(10), unique=True, nullable=False)
     username = db.Column(db.String(20), unique=True, nullable=False)
     password = db.Column(db.String(120), unique=False, nullable=False)
     # settings = db.Column(db.String(50), unique=False, nullable=False)

@@ -2,7 +2,9 @@
 
 import datetime
 import functools
+import os
 
+from contextlib import contextmanager
 from flask import (g, request, redirect, url_for)
 
 # DECORATORS ####################################################### DECORATERS #
@@ -18,6 +20,15 @@ def login_required(f):
         return f(*args, **kwargs)
     return wrap
 
-def get_timestamp(tformat="%y%m%d%H%M%S%f"):
-    """ funtcion to return string of current time in requested format """
-    return datetime.datetime.now().strftime(tformat)
+# context for changing working directory
+@contextmanager
+def working_directory(path, cleanup_after=False):
+    """ Contexter for changing working directory """
+    current_path = os.getcwd()
+    try:
+        if not os.path.exists(path):
+            os.mkdir(path)
+        os.chdir(path)
+        yield
+    finally:
+        os.chdir(current_path)
