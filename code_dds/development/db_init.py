@@ -1,4 +1,4 @@
-"""USED ONLY DURING DEVELOPMENT! Adds test data to the database."""
+ """USED ONLY DURING DEVELOPMENT! Adds test data to the database."""
 
 import os
 import uuid
