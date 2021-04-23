@@ -87,7 +87,7 @@ class NewFile(flask_restful.Resource):
                 return flask.make_response(f"Could not find project {project['id']}!")
 
             current_project.size += int(args["size"])
-            current_project.last_updated = timestamp()
+            current_project.date_updated = timestamp()
 
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -139,7 +139,7 @@ class NewFile(flask_restful.Resource):
             if not current_project or current_project is None:
                 return flask.make_response(f"Could not find project {project['id']}!")
             current_project.size += old_size - int(args["size"])
-            current_project.last_updated = timestamp()
+            current_project.date_updated = timestamp()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()

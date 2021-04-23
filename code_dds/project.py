@@ -152,7 +152,8 @@ def data_upload():
             except:
                 print("Couldn't remove upload space '{}'".format(upload_space))
         else:
-            status, message = (515, "Couldn't send data to S3")
+            # status, message = (515, "Couldn't send data to S3")
+            status, message = (515, err)
 
     return make_response(jsonify({"status": status, "message": message}), status)
 

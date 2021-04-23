@@ -92,6 +92,7 @@ class ApiS3Connector:
         # 1. Get keys
         try:
             # TODO (ina): Change -- these should not be saved in file
+            # print(flask.current_app.config["DDS_S3_CONFIG"], flush=True)
             s3path = pathlib.Path(flask.current_app.config["DDS_S3_CONFIG"])
             # s3path = pathlib.Path.cwd() / pathlib.Path("sensitive/s3_config.json")
             with s3path.open(mode="r") as f:

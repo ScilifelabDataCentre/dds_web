@@ -185,7 +185,7 @@ class DBConnector:
                 id=self.project["id"]
             ).first()
             current_project.size = 0
-            current_project.last_updated = timestamp()
+            current_project.date_updated = timestamp()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
@@ -230,7 +230,7 @@ class DBConnector:
                     current_project.size -= old_size
                 # _ = [db.session.delete(x) for x in files]
                 # _ = [current_project.size - x.size for x in files]
-                current_project.last_updated = timestamp()
+                current_project.date_updated = timestamp()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)
             else:
@@ -310,7 +310,7 @@ class DBConnector:
                 ).first()
                 db.session.delete(file)
                 current_project.size -= old_size
-                current_project.last_updated = timestamp()
+                current_project.date_updated = timestamp()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 db.session.rollback()
                 error = str(err)
@@ -350,7 +350,7 @@ class DBConnector:
                 else:
                     current_project.size -= size
                     deleted[filename] = {"name_in_bucket": nameinbucket}
-            current_project.last_updated = timestamp()
+            current_project.date_updated = timestamp()
         return exists, deleted, errors
 
     def cloud_project(self):
