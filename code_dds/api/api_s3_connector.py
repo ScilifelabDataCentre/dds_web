@@ -23,6 +23,7 @@ import sqlalchemy
 import flask
 
 # Own modules
+from code_dds import app
 from code_dds.db_code import models
 from code_dds.api.dds_decorators import (
     connect_cloud,
@@ -91,8 +92,8 @@ class ApiS3Connector:
         # 1. Get keys
         try:
             # TODO (ina): Change -- these should not be saved in file
-            s3path = pathlib.Path(flask.current_app.config['DDS_S3_CONFIG'])
-            #s3path = pathlib.Path.cwd() / pathlib.Path("sensitive/s3_config.json")
+            s3path = pathlib.Path(flask.current_app.config["DDS_S3_CONFIG"])
+            # s3path = pathlib.Path.cwd() / pathlib.Path("sensitive/s3_config.json")
             with s3path.open(mode="r") as f:
                 s3keys = json.load(f).get("sfsp_keys").get(safespring)
                 print(f"keys: {s3keys}", flush=True)
