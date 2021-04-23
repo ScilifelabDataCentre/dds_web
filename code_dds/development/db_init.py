@@ -119,6 +119,7 @@ def fill_db():
             username="facility",
             password="$argon2id$v=19$m=102400,t=2,p=8$mgkOMH/4B16suy5TMw+4KQ$7j5eT0zMOmdUj2q1A+dcgC9TM4QOl39GeHWdYh+QdEE",
             name="Facility 1",
+            internal_ref="fac1",
             safespring="redacted",
         )
         # Facility(name="Facility1", internal_ref="fac1",
