@@ -12,7 +12,7 @@ from code_dds.db_code import marshmallows as marmal
 from code_dds.utils import login_required
 
 # temp will be removed in next version
-from code_dds.development import temp_cache as tc
+from code_dds.development import cache_temp as tc
 
 user_blueprint = Blueprint("user", __name__)
 
