@@ -4,6 +4,7 @@ import os
 import uuid
 import subprocess
 import shutil
+import zipfile
 
 from flask import (
     Blueprint,
@@ -17,6 +18,7 @@ from flask import (
     g,
     jsonify,
     make_response,
+    send_file
 )
 
 from code_dds import db, timestamp
@@ -24,8 +26,11 @@ from code_dds.db_code import models
 from code_dds.db_code import db_utils
 from code_dds.db_code import marshmallows as marmal
 from code_dds.crypt.key_gen import project_keygen
-from code_dds.utils import login_required, working_directory
+from code_dds.utils import login_required, working_directory, format_byte_size
 from werkzeug.utils import secure_filename
+
+# temp will be removed in next version
+from code_dds.development import temp_cache as tc
 
 project_blueprint = Blueprint("project", __name__)
 
@@ -68,11 +73,17 @@ def add_project():
 @login_required
 def project_info(project_id=None):
     """Get the given project's info"""
-    project_info = models.Project.query.filter_by(id=project_id).first()
-    if not project_info:
+    project_row = models.Project.query.filter_by(id=project_id).one_or_none()
+    if not project_row:
         return abort(404)
-    proj_facility_name = db_utils.get_facility_column(
-        fid=project_info.facility, column="name"
+    project_info = project_row.__dict__.copy()
+    project_info['date_created'] = timestamp(datetime_string=project_info['date_created'])
+    if project_info.get('date_updated'):
+        project_info['date_updated'] = timestamp(datetime_string=project_info['date_updated'])
+    if project_info.get('size'):
+        project_info['size'] = format_byte_size(project_info['size'])
+    project_info['facility_name'] = db_utils.get_facility_column(
+        fid=project_info['facility'], column="name"
     )
     files_list = models.File.query.filter_by(project_id=project_id).all()
     if files_list:
@@ -82,8 +93,7 @@ def project_info(project_id=None):
     return render_template(
         "project/project.html",
         project=project_info,
-        uploaded_data=uploaded_data,
-        proj_facility_name=proj_facility_name,
+        uploaded_data=uploaded_data
     )
 
 
@@ -133,12 +143,15 @@ def data_upload():
                     "dds",
                     "put",
                     "-c",
-                    current_app.config["DDS_CLI_CONFIG"],
+                    os.path.join(
+                        current_app.config.get("LOCAL_TEMP_CACHE"),
+                        "{}_cache.json".format(session.get('current_user'))
+                    ),
                     "-p",
                     project_id,
                     "-spf",
                     "data_to_upload.txt",
-                    "--overwrite",
+                    "--overwrite"
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -146,16 +159,52 @@ def data_upload():
             out, err = proc.communicate(input=None)
 
         if proc.returncode == 0:
-            status, message = (200, "Data susseccfully uploaded to S3")
+            status, message = (200, "Data successfully uploaded to S3")
             try:
                 shutil.rmtree(upload_space)
             except:
                 print("Couldn't remove upload space '{}'".format(upload_space))
         else:
-            # status, message = (515, "Couldn't send data to S3")
-            status, message = (515, err)
+            status, message = (515, "Couldn't send data to S3")
 
     return make_response(jsonify({"status": status, "message": message}), status)
+
+
+@project_blueprint.route("download", methods=["POST"])
+@login_required
+def data_download():
+    project_id = request.form.get("project_id", None)
+    data_path = request.form.get("data_path", None)
+    download_space = os.path.join(current_app.config['DOWNLOAD_FOLDER'], "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")))
+    cmd = [
+            "dds",
+            "get",
+            "-c",
+            os.path.join(
+                current_app.config.get("LOCAL_TEMP_CACHE"),
+                "{}_cache.json".format(session.get('current_user'))
+            ),
+            "-p",
+            project_id,
+            "-d",
+            download_space
+        ]
+    if data_path:
+        cmd.append("-s")
+        cmd.append(data_path)
+    else:
+        cmd.append("-a")
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    out, err = proc.communicate(input=None)
+    if proc.returncode == 0:
+        download_file_path = compile_download_file_path(download_space, project_id)
+        return send_file(download_file_path, as_attachment=True)
+    else:
+        abort(500, "Download failed, try again and if still see this message contact DC")
 
 
 ########## HELPER CLASSES AND FUNCTIONS ##########
@@ -239,19 +288,45 @@ class folder(object):
             if isinstance(_value, dict):
                 div_id = "d{}".format(timestamp(ts_format="%y%m%d%H%M%S%f"))
                 _html_string += (
-                    "<li> <a class='folder' data-toggle='collapse' href='#{did}' aria-expanded='false' aria-controls='{did}'>{_k}</a> "
-                    "<div class='collapse' id='{did}'>{_v}</div> "
+                    "<li>"
+                    " <span class='li-dwn-box'></span>"
+                    " <a class='folder' data-toggle='collapse' href='#{did}' aria-expanded='false' aria-controls='{did}'>{_k}</a> "
+                    " <div class='collapse' id='{did}'>{_v}</div> "
                     "</li>"
-                ).format(
-                    did=div_id,
-                    _k=_key,
-                    _v=self.__make_html_string_from_file_dict(_value),
-                )
+                    ).format(
+                        did=div_id,
+                        _k=_key,
+                        _v=self.__make_html_string_from_file_dict(_value),
+                    )
             else:
-                _html_string += "<li><div class='hovertip'>{_k} <span class='hovertiptext'> {_v}Kb </span></div></li>".format(
-                    _k=_key, _v=_value
-                )
+                _html_string += (
+                    "<li>"
+                    "  <span class='li-dwn-box'></span>"
+                    "  <div class='hovertip'>"
+                    "    <span class='file'>{_k}</span> <span class='hovertiptext'> {_v}Kb </span>"
+                    "  </div>"
+                    "</li>"
+                    ).format(
+                        _k=_key, _v=_value
+                    )
         return '<ul style="list-style: none;"> {} </ul>'.format(_html_string)
+
+
+def compile_download_file_path(dpath, pid):
+    with working_directory(dpath):
+        pname = "{}_data".format(pid)
+        os.rename("files", pname)
+        contents = os.listdir(pname)
+        if len(contents) == 1:
+            cpath = os.path.join(pname, contents[0])
+            if os.path.isfile(cpath):
+                return os.path.join(dpath, cpath)
+        zname = "{}.zip".format(pname)
+        with zipfile.ZipFile(zname, "w") as pz:
+            for pdir, sdir, files in os.walk(pname):
+                for fl in files:
+                    pz.write(os.path.join(pdir, fl))
+        return os.path.join(dpath, zname)
 
 
 def validate_file_list(flist):

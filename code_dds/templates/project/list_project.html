@@ -32,7 +32,7 @@
                 <td>{{ dbfunc(project['facility'], 'name') }}</td>
             {% endif %}
             <td>{{ project['status'] }}</td>
-            <td>{{ project['date_created'] }}</td>
+            <td>{{ timestamp(datetime_string=project['date_created']) }}</td>
         </tr>
         {% endfor %}
     </tbody>

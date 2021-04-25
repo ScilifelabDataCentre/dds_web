@@ -1,14 +1,18 @@
 "User display and login/logout HTMl endpoints."
 
 from flask import (Blueprint, render_template, request,
-                   session, redirect, url_for)
+                   current_app, session, redirect, url_for)
 
+from code_dds import timestamp
 from code_dds.api.login import ds_access
 from code_dds.crypt.auth import validate_user_credentials
 from code_dds.db_code import models
 from code_dds.db_code import db_utils
 from code_dds.db_code import marshmallows as marmal
 from code_dds.utils import login_required
+
+# temp will be removed in next version
+from code_dds.development import temp_cache as tc
 
 user_blueprint = Blueprint("user", __name__)
 
@@ -33,6 +37,8 @@ def login():
         session['current_user_id'] = user_info['id']
         session['is_facility'] = is_facility
         session['facility_name'] = user_info.get('facility_name')
+        # temp should be removed in next version
+        tc.store_temp_ucache(username, password)
         if request.form.get('next'):
             to_go_url = request.form.get('next')
         else:
@@ -43,6 +49,8 @@ def login():
 @user_blueprint.route("/logout", methods=["GET"])
 def logout():
     """Logout of a user account"""
+    # temp should be removed in next version
+    tc.clear_temp_ucache(session.get('current_user', ''))
     session.pop('current_user', None)
     session.pop('current_user_id', None)
     session.pop('is_facility', None)
@@ -60,7 +68,7 @@ def user_page(loginname=None):
     else:
         projects_list = models.Project.query.filter_by(owner=session['current_user_id']).all()
     # TO DO: change dbfunc passing in future
-    return render_template('project/list_project.html', projects_list=projects_list, dbfunc=db_utils.get_facility_column)
+    return render_template('project/list_project.html', projects_list=projects_list, dbfunc=db_utils.get_facility_column, timestamp=timestamp)
 
 
 # @user_blueprint.route("/signup", methods=["GET", "POST"])
