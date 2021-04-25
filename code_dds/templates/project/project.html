@@ -70,20 +70,22 @@
     {% if uploaded_data %}
         <br><br>
         {% if not g.is_facility %}
-            <div class="right-button-container">
+            <div id="download-form-container" class="right-button-container">
                 <!--input class="btn btn-primary btn-custom" type="button" value="Ajax Download" id="download-button"
                        data-project_id="{{ project['id'] }}" data-action="{{ url_for('project.data_download') }}">
                        <br> <br-->
                 <form id="data-download-form" method="POST" enctype="multipart/form-data", action="{{ url_for('project.data_download') }}" autocomplete="off">
                     <input type="hidden" name="project_id" value="{{ project['id'] }}">
-                    <input class="btn btn-primary btn-custom" type="submit" value="Form Download" id="download-button">
+                    <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button">
                 </form>
             </div>
             <br>
         {% endif %}
         <h5 class="underlined tcenter">Files Uploaded</h5>
         <br>
-        {{ uploaded_data|safe }}
+        <div id="uploaded-file-list">
+            {{ uploaded_data|safe }}
+        </div>
     {% endif %}
 {% else %}
     <p>You don't have access to this project, if you think you should contact Data Centre</p>

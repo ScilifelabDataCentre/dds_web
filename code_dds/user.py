@@ -3,6 +3,7 @@
 from flask import (Blueprint, render_template, request,
                    current_app, session, redirect, url_for)
 
+from code_dds import timestamp
 from code_dds.api.login import ds_access
 from code_dds.crypt.auth import validate_user_credentials
 from code_dds.db_code import models
@@ -67,7 +68,7 @@ def user_page(loginname=None):
     else:
         projects_list = models.Project.query.filter_by(owner=session['current_user_id']).all()
     # TO DO: change dbfunc passing in future
-    return render_template('project/list_project.html', projects_list=projects_list, dbfunc=db_utils.get_facility_column)
+    return render_template('project/list_project.html', projects_list=projects_list, dbfunc=db_utils.get_facility_column, timestamp=timestamp)
 
 
 # @user_blueprint.route("/signup", methods=["GET", "POST"])

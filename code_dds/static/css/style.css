@@ -180,3 +180,12 @@ div.right-button-container {
     grid-template-areas: "copy-icon-followed copy-icon";
 }
 
+/* download icon related stuff */
+
+span.li-dwn-box {
+    padding-right: 5px;
+    vertical-align: 2%;
+    cursor: pointer;
+    visibility: hidden;
+}
+
