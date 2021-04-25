@@ -29,9 +29,6 @@ from code_dds.crypt.key_gen import project_keygen
 from code_dds.utils import login_required, working_directory, format_byte_size
 from werkzeug.utils import secure_filename
 
-# temp will be removed in next version
-from code_dds.development import temp_cache as tc
-
 project_blueprint = Blueprint("project", __name__)
 
 

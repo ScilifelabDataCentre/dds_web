@@ -67,7 +67,7 @@ $( '#uploaded-file-list li' ).hover(
 );
 
 /* trail download by ajax, not implemented yet */
-$('#download-button').click(function(e) {
+$('#download-butt').click(function(e) {
     buttonObj = $(this);
     $.ajax({
         url: buttonObj.data().action,
