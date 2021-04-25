@@ -70,13 +70,18 @@
     {% if uploaded_data %}
         <br><br>
         {% if not g.is_facility %}
-            <div id="download-form-container" class="right-button-container">
+            <div id="download-form-container" class="right-button-container hovertip">
                 <!--input class="btn btn-primary btn-custom" type="button" value="Ajax Download" id="download-button"
                        data-project_id="{{ project['id'] }}" data-action="{{ url_for('project.data_download') }}">
                        <br> <br-->
                 <form id="data-download-form" method="POST" enctype="multipart/form-data", action="{{ url_for('project.data_download') }}" autocomplete="off">
                     <input type="hidden" name="project_id" value="{{ project['id'] }}">
-                    <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button">
+                    {% if project['unformated_size'] > download_limit %}
+                        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button" disabled>
+                        <span class="hovertiptext hovertiptext-download">Project size higher than WEB doanload threshold, use CLI to download data</span>
+                    {% else %}
+                        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button">
+                    {% endif %}
                 </form>
             </div>
             <br>
