@@ -119,23 +119,26 @@ div.right-button-container {
    display: inline-block;
  }
 
-.hovertip .hovertiptext {
-   visibility: hidden;
+ .hovertip .hovertiptext {
+    visibility: hidden;
+    background-color: #d3d3d3;
+    color: black;
+    text-align: center;
+    font-size: 0.85em;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+  }
+
+.hovertip .hovertiptext-filesize {
    width: 80px;
    height: 30px;
-   background-color: #d3d3d3;
-   color: black;
-   text-align: center;
-   font-size: 0.85em;
-   border-radius: 6px;
-   padding: 5px 0;
-   position: absolute;
-   z-index: 1;
    top: -3px;
    left: 110%;
  }
 
-.hovertip .hovertiptext::after {
+.hovertip .hovertiptext-filesize::after {
    content: "";
    position: absolute;
    top: 50%;
@@ -146,15 +149,30 @@ div.right-button-container {
    border-color: transparent #d3d3d3 transparent transparent;
 }
 
+.hovertip .hovertiptext-download {
+    width: 250px;
+    bottom: 120%;
+    left: 57%;
+    margin-left: -140px;
+    font-size: 1em;
+ }
+
+.hovertip .hovertiptext-download::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-bottom: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #d3d3d3 transparent transparent;
+    transform: rotate(-90deg);
+ }
+
 .hovertip:hover .hovertiptext {
    visibility: visible;
 }
 
-.hover-box:hover{
-    background: #f4f0ec;
-    border-radius: 6px;
-    border: 0.5px solid #d3d3d3;
-}
 
 /* clipboard icon related */
 
@@ -182,6 +200,9 @@ div.right-button-container {
 
 /* download icon related stuff */
 
+#download-button:disabled {
+    cursor: help;
+}
 span.li-dwn-box {
     padding-right: 5px;
     vertical-align: 2%;

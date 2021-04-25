@@ -78,6 +78,7 @@ def project_info(project_id=None):
     if project_info.get('date_updated'):
         project_info['date_updated'] = timestamp(datetime_string=project_info['date_updated'])
     if project_info.get('size'):
+        project_info['unformated_size'] = project_info['size']
         project_info['size'] = format_byte_size(project_info['size'])
     project_info['facility_name'] = db_utils.get_facility_column(
         fid=project_info['facility'], column="name"
@@ -90,7 +91,8 @@ def project_info(project_id=None):
     return render_template(
         "project/project.html",
         project=project_info,
-        uploaded_data=uploaded_data
+        uploaded_data=uploaded_data,
+        download_limit=current_app.config.get("MAX_DOWNLOAD_LIMIT")
     )
 
 
@@ -300,11 +302,11 @@ class folder(object):
                     "<li>"
                     "  <span class='li-dwn-box'></span>"
                     "  <div class='hovertip'>"
-                    "    <span class='file'>{_k}</span> <span class='hovertiptext'> {_v}Kb </span>"
+                    "    <span class='file'>{_k}</span> <span class='hovertiptext hovertiptext-filesize'> {_v} </span>"
                     "  </div>"
                     "</li>"
                     ).format(
-                        _k=_key, _v=_value
+                        _k=_key, _v=format_byte_size(_value)
                     )
         return '<ul style="list-style: none;"> {} </ul>'.format(_html_string)
 
