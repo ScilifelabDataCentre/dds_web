@@ -31,6 +31,7 @@ def prepare():
     g.current_user = session.get('current_user')
     g.current_user_id = session.get('current_user_id')
     g.is_facility = session.get('is_facility')
+    g.is_admin = session.get('is_admin')
     if g.is_facility:
         g.facility_name = session.get('facility_name')
 
@@ -38,7 +39,7 @@ def prepare():
 def create_app():
     """Construct the core application."""
 
-    app.config.from_object('config.Config')
+    app.config.from_envvar('DDS_APP_CONFIG')
 
     db.init_app(app)    # Initialize database
     # ma.init_app(app)
@@ -64,6 +65,9 @@ def create_app():
 
         from user import user_blueprint
         app.register_blueprint(user_blueprint, url_prefix='/user')
+        
+        from admin import admin_blueprint
+        app.register_blueprint(admin_blueprint, url_prefix='/admin')
 
         from project import project_blueprint
         app.register_blueprint(project_blueprint, url_prefix='/project')

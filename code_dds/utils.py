@@ -5,7 +5,7 @@ import functools
 import os
 
 from contextlib import contextmanager
-from flask import (g, request, redirect, url_for)
+from flask import (g, request, redirect, url_for, abort)
 
 # DECORATORS ####################################################### DECORATERS #
 
@@ -17,6 +17,15 @@ def login_required(f):
         if not g.current_user:
             url = url_for("user.login", next=request.base_url)
             return redirect(url)
+        return f(*args, **kwargs)
+    return wrap
+
+def admin_access_required(f):
+    """ Decorator for checking if the user have admin access else abort."""
+    @functools.wraps(f)
+    def wrap(*args, **kwargs):
+        if not g.is_admin:
+            return abort(403, "Only admin can access this page")
         return f(*args, **kwargs)
     return wrap
 

@@ -3,6 +3,8 @@
 import os
 import uuid
 
+from flask import current_app
+
 from code_dds.db_code.models import User, Project, Facility, File, Role
 from code_dds import db
 from code_dds import timestamp
@@ -82,6 +84,12 @@ def fill_db():
             username="username",
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             admin=False,
+        ),
+        User(
+            public_id="public_admin_id",
+            username="admin",
+            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
+            admin=True,
         )
         #     User(first_name="FirstName", last_name="LastName",
         #         username="username1",
@@ -120,7 +128,7 @@ def fill_db():
             password="$argon2id$v=19$m=102400,t=2,p=8$mgkOMH/4B16suy5TMw+4KQ$7j5eT0zMOmdUj2q1A+dcgC9TM4QOl39GeHWdYh+QdEE",
             name="Facility 1",
             internal_ref="fac",
-            safespring="redacted",
+            safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
         )
         # Facility(name="Facility1", internal_ref="fac1",
         #          username="facility1",
@@ -367,6 +375,7 @@ def fill_db():
 
     roles = [
         Role(username=users[0].username, facility=False),
+        Role(username=users[1].username, facility=False),
         Role(username=facilities[0].username, facility=True),
     ]
 

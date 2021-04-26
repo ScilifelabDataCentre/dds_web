@@ -4,53 +4,38 @@ $('#sortTable').DataTable({ searching: false, info: false });
 /* Submit upload by ajax so can have progress bar */
 $('#data-upload-form').submit(function (e) {
     e.preventDefault();
-    formElement = this;
-    actionUrl = $(this).attr('action');
-    requestMethod = $(this).attr('method');
-    dataFromForm = new FormData(this);
-    modalID = 'uploadModal-' + dataFromForm.get('project_id');
-    jmodalID = '#' + modalID;
-    // If modal doesn't exist, create and add event listener to refresh page
-    if (!($(jmodalID).length)) {
-        $('body').append(getModalHtml(modalID, "Upload in progress"));
-        $(jmodalID).on('hidden.bs.modal', function () { location.reload(); });
-    }
-    modalElement = $(jmodalID);
-    $.ajax({
-        url: actionUrl,
-        method: requestMethod,
-        data: dataFromForm,
-        processData: false,
-        contentType: false,
-        // function to execute before request
-        beforeSend: function(){
-            setUploadModalData(modalElement, "progress");
-            modalElement.modal('show');
+    dataForModal = {
+        progress: {
+            head: "Upload in progress",
+            body: "Data is being transferred to S3"
         },
-        // function to execute on success
-        success: function(resp){
-            setUploadModalData(modalElement, "success", false);
-        },
-        // function to execute on failure
-        error: function(err){
-            setUploadModalData(modalElement, "error", false);
-        },
-        // function to execute always
-        complete: function () {
-            formElement.reset();
-        }
-    });
+        success: "Upload success",
+        error: "Upload failed"
+    };
+    submitWithModel(this, 'uploadModal-' + $(this).find('input[name="project_id"]').prop("value"), dataForModal);
 });
 
 /* download related stuff */
 
-if (! $('#download-button').is(":disabled")){
+if (($('#download-button').length)){
     $('span.li-dwn-box').html(`
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
           <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
           <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
         </svg>
         `);
+
+    $( '#uploaded-file-list li' ).hover(
+        function() {
+            if (! $('#download-button').is(":disabled")){
+                $( this ).find( 'span.li-dwn-box' ).first().css('visibility', 'visible');
+            } else if (sizeCheck(this)){
+                $( this ).find( 'span.li-dwn-box' ).first().css('visibility', 'visible');
+            };
+        }, function() {
+            $( this ).find( 'span.li-dwn-box' ).first().css('visibility', 'hidden');
+        }
+    );
 
     $('span.li-dwn-box').click(function(e){
         realForm = $('#data-download-form');
@@ -59,15 +44,93 @@ if (! $('#download-button').is(":disabled")){
         projectID = realForm.children('input[name="project_id"]').attr('value');
         submitDownloadForm(file, projectID, actionURL);
     });
+};
 
-    $( '#uploaded-file-list li' ).hover(
-      function() {
-        $( this ).find( 'span.li-dwn-box' ).first().css('visibility', 'visible');
-      }, function() {
-        $( this ).find( 'span.li-dwn-box' ).first().css('visibility', 'hidden');
-      }
-    );
-}
+/* admin page related stuff */
+if ($('#user-create-form-container')){
+    $('#facilitySwitch').click(function(e){
+        if ($(this).prop('checked')){
+            if ($('#adminSwitch').prop('checked')){
+                $('#adminSwitch').click();
+            };
+            $('input[name="facility_name"]').prop("required", true);
+            $('input[name="facility_ref"]').prop("required", true);
+        } else {
+            $('input[name="facility_name"]').prop("required", false);
+            $('input[name="facility_ref"]').prop("required", false);
+        };
+    });
+    $('#adminSwitch').click(function(e){
+        if ($(this).prop('checked') && $('#facilitySwitch').prop('checked')){
+            $('#facilitySwitch').click();
+        };
+    });
+    
+    $('#create-user-form').submit(function (e) {
+        e.preventDefault();
+        formElement = this;
+        actionUrl = $(this).attr('action');
+        requestMethod = $(this).attr('method');
+        dataFromForm = new FormData(this);
+        jmodalID = '#' + 'createUser';
+        // If modal doesn't exist, create and add event listener to refresh page
+         $('#createUser').remove();
+        if (!($(jmodalID).length)) {
+            $('body').append(getModalHtml('createUser'));
+            $(jmodalID).on('hidden.bs.modal', function () { location.reload(); });
+        }
+        modalElement = $(jmodalID);
+        $.ajax({
+            url: actionUrl,
+            method: requestMethod,
+            data: dataFromForm,
+            processData: false,
+            contentType: false,
+            // function to execute before request
+            beforeSend: function(){
+                setModalData(modalElement, "progress", "Creating account", "Attempting to create account", true);
+                modalElement.modal('show');
+            },
+            // function to execute on success
+            success: function(resp){
+                user = $(formElement).find('input[name="username"]').prop("value");
+                pass = $(formElement).find('input[name="password"]').prop("value");
+                jObj = { username: user, password: pass };
+                config = new Blob([JSON.stringify(jObj, null, 4)], {type: 'text/json'});
+                configUrl = URL.createObjectURL(config);
+                link = document.createElement("a");
+                link.href = configUrl;
+                link.download = `${user}-config.json`;
+                link.click();
+                setModalData(modalElement, "success", "Account created", resp.message, false);
+            },
+            // function to execute on failure
+            error: function(err){
+                setModalData(modalElement, "error", "Failed", err.responseJSON.message, false);
+            },
+            // function to execute always
+            complete: function () {
+                formElement.reset();
+            }
+        });
+    });
+    
+    $('#user-delete-form').submit(function (e) {
+        e.preventDefault();
+        dataForModal = {
+            progress: {
+                head: "Deleting account",
+                body: "Attempting to delete account"
+            },
+            success: "Account deleted",
+            error: "Failed"
+        };
+        $('#deleteUser').remove();
+        submitWithModel(this, 'deleteUser', dataForModal);
+    });
+};
+
+
 /* trail download by ajax, not implemented yet */
 $('#download-butt').click(function(e) {
     buttonObj = $(this);
@@ -83,8 +146,50 @@ $('#download-butt').click(function(e) {
     });
 });
 
+
+/*  FUNCTIONS USED  */
+
+/* To submit a form request with progress modal */
+function submitWithModel(form, modalID, mCnt){
+    formElement = form;
+    actionUrl = $(form).attr('action');
+    requestMethod = $(form).attr('method');
+    dataFromForm = new FormData(form);
+    jmodalID = '#' + modalID;
+    // If modal doesn't exist, create and add event listener to refresh page
+    if (!($(jmodalID).length)) {
+        $('body').append(getModalHtml(modalID));
+        $(jmodalID).on('hidden.bs.modal', function () { location.reload(); });
+    }
+    modalElement = $(jmodalID);
+    $.ajax({
+        url: actionUrl,
+        method: requestMethod,
+        data: dataFromForm,
+        processData: false,
+        contentType: false,
+        // function to execute before request
+        beforeSend: function(){
+            setModalData(modalElement, "progress", mCnt.progress.head, mCnt.progress.body, true);
+            modalElement.modal('show');
+        },
+        // function to execute on success
+        success: function(resp){
+            setModalData(modalElement, "success", mCnt.success, resp.message, false);
+        },
+        // function to execute on failure
+        error: function(err){
+            setModalData(modalElement, "error", mCnt.progess, err.responseJSON.message, false);
+        },
+        // function to execute always
+        complete: function () {
+            formElement.reset();
+        }
+    });
+}
+
 /* Give the modal design for request progress */
-function getModalHtml(mId, mTitle) {
+function getModalHtml(mId) {
     modalHTMLTemplate = `
         <div class="modal fade" id="${mId}" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
@@ -104,53 +209,49 @@ function getModalHtml(mId, mTitle) {
 };
 
 /* function to set the modal info */
-function setUploadModalData(mElement, type, closeButtonDisabled=true){
-    contentObject = {
-        progress: {
-            header: `
-                <h5 class="modal-title">Update in progress</h5>
+function setModalData(mElement, type, head, body, closeButtonDisabled=true,){
+    
+    if (type == 'progress'){
+        mhead = `
+                <h5 class="modal-title">${head}</h5>
                 <div class="spinner-border text-primary right-button-container"></div>
-            `,
-            body: `
+                `;
+        mbody = `
                 <div class="alert alert-info tcenter">
-                    Data is being transferred to the server
+                    ${body}
                 </div>
-            `
-        },
-        success: {
-            header: `
-                <h5 class="modal-title">Update success</h5>
+                `;
+    } else if (type == 'success'){
+        mhead = `
+                <h5 class="modal-title">${head}</h5>
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#42ba96" class="bi bi-check-circle" viewBox="0 0 16 16">
                   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                   <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
                 </svg>
-            `,
-            body: `
+                `;
+        mbody = `
                 <div class="alert alert-success tcenter">
-                    Data successfully transferred to server
+                    ${body}
                 </div>
-            `
-        },
-        error: {
-            header: `
-                <h5 class="modal-title">Update failed</h5>
+                `;
+    } else if (type == 'error'){
+        mhead =  `
+                <h5 class="modal-title">${head}</h5>
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#df4759" class="bi bi-x-circle" viewBox="0 0 16 16">
                   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                   <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
                 </svg>
-            `,
-            body: `
+                `;
+        mbody = `
                 <div class="alert alert-danger tcenter">
-                    Data transfer failed on server side, contact DC
+                    ${body}
                 </div>
-            `
-        }
-    }
+                `;
+    };
 
-    mElement.find('#modalHeaderContent').html(contentObject[type].header);
-    mElement.find('#modalBodyContent').html(contentObject[type].body);
+    mElement.find('#modalHeaderContent').html(mhead);
+    mElement.find('#modalBodyContent').html(mbody);
     mElement.find('#closeModalButton').attr("disabled", closeButtonDisabled);
-
 };
 
 /* get file tree path for clicked entry */
@@ -174,4 +275,21 @@ function submitDownloadForm(file, projectID, actionURL){
     `;
     $('#download-form-container').append(formTemplate);
     $('#temp-dwn-form').submit()
+};
+
+/* check size of hovered object */
+function sizeCheck(cSelect){
+    units = {
+         B: Math.pow(1000, 0),
+        KB: Math.pow(1000, 1),
+        MB: Math.pow(1000, 2),
+        GB: Math.pow(1000, 3),
+        TB: Math.pow(1000, 4),
+    };
+    tSize = 0;
+    $(cSelect).find('.hovertiptext-filesize').each(function(i){
+        match = $(this).text().match(/(\d+.\d+) (\w+)/);
+        tSize += parseFloat(match[1]) * units[match[2]];
+    });
+    return tSize < parseFloat($('input[name="download_limit"]').prop("value"));
 };
