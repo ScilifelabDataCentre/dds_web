@@ -138,12 +138,9 @@ class GetPrivate(flask_restful.Resource):
         else:
             print(proj_priv, flush=True)
             app_secret = app.config["SECRET_KEY"]
-            print(f"Server secret (hex): {app_secret}", flush=True)
             passphrase = app_secret.encode("utf-8")
-            print(f"Sever secret (bytes): {passphrase}", flush=True)
 
             enc_key = bytes.fromhex(proj_priv[0])
-            print(f"Encrypted key: {enc_key}", flush=True)
 
             nonce = bytes.fromhex(proj_priv[1])
             # print(nonce, flush=True)
