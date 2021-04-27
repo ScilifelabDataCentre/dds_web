@@ -78,7 +78,7 @@ class Facility(db.Model):
     # settings = db.Column(db.String(50), unique=False, nullable=False)
     # email = db.Column(db.String(80), unique=True, nullable=False)
     # phone = db.Column(db.String(20), unique=False, nullable=True)
-    safespring = db.Column(db.String(120), unique=True, nullable=False)
+    safespring = db.Column(db.String(120), unique=False, nullable=False) #unique=True later
 
     # Relationships
     user_projects = db.relationship(

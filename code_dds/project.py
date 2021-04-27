@@ -46,16 +46,17 @@ def add_project():
                     "project/add_project.html",
                     error_message="Field '{}' should not be empty".format(k),
                 )
-
+        
         # Check if the user actually exists
         if request.form.get("owner") not in db_utils.get_full_column_from_table(
             table="User", column="username"
-        ):
+            ) or db_utils.get_user_column_by_username(
+            request.form.get("owner"), "admin"):
             return render_template(
                 "project/add_project.html",
                 error_message="Given username '{}' does not exist".format(
                     request.form.get("owner")
-                ),
+                )
             )
 
         project_inst = create_project_instance(request.form)
@@ -92,7 +93,8 @@ def project_info(project_id=None):
         "project/project.html",
         project=project_info,
         uploaded_data=uploaded_data,
-        download_limit=current_app.config.get("MAX_DOWNLOAD_LIMIT")
+        download_limit=current_app.config.get("MAX_DOWNLOAD_LIMIT"),
+        format_size=format_byte_size
     )
 
 
@@ -144,7 +146,10 @@ def data_upload():
                     "-c",
                     os.path.join(
                         current_app.config.get("LOCAL_TEMP_CACHE"),
-                        "{}_cache.json".format(session.get('current_user'))
+                        "{}_{}_cache.json".format(
+                            session.get('current_user'),
+                            session.get('usid')
+                        )
                     ),
                     "-p",
                     project_id,
@@ -181,7 +186,10 @@ def data_download():
             "-c",
             os.path.join(
                 current_app.config.get("LOCAL_TEMP_CACHE"),
-                "{}_cache.json".format(session.get('current_user'))
+                "{}_{}_cache.json".format(
+                   session.get('current_user'),
+                   session.get('usid')
+                )
             ),
             "-p",
             project_id,
