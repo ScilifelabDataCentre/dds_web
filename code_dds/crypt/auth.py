@@ -81,5 +81,7 @@ def validate_user_credentials(username, password):
     uinfo = {'username': uaccount.username, 'id': uaccount.public_id}
     if is_facility:
         uinfo['facility_name'] = uaccount.name
+    elif uaccount.admin:
+        uinfo['admin'] = True
     
     return (True, is_facility, "Validate successful", uinfo)

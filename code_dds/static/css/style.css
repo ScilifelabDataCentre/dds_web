@@ -150,11 +150,12 @@ div.right-button-container {
 }
 
 .hovertip .hovertiptext-download {
-    width: 250px;
+    width: 320px;
     bottom: 120%;
-    left: 57%;
+    left: 23%;
     margin-left: -140px;
-    font-size: 1em;
+    font-size: 0.95em;
+    padding: 5px;
  }
 
 .hovertip .hovertiptext-download::after {
