@@ -19,7 +19,7 @@ from flask import (
     jsonify,
     make_response,
     send_file,
-    after_this_request
+    after_this_request,
 )
 
 from code_dds import db, timestamp
@@ -47,17 +47,16 @@ def add_project():
                     "project/add_project.html",
                     error_message="Field '{}' should not be empty".format(k),
                 )
-        
+
         # Check if the user actually exists
         if request.form.get("owner") not in db_utils.get_full_column_from_table(
             table="User", column="username"
-            ) or db_utils.get_user_column_by_username(
-            request.form.get("owner"), "admin"):
+        ) or db_utils.get_user_column_by_username(request.form.get("owner"), "admin"):
             return render_template(
                 "project/add_project.html",
                 error_message="Given username '{}' does not exist".format(
                     request.form.get("owner")
-                )
+                ),
             )
 
         project_inst = create_project_instance(request.form)
@@ -76,14 +75,18 @@ def project_info(project_id=None):
     if not project_row:
         return abort(404)
     project_info = project_row.__dict__.copy()
-    project_info['date_created'] = timestamp(datetime_string=project_info['date_created'])
-    if project_info.get('date_updated'):
-        project_info['date_updated'] = timestamp(datetime_string=project_info['date_updated'])
-    if project_info.get('size'):
-        project_info['unformated_size'] = project_info['size']
-        project_info['size'] = format_byte_size(project_info['size'])
-    project_info['facility_name'] = db_utils.get_facility_column(
-        fid=project_info['facility'], column="name"
+    project_info["date_created"] = timestamp(
+        datetime_string=project_info["date_created"]
+    )
+    if project_info.get("date_updated"):
+        project_info["date_updated"] = timestamp(
+            datetime_string=project_info["date_updated"]
+        )
+    if project_info.get("size"):
+        project_info["unformated_size"] = project_info["size"]
+        project_info["size"] = format_byte_size(project_info["size"])
+    project_info["facility_name"] = db_utils.get_facility_column(
+        fid=project_info["facility"], column="name"
     )
     files_list = models.File.query.filter_by(project_id=project_id).all()
     if files_list:
@@ -95,7 +98,7 @@ def project_info(project_id=None):
         project=project_info,
         uploaded_data=uploaded_data,
         download_limit=current_app.config.get("MAX_DOWNLOAD_LIMIT"),
-        format_size=format_byte_size
+        format_size=format_byte_size,
     )
 
 
@@ -148,15 +151,14 @@ def data_upload():
                     os.path.join(
                         current_app.config.get("LOCAL_TEMP_CACHE"),
                         "{}_{}_cache.json".format(
-                            session.get('current_user'),
-                            session.get('usid')
-                        )
+                            session.get("current_user"), session.get("usid")
+                        ),
                     ),
                     "-p",
                     project_id,
                     "-spf",
                     "data_to_upload.txt",
-                    "--overwrite"
+                    "--overwrite",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -168,7 +170,9 @@ def data_upload():
             try:
                 shutil.rmtree(upload_space)
             except:
-                print("Couldn't remove upload space '{}'".format(upload_space), flush=True)
+                print(
+                    "Couldn't remove upload space '{}'".format(upload_space), flush=True
+                )
         else:
             status, message = (515, "Couldn't send data to S3")
 
@@ -180,23 +184,23 @@ def data_upload():
 def data_download():
     project_id = request.form.get("project_id", None)
     data_path = request.form.get("data_path", None)
-    download_space = os.path.join(current_app.config['DOWNLOAD_FOLDER'], "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")))
+    download_space = os.path.join(
+        current_app.config["DOWNLOAD_FOLDER"],
+        "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")),
+    )
     cmd = [
-            "dds",
-            "get",
-            "-c",
-            os.path.join(
-                current_app.config.get("LOCAL_TEMP_CACHE"),
-                "{}_{}_cache.json".format(
-                   session.get('current_user'),
-                   session.get('usid')
-                )
-            ),
-            "-p",
-            project_id,
-            "-d",
-            download_space
-        ]
+        "dds",
+        "get",
+        "-c",
+        os.path.join(
+            current_app.config.get("LOCAL_TEMP_CACHE"),
+            "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
+        ),
+        "-p",
+        project_id,
+        "-d",
+        download_space,
+    ]
     if data_path:
         cmd.append("-s")
         cmd.append(data_path)
@@ -208,7 +212,7 @@ def data_download():
         stderr=subprocess.PIPE,
     )
     out, err = proc.communicate(input=None)
-    
+
     # cleanup after success
     @after_this_request
     def clean_download_space(response):
@@ -216,13 +220,19 @@ def data_download():
             try:
                 shutil.rmtree(download_space)
             except Exception as e:
+                print(
+                    "Couldn't delete download space {}".format(download_space),
+                    flush=True,
+                )
         return response
 
     if proc.returncode == 0:
         download_file_path = compile_download_file_path(download_space, project_id)
         return send_file(download_file_path, as_attachment=True)
     else:
-        abort(500, "Download failed, try again and if still see this message contact DC")
+        abort(
+            500, "Download failed, try again and if still see this message contact DC"
+        )
 
 
 ########## HELPER CLASSES AND FUNCTIONS ##########
@@ -311,11 +321,11 @@ class folder(object):
                     " <a class='folder' data-toggle='collapse' href='#{did}' aria-expanded='false' aria-controls='{did}'>{_k}</a> "
                     " <div class='collapse' id='{did}'>{_v}</div> "
                     "</li>"
-                    ).format(
-                        did=div_id,
-                        _k=_key,
-                        _v=self.__make_html_string_from_file_dict(_value),
-                    )
+                ).format(
+                    did=div_id,
+                    _k=_key,
+                    _v=self.__make_html_string_from_file_dict(_value),
+                )
             else:
                 _html_string += (
                     "<li>"
@@ -324,9 +334,7 @@ class folder(object):
                     "    <span class='file'>{_k}</span> <span class='hovertiptext hovertiptext-filesize'> {_v} </span>"
                     "  </div>"
                     "</li>"
-                    ).format(
-                        _k=_key, _v=format_byte_size(_value)
-                    )
+                ).format(_k=_key, _v=format_byte_size(_value))
         return '<ul style="list-style: none;"> {} </ul>'.format(_html_string)
 
 
