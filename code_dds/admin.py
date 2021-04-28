@@ -12,7 +12,8 @@ from flask import (
     redirect,
     url_for,
     make_response,
-    jsonify
+    jsonify,
+    flash
     )
 
 from code_dds import db
@@ -51,7 +52,7 @@ def admin_page():
                     db_utils.get_user_column_by_username(account_name, "public_id")
                 )
             if projects:
-                return make_response(jsonify({"status": 440, "message": "Account can't be deleted, have projects"}), 440)
+                return make_response(jsonify({"status": 440, "message": "Account '{}' can't be deleted, have projects".format(account_name)}), 440)
             account_role = models.Role.query.filter_by(username=account_name).one()
             db.session.delete(account)
             db.session.delete(account_role)
@@ -67,7 +68,7 @@ def admin_page():
         facility_ref = request.form.get("facility_ref")
         
         if not field_uniq(username, "username"):
-            return make_response(jsonify({"status": 440, "message": "Username already exists"}), 440)
+            return make_response(jsonify({"status": 440, "message": "Username '{}' already exists".format(username)}), 440)
         
         if is_facility:
             if not field_uniq(facility_name, "name"):

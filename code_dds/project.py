@@ -18,7 +18,8 @@ from flask import (
     g,
     jsonify,
     make_response,
-    send_file
+    send_file,
+    after_this_request
 )
 
 from code_dds import db, timestamp
@@ -167,7 +168,7 @@ def data_upload():
             try:
                 shutil.rmtree(upload_space)
             except:
-                print("Couldn't remove upload space '{}'".format(upload_space))
+                print("Couldn't remove upload space '{}'".format(upload_space), flush=True)
         else:
             status, message = (515, "Couldn't send data to S3")
 
@@ -207,6 +208,16 @@ def data_download():
         stderr=subprocess.PIPE,
     )
     out, err = proc.communicate(input=None)
+    
+    # cleanup after success
+    @after_this_request
+    def clean_download_space(response):
+        if os.path.exists(download_space):
+            try:
+                shutil.rmtree(download_space)
+            except Exception as e:
+        return response
+
     if proc.returncode == 0:
         download_file_path = compile_download_file_path(download_space, project_id)
         return send_file(download_file_path, as_attachment=True)
