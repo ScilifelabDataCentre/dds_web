@@ -72,25 +72,12 @@ if ($('#user-create-form-container')){
         actionUrl = $(this).attr('action');
         requestMethod = $(this).attr('method');
         dataFromForm = new FormData(this);
-        jmodalID = '#' + 'createUser';
-        // If modal doesn't exist, create and add event listener to refresh page
-         $('#createUser').remove();
-        if (!($(jmodalID).length)) {
-            $('body').append(getModalHtml('createUser'));
-            $(jmodalID).on('hidden.bs.modal', function () { location.reload(); });
-        }
-        modalElement = $(jmodalID);
         $.ajax({
             url: actionUrl,
             method: requestMethod,
             data: dataFromForm,
             processData: false,
             contentType: false,
-            // function to execute before request
-            beforeSend: function(){
-                setModalData(modalElement, "progress", "Creating account", "Attempting to create account", true);
-                modalElement.modal('show');
-            },
             // function to execute on success
             success: function(resp){
                 user = $(formElement).find('input[name="username"]').prop("value");
@@ -102,31 +89,76 @@ if ($('#user-create-form-container')){
                 link.href = configUrl;
                 link.download = `${user}-config.json`;
                 link.click();
-                setModalData(modalElement, "success", "Account created", resp.message, false);
+                sAlert = `
+                    <div class="alert alert-success alert-dismissible fade show">
+                        <strong>Success!</strong> Created account for '${user}'
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                `;
+                if ($('input[name="is_facility"]').prop('checked')){
+                    $('ol#facility-list').append(`<li id="${user}">${user}</li>`);
+                } else {
+                    $('ol#user-list').append(`<li id="${user}">${user}</li>`);
+                };
+                formElement.reset();
+                if ($('#facilityExtraData').hasClass('show')){
+                    $('#facilityExtraData').toggleClass('show');
+                    $('input[name="facility_name"]').prop("required", false);
+                    $('input[name="facility_ref"]').prop("required", false);
+                };
+                $('#response-container').html(sAlert);
             },
             // function to execute on failure
             error: function(err){
-                setModalData(modalElement, "error", "Failed", err.responseJSON.message, false);
-            },
-            // function to execute always
-            complete: function () {
-                formElement.reset();
+                eMsg = err.responseJSON.message;
+                eAlert =`
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <strong>Failed!</strong> ${eMsg}
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                `;
+                $('#response-container').html(eAlert);
             }
         });
     });
     
     $('#user-delete-form').submit(function (e) {
         e.preventDefault();
-        dataForModal = {
-            progress: {
-                head: "Deleting account",
-                body: "Attempting to delete account"
+        formElement = this;
+        actionUrl = $(this).attr('action');
+        requestMethod = $(this).attr('method');
+        dataFromForm = new FormData(this);
+        $.ajax({
+            url: actionUrl,
+            method: requestMethod,
+            data: dataFromForm,
+            processData: false,
+            contentType: false,
+            // function to execute on success
+            success: function(resp){
+                user = $(formElement).find('input[name="account_name"]').prop("value");
+                sAlert = `
+                    <div class="alert alert-success alert-dismissible fade show">
+                        <strong>Success!</strong> Deleted account for '${user}'
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                `;
+                $(`li#${user}`).remove();
+                formElement.reset();
+                $('#response-container').html(sAlert);
             },
-            success: "Account deleted",
-            error: "Failed"
-        };
-        $('#deleteUser').remove();
-        submitWithModel(this, 'deleteUser', dataForModal);
+            error: function(err){
+                eMsg = err.responseJSON.message;
+                eAlert =`
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <strong>Failed!</strong> ${eMsg}
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                `;
+                $('#response-container').html(eAlert);
+            }
+        });
+        
     });
 };
 

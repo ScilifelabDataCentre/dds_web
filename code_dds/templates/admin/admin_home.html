@@ -2,6 +2,7 @@
 {% block body %}
     <h3 class="underlined tcenter"> Admin page </h3>
     <br>
+    <div id="response-container"></div>
     <div>
         <button type="button" class="btn btn-info btn-block"
                 data-toggle="collapse" data-target="#user-create-form-container"
@@ -68,27 +69,27 @@
         <br>
         
         <button type="button" class="btn btn-primary btn-block"
-                data-toggle="collapse" data-target="#user-list"
-                aria-expanded="false" aria-controls="user-list">
+                data-toggle="collapse" data-target="#accounts-list"
+                aria-expanded="false" aria-controls="accounts-list">
                 List accounts
         </button>
         
-        <div class="collapse show" id="user-list">
+        <div class="collapse show" id="accounts-list">
           <div class="card card-body">
             <div class="row">
                 <div class="col px-lg-5" style="padding-left:">
                 	<p>Users:</p>
-                    <ol>
+                    <ol id="user-list">
                         {% for user in users %}
-                            <li>{{ user.username }}</li>
+                            <li id="{{ user.username }}">{{ user.username }}</li>
                         {% endfor %}
                     </ol>
                 </div>
 				<div class="col px-lg-5">
                 	<p>Facilities:</p>
-                    <ol>
+                    <ol id="facility-list">
                         {% for fac in facilities %}
-                            <li>{{ fac.username }}</li>
+                            <li id="{{ fac.username }}">{{ fac.username }}</li>
                         {% endfor %}
                     </ol>
 				</div>
