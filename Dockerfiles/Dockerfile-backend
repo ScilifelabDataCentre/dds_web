@@ -21,11 +21,11 @@ RUN pip3 install gunicorn
 ENV PYTHONPATH /code
 
 # Add parameters for gunicorn
-# ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class=gthread --forwarded-allow-ips='*' --access-logfile -"
+ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class=gthread --forwarded-allow-ips='*' --access-logfile -"
 
 # Set working directory - 'code' dir in container, 'code' dir locally (in code)
 WORKDIR /code/code_dds
 
 # Run app -- needs to be in WORKDIR
-# CMD ["gunicorn", "app:app"]
-CMD ["python3", "app.py"]
+CMD ["gunicorn", "app:app"]
+#CMD ["python3", "app.py"]
