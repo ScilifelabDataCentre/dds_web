@@ -12,8 +12,7 @@ from flask import (
     redirect,
     url_for,
     make_response,
-    jsonify,
-    flash
+    jsonify
     )
 
 from code_dds import db
