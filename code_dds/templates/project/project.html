@@ -1,64 +1,97 @@
 {% extends 'base.html' %}
 
 {% block body %}
-{% if g.current_user == project['owner'] or g.current_user_id == project['facility'] %}
-    <h2 class="title_underlined">{{ project['title'] }}</h2>
-    <br>
-    <table class="table table-bordered">
-        <thead>
-            <th colspan="2" class="tcenter">Project Info</th>
-        </thead>
-        <tbody>
-            <tr>
-                <th>Description</th>
-                <td>{{ project['description'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Category</th>
-                <td>{{ project['category'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Sensitive project</th>
-                <td>{{ project['sensitive'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Owner</th>
-                <td>{{ project['owner'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Facility</th>
-                <td>{{ project['facility'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Delivery option</th>
-                <td>{{ project['delivery_option'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Status</th>
-                <td>{{ project['status'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Order date</th>
-                <td>{{ project['order_date'] }}</td>
-            </tr>
-            {% if project['delivery_date'] %}
-            <tr>
-                <th scope="row">Delivery date</th>
-                <td>{{ project['delivery_date'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Data size</th>
-                <td>{{ project['size'] }}</td>
-            </tr>
-            {% endif %}
-        </tbody>
-    </table>
+{% if g.current_user_id in [project['owner'], project['facility']] %}
     
-    <br>
-    {% if uploaded_data %}
-        <h5 class="title_underlined">Files Uploaded</h5>
+    {% if g.is_facility %}
+        <div id="data-adder" class="btn-group right-button-container">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Add data
+          </button>
+          <div class="dropdown-menu">
+            <form id="data-upload-form" method="POST" enctype="multipart/form-data", action="{{ url_for('project.data_upload') }}" autocomplete="off">
+                <input type="hidden" name="project_id" value="{{ project['id'] }}">
+                <input type="file" id="file-uploader" name="files" onchange="$(this).closest('form').submit()" hidden multiple/>
+                <label class="dropdown-item" for="file-uploader">Upload Files</label>
+                <input type="file" id="folder-uploader" name="folder" onchange="$(this).closest('form').submit()" hidden multiple webkitdirectory mozdirectory/>
+                <label class="dropdown-item" for="folder-uploader">Upload Folder</label>
+            </form>
+          </div>
+        </div>
+        <br><br><br>
+    {% endif %}
+
+    <div id="project-info">
+        <h2 class="underlined tcenter">{{ project['title'] }}</h2>
         <br>
-        {{ uploaded_data|safe }}
+        <table class="table table-bordered">
+            <thead>
+                <th colspan="2" class="tcenter">Project Info</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Description</th>
+                    <td>{{ project['description'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Category</th>
+                    <td>{{ project['category'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Owner</th>
+                    <td>{{ project['owner'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Facility</th>
+                    <td>{{ project['facility_name'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Status</th>
+                    <td>{{ project['status'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Creation date</th>
+                    <td>{{ project['date_created'] }}</td>
+                </tr>
+                {% if project['date_updated'] %}
+                <tr>
+                    <th scope="row">Delivery date</th>
+                    <td>{{ project['date_updated'] }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Data size</th>
+                    <td>{{ project['size'] }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if uploaded_data %}
+        <br><br>
+        {% if not g.is_facility %}
+            <div id="download-form-container" class="right-button-container hovertip">
+                <!--input class="btn btn-primary btn-custom" type="button" value="Ajax Download" id="download-button"
+                       data-project_id="{{ project['id'] }}" data-action="{{ url_for('project.data_download') }}">
+                       <br> <br-->
+                <form id="data-download-form" method="POST" enctype="multipart/form-data", action="{{ url_for('project.data_download') }}" autocomplete="off">
+                    <input type="hidden" name="project_id" value="{{ project['id'] }}">
+                    <input type="hidden" name="download_limit" value="{{ download_limit }}">
+                    {% if project['unformated_size'] > download_limit %}
+                        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button" disabled>
+                        <span class="hovertiptext hovertiptext-download">Project size higher than WEB download threshold ({{ format_size(download_limit) }}). Files/folders lesser than the threshold can be downloaded individually from file list. Or use CLI to download all data</span>
+                    {% else %}
+                        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button">
+                    {% endif %}
+                </form>
+            </div>
+            <br>
+        {% endif %}
+        <h5 class="underlined tcenter">Files Uploaded</h5>
+        <br>
+        <div id="uploaded-file-list">
+            {{ uploaded_data|safe }}
+        </div>
     {% endif %}
 {% else %}
     <p>You don't have access to this project, if you think you should contact Data Centre</p>

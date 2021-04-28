@@ -1,45 +1,47 @@
-"""S3-related API endpoints."""
+"""S3 module"""
 
 ###############################################################################
 # IMPORTS ########################################################### IMPORTS #
 ###############################################################################
 
 # Standard library
-import json
 import pathlib
 
 # Installed
 import flask_restful
+import flask
+import sqlalchemy
+import json
+import botocore
 
 # Own modules
-from code_dds.db_code import marshmallows as marmal
 from code_dds.db_code import models
-
+from code_dds.api.api_s3_connector import ApiS3Connector
+from code_dds.api.dds_decorators import token_required, project_access_required
 
 ###############################################################################
-# ENDPOINTS ####################################################### ENDPOINTS #
+# FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
-
-class ListS3(flask_restful.Resource):
-    """Endpoint for listing all S3 projects in the database."""
-
-    def get(self):
-        """Gets S3 projects from database and returns in request response."""
-
-        all_s3projects = models.S3Project.query.all()
-        return marmal.s3s_schema.dump(all_s3projects)
 
 
 class S3Info(flask_restful.Resource):
-    """Endpoint for getting S3 connection information."""
+    """Gets the projects S3 keys"""
 
-    def get(self):
-        """Gets the information from file (atm, will be changed) and returns
-        json response."""
+    method_decorators = [project_access_required, token_required]
 
-        s3path = pathlib.Path.cwd() / \
-            pathlib.Path("sensitive/s3_config.json")
-        with s3path.open(mode="r") as f:
-            s3creds = json.load(f)
+    def get(self, current_user, _):
+        """Get the safespring project"""
 
-        return s3creds
+        sfsp_proj, keys, url, bucketname, message = ApiS3Connector().get_s3_info()
+
+        if any(x is None for x in [url, keys, bucketname]):
+            return flask.make_response(f"No s3 info returned! {message}", 500)
+
+        return flask.jsonify(
+            {
+                "safespring_project": sfsp_proj,
+                "url": url,
+                "keys": keys,
+                "bucket": bucketname,
+            }
+        )

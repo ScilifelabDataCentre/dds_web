@@ -2,14 +2,24 @@
 
 {% block body %}
 
-<table class="table table-striped">
+{% if g.is_facility %}
+    <div class="right-button-container">
+        <a class="btn btn-primary" href="{{ url_for('project.add_project') }}" role="button">Add Project</a>
+    </div>
+    <br><br><br>
+{% endif %}
+
+<table class="table table-striped" id="sortTable">
     <thead class="thead-light">
         <tr>
             <th scope="col">ID</th>
             <th scope="col">Title</th>
             <th scope="col">Category</th>
-            <th scope="col">Facility</th>
+            {% if not g.is_facility %}
+                <th scope="col">Facility</th>
+            {% endif %}
             <th scope="col">Status</th>
+            <th scope="col">Created On</th>
         </tr>
     </thead>
     <tbody>
@@ -18,8 +28,11 @@
             <td><a href="{{ url_for('project.project_info', project_id=project['id']) }}">{{ project['id'] }}</a></td>
             <td>{{ project['title'] }}</td>
             <td>{{ project['category'] }}</td>
-            <td>{{ project['facility'] }}</td>
+            {% if not g.is_facility %}
+                <td>{{ dbfunc(project['facility'], 'name') }}</td>
+            {% endif %}
             <td>{{ project['status'] }}</td>
+            <td>{{ timestamp(datetime_string=project['date_created']) }}</td>
         </tr>
         {% endfor %}
     </tbody>

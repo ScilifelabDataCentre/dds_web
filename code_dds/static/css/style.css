@@ -6,7 +6,6 @@ img.scilife_logo {
 
 div.nav_header {
     min-width: 450px;
-    /*margin-left: 252px;*/
     text-align: center;
     vertical-align: middle;
     font-family: 'Book Antiqua';
@@ -20,7 +19,7 @@ div.nav_header {
 .material-icons.md20 { font-size: 20px; }
 
 div.panel {
-    width: 70%;
+    width: 80%;
     padding: 15px 40px;
     background-color: #f0f0f0;
     align-content: center;
@@ -29,6 +28,7 @@ div.panel {
 
 div.panel-header {
     text-align: center;
+    padding: 15px;
 }
 
 div.place-center {
@@ -71,17 +71,6 @@ body {
 div.temp-holder {
     text-align: center;
 }
-
-div.plot-container {
-    width: 100%;
-    align-content: center;
-}
-
-div.half-plot {
-    width: 800px;
-    height: 550px;
-    margin: auto;
-}
   
 h1.title {
     font-size: 60px;
@@ -90,8 +79,7 @@ h1.title {
     margin-top: 11px;
  }
  
-.title_underlined {
-     text-align: center;
+.underlined {
      border-bottom: 1px solid #000;
      padding-bottom: 3px;
  }
@@ -110,8 +98,116 @@ ol.nonumber {
  }
 
 button.navbar-toggler {
-    /* display: inline-block; */
     float: right;
     margin-top: 20px;
  }
+
+div.right-button-container {
+    float: right;
+    padding-bottom: 20px;
+ }
+
+.btn-custom {
+    padding: 7px 12px;
+    font-size: 16px;
+    border-radius: 3px;
+ }
+
+ /* Hover text related styles, taken from w3 examples */
+.hovertip {
+   position: relative;
+   display: inline-block;
+ }
+
+ .hovertip .hovertiptext {
+    visibility: hidden;
+    background-color: #d3d3d3;
+    color: black;
+    text-align: center;
+    font-size: 0.85em;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+  }
+
+.hovertip .hovertiptext-filesize {
+   width: 80px;
+   height: 30px;
+   top: -3px;
+   left: 110%;
+ }
+
+.hovertip .hovertiptext-filesize::after {
+   content: "";
+   position: absolute;
+   top: 50%;
+   right: 100%;
+   margin-top: -5px;
+   border-width: 5px;
+   border-style: solid;
+   border-color: transparent #d3d3d3 transparent transparent;
+}
+
+.hovertip .hovertiptext-download {
+    width: 320px;
+    bottom: 120%;
+    left: 23%;
+    margin-left: -140px;
+    font-size: 0.95em;
+    padding: 5px;
+ }
+
+.hovertip .hovertiptext-download::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-bottom: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #d3d3d3 transparent transparent;
+    transform: rotate(-90deg);
+ }
+
+.hovertip:hover .hovertiptext {
+   visibility: visible;
+}
+
+
+/* clipboard icon related */
+
+.md-icon{
+    width: 20px;
+    height: 20px;
+}
+
+.copy-icon{
+    grid-area: copy-icon;
+    padding: 4px 5px;
+}
+
+.copy-icon-followed {
+    grid-area: copy-icon-followed;
+    padding-top: 5px;
+}
+
+.clipboard-row {
+    display: grid;
+    grid-gap: 3px;
+    grid-template-columns: auto 32px;
+    grid-template-areas: "copy-icon-followed copy-icon";
+}
+
+/* download icon related stuff */
+
+#download-button:disabled {
+    cursor: help;
+}
+span.li-dwn-box {
+    padding-right: 5px;
+    vertical-align: 2%;
+    cursor: pointer;
+    visibility: hidden;
+}
 

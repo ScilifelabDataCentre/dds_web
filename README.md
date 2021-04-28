@@ -1,6 +1,8 @@
 # Data Delivery System -- **WIP**
 A a single cloud-based system for all SciLifeLab facilities, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way. 
 
+**_This project is supported by EIT Digital, activity number 19390. This deliverable consists of design document and implementation report of application and validation of VEIL.AI technology in SciLifeLab context in Sweden._** 
+
 The Delivery Portal consists of two components:
 * The **web interface** where the research groups and facilities will be able to follow the data
 delivery progress. The web interface will also be an option for the delivery within small
@@ -42,15 +44,15 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 
 **4. After changing DB**
 To rebuild the database after a change, you need to: 
-1. Delete the `db-data` folder
-2. Run 
+
+1. Run 
 	```
 	docker rm $(docker ps -a -q) -f
 	docker volume prune
 	```
-3. Run 
+2. Run 
 	```
 	docker-compose build --no-cache
 	```
-4. Run `docker-compose up` as described above.
-5. If there are still issues, try deleting the pycache folders and repeat the steps. 
+3. Run `docker-compose up` as described above.
+4. If there are still issues, try deleting the pycache folders and repeat the steps. 
