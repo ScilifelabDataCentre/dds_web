@@ -42,6 +42,7 @@ class project_keygen(object):
     def _set_passphrase(self):
         """ Sets the private encryption passphrase using app secret key """
         self._passphrase = (current_app.config.get("SECRET_KEY")).encode("utf-8")
+        # self._passphrase = bytes.fromhex(current_app.config.get("SECRET_KEY"))
 
     def _set_private_and_public_keys(self):
         """ Genrates salted, encrypted private and public key """

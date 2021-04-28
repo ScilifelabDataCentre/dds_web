@@ -139,13 +139,14 @@ class GetPrivate(flask_restful.Resource):
             print(proj_priv, flush=True)
             app_secret = app.config["SECRET_KEY"]
             passphrase = app_secret.encode("utf-8")
+            # passphrase = bytes.fromhex(app_secret)
 
             enc_key = bytes.fromhex(proj_priv[0])
 
             nonce = bytes.fromhex(proj_priv[1])
             # print(nonce, flush=True)
             salt = bytes.fromhex(proj_priv[2])
-            # print(salt, flush=True)
+            print(salt, flush=True)
 
             kdf = scrypt.Scrypt(
                 salt=salt,
