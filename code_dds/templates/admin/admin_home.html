@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block body %}
+    <h3 class="underlined tcenter"> Admin page </h3>
+    <br>
+    <div id="response-container"></div>
+    <div>
+        <button type="button" class="btn btn-info btn-block"
+                data-toggle="collapse" data-target="#user-create-form-container"
+                aria-expanded="false" aria-controls="user-create-form-container">
+                Create user
+        </button>
+        
+        <div class="collapse show" id="user-create-form-container">
+          <div class="card card-body">
+            <div class="d-flex justify-content-center h-100">
+        <div class="panel">
+            <div class="panel-body">
+                <br>
+                <div class="container">
+                    <form method="POST" action="{{ url_for('admin.admin_page') }}" id="create-user-form">
+                        <input type="hidden" name="task" value="create">
+                        <div class="row justify-content-md-center">
+                            <div class="col-4 custom-control custom-switch">
+                                <span style="padding-left:35px;"></span>
+                                <input class="custom-control-input" id="adminSwitch" name="is_admin" type="checkbox">
+                                <label class="custom-control-label" for="adminSwitch">Admin</label>
+                            </div>
+                            <div class="col-3 custom-control custom-switch">
+                                <span style="padding-left:35px;"></span>
+                                <input class="custom-control-input" id="facilitySwitch" name="is_facility" type="checkbox"
+                                       data-toggle="collapse" data-target="#facilityExtraData">
+                                <label class="custom-control-label" for="facilitySwitch">Facility</label>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row justify-content-md-center">
+                            <div class="col-10 input-group form-group">
+                        	    <input type="text" class="form-control" name="username" placeholder="Username" required>
+                            </div>
+                        </div>
+                        <div class="row justify-content-md-center">
+        				    <div class="col-10 input-group form-group">
+        					    <input type="text" class="form-control" name="password" placeholder="Password" required>
+        				    </div>
+                        </div>
+                        <div id="facilityExtraData" class="collapse">
+                            <div class="row justify-content-md-center">
+                                <div class="col-10 input-group form-group">
+                                	<input type="text" class="form-control" name="facility_name" placeholder="Facility name">
+                                </div>
+                            </div>
+                            <div class="row justify-content-md-center">
+                				<div class="col-10 input-group form-group">
+                					<input type="text" class="form-control" name="facility_ref" placeholder="Facility internal ref">
+                				</div>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex justify-content-center">
+                        	<input type="submit" value="create" class="btn btn-md btn-info">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+          </div>
+        </div>
+        
+        <br>
+        
+        <button type="button" class="btn btn-primary btn-block"
+                data-toggle="collapse" data-target="#accounts-list"
+                aria-expanded="false" aria-controls="accounts-list">
+                List accounts
+        </button>
+        
+        <div class="collapse show" id="accounts-list">
+          <div class="card card-body">
+            <div class="row">
+                <div class="col px-lg-5" style="padding-left:">
+                	<p>Users:</p>
+                    <ol id="user-list">
+                        {% for user in users %}
+                            <li id="{{ user.username }}">{{ user.username }}</li>
+                        {% endfor %}
+                    </ol>
+                </div>
+				<div class="col px-lg-5">
+                	<p>Facilities:</p>
+                    <ol id="facility-list">
+                        {% for fac in facilities %}
+                            <li id="{{ fac.username }}">{{ fac.username }}</li>
+                        {% endfor %}
+                    </ol>
+				</div>
+            </div>
+          </div>
+        </div>
+        
+        <br>
+        
+        <button type="button" class="btn btn-danger btn-block"
+                data-toggle="collapse" data-target="#user-delete-form-container"
+                aria-expanded="false" aria-controls="user-delete-form-container">
+                Delete user
+        </button>
+        
+        <div class="collapse" id="user-delete-form-container">
+            <div class="card card-body">
+                <div class="d-flex justify-content-center h-100">
+                    <div class="panel">
+                        <div class="panel-body">
+                            <div class="container">
+                                <br>
+                                <form method="POST" action="{{ url_for('admin.admin_page') }}" id="user-delete-form">
+                                    <input type="hidden" name="task" value="delete">
+                                    <div class="row justify-content-md-center">
+				                        <div class="col-7 input-group form-group">
+					                        <input type="text" class="form-control" name="account_name" placeholder="Username of account" required>
+				                        </div>
+				                        <div class="col-3 input-group form-group">
+                                            <div class="form-group d-flex justify-content-center">
+                        	                    <input type="submit" value="delete" class="btn btn-md btn-danger">
+                                            </div>
+				                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock body %}

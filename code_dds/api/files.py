@@ -1,238 +1,524 @@
-"""File-related API endpoints.
-
-Handles listing and updating of the 'Files'-table.
-"""
+"""Files module."""
 
 ###############################################################################
 # IMPORTS ########################################################### IMPORTS #
 ###############################################################################
 
 # Standard library
+import os
 
 # Installed
-import sqlalchemy
-import flask
 import flask_restful
+import flask
+import sqlalchemy
 
 # Own modules
-from code_dds import db, timestamp
-from code_dds.db_code import models
-from code_dds.db_code import marshmallows as marmal
 from code_dds import timestamp
-from code_dds.api import login
-from code_dds.api import project  # import update_project_size
-
+from code_dds.db_code import models
+from code_dds import db, timestamp
+from code_dds.api.api_s3_connector import ApiS3Connector
+from code_dds.api.db_connector import DBConnector
+from code_dds.api.dds_decorators import token_required, project_access_required
 
 ###############################################################################
-# ENDPOINTS ####################################################### ENDPOINTS #
+# FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
+
+
+class NewFile(flask_restful.Resource):
+    """Inserts a file into the database"""
+
+    method_decorators = [project_access_required, token_required]  # 2, 1
+
+    def post(self, _, project):
+        """Add new file to DB"""
+
+        required_info = [
+            "name",
+            "name_in_bucket",
+            "subpath",
+            "size",
+            "size_processed",
+            "compressed",
+            "salt",
+            "public_key",
+            "checksum",
+        ]
+        args = flask.request.args
+        if not all(x in args for x in required_info):
+            missing = [x for x in required_info if x not in args]
+            return flask.make_response(
+                f"Information missing ({missing}), cannot add file to database.", 500
+            )
+
+        try:
+            # Check if file already in db
+            existing_file = (
+                models.File.query.filter_by(name=args["name"], project_id=project["id"])
+                .with_entities(models.File.id)
+                .first()
+            )
+
+            if existing_file or existing_file is not None:
+                return flask.make_response(
+                    f"File '{args['name']}' already exists in the database!", 500
+                )
+
+            # Add new file to db
+            new_file = models.File(
+                name=args["name"],
+                name_in_bucket=args["name_in_bucket"],
+                subpath=args["subpath"],
+                size=args["size"],
+                size_encrypted=args["size_processed"],
+                project_id=project["id"],
+                compressed=bool(args["compressed"] == "True"),
+                salt=args["salt"],
+                public_key=args["public_key"],
+                date_uploaded=timestamp(),
+                checksum=args["checksum"],
+            )
+            db.session.add(new_file)
+
+            # Increase project size
+            # TODO (ina): put in class
+            current_project = models.Project.query.filter_by(id=project["id"]).first()
+            if not current_project or current_project is None:
+                return flask.make_response(f"Could not find project {project['id']}!")
+
+            current_project.size += int(args["size"])
+            current_project.date_updated = timestamp()
+
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            return flask.make_response(
+                f"Failed to add new file '{args['name']}' to database: {err}", 500
+            )
+
+        return flask.jsonify({"message": f"File '{args['name']}' added to db."})
+
+    def put(self, _, project):
+
+        args = flask.request.args
+        if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
+            return flask.make_response(
+                "Information missing, " "cannot add file to database.", 500
+            )
+
+        try:
+            # Check if file already in db
+            existing_file = models.File.query.filter_by(
+                name=args["name"], project_id=project["id"]
+            ).first()
+
+            # Error if not found
+            if not existing_file or existing_file is None:
+                return flask.make_response(
+                    f"Cannot update non-existent file '{args['name']}' in the database!",
+                    500,
+                )
+
+            old_size = existing_file.size
+
+            print(f"\n checksum: {args['checksum']}", flush=True)
+
+            # Update file info
+            existing_file.subpath = args["subpath"]
+            existing_file.size = args["size"]
+            existing_file.size_encrypted = args["size_processed"]
+            existing_file.compressed = bool(args["compressed"] == "True")
+            existing_file.salt = args["salt"]
+            existing_file.public_key = args["public_key"]
+            existing_file.date_uploaded = timestamp()
+            existing_file.checksum = args["checksum"]
+
+            # Increase project size
+            # TODO (ina): put in class
+            current_project = models.Project.query.filter_by(id=project["id"]).first()
+            if not current_project or current_project is None:
+                return flask.make_response(f"Could not find project {project['id']}!")
+            current_project.size += old_size - int(args["size"])
+            current_project.date_updated = timestamp()
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            return flask.make_response(f"Failed updating file information: {err}", 500)
+
+        return flask.jsonify({"message": f"File '{args['name']}' updated in db."})
+
+
+class MatchFiles(flask_restful.Resource):
+    """Checks for matching files in database"""
+
+    method_decorators = [project_access_required, token_required]  # 2, 1
+
+    def get(self, _, project):
+        """Matches specified files to files in db."""
+
+        try:
+            matching_files = (
+                models.File.query.filter(models.File.name.in_(flask.request.json))
+                .filter_by(project_id=project["id"])
+                .all()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(
+                f"Failed to get matching files in db: {err}", 500
+            )
+
+        # The files checked are not in the db
+        if not matching_files or matching_files is None:
+            return flask.jsonify({"files": None})
+
+        return flask.jsonify(
+            {"files": {x.name: x.name_in_bucket for x in matching_files}}
+        )
+
 
 class ListFiles(flask_restful.Resource):
-    """Lists all files in db."""
+    """Lists files within a project"""
 
-    def get(self):
-        """"Gets files from db and returns them in request response."""
+    method_decorators = [project_access_required, token_required]
 
-        all_files = models.File.query.all()
-        return marmal.files_schema.dump(all_files)
+    def get(self, _, project):
+        """Get a list of files within the specified folder."""
+
+        args = flask.request.args
+        print(args, flush=True)
+        # Check if to return file size
+        show_size = False
+        if "show_size" in args and args["show_size"] == "True":
+            show_size = True
+
+        # Check if to get from root or folder
+        subpath = "."
+        if "subpath" in args:
+            subpath = args["subpath"].rstrip(os.sep)
+
+        files_folders = list()
+
+        # Check project not empty
+        with DBConnector() as dbconn:
+            # Get number of files in project and return if empty or error
+            num_files, error = dbconn.project_size()
+            if num_files == 0:
+                if error != "":
+                    return flask.make_response(error, 500)
+
+                return flask.jsonify(
+                    {
+                        "num_items": num_files,
+                        "message": f"The project {project['id']} is empty.",
+                    }
+                )
+
+            # Get files and folders
+            distinct_files, distinct_folders, error = dbconn.items_in_subpath(
+                folder=subpath
+            )
+
+            if error != "":
+                return flask.make_response(error, 500)
+
+            # Collect file and folder info to return to CLI
+            if distinct_files:
+                for x in distinct_files:
+                    info = {
+                        "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
+                        "folder": False,
+                    }
+                    if show_size:
+                        info.update({"size": self.fix_size_format(num_bytes=x[1])})
+                    files_folders.append(info)
+            if distinct_folders:
+                for x in distinct_folders:
+                    info = {
+                        "name": x if subpath == "." else x.split(os.sep)[-1],
+                        "folder": True,
+                    }
+
+                    if show_size:
+                        folder_size, error = dbconn.folder_size(folder_name=x)
+                        if folder_size is None:
+                            return flask.make_response(error, 500)
+
+                        info.update(
+                            {"size": self.fix_size_format(num_bytes=folder_size)}
+                        )
+                    files_folders.append(info)
+
+        return flask.jsonify({"files_folders": files_folders})
+
+    @staticmethod
+    def fix_size_format(num_bytes):
+        """Change size to kb, mb or gb"""
+
+        BYTES = 1
+        KB = 1e3
+        MB = 1e6
+        GB = 1e9
+
+        num_bytes = int(num_bytes)
+        chosen_format = [None, ""]
+        if num_bytes > GB:
+            chosen_format = [GB, "GB"]
+        elif num_bytes > MB:
+            chosen_format = [MB, "MB"]
+        elif num_bytes > KB:
+            chosen_format = [KB, "KB"]
+        else:
+            chosen_format = [BYTES, "bytes"]
+
+        altered = int(round(num_bytes / chosen_format[0]))
+        return str(altered), chosen_format[-1]
 
 
-# class FileSalt(flask_restful.Resource):
-#     """Gets the salt used to derive decryption key."""
+class RemoveFile(flask_restful.Resource):
+    """Removes files from the database and s3 with boto3."""
 
-#     def get(self, file_id):
-#         """Gets salt from db and returns response in json."""
+    method_decorators = [project_access_required, token_required]
 
-#         file_salt = models.File.query.filter_by(id=file_id)
+    def delete(self, _, project):
+        """Deletes the files"""
 
-#         if file_salt is None:
-#             return flask.jsonify(found=False, salt="")
+        with DBConnector() as dbconn:
+            not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
+                files=flask.request.json
+            )
 
-#         return flask.jsonify(found=True, salt=file_salt.salt)
+            # S3 connection error
+            if not any([not_removed_dict, not_exist_list]) and error != "":
+                return flask.make_response(error, 500)
+
+        # Return deleted and not deleted files
+        return flask.jsonify(
+            {"not_removed": not_removed_dict, "not_exists": not_exist_list}
+        )
 
 
-class DeliveryDate(flask_restful.Resource):
-    """Updates the delivery dates."""
+class RemoveDir(flask_restful.Resource):
+    """Removes one or more full directories from the database and s3."""
 
-    def post(self):
-        """Update latest download date in file database.
+    method_decorators = [project_access_required, token_required]
 
-        Returns:
-            json:   If updated
-        """
+    def delete(self, current_user, project):
+        """Deletes the folders."""
 
-        # Validate token and cancel delivery if not valid
-        token = flask.request.args["token"]
-        proj = flask.request.args["project"]
-        ok_ = login.validate_token(token, proj)
-        if not ok_:
-            return flask.jsonify(access_granted=False,
-                                 updated=False,
-                                 message="Token expired. Access denied.")
+        not_removed_dict, not_exist_list = ({}, [])
 
-        # Get file id
-        file_id = flask.request.args["file_id"]
+        with DBConnector() as dbconn:
+            with ApiS3Connector() as s3conn:
+                # Error if not enough info
+                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+                    return (
+                        not_removed_dict,
+                        not_exist_list,
+                        "No s3 info returned! " + s3conn.message,
+                    )
+
+                for x in flask.request.json:
+                    # Get all files in the folder
+                    in_db, folder_deleted, error = dbconn.delete_folder(folder=x)
+
+                    if not in_db:
+                        db.session.rollback()
+                        not_exist_list.append(x)
+                        continue
+
+                    # Error with db --> folder error
+                    if not folder_deleted:
+                        db.session.rollback()
+                        not_removed_dict[x] = error
+                        continue
+
+                    # Delete from s3
+                    folder_deleted, error = s3conn.remove_folder(folder=x)
+
+                    if not folder_deleted:
+                        db.session.rollback()
+                        not_removed_dict[x] = error
+                        continue
+
+                    # Commit to db if no error so far
+                    try:
+                        db.session.commit()
+                    except sqlalchemy.exc.SQLAlchemyError as err:
+                        db.session.rollback()
+                        not_removed_dict[x] = str(err)
+                        continue
+
+        return flask.jsonify(
+            {"not_removed": not_removed_dict, "not_exists": not_exist_list}
+        )
+
+
+class FileInfo(flask_restful.Resource):
+    """Get file info on files to download."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, current_user, project):
+        """Checks which files can be downloaded, and get their info."""
+
+        # Get files and folders requested by CLI
+        paths = flask.request.json
+
+        print(f"Paths: {paths}", flush=True)
+
+        files_single, files_in_folders = ({}, {})
+
+        # Get info on files and folders
+        try:
+            # Get all files in project
+            files_in_proj = models.File.query.filter_by(project_id=project["id"])
+
+            # All files matching the path -- single files
+            files = (
+                files_in_proj.filter(models.File.name.in_(paths))
+                .with_entities(
+                    models.File.name,
+                    models.File.name_in_bucket,
+                    models.File.subpath,
+                    models.File.size,
+                    models.File.size_encrypted,
+                    models.File.salt,
+                    models.File.public_key,
+                    models.File.checksum,
+                    models.File.compressed,
+                )
+                .all()
+            )
+
+            # All paths which start with the subpath are within a folder
+            for x in paths:
+                # Only try to match those not already saved in files
+                if x not in [f[0] for f in files]:
+                    list_of_files = (
+                        files_in_proj.filter(
+                            models.File.subpath.like(f"{x.rstrip(os.sep)}%")
+                        )
+                        .with_entities(
+                            models.File.name,
+                            models.File.name_in_bucket,
+                            models.File.subpath,
+                            models.File.size,
+                            models.File.size_encrypted,
+                            models.File.salt,
+                            models.File.public_key,
+                            models.File.checksum,
+                            models.File.compressed,
+                        )
+                        .all()
+                    )
+
+                    if list_of_files:
+                        files_in_folders[x] = [tuple(x) for x in list_of_files]
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+
+            # Make dict for files with info
+            files_single = {
+                x[0]: {
+                    "name_in_bucket": x[1],
+                    "subpath": x[2],
+                    "size": x[3],
+                    "size_encrypted": x[4],
+                    "key_salt": x[5],
+                    "public_key": x[6],
+                    "checksum": x[7],
+                    "compressed": x[8],
+                }
+                for x in files
+            }
+
+        try:
+            return flask.jsonify({"files": files_single, "folders": files_in_folders})
+        except Exception as err:
+            print(str(err), flush=True)
+
+
+class FileInfoAll(flask_restful.Resource):
+    """Get info on all project files."""
+
+    method_decorators = [project_access_required, token_required]
+
+    def get(self, current_user, project):
+        """Get file info."""
+
+        files = {}
+        try:
+            all_files = (
+                models.File.query.filter_by(project_id=project["id"])
+                .with_entities(
+                    models.File.name,
+                    models.File.name_in_bucket,
+                    models.File.subpath,
+                    models.File.size,
+                    models.File.size_encrypted,
+                    models.File.salt,
+                    models.File.public_key,
+                    models.File.checksum,
+                    models.File.compressed,
+                )
+                .all()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(str(err), 500)
+        else:
+            if all_files is None or not all_files:
+                return flask.make_response(
+                    f"The project {project['id']} is empty.", 401
+                )
+
+            files = {
+                x[0]: {
+                    "name_in_bucket": x[1],
+                    "subpath": x[2],
+                    "size": x[3],
+                    "size_encrypted": x[4],
+                    "key_salt": x[5],
+                    "public_key": x[6],
+                    "checksum": x[7],
+                    "compressed": x[8],
+                }
+                for x in all_files
+            }
+
+        return flask.jsonify({"files": files})
+
+
+class UpdateFile(flask_restful.Resource):
+    """Update file info after download"""
+
+    method_decorators = [project_access_required, token_required]
+
+    def put(self, current_user, project):
+        """Update info in db."""
+
+        # Get file name from request from CLI
+        file_name = flask.request.args
+        if "name" not in file_name:
+            return flask.make_response(
+                "No file name specified. Cannot update file.", 500
+            )
 
         # Update file info
         try:
-            file = models.File.query.filter_by(id=int(file_id)).first()
-        except sqlalchemy.exc.SQLAlchemyError as e:
-            print(str(e), flush=True)
-            return flask.jsonify(access_granted=True, updated=False,
-                                 message=str(e))
+            file = models.File.query.filter_by(
+                project_id=project["id"], name=file_name["name"]
+            ).first()
 
-        if file is None:
-            emess = "The file does not exist in the database, cannot update."
-            print(emess, flush=True)
-            return flask.jsonify(access_granted=True, updated=False,
-                                 message=emess)
+            if not file or file is None:
+                return flask.make_response(f"No such file: {file_name['name']}", 500)
 
-        # Update download time
-        try:
             file.latest_download = timestamp()
-        except sqlalchemy.exc.SQLAlchemyError as e:
-            print(str(e), flush=True)
-            return flask.jsonify(access_granted=True, updated=False,
-                                 message=str(e))
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            return flask.make_response(str(err), 500)
         else:
             db.session.commit()
 
-        return flask.jsonify(access_granted=True, updated=True, message="")
-
-
-class FileUpdate(flask_restful.Resource):
-    """Creates or updates the file information."""
-
-    def post(self):
-        """Add to or update file in database.
-
-        Returns:
-            json: access (bool), updated (bool), message (str)
-        """
-
-        # Get all params from request
-        file_info = flask.request.args
-
-        # Validate token and cancel delivery if not valid
-        ok_ = login.validate_token(file_info["token"], file_info["project"])
-        if not ok_:
-            return flask.jsonify(access_granted=False,
-                                 updated=False,
-                                 message="Token expired. Access denied.")
-
-        # Add file info to db
-        try:
-            # Get existing file
-            existing_file = models.File.query.filter_by(
-                name=file_info["file"], project_id=file_info["project"]
-            ).first()
-        except sqlalchemy.exc.SQLAlchemyError as e:
-            print("\nError occurred! {e}\n", flush=True)
-            return flask.jsonify(access_granted=True, updated=False,
-                                 message=str(e))
-        else:
-            size = int(file_info["size"])            # File size
-            size_enc = int(file_info["size_enc"])    # Encrypted file size
-
-            # Add new file if it doesn't already exist in db
-            if existing_file is None:
-                try:
-                    new_file = models.File(
-                        name=file_info["file"],
-                        directory_path=file_info["directory_path"],
-                        size=size,
-                        size_enc=size_enc,
-                        extension=file_info["extension"],
-                        compressed=bool(file_info["ds_compressed"] == "True"),
-                        public_key=file_info["key"],
-                        salt=file_info["salt"],
-                        project_id=file_info["project"],
-                        date_uploaded=timestamp()
-                    )
-                except sqlalchemy.exc.SQLAlchemyError as e:
-                    return flask.jsonify(access_granted=True, updated=False,
-                                         message=str(e))
-                else:
-                    # Add new info to db
-                    db.session.add(new_file)
-
-                    # Update project size
-                    proj_updated, error = project.update_project_size(
-                        proj_id=file_info["project"],
-                        altered_size=size,
-                        altered_enc_size=size_enc,
-                        method="insert"
-                    )
-
-                    # If project size updated, commit to session to save to db
-                    if proj_updated:
-                        try:
-                            db.session.commit()
-                        except sqlalchemy.exc.SQLAlchemyError as e:
-                            return flask.jsonify(access_granted=True,
-                                                 updated=False,
-                                                 message=str(e))
-                        else:
-                            return flask.jsonify(access_granted=True,
-                                                 updated=True,
-                                                 message="")
-                    else:
-                        return flask.jsonify(access_granted=True,
-                                             updated=False,
-                                             message=error)
-            else:
-                if file_info["overwrite"]:
-                    old_size = existing_file.size   # Curr file size in db
-                    old_enc_size = existing_file.size_enc   # Curr enc size db
-
-                    # Update file if it exists in db
-                    try:
-                        existing_file.name = file_info["file"]
-                        existing_file.directory_path = file_info["directory_path"]
-                        existing_file.size = size
-                        existing_file.size_enc = size_enc
-                        existing_file.extension = file_info["extension"]
-                        existing_file.compressed = bool(file_info["ds_compressed"])
-                        existing_file.date_uploaded = timestamp()
-                        existing_file.public_key = file_info["key"]
-                        existing_file.salt = file_info["salt"]
-                        existing_file.project_id = file_info["project"]
-                    except sqlalchemy.exc.SQLAlchemyError as e:
-                        return flask.jsonify(access_granted=True,
-                                             updated=False,
-                                             message=str(e))
-                    else:
-                        # Update project size
-                        proj_updated, error = project.update_project_size(
-                            proj_id=file_info["project"],
-                            altered_size=size,
-                            altered_enc_size=size_enc,
-                            method="update",
-                            old_size=old_size,
-                            old_enc_size=old_enc_size
-                        )
-
-                        # If project size updated, commit to session to save
-                        if proj_updated:
-                            try:
-                                db.session.commit()
-                            except sqlalchemy.exc.SQLAlchemyError as e:
-                                return flask.jsonify(access_granted=True,
-                                                     updated=False,
-                                                     message=str(e))
-                            else:
-                                return flask.jsonify(access_granted=True,
-                                                     updated=True, message="")
-                        else:
-                            return flask.jsonify(access_granted=True,
-                                                 updated=False,
-                                                 message=error)
-                else:
-                    return flask.jsonify(
-                        access_granted=True, updated=False,
-                        message=("Trying to overwrite delivered "
-                                 "file but 'overwrite' option not "
-                                 "specified.")
-                    )
-
-        return flask.jsonify(access_granted=True, updated=True, message="")
+        return flask.jsonify({"message": "File info updated."})

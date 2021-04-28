@@ -23,3 +23,8 @@ demo
 passphrase*
 *DataDelivery*
 docker-compose*.yml
+old_version_files*
+temp_*
+my_*
+*web_updown*
+dds_conf.yml

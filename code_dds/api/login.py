@@ -9,8 +9,7 @@ Used by endpoints for access checks.
 
 # Standard library
 import os
-
-# Installed
+import argon2
 import datetime
 from cryptography.hazmat.primitives.kdf import scrypt
 import cryptography.hazmat.backends as backends
@@ -60,18 +59,18 @@ def ds_access(username, password, role) -> (bool, int, str):
         tuple:  If access to DS granted, facility/user ID and error message
 
     """
-    
+
     if role == "facility":
         table = models.Facility
     elif role == "user":
         table = models.User
     else:
-        pass    # custom error here?
+        pass    # TODO (ina/senthil) : cancel/custom error here?
 
     # Get user from database
     try:
         user = table.query.filter_by(username=username).\
-            with_entities(table.id, table.password, table.settings).first()
+            with_entities(table.id, table.password).first()
     except sqlalchemy.exc.SQLAlchemyError as e:
         print(str(e), flush=True)
 
@@ -79,13 +78,8 @@ def ds_access(username, password, role) -> (bool, int, str):
     if user is None:
         return False, 0, "The user does not exist"
 
-    # Get password info in response and
-    # calculate secure password hash with Scrypt
-    sec_pw = secure_password_hash(password_settings=user[2],
-                                  password_entered=password)
-
     # Return error if the password doesn't match
-    if sec_pw != user[1]:
+    if not verify_password(user[1], password):
         return False, 0, "Incorrect password!"
 
     return True, user[0], ""
@@ -113,7 +107,8 @@ def project_access(uid, project, owner, role="facility") -> (bool, str):
         # Get project info if owner matches
         # TODO (ina): possibly another check here
         project_info = models.Project.query.filter_by(id=project, owner=owner).\
-            with_entities(models.Project.delivery_option, models.Project.public_key).first()
+            with_entities(models.Project.delivery_option,
+                          models.Project.public_key).first()
 
     # Return error if project not found
     if project_info is None:
@@ -129,35 +124,47 @@ def project_access(uid, project, owner, role="facility") -> (bool, str):
     return True, project_info[1], ""
 
 
-def secure_password_hash(password_settings: str,
-                         password_entered: str) -> (str):
-    """Generates secure password hash.
+def verify_password(db_pw, input_pw):
+    password_hasher = argon2.PasswordHasher()
+    try:
+        password_hasher.verify(db_pw, input_pw)
+    except (argon2.exceptions.VerifyMismatchError,
+            argon2.exceptions.VerificationError,
+            argon2.exceptions.InvalidHash) as err:
+        print(err, flush=True)
+        return False
+    return True
 
-    Args:
-            password_settings:  String containing the salt, length of hash,
-                                n-exponential, r and p variables.
-                                Taken from database. Separated by '$'.
-            password_entered:   The user-specified password.
 
-    Returns:
-            str:    The derived hash from the user-specified password.
-
-    """
-
-    # Split scrypt settings into parts
-    settings = password_settings.split("$")
-    for i in [1, 2, 3, 4]:
-        settings[i] = int(settings[i])  # Set settings as int, not str
-
-    # Create cryptographically secure password hash
-    kdf = scrypt.Scrypt(salt=bytes.fromhex(settings[0]),
-                        length=settings[1],
-                        n=2**settings[2],
-                        r=settings[3],
-                        p=settings[4],
-                        backend=backends.default_backend())
-
-    return (kdf.derive(password_entered.encode("utf-8"))).hex()
+# def secure_password_hash(password_settings: str,
+#                          password_entered: str) -> (str):
+#     """Generates secure password hash.
+#
+#     Args:
+#             password_settings:  String containing the salt, length of hash,
+#                                 n-exponential, r and p variables.
+#                                 Taken from database. Separated by '$'.
+#             password_entered:   The user-specified password.
+#
+#     Returns:
+#             str:    The derived hash from the user-specified password.
+#
+#     """
+#
+#     # Split scrypt settings into parts
+#     settings = password_settings.split("$")
+#     for i in [1, 2, 3, 4]:
+#         settings[i] = int(settings[i])  # Set settings as int, not str
+#
+#     # Create cryptographically secure password hash
+#     kdf = scrypt.Scrypt(salt=bytes.fromhex(settings[0]),
+#                         length=settings[1],
+#                         n=2**settings[2],
+#                         r=settings[3],
+#                         p=settings[4],
+#                         backend=backends.default_backend())
+#
+#     return (kdf.derive(password_entered.encode("utf-8"))).hex()
 
 
 def gen_access_token(project, length: int = 16) -> (str):

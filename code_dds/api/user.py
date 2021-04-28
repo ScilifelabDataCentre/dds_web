@@ -1,108 +1,128 @@
-"""User related API endpoints."""
+"""Docstring"""
 
 ###############################################################################
 # IMPORTS ########################################################### IMPORTS #
 ###############################################################################
 
 # Standard library
+import datetime
+import binascii
 
 # Installed
 import flask
 import flask_restful
+import jwt
+import sqlalchemy
+import functools
 
 # Own modules
-from code_dds.db_code import marshmallows as marmal
+from code_dds import app
 from code_dds.db_code import models
-from code_dds.api import login
+from code_dds.crypt.auth import gen_argon2hash, verify_password_argon2id
+
+###############################################################################
+# FUNCTIONS ####################################################### FUNCTIONS #
+###############################################################################
+
+
+def is_facility(username):
+    """Checks if the user is a facility or not."""
+
+    is_fac, error = (False, "")
+
+    # Check for user and which table to work in
+    try:
+        role = (
+            models.Role.query.filter_by(username=username)
+            .with_entities(models.Role.facility)
+            .first()
+        )
+    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+        error = f"Database connection failed - {sqlerr}" + str(sqlerr)
+    else:
+        # Deny access if there is no such user
+        if not role or role is None:
+            is_fac, error = (None, "The user doesn't exist.")
+        else:
+            is_fac = role[0]
+
+    return is_fac, error
+
+
+def jwt_token(user_id, is_fac, project_id, project_access=False):
+    """Generates and encodes a JWT token."""
+
+    token, error = (None, "")
+    try:
+        token = jwt.encode(
+            {
+                "public_id": user_id,
+                "facility": is_fac,
+                "project": {"id": project_id, "verified": project_access},
+                "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
+            },
+            app.config["SECRET_KEY"],
+        )
+    except Exception as err:
+        token, error = (None, str(err))
+
+    return token, error
 
 
 ###############################################################################
 # ENDPOINTS ####################################################### ENDPOINTS #
 ###############################################################################
 
-class LoginUser(flask_restful.Resource):
-    """Handles the access checks on the users."""
 
-    # TODO (senthil): use @marshal_with instead of jsonify etc. Worked first
-    # but stopped working for some reason. Gives response 500.
-    def post(self):
-        """Checks the users access to the delivery system.
-
-        Args:
-            username:   Username
-            password:   Password
-            project:    Project ID
-            owner:      Owner of project with project ID
-
-        Returns:
-            json:   access (bool), s3_id (str), public_key (str),
-                    error (str), project_id (int), token (str)
-        """
-
-        # Get args from request
-        user_info = flask.request.args
-
-        # Look for user in database
-        ok_, uid, error = login.ds_access(username=user_info["username"],
-                                          password=user_info["password"],
-                                          role=user_info["role"])
-        if not ok_:  # Access denied
-            return flask.jsonify(access=False,
-                                 user_id=uid,
-                                 s3_id="",
-                                 public_key=None,
-                                 error=error,
-                                 project_id=user_info["project"],
-                                 token="")
-
-
-        # Look for project in database
-        ok_, public_key, error = login.project_access(
-            uid=uid,
-            project=user_info["project"],
-            owner=(user_info["owner"] if "owner" in user_info
-                   and user_info["role"] == "facility"
-                   else user_info["username"]),
-            role=user_info["role"]
-        )
-        if not ok_:  # Access denied
-            return flask.jsonify(access=False,
-                                 user_id=uid,
-                                 s3_id="",
-                                 public_key=None,
-                                 error=error,
-                                 project_id=user_info["project"],
-                                 token="")
-
-        # Get S3 project ID for project
-        # ok_, s3_id, error = login.cloud_access(project=user_info["project"])
-        # if not ok_:  # Access denied
-        #     return flask.jsonify(access=False,
-        #                          user_id=uid,
-        #                          s3_id=s3_id,
-        #                          public_key=None,
-        #                          error=error,
-        #                          project_id=user_info["project"],
-        #                          token="")
-
-        # Generate delivery token
-        token = login.gen_access_token(project=user_info["project"])
-
-        # Access approved
-        return flask.jsonify(access=True,
-                             user_id=uid,
-                             s3_id=user_info["project"],
-                             public_key=public_key,
-                             error="",
-                             project_id=user_info["project"],
-                             token=token)
-
-
-class ListUsers(flask_restful.Resource):
-    """Lists all users in database."""
+class AuthenticateUser(flask_restful.Resource):
+    """Handles the authentication of the user."""
 
     def get(self):
-        """Gets all users from db and return them in response."""
+        """Checks the username, password and generates the token."""
 
-        all_users = models.User.query.all()
-        return marmal.users_schema.dump(all_users)
+        # Get username and password from CLI request
+        auth = flask.request.authorization
+        if not auth or not auth.username or not auth.password:
+            return flask.make_response("Could not verify", 401)
+
+        # Project not required, will be checked for future operations
+        args = flask.request.args
+        if "project" not in args:
+            project = None
+        else:
+            project = args["project"]
+
+        # Check if user has facility role
+        user_is_fac, error = is_facility(username=auth.username)
+        if user_is_fac is None:
+            return flask.make_response(error, 500)
+
+        # Get user from DB matching the username
+        try:
+            table = models.Facility if user_is_fac else models.User
+            user = table.query.filter_by(username=auth.username).first()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            return flask.make_response(f"Database connection failed: {sqlerr}", 500)
+
+        # Deny access if there is no such user
+        if not user or user is None:
+            return flask.make_response(
+                "User role registered as "
+                f"'{'facility' if user_is_fac else 'user'}' but user account "
+                f"not found! User denied access: {auth.username}",
+                500,
+            )
+
+        # Verify user password and generate token
+        if verify_password_argon2id(user.password, auth.password):
+            token, error = jwt_token(
+                user_id=user.public_id, is_fac=user_is_fac, project_id=project
+            )
+            if token is None:
+                return flask.make_response(error, 500)
+
+            # Success - return token
+            return flask.jsonify({"token": token.decode("UTF-8")})
+
+        # Failed - incorrect password
+        return flask.make_response("Incorrect password!", 401)
