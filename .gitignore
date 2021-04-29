@@ -10,6 +10,7 @@ cli_venv
 *.egg*
 .vscode
 .Rproj.user
+passphrase*
 sensitive
 filenumber*
 testfile*
