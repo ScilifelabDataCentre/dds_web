@@ -195,7 +195,11 @@ class UserProjects(flask_restful.Resource):
                     columns[1]: x.title,
                     columns[2]: x.pi,
                     columns[3]: x.status,
-                    columns[4]: timestamp(datetime_string=x.date_updated),
+                    columns[4]: timestamp(
+                        datetime_string=x.date_updated
+                        if x.date_updated
+                        else x.date_created
+                    ),
                 }
             )
         return flask.jsonify({"all_projects": all_projects, "columns": columns})
