@@ -28,4 +28,3 @@ WORKDIR /code/code_dds
 
 # Run app -- needs to be in WORKDIR
 CMD ["gunicorn", "app:app"]
-#CMD ["python3", "app.py"]
