@@ -5,12 +5,15 @@
 # Standard library
 from datetime import datetime, timedelta
 import pytz
+import logging
+import os
 
 # Installed
 from flask import Flask, g, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_marshmallow import Marshmallow
+from logging.handlers import RotatingFileHandler
 
 # Own modules
 
@@ -21,7 +24,6 @@ app = Flask(__name__, instance_relative_config=False)
 db = SQLAlchemy()
 ma = Marshmallow(app)
 C_TZ = pytz.timezone('Europe/Stockholm')
-
 
 # FUNCTIONS ####################################################### FUNCTIONS #
 
@@ -40,7 +42,14 @@ def create_app():
     """Construct the core application."""
 
     app.config.from_envvar('DDS_APP_CONFIG')
-
+    
+    # Set logger, to be used in the app
+    log_file = os.path.join(app.config.get('LOGS_DIR'), 'dds.log')
+    log_formatter = logging.Formatter('%(asctime)s %(module)s [%(levelname)s] %(message)s')
+    handler = RotatingFileHandler(log_file, maxBytes=100000000, backupCount=1)
+    handler.setFormatter(log_formatter)
+    app.logger.addHandler(handler)
+    
     db.init_app(app)    # Initialize database
     # ma.init_app(app)
 
