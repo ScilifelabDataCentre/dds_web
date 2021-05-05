@@ -11,10 +11,10 @@ from flask import current_app
 
 
 class project_keygen(object):
-    """ Class with methods to generate keys """
+    """Class with methods to generate keys"""
 
     def __init__(self, project_id):
-        """ Needs a project id"""
+        """Needs a project id"""
         self.project_id = project_id
         self._set_project_id_bytes()
         self._set_salt_and_nonce()
@@ -31,21 +31,21 @@ class project_keygen(object):
         )
 
     def _set_project_id_bytes(self):
-        """ Converts and set the project id in bytes """
+        """Converts and set the project id in bytes"""
         self._project_id_bytes = bytes(self.project_id, "utf-8")
 
     def _set_salt_and_nonce(self):
-        """ Set salt and nonce i.e. random generated bit for encryption """
+        """Set salt and nonce i.e. random generated bit for encryption"""
         self._salt = os.urandom(16)
         self._nonce = os.urandom(12)
 
     def _set_passphrase(self):
-        """ Sets the private encryption passphrase using app secret key """
+        """Sets the private encryption passphrase using app secret key"""
         self._passphrase = (current_app.config.get("SECRET_KEY")).encode("utf-8")
         # self._passphrase = bytes.fromhex(current_app.config.get("SECRET_KEY"))
 
     def _set_private_and_public_keys(self):
-        """ Genrates salted, encrypted private and public key """
+        """Genrates salted, encrypted private and public key"""
         project_key_gen = x25519.X25519PrivateKey.generate()
         # generate private key bytes
         private_key_bytes = project_key_gen.private_bytes(
@@ -64,13 +64,11 @@ class project_keygen(object):
         )
         derived_passphrase_key = scrpyt_salt.derive(self._passphrase)
         # Encrypt the formatted private key with salted passphrase and nonce
-        self._encrypted_private_key = (
-            bindings.crypto_aead_chacha20poly1305_ietf_encrypt(
-                message=private_key_bytes,
-                aad=None,
-                nonce=self._nonce,
-                key=derived_passphrase_key,
-            )
+        self._encrypted_private_key = bindings.crypto_aead_chacha20poly1305_ietf_encrypt(
+            message=private_key_bytes,
+            aad=None,
+            nonce=self._nonce,
+            key=derived_passphrase_key,
         )
         # Generate public key bytes
         self._public_key_bytes = project_key_gen.public_key().public_bytes(
