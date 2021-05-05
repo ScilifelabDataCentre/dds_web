@@ -80,9 +80,7 @@ class DBConnector:
 
         num_proj_files, error = (0, "")
         try:
-            num_proj_files = models.File.query.filter_by(
-                project_id=self.project["id"]
-            ).count()
+            num_proj_files = models.File.query.filter_by(project_id=self.project["id"]).count()
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
 
@@ -123,9 +121,7 @@ class DBConnector:
             else:
                 # Get distinct sub folders in specific folder with regex
                 distinct_folders = (
-                    files.filter(
-                        models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)+$")
-                    )
+                    files.filter(models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)+$"))
                     .with_entities(models.File.subpath)
                     .distinct()
                     .all()
@@ -136,8 +132,7 @@ class DBConnector:
 
                 # Get subfolders in level under specified folder
                 split_paths = set(
-                    f"{os.sep}".join(x[0].split(os.sep)[: len_folder + 1])
-                    for x in distinct_folders
+                    f"{os.sep}".join(x[0].split(os.sep)[: len_folder + 1]) for x in distinct_folders
                 )
                 distinct_folders = list(split_paths)
 
@@ -175,15 +170,11 @@ class DBConnector:
 
         deleted, error = (False, "")
         try:
-            num_deleted = models.File.query.filter_by(
-                project_id=self.project["id"]
-            ).delete()
+            num_deleted = models.File.query.filter_by(project_id=self.project["id"]).delete()
 
             # TODO (ina): put in class
             # change project size
-            current_project = models.Project.query.filter_by(
-                id=self.project["id"]
-            ).first()
+            current_project = models.Project.query.filter_by(id=self.project["id"]).first()
             current_project.size = 0
             current_project.date_updated = timestamp()
             db.session.commit()
@@ -221,9 +212,7 @@ class DBConnector:
         if files and files is not None:
             exists = True
             try:
-                current_project = models.Project.query.filter_by(
-                    id=self.project["id"]
-                ).first()
+                current_project = models.Project.query.filter_by(id=self.project["id"]).first()
                 for x in files:
                     old_size = x.size
                     db.session.delete(x)
@@ -292,9 +281,7 @@ class DBConnector:
 
         # Get matching files in project
         try:
-            file = models.File.query.filter_by(
-                name=filename, project_id=self.project["id"]
-            ).first()
+            file = models.File.query.filter_by(name=filename, project_id=self.project["id"]).first()
 
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
@@ -305,9 +292,7 @@ class DBConnector:
             try:
                 # TODO (ina): put in own class
                 old_size = file.size
-                current_project = models.Project.query.filter_by(
-                    id=self.project["id"]
-                ).first()
+                current_project = models.Project.query.filter_by(id=self.project["id"]).first()
                 db.session.delete(file)
                 current_project.size -= old_size
                 current_project.date_updated = timestamp()
@@ -335,9 +320,7 @@ class DBConnector:
         # Get bucket info and delete files
         if files_in_folder or files_in_folder is not None:
             exists, deleted, errors = (True, {}, {})
-            current_project = models.Project.query.filter_by(
-                id=self.project["id"]
-            ).first()
+            current_project = models.Project.query.filter_by(id=self.project["id"]).first()
             for x in files_in_folder:
                 filename = x.name
                 nameinbucket = x.name_in_bucket

@@ -102,9 +102,7 @@ class NewFile(flask_restful.Resource):
 
         args = flask.request.args
         if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
-            return flask.make_response(
-                "Information missing, " "cannot add file to database.", 500
-            )
+            return flask.make_response("Information missing, " "cannot add file to database.", 500)
 
         try:
             # Check if file already in db
@@ -163,17 +161,13 @@ class MatchFiles(flask_restful.Resource):
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(
-                f"Failed to get matching files in db: {err}", 500
-            )
+            return flask.make_response(f"Failed to get matching files in db: {err}", 500)
 
         # The files checked are not in the db
         if not matching_files or matching_files is None:
             return flask.jsonify({"files": None})
 
-        return flask.jsonify(
-            {"files": {x.name: x.name_in_bucket for x in matching_files}}
-        )
+        return flask.jsonify({"files": {x.name: x.name_in_bucket for x in matching_files}})
 
 
 class ListFiles(flask_restful.Resource):
@@ -214,9 +208,7 @@ class ListFiles(flask_restful.Resource):
                 )
 
             # Get files and folders
-            distinct_files, distinct_folders, error = dbconn.items_in_subpath(
-                folder=subpath
-            )
+            distinct_files, distinct_folders, error = dbconn.items_in_subpath(folder=subpath)
 
             if error != "":
                 return flask.make_response(error, 500)
@@ -243,9 +235,7 @@ class ListFiles(flask_restful.Resource):
                         if folder_size is None:
                             return flask.make_response(error, 500)
 
-                        info.update(
-                            {"size": self.fix_size_format(num_bytes=folder_size)}
-                        )
+                        info.update({"size": self.fix_size_format(num_bytes=folder_size)})
                     files_folders.append(info)
 
         return flask.jsonify({"files_folders": files_folders})
@@ -292,9 +282,7 @@ class RemoveFile(flask_restful.Resource):
                 return flask.make_response(error, 500)
 
         # Return deleted and not deleted files
-        return flask.jsonify(
-            {"not_removed": not_removed_dict, "not_exists": not_exist_list}
-        )
+        return flask.jsonify({"not_removed": not_removed_dict, "not_exists": not_exist_list})
 
 
 class RemoveDir(flask_restful.Resource):
@@ -348,9 +336,7 @@ class RemoveDir(flask_restful.Resource):
                         not_removed_dict[x] = str(err)
                         continue
 
-        return flask.jsonify(
-            {"not_removed": not_removed_dict, "not_exists": not_exist_list}
-        )
+        return flask.jsonify({"not_removed": not_removed_dict, "not_exists": not_exist_list})
 
 
 class FileInfo(flask_restful.Resource):
@@ -395,9 +381,7 @@ class FileInfo(flask_restful.Resource):
                 # Only try to match those not already saved in files
                 if x not in [f[0] for f in files]:
                     list_of_files = (
-                        files_in_proj.filter(
-                            models.File.subpath.like(f"{x.rstrip(os.sep)}%")
-                        )
+                        files_in_proj.filter(models.File.subpath.like(f"{x.rstrip(os.sep)}%"))
                         .with_entities(
                             models.File.name,
                             models.File.name_in_bucket,
@@ -469,9 +453,7 @@ class FileInfoAll(flask_restful.Resource):
             return flask.make_response(str(err), 500)
         else:
             if all_files is None or not all_files:
-                return flask.make_response(
-                    f"The project {project['id']} is empty.", 401
-                )
+                return flask.make_response(f"The project {project['id']} is empty.", 401)
 
             files = {
                 x[0]: {
@@ -501,9 +483,7 @@ class UpdateFile(flask_restful.Resource):
         # Get file name from request from CLI
         file_name = flask.request.args
         if "name" not in file_name:
-            return flask.make_response(
-                "No file name specified. Cannot update file.", 500
-            )
+            return flask.make_response("No file name specified. Cannot update file.", 500)
 
         # Update file info
         try:

@@ -70,8 +70,7 @@ def project_access_required(f):
 
         if not project["verified"]:
             return flask.make_response(
-                f"Access to project {project['id']} not yet verified. "
-                "Checkout token settings.",
+                f"Access to project {project['id']} not yet verified. " "Checkout token settings.",
                 401,
             )
 
@@ -130,8 +129,7 @@ def bucket_must_exists(func):
         except botocore.client.ClientError as err:
             return (
                 False,
-                f"Project does not yet have a "
-                f"dedicated bucket in the S3 instance: {err}",
+                f"Project does not yet have a " f"dedicated bucket in the S3 instance: {err}",
             )
 
         return func(self, *args, **kwargs)

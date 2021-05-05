@@ -115,9 +115,7 @@ class AuthenticateUser(flask_restful.Resource):
 
         # Verify user password and generate token
         if verify_password_argon2id(user.password, auth.password):
-            token, error = jwt_token(
-                user_id=user.public_id, is_fac=user_is_fac, project_id=project
-            )
+            token, error = jwt_token(user_id=user.public_id, is_fac=user_is_fac, project_id=project)
             if token is None:
                 return flask.make_response(error, 500)
 

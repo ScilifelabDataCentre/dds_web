@@ -62,8 +62,7 @@ class ProjectAccess(flask_restful.Resource):
             not user_is_fac and args["method"] not in ["get", "ls", "rm"]
         ):
             return flask.make_response(
-                f"Attempted to {args['method']} in project {project['id']}. "
-                "Permission denied.",
+                f"Attempted to {args['method']} in project {project['id']}. " "Permission denied.",
                 401,
             )
 
@@ -161,9 +160,7 @@ class GetPrivate(flask_restful.Resource):
             key_enc_key = kdf.derive(passphrase)
             # print(key_enc_key, flush=True)
             try:
-                decrypted_key = decrypt(
-                    ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key
-                )
+                decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
             except Exception as err:
                 print(str(err), flush=True)
                 return flask.make_response(str(err), 500)
@@ -196,9 +193,7 @@ class UserProjects(flask_restful.Resource):
                     columns[2]: x.pi,
                     columns[3]: x.status,
                     columns[4]: timestamp(
-                        datetime_string=x.date_updated
-                        if x.date_updated
-                        else x.date_created
+                        datetime_string=x.date_updated if x.date_updated else x.date_created
                     ),
                 }
             )
@@ -225,9 +220,7 @@ class RemoveContents(flask_restful.Resource):
             # Delete from bucket
             with ApiS3Connector() as s3conn:
                 if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                    return flask.make_response(
-                        "No s3 info returned! " + s3conn.message, 500
-                    )
+                    return flask.make_response("No s3 info returned! " + s3conn.message, 500)
 
                 removed, error = s3conn.remove_all()
 
