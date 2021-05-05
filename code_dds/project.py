@@ -36,7 +36,7 @@ project_blueprint = Blueprint("project", __name__)
 @project_blueprint.route("/add_project", methods=["GET", "POST"])
 @login_required
 def add_project():
-    """ Add new project to the database """
+    """Add new project to the database"""
     if request.method == "GET":
         return render_template("project/add_project.html")
     if request.method == "POST":
@@ -75,13 +75,9 @@ def project_info(project_id=None):
     if not project_row:
         return abort(404)
     project_info = project_row.__dict__.copy()
-    project_info["date_created"] = timestamp(
-        datetime_string=project_info["date_created"]
-    )
+    project_info["date_created"] = timestamp(datetime_string=project_info["date_created"])
     if project_info.get("date_updated"):
-        project_info["date_updated"] = timestamp(
-            datetime_string=project_info["date_updated"]
-        )
+        project_info["date_updated"] = timestamp(datetime_string=project_info["date_updated"])
     if project_info.get("size"):
         project_info["unformated_size"] = project_info["size"]
         project_info["size"] = format_byte_size(project_info["size"])
@@ -136,10 +132,7 @@ def data_upload():
             with open("data_to_upload.txt", "w") as dfl:
                 dfl.write(
                     "\n".join(
-                        [
-                            os.path.join(upload_file_dest, i)
-                            for i in os.listdir(upload_file_dest)
-                        ]
+                        [os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)]
                     )
                 )
 
@@ -150,9 +143,7 @@ def data_upload():
                     "-c",
                     os.path.join(
                         current_app.config.get("LOCAL_TEMP_CACHE"),
-                        "{}_{}_cache.json".format(
-                            session.get("current_user"), session.get("usid")
-                        ),
+                        "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
                     ),
                     "-p",
                     project_id,
@@ -170,9 +161,7 @@ def data_upload():
             try:
                 shutil.rmtree(upload_space)
             except:
-                print(
-                    "Couldn't remove upload space '{}'".format(upload_space), flush=True
-                )
+                print("Couldn't remove upload space '{}'".format(upload_space), flush=True)
         else:
             status, message = (515, "Couldn't send data to S3")
 
@@ -230,25 +219,21 @@ def data_download():
         download_file_path = compile_download_file_path(download_space, project_id)
         return send_file(download_file_path, as_attachment=True)
     else:
-        abort(
-            500, "Download failed, try again and if still see this message contact DC"
-        )
+        abort(500, "Download failed, try again and if still see this message contact DC")
 
 
 ########## HELPER CLASSES AND FUNCTIONS ##########
 
 
 class create_project_instance(object):
-    """ Creates a project instance to add in DB"""
+    """Creates a project instance to add in DB"""
 
     def __init__(self, project_info):
         self.project_info = {
             "id": self.get_new_id(),
             "title": project_info["title"],
             "description": project_info["description"],
-            "owner": db_utils.get_user_column_by_username(
-                project_info["owner"], "public_id"
-            ),
+            "owner": db_utils.get_user_column_by_username(project_info["owner"], "public_id"),
             "category": "testing",
             "facility": g.current_user_id,
             "status": "Ongoing",
@@ -270,47 +255,43 @@ class create_project_instance(object):
         return "{}{:03d}".format(facility_ref, len(facility_prjs) + 1)
 
     def __is_column_value_uniq(self, table, column, value):
-        """ See that the value is unique in DB """
-        all_column_values = db_utils.get_full_column_from_table(
-            table=table, column=column
-        )
+        """See that the value is unique in DB"""
+        all_column_values = db_utils.get_full_column_from_table(table=table, column=column)
         return value not in all_column_values
 
 
 class folder(object):
-    """ A class to parse the file list and do appropriate ops """
+    """A class to parse the file list and do appropriate ops"""
 
     def __init__(self, file_list):
         self.files = file_list
         self.files_arranged = {}
 
     def arrange_files(self):
-        """ Method to arrange files that reflects folder structure """
+        """Method to arrange files that reflects folder structure"""
         for _file in self.files:
             self.__parse_and_put_file(_file.name, _file.size, self.files_arranged)
 
     def generate_html_string(self, arrange=True):
-        """ Generates html string for the files to pass in template """
+        """Generates html string for the files to pass in template"""
         if arrange and not self.files_arranged:
             self.arrange_files()
 
         return self.__make_html_string_from_file_dict(self.files_arranged)
 
     def __parse_and_put_file(self, file_name, file_size, target_dict):
-        """ Private method that actually """
+        """Private method that actually"""
         file_name_splitted = file_name.split("/", 1)
         if len(file_name_splitted) == 2:
             parent_dir, remaining_file_path = file_name_splitted
             if parent_dir not in target_dict:
                 target_dict[parent_dir] = {}
-            self.__parse_and_put_file(
-                remaining_file_path, file_size, target_dict[parent_dir]
-            )
+            self.__parse_and_put_file(remaining_file_path, file_size, target_dict[parent_dir])
         else:
             target_dict[file_name] = file_size
 
     def __make_html_string_from_file_dict(self, file_dict):
-        """ Takes a dict with files and creates html string with <ol> tag """
+        """Takes a dict with files and creates html string with <ol> tag"""
         _html_string = ""
         for _key, _value in file_dict.items():
             if isinstance(_value, dict):
@@ -356,5 +337,5 @@ def compile_download_file_path(dpath, pid):
 
 
 def validate_file_list(flist):
-    """ Helper function to check if the file list from upload have files """
+    """Helper function to check if the file list from upload have files"""
     return False if (len(flist) == 1 and flist[0].filename == "") else flist

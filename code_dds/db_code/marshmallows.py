@@ -5,26 +5,48 @@ class UserSchema(ma.Schema):
     class Meta:
         # The following fields will be shown when returned in request
         # Change for later -- hide sensitive info etc
-        fields = ("id", "first_name", "last_name", "username", "password",
-                  "settings", "email", "phone", "admin")
+        fields = (
+            "id",
+            "first_name",
+            "last_name",
+            "username",
+            "password",
+            "settings",
+            "email",
+            "phone",
+            "admin",
+        )
 
 
 class FacilitySchema(ma.Schema):
     class Meta:
         # The following fields will be shown when returned in request
         # Change for later -- hide sensitive info etc
-        fields = ("id", "name", "username", "password",
-                  "settings", "email", "phone")
+        fields = ("id", "name", "username", "password", "settings", "email", "phone")
 
 
 class ProjectSchema(ma.Schema):
     class Meta:
         # The following fields will be shown when returned in request
         # Change for later -- hide sensitive info etc
-        fields = ("id", "time", "category", "order_date",
-                  "delivery_date", "status", "sensitive",
-                  "description", "pi", "owner", "facility", "size",
-                  "delivery_option", "public_key", "private_key", "nonce")
+        fields = (
+            "id",
+            "time",
+            "category",
+            "order_date",
+            "delivery_date",
+            "status",
+            "sensitive",
+            "description",
+            "pi",
+            "owner",
+            "facility",
+            "size",
+            "delivery_option",
+            "public_key",
+            "private_key",
+            "nonce",
+        )
 
 
 class S3Schema(ma.Schema):
@@ -38,9 +60,18 @@ class FileSchema(ma.Schema):
     class Meta:
         # The following fields will be shown when returned in request
         # Change for later -- hide sensitive info etc
-        fields = ("id", "name", "directory_path", "size",
-                  "format", "compressed", "public_key", "salt",
-                  "date_uploaded", "project_id")
+        fields = (
+            "id",
+            "name",
+            "directory_path",
+            "size",
+            "format",
+            "compressed",
+            "public_key",
+            "salt",
+            "date_uploaded",
+            "project_id",
+        )
 
 
 user_schema = UserSchema()

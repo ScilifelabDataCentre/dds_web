@@ -65,12 +65,13 @@ def ds_access(username, password, role) -> (bool, int, str):
     elif role == "user":
         table = models.User
     else:
-        pass    # TODO (ina/senthil) : cancel/custom error here?
+        pass  # TODO (ina/senthil) : cancel/custom error here?
 
     # Get user from database
     try:
-        user = table.query.filter_by(username=username).\
-            with_entities(table.id, table.password).first()
+        user = (
+            table.query.filter_by(username=username).with_entities(table.id, table.password).first()
+        )
     except sqlalchemy.exc.SQLAlchemyError as e:
         print(str(e), flush=True)
 
@@ -99,16 +100,19 @@ def project_access(uid, project, owner, role="facility") -> (bool, str):
 
     if role == "facility":
         # Get project info if owner and facility matches
-        project_info = models.Project.query.\
-            filter_by(id=project, owner=owner, facility=uid).\
-            with_entities(models.Project.delivery_option, models.Project.public_key).\
-            first()
+        project_info = (
+            models.Project.query.filter_by(id=project, owner=owner, facility=uid)
+            .with_entities(models.Project.delivery_option, models.Project.public_key)
+            .first()
+        )
     else:
         # Get project info if owner matches
         # TODO (ina): possibly another check here
-        project_info = models.Project.query.filter_by(id=project, owner=owner).\
-            with_entities(models.Project.delivery_option,
-                          models.Project.public_key).first()
+        project_info = (
+            models.Project.query.filter_by(id=project, owner=owner)
+            .with_entities(models.Project.delivery_option, models.Project.public_key)
+            .first()
+        )
 
     # Return error if project not found
     if project_info is None:
@@ -128,9 +132,11 @@ def verify_password(db_pw, input_pw):
     password_hasher = argon2.PasswordHasher()
     try:
         password_hasher.verify(db_pw, input_pw)
-    except (argon2.exceptions.VerifyMismatchError,
-            argon2.exceptions.VerificationError,
-            argon2.exceptions.InvalidHash) as err:
+    except (
+        argon2.exceptions.VerifyMismatchError,
+        argon2.exceptions.VerificationError,
+        argon2.exceptions.InvalidHash,
+    ) as err:
         print(err, flush=True)
         return False
     return True
@@ -188,9 +194,9 @@ def gen_access_token(project, length: int = 16) -> (str):
         curr_token = models.Tokens.query.filter_by(token=token).first()
 
     # Create new token object for db and add it
-    new_token = models.Tokens(token=token, project_id=project,
-                              created=timestamp(),
-                              expires=token_expiration())
+    new_token = models.Tokens(
+        token=token, project_id=project, created=timestamp(), expires=token_expiration()
+    )
     db.session.add(new_token)
     db.session.commit()
 
@@ -207,12 +213,11 @@ def validate_token(token: str, project_id):
         bool:   True if token validated
     """
 
-    validated = False      # Returned variable - changes is validated
+    validated = False  # Returned variable - changes is validated
 
     # Get token from db matching the specified token in request
     try:
-        token_info = models.Tokens.query.filter_by(
-            token=token, project_id=project_id).first()
+        token_info = models.Tokens.query.filter_by(token=token, project_id=project_id).first()
     except sqlalchemy.exc.SQLAlchemyError as e:
         print(e, flush=True)
         return validated
@@ -223,10 +228,8 @@ def validate_token(token: str, project_id):
 
     # Transform timestamps in db to datetime object
     try:
-        date_time_created = datetime.datetime.strptime(token_info.created,
-                                                       "%Y-%m-%d %H:%M:%S.%f%z")
-        date_time_expires = datetime.datetime.strptime(token_info.expires,
-                                                       "%Y-%m-%d %H:%M:%S.%f%z")
+        date_time_created = datetime.datetime.strptime(token_info.created, "%Y-%m-%d %H:%M:%S.%f%z")
+        date_time_expires = datetime.datetime.strptime(token_info.expires, "%Y-%m-%d %H:%M:%S.%f%z")
     except ValueError as e:
         print(e, flush=True)
         return validated

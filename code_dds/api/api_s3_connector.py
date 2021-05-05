@@ -143,9 +143,7 @@ class ApiS3Connector:
 
         removed, error = (False, "")
         try:
-            self.resource.Bucket(self.bucketname).objects.filter(
-                Prefix=f"{folder}/"
-            ).delete()
+            self.resource.Bucket(self.bucketname).objects.filter(Prefix=f"{folder}/").delete()
         except botocore.client.ClientError as err:
             error = str(err)
         else:
@@ -159,9 +157,7 @@ class ApiS3Connector:
 
         removed, error = (False, "")
         try:
-            _ = self.resource.meta.client.delete_object(
-                Bucket=self.bucketname, Key=file
-            )
+            _ = self.resource.meta.client.delete_object(Bucket=self.bucketname, Key=file)
         except botocore.client.ClientError as err:
             error = str(err)
         else:
