@@ -21,15 +21,13 @@ from cryptography.hazmat import backends
 
 
 # Own modules
-from code_dds import app
-from code_dds import db
-from code_dds.api.user import jwt_token
-from code_dds.api.user import is_facility
-from code_dds.db_code import models
-from code_dds import timestamp
-from code_dds.api.api_s3_connector import ApiS3Connector
-from code_dds.api.db_connector import DBConnector
-from code_dds.api.dds_decorators import token_required, project_access_required
+from dds import app, db, timestamp
+from dds.api.user import jwt_token
+from dds.api.user import is_facility
+from dds.database import models
+from dds.api.api_s3_connector import ApiS3Connector
+from dds.api.db_connector import DBConnector
+from dds.api.dds_decorators import token_required, project_access_required
 
 
 ###############################################################################

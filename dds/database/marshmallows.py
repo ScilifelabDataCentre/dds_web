@@ -1,4 +1,4 @@
-from code_dds import ma
+from dds import ma
 
 
 class UserSchema(ma.Schema):

@@ -13,11 +13,11 @@ import flask
 import sqlalchemy
 
 # Own modules
-from code_dds import timestamp
-from code_dds.db_code import models
-from code_dds import db
-from code_dds.api.dds_decorators import token_required
-from code_dds.api.api_s3_connector import ApiS3Connector
+from dds import timestamp
+from dds.database import models
+from dds import db
+from dds.api.dds_decorators import token_required
+from dds.api.api_s3_connector import ApiS3Connector
 
 ###############################################################################
 # CLASSES ########################################################### CLASSES #

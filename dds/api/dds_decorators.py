@@ -12,8 +12,8 @@ import boto3
 import botocore
 
 # Own modules
-from code_dds import app
-from code_dds.db_code import models
+from dds import app
+from dds.database import models
 
 ###############################################################################
 # DECORATORS ##################################################### DECORATORS #

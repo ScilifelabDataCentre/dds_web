@@ -22,12 +22,11 @@ from flask import (
     after_this_request,
 )
 
-from code_dds import db, timestamp
-from code_dds.db_code import models
-from code_dds.db_code import db_utils
-from code_dds.db_code import marshmallows as marmal
-from code_dds.crypt.key_gen import project_keygen
-from code_dds.utils import login_required, working_directory, format_byte_size
+from dds import db, timestamp
+from dds.database import models
+from dds.database import db_utils
+from dds.crypt.key_gen import project_keygen
+from dds.utils import login_required, working_directory, format_byte_size
 from werkzeug.utils import secure_filename
 
 project_blueprint = Blueprint("project", __name__)

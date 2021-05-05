@@ -9,11 +9,11 @@ import flask
 import flask_restful
 
 # Own modules
-from code_dds.api import user
-from code_dds.api import project
-from code_dds.api import s3
-from code_dds.api import files
-from code_dds.api.errors import errors
+from dds.api import user
+from dds.api import project
+from dds.api import s3
+from dds.api import files
+from dds.api.errors import errors
 
 
 ###############################################################################
