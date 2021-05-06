@@ -2,16 +2,15 @@
 
 from flask import Blueprint, render_template, request, current_app, session, redirect, url_for
 
-from code_dds import timestamp
-from code_dds.api.login import ds_access
-from code_dds.crypt.auth import validate_user_credentials
-from code_dds.db_code import models
-from code_dds.db_code import db_utils
-from code_dds.db_code import marshmallows as marmal
-from code_dds.utils import login_required
+from dds import timestamp
+from dds.api.login import ds_access
+from dds.crypt.auth import validate_user_credentials
+from dds.database import models
+from dds.database import db_utils
+from dds.utils import login_required
 
 # temp will be removed in next version
-from code_dds.development import cache_temp as tc
+from dds.development import cache_temp as tc
 
 user_blueprint = Blueprint("user", __name__)
 
