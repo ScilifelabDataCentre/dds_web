@@ -33,6 +33,7 @@ class NewFile(flask_restful.Resource):
     def post(self, _, project):
         """Add new file to DB"""
 
+        message = ""
         required_info = [
             "name",
             "name_in_bucket",
@@ -79,16 +80,6 @@ class NewFile(flask_restful.Resource):
                 checksum=args["checksum"],
             )
             db.session.add(new_file)
-
-            # Increase project size
-            # TODO (ina): put in class
-            current_project = models.Project.query.filter_by(id=project["id"]).first()
-            if not current_project or current_project is None:
-                return flask.make_response(f"Could not find project {project['id']}!")
-
-            current_project.size += int(args["size"])
-            current_project.date_updated = timestamp()
-
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
@@ -119,8 +110,6 @@ class NewFile(flask_restful.Resource):
 
             old_size = existing_file.size
 
-            print(f"\n checksum: {args['checksum']}", flush=True)
-
             # Update file info
             existing_file.subpath = args["subpath"]
             existing_file.size = args["size"]
@@ -131,13 +120,6 @@ class NewFile(flask_restful.Resource):
             existing_file.date_uploaded = timestamp()
             existing_file.checksum = args["checksum"]
 
-            # Increase project size
-            # TODO (ina): put in class
-            current_project = models.Project.query.filter_by(id=project["id"]).first()
-            if not current_project or current_project is None:
-                return flask.make_response(f"Could not find project {project['id']}!")
-            current_project.size += old_size - int(args["size"])
-            current_project.date_updated = timestamp()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()

@@ -7,6 +7,7 @@
 # Standard library
 import traceback
 import os
+import time
 
 # Installed
 import flask
@@ -85,6 +86,39 @@ class DBConnector:
             error = str(err)
 
         return num_proj_files, error
+
+    # def update_project_size(self, new_size):
+
+    #     updated, error, current_try, max_retries = (False, "", 0, 5)
+
+    #     while current_try < max_retries:
+    #         try:
+    #             current_project = models.Project.query.filter_by(id=self.project["id"]).first()
+    #             if not current_project or current_project is None:
+    #                 return updated, f"Could not find project {self.project['id']}!"
+
+    #             current_project.size += int(new_size)
+    #             current_project.date_updated = timestamp()
+    #             db.session.commit()
+    #         except sqlalchemy.exc.SQLAlchemyError as err:
+    #             print(f"{current_try}: Trying again....", flush=True)
+    #             db.session.rollback()
+    #             error = str(err)
+    #             current_try += 1
+    #             time.sleep(2)
+    #         else:
+    #             updated, error = (True, "")
+    #             print(f"OK! Updated on {current_try}/{max_retries}")
+    #             break
+
+    # current_project = models.Project.query.filter_by(id=project["id"]).first()
+    # if not current_project or current_project is None:
+    #     return flask.make_response(f"Could not find project {project['id']}!")
+    # current_project.size += old_size - int(args["size"])
+    # current_project.date_updated = timestamp()
+    # db.session.commit()
+
+    #     return updated, error
 
     def items_in_subpath(self, folder="."):
         """Get all items in root folder of project"""
@@ -217,8 +251,6 @@ class DBConnector:
                     old_size = x.size
                     db.session.delete(x)
                     current_project.size -= old_size
-                # _ = [db.session.delete(x) for x in files]
-                # _ = [current_project.size - x.size for x in files]
                 current_project.date_updated = timestamp()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)
