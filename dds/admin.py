@@ -15,11 +15,11 @@ from flask import (
     jsonify,
 )
 
-from code_dds import db
-from code_dds.crypt.auth import gen_argon2hash
-from code_dds.db_code import models
-from code_dds.db_code import db_utils
-from code_dds.utils import admin_access_required
+from dds import db
+from dds.crypt.auth import gen_argon2hash
+from dds.database import models
+from dds.database import db_utils
+from dds.utils import admin_access_required
 
 admin_blueprint = Blueprint("admin", __name__)
 

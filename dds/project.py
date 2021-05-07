@@ -22,12 +22,11 @@ from flask import (
     after_this_request,
 )
 
-from code_dds import db, timestamp
-from code_dds.db_code import models
-from code_dds.db_code import db_utils
-from code_dds.db_code import marshmallows as marmal
-from code_dds.crypt.key_gen import project_keygen
-from code_dds.utils import login_required, working_directory, format_byte_size
+from dds import db, timestamp
+from dds.database import models
+from dds.database import db_utils
+from dds.crypt.key_gen import project_keygen
+from dds.utils import login_required, working_directory, format_byte_size
 from werkzeug.utils import secure_filename
 
 project_blueprint = Blueprint("project", __name__)
@@ -241,7 +240,7 @@ class create_project_instance(object):
             "pi": "NA",
             "size": 0,
         }
-        self.project_info["bucket"] = "{}_bucket".format(self.project_info["id"])
+        self.project_info["bucket"] = self.__create_bucket_name()
         pkg = project_keygen(self.project_info["id"])
         self.project_info.update(pkg.get_key_info_dict())
 
@@ -258,6 +257,14 @@ class create_project_instance(object):
         """See that the value is unique in DB"""
         all_column_values = db_utils.get_full_column_from_table(table=table, column=column)
         return value not in all_column_values
+
+    def __create_bucket_name(self):
+        """Create a bucket name for the given project"""
+        return "{pid}-{tstamp}-{rstring}".format(
+            pid=self.project_info["id"].lower(),
+            tstamp=timestamp(ts_format="%y%m%d%H%M%S%f"),
+            rstring=os.urandom(4).hex(),
+        )
 
 
 class folder(object):

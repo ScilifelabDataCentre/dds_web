@@ -16,9 +16,9 @@ import sqlalchemy
 import functools
 
 # Own modules
-from code_dds import app
-from code_dds.db_code import models
-from code_dds.crypt.auth import gen_argon2hash, verify_password_argon2id
+from dds import app
+from dds.database import models
+from dds.crypt.auth import gen_argon2hash, verify_password_argon2id
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #

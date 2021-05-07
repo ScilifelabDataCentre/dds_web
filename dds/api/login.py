@@ -16,10 +16,10 @@ import cryptography.hazmat.backends as backends
 import sqlalchemy
 
 # Own modules
-from code_dds import C_TZ
-from code_dds import db, timestamp, token_expiration
-from code_dds.db_code import models
-from code_dds.db_code import db_utils
+from dds import C_TZ
+from dds import db, timestamp, token_expiration
+from dds.database import models
+from dds.database import db_utils
 
 
 ###############################################################################

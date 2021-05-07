@@ -4,7 +4,7 @@ import argon2
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from code_dds.db_code import models
+from dds.database import models
 
 
 def gen_argon2hash(

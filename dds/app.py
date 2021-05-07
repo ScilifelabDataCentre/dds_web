@@ -8,7 +8,7 @@
 # from flask_marshmallow import Marshmallow
 
 # Own modules
-from code_dds import create_app
+from dds import create_app
 
 # CONFIG ############################################################# CONFIG #
 

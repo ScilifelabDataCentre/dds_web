@@ -23,15 +23,15 @@ import sqlalchemy
 import flask
 
 # Own modules
-from code_dds import app
-from code_dds.db_code import models
-from code_dds.api.dds_decorators import (
+from dds import app
+from dds.database import models
+from dds.api.dds_decorators import (
     connect_cloud,
     bucket_must_exists,
     token_required,
     project_access_required,
 )
-from code_dds.api.errors import ItemDeletionError
+from dds.api.errors import ItemDeletionError
 
 ###############################################################################
 # LOGGING ########################################################### LOGGING #
@@ -81,7 +81,7 @@ class ApiS3Connector:
         """Get information required to connect to cloud."""
 
         safespring = ""
-        from code_dds.api.db_connector import DBConnector
+        from dds.api.db_connector import DBConnector
 
         with DBConnector() as dbconn:
             safespring, error = dbconn.cloud_project()
