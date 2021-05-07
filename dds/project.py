@@ -261,9 +261,9 @@ class create_project_instance(object):
     def __create_bucket_name(self):
         """Create a bucket name for the given project"""
         return "{pid}-{tstamp}-{rstring}".format(
-            pid=self.project_info["id"],
+            pid=self.project_info["id"].lower(),
             tstamp=timestamp(ts_format="%y%m%d%H%M%S%f"),
-            rstring=os.urandom(3).hex(),
+            rstring=os.urandom(4).hex(),
         )
 
 
