@@ -110,8 +110,6 @@ class NewFile(flask_restful.Resource):
 
             old_size = existing_file.size
 
-            print(f"\n checksum: {args['checksum']}", flush=True)
-
             # Update file info
             existing_file.subpath = args["subpath"]
             existing_file.size = args["size"]

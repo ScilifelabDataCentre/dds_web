@@ -246,24 +246,28 @@ class UpdateProjectSize(flask_restful.Resource):
         """Update the project size and updated time stamp."""
 
         updated, error = (False, "")
-        try:
-            current_project = models.Project.query.filter_by(id=project["id"]).first()
+        current_try, max_tries = (1, 5)
+        while current_try < max_tries:
+            try:
+                current_project = models.Project.query.filter_by(id=project["id"]).first()
 
-            tot_file_size = (
-                models.File.query.with_entities(
-                    sqlalchemy.func.sum(models.File.size).label("sizeSum")
+                tot_file_size = (
+                    models.File.query.with_entities(
+                        sqlalchemy.func.sum(models.File.size).label("sizeSum")
+                    )
+                    .filter(models.File.project_id == project["id"])
+                    .first()
                 )
-                .filter(models.File.project_id == project["id"])
-                .first()
-            )
 
-            current_project.size = tot_file_size.sizeSum
-            current_project.date_updated = timestamp()
-            db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-            db.session.rollback()
-        else:
-            updated = True
+                current_project.size = tot_file_size.sizeSum
+                current_project.date_updated = timestamp()
+                db.session.commit()
+            except sqlalchemy.exc.SQLAlchemyError as err:
+                error = str(err)
+                db.session.rollback()
+                current_try += 1
+            else:
+                updated = True
+                break
 
-        return flask.jsonify({"updated": updated, "error": error})
+        return flask.jsonify({"updated": updated, "error": error, "tries": current_try})
