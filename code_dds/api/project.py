@@ -243,5 +243,27 @@ class UpdateProjectSize(flask_restful.Resource):
     method_decorators = [project_access_required, token_required]
 
     def put(self, _, project):
+        """Update the project size and updated time stamp."""
 
-        print("Testing testing", flush=True)
+        updated, error = (False, "")
+        try:
+            current_project = models.Project.query.filter_by(id=project["id"]).first()
+
+            tot_file_size = (
+                models.File.query.with_entities(
+                    sqlalchemy.func.sum(models.File.size).label("sizeSum")
+                )
+                .filter(models.File.project_id == project["id"])
+                .first()
+            )
+
+            current_project.size = tot_file_size.sizeSum
+            current_project.date_updated = timestamp()
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            error = str(err)
+            db.session.rollback()
+        else:
+            updated = True
+
+        return flask.jsonify({"updated": updated, "error": error})
