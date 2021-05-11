@@ -15,9 +15,9 @@ import json
 import botocore
 
 # Own modules
-from dds.database import models
-from dds.api.api_s3_connector import ApiS3Connector
-from dds.api.dds_decorators import token_required, project_access_required
+from dds_web.database import models
+from dds_web.api.api_s3_connector import ApiS3Connector
+from dds_web.api.dds_decorators import token_required, project_access_required
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #

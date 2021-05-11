@@ -1,7 +1,7 @@
 """ Utility function that makes DB calls """
 
-from dds import db
-from dds.database import models
+from dds_web import db
+from dds_web.database import models
 
 
 def get_facility_column(fid, column) -> (str):

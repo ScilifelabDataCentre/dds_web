@@ -4,7 +4,8 @@ import argon2
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from dds.database import models
+from dds_web.database import models
+from sqlalchemy.sql import func
 
 
 def gen_argon2hash(
@@ -60,20 +61,20 @@ def validate_user_credentials(username, password):
 
     # get type of the user
     try:
-        user_role = models.Role.query.filter_by(username=username).first()
+        user_role = models.Role.query.filter(models.Role.username==func.binary(username)).first()
     except SQLAlchemyError as e:
         print(str(e), flush=True)
 
     # Exit if user not exisit in Roles table
     if user_role is None:
-        return (False, None, "User type unknown", None)
+        return (False, None, "User doesn't exist (Credentials are case sensitive)", None)
     is_facility = user_role.facility == 1
     table = models.Facility if is_facility else models.User
     try:
         uaccount = table.query.filter_by(username=username).first()
     except SQLAlchemyError as e:
         print(str(e), flush=True)
-        return (False, None, "User doesn't exist", None)
+        return (False, None, "User doesn't exist (Credentials are case sensitive)", None)
 
     if not verify_password_argon2id(uaccount.password, password):
         return (False, None, "Password din't match", None)
