@@ -86,7 +86,7 @@ class ApiS3Connector:
         with DBConnector() as dbconn:
             safespring, error = dbconn.cloud_project()
 
-        print(f"-- {safespring}", flush=True)
+        # print(f"-- {safespring}", flush=True)
 
         s3keys, url, bucketname, error = (None,) * 3 + ("",)
         # 1. Get keys
