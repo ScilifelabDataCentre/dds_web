@@ -5,9 +5,9 @@ import uuid
 
 from flask import current_app
 
-from dds import db, timestamp
+from dds_web import db, timestamp
 
-from dds.database.models import User, Project, Facility, File, Role
+from dds_web.database.models import User, Project, Facility, File, Role
 
 
 # def create_files_for_project(project):

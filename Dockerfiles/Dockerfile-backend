@@ -12,7 +12,7 @@ RUN apt-get install -y gfortran libopenblas-dev liblapack-dev
 RUN pip3 install -r /code/requirements.txt
 
 # Install DDS CLI for web upload
-RUN pip3 install git+https://github.com/ScilifelabDataCentre/DS_CLI.git@dev
+RUN pip3 install git+https://github.com/ScilifelabDataCentre/DS_CLI.git@master
 
 # Install gnuicorn 
 RUN pip3 install gunicorn
@@ -24,7 +24,7 @@ ENV PYTHONPATH /code
 ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class=gthread --forwarded-allow-ips='*' --access-logfile -"
 
 # Set working directory - 'code' dir in container, 'code' dir locally (in code)
-WORKDIR /code/dds
+WORKDIR /code/dds_web
 
 # Run app -- needs to be in WORKDIR
 CMD ["gunicorn", "app:app"]
