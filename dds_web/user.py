@@ -2,15 +2,15 @@
 
 from flask import Blueprint, render_template, request, current_app, session, redirect, url_for
 
-from dds import timestamp
-from dds.api.login import ds_access
-from dds.crypt.auth import validate_user_credentials
-from dds.database import models
-from dds.database import db_utils
-from dds.utils import login_required
+from dds_web import timestamp
+from dds_web.api.login import ds_access
+from dds_web.crypt.auth import validate_user_credentials
+from dds_web.database import models
+from dds_web.database import db_utils
+from dds_web.utils import login_required
 
 # temp will be removed in next version
-from dds.development import cache_temp as tc
+from dds_web.development import cache_temp as tc
 
 user_blueprint = Blueprint("user", __name__)
 

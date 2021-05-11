@@ -10,7 +10,7 @@
 # from sqlalchemy import func, DDL, event
 
 # Own modules
-from dds import db
+from dds_web import db
 
 # CLASSES ########################################################### CLASSES #
 
