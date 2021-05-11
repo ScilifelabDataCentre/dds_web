@@ -61,7 +61,7 @@ def validate_user_credentials(username, password):
 
     # get type of the user
     try:
-        user_role = models.Role.query.filter(models.Role.username==func.binary(username)).first()
+        user_role = models.Role.query.filter(models.Role.username == func.binary(username)).first()
     except SQLAlchemyError as e:
         print(str(e), flush=True)
 
