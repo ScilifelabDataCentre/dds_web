@@ -211,7 +211,14 @@ function submitWithModel(form, modalID, mCnt){
         },
         // function to execute on failure
         error: function(err){
-            setModalData(modalElement, "error", mCnt.progess, err.responseJSON.message, false);
+            console.log(err);
+            if (err.status == 413) {
+                uLimit = $(formElement).find('input[name="upload_limit"]').prop("value");
+                eMsg = `Data size greater upload threshold (${uLimit}), cannot upload`;
+            } else {
+                eMsg = err.responseJSON.message;
+            }
+            setModalData(modalElement, "error", mCnt.error, eMsg, false);
         },
         // function to execute always
         complete: function () {
