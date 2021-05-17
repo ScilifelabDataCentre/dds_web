@@ -92,6 +92,7 @@ def project_info(project_id=None):
         "project/project.html",
         project=project_info,
         uploaded_data=uploaded_data,
+        upload_limit=current_app.config.get('MAX_CONTENT_LENGTH'),
         download_limit=current_app.config.get("MAX_DOWNLOAD_LIMIT"),
         format_size=format_byte_size,
     )
