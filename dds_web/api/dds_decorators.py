@@ -10,10 +10,11 @@ import flask
 import jwt
 import boto3
 import botocore
+from sqlalchemy.sql import func
 
 # Own modules
-from dds import app
-from dds.database import models
+from dds_web import app
+from dds_web.database import models
 
 ###############################################################################
 # DECORATORS ##################################################### DECORATORS #
@@ -44,8 +45,10 @@ def token_required(f):
 
             # Get table and user
             table = models.Facility if data["facility"] else models.User
-            current_user = table.query.filter_by(public_id=data["public_id"]).first()
-
+            current_user = table.query.filter(
+                table.public_id == func.binary(data["public_id"])
+            ).first()
+            print(f"Current user: {current_user}", flush=True)
             project = data["project"]
         except Exception:
             return flask.make_response("Token is invalid!", 401)

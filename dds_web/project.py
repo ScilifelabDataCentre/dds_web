@@ -22,11 +22,11 @@ from flask import (
     after_this_request,
 )
 
-from dds import db, timestamp
-from dds.database import models
-from dds.database import db_utils
-from dds.crypt.key_gen import project_keygen
-from dds.utils import login_required, working_directory, format_byte_size
+from dds_web import db, timestamp
+from dds_web.database import models
+from dds_web.database import db_utils
+from dds_web.crypt.key_gen import project_keygen
+from dds_web.utils import login_required, working_directory, format_byte_size
 from werkzeug.utils import secure_filename
 
 project_blueprint = Blueprint("project", __name__)
@@ -92,6 +92,7 @@ def project_info(project_id=None):
         "project/project.html",
         project=project_info,
         uploaded_data=uploaded_data,
+        upload_limit=current_app.config.get('MAX_CONTENT_LENGTH'),
         download_limit=current_app.config.get("MAX_DOWNLOAD_LIMIT"),
         format_size=format_byte_size,
     )
@@ -161,8 +162,10 @@ def data_upload():
                 shutil.rmtree(upload_space)
             except:
                 print("Couldn't remove upload space '{}'".format(upload_space), flush=True)
+                current_app.logger.error(err)
         else:
             status, message = (515, "Couldn't send data to S3")
+            current_app.logger.error(err)
 
     return make_response(jsonify({"status": status, "message": message}), status)
 
@@ -219,6 +222,7 @@ def data_download():
         return send_file(download_file_path, as_attachment=True)
     else:
         abort(500, "Download failed, try again and if still see this message contact DC")
+        current_app.logger.error(err)
 
 
 ########## HELPER CLASSES AND FUNCTIONS ##########

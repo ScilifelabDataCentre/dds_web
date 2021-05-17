@@ -14,11 +14,12 @@ import flask_restful
 import jwt
 import sqlalchemy
 import functools
+from sqlalchemy.sql import func
 
 # Own modules
-from dds import app
-from dds.database import models
-from dds.crypt.auth import gen_argon2hash, verify_password_argon2id
+from dds_web import app
+from dds_web.database import models
+from dds_web.crypt.auth import gen_argon2hash, verify_password_argon2id
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -29,14 +30,16 @@ def is_facility(username):
     """Checks if the user is a facility or not."""
 
     is_fac, error = (False, "")
-
+    print(f"Username: {username}", flush=True)
     # Check for user and which table to work in
     try:
         role = (
-            models.Role.query.filter_by(username=username)
+            models.Role.query.filter(models.Role.username == func.binary(username))
             .with_entities(models.Role.facility)
             .first()
         )
+        # user = models.Role.query.filter(models.Role.username.is_(username)).first()
+        # print(user, flush=True)
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
         error = f"Database connection failed - {sqlerr}" + str(sqlerr)
     else:
@@ -100,7 +103,7 @@ class AuthenticateUser(flask_restful.Resource):
         # Get user from DB matching the username
         try:
             table = models.Facility if user_is_fac else models.User
-            user = table.query.filter_by(username=auth.username).first()
+            user = table.query.filter(table.username == func.binary(auth.username)).first()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             return flask.make_response(f"Database connection failed: {sqlerr}", 500)
 

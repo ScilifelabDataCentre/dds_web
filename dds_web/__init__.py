@@ -55,8 +55,8 @@ def create_app():
     # ma.init_app(app)
 
     with app.app_context():  # Everything in here has access to sessions
-        from dds import routes  # Import routes
-        from dds.database import models
+        from dds_web import routes  # Import routes
+        from dds_web.database import models
 
         # db.drop_all()       # Make sure it's the latest db
         db.create_all()  # Create database tables for our data models
@@ -64,14 +64,14 @@ def create_app():
         # puts in test info for local DB, will be removed later
         if app.config["USE_LOCAL_DB"]:
             try:
-                from dds.development.db_init import fill_db
+                from dds_web.development.db_init import fill_db
 
                 fill_db()
             except Exception as err:
                 # don't care why, this will be removed soon anyway
                 print(f"-----------------{err}", flush=True)
 
-        from dds.api import api_blueprint
+        from dds_web.api import api_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
