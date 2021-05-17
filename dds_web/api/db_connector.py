@@ -212,7 +212,7 @@ class DBConnector:
         deleted, error = (False, "")
         try:
             num_deleted = models.File.query.filter(
-                models.File.project_id == func.binary(self.project["id"])
+                models.File.project_id == self.project["id"]
             ).delete()
 
             # TODO (ina): put in class
