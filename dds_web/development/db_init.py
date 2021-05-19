@@ -115,8 +115,15 @@ def fill_db():
             role="researcher",
             permissions="-gl--",
             facility_id=facilities[0],
-            # project_id=projects[0],
-        )
+        ),
+        User(
+            public_id="public_admin_id",
+            username="admin",
+            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
+            role="admin",
+            permissions="a-l--",
+            facility_id=None,
+        ),
     ]
 
     # User(

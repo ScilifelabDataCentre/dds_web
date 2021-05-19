@@ -15,6 +15,7 @@ import pathlib
 import json
 import boto3
 import botocore
+from sqlalchemy.sql import func
 from cryptography.hazmat.primitives.kdf import scrypt
 from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
 from cryptography.hazmat import backends
@@ -49,31 +50,36 @@ class ProjectAccess(flask_restful.Resource):
         if "method" not in args:
             return flask.make_response("Invalid request", 500)
 
-        # Check if user is allowed to performed attempted operation
-        user_is_fac, error = is_facility(username=current_user.username)
-        if user_is_fac is None:
-            return flask.make_response(error, 401)
+        # Check if project id specified
+        if project["id"] is None:
+            return flask.make_response("No project specified.", 401)
 
-        # Facilities can upload and list, users can download and list
-        # TODO (ina): Add allowed actions to DB instead of hard coding
-        if (user_is_fac and args["method"] not in ["put", "ls", "rm"]) or (
-            not user_is_fac and args["method"] not in ["get", "ls", "rm"]
-        ):
+        # Check if project exists
+        try:
+            attempted_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            return flask.make_response(f"Database connection failed: {sqlerr}", 500)
+
+        if not attempted_project:
+            return flask.make_response(f"Project does not exist: {project['id']}", 401)
+
+        # Check if attempted action is ok for user
+        permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
+        if permissions_dict[args["method"]] not in list(current_user.permissions):
             return flask.make_response(
                 f"Attempted to {args['method']} in project {project['id']}. " "Permission denied.",
                 401,
             )
 
         # Check if user has access to project
-        if project["id"] is None:
-            return flask.make_response("No project specified.", 401)
-
-        if project["id"] in [x.id for x in current_user.user_projects]:
+        if project["id"] in [x.public_id for x in current_user.projects]:
             token, error = jwt_token(
                 user_id=current_user.public_id,
-                is_fac=user_is_fac,
                 project_id=project["id"],
                 project_access=True,
+                permission=args["method"],
             )
             if token is None:
                 return flask.make_response(error, 500)
