@@ -3,14 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!--link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"-->
-        <!--link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"-->
-        <link rel="stylesheet"
-            href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-            integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
-            crossorigin="anonymous">
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
         <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.png') }}" type="png">
         <title>Data Delivery System</title>
     </head>
@@ -20,7 +13,7 @@
             <!-- Should also add a if g.am_admin here somewhere -->
             <img class="scilife_logo" src="{{ url_for('static', filename='img/scilifelab_logo.png') }}">
             <div class="nav_header"> Data Delivery System </div>
-                
+
            <ul class="nav justify-content-end">
              <li class="nav-item">
                <a class="nav-link nav_color" href="{{ url_for('home') }}">Home</a>
@@ -47,25 +40,13 @@
         <div class="container" style="background: white;">
             {% block body %} Will be replaced by other templates {% endblock body %}
         </div>
-        
-        <!-- JS and bootstrap loading -->
-        <!--script src="https://kit.fontawesome.com/48759fdc40.js" crossorigin="anonymous"></script-->
-        <script src="https://code.jquery.com/jquery-3.5.1.min.js"
-            integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2"
-            crossorigin="anonymous"></script>
-        <script
-            src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
-            integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
-            crossorigin="anonymous"></script>
-        <script
-            src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
-            integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
-            crossorigin="anonymous"></script>
-        <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js">
-        </script>
-        <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js">
-        </script>
-        <!-- Custom JS functions -->
+
+        <!-- Javascript -->
+        <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='node_modules/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='node_modules/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+        <!-- TODO - bs5 version not yet on npm. When it is, install as an npm package. -->
+        <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap5.min.js"></script>
         <script src="{{ url_for('static', filename='js/dds.js') }}"></script>
     </body>
 </html>
