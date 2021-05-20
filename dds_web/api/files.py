@@ -183,6 +183,7 @@ class ListFiles(flask_restful.Resource):
 
         args = flask.request.args
         if project["permission"] != "ls":
+            app.logger.debug("User does not have listing permissions.")
             return flask.make_response(
                 f"User {current_user.username} does not have permission to list project contents.",
                 401,
@@ -352,13 +353,11 @@ class FileInfo(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def get(self, current_user, project):
+    def get(self, _, project):
         """Checks which files can be downloaded, and get their info."""
 
         # Get files and folders requested by CLI
         paths = flask.request.json
-
-        print(f"Paths: {paths}", flush=True)
 
         files_single, files_in_folders = ({}, {})
 
@@ -367,8 +366,11 @@ class FileInfo(flask_restful.Resource):
             current_project = models.Project.query.filter(
                 models.Project.public_id == func.binary(project["id"])
             ).first()
+
             # Get all files in project
-            files_in_proj = models.File.query.filter_by(project_id=current_project.id)
+            files_in_proj = models.File.query.filter(
+                models.File.project_id == func.binary(current_project.id)
+            )
 
             # All files matching the path -- single files
             files = (
@@ -492,7 +494,7 @@ class UpdateFile(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def put(self, current_user, project):
+    def put(self, _, project):
         """Update info in db."""
 
         # Get file name from request from CLI
@@ -506,18 +508,25 @@ class UpdateFile(flask_restful.Resource):
                 models.Project.public_id == func.binary(project["id"])
             ).first()
 
-            file = models.File.query.filter_by(
-                project_id=current_project.id, name=file_name["name"]
+            app.logger.debug("Updating file in current project: %s", current_project.public_id)
+
+            file = models.File.query.filter(
+                sqlalchemy.and_(
+                    models.File.project_id == func.binary(current_project.id),
+                    models.File.name == func.binary(file_name["name"]),
+                )
             ).first()
 
-            if not file or file is None:
+            if not file:
                 return flask.make_response(f"No such file: {file_name['name']}", 500)
 
             file.latest_download = timestamp()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
+            app.logger.exception(str(err))
             return flask.make_response(str(err), 500)
         else:
+            app.logger.debug("File %s updated", file_name["name"])
             db.session.commit()
 
         return flask.jsonify({"message": "File info updated."})

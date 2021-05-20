@@ -112,6 +112,7 @@ class GetPublic(flask_restful.Resource):
     def get(self, _, project):
         """Get public key from database."""
 
+        app.logger.debug("Getting the public key.")
         try:
             proj_pub = (
                 models.Project.query.filter_by(public_id=project["id"])
@@ -137,7 +138,7 @@ class GetPrivate(flask_restful.Resource):
         """Get private key from database"""
 
         # TODO (ina): Change handling of private key -- not secure
-
+        app.logger.debug("Getting the private key.")
         try:
             proj_priv = (
                 models.Project.query.filter_by(public_id=project["id"])
@@ -171,7 +172,7 @@ class GetPrivate(flask_restful.Resource):
             try:
                 decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
             except Exception as err:
-                print(str(err), flush=True)
+                app.logging.exception(err)
                 return flask.make_response(str(err), 500)
 
             # print(f"Decrypted key: {decrypted_key}", flush=True)

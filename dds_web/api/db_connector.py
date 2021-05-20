@@ -72,9 +72,18 @@ class DBConnector:
 
         name_in_bucket, error = (None, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == self.project["id"]
+            ).first()
+
             file = models.File.query.filter(
-                models.File.project_id == func.binary(self.project["id"])
-            ).all()
+                sqlalchemy.and_(
+                    models.File.project_id == func.binary(current_project.id),
+                    models.File.name == func.binary(filename),
+                )
+            ).first()
+
+            app.logger.debug("--------File: %s", file)
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
         else:
@@ -154,7 +163,7 @@ class DBConnector:
 
             # File names in root
             distinct_files = (
-                files.filter(models.File.subpath == folder)
+                files.filter(models.File.subpath == func.binary(folder))
                 .with_entities(models.File.name, models.File.size)
                 .all()
             )
@@ -163,7 +172,7 @@ class DBConnector:
             if folder == ".":
                 # Get distinct folders in root, subpath should not be "."
                 distinct_folders = (
-                    files.filter(models.File.subpath != folder)
+                    files.filter(models.File.subpath != func.binary(folder))
                     .with_entities(models.File.subpath)
                     .distinct()
                     .all()
