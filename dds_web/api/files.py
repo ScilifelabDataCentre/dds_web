@@ -114,8 +114,11 @@ class NewFile(flask_restful.Resource):
             ).first()
 
             # Check if file already in db
-            existing_file = models.File.query.filter_by(
-                name=args["name"], project_id=current_project.id
+            existing_file = models.File.query.filter(
+                sqlalchemy.and_(
+                    models.File.name == func.binary(args["name"]),
+                    models.File.project_id == current_project.id,
+                )
             ).first()
 
             # Error if not found
@@ -160,7 +163,7 @@ class MatchFiles(flask_restful.Resource):
 
             matching_files = (
                 models.File.query.filter(models.File.name.in_(flask.request.json))
-                .filter_by(project_id=current_project.id)
+                .filter(models.File.project_id == func.binary(current_project.id))
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -442,7 +445,7 @@ class FileInfoAll(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def get(self, current_user, project):
+    def get(self, _, project):
         """Get file info."""
 
         files = {}
