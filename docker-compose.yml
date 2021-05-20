@@ -23,13 +23,11 @@ services:
   backend:
     container_name: dds_backend
     image: dds-backend-local:latest
+    build: ./
     command: python3 app.py
     environment:
       - DDS_APP_CONFIG
       - FLASK_ENV
-    build:
-      context: ./
-      dockerfile: ./Dockerfiles/backend.Dockerfile
     depends_on:
       db:
         condition: service_healthy
