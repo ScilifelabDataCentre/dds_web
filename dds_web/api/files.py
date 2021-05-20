@@ -54,12 +54,16 @@ class NewFile(flask_restful.Resource):
             )
 
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             # Check if file already in db
             existing_file = (
                 models.File.query.filter(
                     sqlalchemy.and_(
                         models.File.name == func.binary(args["name"]),
-                        models.File.project_id == func.binary(project["id"]),
+                        models.File.project_id == func.binary(current_project.id),
                     )
                 )
                 .with_entities(models.File.id)
@@ -70,10 +74,6 @@ class NewFile(flask_restful.Resource):
                 return flask.make_response(
                     f"File '{args['name']}' already exists in the database!", 500
                 )
-
-            current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(project["id"])
-            ).first()
 
             # Add new file to db
             new_file = models.File(
@@ -109,9 +109,13 @@ class NewFile(flask_restful.Resource):
             return flask.make_response("Information missing, " "cannot add file to database.", 500)
 
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             # Check if file already in db
             existing_file = models.File.query.filter_by(
-                name=args["name"], project_id=project["id"]
+                name=args["name"], project_id=current_project.id
             ).first()
 
             # Error if not found
@@ -150,9 +154,13 @@ class MatchFiles(flask_restful.Resource):
         """Matches specified files to files in db."""
 
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             matching_files = (
                 models.File.query.filter(models.File.name.in_(flask.request.json))
-                .filter_by(project_id=project["id"])
+                .filter_by(project_id=current_project.id)
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -356,8 +364,11 @@ class FileInfo(flask_restful.Resource):
 
         # Get info on files and folders
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
             # Get all files in project
-            files_in_proj = models.File.query.filter_by(project_id=project["id"])
+            files_in_proj = models.File.query.filter_by(project_id=current_project.id)
 
             # All files matching the path -- single files
             files = (
@@ -434,8 +445,12 @@ class FileInfoAll(flask_restful.Resource):
 
         files = {}
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             all_files = (
-                models.File.query.filter_by(project_id=project["id"])
+                models.File.query.filter_by(project_id=current_project.id)
                 .with_entities(
                     models.File.name,
                     models.File.name_in_bucket,
@@ -487,8 +502,12 @@ class UpdateFile(flask_restful.Resource):
 
         # Update file info
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             file = models.File.query.filter_by(
-                project_id=project["id"], name=file_name["name"]
+                project_id=current_project.id, name=file_name["name"]
             ).first()
 
             if not file or file is None:

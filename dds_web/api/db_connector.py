@@ -87,9 +87,15 @@ class DBConnector:
 
         num_proj_files, error = (0, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             num_proj_files = models.File.query.filter(
-                models.File.project_id == func.binary(self.project["id"])
+                models.File.project_id == func.binary(current_project.id)
             ).count()
+
+            app.logger.debug("Number of project files: %s", num_proj_files)
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
 
@@ -137,9 +143,13 @@ class DBConnector:
         # Get everything in folder:
         # Files have subpath == folder and folders have child folders (regexp)
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             # All files in project
             files = models.File.query.filter(
-                models.File.project_id == func.binary(self.project["id"])
+                models.File.project_id == func.binary(current_project.id)
             )
 
             # File names in root
@@ -190,13 +200,17 @@ class DBConnector:
 
         tot_file_size, error = (None, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             file_info = (
                 models.File.query.with_entities(
                     sqlalchemy.func.sum(models.File.size).label("sizeSum")
                 )
                 .filter(
                     sqlalchemy.and_(
-                        models.File.project_id == func.binary(self.project["id"]),
+                        models.File.project_id == func.binary(current_project.id),
                         models.File.subpath.like(f"{folder_name}%"),
                     )
                 )
@@ -214,15 +228,16 @@ class DBConnector:
 
         deleted, error = (False, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             num_deleted = models.File.query.filter(
-                models.File.project_id == self.project["id"]
+                models.File.project_id == current_project.id
             ).delete()
 
             # TODO (ina): put in class
             # change project size
-            current_project = models.Project.query.filter(
-                models.Project.id == func.binary(self.project["id"])
-            ).first()
             current_project.size = 0
             current_project.date_updated = timestamp()
             db.session.commit()
@@ -243,9 +258,13 @@ class DBConnector:
 
         exists, deleted, error = (False, False, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             # File names in root
             files = (
-                models.File.query.filter(models.File.project_id == func.binary(self.project["id"]))
+                models.File.query.filter(models.File.project_id == func.binary(current_project.id))
                 .filter(
                     sqlalchemy.or_(
                         models.File.subpath == func.binary(folder),
@@ -261,7 +280,7 @@ class DBConnector:
             exists = True
             try:
                 current_project = models.Project.query.filter(
-                    models.Project.id == func.binary(self.project["id"])
+                    models.Project.public_id == func.binary(self.project["id"])
                 ).first()
                 for x in files:
                     old_size = x.size
@@ -329,9 +348,13 @@ class DBConnector:
 
         # Get matching files in project
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             file = models.File.query.filter(
                 models.File.name == func.binary(filename),
-                models.File.project_id == func.binary(self.project["id"]),
+                models.File.project_id == func.binary(current_project.id),
             ).first()
 
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -344,7 +367,7 @@ class DBConnector:
                 # TODO (ina): put in own class
                 old_size = file.size
                 current_project = models.Project.query.filter(
-                    models.Project.id == func.binary(self.project["id"])
+                    models.Project.public_id == func.binary(self.project["id"])
                 ).first()
                 db.session.delete(file)
                 current_project.size -= old_size
@@ -364,8 +387,12 @@ class DBConnector:
 
         # Get files in folder
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             files_in_folder = models.File.query.filter(
-                models.File.project_id == func.binary(self.project["id"]),
+                models.File.project_id == func.binary(current_project.id),
                 models.File.subpath == func.binary(foldername),
             ).all()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -375,7 +402,7 @@ class DBConnector:
         if files_in_folder or files_in_folder is not None:
             exists, deleted, errors = (True, {}, {})
             current_project = models.Project.query.filter(
-                models.Project.id == func.binary(self.project["id"])
+                models.Project.public_id == func.binary(self.project["id"])
             ).first()
             for x in files_in_folder:
                 filename = x.name

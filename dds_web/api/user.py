@@ -123,6 +123,7 @@ class AuthenticateUser(flask_restful.Resource):
                 return flask.make_response(error, 500)
 
             # Success - return token
+            app.logger.debug("Token generated. Returning to CLI.")
             return flask.jsonify({"token": token.decode("UTF-8")})
 
         # Failed - incorrect password

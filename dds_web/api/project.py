@@ -48,14 +48,16 @@ class ProjectAccess(flask_restful.Resource):
 
         # Deny access if project or method not specified
         if "method" not in args:
-            app.logger.debug(f"No method in request: {args['method']}")
+            app.logger.debug("No method in request.")
             return flask.make_response("Invalid request.", 500)
 
         # Check if project id specified
         if project["id"] is None:
+            app.logger.debug("No project retrieved from token.")
             return flask.make_response("No project specified.", 401)
 
         # Check if project exists
+        app.logger.debug("Getting project from db.")
         try:
             attempted_project = models.Project.query.filter(
                 models.Project.public_id == func.binary(project["id"])
@@ -67,7 +69,9 @@ class ProjectAccess(flask_restful.Resource):
             return flask.make_response(f"Project does not exist: {project['id']}", 401)
 
         # Check if attempted action is ok for user
-        app.logger.debug(current_user.permissions)
+        app.logger.debug(
+            "User permissions: %s, attempted method: %s", current_user.permissions, args["method"]
+        )
         permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
         if permissions_dict[args["method"]] not in list(current_user.permissions):
             return flask.make_response(
@@ -76,8 +80,9 @@ class ProjectAccess(flask_restful.Resource):
             )
 
         # Check if user has access to project
-        app.logger.debug(current_user.projects)
+        app.logger.debug("User projects: %s", current_user.projects)
         if project["id"] in [x.public_id for x in current_user.projects]:
+            app.logger.debug("Updating token...")
             token, error = jwt_token(
                 user_id=current_user.public_id,
                 project_id=project["id"],
