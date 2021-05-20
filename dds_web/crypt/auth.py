@@ -60,18 +60,18 @@ def validate_user_credentials(username, password):
     """Verifies if the given username and password is the match."""
 
     # get type of the user
-    try:
-        user_role = models.Role.query.filter(models.Role.username == func.binary(username)).first()
-    except SQLAlchemyError as e:
-        print(str(e), flush=True)
+    # try:
+    #     user_role = models.Role.query.filter(models.Role.username == func.binary(username)).first()
+    # except SQLAlchemyError as e:
+    #     print(str(e), flush=True)
 
     # Exit if user not exisit in Roles table
-    if user_role is None:
-        return (False, None, "User doesn't exist (Credentials are case sensitive)", None)
-    is_facility = user_role.facility == 1
-    table = models.Facility if is_facility else models.User
+    # if user_role is None:
+    #     return (False, None, "User doesn't exist (Credentials are case sensitive)", None)
+    # is_facility = user_role.facility == 1
+    # table = models.Facility if is_facility else models.User
     try:
-        uaccount = table.query.filter_by(username=username).first()
+        uaccount = models.User.query.filter(models.User.username == func.binary(username)).first()
     except SQLAlchemyError as e:
         print(str(e), flush=True)
         return (False, None, "User doesn't exist (Credentials are case sensitive)", None)
@@ -80,9 +80,16 @@ def validate_user_credentials(username, password):
         return (False, None, "Password din't match", None)
 
     uinfo = {"username": uaccount.username, "id": uaccount.public_id}
-    if is_facility:
-        uinfo["facility_name"] = uaccount.name
-    elif uaccount.admin:
+    if uaccount.role == "facility":
+        try:
+            facility_info = models.Facility.query.filter(
+                models.Facility.id == func.binary(uaccount.facility_id)
+            ).first()
+        except SQLAlchemyError as e:
+            return (False, None, "No facility found.", None)
+
+        uinfo["facility_name"] = facility_info.name
+    elif uaccount.role == "admin":
         uinfo["admin"] = True
 
-    return (True, is_facility, "Validate successful", uinfo)
+    return (True, uaccount.role == "facility", "Validate successful", uinfo)

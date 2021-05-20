@@ -11,9 +11,10 @@ import os
 import flask_restful
 import flask
 import sqlalchemy
+from sqlalchemy.sql import func
 
 # Own modules
-from dds_web import timestamp
+from dds_web import timestamp, app
 from dds_web.database import models
 from dds_web import db, timestamp
 from dds_web.api.api_s3_connector import ApiS3Connector
@@ -55,7 +56,12 @@ class NewFile(flask_restful.Resource):
         try:
             # Check if file already in db
             existing_file = (
-                models.File.query.filter_by(name=args["name"], project_id=project["id"])
+                models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name == func.binary(args["name"]),
+                        models.File.project_id == func.binary(project["id"]),
+                    )
+                )
                 .with_entities(models.File.id)
                 .first()
             )
@@ -65,23 +71,30 @@ class NewFile(flask_restful.Resource):
                     f"File '{args['name']}' already exists in the database!", 500
                 )
 
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             # Add new file to db
             new_file = models.File(
+                public_id=os.urandom(16).hex(),
                 name=args["name"],
                 name_in_bucket=args["name_in_bucket"],
                 subpath=args["subpath"],
                 size=args["size"],
                 size_encrypted=args["size_processed"],
-                project_id=project["id"],
                 compressed=bool(args["compressed"] == "True"),
                 salt=args["salt"],
                 public_key=args["public_key"],
                 date_uploaded=timestamp(),
                 checksum=args["checksum"],
+                project_id=current_project,
             )
+            current_project.files.append(new_file)
             db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
+            app.logger.debug(err)
             db.session.rollback()
             return flask.make_response(
                 f"Failed to add new file '{args['name']}' to database: {err}", 500

@@ -166,6 +166,7 @@ class GetPrivate(flask_restful.Resource):
             try:
                 decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
             except Exception as err:
+                print(str(err), flush=True)
                 return flask.make_response(str(err), 500)
 
             # print(f"Decrypted key: {decrypted_key}", flush=True)
@@ -253,13 +254,15 @@ class UpdateProjectSize(flask_restful.Resource):
         current_try, max_tries = (1, 5)
         while current_try < max_tries:
             try:
-                current_project = models.Project.query.filter_by(id=project["id"]).first()
+                current_project = models.Project.query.filter(
+                    models.Project.public_id == func.binary(project["id"])
+                ).first()
 
                 tot_file_size = (
                     models.File.query.with_entities(
                         sqlalchemy.func.sum(models.File.size).label("sizeSum")
                     )
-                    .filter(models.File.project_id == project["id"])
+                    .filter(models.File.project_id == current_project.id)
                     .first()
                 )
 

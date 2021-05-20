@@ -114,7 +114,7 @@ def fill_db():
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             role="researcher",
             permissions="-gl--",
-            facility_id=facilities[0],
+            facility_id=None,
         ),
         User(
             public_id="public_admin_id",
@@ -123,6 +123,22 @@ def fill_db():
             role="admin",
             permissions="a-l--",
             facility_id=None,
+        ),
+        User(
+            public_id="public_facility_admin_id",
+            username="facility_admin",
+            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
+            role="facility",
+            permissions="a-l--",
+            facility_id=facilities[0],
+        ),
+        User(
+            public_id="public_facility_id",
+            username="facility",
+            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
+            role="facility",
+            permissions="--lpr",
+            facility_id=facilities[0],
         ),
     ]
 
@@ -341,10 +357,12 @@ def fill_db():
 
     # Foreign key/relationship updates
     for p in projects:
-        users[0].projects.append(p)
+        for u in users:
+            u.projects.append(p)
 
     for u in users:
-        facilities[0].users.append(u)
+        if u.facility_id:
+            facilities[0].users.append(u)
 
     for f in files:
         projects[0].files.append(f)

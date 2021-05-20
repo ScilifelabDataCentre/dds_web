@@ -15,7 +15,7 @@ import sqlalchemy
 from sqlalchemy.sql import func
 
 # Own modules
-from dds_web import timestamp
+from dds_web import timestamp, app
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.dds_decorators import token_required
@@ -53,10 +53,13 @@ class DBConnector:
         bucketname, error = (None, "")
         try:
             bucket = (
-                models.Project.query.filter(models.Project.id == func.binary(self.project["id"]))
+                models.Project.query.filter(
+                    models.Project.public_id == func.binary(self.project["id"])
+                )
                 .with_entities(models.Project.bucket)
                 .first()
             )
+            app.logger.debug("Bucket: %s", bucket)
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
         else:
@@ -393,27 +396,25 @@ class DBConnector:
         """Get safespring project"""
 
         sfsp_proj, error = ("", "")
-        if hasattr(self.current_user, "safespring"):
-            return self.current_user.safespring, error
 
+        # Get current project
         try:
-            proj_fac = (
-                models.Project.query.filter(models.Project.id == func.binary(self.project["id"]))
-                .with_entities(models.Project.facility)
-                .first()
-            )
 
-            print(proj_fac, flush=True)
+            current_project_facility_safespring = (
+                models.Project.query.join(
+                    models.Facility, models.Project.facility_id == func.binary(models.Facility.id)
+                )
+                .add_columns(models.Facility.safespring)
+                .filter(models.Facility.id == func.binary(models.Project.facility_id))
+                .filter(models.Project.public_id == func.binary(self.project["id"]))
+            ).first()
 
-            sfsp_proj_info = (
-                models.Facility.query.filter(models.Facility.public_id == func.binary(proj_fac[0]))
-                .with_entities(models.Facility.safespring)
-                .first()
-            )
+            app.logger.debug("Safespring project: %s", current_project_facility_safespring)
+            if not current_project_facility_safespring:
+                error = "No safespring project found for responsible facility."
+
+            sfsp_proj = current_project_facility_safespring[1]
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
-        else:
-            sfsp_proj = sfsp_proj_info[0]
-            print(f"project: {sfsp_proj}", flush=True)
 
         return sfsp_proj, error
