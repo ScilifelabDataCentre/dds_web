@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+
+  db:
+    container_name: dds_database_dev_local
+    image: dds-database-local:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
+      - MYSQL_USER=${DDS_MYSQL_USER}
+      - MYSQL_PASSWORD=${DDS_MYSQL_PASS}
+      - MYSQL_DATABASE=DeliverySystem
+    build:
+      context: ./
+      dockerfile: ./Dockerfiles/database.Dockerfile
+    restart: on-failure
+    ports:
+      - 127.0.0.1:3306:3306
+    # Test to see if the database is accessible. Backend waits for this with 'condition: service_healthy'
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    container_name: dds_backend_dev_local
+    image: dds-backend-local:latest
+    command: python3 app.py
+    environment:
+      - DDS_APP_CONFIG
+      - FLASK_ENV
+    build:
+      context: ./
+      dockerfile: ./Dockerfiles/backend.Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+    ports:
+      - 127.0.0.1:5000:5000
+    volumes:
+      - type: bind
+        source: ./dds_web
+        target: /code/dds_web
+      - type: bind
+        source: ${DDS_SENSITIVE_FILES}/
+        target: /code/dds_web/sensitive
+      - type: bind
+        source: ${DDS_LOG_DIR}
+        target: /dds_web/logs
+      - type: bind
+        source: ${DDS_UPLOAD_TEST}
+        target: /dds_web/uploads
+      - type: bind
+        source: ${DDS_DOWNLOAD_TEST}
+        target: /dds_web/downloads
+      - type: bind
+        source: ${DDS_TEMP_CACHE_TEST}
+        target: /dds_web/local_temp_cache

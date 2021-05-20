@@ -14,7 +14,7 @@ RUN pip3 install -r /code/requirements.txt
 # Install DDS CLI for web upload
 RUN pip3 install git+https://github.com/ScilifelabDataCentre/DS_CLI.git@master
 
-# Install gnuicorn 
+# Install gnuicorn
 RUN pip3 install gunicorn
 
 # Add code directory in pythonpath
