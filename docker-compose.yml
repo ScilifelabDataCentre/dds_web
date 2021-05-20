@@ -3,16 +3,13 @@ version: "3.8"
 services:
 
   db:
-    container_name: dds_database_dev_local
-    image: dds-database-local:latest
+    container_name: dds_database
+    image: mariadb:latest
     environment:
       - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
       - MYSQL_USER=${DDS_MYSQL_USER}
       - MYSQL_PASSWORD=${DDS_MYSQL_PASS}
       - MYSQL_DATABASE=DeliverySystem
-    build:
-      context: ./
-      dockerfile: ./Dockerfiles/database.Dockerfile
     restart: on-failure
     ports:
       - 127.0.0.1:3306:3306
@@ -24,7 +21,7 @@ services:
       retries: 5
 
   backend:
-    container_name: dds_backend_dev_local
+    container_name: dds_backend
     image: dds-backend-local:latest
     command: python3 app.py
     environment:
