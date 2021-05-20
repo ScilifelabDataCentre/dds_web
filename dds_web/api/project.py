@@ -48,7 +48,8 @@ class ProjectAccess(flask_restful.Resource):
 
         # Deny access if project or method not specified
         if "method" not in args:
-            return flask.make_response("Invalid request", 500)
+            app.logger.debug(f"No method in request: {args['method']}")
+            return flask.make_response("Invalid request.", 500)
 
         # Check if project id specified
         if project["id"] is None:
@@ -66,14 +67,16 @@ class ProjectAccess(flask_restful.Resource):
             return flask.make_response(f"Project does not exist: {project['id']}", 401)
 
         # Check if attempted action is ok for user
+        app.logger.debug(current_user.permissions)
         permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
         if permissions_dict[args["method"]] not in list(current_user.permissions):
             return flask.make_response(
-                f"Attempted to {args['method']} in project {project['id']}. " "Permission denied.",
+                f"Attempted to '{args['method']}' in project '{project['id']}'. Permission denied.",
                 401,
             )
 
         # Check if user has access to project
+        app.logger.debug(current_user.projects)
         if project["id"] in [x.public_id for x in current_user.projects]:
             token, error = jwt_token(
                 user_id=current_user.public_id,
@@ -106,10 +109,14 @@ class GetPublic(flask_restful.Resource):
 
         try:
             proj_pub = (
-                models.Project.query.filter_by(id=project["id"])
+                models.Project.query.filter_by(public_id=project["id"])
                 .with_entities(models.Project.public_key)
                 .first()
             )
+
+            if not proj_pub:
+                return flask.make_response("No public key found.", 500)
+
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(str(err), 500)
         else:
@@ -128,7 +135,7 @@ class GetPrivate(flask_restful.Resource):
 
         try:
             proj_priv = (
-                models.Project.query.filter_by(id=project["id"])
+                models.Project.query.filter_by(public_id=project["id"])
                 .with_entities(
                     models.Project.private_key,
                     models.Project.privkey_nonce,
@@ -139,17 +146,12 @@ class GetPrivate(flask_restful.Resource):
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(str(err), 500)
         else:
-            print(proj_priv, flush=True)
             app_secret = app.config["SECRET_KEY"]
             passphrase = app_secret.encode("utf-8")
-            # passphrase = bytes.fromhex(app_secret)
 
             enc_key = bytes.fromhex(proj_priv[0])
-
             nonce = bytes.fromhex(proj_priv[1])
-            # print(nonce, flush=True)
             salt = bytes.fromhex(proj_priv[2])
-            print(salt, flush=True)
 
             kdf = scrypt.Scrypt(
                 salt=salt,
@@ -160,13 +162,10 @@ class GetPrivate(flask_restful.Resource):
                 backend=backends.default_backend(),
             )
 
-            # print(kdf, flush=True)
             key_enc_key = kdf.derive(passphrase)
-            # print(key_enc_key, flush=True)
             try:
                 decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
             except Exception as err:
-                print(str(err), flush=True)
                 return flask.make_response(str(err), 500)
 
             # print(f"Decrypted key: {decrypted_key}", flush=True)
@@ -179,28 +178,29 @@ class UserProjects(flask_restful.Resource):
 
     method_decorators = [token_required]
 
-    def get(self, current_user, *args):
+    def get(self, current_user, project, *args):
         """Get info regarding all projects which user is involved in."""
 
-        # TODO: Return different things depending on if facility or not
-        user_is_fac, error = is_facility(username=current_user.username)
-        if user_is_fac is None:
-            return flask.make_response(error, 401)
-
-        all_projects = list()
-        columns = ["Project ID", "Title", "PI", "Status", "Last updated"]
-        for x in current_user.user_projects:
-            all_projects.append(
-                {
-                    columns[0]: x.id,
-                    columns[1]: x.title,
-                    columns[2]: x.pi,
-                    columns[3]: x.status,
-                    columns[4]: timestamp(
-                        datetime_string=x.date_updated if x.date_updated else x.date_created
-                    ),
-                }
+        if project["permission"] != "ls":
+            return flask.make_response(
+                f"User {current_user.username} does not have permission to view projects.", 401
             )
+
+        # TODO: Return different things depending on if facility or not
+        columns = ["Project ID", "Title", "PI", "Status", "Last updated"]
+        all_projects = [
+            {
+                columns[0]: x.public_id,
+                columns[1]: x.title,
+                columns[2]: x.pi,
+                columns[3]: x.status,
+                columns[4]: timestamp(
+                    datetime_string=x.date_updated if x.date_updated else x.date_created
+                ),
+            }
+            for x in current_user.projects
+        ]
+        app.logger.debug(all_projects)
         return flask.jsonify({"all_projects": all_projects, "columns": columns})
 
 

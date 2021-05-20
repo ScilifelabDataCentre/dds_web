@@ -48,7 +48,7 @@ def verify_password_argon2id(db_pw, input_pw):
         argon2.exceptions.VerifyMismatchError,
         argon2.exceptions.VerificationError,
         argon2.exceptions.InvalidHash,
-    ) as err:
+    ):
         return False
 
     # TODO (ina): Add check_needs_rehash?

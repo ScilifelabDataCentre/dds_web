@@ -157,11 +157,16 @@ class ListFiles(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def get(self, _, project):
+    def get(self, current_user, project):
         """Get a list of files within the specified folder."""
 
         args = flask.request.args
-        print(args, flush=True)
+        if project["permission"] != "ls":
+            return flask.make_response(
+                f"User {current_user.username} does not have permission to list project contents.",
+                401,
+            )
+
         # Check if to return file size
         show_size = False
         if "show_size" in args and args["show_size"] == "True":
