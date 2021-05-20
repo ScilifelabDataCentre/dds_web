@@ -87,8 +87,8 @@ For example:
 ```bash
 SITE_NAME = "My Custom Data Delivery System"
 SECRET_KEY = "some-mega-random-string"
-SQLALCHEMY_DATABASE_URI = "mysql+pymysql://johannes:test_password@db/DeliverySystem"
-DDS_SAFE_SPRING_PROJECT = "dds-alphatest.scilifelab.se"
+SQLALCHEMY_DATABASE_URI = "mysql+pymysql://TEST_USER:TEST_PASSWORD@db/DeliverySystem"
+DDS_SAFE_SPRING_PROJECT = "YOUR-PROJECT-ID"
 ```
 
 ### Flash env
