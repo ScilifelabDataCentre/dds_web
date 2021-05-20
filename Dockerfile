@@ -1,8 +1,25 @@
+##########
+# Compile
+##########
+# First - compile the SCSS into static CSS
+FROM node:latest AS compile_css
+COPY . /code
+WORKDIR /code/dds_web/static
+RUN npm install
+RUN npm run css
+
+#########
+# Run
+#########
+
 # Set official image -- parent image
 FROM python:latest
 
 # Copy the content to a code folder in container
 COPY . /code
+
+# Copy the compiled CSS from the first build step
+COPY --from=compile_css /code/dds_web/static /code/dds_web/static
 
 # Install some necessary systems packages
 RUN apt-get update
