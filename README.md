@@ -18,6 +18,8 @@ The web interface is built using [Flask](https://flask.palletsprojects.com/en/2.
 
 ## Development
 
+### Running with Docker
+
 When developing this software, we recommend that you run the web server locally using Docker.
 You can download Docker here: <https://docs.docker.com/get-docker/>
 
@@ -31,7 +33,27 @@ docker-compose up
 This command will orchestrate the building and running of two containers:
 one for the SQL database (`mariadb`) and one for the application.
 
-If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal. If using this method, you can stop the web server with the command `docker-compose down`.
+If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
+If using this method, you can stop the web server with the command `docker-compose down`.
+
+### Compiling CSS & JS
+
+The website uses SASS / SCSS for its stylesheets, allowing customisation of Bootstrap styles.
+To manage the CSS and JavaScript packages, we use `npm`.
+To use `npm` you need to have [NodeJS](https://nodejs.org/en/download/) installed.
+
+The first time you run the website, you will need to initialise the required files:
+
+```bash
+cd dds_web/static/
+npm install
+npm run css
+```
+
+This will fetch all required packages and compile the main website CSS stylesheet.
+
+If you are editing any of the SCSS files, you probably want to get `npm` to automatically recompile the CSS every time you change something.
+To do this, run `npm run watch` in the `static/` folder.
 
 ### Config settings
 
@@ -64,6 +86,9 @@ If there are still issues, try deleting the `pycache` folders and repeat the abo
 When running in production, you will likely want to manually build and run the two containers.
 Whilst in `docker-compose.yml` the web server is run by Flask (`command: python3 app.py`),
 the default server in the container is `gunicorn` (`CMD ["gunicorn", "app:app"]`).
+The other difference is that the docker image comes with compiled CSS files ready to go,
+but the docker-compose script mounts the local volume. So for development you need to run `npm`
+but for production there is no need.
 
 In addition to using `gunicorn` to serve files and runing the MySQL database separately,
 you will also need to overwrite all (or most) of the default configuration values.
