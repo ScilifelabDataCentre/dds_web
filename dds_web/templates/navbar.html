@@ -1,35 +1,52 @@
-<nav class="navbar navbar-expand-md navbar-light bg-light mb-3 shadow-sm">
-         <div class="container-fluid">
-            <!-- Should also add a if g.am_admin here somewhere -->
-            <a class="navbar-brand" href="#">
-              <img src="{{ url_for('static', filename='img/scilifelab_symbol.svg') }}" alt="" height="24" class="d-inline-block align-text-top me-2">
-              SciLifeLab Data Delivery System
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+<nav class="bg-light shadow-sm">
+  <div class="container-flex">
+    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start p-2">
+      <a href="/" class="navbar-brand d-flex align-items-center my-2 my-lg-0 me-lg-auto ms-3 text-decoration-none">
+        <img src="{{ url_for('static', filename='img/scilifelab_symbol.svg') }}" alt="" height="24" class="d-inline-block align-text-top me-2">
+        SciLifeLab Data Delivery Service
+      </a>
 
-              <ul class="nav navbar-nav ms-auto mb-2 mb-md-0">
+      <ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-small text-center">
                 <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+                  <a class="nav-link" href="{{ url_for('home') }}">
+                    <i class="far fa-house d-block mx-auto"></i>
+                    Home
+                  </a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#">About</a>
+                  <a class="nav-link" href="#">
+                    <i class="far fa-info-circle d-block mx-auto"></i>
+                    About
+                  </a>
                 </li>
                 {% if g.current_user %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user.user_page', loginname=g.current_user) }}">{{ g.current_user }}</a>
+                    <a class="nav-link" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
+                      <i class="far fa-user d-block mx-auto"></i>
+                      {{ g.current_user }}
+                    </a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for('user.logout') }}">Logout</a>
+                  <a class="nav-link" href="{{ url_for('user.logout') }}">
+                    <i class="far fa-sign-out d-block mx-auto"></i>
+                    Logout
+                  </a>
                 </li>
                 {% else %}
-                <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for('user.login') }}">Login</a>
+                <li class="nav-item mx-2">
+                  <a class="btn btn-info text-body" href="#">
+                    <i class="far fa-user-plus d-block mx-auto"></i>
+                    Register
+                  </a>
+                </li>
+                <li class="nav-item mx-2">
+                  <a class="btn btn-success text-body" href="{{ url_for('user.login') }}">
+                    <i class="far fa-sign-in-alt d-block mx-auto"></i>
+                    Login
+                  </a>
                 </li>
                 {% endif %}
-              </ul>
-            </div>
-          </div>
-        </nav>
+      </ul>
+    </div>
+  </div>
+</nav>
