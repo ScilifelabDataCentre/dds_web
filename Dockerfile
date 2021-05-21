@@ -1,8 +1,7 @@
 ##############################
 ## Compile dist CSS
 ##############################
-FROM node:12-alpine AS compile_css
-RUN apk update && apk add python3 make g++
+FROM node:15-alpine AS compile_css
 COPY ./dds_web /code/dds_web
 WORKDIR /code/dds_web/static
 RUN npm install -g npm@latest --quiet
