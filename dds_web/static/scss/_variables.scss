@@ -1,12 +1,22 @@
 // Global Bootstrap options
 $enable-gradients: true;
 $enable-shadows: true;
-$border-radius: .4rem;
+$border-radius: .2rem;
 
 // Colours
+/*
+Official SciLifeLab colours (2020):
+  Lime: #A7C947
+  Teal: #045C64
+  Aqua: #4C979F
+  Grape: #491F53
+*/
 $body-color: #333;
 $body-bg: #fff;
-$success: #7952b3;
+$primary: #045C64;
+$secondary: #491F53;
+$success: #A7C947;
+$info: #4C979F;
 
 // Specific elements
 $navbar-nav-link-padding-x: 1rem;

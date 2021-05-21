@@ -1,22 +1,15 @@
 {% extends "base.html" %}
 {% block body %}
-    <div class="d-flex justify-content-center h-100">
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Sign In</h2>
-            </div>
-            <div class="panel-body">
-                <form method="POST" action="{{ url_for('user.login') }}">
-                    <div class="input-group form-group">
-    					<div class="input-group-prepend">
-    						<span class="input-group-text"><i class="fas fa-user"></i></span>
-    					</div>
-                    	<input type="text" class="form-control" name="username" placeholder="Username">		
+        <div class="card bg-light border-0 mx-auto mt-5" style="max-width:30rem;">
+            <h2 class="card-header border-0 py-3 text-center">Log In</h2>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('user.login') }}" class="mt-2">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-success"><i class="fas fa-user"></i></span>
+                        <input type="text" class="form-control" name="username" placeholder="Username">
                     </div>
-    				<div class="input-group form-group">
-    					<div class="input-group-prepend">
-    						<span class="input-group-text"><i class="fas fa-key"></i></span>
-    					</div>
+    				<div class="input-group mb-3">
+    					<span class="input-group-text bg-success"><i class="fas fa-key"></i></span>
     					<input type="password" class="form-control" name="password" placeholder="Password">
     				</div>
                     {% if next %}
@@ -27,15 +20,12 @@
                         <p>{{ login_error_message }}</p>
                     </div>
                     {% endif %}
-                    <div class="form-group d-flex justify-content-center">
-                    	<input type="submit" value="Login" class="btn submit_btn">
-                    </div>
+                    <button type="submit" class="btn btn-success w-100">Log In</button>
                 </form>
-            </div>
-            <div class="panel-footer">
-                {# <!--div class="float-left"><a href="{{ url_for('user.signup') }}">New Account?</a></div--> #}
-                <div class="float-right"><a href="#">Forgot Password?</a></div>
+                <hr class="text-muted">
+                <p class="text-center mb-1 small"><a class="text-muted" href="#">Register</a></p>
+                <p class="text-center mb-1 small"><a class="text-muted" href="#">Forgot your password?</a></p>
+                {# <!-- <div class="col-6 text-start"><a href="{{ url_for('user.signup') }}">Register</a></div>  --> #}
             </div>
         </div>
-    </div>
 {% endblock body %}

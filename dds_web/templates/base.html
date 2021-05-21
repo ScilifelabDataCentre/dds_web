@@ -20,6 +20,8 @@
         <script src="{{ url_for('static', filename='node_modules/datatables.net/js/jquery.dataTables.min.js') }}"></script>
         <!-- TODO - bs5 version not yet on npm. When it is, install as an npm package. -->
         <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap5.min.js"></script>
+        <!-- We could use FontAwesome through npm, but then we need configure secrets to access the Pro kit which is a hassle -->
+        <script src="https://kit.fontawesome.com/8cd1f5d753.js" crossorigin="anonymous"></script>
         <script src="{{ url_for('static', filename='js/dds.js') }}"></script>
     </body>
 </html>
