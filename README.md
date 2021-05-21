@@ -61,7 +61,12 @@ If there are still issues, try deleting the `pycache` folders and repeat the abo
 
 ## Production
 
-To use in production, please overwrite all of the default configuration values set in the repository.
+When running in production, you will likely want to manually build and run the two containers.
+Whilst in `docker-compose.yml` the web server is run by Flask (`command: python3 app.py`),
+the default server in the container is `gunicorn` (`CMD ["gunicorn", "app:app"]`).
+
+In addition to using `gunicorn` to serve files and runing the MySQL database separately,
+you will also need to oveerwrit all (or most) of the default configuration values.
 
 ### Environment variables
 
@@ -91,7 +96,7 @@ SQLALCHEMY_DATABASE_URI = "mysql+pymysql://TEST_USER:TEST_PASSWORD@db/DeliverySy
 DDS_SAFE_SPRING_PROJECT = "YOUR-PROJECT-ID"
 ```
 
-### Flash env
+### Flask env
 
 Finally, an environment variable `FLASK_ENV` can be set as either `development` or `production`.
 From the [Flask docs](https://flask.palletsprojects.com/en/2.0.x/config/#environment-and-debug-features):
