@@ -82,6 +82,13 @@ export DDS_MYSQL_USER="your_custom_user"
 export DDS_MYSQL_PASS="your_custom_password"
 ```
 
+If you prefer, you can make a copy of the `.env` file somewhere and make edits there.
+Then use the `--env-file` argument when running `docker-compose`, eg:
+
+```bash
+docker-compose up --env-file ~/my_setup.env
+```
+
 ### Config file
 
 In addition to the above, an environment variable `DDS_APP_CONFIG` can be used.
