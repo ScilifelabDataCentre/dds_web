@@ -66,7 +66,7 @@ Whilst in `docker-compose.yml` the web server is run by Flask (`command: python3
 the default server in the container is `gunicorn` (`CMD ["gunicorn", "app:app"]`).
 
 In addition to using `gunicorn` to serve files and runing the MySQL database separately,
-you will also need to oveerwrit all (or most) of the default configuration values.
+you will also need to overwrite all (or most) of the default configuration values.
 
 ### Environment variables
 
