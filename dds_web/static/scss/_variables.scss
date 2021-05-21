@@ -1,5 +1,12 @@
-// Customize some defaults
+// Global Bootstrap options
+$enable-gradients: true;
+$enable-shadows: true;
+$border-radius: .4rem;
+
+// Colours
 $body-color: #333;
 $body-bg: #fff;
-$border-radius: .4rem;
 $success: #7952b3;
+
+// Specific elements
+$navbar-nav-link-padding-x: 1rem;
