@@ -40,9 +40,24 @@ If using this method, you can stop the web server with the command `docker-compo
 
 The website uses SASS / SCSS for its stylesheets, allowing customisation of Bootstrap styles.
 To manage the CSS and JavaScript packages, we use `npm`.
-To use `npm` you need to have [NodeJS](https://nodejs.org/en/download/) installed.
 
-The first time you run the website, you will need to initialise the required files:
+#### Using Docker
+
+It's complex to be building the CSS dynamically during development from within `docker-compose.yml`,
+but it is possible to use a separate Docker image in another tab.
+
+To make this easy, there is a convenience script in the root folder called `compile_css.sh`.
+Running this will launch `npm` inside a container which will install all packages, compile CSS
+and then watch for any changes to the source SCSS files. Newly compiled files will be created on save.
+When you're done, just `cmd+c` to exit.
+
+Using Docker is the recommended way to do this, as the packages installed will be more consistent.
+
+#### Using `npm`
+
+If you have [NodeJS](https://nodejs.org/en/download/) installed you can just run `npm` locally without Docker.
+
+The first time you run the website, you will need to initialise the required packages and compile the CSS:
 
 ```bash
 cd dds_web/static/
@@ -50,10 +65,11 @@ npm install
 npm run css
 ```
 
-This will fetch all required packages and compile the main website CSS stylesheet.
+To get `npm` to automatically recompile the CSS every time you change something,
+run `npm run watch` in the `static/` folder.
 
-If you are editing any of the SCSS files, you probably want to get `npm` to automatically recompile the CSS every time you change something.
-To do this, run `npm run watch` in the `static/` folder.
+Using Docker is preferred, as the installation may resolve different files with different
+operating systems / node installations. This can lead to large diffs in the `package-lock.json` file.
 
 ### Config settings
 
