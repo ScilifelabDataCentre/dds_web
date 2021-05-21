@@ -9,36 +9,9 @@
     </head>
 
     <body>
-       <nav class="navbar navbar-light bg-light">
-            <!-- Should also add a if g.am_admin here somewhere -->
-            <img class="scilife_logo" src="{{ url_for('static', filename='img/scilifelab_logo.png') }}">
-            <div class="nav_header"> Data Delivery System </div>
-
-           <ul class="nav justify-content-end">
-             <li class="nav-item">
-               <a class="nav-link nav_color" href="{{ url_for('home') }}">Home</a>
-             </li>
-             <li class="nav-item">
-               <a class="nav-link nav_color" href="#">About</a>
-             </li>
-             {% if g.current_user %}
-             <li class="nav-item">
-                 <a class="nav-link nav_color" href="{{ url_for('user.user_page', loginname=g.current_user) }}">{{ g.current_user }}</a>
-             </li>
-             <li class="nav-item">
-               <a class="nav-link nav_color" href="{{ url_for('user.logout') }}">Logout</a>
-             </li>
-             {% else %}
-             <li class="nav-item">
-               <a class="nav-link nav_color" href="{{ url_for('user.login') }}">Login</a>
-             </li>
-             {% endif %}
-           </ul>
-        </nav>
-
-        <br><br>
-        <div class="container" style="background: white;">
-            {% block body %} Will be replaced by other templates {% endblock body %}
+       {% include 'navbar.html' %}
+        <div class="container-fluid">
+          {% block body %}{% endblock body %}
         </div>
 
         <!-- Javascript -->
