@@ -42,7 +42,11 @@ def prepare():
 def create_app():
     """Construct the core application."""
 
-    app.config.from_envvar("DDS_APP_CONFIG")
+    # Defaults
+    app.config.from_object("dds_web.config.Config")
+
+    # User config file, if using in production
+    app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
     # Set logger, to be used in the app
     log_file = os.path.join(app.config.get("LOGS_DIR"), "dds.log")

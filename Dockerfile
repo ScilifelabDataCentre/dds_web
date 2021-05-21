@@ -12,9 +12,10 @@ RUN apt-get install -y gfortran libopenblas-dev liblapack-dev
 RUN pip3 install -r /code/requirements.txt
 
 # Install DDS CLI for web upload
-RUN pip3 install git+https://github.com/ScilifelabDataCentre/DS_CLI.git@master
+### TODO - Replace this with `dds_cli` when published to PyPI
+RUN pip3 install git+https://github.com/ScilifelabDataCentre/dds_cli.git@master
 
-# Install gnuicorn 
+# Install gnuicorn
 RUN pip3 install gunicorn
 
 # Add code directory in pythonpath
