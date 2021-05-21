@@ -1,14 +1,15 @@
-<nav class="bg-light shadow-sm">
-    <div class="container-flex">
+<nav class="bg-light shadow-sm mb-3">
+    <div class="container">
         <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start p-2">
-            <a href="{{ url_for('home') }}" class="navbar-brand d-flex align-items-center my-2 my-lg-0 me-lg-auto ms-3
+            <a href="{{ url_for('home') }}" class="navbar-brand fs-4 d-flex my-2 my-lg-0 me-lg-auto
+                ms-3
                 text-decoration-none">
-                <img src="{{ url_for('static', filename='img/scilifelab_symbol.svg') }}" alt="" height="24"
+                <img src="{{ url_for('static', filename='img/scilifelab_symbol.svg') }}" alt="" style="height: 2rem;"
                     class="d-inline-block align-text-top me-3">
                 SciLifeLab Data Delivery Service
             </a>
 
-            <ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-small text-center">
+            <ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-center">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('home') }}">
                         <i class="far fa-home d-block mx-auto"></i>
@@ -36,7 +37,7 @@
                 </li>
                 {% else %}
                 <li class="nav-item mx-2">
-                    <a class="btn btn-info text-body" href="#">
+                    <a class="btn btn-outline-primary" href="#">
                         <i class="far fa-user-plus d-block mx-auto"></i>
                         Register
                     </a>

@@ -65,7 +65,7 @@ if ($('#user-create-form-container')){
             $('#facilitySwitch').click();
         };
     });
-    
+
     $('#create-user-form').submit(function (e) {
         e.preventDefault();
         formElement = this;
@@ -121,7 +121,7 @@ if ($('#user-create-form-container')){
             }
         });
     });
-    
+
     $('#user-delete-form').submit(function (e) {
         e.preventDefault();
         formElement = this;
@@ -158,7 +158,7 @@ if ($('#user-create-form-container')){
                 $('#response-container').html(eAlert);
             }
         });
-        
+
     });
 };
 
@@ -249,7 +249,7 @@ function getModalHtml(mId) {
 
 /* function to set the modal info */
 function setModalData(mElement, type, head, body, closeButtonDisabled=true,){
-    
+
     if (type == 'progress'){
         mhead = `
                 <h5 class="modal-title">${head}</h5>
