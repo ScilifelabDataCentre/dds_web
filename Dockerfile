@@ -1,16 +1,17 @@
-##########
-# Compile
-##########
-# First - compile the SCSS into static CSS
-FROM node:latest AS compile_css
-COPY . /code
+##############################
+## Compile dist CSS
+##############################
+FROM node:12-alpine AS compile_css
+RUN apk update && apk add python3 make g++
+COPY ./dds_web /code/dds_web
 WORKDIR /code/dds_web/static
-RUN npm install
+RUN npm install -g npm@latest --quiet
+RUN npm install --quiet
 RUN npm run css
 
-#########
-# Run
-#########
+#############################
+## Build main container
+#############################
 
 # Set official image -- parent image
 FROM python:latest

@@ -29,11 +29,10 @@
     "SciLifeLab"
   ],
   "dependencies": {
-    "bootstrap": "^4.6.0",
-    "bootstrap-icons": "^1.4.0",
+    "bootstrap": "^5.0.1",
+    "@popperjs/core": "^2.9.2",
     "datatables.net": "^1.10.24",
-    "jquery": "^3.6.0",
-    "popper.js": "^1.16.1"
+    "jquery": "^3.6.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.2.5",
