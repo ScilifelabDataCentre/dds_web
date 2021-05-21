@@ -79,6 +79,12 @@ These values are publicly visible on GitHub and **should not be used in producti
 At the time of writing, much of the functionality will not work with the defaults.
 Please see the _Production_ section below for how to set what you need.
 
+### Setting up users
+
+When you first initialise the database, a user with admin privileges will be automatically created.
+You can log in with the username `admin` and the password `password`.
+Once logged in, you can create user accounts and start to use the system.
+
 ### Database changes
 
 If the database is modified, you will need to rebuild the containers from scratch.

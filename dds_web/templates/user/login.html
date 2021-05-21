@@ -3,6 +3,14 @@
         <div class="card bg-light border-0 mx-auto mt-5" style="max-width:30rem;">
             <h2 class="card-header border-0 py-3 text-center">Log In</h2>
             <div class="card-body">
+                {% if login_error_message %}
+                    <div class="alert alert-danger" role="alert">
+                        <p class="lead">
+                            <i class="far fa-exclamation-triangle"></i> Oops! Something went wrong.</strong>
+                        </p>
+                        <p class="mb-0">{{ login_error_message }}</p>
+                    </div>
+                {% endif %}
                 <form method="POST" action="{{ url_for('user.login') }}" class="mt-2">
                     <div class="input-group mb-3">
                         <span class="input-group-text bg-success"><i class="fas fa-user"></i></span>
@@ -15,17 +23,10 @@
                     {% if next %}
                       <input type="hidden" name="next" value="{{ next }}">
                     {% endif %}
-                    {% if login_error_message %}
-                    <div class="error_msg">
-                        <p>{{ login_error_message }}</p>
-                    </div>
-                    {% endif %}
                     <button type="submit" class="btn btn-success w-100">Log In</button>
                 </form>
                 <hr class="text-muted">
-                <p class="text-center mb-1 small"><a class="text-muted text-decoration-none" href="#">Register</a></p>
                 <p class="text-center mb-1 small"><a class="text-muted text-decoration-none" href="#">Forgot your password?</a></p>
-                {# <!-- <div class="col-6 text-start"><a href="{{ url_for('user.signup') }}">Register</a></div>  --> #}
             </div>
         </div>
 {% endblock body %}
