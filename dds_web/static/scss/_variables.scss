@@ -25,3 +25,8 @@ $font-family-sans-serif:
 
 // Specific elements
 $navbar-nav-link-padding-x: 1rem;
+$form-floating-label-opacity: .4;
+
+.form-floating > label {
+  opacity: .65;
+}

@@ -1,140 +1,192 @@
 {% extends "base.html" %}
 {% block body %}
-<h1>Admin Dashboard</h1>
-<div id="response-container"></div>
-
-<button type="button" class="btn btn-info btn-block"
-    data-toggle="collapse" data-target="#user-create-form-container"
-    aria-expanded="false" aria-controls="user-create-form-container">
+<button type="button" class="btn btn-primary float-end mt-2" data-bs-toggle="modal" data-bs-target="#newuser_modal">
     Create user
 </button>
+<h1>Admin Dashboard</h1>
+<div id="response-container" class="alert alert-dismissible fade show my-4 d-none">
+    <span></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
 
-<div class="collapse show" id="user-create-form-container">
-    <div class="card card-body">
-        <div class="d-flex justify-content-center h-100">
-            <div class="panel">
-                <div class="panel-body">
-                    <br>
-                    <div class="container">
-                        <form method="POST" action="{{ url_for('admin.admin_page') }}" id="create-user-form">
-                            <input type="hidden" name="task" value="create">
-                            <div class="row justify-content-md-center">
-                                <div class="col-4 custom-control custom-switch">
-                                    <span style="padding-left:35px;"></span>
-                                    <input class="custom-control-input" id="adminSwitch" name="is_admin"
-                                        type="checkbox">
-                                    <label class="custom-control-label" for="adminSwitch">Admin</label>
-                                </div>
-                                <div class="col-3 custom-control custom-switch">
-                                    <span style="padding-left:35px;"></span>
-                                    <input class="custom-control-input" id="facilitySwitch" name="is_facility"
-                                        type="checkbox"
-                                        data-toggle="collapse" data-target="#facilityExtraData">
-                                    <label class="custom-control-label" for="facilitySwitch">Facility</label>
-                                </div>
-                            </div>
-                            <br>
-                            <div class="row justify-content-md-center">
-                                <div class="col-10 input-group form-group">
-                                    <input type="text" class="form-control" name="username" placeholder="Username"
-                                        required>
-                                </div>
-                            </div>
-                            <div class="row justify-content-md-center">
-                                <div class="col-10 input-group form-group">
-                                    <input type="text" class="form-control" name="password" placeholder="Password"
-                                        required>
-                                </div>
-                            </div>
-                            <div id="facilityExtraData" class="collapse">
-                                <div class="row justify-content-md-center">
-                                    <div class="col-10 input-group form-group">
-                                        <input type="text" class="form-control" name="facility_name"
-                                            placeholder="Facility name">
-                                    </div>
-                                </div>
-                                <div class="row justify-content-md-center">
-                                    <div class="col-10 input-group form-group">
-                                        <input type="text" class="form-control" name="facility_ref"
-                                            placeholder="Facility internal ref">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group d-flex justify-content-center">
-                                <input type="submit" value="create" class="btn btn-md btn-info">
-                            </div>
-                        </form>
+<!-- Create User Modal -->
+<div class="modal fade" id="newuser_modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create new user</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="create-user-form" class="needs-validation" novalidate>
+                    <input type="hidden" name="task" value="create">
+                    <div class="mb-3" id="newuser_type_radio_group">
+                        <span class="me-4">User type:</span>
+                        <div class="form-check form-check-inline me-4">
+                            <input class="form-check-input" type="radio" name="userType" value="user"
+                                id="newuser_type_user" checked>
+                            <label class="form-check-label" for="newuser_type_user">User</label>
+                        </div>
+                        <div class="form-check form-check-inline me-4">
+                            <input class="form-check-input" type="radio" name="userType" value="facility"
+                                id="newuser_type_facility">
+                            <label class="form-check-label" for="newuser_type_facility">Facility</label>
+                        </div>
+                        <div class="form-check form-check-inline me-4">
+                            <input class="form-check-input" type="radio" name="userType" value="admin"
+                                id="newuser_type_admin">
+                            <label class="form-check-label" for="newuser_type_admin">Admin</label>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<br>
-
-<button type="button" class="btn btn-primary btn-block"
-    data-toggle="collapse" data-target="#accounts-list"
-    aria-expanded="false" aria-controls="accounts-list">
-    List accounts
-</button>
-
-<div class="collapse show" id="accounts-list">
-    <div class="card card-body">
-        <div class="row">
-            <div class="col px-lg-5" style="padding-left:">
-                <p>Users:</p>
-                <ol id="user-list">
-                    {% for user in users %}
-                    <li id="{{ user.username }}">{{ user.username }}</li>
-                    {% endfor %}
-                </ol>
-            </div>
-            <div class="col px-lg-5">
-                <p>Facilities:</p>
-                <ol id="facility-list">
-                    {% for fac in facilities %}
-                    <li id="{{ fac.username }}">{{ fac.username }}</li>
-                    {% endfor %}
-                </ol>
-            </div>
-        </div>
-    </div>
-</div>
-
-<br>
-
-<button type="button" class="btn btn-danger btn-block"
-    data-toggle="collapse" data-target="#user-delete-form-container"
-    aria-expanded="false" aria-controls="user-delete-form-container">
-    Delete user
-</button>
-
-<div class="collapse" id="user-delete-form-container">
-    <div class="card card-body">
-        <div class="d-flex justify-content-center h-100">
-            <div class="panel">
-                <div class="panel-body">
-                    <div class="container">
-                        <br>
-                        <form method="POST" action="{{ url_for('admin.admin_page') }}" id="user-delete-form">
-                            <input type="hidden" name="task" value="delete">
-                            <div class="row justify-content-md-center">
-                                <div class="col-7 input-group form-group">
-                                    <input type="text" class="form-control" name="account_name"
-                                        placeholder="Username of account" required>
-                                </div>
-                                <div class="col-3 input-group form-group">
-                                    <div class="form-group d-flex justify-content-center">
-                                        <input type="submit" value="delete" class="btn btn-md btn-danger">
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="username" id="newuser_username"
+                            placeholder="Username" required>
+                        <label for="newuser_username">Username</label>
                     </div>
-                </div>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" name="password" id="newuser_password"
+                            placeholder="Password"
+                            required>
+                        <label for="newuser_password">Password</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="facility_name" id="newuser_facility_name"
+                            placeholder="Facility
+                            Name" disabled>
+                        <label for="newuser_facility_name">Facility Name</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="facility_ref" id="newuser_facility_ref"
+                            placeholder="Facility
+                            internal ref" disabled>
+                        <label for="newuser_facility_ref">Facility internal ref</label>
+                    </div>
+                    <button id="newuser_submit" type="submit" class="btn btn-primary w-100 mb-3">Create user</button>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
+
+<table id="users-table" class="table table-striped table-hover datatable">
+    <thead class="thead-light">
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Facility</th>
+            <th>Admin</th>
+            <th>Facility name</th>
+            <th>Facility reference</th>
+            <th>Public ID</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users + facilities %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ 'Yes' if user.internal_ref }}</td>
+            <td>{{ 'Yes' if user.admin else '' }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.internal_ref }}</td>
+            <td><code class="text-muted">{{ user.public_id }}</code></td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger btn-delete-user" data-target="{{ user.username }}">
+                    <i lass="far fa-user-slash me-1"></i> Delete
+                </button></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock body %}
+
+{% block javascript %}
+<script type="text/javascript">
+$(function() {
+    // Create user - enable facility fields when a facility user
+    $('#newuser_type_radio_group input').change(function(){
+        if($(this).val() == 'facility'){
+            $('#newuser_facility_name').prop('disabled', false).prop('required', true);
+            $('#newuser_facility_ref').prop('disabled', false).prop('required', true);
+        } else {
+            $('#newuser_facility_name').prop('disabled', true).prop('required', false);
+            $('#newuser_facility_ref').prop('disabled', true).prop('required', false);
+        }
+    });
+});
+
+
+    $('#create-user-form').submit(function (e) {
+
+        // Stop regular form submission
+        e.preventDefault();
+
+        // Check if the central form validation function passed
+        if($(this).hasClass('failed-validation')){
+            return;
+        }
+
+        $('#newuser_submit').prop('disabled', true);
+
+        // Send the form data via AJAX
+        $.post("{{ url_for('admin.admin_page') }}", $(this).serialize(), function(data){
+
+            // Show the success message
+            $('#response-container').addClass('alert-success').removeClass('d-none alert-danger');
+            $('#response-container span').html('<strong>Success!</strong> '+data.message + '<br><small>Reload the page to see in the table.</small>');
+
+            // Trigger a download of a credentials file for the user
+            username = $('#newuser_username').val();
+            jObj = { username: username, password: $('#newuser_password').val() };
+            config = new Blob([JSON.stringify(jObj, null, 4)], {type: 'text/json'});
+            configUrl = URL.createObjectURL(config);
+            link = document.createElement("a");
+            link.href = configUrl;
+            link.download = `${username}-config.json`;
+            link.click();
+
+            // Hide the modal and reset the form
+            $('#newuser_modal').modal('hide');
+            $(this).trigger("reset");
+            $('#newuser_submit').prop('disabled', false);
+
+        }).fail(function(data){
+
+            // Show an error message
+            $('#response-container').addClass('alert-danger').removeClass('d-none alert-success');
+            $('#response-container span').html('<strong>Error!</strong> '+data.responseJSON.message);
+
+            // Hide the modal, do not reset the form
+            $('#newuser_modal').modal('hide');
+            $('#newuser_submit').prop('disabled', false);
+        });
+
+    });
+
+    $('#users-table tbody').on('click', '.btn-delete-user', function(e){
+        var account_name = $(this).data('target');
+        var usersTable = $('#users-table').DataTable();
+        var tableRow = $(this).closest('tr');
+        if(!confirm("Really delete user '"+account_name+"'?")){
+            return false;
+        }
+        $.post("{{ url_for('admin.admin_page') }}", {'task': 'delete', 'account_name': account_name}, function(data){
+
+            // Show the success message
+            $('#response-container').addClass('alert-success').removeClass('d-none alert-danger');
+            $('#response-container span').html('<strong>Success!</strong> '+data.message);
+
+            // Delete the table row
+            usersTable.row(tableRow).remove().draw();
+
+        }).fail(function(data){
+            // Show an error message
+            $('#response-container').addClass('alert-danger').removeClass('d-none alert-success');
+            $('#response-container span').html('<strong>Error!</strong> '+data.responseJSON.message);
+        });
+    });
+
+</script>
+{% endblock javascript %}

@@ -1,5 +1,27 @@
+// Validate form submissions nicely, using Bootstrap 5 validation classes.
+(function () {
+  'use strict'
+
+  // Fetch all the forms we want to apply custom Bootstrap validation styles to
+  var forms = document.querySelectorAll('.needs-validation')
+
+  // Loop over them and prevent submission
+  Array.prototype.slice.call(forms)
+    .forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            form.classList.remove("failed-validation")
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+                form.classList.add("failed-validation")
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+
 /* Make project table sortable */
-$('#sortTable').DataTable({ searching: false, info: false });
+$('.datatable').DataTable();
 
 /* Submit upload by ajax so can have progress bar */
 $('#data-upload-form').submit(function (e) {
@@ -45,123 +67,6 @@ if (($('#download-button').length)){
         submitDownloadForm(file, projectID, actionURL);
     });
 };
-
-/* admin page related stuff */
-if ($('#user-create-form-container')){
-    $('#facilitySwitch').click(function(e){
-        if ($(this).prop('checked')){
-            if ($('#adminSwitch').prop('checked')){
-                $('#adminSwitch').click();
-            };
-            $('input[name="facility_name"]').prop("required", true);
-            $('input[name="facility_ref"]').prop("required", true);
-        } else {
-            $('input[name="facility_name"]').prop("required", false);
-            $('input[name="facility_ref"]').prop("required", false);
-        };
-    });
-    $('#adminSwitch').click(function(e){
-        if ($(this).prop('checked') && $('#facilitySwitch').prop('checked')){
-            $('#facilitySwitch').click();
-        };
-    });
-
-    $('#create-user-form').submit(function (e) {
-        e.preventDefault();
-        formElement = this;
-        actionUrl = $(this).attr('action');
-        requestMethod = $(this).attr('method');
-        dataFromForm = new FormData(this);
-        $.ajax({
-            url: actionUrl,
-            method: requestMethod,
-            data: dataFromForm,
-            processData: false,
-            contentType: false,
-            // function to execute on success
-            success: function(resp){
-                user = $(formElement).find('input[name="username"]').prop("value");
-                pass = $(formElement).find('input[name="password"]').prop("value");
-                jObj = { username: user, password: pass };
-                config = new Blob([JSON.stringify(jObj, null, 4)], {type: 'text/json'});
-                configUrl = URL.createObjectURL(config);
-                link = document.createElement("a");
-                link.href = configUrl;
-                link.download = `${user}-config.json`;
-                link.click();
-                sAlert = `
-                    <div class="alert alert-success alert-dismissible fade show">
-                        <strong>Success!</strong> Created account for '${user}'
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    </div>
-                `;
-                if ($('input[name="is_facility"]').prop('checked')){
-                    $('ol#facility-list').append(`<li id="${user}">${user}</li>`);
-                } else {
-                    $('ol#user-list').append(`<li id="${user}">${user}</li>`);
-                };
-                formElement.reset();
-                if ($('#facilityExtraData').hasClass('show')){
-                    $('#facilityExtraData').toggleClass('show');
-                    $('input[name="facility_name"]').prop("required", false);
-                    $('input[name="facility_ref"]').prop("required", false);
-                };
-                $('#response-container').html(sAlert);
-            },
-            // function to execute on failure
-            error: function(err){
-                eMsg = err.responseJSON.message;
-                eAlert =`
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        <strong>Failed!</strong> ${eMsg}
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    </div>
-                `;
-                $('#response-container').html(eAlert);
-            }
-        });
-    });
-
-    $('#user-delete-form').submit(function (e) {
-        e.preventDefault();
-        formElement = this;
-        actionUrl = $(this).attr('action');
-        requestMethod = $(this).attr('method');
-        dataFromForm = new FormData(this);
-        $.ajax({
-            url: actionUrl,
-            method: requestMethod,
-            data: dataFromForm,
-            processData: false,
-            contentType: false,
-            // function to execute on success
-            success: function(resp){
-                user = $(formElement).find('input[name="account_name"]').prop("value");
-                sAlert = `
-                    <div class="alert alert-success alert-dismissible fade show">
-                        <strong>Success!</strong> Deleted account for '${user}'
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    </div>
-                `;
-                $(`li#${user}`).remove();
-                formElement.reset();
-                $('#response-container').html(sAlert);
-            },
-            error: function(err){
-                eMsg = err.responseJSON.message;
-                eAlert =`
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        <strong>Failed!</strong> ${eMsg}
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    </div>
-                `;
-                $('#response-container').html(eAlert);
-            }
-        });
-
-    });
-};
-
 
 /* trail download by ajax, not implemented yet */
 $('#download-butt').click(function(e) {

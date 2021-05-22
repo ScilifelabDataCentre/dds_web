@@ -3,6 +3,8 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- TODO - bs5 version not yet on npm. When it is, install as an npm package. -->
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap5.min.css">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
         <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.png') }}" type="png">
         <title>Data Delivery System</title>
@@ -23,5 +25,6 @@
         <!-- We could use FontAwesome through npm, but then we need configure secrets to access the Pro kit which is a hassle -->
         <script src="https://kit.fontawesome.com/8cd1f5d753.js" crossorigin="anonymous"></script>
         <script src="{{ url_for('static', filename='js/dds.js') }}"></script>
+        {% block javascript %}{% endblock javascript %}
     </body>
 </html>
