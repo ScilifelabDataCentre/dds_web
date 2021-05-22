@@ -1,15 +1,13 @@
 <nav class="bg-light shadow-sm mb-3">
     <div class="container">
         <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start p-2">
-            <a href="{{ url_for('home') }}" class="navbar-brand fs-4 d-flex my-2 my-lg-0 me-lg-auto
-                ms-3
-                text-decoration-none">
+            <a href="{{ url_for('home') }}" class="navbar-brand fs-4 d-flex my-2 my-lg-0 me-lg-auto">
                 <img src="{{ url_for('static', filename='img/scilifelab_symbol.svg') }}" alt="" style="height: 2rem;"
                     class="d-inline-block align-text-top me-3">
                 SciLifeLab Data Delivery Service
             </a>
 
-            <ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-center">
+            <ul class="nav col-12 col-lg-auto my-2 my-md-0 justify-content-center text-center">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('home') }}">
                         <i class="far fa-home d-block mx-auto"></i>

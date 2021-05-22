@@ -3,10 +3,9 @@
 {% block body %}
 
 {% if g.is_facility %}
-<div class="right-button-container">
-    <a class="btn btn-primary" href="{{ url_for('project.add_project') }}" role="button">Add Project</a>
-</div>
+<a class="btn btn-primary float-end my-3" href="{{ url_for('project.add_project') }}" role="button">Add Project</a>
 {% endif %}
+<h1 class="mb-4">Your Projects</h1>
 
 <table class="table table-striped datatable">
     <thead class="thead-light">
