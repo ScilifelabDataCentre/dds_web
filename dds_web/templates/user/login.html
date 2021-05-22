@@ -14,18 +14,29 @@
         <form method="POST" action="{{ url_for('user.login') }}" class="mt-2">
             <div class="input-group mb-3">
                 <span class="input-group-text bg-success"><i class="fas fa-user"></i></span>
-                <input type="text" class="form-control" name="username" placeholder="Username">
+                <div class="col">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Username">
+                        <label for="username">Username</label>
+                    </div>
+                </div>
             </div>
             <div class="input-group mb-3">
                 <span class="input-group-text bg-success"><i class="fas fa-key"></i></span>
-                <input type="password" class="form-control" name="password" placeholder="Password">
+                <div class="col">
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+                        <label for="password">Password</label>
+                    </div>
+                </div>
             </div>
             {% if next %}
                 <input type="hidden" name="next" value="{{ next }}">
             {% endif %}
-            <button type="submit" class="btn btn-success w-100">Log In</button>
+            <button type="submit" class="btn btn-success w-100 mb-2">Log In</button>
         </form>
-        <hr class="text-muted">
+    </div>
+    <div class="card-footer border-top-0 text-muted">
         <p class="text-center mb-1 small"><a class="text-muted text-decoration-none" href="#">Forgot your password?</a></p>
     </div>
 </div>
