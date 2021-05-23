@@ -3,7 +3,9 @@
 {% block body %}
 
 {% if g.is_facility %}
-<a class="btn btn-primary float-end my-3" href="{{ url_for('project.add_project') }}" role="button">Add Project</a>
+<button type="button" class="btn btn-primary float-end my-3" data-bs-toggle="modal" data-bs-target="#addProject_modal">
+    Add Project
+</button>
 {% endif %}
 <h1 class="mb-4">Your Projects</h1>
 
@@ -23,7 +25,8 @@
     <tbody>
         {% for project in projects_list %}
         <tr>
-            <td><a href="{{ url_for('project.project_info', project_id=project['id']) }}">{{ project['id'] }}</a></td>
+            <td><a href="{{ url_for('project.project_info', project_id=project['id']) }}" class="font-monospace small">{{
+                    project['id'] }}</a></td>
             <td>{{ project['title'] }}</td>
             <td>{{ project['category'] }}</td>
             {% if not g.is_facility %}
@@ -35,5 +38,39 @@
         {% endfor %}
     </tbody>
 </table>
+
+{% if g.is_facility %}
+<!-- Add Project Modal -->
+<div class="modal fade" id="addProject_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Add Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('project.add_project') }}">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="owner" id="addProject_owner"
+                            placeholder="Project owner (data recipient)">
+                        <label for="addProject_owner">Project owner (data recipient)</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="title" id="addProject_title"
+                            placeholder="Project title">
+                        <label for="addProject_title">Project title</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" name="description" id="addProject_description"
+                            placeholder="Project description text" style="height: 100px"></textarea>
+                        <label for="addProject_description">Project description text</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Create Project</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}

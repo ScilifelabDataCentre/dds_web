@@ -4,10 +4,22 @@
 {% if g.current_user_id in [project['owner'], project['facility']] %}
 
 {% if g.is_facility %}
+<div class="dropdown float-end my-3">
+    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown"
+        aria-expanded="false">
+        Add data (TODO - fix)
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="#">Upload Files</a></li>
+        <li><a class="dropdown-item" href="#">Upload Folder</a></li>
+    </ul>
+</div>
+
+{#
 <div id="data-adder" class="btn-group right-button-container">
     <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
         aria-expanded="false">
-        Add data
+        TODO - Button needs replacing
     </button>
     <div class="dropdown-menu">
         <form id="data-upload-form" method="POST" enctype="multipart/form-data" , action="{{
@@ -23,54 +35,51 @@
         </form>
     </div>
 </div>
-<br><br><br>
+#}
 {% endif %}
 
-<div id="project-info">
-    <h2 class="underlined tcenter">{{ project['title'] }}</h2>
-    <br>
-    <table class="table table-bordered">
-        <thead>
-            <th colspan="2" class="tcenter">Project Info</th>
-        </thead>
-        <tbody>
-            <tr>
-                <th>Description</th>
-                <td>{{ project['description'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Category</th>
-                <td>{{ project['category'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Owner</th>
-                <td>{{ project['owner'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Facility</th>
-                <td>{{ project['facility_name'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Status</th>
-                <td>{{ project['status'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Creation date</th>
-                <td>{{ project['date_created'] }}</td>
-            </tr>
-            {% if project['date_updated'] %}
-            <tr>
-                <th scope="row">Delivery date</th>
-                <td>{{ project['date_updated'] }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Data size</th>
-                <td>{{ project['size'] }}</td>
-            </tr>
-            {% endif %}
-        </tbody>
-    </table>
-</div>
+<h1 class="mb-4">{{ project['title'] }}</h1>
+
+
+<table class="table table-hover">
+    <tbody>
+        <tr>
+            <th>Description</th>
+            <td>{{ project['description'] }}</td>
+        </tr>
+        <tr>
+            <th>Category</th>
+            <td>{{ project['category'] }}</td>
+        </tr>
+        <tr>
+            <th>Owner</th>
+            <td><code>{{ project['owner'] }}</code></td>
+        </tr>
+        <tr>
+            <th>Facility</th>
+            <td>{{ project['facility_name'] }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td>{{ project['status'] }}</td>
+        </tr>
+        <tr>
+            <th>Creation date</th>
+            <td>{{ project['date_created'] }}</td>
+        </tr>
+        {% if project['date_updated'] %}
+        <tr>
+            <th>Delivery date</th>
+            <td>{{ project['date_updated'] }}</td>
+        </tr>
+        <tr>
+            <th>Data size</th>
+            <td>{{ project['size'] }}</td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
 
 {% if uploaded_data %}
 <br><br>
