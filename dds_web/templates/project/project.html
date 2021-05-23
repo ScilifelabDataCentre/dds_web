@@ -3,41 +3,6 @@
 {% block body %}
 {% if g.current_user_id in [project['owner'], project['facility']] %}
 
-{% if g.is_facility %}
-<div class="dropdown float-end my-3">
-    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown"
-        aria-expanded="false">
-        Add data (TODO - fix)
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="#">Upload Files</a></li>
-        <li><a class="dropdown-item" href="#">Upload Folder</a></li>
-    </ul>
-</div>
-
-{#
-<div id="data-adder" class="btn-group right-button-container">
-    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
-        aria-expanded="false">
-        TODO - Button needs replacing
-    </button>
-    <div class="dropdown-menu">
-        <form id="data-upload-form" method="POST" enctype="multipart/form-data" , action="{{
-            url_for('project.data_upload') }}" autocomplete="off">
-            <input type="hidden" name="project_id" value="{{ project['id'] }}">
-            <input type="hidden" name="upload_limit" value="{{ format_size(upload_limit) }}">
-            <input type="file" id="file-uploader" name="files" onchange="$(this).closest('form').submit()" hidden
-                multiple/>
-            <label class="dropdown-item" for="file-uploader">Upload Files</label>
-            <input type="file" id="folder-uploader" name="folder" onchange="$(this).closest('form').submit()" hidden
-                multiple webkitdirectory mozdirectory/>
-            <label class="dropdown-item" for="folder-uploader">Upload Folder</label>
-        </form>
-    </div>
-</div>
-#}
-{% endif %}
-
 <h1 class="mb-4">{{ project['title'] }}</h1>
 
 
@@ -80,18 +45,37 @@
     </tbody>
 </table>
 
+{% if g.is_facility %}
+
+<form id="data-upload-form" method="POST" enctype="multipart/form-data" action="{{ url_for('project.data_upload') }}"
+    autocomplete="off">
+    <input type="hidden" name="project_id" value="{{ project['id'] }}">
+    <input type="hidden" name="upload_limit" value="{{ format_size(upload_limit) }}">
+    <div class="mb-3">
+        <label class="form-label" for="file-uploader">Upload Files</label>
+        <input class="form-control" type="file" id="file-uploader" name="files"
+            onchange="$(this).closest('form').submit()" multiple>
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="folder-uploader">Upload Folder</label>
+        <input class="form-control" type="file" id="folder-uploader" name="folder" multiple webkitdirectory mozdirectory
+            onchange="$(this).closest('form').submit()">
+    </div>
+</form>
+{% endif %}
+
 
 {% if uploaded_data %}
-<br><br>
 {% if not g.is_facility %}
 <div id="download-form-container" class="right-button-container hovertip">
     <!--input class="btn btn-primary btn-custom" type="button" value="Ajax Download" id="download-button"
                        data-project_id="{{ project['id'] }}" data-action="{{ url_for('project.data_download') }}">
                        <br> <br-->
-    <form id="data-download-form" method="POST" enctype="multipart/form-data" , action="{{
-        url_for('project.data_download') }}" autocomplete="off">
+    <form id="data-download-form" method="POST" enctype="multipart/form-data" autocomplete="off"
+        action="{{ url_for('project.data_download') }}">
         <input type="hidden" name="project_id" value="{{ project['id'] }}">
         <input type="hidden" name="download_limit" value="{{ download_limit }}">
+
         {% if project['unformated_size'] > download_limit %}
         <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button" disabled>
         <span class="hovertiptext hovertiptext-download">Project size higher than WEB download threshold ({{
@@ -104,7 +88,7 @@
 </div>
 <br>
 {% endif %}
-<h5 class="underlined tcenter">Files Uploaded</h5>
+<h2>Files Uploaded</h2>
 <br>
 <div id="uploaded-file-list">
     {{ uploaded_data|safe }}
