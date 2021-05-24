@@ -157,6 +157,7 @@ def data_upload():
             out, err = proc.communicate(input=None)
 
         if proc.returncode == 0:
+            current_app.logger.info(out)
             status, message = (200, "Data successfully uploaded to S3")
             try:
                 shutil.rmtree(upload_space)
