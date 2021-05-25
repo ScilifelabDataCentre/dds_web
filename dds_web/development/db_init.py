@@ -98,7 +98,7 @@ def fill_db():
             description="This is a test project",
             pi="PI",
             size=7357,
-            bucket=f"public_project_id-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            bucket=f"publicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
             public_key="08D0D813DD7DD2541DF58A7E5AB651D20299F741732B0DC8B297A2D4CB43626C",
             private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
             privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",

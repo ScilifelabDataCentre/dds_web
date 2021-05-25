@@ -83,7 +83,7 @@ def validate_user_credentials(username, password):
     if uaccount.role == "facility":
         try:
             facility_info = models.Facility.query.filter(
-                models.Facility.id == func.binary(uaccount.facility_id)
+                models.Facility.public_id == func.binary(uaccount.facility_id)
             ).first()
         except SQLAlchemyError as e:
             return (False, None, "No facility found.", None)
