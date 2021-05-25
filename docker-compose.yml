@@ -39,7 +39,6 @@ services:
     environment:
       - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
       - FLASK_ENV=development
-      - FLASK_DEBUG=1
       - DDS_CLI_ENV=development
     depends_on:
       db:
