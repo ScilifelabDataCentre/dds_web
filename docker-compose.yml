@@ -36,6 +36,10 @@ services:
     image: dds-backend-local:latest
     build: ./
     command: python3 app.py
+    environment:
+      - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
+      - FLASK_ENV
+      - DDS_CLI_ENV
     depends_on:
       db:
         condition: service_healthy
