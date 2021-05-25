@@ -15,4 +15,4 @@ demo
 passphrase*
 **/*DataDelivery*
 **/docker-compose*.yml
-DS_CLI
+**/run_dir
