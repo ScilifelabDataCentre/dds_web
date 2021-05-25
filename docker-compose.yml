@@ -20,6 +20,17 @@ services:
       timeout: 5s
       retries: 5
 
+  # Development service to watch for changes to SCSS files and recompile static CSS
+  node_builder:
+    container_name: dds_nodebuilder
+    build:
+      dockerfile: compile_css.Dockerfile
+      context: ./
+    volumes:
+      - type: bind
+        source: ./dds_web/static/
+        target: /build
+
   backend:
     container_name: dds_backend
     image: dds-backend-local:latest
