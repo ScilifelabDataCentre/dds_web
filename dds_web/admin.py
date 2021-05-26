@@ -36,6 +36,8 @@ def admin_page():
 
     elif request.method == "POST":
         task = request.form.get("task")
+
+        # Delete a user
         if task == "delete":
             account_name = request.form.get("account_name")
             user_role = models.Role.query.filter_by(username=account_name).one_or_none()
@@ -73,6 +75,7 @@ def admin_page():
                 200,
             )
 
+        # Add a user
         username = request.form.get("username", "")
         password = request.form.get("password", "")
         is_admin = request.form.get("userType", "") == "admin"
@@ -102,27 +105,41 @@ def admin_page():
             if not field_uniq(facility_ref, "internal_ref"):
                 return make_response(jsonify({"status": 400, "message": "Facility internal ref already exists"}), 400)
 
+            public_id = genarate_public_id("Facility")
             acc_obj = models.Facility(
                 username=username,
                 password=gen_argon2hash(password),
-                public_id=genarate_public_id("Facility"),
+                public_id=public_id,
                 name=facility_name,
                 internal_ref=facility_ref,
                 safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
             )
         else:
+            public_id = genarate_public_id("User")
             acc_obj = models.User(
                 username=username,
                 password=gen_argon2hash(password),
                 admin=is_admin,
-                public_id=genarate_public_id("User"),
+                public_id=public_id,
             )
         role_obj = models.Role(username=username, facility=is_facility)
 
         db.session.add_all([acc_obj, role_obj])
         db.session.commit()
         return make_response(
-            jsonify({"status": 200, "message": "Successfully added user '{}'".format(username)}),
+            jsonify(
+                {
+                    "status": 200,
+                    "message": "Successfully added user '{}'".format(username),
+                    "user": {
+                        "username": username,
+                        "public_id": public_id,
+                        "admin": is_admin,
+                        "facility_name": facility_name,
+                        "facility_ref": facility_ref,
+                    },
+                }
+            ),
             200,
         )
 
