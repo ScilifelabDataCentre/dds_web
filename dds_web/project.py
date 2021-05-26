@@ -36,34 +36,34 @@ project_blueprint = Blueprint("project", __name__)
 @login_required
 def add_project():
     """Add new project to the database"""
-    if request.method == "GET":
-        return render_template("project/add_project.html")
     if request.method == "POST":
         # Check no empty field from form
         for k in ["title", "owner", "description"]:
             if not request.form.get(k):
-                return render_template(
-                    "project/add_project.html",
-                    error_message="Field '{}' should not be empty".format(k),
-                )
+                return make_response(jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440)
 
         # Check if the user actually exists
         if request.form.get("owner") not in db_utils.get_full_column_from_table(
             table="User", column="username"
         ) or db_utils.get_user_column_by_username(request.form.get("owner"), "admin"):
-            return render_template(
-                "project/add_project.html",
-                error_message="Given username '{}' does not exist".format(
-                    request.form.get("owner")
-                ),
-            )
+            e_msg = "Given username '{}' does not exist".format(request.form.get("owner"))
+            return make_response(jsonify({"status": 440, "message": e_msg}), 440)
 
         project_inst = create_project_instance(request.form)
         # TO DO : This part should be moved elsewhere to dedicated DB handling script
         new_project = models.Project(**project_inst.project_info)
         db.session.add(new_project)
         db.session.commit()
-        return redirect(url_for("project.project_info", project_id=new_project.id))
+        return make_response(
+            jsonify(
+                {
+                    "status": 200,
+                    "message": "Added new project '{}'".format(request.form.get("title")),
+                    "project_id": new_project.id,
+                }
+            ),
+            200,
+        )
 
 
 @project_blueprint.route("/<project_id>", methods=["GET"])
@@ -80,9 +80,7 @@ def project_info(project_id=None):
     if project_info.get("size"):
         project_info["unformated_size"] = project_info["size"]
         project_info["size"] = format_byte_size(project_info["size"])
-    project_info["facility_name"] = db_utils.get_facility_column(
-        fid=project_info["facility"], column="name"
-    )
+    project_info["facility_name"] = db_utils.get_facility_column(fid=project_info["facility"], column="name")
     files_list = models.File.query.filter_by(project_id=project_id).all()
     if files_list:
         uploaded_data = folder(files_list).generate_html_string()
@@ -92,7 +90,7 @@ def project_info(project_id=None):
         "project/project.html",
         project=project_info,
         uploaded_data=uploaded_data,
-        upload_limit=current_app.config.get('MAX_CONTENT_LENGTH'),
+        upload_limit=current_app.config.get("MAX_CONTENT_LENGTH"),
         download_limit=current_app.config.get("MAX_DOWNLOAD_LIMIT"),
         format_size=format_byte_size,
     )
@@ -102,9 +100,7 @@ def project_info(project_id=None):
 @login_required
 def data_upload():
     project_id = request.form.get("project_id", None)
-    in_files = validate_file_list(request.files.getlist("files")) or validate_file_list(
-        request.files.getlist("folder")
-    )
+    in_files = validate_file_list(request.files.getlist("files")) or validate_file_list(request.files.getlist("folder"))
     upload_space = os.path.join(
         current_app.config["UPLOAD_FOLDER"],
         "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")),
@@ -130,11 +126,7 @@ def data_upload():
                 in_file.save(os.path.join(file_target_path, filename))
 
             with open("data_to_upload.txt", "w") as dfl:
-                dfl.write(
-                    "\n".join(
-                        [os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)]
-                    )
-                )
+                dfl.write("\n".join([os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)]))
 
             proc = subprocess.Popen(
                 [
@@ -250,12 +242,8 @@ class create_project_instance(object):
         self.project_info.update(pkg.get_key_info_dict())
 
     def get_new_id(self, id=None):
-        facility_ref = db_utils.get_facility_column(
-            fid=session.get("current_user_id"), column="internal_ref"
-        )
-        facility_prjs = db_utils.get_facilty_projects(
-            fid=session.get("current_user_id"), only_id=True
-        )
+        facility_ref = db_utils.get_facility_column(fid=session.get("current_user_id"), column="internal_ref")
+        facility_prjs = db_utils.get_facilty_projects(fid=session.get("current_user_id"), only_id=True)
         return "{}{:03d}".format(facility_ref, len(facility_prjs) + 1)
 
     def __is_column_value_uniq(self, table, column, value):

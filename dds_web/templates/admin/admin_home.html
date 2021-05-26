@@ -18,7 +18,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form method="POST" id="create-user-form" class="needs-validation" novalidate>
+                <form method="POST" id="create-user-form" action="{{ url_for('admin.admin_page') }}"
+                    class="needs-validation" novalidate>
                     <input type="hidden" name="task" value="create">
                     <div class="mb-3" id="newuser_type_radio_group">
                         <span class="me-4">User type:</span>
@@ -115,8 +116,6 @@ $(function() {
             $('#newuser_facility_ref').prop('disabled', true).prop('required', false);
         }
     });
-});
-
 
     $('#create-user-form').submit(function (e) {
 
@@ -135,6 +134,7 @@ $(function() {
 
             // Show the success message
             $('#response-container').addClass('alert-success').removeClass('d-none alert-danger');
+            // TODO - add new entry to table dynamically
             $('#response-container span').html('<strong>Success!</strong> '+data.message + '<br><small>Reload the page to see in the table.</small>');
 
             // Trigger a download of a credentials file for the user
@@ -187,6 +187,8 @@ $(function() {
             $('#response-container span').html('<strong>Error!</strong> '+data.responseJSON.message);
         });
     });
+
+});
 
 </script>
 {% endblock javascript %}

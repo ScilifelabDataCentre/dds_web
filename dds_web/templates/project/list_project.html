@@ -9,6 +9,11 @@
 {% endif %}
 <h1 class="mb-4">Your Projects</h1>
 
+<div id="response-container" class="alert alert-dismissible fade show my-4 d-none">
+    <span></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
 <table class="table table-striped datatable">
     <thead class="thead-light">
         <tr>
@@ -41,23 +46,24 @@
 
 {% if g.is_facility %}
 <!-- Add Project Modal -->
-<div class="modal fade" id="addProject_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="addProject_modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Add Project</h5>
+                <h5 class="modal-title">Add Project</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form method="POST" action="{{ url_for('project.add_project') }}">
+                <form method="POST" id="addProject_form" action="{{ url_for('project.add_project') }}"
+                    class="needs-validation" novalidate>
                     <div class="form-floating mb-3">
                         <input type="text" class="form-control" name="owner" id="addProject_owner"
-                            placeholder="Project owner (data recipient)">
+                            placeholder="Project owner (data recipient)" required>
                         <label for="addProject_owner">Project owner (data recipient)</label>
                     </div>
                     <div class="form-floating mb-3">
                         <input type="text" class="form-control" name="title" id="addProject_title"
-                            placeholder="Project title">
+                            placeholder="Project title" required>
                         <label for="addProject_title">Project title</label>
                     </div>
                     <div class="form-floating mb-3">
@@ -74,3 +80,55 @@
 {% endif %}
 
 {% endblock %}
+
+
+
+{% block javascript %}
+{% if g.is_facility %}
+<script type="text/javascript">
+$(function() {
+
+    $('#addProject_form').submit(function (e) {
+
+        // Stop regular form submission
+        e.preventDefault();
+
+        // Check if the central form validation function passed
+        if($(this).hasClass('failed-validation')){
+            return;
+        }
+
+        $('#addProject_form button').prop('disabled', true);
+
+        // Send the form data via AJAX
+        $.post("{{ url_for('project.add_project') }}", $(this).serialize(), function(data){
+            console.log(data);
+
+            // Show the success message
+            $('#response-container').addClass('alert-success').removeClass('d-none alert-danger');
+            // TODO - add new entry to table dynamically
+            $('#response-container span').html('<strong>Success!</strong> '+data.message + '<br><small>Reload the page to see in the table.</small>');
+
+            // Hide the modal and reset the form
+            $('#addProject_modal').modal('hide');
+            $(this).trigger("reset");
+            $('#addProject_form button').prop('disabled', false);
+
+        }).fail(function(data){
+
+            // Show an error message
+            $('#response-container').addClass('alert-danger').removeClass('d-none alert-success');
+            $('#response-container span').html('<strong>Error!</strong> '+data.responseJSON.message);
+
+            // Hide the modal, do not reset the form
+            $('#addProject_modal').modal('hide');
+            $('#addProject_form button').prop('disabled', false);
+        });
+
+    });
+
+});
+
+</script>
+{% endif %}
+{% endblock javascript %}
