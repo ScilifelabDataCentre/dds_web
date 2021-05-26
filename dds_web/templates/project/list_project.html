@@ -4,7 +4,8 @@
 
 {% if g.is_facility %}
 <button type="button" class="btn btn-primary float-end my-3" data-bs-toggle="modal" data-bs-target="#addProject_modal">
-    Add Project
+    <i class="far fa-folder-plus me-2"></i>
+    Create Project
 </button>
 {% endif %}
 <h1 class="mb-4">Your Projects</h1>
@@ -14,7 +15,7 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 
-<table class="table table-striped datatable">
+<table class="table table-striped datatable" id="projects-table">
     <thead class="thead-light">
         <tr>
             <th scope="col">ID</th>
@@ -71,7 +72,10 @@
                             placeholder="Project description text" style="height: 100px"></textarea>
                         <label for="addProject_description">Project description text</label>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Create Project</button>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="far fa-folder-plus me-2"></i>
+                        Create Project
+                    </button>
                 </form>
             </div>
         </div>
@@ -99,15 +103,25 @@ $(function() {
         }
 
         $('#addProject_form button').prop('disabled', true);
+        var dateToday = new Date();
+        dateToday = dateToday.toISOString().split('T')[0];
 
         // Send the form data via AJAX
         $.post("{{ url_for('project.add_project') }}", $(this).serialize(), function(data){
-            console.log(data);
 
             // Show the success message
             $('#response-container').addClass('alert-success').removeClass('d-none alert-danger');
-            // TODO - add new entry to table dynamically
-            $('#response-container span').html('<strong>Success!</strong> '+data.message + '<br><small>Reload the page to see in the table.</small>');
+            $('#response-container span').html('<strong>Success!</strong> '+data.message);
+
+            // Add to the table
+            var dataTable = $('#projects-table').DataTable();
+            dataTable.row.add([
+                '<a href="/project/'+data.project_id+'" class="font-monospace small">'+data.project_id+'</a>',
+                $('#addProject_title').val(),
+                'testing', // TODO - needs to be set dynamically?
+                'Ongoing', // TODO - needs to be set dynamically?
+                dateToday
+            ]).draw();
 
             // Hide the modal and reset the form
             $('#addProject_modal').modal('hide');
