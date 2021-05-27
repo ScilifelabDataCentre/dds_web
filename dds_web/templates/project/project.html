@@ -130,6 +130,12 @@ document.addEventListener('DOMContentLoaded', function(event) {
     ['dragenter', 'dragover'].forEach(eventName => {
         dropArea.addEventListener(eventName, function(e){
             document.getElementById('dropDiv').classList.add("border-primary");
+
+            // Just in case we had an upload already - show everything again
+            $('#upload_file_list, #upload_file_instructions').removeClass('d-none');
+            $('#upload_file_progress').addClass('d-none');
+            $('#upload_file_msg').text('').removeClass('bg-danger');
+            $('#upload_file_progress div').css('width', 0).text('').removeClass('bg-danger bg-success');
         }, false);
     });
     ['dragleave', 'drop'].forEach(eventName => {
@@ -227,6 +233,10 @@ document.addEventListener('DOMContentLoaded', function(event) {
                 $('#upload_file_msg').addClass('bg-danger text-white').removeClass('text-success').prepend('<strong>Error: </strong>');
                 $('#upload_file_progress div').addClass('bg-danger');
             }
+
+            // Reset
+            upload_files = [];
+            $('#upload_file_list').html('');
         };
 
         xhr.open("POST", "{{ url_for('project.data_upload') }}");
