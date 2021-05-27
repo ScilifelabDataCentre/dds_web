@@ -67,17 +67,17 @@ def validate_user_credentials(username, password):
 
     # Exit if user not exisit in Roles table
     if user_role is None:
-        return (False, None, "User doesn't exist (Credentials are case sensitive)", None)
+        return (False, None, "Username not found (Credentials are case sensitive)", None)
     is_facility = user_role.facility == 1
     table = models.Facility if is_facility else models.User
     try:
         uaccount = table.query.filter_by(username=username).first()
     except SQLAlchemyError as e:
         print(str(e), flush=True)
-        return (False, None, "User doesn't exist (Credentials are case sensitive)", None)
+        return (False, None, "Username not found (Credentials are case sensitive)", None)
 
     if not verify_password_argon2id(uaccount.password, password):
-        return (False, None, "Password din't match", None)
+        return (False, None, "Incorrect password", None)
 
     uinfo = {"username": uaccount.username, "id": uaccount.public_id}
     if is_facility:

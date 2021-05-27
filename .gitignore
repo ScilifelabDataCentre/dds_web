@@ -1,5 +1,7 @@
 run_dir/*
+dds_web/static/css/
 .DS_Store
+dds_web/static/node_modules/
 *.pyc
 __pycache__
 couchdb-data

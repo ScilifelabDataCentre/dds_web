@@ -20,6 +20,17 @@ services:
       timeout: 5s
       retries: 5
 
+  # Development service to watch for changes to SCSS files and recompile static CSS
+  node_builder:
+    container_name: dds_nodebuilder
+    build:
+      dockerfile: compile_css.Dockerfile
+      context: ./
+    volumes:
+      - type: bind
+        source: ./dds_web/static/
+        target: /build
+
   backend:
     container_name: dds_backend
     image: dds-backend-local:latest
@@ -27,8 +38,8 @@ services:
     command: python3 app.py
     environment:
       - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
-      - FLASK_ENV
-      - DDS_CLI_ENV
+      - FLASK_ENV=development
+      - DDS_CLI_ENV=development
     depends_on:
       db:
         condition: service_healthy

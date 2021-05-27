@@ -1,8 +1,25 @@
+##############################
+## Compile dist CSS
+##############################
+FROM node:15-alpine AS compile_css
+COPY ./dds_web /code/dds_web
+WORKDIR /code/dds_web/static
+RUN npm install -g npm@latest --quiet
+RUN npm install --quiet
+RUN npm run css
+
+#############################
+## Build main container
+#############################
+
 # Set official image -- parent image
 FROM python:latest
 
 # Copy the content to a code folder in container
 COPY . /code
+
+# Copy the compiled CSS from the first build step
+COPY --from=compile_css /code/dds_web/static /code/dds_web/static
 
 # Install some necessary systems packages
 RUN apt-get update

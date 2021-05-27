@@ -36,13 +36,13 @@ def admin_page():
 
     elif request.method == "POST":
         task = request.form.get("task")
+
+        # Delete a user
         if task == "delete":
             account_name = request.form.get("account_name")
             user_role = models.Role.query.filter_by(username=account_name).one_or_none()
             if not user_role:
-                return make_response(
-                    jsonify({"status": 440, "message": "Username do not exist"}), 440
-                )
+                return make_response(jsonify({"status": 440, "message": "Username do not exist"}), 440)
             if user_role.facility == 1:
                 account = models.Facility.query.filter_by(username=account_name).one()
                 projects = db_utils.get_facilty_projects(
@@ -50,17 +50,13 @@ def admin_page():
                 )
             else:
                 account = models.User.query.filter_by(username=account_name).one()
-                projects = db_utils.get_user_projects(
-                    db_utils.get_user_column_by_username(account_name, "public_id")
-                )
+                projects = db_utils.get_user_projects(db_utils.get_user_column_by_username(account_name, "public_id"))
             if projects:
                 return make_response(
                     jsonify(
                         {
                             "status": 440,
-                            "message": "Account '{}' can't be deleted, have projects".format(
-                                account_name
-                            ),
+                            "message": "Account '{}' can't be deleted, have projects".format(account_name),
                         }
                     ),
                     440,
@@ -79,52 +75,71 @@ def admin_page():
                 200,
             )
 
-        username = request.form.get("username")
-        password = request.form.get("password")
-        is_admin = True if request.form.get("is_admin") else False
-        is_facility = True if request.form.get("is_facility") else False
-        facility_name = request.form.get("facility_name")
-        facility_ref = request.form.get("facility_ref")
+        # Add a user
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        is_admin = request.form.get("userType", "") == "admin"
+        is_facility = request.form.get("userType", "") == "facility"
+        facility_name = request.form.get("facility_name", "")
+        facility_ref = request.form.get("facility_ref", "")
 
+        # Validate user fields
+        if username == "":
+            return make_response(jsonify({"status": 400, "message": "Username cannot be blank"}), 400)
+        if password == "":
+            return make_response(jsonify({"status": 400, "message": "Password cannot be blank"}), 400)
         if not field_uniq(username, "username"):
             return make_response(
-                jsonify(
-                    {"status": 440, "message": "Username '{}' already exists".format(username)}
-                ),
-                440,
+                jsonify({"status": 400, "message": "Username '{}' already exists".format(username)}),
+                400,
             )
 
         if is_facility:
+            # Validate facility fields
+            if facility_name == "":
+                return make_response(jsonify({"status": 400, "message": "Facility name cannot be blank"}), 400)
+            if facility_ref == "":
+                return make_response(jsonify({"status": 400, "message": "Facility reference cannot be blank"}), 400)
             if not field_uniq(facility_name, "name"):
-                return make_response(
-                    jsonify({"status": 440, "message": "Facility name already exists"}), 440
-                )
+                return make_response(jsonify({"status": 400, "message": "Facility name already exists"}), 400)
             if not field_uniq(facility_ref, "internal_ref"):
-                return make_response(
-                    jsonify({"status": 440, "message": "Facility internal ref already exists"}), 440
-                )
+                return make_response(jsonify({"status": 400, "message": "Facility internal ref already exists"}), 400)
 
+            public_id = genarate_public_id("Facility")
             acc_obj = models.Facility(
                 username=username,
                 password=gen_argon2hash(password),
-                public_id=genarate_public_id("Facility"),
+                public_id=public_id,
                 name=facility_name,
                 internal_ref=facility_ref,
                 safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
             )
         else:
+            public_id = genarate_public_id("User")
             acc_obj = models.User(
                 username=username,
                 password=gen_argon2hash(password),
                 admin=is_admin,
-                public_id=genarate_public_id("User"),
+                public_id=public_id,
             )
         role_obj = models.Role(username=username, facility=is_facility)
 
         db.session.add_all([acc_obj, role_obj])
         db.session.commit()
         return make_response(
-            jsonify({"status": 200, "message": "Successfully added user '{}'".format(username)}),
+            jsonify(
+                {
+                    "status": 200,
+                    "message": "Successfully added user '{}'".format(username),
+                    "user": {
+                        "username": username,
+                        "public_id": public_id,
+                        "admin": is_admin,
+                        "facility_name": facility_name,
+                        "facility_ref": facility_ref,
+                    },
+                }
+            ),
             200,
         )
 

@@ -1,0 +1,53 @@
+<nav class="bg-light shadow-sm mb-3">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start p-2">
+            <a href="{{ url_for('home') }}" class="navbar-brand fs-4 d-flex my-2 my-lg-0 me-lg-auto">
+                <img src="{{ url_for('static', filename='img/scilifelab_symbol.svg') }}" alt="" style="height: 2rem;"
+                    class="d-inline-block align-text-top me-3">
+                SciLifeLab Data Delivery Service
+            </a>
+
+            <ul class="nav col-12 col-lg-auto my-2 my-md-0 justify-content-center text-center">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">
+                        <i class="far fa-home d-block mx-auto"></i>
+                        Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="far fa-info-circle d-block mx-auto"></i>
+                        About
+                    </a>
+                </li>
+                {% if g.current_user %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
+                        <i class="fas fa-user-circle d-block mx-auto"></i>
+                        {{ g.current_user }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user.logout') }}">
+                        <i class="far fa-sign-out d-block mx-auto"></i>
+                        Logout
+                    </a>
+                </li>
+                {% else %}
+                <li class="nav-item mx-2">
+                    <a class="btn btn-outline-primary" href="#">
+                        <i class="far fa-user-plus d-block mx-auto"></i>
+                        Register
+                    </a>
+                </li>
+                <li class="nav-item mx-2">
+                    <a class="btn btn-success text-body" href="{{ url_for('user.login') }}">
+                        <i class="far fa-sign-in-alt d-block mx-auto"></i>
+                        Login
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
