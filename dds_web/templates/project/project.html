@@ -6,7 +6,7 @@
 <h1 class="mb-4">{{ project['title'] }}</h1>
 
 
-<table class="table table-hover">
+<table class="table table-hover mb-5">
     <tbody>
         <tr>
             <th>Description</th>
@@ -67,34 +67,29 @@
 
 {% if uploaded_data %}
 {% if not g.is_facility %}
-<div id="download-form-container" class="right-button-container hovertip">
-    <!--input class="btn btn-primary btn-custom" type="button" value="Ajax Download" id="download-button"
-                       data-project_id="{{ project['id'] }}" data-action="{{ url_for('project.data_download') }}">
-                       <br> <br-->
-    <form id="data-download-form" method="POST" enctype="multipart/form-data" autocomplete="off"
-        action="{{ url_for('project.data_download') }}">
-        <input type="hidden" name="project_id" value="{{ project['id'] }}">
-        <input type="hidden" name="download_limit" value="{{ download_limit }}">
+{% if project['unformated_size'] <= download_limit %}
+<a href="{{ url_for('project.data_download', project_id=project.id) }}" class="btn btn-primary btn-custom float-end">
+    <i class="fas fa-download me-2"></i> Download all
+</a>
+{% endif %}
 
-        {% if project['unformated_size'] > download_limit %}
-        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button" disabled>
-        <span class="hovertiptext hovertiptext-download">Project size higher than WEB download threshold ({{
-            format_size(download_limit) }}). Files/folders lesser than the threshold can be downloaded individually from
-            file list. Or use CLI to download all data</span>
-        {% else %}
-        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button">
-        {% endif %}
-    </form>
-</div>
-<br>
-{% endif %}
-<h2>Files Uploaded</h2>
-<br>
-<div id="uploaded-file-list">
-    {{ uploaded_data|safe }}
+<h2 class="mb-4">Files Uploaded</h2>
+
+{% if project['unformated_size'] > download_limit %}
+<div class="alert alert-info" role="alert">
+    This project is too large to be downloaded via a web browser.
+    Please use the <code>dds_cli</code> command line tool, available here:
+    <a href="https://github.com/scilifelabdataCentre/dds_cli">https://github.com/scilifelabdataCentre/dds_cli</a>
 </div>
 {% endif %}
+
+<div id="uploaded-file-list">{{ uploaded_data | safe }}</div>
+
+{% endif %}
+
 {% else %}
 <p>You don't have access to this project, if you think you should contact Data Centre</p>
+{% endif %}
+
 {% endif %}
 {% endblock %}

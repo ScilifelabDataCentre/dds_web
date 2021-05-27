@@ -83,7 +83,7 @@ def project_info(project_id=None):
     project_info["facility_name"] = db_utils.get_facility_column(fid=project_info["facility"], column="name")
     files_list = models.File.query.filter_by(project_id=project_id).all()
     if files_list:
-        uploaded_data = folder(files_list).generate_html_string()
+        uploaded_data = folder(files_list, project_id).generate_html_string()
     else:
         uploaded_data = None
     return render_template(
@@ -163,10 +163,9 @@ def data_upload():
     return make_response(jsonify({"status": status, "message": message}), status)
 
 
-@project_blueprint.route("download", methods=["POST"])
+@project_blueprint.route("download/<project_id>", methods=["GET"])
 @login_required
-def data_download():
-    project_id = request.form.get("project_id", None)
+def data_download(project_id):
     data_path = request.form.get("data_path", None)
     download_space = os.path.join(
         current_app.config["DOWNLOAD_FOLDER"],
@@ -263,8 +262,9 @@ class create_project_instance(object):
 class folder(object):
     """A class to parse the file list and do appropriate ops"""
 
-    def __init__(self, file_list):
+    def __init__(self, file_list, project_id):
         self.files = file_list
+        self.project_id = project_id
         self.files_arranged = {}
 
     def arrange_files(self):
@@ -296,27 +296,33 @@ class folder(object):
         for _key, _value in file_dict.items():
             if isinstance(_value, dict):
                 div_id = "d{}".format(timestamp(ts_format="%y%m%d%H%M%S%f"))
-                _html_string += (
-                    "<li>"
-                    " <span class='li-dwn-box'></span>"
-                    " <a class='folder' data-bs-toggle='collapse' href='#{did}' aria-expanded='false' aria-controls='{did}'>{_k}</a> "
-                    " <div class='collapse' id='{did}'>{_v}</div> "
-                    "</li>"
-                ).format(
-                    did=div_id,
-                    _k=_key,
-                    _v=self.__make_html_string_from_file_dict(_value),
-                )
+                _html_string += f"""
+                    <li class="mb-1">
+                        <a href="{url_for('project.data_download', project_id=self.project_id, data_path=_key) }" class="text-decoration-none">
+                            <i class="far fa-arrow-to-bottom me-3 li-dwn-box"></i>
+                        </a>
+                        <a class="folder text-decoration-none" data-bs-toggle="collapse" href="#{div_id}" aria-expanded="false" aria-controls="{div_id}">
+                            <i class="folder-icon far fa-folder me-2"></i>
+                            {_key}
+                        </a>
+                        <div class="collapse" id="{div_id}"">
+                            {self.__make_html_string_from_file_dict(_value)}
+                        </div>
+                    </li>"""
             else:
-                _html_string += (
-                    "<li>"
-                    "  <span class='li-dwn-box'></span>"
-                    "  <div class='hovertip'>"
-                    "    <span class='file'>{_k}</span> <span class='hovertiptext hovertiptext-filesize'> {_v} </span>"
-                    "  </div>"
-                    "</li>"
-                ).format(_k=_key, _v=format_byte_size(_value))
-        return '<ul style="list-style: none;"> {} </ul>'.format(_html_string)
+                _html_string += f"""
+                    <li class="mb-1">
+                        <a href="{url_for('project.data_download', project_id=self.project_id, data_path=_key) }" class="text-decoration-none">
+                            <i class="far fa-arrow-to-bottom me-3 li-dwn-box"></i>
+                        </a>
+                        <code class="file">
+                            {_key}
+                        </code>
+                        <span class="badge bg-light text-muted fw-light border font-monospace">
+                            {format_byte_size(_value)}
+                        </span>
+                    </li>"""
+        return f'<ul style="list-style: none;">{_html_string}</ul>'
 
 
 def compile_download_file_path(dpath, pid):
