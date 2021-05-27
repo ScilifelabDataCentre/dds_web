@@ -98,7 +98,7 @@ $(function () {
                 <div class="modal-body" id="modalBodyContent">
                 </div>
                 <div class="modal-footer">
-                    <button id="closeModalButton" type="button" class="btn btn-secondary btn-sm mx-auto" data-bs-dismiss="modal">close</button>
+                    <button id="closeModalButton" type="button" class="btn btn-light border btn-sm mx-auto" data-dismiss="modal">Close</button>
                 </div>
                 </div>
             </div>
