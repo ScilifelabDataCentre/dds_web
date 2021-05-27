@@ -169,24 +169,17 @@ def data_download(project_id):
         cmd.extend(["-s", data_path])
     else:
         cmd.append("-a")
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate(input=None)
 
-    # cleanup after success
+    # Clean up after success
     @after_this_request
     def clean_download_space(response):
         if os.path.exists(download_space):
             try:
                 shutil.rmtree(download_space)
             except Exception as e:
-                print(
-                    "Couldn't delete download space {}".format(download_space),
-                    flush=True,
-                )
+                current_app.logger.error("Couldn't delete download space {}".format(download_space), flush=True)
         return response
 
     if proc.returncode == 0:
