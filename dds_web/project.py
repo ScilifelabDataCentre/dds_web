@@ -299,7 +299,7 @@ class folder(object):
                 _html_string += (
                     "<li>"
                     " <span class='li-dwn-box'></span>"
-                    " <a class='folder' data-toggle='collapse' href='#{did}' aria-expanded='false' aria-controls='{did}'>{_k}</a> "
+                    " <a class='folder' data-bs-toggle='collapse' href='#{did}' aria-expanded='false' aria-controls='{did}'>{_k}</a> "
                     " <div class='collapse' id='{did}'>{_v}</div> "
                     "</li>"
                 ).format(
