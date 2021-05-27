@@ -9,36 +9,36 @@
     <tbody>
         <tr>
             <th>Description</th>
-            <td>{{ project['description'] }}</td>
+            <td>{{ project.description }}</td>
         </tr>
         <tr>
             <th>Category</th>
-            <td>{{ project['category'] }}</td>
+            <td>{{ project.category }}</td>
         </tr>
         <tr>
             <th>Owner</th>
-            <td><code>{{ project['owner'] }}</code></td>
+            <td><code>{{ project.owner }}</code></td>
         </tr>
         <tr>
             <th>Facility</th>
-            <td>{{ project['facility_name'] }}</td>
+            <td>{{ project.facility_name }}</td>
         </tr>
         <tr>
             <th>Status</th>
-            <td>{{ project['status'] }}</td>
+            <td>{{ project.status }}</td>
         </tr>
         <tr>
             <th>Creation date</th>
-            <td>{{ project['date_created'] }}</td>
+            <td>{{ project.date_created }}</td>
         </tr>
-        {% if project['date_updated'] %}
+        {% if project.date_updated %}
         <tr>
             <th>Delivery date</th>
-            <td>{{ project['date_updated'] }}</td>
+            <td>{{ project.date_updated }}</td>
         </tr>
         <tr>
             <th>Data size</th>
-            <td>{{ project['size'] }}</td>
+            <td>{{ project.size }}</td>
         </tr>
         {% endif %}
     </tbody>
@@ -46,8 +46,9 @@
 
 {% if g.is_facility %}
 
+<h2 class="mb-4">Upload Files</h2>
 <form id="data-upload-form" method="POST" enctype="multipart/form-data" action="{{ url_for('project.data_upload') }}"
-    autocomplete="off">
+    autocomplete="off" class="mb-5">
     <input type="hidden" name="project_id" value="{{ project['id'] }}">
     <input type="hidden" name="upload_limit" value="{{ format_size(upload_limit) }}">
     <div class="mb-3">
@@ -63,7 +64,7 @@
 </form>
 {% endif %}
 
-<h2 class="mb-4">Files Uploaded</h2>
+<h2 class="mb-4">Project Files</h2>
 
 {% if uploaded_data %}
 
