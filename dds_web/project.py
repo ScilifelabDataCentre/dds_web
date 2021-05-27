@@ -41,25 +41,29 @@ def add_project():
         for k in ["title", "owner", "description"]:
             if not request.form.get(k):
                 return make_response(jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440)
-
+        
+        ruser_obj = models.User.query.filter_by(username=request.form.get("owner")).one_or_none()
+        cuser_obj = models.User.query.filter_by(username=session.get("current_user")).one()
+        facility_obj = models.Facility.query.filter_by(id=session.get("facility_id")).one()
         # Check if the user actually exists
-        if request.form.get("owner") not in db_utils.get_full_column_from_table(
-            table="User", column="username"
-        ) or db_utils.get_user_column_by_username(request.form.get("owner"), "admin"):
+        if not ruser_obj or ruser_obj.role != "researcher":
             e_msg = "Given username '{}' does not exist".format(request.form.get("owner"))
             return make_response(jsonify({"status": 440, "message": e_msg}), 440)
 
         project_inst = create_project_instance(request.form)
         # TO DO : This part should be moved elsewhere to dedicated DB handling script
         new_project = models.Project(**project_inst.project_info)
-        db.session.add(new_project)
+        ruser_obj.projects.append(new_project)
+        cuser_obj.projects.append(new_project)
+        facility_obj.projects.append(new_project)
+        db.session.add_all([new_project, ruser_obj, cuser_obj, facility_obj])
         db.session.commit()
         return make_response(
             jsonify(
                 {
                     "status": 200,
                     "message": "Added new project '{}'".format(request.form.get("title")),
-                    "project_id": new_project.id,
+                    "project_id": new_project.public_id,
                 }
             ),
             200,
@@ -70,18 +74,22 @@ def add_project():
 @login_required
 def project_info(project_id=None):
     """Get the given project's info"""
-    project_row = models.Project.query.filter_by(id=project_id).one_or_none()
+    project_row = models.Project.query.filter_by(public_id=project_id).one_or_none()
     if not project_row:
-        return abort(404)
+        return abort(404, "Project doesn't exist")
+    project_users = db_utils.get_project_users(project_id=project_row.id)
+    if session.get("current_user") not in project_users:
+        return abort(403, "You don't have access to this project")
     project_info = project_row.__dict__.copy()
+    project_info["users"] = ", ".join(db_utils.get_project_users(project_id=project_row.id, no_facility_users=True))
     project_info["date_created"] = timestamp(datetime_string=project_info["date_created"])
     if project_info.get("date_updated"):
         project_info["date_updated"] = timestamp(datetime_string=project_info["date_updated"])
     if project_info.get("size"):
         project_info["unformated_size"] = project_info["size"]
         project_info["size"] = format_byte_size(project_info["size"])
-    project_info["facility_name"] = db_utils.get_facility_column(fid=project_info["facility"], column="name")
-    files_list = models.File.query.filter_by(project_id=project_id).all()
+    project_info["facility_name"] = db_utils.get_facility_column(fid=project_info["facility_id"], column="name")
+    files_list = models.File.query.filter_by(project_id=project_info["id"]).all()
     if files_list:
         uploaded_data = folder(files_list).generate_html_string()
     else:
@@ -226,25 +234,28 @@ class create_project_instance(object):
 
     def __init__(self, project_info):
         self.project_info = {
-            "id": self.get_new_id(),
+            "public_id": self.get_new_id(),
             "title": project_info["title"],
             "description": project_info["description"],
-            "owner": db_utils.get_user_column_by_username(project_info["owner"], "public_id"),
+#            "owner": db_utils.get_user_column_by_username(project_info["owner"], "public_id"),
             "category": "testing",
-            "facility": g.current_user_id,
+            "facility_id": session.get("facility_id"),
             "status": "Ongoing",
             "date_created": timestamp(),
             "pi": "NA",
             "size": 0,
         }
         self.project_info["bucket"] = self.__create_bucket_name()
-        pkg = project_keygen(self.project_info["id"])
+        pkg = project_keygen(self.project_info["public_id"])
         self.project_info.update(pkg.get_key_info_dict())
 
     def get_new_id(self, id=None):
-        facility_ref = db_utils.get_facility_column(fid=session.get("current_user_id"), column="internal_ref")
-        facility_prjs = db_utils.get_facilty_projects(fid=session.get("current_user_id"), only_id=True)
-        return "{}{:03d}".format(facility_ref, len(facility_prjs) + 1)
+        project_public_id = None
+        while not project_public_id or not self.__is_column_value_uniq("Project", "public_id", project_public_id):
+            facility_ref = db_utils.get_facility_column(fid=session.get("facility_id"), column="internal_ref")
+            facility_prjs = db_utils.get_facilty_projects(fid=session.get("facility_id"), only_id=True)
+            project_public_id = "{}{:03d}".format(facility_ref, len(facility_prjs) + 1)
+        return project_public_id
 
     def __is_column_value_uniq(self, table, column, value):
         """See that the value is unique in DB"""
@@ -254,7 +265,7 @@ class create_project_instance(object):
     def __create_bucket_name(self):
         """Create a bucket name for the given project"""
         return "{pid}-{tstamp}-{rstring}".format(
-            pid=self.project_info["id"].lower(),
+            pid=self.project_info["public_id"].lower(),
             tstamp=timestamp(ts_format="%y%m%d%H%M%S%f"),
             rstring=os.urandom(4).hex(),
         )

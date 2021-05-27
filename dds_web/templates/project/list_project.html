@@ -31,12 +31,12 @@
     <tbody>
         {% for project in projects_list %}
         <tr>
-            <td><a href="{{ url_for('project.project_info', project_id=project['id']) }}" class="font-monospace small">{{
-                    project['id'] }}</a></td>
+            <td><a href="{{ url_for('project.project_info', project_id=project['public_id']) }}" class="font-monospace small">{{
+                    project['public_id'] }}</a></td>
             <td>{{ project['title'] }}</td>
             <td>{{ project['category'] }}</td>
             {% if not g.is_facility %}
-            <td>{{ dbfunc(project['facility'], 'name') }}</td>
+            <td>{{ dbfunc(project['facility_id'], 'name') }}</td>
             {% endif %}
             <td>{{ project['status'] }}</td>
             <td>{{ timestamp(datetime_string=project['date_created']) }}</td>
