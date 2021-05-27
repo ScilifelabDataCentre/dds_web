@@ -93,3 +93,16 @@
 
 {% endif %}
 {% endblock %}
+
+
+
+{% block javascript %}
+<script type="text/javascript">
+$(function () {
+    // Toggle the folder icon when opening / closing
+    $('.folder').click(function () {
+        $(this).children('.folder-icon').toggleClass('fa-folder, fa-folder-open');
+    });
+});
+</script>
+{% endblock %}

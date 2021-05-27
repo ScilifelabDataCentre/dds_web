@@ -39,23 +39,6 @@ $(function () {
         submitWithModel(this, 'uploadModal-' + $(this).find('input[name="project_id"]').prop("value"), dataForModal);
     });
 
-    // download related stuff
-
-    if (($('#uploaded-file-list').length)) {
-
-        $('.li-dwn-box').click(function (e) {
-            realForm = $('#data-download-form');
-            file = getFileTree(this, '#uploaded-file-list');
-            actionURL = realForm.attr('action');
-            projectID = realForm.children('input[name="project_id"]').attr('value');
-            submitDownloadForm(file, projectID, actionURL);
-        });
-
-        $('.folder').click(function () {
-            $(this).children('.folder-icon').toggleClass('fa-folder, fa-folder-open');
-        });
-    };
-
     /*  FUNCTIONS USED  */
 
     /* To submit a form request with progress modal */
@@ -169,16 +152,5 @@ $(function () {
         mElement.find('#modalBodyContent').html(mbody);
         mElement.find('#closeModalButton').attr("disabled", closeButtonDisabled);
     };
-
-    // get file tree path for clicked entry
-    function getFileTree(clickedObj, containerID){
-        fileTree = [];
-        $(clickedObj).parentsUntil(`${containerID} ul:first`).not('ul,div').each(function(i){
-            fileTree.unshift($(this).find('.file,.folder').first().text());
-        });
-        return fileTree.join('/');
-    };
-
-
 
 });
