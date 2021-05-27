@@ -143,7 +143,7 @@ function getModalHtml(mId) {
               <div class="modal-body" id="modalBodyContent">
               </div>
               <div class="modal-footer">
-                <button id="closeModalButton" type="button" class="btn btn-secondary btn-sm mx-auto" data-dismiss="modal">close</button>
+                <button id="closeModalButton" type="button" class="btn btn-secondary btn-sm mx-auto" data-bs-dismiss="modal">close</button>
               </div>
             </div>
           </div>
