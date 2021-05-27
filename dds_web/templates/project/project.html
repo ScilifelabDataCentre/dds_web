@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
 
 {% block body %}
-{% if g.current_user_id in [project['owner'], project['facility']] %}
 
-<h1 class="mb-4">{{ project['title'] }}</h1>
+<h1 class="mb-4"><span class="badge bg-light text-muted border">{{ project.id }}</span> {{ project.title }}</h1>
 
 
 <table class="table table-hover mb-5">
@@ -64,16 +63,17 @@
 </form>
 {% endif %}
 
+<h2 class="mb-4">Files Uploaded</h2>
 
 {% if uploaded_data %}
+
 {% if not g.is_facility %}
+
 {% if project['unformated_size'] <= download_limit %}
 <a href="{{ url_for('project.data_download', project_id=project.id) }}" class="btn btn-primary btn-custom float-end">
     <i class="fas fa-download me-2"></i> Download all
 </a>
 {% endif %}
-
-<h2 class="mb-4">Files Uploaded</h2>
 
 {% if project['unformated_size'] > download_limit %}
 <div class="alert alert-info" role="alert">
@@ -83,15 +83,18 @@
 </div>
 {% endif %}
 
+{% endif %}
+
 <div id="uploaded-file-list">{{ uploaded_data | safe }}</div>
 
-{% endif %}
-
 {% else %}
-<p>You don't have access to this project, if you think you should contact Data Centre</p>
-{% endif %}
+
+<div class="alert alert-light border">
+    No files found.
+</div>
 
 {% endif %}
+
 {% endblock %}
 
 
