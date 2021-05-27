@@ -30,7 +30,8 @@ RUN pip3 install -r /code/requirements.txt
 
 # Install DDS CLI for web upload
 ### TODO - Replace this with `dds_cli` when published to PyPI
-RUN pip3 install git+https://github.com/ScilifelabDataCentre/dds_cli.git@master
+### TODO - NOT FOR USE IN PRODUCTION! CURRENTLY USING DEV BRANCH
+RUN pip3 install git+https://github.com/ScilifelabDataCentre/dds_cli.git@dev
 
 # Install gnuicorn
 RUN pip3 install gunicorn
