@@ -5,7 +5,7 @@
 <h1 class="mb-4"><span class="badge bg-light text-muted border">{{ project.public_id }}</span> {{ project.title }}</h1>
 
 
-<table class="table table-hover mb-5">
+<table class="table table-hover">
     <tbody>
         <tr>
             <th>Project ID</th>
@@ -50,18 +50,21 @@
 
 {% if g.is_facility %}
 
-<h2 class="mb-4">Upload Files</h2>
-<div id="upload_file_msg" class="alert d-none"></div>
+<h2 class="mt-5 mb-4">Upload Files</h2>
 <div id="dropDiv" class="p-4 mb-3 bg-light border text-muted">
-    Drag & drop your files here!
+    <span id="upload_file_instructions">Drag & drop your files here!</span>
     <div id="upload_file_list"></div>
+    <div id="upload_file_progress" class="progress d-none">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+    </div>
 </div>
 <button id="upload_file_btn" class="btn btn-primary">
     <i class="far fa-cloud-upload me-2"></i> Upload
 </button>
+<span id="upload_file_msg" class="ms-3 p-1 d-none"></span>
 {% endif %}
 
-<h2 class="mb-4">Project Files</h2>
+<h2 class="mt-5 mb-4">Project Files</h2>
 
 {% if uploaded_data %}
 
@@ -191,30 +194,43 @@ document.addEventListener('DOMContentLoaded', function(event) {
     $('#upload_file_btn').click(function(e){
         e.preventDefault();
 
-        function uploadFile(file) {
-            let url = "{{ url_for('project.data_upload') }}";
-            let formData = new FormData();
-            formData.append('project_id', '{{ project.id }}');
-            formData.append('files', file);
-            fetch(url, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                $('#upload_file_msg').text(data.message).removeClass('d-none');
-                if(data.status == 200){
-                    $('#upload_file_msg').addClass('alert-success').removeClass('alert-danger');
-                } else {
-                    $('#upload_file_msg').addClass('alert-danger').removeClass('alert-success');
-                }
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+        // Hide the file list and show the progress bar
+        $('#upload_file_list, #upload_file_instructions').addClass('d-none');
+        $('#upload_file_progress').removeClass('d-none');
+
+        // Build the FormData object
+        let formData = new FormData();
+        formData.append('project_id', '{{ project.id }}');
+        for (let i = 0; i < upload_files.length; i++) {
+            formData.append('files', upload_files[i]);
         }
 
-        upload_files.forEach(uploadFile);
+        // Send
+        // Note that we can't use 'fetch' yet as we want upload progress
+        let xhr = new XMLHttpRequest();
+
+        // track upload progress
+        xhr.upload.onprogress = function(e) {
+            let pct = (e.loaded/e.total)*100.0+'%';
+            $('#upload_file_progress div').css('width', pct).text(pct);
+        };
+
+        // track completion: both successful or not
+        xhr.onloadend = function() {
+            data = JSON.parse(this.response);
+            $('#upload_file_msg').text(data.message).removeClass('d-none');
+            $('#upload_file_progress div').css('width', '100%').removeClass('progress-bar-animated');
+            if (xhr.status == 200) {
+                $('#upload_file_msg').addClass('text-success').removeClass('bg-danger text-white');
+                $('#upload_file_progress div').addClass('bg-success');
+            } else {
+                $('#upload_file_msg').addClass('bg-danger text-white').removeClass('text-success').prepend('<strong>Error: </strong>');
+                $('#upload_file_progress div').addClass('bg-danger');
+            }
+        };
+
+        xhr.open("POST", "{{ url_for('project.data_upload') }}");
+        xhr.send(formData);
 
     });
 });
