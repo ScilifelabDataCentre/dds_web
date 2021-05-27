@@ -18,6 +18,8 @@ The web interface is built using [Flask](https://flask.palletsprojects.com/en/2.
 
 ## Development
 
+### Running with Docker
+
 When developing this software, we recommend that you run the web server locally using Docker.
 You can download Docker here: <https://docs.docker.com/get-docker/>
 
@@ -31,7 +33,18 @@ docker-compose up
 This command will orchestrate the building and running of two containers:
 one for the SQL database (`mariadb`) and one for the application.
 
-If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal. If using this method, you can stop the web server with the command `docker-compose down`.
+If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
+If using this method, you can stop the web server with the command `docker-compose down`.
+
+### Compiling CSS & JS
+
+The website uses SASS / SCSS for its stylesheets, allowing customisation of Bootstrap styles.
+To manage the CSS and JavaScript packages, we use `npm`, though you shouldn't need to worry about this.
+
+When you run `docker-compose up` for the first time, the `npm install` command will fetch all
+required packages to your local folder and build the compiled CSS file.
+A process will then sit and watch for any changes to `.scss` files and automatically recompile
+the `.css` files on save.
 
 ### Config settings
 
@@ -40,6 +53,12 @@ These values are publicly visible on GitHub and **should not be used in producti
 
 At the time of writing, much of the functionality will not work with the defaults.
 Please see the _Production_ section below for how to set what you need.
+
+### Setting up users
+
+When you first initialise the database, a user with admin privileges will be automatically created.
+You can log in with the username `admin` and the password `password`.
+Once logged in, you can create user accounts and start to use the system.
 
 ### Database changes
 
@@ -64,6 +83,9 @@ If there are still issues, try deleting the `pycache` folders and repeat the abo
 When running in production, you will likely want to manually build and run the two containers.
 Whilst in `docker-compose.yml` the web server is run by Flask (`command: python3 app.py`),
 the default server in the container is `gunicorn` (`CMD ["gunicorn", "app:app"]`).
+The other difference is that the docker image comes with compiled CSS files ready to go,
+but the docker-compose script mounts the local volume. So for development you need to run `npm`
+but for production there is no need.
 
 In addition to using `gunicorn` to serve files and runing the MySQL database separately,
 you will also need to overwrite all (or most) of the default configuration values.

@@ -1,41 +1,43 @@
 {% extends "base.html" %}
 {% block body %}
-    <div class="d-flex justify-content-center h-100">
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Sign In</h2>
+<div class="card bg-light border-0 mx-auto mt-5" style="max-width:30rem;">
+    <h2 class="card-header border-0 py-3 text-center">Log In</h2>
+    <div class="card-body">
+        {% if login_error_message %}
+            <div class="alert alert-danger" role="alert">
+                <p class="lead">
+                    <i class="far fa-exclamation-triangle"></i> Oops! Something went wrong.</strong>
+                </p>
+                <p class="mb-0">{{ login_error_message }}</p>
             </div>
-            <div class="panel-body">
-                <form method="POST" action="{{ url_for('user.login') }}">
-                    <div class="input-group form-group">
-    					<div class="input-group-prepend">
-    						<span class="input-group-text"><i class="fas fa-user"></i></span>
-    					</div>
-                    	<input type="text" class="form-control" name="username" placeholder="Username">		
+        {% endif %}
+        <form method="POST" action="{{ url_for('user.login') }}" class="mt-2">
+            <div class="input-group mb-3">
+                <span class="input-group-text bg-success"><i class="fas fa-user mx-1"></i></span>
+                <div class="col">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Username">
+                        <label for="username">Username</label>
                     </div>
-    				<div class="input-group form-group">
-    					<div class="input-group-prepend">
-    						<span class="input-group-text"><i class="fas fa-key"></i></span>
-    					</div>
-    					<input type="password" class="form-control" name="password" placeholder="Password">
-    				</div>
-                    {% if next %}
-                      <input type="hidden" name="next" value="{{ next }}">
-                    {% endif %}
-                    {% if login_error_message %}
-                    <div class="error_msg">
-                        <p>{{ login_error_message }}</p>
-                    </div>
-                    {% endif %}
-                    <div class="form-group d-flex justify-content-center">
-                    	<input type="submit" value="Login" class="btn submit_btn">
-                    </div>
-                </form>
+                </div>
             </div>
-            <div class="panel-footer">
-                {# <!--div class="float-left"><a href="{{ url_for('user.signup') }}">New Account?</a></div--> #}
-                <div class="float-right"><a href="#">Forgot Password?</a></div>
+            <div class="input-group mb-3">
+                <span class="input-group-text bg-success"><i class="fas fa-key mx-1"></i></span>
+                <div class="col">
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+                        <label for="password">Password</label>
+                    </div>
+                </div>
             </div>
-        </div>
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+            <button type="submit" class="btn btn-success w-100 mb-2">Log In</button>
+        </form>
     </div>
+    <div class="card-footer border-top-0 text-muted">
+        <p class="text-center mb-1 small"><a class="text-muted text-decoration-none" href="#">Forgot your password?</a></p>
+    </div>
+</div>
 {% endblock body %}

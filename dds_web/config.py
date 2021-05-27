@@ -21,3 +21,6 @@ class Config(object):
     LOCAL_TEMP_CACHE = "/dds_web/local_temp_cache"
     DDS_S3_CONFIG = "/code/dds_web/s3_config_example.json"
     DDS_SAFE_SPRING_PROJECT = "YOUR-PROJECT-ID"
+
+    # Devel settings
+    TEMPLATES_AUTO_RELOAD = True

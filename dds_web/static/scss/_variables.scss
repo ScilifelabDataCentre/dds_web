@@ -1,0 +1,33 @@
+// Global Bootstrap options
+// $enable-shadows: true;
+// $enable-gradients: true;
+$border-radius: .2rem;
+
+// Colours
+/*
+Official SciLifeLab colours (2020):
+  Lime: #A7C947
+  Teal: #045C64
+  Aqua: #4C979F
+  Grape: #491F53
+*/
+$body-color: #333;
+$body-bg: #fff;
+$primary: #045C64;
+$secondary: #491F53;
+$success: #A7C947; // TODO - A bit light for use as "success" for validation etc. Split into its own colour?
+$info: #4C979F;
+
+$font-family-sans-serif:
+  // Custom - Lato (as recommended by SciLifeLab style guide)
+  "Lato",
+  // Everything else is the default Bootstrap 5 sans-serif font stack..
+  system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+
+// Specific elements
+$navbar-nav-link-padding-x: 1rem;
+$form-floating-label-opacity: .4;
+
+.form-floating > label {
+  opacity: .65;
+}
