@@ -2,46 +2,47 @@
 
 {% block body %}
 
-<h1 class="mb-4">{{ project['title'] }}</h1>
+<h1 class="mb-4"><span class="badge bg-light text-muted border">{{ project.public_id }}</span> {{ project.title }}</h1>
 
-<table class="table table-hover">
+
+<table class="table table-hover mb-5">
     <tbody>
         <tr>
             <th>Project ID</th>
-            <td>{{ project['public_id'] }}</td>
+            <td>{{ project.public_id }}</td>
         </tr>
         <tr>
             <th>Description</th>
-            <td>{{ project['description'] }}</td>
+            <td>{{ project.description }}</td>
         </tr>
         <tr>
             <th>Category</th>
-            <td>{{ project['category'] }}</td>
+            <td>{{ project.category }}</td>
         </tr>
         <tr>
             <th>Users</th>
-            <td><code>{{ project['users'] }}</code></td>
+            <td><code>{{ project.users }}</code></td>
         </tr>
         <tr>
             <th>Facility</th>
-            <td>{{ project['facility_name'] }}</td>
+            <td>{{ project.facility_name }}</td>
         </tr>
         <tr>
             <th>Status</th>
-            <td>{{ project['status'] }}</td>
+            <td>{{ project.status }}</td>
         </tr>
         <tr>
             <th>Creation date</th>
-            <td>{{ project['date_created'] }}</td>
+            <td>{{ project.date_created }}</td>
         </tr>
-        {% if project['date_updated'] %}
+        {% if project.date_updated %}
         <tr>
             <th>Delivery date</th>
-            <td>{{ project['date_updated'] }}</td>
+            <td>{{ project.date_updated }}</td>
         </tr>
         <tr>
             <th>Data size</th>
-            <td>{{ project['size'] }}</td>
+            <td>{{ project.size }}</td>
         </tr>
         {% endif %}
     </tbody>
@@ -49,9 +50,10 @@
 
 {% if g.is_facility %}
 
+<h2 class="mb-4">Upload Files</h2>
 <form id="data-upload-form" method="POST" enctype="multipart/form-data" action="{{ url_for('project.data_upload') }}"
-    autocomplete="off">
-    <input type="hidden" name="project_id" value="{{ project['public_id'] }}">
+    autocomplete="off" class="mb-5">
+    <input type="hidden" name="project_id" value="{{ project.public_id }}">
     <input type="hidden" name="upload_limit" value="{{ format_size(upload_limit) }}">
     <div class="mb-3">
         <label class="form-label" for="file-uploader">Upload Files</label>
@@ -66,34 +68,48 @@
 </form>
 {% endif %}
 
+<h2 class="mb-4">Project Files</h2>
 
 {% if uploaded_data %}
-{% if not g.is_facility %}
-<div id="download-form-container" class="right-button-container hovertip">
-    <!--input class="btn btn-primary btn-custom" type="button" value="Ajax Download" id="download-button"
-                       data-project_id="{{ project['id'] }}" data-action="{{ url_for('project.data_download') }}">
-                       <br> <br-->
-    <form id="data-download-form" method="POST" enctype="multipart/form-data" autocomplete="off"
-        action="{{ url_for('project.data_download') }}">
-        <input type="hidden" name="project_id" value="{{ project['public_id'] }}">
-        <input type="hidden" name="download_limit" value="{{ download_limit }}">
 
-        {% if project['unformated_size'] > download_limit %}
-        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button" disabled>
-        <span class="hovertiptext hovertiptext-download">Project size higher than WEB download threshold ({{
-            format_size(download_limit) }}). Files/folders lesser than the threshold can be downloaded individually from
-            file list. Or use CLI to download all data</span>
-        {% else %}
-        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button">
-        {% endif %}
-    </form>
-</div>
-<br>
-{% endif %}
-<h2>Files Uploaded</h2>
-<br>
-<div id="uploaded-file-list">
-    {{ uploaded_data|safe }}
+{% if not g.is_facility %}
+
+{% if project.unformated_size <= download_limit %}
+<a href="{{ url_for('project.data_download', project_id=project.public_id) }}" class="btn btn-primary btn-custom float-end">
+    <i class="fas fa-download me-2"></i> Download all
+</a>
+{% else %}
+<div class="alert alert-info" role="alert">
+    This project is too large to be downloaded via a web browser (over {{format_size(download_limit) }}).
+    Files / folders that are under the threshold can be downloaded individually.
+    Alternatively, Please use the <code>dds_cli</code> command line tool, available here:
+    <a href="https://github.com/scilifelabdataCentre/dds_cli">https://github.com/scilifelabdataCentre/dds_cli</a>
 </div>
 {% endif %}
+
+{% endif %}
+
+<div id="uploaded-file-list">{{ uploaded_data | safe }}</div>
+
+{% else %}
+
+<div class="alert alert-light border">
+    No files found.
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+
+
+{% block javascript %}
+<script type="text/javascript">
+$(function () {
+    // Toggle the folder icon when opening / closing
+    $('.folder').click(function () {
+        $(this).children('.folder-icon').toggleClass('fa-folder, fa-folder-open');
+    });
+});
+</script>
 {% endblock %}

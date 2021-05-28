@@ -1,9 +1,9 @@
 " Project info related endpoints "
 
 import os
-import uuid
-import subprocess
+import shlex
 import shutil
+import subprocess
 import zipfile
 
 from flask import (
@@ -13,7 +13,6 @@ from flask import (
     current_app,
     abort,
     session,
-    redirect,
     url_for,
     g,
     jsonify,
@@ -27,7 +26,6 @@ from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.crypt.key_gen import project_keygen
 from dds_web.utils import login_required, working_directory, format_byte_size
-from werkzeug.utils import secure_filename
 
 project_blueprint = Blueprint("project", __name__)
 
@@ -91,7 +89,7 @@ def project_info(project_id=None):
     project_info["facility_name"] = db_utils.get_facility_column(fid=project_info["facility_id"], column="name")
     files_list = models.File.query.filter_by(project_id=project_info["id"]).all()
     if files_list:
-        uploaded_data = folder(files_list).generate_html_string()
+        uploaded_data = dds_folder(files_list, project_id).generate_html_string()
     else:
         uploaded_data = None
     return render_template(
@@ -136,21 +134,12 @@ def data_upload():
             with open("data_to_upload.txt", "w") as dfl:
                 dfl.write("\n".join([os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)]))
 
+            cache_path = os.path.join(
+                current_app.config.get("LOCAL_TEMP_CACHE"),
+                "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
+            )
             proc = subprocess.Popen(
-                [
-                    "dds",
-                    "put",
-                    "-c",
-                    os.path.join(
-                        current_app.config.get("LOCAL_TEMP_CACHE"),
-                        "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
-                    ),
-                    "-p",
-                    project_id,
-                    "-spf",
-                    "data_to_upload.txt",
-                    "--overwrite",
-                ],
+                shlex.split(f"dds put -c {cache_path} -p {project_id} -spf data_to_upload.txt --overwrite"),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
@@ -171,59 +160,42 @@ def data_upload():
     return make_response(jsonify({"status": status, "message": message}), status)
 
 
-@project_blueprint.route("download", methods=["POST"])
+@project_blueprint.route("download/<project_id>", methods=["GET"])
 @login_required
-def data_download():
-    project_id = request.form.get("project_id", None)
+def data_download(project_id):
     data_path = request.form.get("data_path", None)
     download_space = os.path.join(
         current_app.config["DOWNLOAD_FOLDER"],
         "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")),
     )
-    cmd = [
-        "dds",
-        "get",
-        "-c",
-        os.path.join(
-            current_app.config.get("LOCAL_TEMP_CACHE"),
-            "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
-        ),
-        "-p",
-        project_id,
-        "-d",
-        download_space,
-    ]
+    cache_path = os.path.join(
+        current_app.config.get("LOCAL_TEMP_CACHE"),
+        "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
+    )
+    cmd = shlex.split(f"dds get -c {cache_path} -p {project_id} -d {download_space}")
     if data_path:
-        cmd.append("-s")
-        cmd.append(data_path)
+        cmd.extend(["-s", data_path])
     else:
         cmd.append("-a")
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate(input=None)
 
-    # cleanup after success
+    # Clean up after success
     @after_this_request
     def clean_download_space(response):
         if os.path.exists(download_space):
             try:
                 shutil.rmtree(download_space)
             except Exception as e:
-                print(
-                    "Couldn't delete download space {}".format(download_space),
-                    flush=True,
-                )
+                current_app.logger.error("Couldn't delete download space {}".format(download_space), flush=True)
         return response
 
     if proc.returncode == 0:
         download_file_path = compile_download_file_path(download_space, project_id)
         return send_file(download_file_path, as_attachment=True)
     else:
-        abort(500, "Download failed, try again and if still see this message contact DC")
         current_app.logger.error(err)
+        abort(500, "Download failed, try again and if still see this message contact DC")
 
 
 ########## HELPER CLASSES AND FUNCTIONS ##########
@@ -271,11 +243,12 @@ class create_project_instance(object):
         )
 
 
-class folder(object):
+class dds_folder(object):
     """A class to parse the file list and do appropriate ops"""
 
-    def __init__(self, file_list):
+    def __init__(self, file_list, project_id):
         self.files = file_list
+        self.project_id = project_id
         self.files_arranged = {}
 
     def arrange_files(self):
@@ -307,27 +280,33 @@ class folder(object):
         for _key, _value in file_dict.items():
             if isinstance(_value, dict):
                 div_id = "d{}".format(timestamp(ts_format="%y%m%d%H%M%S%f"))
-                _html_string += (
-                    "<li>"
-                    " <span class='li-dwn-box'></span>"
-                    " <a class='folder' data-bs-toggle='collapse' href='#{did}' aria-expanded='false' aria-controls='{did}'>{_k}</a> "
-                    " <div class='collapse' id='{did}'>{_v}</div> "
-                    "</li>"
-                ).format(
-                    did=div_id,
-                    _k=_key,
-                    _v=self.__make_html_string_from_file_dict(_value),
-                )
+                _html_string += f"""
+                    <li class="mb-1">
+                        <a href="{url_for('project.data_download', project_id=self.project_id, data_path=_key) }" class="text-decoration-none">
+                            <i class="far fa-arrow-to-bottom me-3 li-dwn-box"></i>
+                        </a>
+                        <a class="folder text-decoration-none" data-bs-toggle="collapse" href="#{div_id}" aria-expanded="false" aria-controls="{div_id}">
+                            <i class="folder-icon far fa-folder me-2"></i>
+                            {_key}
+                        </a>
+                        <div class="collapse" id="{div_id}"">
+                            {self.__make_html_string_from_file_dict(_value)}
+                        </div>
+                    </li>"""
             else:
-                _html_string += (
-                    "<li>"
-                    "  <span class='li-dwn-box'></span>"
-                    "  <div class='hovertip'>"
-                    "    <span class='file'>{_k}</span> <span class='hovertiptext hovertiptext-filesize'> {_v} </span>"
-                    "  </div>"
-                    "</li>"
-                ).format(_k=_key, _v=format_byte_size(_value))
-        return '<ul style="list-style: none;"> {} </ul>'.format(_html_string)
+                _html_string += f"""
+                    <li class="mb-1">
+                        <a href="{url_for('project.data_download', project_id=self.project_id, data_path=_key) }" class="text-decoration-none">
+                            <i class="far fa-arrow-to-bottom me-3 li-dwn-box"></i>
+                        </a>
+                        <code class="file">
+                            {_key}
+                        </code>
+                        <span class="badge bg-light text-muted fw-light border font-monospace">
+                            {format_byte_size(_value)}
+                        </span>
+                    </li>"""
+        return f'<ul style="list-style: none;">{_html_string}</ul>'
 
 
 def compile_download_file_path(dpath, pid):
