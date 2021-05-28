@@ -86,7 +86,7 @@ class ApiS3Connector:
         with DBConnector() as dbconn:
             safespring, error = dbconn.cloud_project()
 
-        # print(f"-- {safespring}", flush=True)
+        app.logger.debug(safespring)
 
         s3keys, url, bucketname, error = (None,) * 3 + ("",)
         # 1. Get keys
@@ -97,7 +97,7 @@ class ApiS3Connector:
             # s3path = pathlib.Path.cwd() / pathlib.Path("sensitive/s3_config.json")
             with s3path.open(mode="r") as f:
                 s3keys = json.load(f).get("sfsp_keys").get(safespring)
-                print(f"keys: {s3keys}", flush=True)
+                app.logger.debug("keys: %s", s3keys)
         except IOError as err:
             return s3keys, url, bucketname, f"Failed getting keys: {err}"
 
@@ -105,7 +105,7 @@ class ApiS3Connector:
         try:
             with s3path.open(mode="r") as f:
                 endpoint_url = json.load(f)["endpoint_url"]
-                print(f"Endpoint: {endpoint_url}", flush=True)
+                app.logger.debug("Endpoint: %s", endpoint_url)
         except IOError as err:
             return s3keys, url, bucketname, f"Failed getting url! {err}"
 

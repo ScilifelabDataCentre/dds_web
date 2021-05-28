@@ -43,17 +43,15 @@ def token_required(f):
             # Decode
             data = jwt.decode(token, app.config["SECRET_KEY"])
 
-            # Get table and user
-            table = models.Facility if data["facility"] else models.User
-            current_user = table.query.filter(
-                table.public_id == func.binary(data["public_id"])
+            # NEW
+            current_user = models.User.query.filter(
+                models.User.public_id == func.binary(data["public_id"])
             ).first()
-            print(f"Current user: {current_user}", flush=True)
             project = data["project"]
         except Exception:
             return flask.make_response("Token is invalid!", 401)
-
-        return f(current_user, project, *args, **kwargs)
+        else:
+            return f(current_user, project, *args, **kwargs)
 
     return validate_token
 

@@ -8,6 +8,10 @@
 <table class="table table-hover mb-5">
     <tbody>
         <tr>
+            <th>Project ID</th>
+            <td>{{ project['public_id'] }}</td>
+        </tr>
+        <tr>
             <th>Description</th>
             <td>{{ project.description }}</td>
         </tr>
@@ -16,8 +20,8 @@
             <td>{{ project.category }}</td>
         </tr>
         <tr>
-            <th>Owner</th>
-            <td><code>{{ project.owner }}</code></td>
+            <th>Users</th>
+            <td><code>{{ project.users }}</code></td>
         </tr>
         <tr>
             <th>Facility</th>
@@ -49,7 +53,7 @@
 <h2 class="mb-4">Upload Files</h2>
 <form id="data-upload-form" method="POST" enctype="multipart/form-data" action="{{ url_for('project.data_upload') }}"
     autocomplete="off" class="mb-5">
-    <input type="hidden" name="project_id" value="{{ project['id'] }}">
+    <input type="hidden" name="project_id" value="{{ project.public_id }}">
     <input type="hidden" name="upload_limit" value="{{ format_size(upload_limit) }}">
     <div class="mb-3">
         <label class="form-label" for="file-uploader">Upload Files</label>
@@ -70,16 +74,15 @@
 
 {% if not g.is_facility %}
 
-{% if project['unformated_size'] <= download_limit %}
+{% if project.unformated_size <= download_limit %}
 <a href="{{ url_for('project.data_download', project_id=project.id) }}" class="btn btn-primary btn-custom float-end">
     <i class="fas fa-download me-2"></i> Download all
 </a>
-{% endif %}
-
-{% if project['unformated_size'] > download_limit %}
+{% else %}
 <div class="alert alert-info" role="alert">
-    This project is too large to be downloaded via a web browser.
-    Please use the <code>dds_cli</code> command line tool, available here:
+    This project is too large to be downloaded via a web browser (over {{format_size(download_limit) }}).
+    Files / folders that are under the threshold can be downloaded individually.
+    Alternatively, Please use the <code>dds_cli</code> command line tool, available here:
     <a href="https://github.com/scilifelabdataCentre/dds_cli">https://github.com/scilifelabdataCentre/dds_cli</a>
 </div>
 {% endif %}

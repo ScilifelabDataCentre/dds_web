@@ -42,6 +42,7 @@ def login():
         session["is_admin"] = user_info.get("admin", False)
         session["is_facility"] = is_facility
         session["facility_name"] = user_info.get("facility_name")
+        session["facility_id"] = user_info.get("facility_id")
         # temp admin fix
         if session["is_admin"]:
             return redirect(url_for("admin.admin_page"))
@@ -68,6 +69,7 @@ def logout():
     session.pop("is_facility", None)
     session.pop("is_admin", None)
     session.pop("facility_name", None)
+    session.pop("facility_id", None)
     session.pop("usid", None)
     return redirect(url_for("home"))
 
@@ -76,12 +78,13 @@ def logout():
 @login_required
 def user_page(loginname=None):
     """User home page"""
+    #return session
     if session.get("is_admin"):
         return redirect(url_for("admin.admin_page"))
     if session["is_facility"]:
-        projects_list = models.Project.query.filter_by(facility=session["current_user_id"]).all()
+        projects_list = db_utils.get_facilty_projects(fid=session["facility_id"])
     else:
-        projects_list = models.Project.query.filter_by(owner=session["current_user_id"]).all()
+        projects_list = db_utils.get_user_projects(uid=session["current_user_id"])
     # TO DO: change dbfunc passing in future
     return render_template(
         "project/list_project.html",

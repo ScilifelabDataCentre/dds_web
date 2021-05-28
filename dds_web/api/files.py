@@ -11,9 +11,10 @@ import os
 import flask_restful
 import flask
 import sqlalchemy
+from sqlalchemy.sql import func
 
 # Own modules
-from dds_web import timestamp
+from dds_web import timestamp, app
 from dds_web.database import models
 from dds_web import db, timestamp
 from dds_web.api.api_s3_connector import ApiS3Connector
@@ -53,9 +54,18 @@ class NewFile(flask_restful.Resource):
             )
 
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             # Check if file already in db
             existing_file = (
-                models.File.query.filter_by(name=args["name"], project_id=project["id"])
+                models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name == func.binary(args["name"]),
+                        models.File.project_id == func.binary(current_project.id),
+                    )
+                )
                 .with_entities(models.File.id)
                 .first()
             )
@@ -67,21 +77,24 @@ class NewFile(flask_restful.Resource):
 
             # Add new file to db
             new_file = models.File(
+                public_id=os.urandom(16).hex(),
                 name=args["name"],
                 name_in_bucket=args["name_in_bucket"],
                 subpath=args["subpath"],
                 size=args["size"],
                 size_encrypted=args["size_processed"],
-                project_id=project["id"],
                 compressed=bool(args["compressed"] == "True"),
                 salt=args["salt"],
                 public_key=args["public_key"],
                 date_uploaded=timestamp(),
                 checksum=args["checksum"],
+                project_id=current_project,
             )
+            current_project.files.append(new_file)
             db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
+            app.logger.debug(err)
             db.session.rollback()
             return flask.make_response(
                 f"Failed to add new file '{args['name']}' to database: {err}", 500
@@ -96,9 +109,16 @@ class NewFile(flask_restful.Resource):
             return flask.make_response("Information missing, " "cannot add file to database.", 500)
 
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             # Check if file already in db
-            existing_file = models.File.query.filter_by(
-                name=args["name"], project_id=project["id"]
+            existing_file = models.File.query.filter(
+                sqlalchemy.and_(
+                    models.File.name == func.binary(args["name"]),
+                    models.File.project_id == current_project.id,
+                )
             ).first()
 
             # Error if not found
@@ -137,9 +157,13 @@ class MatchFiles(flask_restful.Resource):
         """Matches specified files to files in db."""
 
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             matching_files = (
                 models.File.query.filter(models.File.name.in_(flask.request.json))
-                .filter_by(project_id=project["id"])
+                .filter(models.File.project_id == func.binary(current_project.id))
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -157,11 +181,17 @@ class ListFiles(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def get(self, _, project):
+    def get(self, current_user, project):
         """Get a list of files within the specified folder."""
 
         args = flask.request.args
-        print(args, flush=True)
+        if project["permission"] != "ls":
+            app.logger.debug("User does not have listing permissions.")
+            return flask.make_response(
+                f"User {current_user.username} does not have permission to list project contents.",
+                401,
+            )
+
         # Check if to return file size
         show_size = False
         if "show_size" in args and args["show_size"] == "True":
@@ -326,20 +356,24 @@ class FileInfo(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def get(self, current_user, project):
+    def get(self, _, project):
         """Checks which files can be downloaded, and get their info."""
 
         # Get files and folders requested by CLI
         paths = flask.request.json
 
-        print(f"Paths: {paths}", flush=True)
-
         files_single, files_in_folders = ({}, {})
 
         # Get info on files and folders
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             # Get all files in project
-            files_in_proj = models.File.query.filter_by(project_id=project["id"])
+            files_in_proj = models.File.query.filter(
+                models.File.project_id == func.binary(current_project.id)
+            )
 
             # All files matching the path -- single files
             files = (
@@ -411,13 +445,17 @@ class FileInfoAll(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def get(self, current_user, project):
+    def get(self, _, project):
         """Get file info."""
 
         files = {}
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
+            ).first()
+
             all_files = (
-                models.File.query.filter_by(project_id=project["id"])
+                models.File.query.filter_by(project_id=current_project.id)
                 .with_entities(
                     models.File.name,
                     models.File.name_in_bucket,
@@ -459,7 +497,7 @@ class UpdateFile(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def put(self, current_user, project):
+    def put(self, _, project):
         """Update info in db."""
 
         # Get file name from request from CLI
@@ -469,18 +507,29 @@ class UpdateFile(flask_restful.Resource):
 
         # Update file info
         try:
-            file = models.File.query.filter_by(
-                project_id=project["id"], name=file_name["name"]
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(project["id"])
             ).first()
 
-            if not file or file is None:
+            app.logger.debug("Updating file in current project: %s", current_project.public_id)
+
+            file = models.File.query.filter(
+                sqlalchemy.and_(
+                    models.File.project_id == func.binary(current_project.id),
+                    models.File.name == func.binary(file_name["name"]),
+                )
+            ).first()
+
+            if not file:
                 return flask.make_response(f"No such file: {file_name['name']}", 500)
 
             file.latest_download = timestamp()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
+            app.logger.exception(str(err))
             return flask.make_response(str(err), 500)
         else:
+            app.logger.debug("File %s updated", file_name["name"])
             db.session.commit()
 
         return flask.jsonify({"message": "File info updated."})

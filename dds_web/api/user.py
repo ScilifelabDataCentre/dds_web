@@ -52,7 +52,7 @@ def is_facility(username):
     return is_fac, error
 
 
-def jwt_token(user_id, is_fac, project_id, project_access=False):
+def jwt_token(user_id, project_id, project_access=False, permission="ls"):
     """Generates and encodes a JWT token."""
 
     token, error = (None, "")
@@ -60,8 +60,7 @@ def jwt_token(user_id, is_fac, project_id, project_access=False):
         token = jwt.encode(
             {
                 "public_id": user_id,
-                "facility": is_fac,
-                "project": {"id": project_id, "verified": project_access},
+                "project": {"id": project_id, "verified": project_access, "permission": permission},
                 "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
             },
             app.config["SECRET_KEY"],
@@ -87,6 +86,7 @@ class AuthenticateUser(flask_restful.Resource):
         auth = flask.request.authorization
         if not auth or not auth.username or not auth.password:
             return flask.make_response("Could not verify", 401)
+        app.logger.debug(auth)
 
         # Project not required, will be checked for future operations
         args = flask.request.args
@@ -94,35 +94,36 @@ class AuthenticateUser(flask_restful.Resource):
             project = None
         else:
             project = args["project"]
+        app.logger.debug(project)
 
-        # Check if user has facility role
-        user_is_fac, error = is_facility(username=auth.username)
-        if user_is_fac is None:
-            return flask.make_response(error, 500)
-
-        # Get user from DB matching the username
+        # Check if user in db
         try:
-            table = models.Facility if user_is_fac else models.User
-            user = table.query.filter(table.username == func.binary(auth.username)).first()
+            user = models.User.query.filter(
+                models.User.username == func.binary(auth.username)
+            ).first()
+            app.logger.debug(user)
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             return flask.make_response(f"Database connection failed: {sqlerr}", 500)
 
-        # Deny access if there is no such user
-        if not user or user is None:
+        app.logger.debug(not user)
+        if not user:
             return flask.make_response(
-                "User role registered as "
-                f"'{'facility' if user_is_fac else 'user'}' but user account "
-                f"not found! User denied access: {auth.username}",
-                500,
+                f"User not found in system. User access denied: {auth.username}", 401
             )
 
         # Verify user password and generate token
         if verify_password_argon2id(user.password, auth.password):
-            token, error = jwt_token(user_id=user.public_id, is_fac=user_is_fac, project_id=project)
+            if "l" not in list(user.permissions):
+                return flask.make_response(
+                    f"The user {auth.username} does not have any permissions", 401
+                )
+
+            token, error = jwt_token(user_id=user.public_id, project_id=project)
             if token is None:
                 return flask.make_response(error, 500)
 
             # Success - return token
+            app.logger.debug("Token generated. Returning to CLI.")
             return flask.jsonify({"token": token.decode("UTF-8")})
 
         # Failed - incorrect password
