@@ -1,13 +1,15 @@
 {% extends 'base.html' %}
 
 {% block body %}
-{% if g.current_user_id in [project['owner'], project['facility']] %}
 
 <h1 class="mb-4">{{ project['title'] }}</h1>
 
-
 <table class="table table-hover">
     <tbody>
+        <tr>
+            <th>Project ID</th>
+            <td>{{ project['public_id'] }}</td>
+        </tr>
         <tr>
             <th>Description</th>
             <td>{{ project['description'] }}</td>
@@ -17,8 +19,8 @@
             <td>{{ project['category'] }}</td>
         </tr>
         <tr>
-            <th>Owner</th>
-            <td><code>{{ project['owner'] }}</code></td>
+            <th>Users</th>
+            <td><code>{{ project['users'] }}</code></td>
         </tr>
         <tr>
             <th>Facility</th>
@@ -49,7 +51,7 @@
 
 <form id="data-upload-form" method="POST" enctype="multipart/form-data" action="{{ url_for('project.data_upload') }}"
     autocomplete="off">
-    <input type="hidden" name="project_id" value="{{ project['id'] }}">
+    <input type="hidden" name="project_id" value="{{ project['public_id'] }}">
     <input type="hidden" name="upload_limit" value="{{ format_size(upload_limit) }}">
     <div class="mb-3">
         <label class="form-label" for="file-uploader">Upload Files</label>
@@ -73,7 +75,7 @@
                        <br> <br-->
     <form id="data-download-form" method="POST" enctype="multipart/form-data" autocomplete="off"
         action="{{ url_for('project.data_download') }}">
-        <input type="hidden" name="project_id" value="{{ project['id'] }}">
+        <input type="hidden" name="project_id" value="{{ project['public_id'] }}">
         <input type="hidden" name="download_limit" value="{{ download_limit }}">
 
         {% if project['unformated_size'] > download_limit %}
@@ -93,8 +95,5 @@
 <div id="uploaded-file-list">
     {{ uploaded_data|safe }}
 </div>
-{% endif %}
-{% else %}
-<p>You don't have access to this project, if you think you should contact Data Centre</p>
 {% endif %}
 {% endblock %}

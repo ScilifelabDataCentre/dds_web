@@ -15,7 +15,7 @@ import sqlalchemy
 from sqlalchemy.sql import func
 
 # Own modules
-from dds_web import timestamp
+from dds_web import timestamp, app
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.dds_decorators import token_required
@@ -53,10 +53,13 @@ class DBConnector:
         bucketname, error = (None, "")
         try:
             bucket = (
-                models.Project.query.filter(models.Project.id == func.binary(self.project["id"]))
+                models.Project.query.filter(
+                    models.Project.public_id == func.binary(self.project["id"])
+                )
                 .with_entities(models.Project.bucket)
                 .first()
             )
+            app.logger.debug("Bucket: %s", bucket)
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
         else:
@@ -69,9 +72,18 @@ class DBConnector:
 
         name_in_bucket, error = (None, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == self.project["id"]
+            ).first()
+
             file = models.File.query.filter(
-                models.File.project_id == func.binary(self.project["id"])
-            ).all()
+                sqlalchemy.and_(
+                    models.File.project_id == func.binary(current_project.id),
+                    models.File.name == func.binary(filename),
+                )
+            ).first()
+
+            app.logger.debug("--------File: %s", file)
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
         else:
@@ -84,9 +96,15 @@ class DBConnector:
 
         num_proj_files, error = (0, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             num_proj_files = models.File.query.filter(
-                models.File.project_id == func.binary(self.project["id"])
+                models.File.project_id == func.binary(current_project.id)
             ).count()
+
+            app.logger.debug("Number of project files: %s", num_proj_files)
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
 
@@ -134,14 +152,18 @@ class DBConnector:
         # Get everything in folder:
         # Files have subpath == folder and folders have child folders (regexp)
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             # All files in project
             files = models.File.query.filter(
-                models.File.project_id == func.binary(self.project["id"])
+                models.File.project_id == func.binary(current_project.id)
             )
 
             # File names in root
             distinct_files = (
-                files.filter(models.File.subpath == folder)
+                files.filter(models.File.subpath == func.binary(folder))
                 .with_entities(models.File.name, models.File.size)
                 .all()
             )
@@ -150,7 +172,7 @@ class DBConnector:
             if folder == ".":
                 # Get distinct folders in root, subpath should not be "."
                 distinct_folders = (
-                    files.filter(models.File.subpath != folder)
+                    files.filter(models.File.subpath != func.binary(folder))
                     .with_entities(models.File.subpath)
                     .distinct()
                     .all()
@@ -187,13 +209,17 @@ class DBConnector:
 
         tot_file_size, error = (None, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             file_info = (
                 models.File.query.with_entities(
                     sqlalchemy.func.sum(models.File.size).label("sizeSum")
                 )
                 .filter(
                     sqlalchemy.and_(
-                        models.File.project_id == func.binary(self.project["id"]),
+                        models.File.project_id == func.binary(current_project.id),
                         models.File.subpath.like(f"{folder_name}%"),
                     )
                 )
@@ -211,15 +237,16 @@ class DBConnector:
 
         deleted, error = (False, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             num_deleted = models.File.query.filter(
-                models.File.project_id == self.project["id"]
+                models.File.project_id == current_project.id
             ).delete()
 
             # TODO (ina): put in class
             # change project size
-            current_project = models.Project.query.filter(
-                models.Project.id == func.binary(self.project["id"])
-            ).first()
             current_project.size = 0
             current_project.date_updated = timestamp()
             db.session.commit()
@@ -240,9 +267,13 @@ class DBConnector:
 
         exists, deleted, error = (False, False, "")
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             # File names in root
             files = (
-                models.File.query.filter(models.File.project_id == func.binary(self.project["id"]))
+                models.File.query.filter(models.File.project_id == func.binary(current_project.id))
                 .filter(
                     sqlalchemy.or_(
                         models.File.subpath == func.binary(folder),
@@ -258,7 +289,7 @@ class DBConnector:
             exists = True
             try:
                 current_project = models.Project.query.filter(
-                    models.Project.id == func.binary(self.project["id"])
+                    models.Project.public_id == func.binary(self.project["id"])
                 ).first()
                 for x in files:
                     old_size = x.size
@@ -326,9 +357,13 @@ class DBConnector:
 
         # Get matching files in project
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             file = models.File.query.filter(
                 models.File.name == func.binary(filename),
-                models.File.project_id == func.binary(self.project["id"]),
+                models.File.project_id == func.binary(current_project.id),
             ).first()
 
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -341,7 +376,7 @@ class DBConnector:
                 # TODO (ina): put in own class
                 old_size = file.size
                 current_project = models.Project.query.filter(
-                    models.Project.id == func.binary(self.project["id"])
+                    models.Project.public_id == func.binary(self.project["id"])
                 ).first()
                 db.session.delete(file)
                 current_project.size -= old_size
@@ -361,8 +396,12 @@ class DBConnector:
 
         # Get files in folder
         try:
+            current_project = models.Project.query.filter(
+                models.Project.public_id == func.binary(self.project["id"])
+            ).first()
+
             files_in_folder = models.File.query.filter(
-                models.File.project_id == func.binary(self.project["id"]),
+                models.File.project_id == func.binary(current_project.id),
                 models.File.subpath == func.binary(foldername),
             ).all()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -372,7 +411,7 @@ class DBConnector:
         if files_in_folder or files_in_folder is not None:
             exists, deleted, errors = (True, {}, {})
             current_project = models.Project.query.filter(
-                models.Project.id == func.binary(self.project["id"])
+                models.Project.public_id == func.binary(self.project["id"])
             ).first()
             for x in files_in_folder:
                 filename = x.name
@@ -393,27 +432,25 @@ class DBConnector:
         """Get safespring project"""
 
         sfsp_proj, error = ("", "")
-        if hasattr(self.current_user, "safespring"):
-            return self.current_user.safespring, error
 
+        # Get current project
         try:
-            proj_fac = (
-                models.Project.query.filter(models.Project.id == func.binary(self.project["id"]))
-                .with_entities(models.Project.facility)
-                .first()
-            )
 
-            print(proj_fac, flush=True)
+            current_project_facility_safespring = (
+                models.Project.query.join(
+                    models.Facility, models.Project.facility_id == func.binary(models.Facility.id)
+                )
+                .add_columns(models.Facility.safespring)
+                .filter(models.Facility.id == func.binary(models.Project.facility_id))
+                .filter(models.Project.public_id == func.binary(self.project["id"]))
+            ).first()
 
-            sfsp_proj_info = (
-                models.Facility.query.filter(models.Facility.public_id == func.binary(proj_fac[0]))
-                .with_entities(models.Facility.safespring)
-                .first()
-            )
+            app.logger.debug("Safespring project: %s", current_project_facility_safespring)
+            if not current_project_facility_safespring:
+                error = "No safespring project found for responsible facility."
+
+            sfsp_proj = current_project_facility_safespring[1]
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
-        else:
-            sfsp_proj = sfsp_proj_info[0]
-            print(f"project: {sfsp_proj}", flush=True)
 
         return sfsp_proj, error

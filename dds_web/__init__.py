@@ -37,6 +37,7 @@ def prepare():
     g.is_admin = session.get("is_admin")
     if g.is_facility:
         g.facility_name = session.get("facility_name")
+        g.facility_id = session.get("facility_id")
 
 
 def create_app():
