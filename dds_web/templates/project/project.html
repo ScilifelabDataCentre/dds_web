@@ -49,6 +49,12 @@
 {% if g.is_facility %}
 
 <h2 class="mt-5 mb-4">Upload Files</h2>
+<div class="alert alert-danger d-none" id="noDataTransfer_warning">
+    <strong>Warning:</strong> Your web browser does not support the
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer" target="_blank"><code>DataTransfer</code></a>
+    web API. Directory file paths of uploads cannot not be maintained.
+    Please try using a newer browser or the <code>dds</code> command line client.
+</div>
 <div id="dropDiv" class="p-4 mb-3 bg-light border text-muted">
     <span id="upload_file_instructions">Drag & drop your files here!</span>
     <div id="upload_file_list"></div>
@@ -110,7 +116,12 @@ $(function () {
 {% if g.is_facility %}
 
 // Variable to hold file objects to upload
-upload_files = [];
+upload_files = {};
+
+// Filenames to ignore
+ignore_files = [
+    '.DS_Store'
+]
 
 // Upload files drag + drop
 document.addEventListener('DOMContentLoaded', function(event) {
@@ -159,13 +170,14 @@ document.addEventListener('DOMContentLoaded', function(event) {
                 }
                 return;
             }
-            // Fallback
-            var files = e.target.files || e.dataTransfer.files;
-            if (!files.length){
-                alert('File type not accepted');
-                return;
-            }
-            processFile(files);
+            // We could offer some Fallback support here,
+            // but this will only be used by a limited number of users
+            // so it's probably ok to keep the code simple and insist
+            // on new browsers or using the cli tool.
+            $('#noDataTransfer_warning').removeClass('d-none');
+            $('#dropDiv').addClass('d-none');
+            $('#upload_file_btn').attr('disabled', true);
+            return;
         }
 
         function addDirectory(item) {
@@ -178,16 +190,14 @@ document.addEventListener('DOMContentLoaded', function(event) {
                 });
             } else {
                 item.file(function(file){
-                    processFile([file], [item.fullPath]);
+                    if(ignore_files.indexOf(file.name) >= 0){
+                        console.log("Skipping file as matched filename ignore pattern: "+item.fullPath);
+                    } else {
+                        $('#upload_file_list').append('<div class="upload_file"><code>'+item.fullPath+'</code></div>');
+                        upload_files[item.fullPath] = file;
+                    }
                 });
             }
-        }
-
-        function processFile(files, paths){
-            $.each(paths, function(idx, path){
-                $('#upload_file_list').append('<div class="upload_file"><code>'+path+'</code></div>');
-            });
-            upload_files = upload_files.concat(files);
         }
 
         // Call the function
@@ -206,8 +216,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
         // Build the FormData object
         let formData = new FormData();
         formData.append('project_id', '{{ project.public_id }}');
-        for (let i = 0; i < upload_files.length; i++) {
-            formData.append('files', upload_files[i]);
+        for(path in upload_files){
+            formData.append('files', upload_files[path]);
+            formData.append('file_paths', path);
         }
 
         // Send

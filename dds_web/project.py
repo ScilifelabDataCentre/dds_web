@@ -39,7 +39,7 @@ def add_project():
         for k in ["title", "owner", "description"]:
             if not request.form.get(k):
                 return make_response(jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440)
-        
+
         ruser_obj = models.User.query.filter_by(username=request.form.get("owner")).one_or_none()
         cuser_obj = models.User.query.filter_by(username=session.get("current_user")).one()
         facility_obj = models.Facility.query.filter_by(id=session.get("facility_id")).one()
@@ -106,56 +106,69 @@ def project_info(project_id=None):
 @login_required
 def data_upload():
     project_id = request.form.get("project_id", None)
-    in_files = validate_file_list(request.files.getlist("files")) or validate_file_list(request.files.getlist("folder"))
+    in_files = request.files.getlist("files")
+    in_file_paths = request.files.getlist("file_paths")
+
+    # Check that we got a project ID
+    if project_id is None:
+        return make_response(jsonify({"status": 433, "message": "Project ID not found in request"}), 433)
+
+    # Check that something was uploaded
+    if not in_files or len(in_files) == 0:
+        return make_response(jsonify({"status": 433, "message": "No files were selected to upload"}), 433)
+
+    # Check that we have the same number of files and paths
+    if len(in_files) != len(in_file_paths):
+        return make_response(
+            jsonify(
+                {
+                    "status": 433,
+                    "message": f"Number of uploaded files ({len(in_files)}) did not match number of file paths! ({len(in_file_paths)})",
+                }
+            ),
+            433,
+        )
+
     upload_space = os.path.join(
         current_app.config["UPLOAD_FOLDER"],
         "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")),
     )
-    if project_id is None:
-        status, message = (433, "Project ID not found in request")
-    elif not in_files:
-        status, message = (434, "No files/folder were selected")
-    else:
-        os.mkdir(upload_space)
-        with working_directory(upload_space):
-            upload_file_dest = os.path.join(upload_space, "data")
-            os.mkdir(upload_file_dest)
-            for in_file in in_files:
-                file_target_path = upload_file_dest
-                path_splitted = in_file.filename.split("/")
-                filename = path_splitted[-1]  # TO DO: look into secure naming
-                if len(path_splitted) > 1:
-                    for p in path_splitted[:-1]:
-                        file_target_path = os.path.join(file_target_path, p)
-                        if not os.path.exists(file_target_path):
-                            os.mkdir(file_target_path)
-                in_file.save(os.path.join(file_target_path, filename))
+    os.mkdir(upload_space)
+    with working_directory(upload_space):
+        upload_file_dest = os.path.join(upload_space, "data")
+        os.mkdir(upload_file_dest)
+        for idx, in_file in enumerate(in_files):
+            file_dir = os.path.join(upload_file_dest, os.path.dirname(in_file_paths[idx]))
+            file_name = os.path.basename(in_file_paths[idx])
+            if not os.path.isdir(file_dir):
+                os.makedirs(file_dir)
+            in_file.save(os.path.join(file_dir, file_name))
 
-            with open("data_to_upload.txt", "w") as dfl:
-                dfl.write("\n".join([os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)]))
+        with open("data_to_upload.txt", "w") as dfl:
+            dfl.write("\n".join([os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)]))
 
-            cache_path = os.path.join(
-                current_app.config.get("LOCAL_TEMP_CACHE"),
-                "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
-            )
-            proc = subprocess.Popen(
-                shlex.split(f"dds put -c {cache_path} -p {project_id} -spf data_to_upload.txt --overwrite"),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            out, err = proc.communicate(input=None)
+        cache_path = os.path.join(
+            current_app.config.get("LOCAL_TEMP_CACHE"),
+            "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
+        )
+        proc = subprocess.Popen(
+            shlex.split(f"dds put -c {cache_path} -p {project_id} -spf data_to_upload.txt --overwrite"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        out, err = proc.communicate(input=None)
 
-        if proc.returncode == 0:
-            current_app.logger.info(out)
-            status, message = (200, "Data successfully uploaded to S3")
-            try:
-                shutil.rmtree(upload_space)
-            except:
-                print("Couldn't remove upload space '{}'".format(upload_space), flush=True)
-                current_app.logger.error(err)
-        else:
-            status, message = (515, "Couldn't send data to S3")
+    if proc.returncode == 0:
+        current_app.logger.info(out)
+        status, message = (200, "Data successfully uploaded to S3")
+        try:
+            shutil.rmtree(upload_space)
+        except:
+            print("Couldn't remove upload space '{}'".format(upload_space), flush=True)
             current_app.logger.error(err)
+    else:
+        status, message = (515, "Couldn't send data to S3")
+        current_app.logger.error(err)
 
     return make_response(jsonify({"status": status, "message": message}), status)
 
@@ -209,7 +222,7 @@ class create_project_instance(object):
             "public_id": self.get_new_id(),
             "title": project_info["title"],
             "description": project_info["description"],
-#            "owner": db_utils.get_user_column_by_username(project_info["owner"], "public_id"),
+            #            "owner": db_utils.get_user_column_by_username(project_info["owner"], "public_id"),
             "category": "testing",
             "facility_id": session.get("facility_id"),
             "status": "Ongoing",
@@ -324,8 +337,3 @@ def compile_download_file_path(dpath, pid):
                 for fl in files:
                     pz.write(os.path.join(pdir, fl))
         return os.path.join(dpath, zname)
-
-
-def validate_file_list(flist):
-    """Helper function to check if the file list from upload have files"""
-    return False if (len(flist) == 1 and flist[0].filename == "") else flist
