@@ -24,7 +24,7 @@ services:
   node_builder:
     container_name: dds_nodebuilder
     build:
-      dockerfile: compile_css.Dockerfile
+      dockerfile: Dockerfiles/nodebuilder.Dockerfile
       context: ./
     volumes:
       - type: bind
@@ -34,7 +34,9 @@ services:
   backend:
     container_name: dds_backend
     image: dds-backend-local:latest
-    build: ./
+    build:
+      dockerfile: Dockerfiles/backend.Dockerfile
+      context: ./
     command: python3 app.py
     environment:
       - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
