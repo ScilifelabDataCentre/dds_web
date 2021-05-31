@@ -160,19 +160,30 @@ def data_upload():
         )
         out, err = proc.communicate(input=None)
 
+    resp = {"status": 200, "message": ""}
     if proc.returncode == 0:
         current_app.logger.info(out)
-        status, message = (200, "Data successfully uploaded to S3")
+        resp = {"status": 200, "message": "Data successfully uploaded to S3"}
+
+        # Get an updated file tree
+        project_row = models.Project.query.filter_by(public_id=project_id).one_or_none()
+        if project_row:
+            project_info = project_row.__dict__.copy()
+            files_list = models.File.query.filter_by(project_id=project_info["id"]).all()
+            if files_list:
+                resp["uploaded_data_html"] = dds_folder(files_list, project_id).generate_html_string()
+
+        # Remove the temporary upload space
         try:
             shutil.rmtree(upload_space)
         except:
             print("Couldn't remove upload space '{}'".format(upload_space), flush=True)
             current_app.logger.error(err)
     else:
-        status, message = (515, "Couldn't send data to S3")
+        resp = {"status": 515, "message": "Couldn't send data to S3"}
         current_app.logger.error(err)
 
-    return make_response(jsonify({"status": status, "message": message}), status)
+    return make_response(jsonify(resp), resp["status"])
 
 
 @project_blueprint.route("download/<project_id>", methods=["GET"])

@@ -264,6 +264,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
             try {
                 data = JSON.parse(this.response);
                 $('#upload_file_msg').text(data.message).removeClass('d-none');
+                if(data.uploaded_data_html){
+                    $('#uploaded-file-list').html(data.uploaded_data_html);
+                }
             } catch {
                 $('#upload_file_msg').text('Unexpected error').removeClass('d-none');
             }
