@@ -133,6 +133,8 @@ def data_upload():
         current_app.config["UPLOAD_FOLDER"],
         "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")),
     )
+    current_app.logger.info(f"Uploading {len(in_files)} files to {upload_space}")
+
     os.mkdir(upload_space)
     with working_directory(upload_space):
         upload_file_dest = os.path.abspath(os.path.join(upload_space, "data"))

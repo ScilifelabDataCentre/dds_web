@@ -57,7 +57,7 @@
 </div>
 <div id="dropDiv" class="p-4 mb-3 bg-light border text-muted">
     <span id="upload_file_instructions">Drag & drop your files here!</span>
-    <div id="upload_file_list"></div>
+    <div id="upload_file_list" style="max-height:205px; overflow-y: auto;"></div>
     <div id="upload_file_progress" class="progress d-none">
         <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
     </div>
@@ -199,7 +199,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
                     if(ignore_files.indexOf(file.name) >= 0){
                         console.log("Skipping file as matched filename ignore pattern: "+fpath);
                     } else {
-                        $('#upload_file_list').append('<div class="upload_file"><code>'+fpath+'</code></div>');
                         upload_files[fpath] = file;
                     }
                 });
@@ -209,7 +208,14 @@ document.addEventListener('DOMContentLoaded', function(event) {
         // Call the function
         addFiles(e);
 
-        // Hide the instructions
+        // Update the file list and hide the instructions
+        $('#upload_file_list').html('');
+        setTimeout(function(){
+            // This is a hack, and it pains me to write it. Needs refactoring.
+            for(path in upload_files){
+                $('#upload_file_list').append('<div class="upload_file"><code>'+path+'</code></div>');
+            }
+        }, 100);
         $('#upload_file_instructions').addClass('d-none');
 
     }, false);
@@ -240,15 +246,23 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
         // track upload progress
         xhr.upload.onprogress = function(e) {
-            let pct = (e.loaded/e.total)*100.0+'%';
-            let pct_fixed = ((e.loaded/e.total)*100.0).toFixed(0)+'%';
-            $('#upload_file_progress div').css('width', pct).text(pct_fixed);
+            let pct = (e.loaded/e.total)*100.0;
+            if(pct == 100){
+                $('#upload_file_progress div').css('width', '100%').text('Encrypting and transferring to storage');
+            } else {
+                $('#upload_file_progress div').css('width', pct+'%').text(pct.toFixed(0)+'%');
+            }
         };
 
         // track completion: both successful or not
         xhr.onloadend = function(e) {
-            data = JSON.parse(this.response);
-            $('#upload_file_msg').text(data.message).removeClass('d-none');
+            try {
+                data = JSON.parse(this.response);
+                $('#upload_file_msg').text(data.message).removeClass('d-none');
+            } catch {
+                console.log(this.response);
+                $('#upload_file_msg').text('Unexpected error').removeClass('d-none');
+            }
             $('#upload_file_progress div').css('width', '100%').removeClass('progress-bar-animated');
             $('#upload_file_btn').attr('disabled', false);
             $('#cancel_upload_file_btn').addClass('d-none');
