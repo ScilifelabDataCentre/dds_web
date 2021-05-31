@@ -241,6 +241,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
         $('#upload_file_btn').attr('disabled', true);
         $('#cancel_upload_file_btn').removeClass('d-none');
 
+        // Activate the "Are you sure that you want to navigate away from this page" thing
+        window.onbeforeunload = function() {
+            return true;
+        };
+
         // Note that we can't use 'fetch' yet as we want upload progress
         xhr = new XMLHttpRequest();
 
@@ -260,12 +265,13 @@ document.addEventListener('DOMContentLoaded', function(event) {
                 data = JSON.parse(this.response);
                 $('#upload_file_msg').text(data.message).removeClass('d-none');
             } catch {
-                console.log(this.response);
                 $('#upload_file_msg').text('Unexpected error').removeClass('d-none');
             }
-            $('#upload_file_progress div').css('width', '100%').removeClass('progress-bar-animated');
+            $('#upload_file_progress div').removeClass('progress-bar-animated');
             $('#upload_file_btn').attr('disabled', false);
             $('#cancel_upload_file_btn').addClass('d-none');
+            window.onbeforeunload = null;
+
             if (xhr.status == 200) {
                 $('#upload_file_msg').addClass('text-success').removeClass('bg-danger text-white');
                 $('#upload_file_progress div').addClass('bg-success');
@@ -286,12 +292,12 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
     // Listener to cancel button
     $('#cancel_upload_file_btn').click(function(e){
-        console.log('CLICKED!')
         xhr.abort();
         $('#upload_file_btn').attr('disabled', false);
         $('#cancel_upload_file_btn').addClass('d-none');
         $('#upload_file_msg').addClass('bg-danger text-white').removeClass('text-success').html('<strong>Upload cancelled</strong>');
         $('#upload_file_progress div').addClass('bg-danger');
+        window.onbeforeunload = null;
     });
 });
 
