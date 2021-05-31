@@ -64,6 +64,9 @@ In order to test uploading files through the web interface, you will need to con
   * `DDS_S3_CONFIG="/code/dds_web/sensitive/s3_config.json"` - to tell the app where to find the above file _(NOTE: will soon not be needed)_
   * `DDS_SAFE_SPRING_PROJECT` - the s3 project name to use
 
+Note that uploads with the default projects shipped in the development database will probably not work.
+You will need to create a new project first, then use that for testing.
+
 ### Setting up users
 
 When you first initialise the database, a user with admin privileges will be automatically created.

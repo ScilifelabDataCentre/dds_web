@@ -65,6 +65,9 @@
 <button id="upload_file_btn" class="btn btn-primary">
     <i class="far fa-cloud-upload me-2"></i> Upload
 </button>
+<button id="cancel_upload_file_btn" class="btn btn-outline-danger d-none">
+    <i class="fas fa-ban me-2"></i> Cancel Upload
+</button>
 <span id="upload_file_msg" class="ms-3 p-1 d-none"></span>
 {% endif %}
 
@@ -117,6 +120,7 @@ $(function () {
 
 // Variable to hold file objects to upload
 upload_files = {};
+xhr = false;
 
 // Filenames to ignore
 ignore_files = [
@@ -174,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
             // but this will only be used by a limited number of users
             // so it's probably ok to keep the code simple and insist
             // on new browsers or using the cli tool.
+            // Instead, show a warning and disable the upload.
             $('#noDataTransfer_warning').removeClass('d-none');
             $('#dropDiv').addClass('d-none');
             $('#upload_file_btn').attr('disabled', true);
@@ -204,6 +209,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
         // Call the function
         addFiles(e);
 
+        // Hide the instructions
+        $('#upload_file_instructions').addClass('d-none');
+
     }, false);
 
     // Upload files
@@ -211,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
         e.preventDefault();
 
         // Hide the file list and show the progress bar
-        $('#upload_file_list, #upload_file_instructions').addClass('d-none');
+        $('#upload_file_list').addClass('d-none');
         $('#upload_file_progress').removeClass('d-none');
 
         // Build the FormData object
@@ -223,20 +231,27 @@ document.addEventListener('DOMContentLoaded', function(event) {
         }
 
         // Send
+        // Disable the upload button + show the cancel-upload button
+        $('#upload_file_btn').attr('disabled', true);
+        $('#cancel_upload_file_btn').removeClass('d-none');
+
         // Note that we can't use 'fetch' yet as we want upload progress
-        let xhr = new XMLHttpRequest();
+        xhr = new XMLHttpRequest();
 
         // track upload progress
         xhr.upload.onprogress = function(e) {
             let pct = (e.loaded/e.total)*100.0+'%';
-            $('#upload_file_progress div').css('width', pct).text(pct);
+            let pct_fixed = ((e.loaded/e.total)*100.0).toFixed(0)+'%';
+            $('#upload_file_progress div').css('width', pct).text(pct_fixed);
         };
 
         // track completion: both successful or not
-        xhr.onloadend = function() {
+        xhr.onloadend = function(e) {
             data = JSON.parse(this.response);
             $('#upload_file_msg').text(data.message).removeClass('d-none');
             $('#upload_file_progress div').css('width', '100%').removeClass('progress-bar-animated');
+            $('#upload_file_btn').attr('disabled', false);
+            $('#cancel_upload_file_btn').addClass('d-none');
             if (xhr.status == 200) {
                 $('#upload_file_msg').addClass('text-success').removeClass('bg-danger text-white');
                 $('#upload_file_progress div').addClass('bg-success');
@@ -253,6 +268,16 @@ document.addEventListener('DOMContentLoaded', function(event) {
         xhr.open("POST", "{{ url_for('project.data_upload') }}");
         xhr.send(formData);
 
+    });
+
+    // Listener to cancel button
+    $('#cancel_upload_file_btn').click(function(e){
+        console.log('CLICKED!')
+        xhr.abort();
+        $('#upload_file_btn').attr('disabled', false);
+        $('#cancel_upload_file_btn').addClass('d-none');
+        $('#upload_file_msg').addClass('bg-danger text-white').removeClass('text-success').html('<strong>Upload cancelled</strong>');
+        $('#upload_file_progress div').addClass('bg-danger');
     });
 });
 
