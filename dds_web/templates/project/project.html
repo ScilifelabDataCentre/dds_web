@@ -190,11 +190,12 @@ document.addEventListener('DOMContentLoaded', function(event) {
                 });
             } else {
                 item.file(function(file){
+                    let fpath = item.fullPath.replace(/^\//, ''); // Strip leading slash
                     if(ignore_files.indexOf(file.name) >= 0){
-                        console.log("Skipping file as matched filename ignore pattern: "+item.fullPath);
+                        console.log("Skipping file as matched filename ignore pattern: "+fpath);
                     } else {
-                        $('#upload_file_list').append('<div class="upload_file"><code>'+item.fullPath+'</code></div>');
-                        upload_files[item.fullPath] = file;
+                        $('#upload_file_list').append('<div class="upload_file"><code>'+fpath+'</code></div>');
+                        upload_files[fpath] = file;
                     }
                 });
             }

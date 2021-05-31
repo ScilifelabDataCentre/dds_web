@@ -106,8 +106,8 @@ def project_info(project_id=None):
 @login_required
 def data_upload():
     project_id = request.form.get("project_id", None)
-    in_files = request.files.getlist("files")
-    in_file_paths = request.files.getlist("file_paths")
+    in_file_paths = request.form.getlist("file_paths")
+    in_files = request.files.getlist("files")  # NB: request.files not request.form
 
     # Check that we got a project ID
     if project_id is None:
@@ -135,7 +135,7 @@ def data_upload():
     )
     os.mkdir(upload_space)
     with working_directory(upload_space):
-        upload_file_dest = os.path.join(upload_space, "data")
+        upload_file_dest = os.path.abspath(os.path.join(upload_space, "data"))
         os.mkdir(upload_file_dest)
         for idx, in_file in enumerate(in_files):
             file_dir = os.path.join(upload_file_dest, os.path.dirname(in_file_paths[idx]))
