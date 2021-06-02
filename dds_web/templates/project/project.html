@@ -221,21 +221,15 @@ document.addEventListener('DOMContentLoaded', function(event) {
             // This is a hack, and it pains me to write it. Needs refactoring.
             for(path in upload_files){
                 let filesize = upload_files[path].size;
-                let delstart = '';
-                let delend = '';
-                let pathclass = '';
-                let badgeclass = 'bg-light border text-muted';
+                let toobig = '';
                 if (filesize > upload_limit){
-                    badgeclass = 'bg-danger text-white';
-                    delstart = '<del>';
-                    delend = '</del>';
-                    pathclass = 'text-muted';
+                    toobig = 'upload_file_toobig';
                     $('#upload_files_too_large').removeClass('d-none');
                 }
                 $('#upload_file_list').append(
-                    '<div class="upload_file">'+
-                        '<code class="'+pathclass+'">'+delstart+path+delend+' </code>'+
-                        '<span class="badge '+badgeclass+' fw-light font-monospace">'+humanFileSize(filesize)+'</span>'+
+                    '<div class="upload_file '+toobig+'">'+
+                        '<code>'+path+' </code>'+
+                        '<span>'+humanFileSize(filesize)+'</span>'+
                     '</div>');
             }
         }, 100);

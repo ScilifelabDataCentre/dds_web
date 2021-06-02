@@ -1,0 +1,16 @@
+
+.upload_file {
+    span {
+        @extend .badge, .fw-light, .font-monospace;
+    }
+}
+.upload_file_toobig {
+    @extend .upload_file;
+    code {
+        @extend .text-muted;
+        text-decoration: line-through;
+    }
+    span {
+        @extend .bg-danger, .text-white;
+    }
+}
