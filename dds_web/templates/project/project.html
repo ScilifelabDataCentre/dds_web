@@ -55,6 +55,11 @@
     web API. Directory file paths of uploads cannot not be maintained.
     Please try using a newer browser or the <code>dds</code> command line client.
 </div>
+<div id="upload_files_too_large" class="alert alert-danger d-none">
+    Some files are too large to be uploaded via the web interface (filesizes highlighted in red).
+    <strong>These will be skipped in the upload.</strong>
+    Please use the command line tool to upload these files instead.
+</div>
 <div id="dropDiv" class="p-4 mb-3 bg-light border text-muted">
     <span id="upload_file_instructions">Drag & drop your files here!</span>
     <div id="upload_file_list" style="max-height:205px; overflow-y: auto;"></div>
@@ -112,14 +117,22 @@ $(function () {
 
 {% if g.is_facility %}
 
-// Variable to hold file objects to upload
+// Global upload variables
 upload_files = {};
+upload_limit = {{ upload_limit }};
 xhr = false;
 
 // Filenames to ignore
 ignore_files = [
     '.DS_Store'
 ]
+
+// Human readable file sizes
+function humanFileSize(size) {
+    if(size == 0){ return '0 B'; }
+    var i = Math.floor( Math.log(size) / Math.log(1000) );
+    return ( size / Math.pow(1000, i) ).toFixed(2) * 1 + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
+};
 
 // Upload files drag + drop
 document.addEventListener('DOMContentLoaded', function(event) {
@@ -205,20 +218,24 @@ document.addEventListener('DOMContentLoaded', function(event) {
         // Update the file list and hide the instructions
         $('#upload_file_list').html('');
         setTimeout(function(){
-            // Human readable file sizes
-            function humanFileSize(size) {
-                if(size == 0){ return '0 B'; }
-                var i = Math.floor( Math.log(size) / Math.log(1000) );
-                return ( size / Math.pow(1000, i) ).toFixed(2) * 1 + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
-            };
             // This is a hack, and it pains me to write it. Needs refactoring.
             for(path in upload_files){
                 let filesize = upload_files[path].size;
-                console.log(upload_files[path]);
+                let delstart = '';
+                let delend = '';
+                let pathclass = '';
+                let badgeclass = 'bg-light border text-muted';
+                if (filesize > upload_limit){
+                    badgeclass = 'bg-danger text-white';
+                    delstart = '<del>';
+                    delend = '</del>';
+                    pathclass = 'text-muted';
+                    $('#upload_files_too_large').removeClass('d-none');
+                }
                 $('#upload_file_list').append(
                     '<div class="upload_file">'+
-                        '<code>'+path+' </code>'+
-                        '<span class="badge bg-light text-muted fw-light border font-monospace">'+humanFileSize(filesize)+'</span>'+
+                        '<code class="'+pathclass+'">'+delstart+path+delend+' </code>'+
+                        '<span class="badge '+badgeclass+' fw-light font-monospace">'+humanFileSize(filesize)+'</span>'+
                     '</div>');
             }
         }, 100);
@@ -237,9 +254,17 @@ document.addEventListener('DOMContentLoaded', function(event) {
         // Build the FormData object
         let formData = new FormData();
         formData.append('project_id', '{{ project.public_id }}');
+        let i = 0;
         for(path in upload_files){
-            formData.append('files', upload_files[path]);
-            formData.append('file_paths', path);
+            if (upload_files[path].size <= upload_limit){
+                formData.append('files', upload_files[path]);
+                formData.append('file_paths', path);
+                i += 1;
+            }
+        }
+        if (i == 0){
+            alert("No files to upload");
+            return false;
         }
 
         // Send
