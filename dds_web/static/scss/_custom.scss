@@ -1,7 +1,16 @@
 
+.filesize_badge {
+    @extend .badge, .border, .fw-light, .font-monospace;
+    background-color: $light;
+    color: $text-muted;
+}
+.toobig {
+    background-color: $danger;
+    color: $white;
+}
 .upload_file {
     span {
-        @extend .badge, .fw-light, .font-monospace;
+        @extend .filesize_badge;
     }
 }
 .upload_file_toobig {
@@ -11,6 +20,6 @@
         text-decoration: line-through;
     }
     span {
-        @extend .bg-danger, .text-white;
+        @extend .toobig;
     }
 }

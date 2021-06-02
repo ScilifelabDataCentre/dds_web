@@ -56,7 +56,8 @@
     Please try using a newer browser or the <code>dds</code> command line client.
 </div>
 <div id="upload_files_too_large" class="alert alert-danger d-none">
-    Some files are too large to be uploaded via the web interface (filesizes highlighted in red).
+    Some files are too large to be uploaded via the web interface (filesizes highlighted in red - limit is <code>{{
+        format_size(upload_limit) }}</code>).
     <strong>These will be skipped in the upload.</strong>
     Please use the command line tool to upload these files instead.
 </div>
@@ -73,6 +74,9 @@
 <button id="cancel_upload_file_btn" class="btn btn-outline-danger d-none">
     <i class="fas fa-ban me-2"></i> Cancel Upload
 </button>
+<span id="upload_file_total_msg" class="ms-2">
+    Total upload size: <span class="filesize_badge" id="upload_file_total">0</span>
+</span>
 <span id="upload_file_msg" class="ms-3 p-1 d-none"></span>
 {% endif %}
 
@@ -219,18 +223,27 @@ document.addEventListener('DOMContentLoaded', function(event) {
         $('#upload_file_list').html('');
         setTimeout(function(){
             // This is a hack, and it pains me to write it. Needs refactoring.
+            total_filesize = 0;
             for(path in upload_files){
                 let filesize = upload_files[path].size;
                 let toobig = '';
                 if (filesize > upload_limit){
                     toobig = 'upload_file_toobig';
                     $('#upload_files_too_large').removeClass('d-none');
+                } else {
+                    total_filesize += filesize;
                 }
                 $('#upload_file_list').append(
                     '<div class="upload_file '+toobig+'">'+
                         '<code>'+path+' </code>'+
                         '<span>'+humanFileSize(filesize)+'</span>'+
                     '</div>');
+            }
+            $('#upload_file_total').text(humanFileSize(total_filesize));
+            if(total_filesize > upload_limit){
+                $('#upload_file_total').addClass('toobig');
+            } else {
+                $('#upload_file_total').removeClass('toobig');
             }
         }, 100);
         $('#upload_file_instructions').addClass('d-none');
@@ -249,15 +262,24 @@ document.addEventListener('DOMContentLoaded', function(event) {
         let formData = new FormData();
         formData.append('project_id', '{{ project.public_id }}');
         let i = 0;
+        let total_filesize = 0;
         for(path in upload_files){
             if (upload_files[path].size <= upload_limit){
+                total_filesize += upload_files[path].size;
                 formData.append('files', upload_files[path]);
                 formData.append('file_paths', path);
                 i += 1;
             }
         }
+        // Check that we still have something to upload after chucking those that are over the limit
         if (i == 0){
             alert("No files to upload");
+            return false;
+        }
+        // Check the combined filesize
+        // TODO - when refactoring to do a separate upload for each file, this won't be needed
+        if (total_filesize > upload_limit){
+            alert("Total combined filesize is over the upload limit: "+humanFileSize(upload_limit))
             return false;
         }
 
