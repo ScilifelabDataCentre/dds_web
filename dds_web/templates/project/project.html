@@ -205,9 +205,21 @@ document.addEventListener('DOMContentLoaded', function(event) {
         // Update the file list and hide the instructions
         $('#upload_file_list').html('');
         setTimeout(function(){
+            // Human readable file sizes
+            function humanFileSize(size) {
+                if(size == 0){ return '0 B'; }
+                var i = Math.floor( Math.log(size) / Math.log(1000) );
+                return ( size / Math.pow(1000, i) ).toFixed(2) * 1 + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
+            };
             // This is a hack, and it pains me to write it. Needs refactoring.
             for(path in upload_files){
-                $('#upload_file_list').append('<div class="upload_file"><code>'+path+'</code></div>');
+                let filesize = upload_files[path].size;
+                console.log(upload_files[path]);
+                $('#upload_file_list').append(
+                    '<div class="upload_file">'+
+                        '<code>'+path+' </code>'+
+                        '<span class="badge bg-light text-muted fw-light border font-monospace">'+humanFileSize(filesize)+'</span>'+
+                    '</div>');
             }
         }, 100);
         $('#upload_file_instructions').addClass('d-none');
