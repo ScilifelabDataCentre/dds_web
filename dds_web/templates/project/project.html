@@ -73,9 +73,7 @@
 
 <h2 class="mt-5 mb-4">Project Files</h2>
 
-{% if uploaded_data %}
-
-{% if not g.is_facility %}
+{% if uploaded_data and not g.is_facility %}
 
 {% if project.unformated_size <= download_limit %}
 <a href="{{ url_for('project.data_download', project_id=project.public_id) }}" class="btn btn-primary btn-custom
@@ -93,15 +91,11 @@
 
 {% endif %}
 
-<div id="uploaded-file-list">{{ uploaded_data | safe }}</div>
+<div id="uploaded-file-list" class="{{ '' if uploaded_data else 'd-none' }}">{{ uploaded_data | safe }}</div>
 
-{% else %}
-
-<div class="alert alert-light border">
+<div id="no_uploaded_files" class="alert alert-light border {{ 'd-none' if uploaded_data else '' }}">
     No files found.
 </div>
-
-{% endif %}
 
 {% endblock %}
 
@@ -265,7 +259,8 @@ document.addEventListener('DOMContentLoaded', function(event) {
                 data = JSON.parse(this.response);
                 $('#upload_file_msg').text(data.message).removeClass('d-none');
                 if(data.uploaded_data_html){
-                    $('#uploaded-file-list').html(data.uploaded_data_html);
+                    $('#uploaded-file-list').html(data.uploaded_data_html).removeClass('d-none');
+                    $('#no_uploaded_files').addClass('d-none');
                 }
             } catch {
                 $('#upload_file_msg').text('Unexpected error').removeClass('d-none');
