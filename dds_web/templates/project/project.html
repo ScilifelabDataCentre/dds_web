@@ -75,7 +75,9 @@
     <i class="fas fa-ban me-2"></i> Cancel Upload
 </button>
 <span id="upload_file_total_msg" class="ms-2">
-    Total upload size: <span class="filesize_badge" id="upload_file_total">0</span>
+    Total upload size:
+    <span class="filesize_badge" id="upload_file_total">0</span> -
+    <span class="filesize_badge" id="upload_file_count">0 files</span>
 </span>
 <span id="upload_file_msg" class="ms-3 p-1 d-none"></span>
 {% endif %}
@@ -124,6 +126,8 @@ $(function () {
 // Global upload variables
 upload_files = {};
 upload_limit = {{ upload_limit }};
+total_filesize = 0;
+num_files = 0;
 xhr = false;
 
 // Filenames to ignore
@@ -172,6 +176,30 @@ document.addEventListener('DOMContentLoaded', function(event) {
     // Action to stage files when dropped
     dropArea.addEventListener('drop', function (e) {
 
+        function updateFileList(file, fpath){
+            let toobig = '';
+            if (file.size > upload_limit){
+                toobig = 'upload_file_toobig';
+                $('#upload_files_too_large').removeClass('d-none');
+            } else {
+                total_filesize += file.size;
+                num_files += 1;
+            }
+            $('#upload_file_list').append(
+                '<div class="upload_file '+toobig+'">'+
+                    '<code>'+fpath+' </code>'+
+                    '<span>'+humanFileSize(file.size)+'</span>'+
+                '</div>');
+            // Update the global counter elements
+            $('#upload_file_total').text(humanFileSize(total_filesize));
+            $('#upload_file_count').text(num_files + ' files');
+            if(total_filesize > upload_limit){
+                $('#upload_file_total').addClass('toobig');
+            } else {
+                $('#upload_file_total').removeClass('toobig');
+            }
+        }
+
         // Thanks to https://stackoverflow.com/a/51150691/713980
         function addFiles(e){
             // if directory support is available
@@ -205,12 +233,20 @@ document.addEventListener('DOMContentLoaded', function(event) {
                     });
                 });
             } else {
+                // NB: This function call is async!
                 item.file(function(file){
                     let fpath = item.fullPath.replace(/^\//, ''); // Strip leading slash
                     if(ignore_files.indexOf(file.name) >= 0){
                         console.log("Skipping file as matched filename ignore pattern: "+fpath);
                     } else {
+                        // Update staging interface only if the file hasn't already been added
+                        if(Object.keys(upload_files).indexOf(fpath) < 0){
+                            updateFileList(file, fpath);
+                        }
+                        // Update dict
                         upload_files[fpath] = file;
+                        // Hide the "Drop file here" text
+                        $('#upload_file_instructions').addClass('d-none');
                     }
                 });
             }
@@ -218,35 +254,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
         // Call the function
         addFiles(e);
-
-        // Update the file list and hide the instructions
-        $('#upload_file_list').html('');
-        setTimeout(function(){
-            // This is a hack, and it pains me to write it. Needs refactoring.
-            total_filesize = 0;
-            for(path in upload_files){
-                let filesize = upload_files[path].size;
-                let toobig = '';
-                if (filesize > upload_limit){
-                    toobig = 'upload_file_toobig';
-                    $('#upload_files_too_large').removeClass('d-none');
-                } else {
-                    total_filesize += filesize;
-                }
-                $('#upload_file_list').append(
-                    '<div class="upload_file '+toobig+'">'+
-                        '<code>'+path+' </code>'+
-                        '<span>'+humanFileSize(filesize)+'</span>'+
-                    '</div>');
-            }
-            $('#upload_file_total').text(humanFileSize(total_filesize));
-            if(total_filesize > upload_limit){
-                $('#upload_file_total').addClass('toobig');
-            } else {
-                $('#upload_file_total').removeClass('toobig');
-            }
-        }, 100);
-        $('#upload_file_instructions').addClass('d-none');
 
     }, false);
 
