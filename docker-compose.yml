@@ -24,7 +24,7 @@ services:
   node_builder:
     container_name: dds_nodebuilder
     build:
-      dockerfile: compile_css.Dockerfile
+      dockerfile: Dockerfiles/nodebuilder.Dockerfile
       context: ./
     volumes:
       - type: bind
@@ -34,7 +34,9 @@ services:
   backend:
     container_name: dds_backend
     image: dds-backend-local:latest
-    build: ./
+    build:
+      dockerfile: Dockerfiles/backend.Dockerfile
+      context: ./
     command: python3 app.py
     environment:
       - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
@@ -47,21 +49,33 @@ services:
     ports:
       - 127.0.0.1:5000:5000
     volumes:
+
+      # Main website files (so can edit locally)
       - type: bind
         source: ./dds_web
         target: /code/dds_web
+
+      # Sensitive config files: s3_config.json / .dds-cli.json / dds_app.cfg
       - type: bind
-        source: ${DDS_SENSITIVE_FILES}/
+        source: $DDS_SENSITIVE_FILES
         target: /code/dds_web/sensitive
+
+      # Logging outputs
       - type: bind
-        source: ${DDS_LOG_DIR}
+        source: $DDS_LOG_DIR
         target: /dds_web/logs
+
+      # Staged uploads
       - type: bind
-        source: ${DDS_UPLOAD_TEST}
+        source: $DDS_UPLOAD_TEST
         target: /dds_web/uploads
+
+      # Staged download
       - type: bind
-        source: ${DDS_DOWNLOAD_TEST}
+        source: $DDS_DOWNLOAD_TEST
         target: /dds_web/downloads
+
+      # Cache test (?)
       - type: bind
-        source: ${DDS_TEMP_CACHE_TEST}
+        source: $DDS_TEMP_CACHE_TEST
         target: /dds_web/local_temp_cache
