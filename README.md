@@ -60,9 +60,12 @@ In order to test uploading files through the web interface, you will need to con
 
 * `s3_config.json` - JSON file with the endpoint url and keys for uploading data.
 * `.dds-cli.json` - Username and password credentials for DDS authentication when uploading data _(NOTE: will soon not be needed)_
-* `dds_app.cfg` - App config file specifying the following:
-  * `DDS_S3_CONFIG="/code/dds_web/sensitive/s3_config.json"` - to tell the app where to find the above file _(NOTE: will soon not be needed)_
-  * `DDS_SAFE_SPRING_PROJECT` - the s3 project name to use
+* `dds_app.cfg` - App config file that should look something like this:
+
+  ```bash
+  DDS_S3_CONFIG="/code/dds_web/sensitive/s3_config.json" # Tells the app where to find the s3_config.json file (NOTE: will soon not be needed)
+  DDS_SAFE_SPRING_PROJECT="PROJECT-NAME" # The s3 project name to use. Please ask one of the core developers for this value.
+  ```
 
 Note that uploads with the default projects shipped in the development database will probably not work.
 You will need to create a new project first, then use that for testing.

@@ -79,37 +79,37 @@ class ApiS3Connector:
     def get_s3_info(self):
         """Get information required to connect to cloud."""
 
-        safespring = ""
+        safespring_project = None
         from dds_web.api.db_connector import DBConnector
 
         with DBConnector() as dbconn:
-            safespring, error = dbconn.cloud_project()
+            safespring_project, error = dbconn.cloud_project()
+        assert safespring_project
 
-        app.logger.debug(safespring)
-
-        s3keys, url, bucketname, error = (None,) * 3 + ("",)
+        s3keys = {}
+        bucketname = None
+        error = ("",)
         # 1. Get keys
         # TODO (ina): Change -- these should not be saved in file
         # print(flask.current_app.config["DDS_S3_CONFIG"], flush=True)
         s3path = pathlib.Path(flask.current_app.config["DDS_S3_CONFIG"])
         # s3path = pathlib.Path.cwd() / pathlib.Path("sensitive/s3_config.json")
         with s3path.open(mode="r") as f:
-            s3keys = json.load(f).get("sfsp_keys").get(safespring)
-            app.logger.debug("keys: %s", s3keys)
+            s3keys = json.load(f)["sfsp_keys"][safespring_project]
 
         # 2. Get endpoint url
         with s3path.open(mode="r") as f:
             endpoint_url = json.load(f)["endpoint_url"]
-            app.logger.debug("Endpoint: %s", endpoint_url)
 
-        assert all(x in s3keys for x in ["access_key", "secret_key"]), "Keys not found!"
+        assert "access_key" in s3keys, "s3 access key not found!"
+        assert "secret_key" in s3keys, "s3 secret key not found!"
 
         with DBConnector() as dbconn:
             # 3. Get bucket name
             bucketname, error = dbconn.get_bucket_name()
 
         print(s3keys, flush=True)
-        return safespring, s3keys, endpoint_url, bucketname, error
+        return safespring_project, s3keys, endpoint_url, bucketname, error
 
     def get_safespring_project(self):
         """Get the safespring project"""
