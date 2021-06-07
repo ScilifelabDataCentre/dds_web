@@ -27,7 +27,7 @@
                         {{ g.current_user }}
                     </a>
                     <div class="dropdown-content">
-                        <a href="{{ url_for('home') }}">Account</a>
+                        <a href="{{ url_for('account.account_info', loginname=g.current_user) }}">Account</a>
                     </div>
                 </li>
                 <li class="nav-item">
