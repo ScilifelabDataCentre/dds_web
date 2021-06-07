@@ -11,7 +11,7 @@ from dds_web.development import cache_temp as tc
 
 account_blueprint = Blueprint("account", __name__)
 
-@account_blueprint.route("/<loginname>_account", methods=["GET"])
+@account_blueprint.route("/<loginname>", methods=["GET"])
 @login_required
 def account_info(loginname=None):
     """account page"""
