@@ -47,7 +47,43 @@
                     </a>
                 </li>
                 {% endif %}
+                <li class="dropdown">
+                    <a class="nav-link" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
+                        <i class="fas fa-user-circle d-block mx-auto"></i>
+                        User v3
+                    </a>
+                    <div class="dropdown-content">
+                        <a href="{{ url_for('home') }}">Account</a>
+                    </div>
+                </li>
             </ul>
         </div>
     </div>
 </nav>
+
+<style>
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.dropdown-content a {
+  float: none;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+.dropdown-content a:hover {
+  background-color: #ddd;
+}
+</style>
