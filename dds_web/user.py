@@ -66,7 +66,6 @@ def oidc_login():
     client = oauth.create_client("default_login")
     if not client:
         return flask.Response(status=404)
-    flask.current_app.logger.error(client)
     redirect_uri = flask.url_for("user.oidc_authorize", _external=True)
     return client.authorize_redirect(redirect_uri)
 
