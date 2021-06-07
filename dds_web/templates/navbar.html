@@ -21,11 +21,14 @@
                     </a>
                 </li>
                 {% if g.current_user %}
-                <li class="nav-item">
+                <li class="dropdown">
                     <a class="nav-link" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
                         <i class="fas fa-user-circle d-block mx-auto"></i>
                         {{ g.current_user }}
                     </a>
+                    <div class="dropdown-content">
+                        <a href="{{ url_for('home') }}">Account</a>
+                    </div>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('user.logout') }}">
@@ -47,15 +50,6 @@
                     </a>
                 </li>
                 {% endif %}
-                <li class="dropdown">
-                    <a class="nav-link" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
-                        <i class="fas fa-user-circle d-block mx-auto"></i>
-                        User v3
-                    </a>
-                    <div class="dropdown-content">
-                        <a href="{{ url_for('home') }}">Account</a>
-                    </div>
-                </li>
             </ul>
         </div>
     </div>
