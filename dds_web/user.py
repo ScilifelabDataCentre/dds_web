@@ -1,8 +1,9 @@
 "User display and login/logout HTMl endpoints."
 
+import flask
 from flask import Blueprint, render_template, request, current_app, session, redirect, url_for
 
-from dds_web import timestamp
+from dds_web import timestamp, oauth
 from dds_web.api.login import ds_access
 from dds_web.crypt.auth import validate_user_credentials
 from dds_web.database import models
@@ -57,6 +58,29 @@ def login():
         else:
             to_go_url = url_for("user.user_page", loginname=request.form.get("username"))
         return redirect(to_go_url)
+
+
+@user_blueprint.route("/login-oidc")
+def oidc_login():
+    """Perform a login using OpenID Connect (e.g. Elixir AAI)."""
+    client = oauth.create_client("default_login")
+    if not client:
+        return flask.Response(status=404)
+    flask.current_app.logger.error(client)
+    redirect_uri = flask.url_for("user.oidc_authorize", _external=True)
+    return client.authorize_redirect(redirect_uri)
+
+
+@user_blueprint.route('/login-oidc/authorize')
+def oidc_authorize():
+    """Authorize a login using OpenID Connect (e.g. Elixir AAI)."""
+    client = oauth.create_client("default_login")
+    token = client.authorize_access_token()
+    if "id_token" in token:
+        user_info = client.parse_id_token(token)
+    else:
+        user_info = client.userinfo()
+    return flask.jsonify(user_info)
 
 
 @user_blueprint.route("/logout", methods=["GET"])
