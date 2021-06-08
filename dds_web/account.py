@@ -16,14 +16,14 @@ account_blueprint = Blueprint("account", __name__)
 def account_info(loginname=None):
     """account page"""
     #return session
-    if session.get("is_admin"):
-        return "admin"
+    # if session.get("is_admin"):
+    #     return "admin"
         # return redirect(url_for("admin.admin_page"))
-    if session["is_facility"]:
-        return "facility"
+    # if session["is_facility"]:
+    #     return "facility"
         # projects_list = db_utils.get_facilty_projects(fid=session["facility_id"])
-    else:
-        return "other"
+    # else:
+    #     return "other"
         # projects_list = db_utils.get_user_projects(uid=session["current_user_id"])
     # TO DO: change dbfunc passing in future
     # return render_template(
@@ -32,3 +32,4 @@ def account_info(loginname=None):
     #     dbfunc=db_utils.get_facility_column,
     #     timestamp=timestamp,
     # )
+    return render_template("account/account.html")
