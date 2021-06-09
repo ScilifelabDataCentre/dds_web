@@ -1,11 +1,16 @@
 
-// Animate the hero image cogs
-#cog_1, #cog_2 {
-    animation-duration: 1000ms;
-    animation-iteration-count: infinite;
-    animation-timing-function: linear;
+// General animation stuff
+.dds_animate {
     transform-origin: center;
     transform-box: fill-box;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+}
+
+// Animate the hero image cogs
+#cog_1, #cog_2 {
+    @extend .dds_animate;
+    animation-duration: 1000ms;
 }
 #cog_1 {
     animation-name: spin_clockwise;
@@ -26,12 +31,8 @@
 
 // Animate the cloud pulsating
 #cloud {
-    animation-duration: 3000ms;
-    animation-iteration-count: infinite;
-    animation-timing-function: linear;
-    transform-origin: center;
-    transform-box: fill-box;
-    animation-name: pulse;
+    @extend .dds_animate;
+    animation: pulse 3s linear infinite;
 }
 @keyframes pulse {
     50% {
