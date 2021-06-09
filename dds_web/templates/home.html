@@ -1,20 +1,32 @@
 {% extends 'base.html' %}
 {% block body %}
-<div class="w-75 mx-auto bg-light px-5 py-4 mt-5">
-    <h1>Welcome to the Data Delivery System Web Interface!</h1>
-    <p class="lead text-danger">This page is a work in progress and will be updated during further development.</p>
-    <p>
-        The Data Delivery System (DDS) is a system designed for the simple and secure delivery of data from SciLifeLab
-        facilities to their users.
-        The DDS uses Safespring's object-storage as the delivery medium and has built-in encryption and key management
-        in order to simplify the data delivery as much as possible.
-    </p>
-    <p>
-        In the Web Interface, both account types (facilities and users) can track projects and see all the uploaded data
-        within the projects connected to their accounts.
-        However, only facilities can upload, and only users can download the data. The Web Interface is for small and
-        few files only.
-        If something connected to upload and download does not work, try using a smaller file or folder.
-    </p>
+
+<div class="row mt-3 mb-5 pb-3">
+    <div class="col-lg-6">
+        <h1 class="display-4">Welcome to the SciLifeLab Data Delivery System</h1>
+        <p class="lead">A cloud-based system for the delivery of data from SciLifeLab Facilities to their users.</p>
+        <div class="row">
+            <div class="col-xxl-8 offset-xxl-2 bg-light">
+                {% include "components/login_form.html" %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 pt-5">
+        {% include "components/hero_image.svg" %}
+    </div>
 </div>
+<p>
+    The Data Delivery System (DDS) is a system designed for the simple and secure delivery of data from SciLifeLab
+    facilities to their users.
+    The DDS uses Safespring's object-storage as the delivery medium and has built-in encryption and key management
+    in order to simplify the data delivery as much as possible.
+</p>
+<p>
+    In the Web Interface, both account types (facilities and users) can track projects and see all the uploaded data
+    within the projects connected to their accounts.
+    However, only facilities can upload, and only users can download the data. The Web Interface is for small and
+    few files only.
+    If something connected to upload and download does not work, try using a smaller file or folder.
+</p>
+
 {% endblock %}

@@ -1,0 +1,43 @@
+
+// Animate the hero image cogs
+#cog_1, #cog_2 {
+    animation-duration: 1000ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    transform-origin: center;
+    transform-box: fill-box;
+}
+#cog_1 {
+    animation-name: spin_clockwise;
+}
+#cog_2 {
+    animation-name: spin_counter_clockwise;
+}
+@keyframes spin_clockwise {
+    to {
+        transform:rotate(360deg);
+    }
+}
+@keyframes spin_counter_clockwise {
+    to {
+        transform:rotate(-360deg);
+    }
+}
+
+// Animate the cloud pulsating
+#cloud {
+    animation-duration: 3000ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    transform-origin: center;
+    transform-box: fill-box;
+    animation-name: pulse;
+}
+@keyframes pulse {
+    50% {
+        transform:scale(1.05);
+    }
+    to {
+        transform:scale(1);
+    }
+}
