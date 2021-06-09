@@ -2,46 +2,45 @@
 
 {% block body %}
 
-<h1 class="mb-4">{{ project['title'] }}</h1>
-
+<h1 class="mb-4"><span class="badge bg-light text-muted border">{{ project.public_id }}</span> {{ project.title }}</h1>
 <table class="table table-hover">
     <tbody>
         <tr>
             <th>Project ID</th>
-            <td>{{ project['public_id'] }}</td>
+            <td>{{ project.public_id }}</td>
         </tr>
         <tr>
             <th>Description</th>
-            <td>{{ project['description'] }}</td>
+            <td>{{ project.description }}</td>
         </tr>
         <tr>
             <th>Category</th>
-            <td>{{ project['category'] }}</td>
+            <td>{{ project.category }}</td>
         </tr>
         <tr>
             <th>Users</th>
-            <td><code>{{ project['users'] }}</code></td>
+            <td><code>{{ project.users }}</code></td>
         </tr>
         <tr>
             <th>Facility</th>
-            <td>{{ project['facility_name'] }}</td>
+            <td>{{ project.facility_name }}</td>
         </tr>
         <tr>
             <th>Status</th>
-            <td>{{ project['status'] }}</td>
+            <td>{{ project.status }}</td>
         </tr>
         <tr>
             <th>Creation date</th>
-            <td>{{ project['date_created'] }}</td>
+            <td>{{ project.date_created }}</td>
         </tr>
-        {% if project['date_updated'] %}
+        {% if project.date_updated %}
         <tr>
             <th>Delivery date</th>
-            <td>{{ project['date_updated'] }}</td>
+            <td>{{ project.date_updated }}</td>
         </tr>
         <tr>
             <th>Data size</th>
-            <td>{{ project['size'] }}</td>
+            <td>{{ project.size }}</td>
         </tr>
         {% endif %}
     </tbody>
@@ -49,51 +48,318 @@
 
 {% if g.is_facility %}
 
-<form id="data-upload-form" method="POST" enctype="multipart/form-data" action="{{ url_for('project.data_upload') }}"
-    autocomplete="off">
-    <input type="hidden" name="project_id" value="{{ project['public_id'] }}">
-    <input type="hidden" name="upload_limit" value="{{ format_size(upload_limit) }}">
-    <div class="mb-3">
-        <label class="form-label" for="file-uploader">Upload Files</label>
-        <input class="form-control" type="file" id="file-uploader" name="files"
-            onchange="$(this).closest('form').submit()" multiple>
-    </div>
-    <div class="mb-3">
-        <label class="form-label" for="folder-uploader">Upload Folder</label>
-        <input class="form-control" type="file" id="folder-uploader" name="folder" multiple webkitdirectory mozdirectory
-            onchange="$(this).closest('form').submit()">
-    </div>
-</form>
-{% endif %}
-
-
-{% if uploaded_data %}
-{% if not g.is_facility %}
-<div id="download-form-container" class="right-button-container hovertip">
-    <!--input class="btn btn-primary btn-custom" type="button" value="Ajax Download" id="download-button"
-                       data-project_id="{{ project['id'] }}" data-action="{{ url_for('project.data_download') }}">
-                       <br> <br-->
-    <form id="data-download-form" method="POST" enctype="multipart/form-data" autocomplete="off"
-        action="{{ url_for('project.data_download') }}">
-        <input type="hidden" name="project_id" value="{{ project['public_id'] }}">
-        <input type="hidden" name="download_limit" value="{{ download_limit }}">
-
-        {% if project['unformated_size'] > download_limit %}
-        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button" disabled>
-        <span class="hovertiptext hovertiptext-download">Project size higher than WEB download threshold ({{
-            format_size(download_limit) }}). Files/folders lesser than the threshold can be downloaded individually from
-            file list. Or use CLI to download all data</span>
-        {% else %}
-        <input class="btn btn-primary btn-custom" type="submit" value="Download" id="download-button">
-        {% endif %}
-    </form>
+<h2 class="mt-5 mb-4">Upload Files</h2>
+<div class="alert alert-danger d-none" id="noDataTransfer_warning">
+    <strong>Warning:</strong> Your web browser does not support the
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer" target="_blank"><code>DataTransfer</code></a>
+    web API. Directory file paths of uploads cannot not be maintained.
+    Please try using a newer browser or the <code>dds</code> command line client.
 </div>
-<br>
+<div id="upload_files_too_large" class="alert alert-danger d-none">
+    Some files are too large to be uploaded via the web interface (filesizes highlighted in red - limit is <code>{{
+        format_size(upload_limit) }}</code>).
+    <strong>These will be skipped in the upload.</strong>
+    Please use the command line tool to upload these files instead.
+</div>
+<div id="dropDiv" class="p-4 mb-3 bg-light border text-muted">
+    <span id="upload_file_instructions">Drag & drop your files here!</span>
+    <div id="upload_file_list" style="max-height:205px; overflow-y: auto;"></div>
+    <div id="upload_file_progress" class="progress d-none">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+    </div>
+</div>
+<button id="upload_file_btn" class="btn btn-primary">
+    <i class="far fa-cloud-upload me-2"></i> Upload
+</button>
+<button id="cancel_upload_file_btn" class="btn btn-outline-danger d-none">
+    <i class="fas fa-ban me-2"></i> Cancel Upload
+</button>
+<span id="upload_file_total_msg" class="ms-2">
+    Total upload size:
+    <span class="filesize_badge" id="upload_file_total">0</span> -
+    <span class="filesize_badge" id="upload_file_count">0 files</span>
+</span>
+<span id="upload_file_msg" class="ms-3 p-1 d-none"></span>
 {% endif %}
-<h2>Files Uploaded</h2>
-<br>
-<div id="uploaded-file-list">
-    {{ uploaded_data|safe }}
+
+<h2 class="mt-5 mb-4">Project Files</h2>
+
+{% if uploaded_data and not g.is_facility %}
+
+{% if project.unformated_size <= download_limit %}
+<a href="{{ url_for('project.data_download', project_id=project.public_id) }}" class="btn btn-primary btn-custom
+    float-end">
+    <i class="fas fa-download me-2"></i> Download all
+</a>
+{% else %}
+<div class="alert alert-info" role="alert">
+    This project is too large to be downloaded via a web browser (over {{format_size(download_limit) }}).
+    Files / folders that are under the threshold can be downloaded individually.
+    Alternatively, Please use the <code>dds_cli</code> command line tool, available here:
+    <a href="https://github.com/scilifelabdataCentre/dds_cli">https://github.com/scilifelabdataCentre/dds_cli</a>
 </div>
 {% endif %}
+
+{% endif %}
+
+<div id="uploaded-file-list" class="{{ '' if uploaded_data else 'd-none' }}">{{ uploaded_data | safe }}</div>
+
+<div id="no_uploaded_files" class="alert alert-light border {{ 'd-none' if uploaded_data else '' }}">
+    No files found.
+</div>
+
+{% endblock %}
+
+
+
+{% block javascript %}
+<script type="text/javascript">
+$(function () {
+    // Toggle the folder icon when opening / closing
+    $('.folder').click(function () {
+        $(this).children('.folder-icon').toggleClass('fa-folder, fa-folder-open');
+    });
+});
+
+{% if g.is_facility %}
+
+// Global upload variables
+upload_files = {};
+upload_limit = {{ upload_limit }};
+total_filesize = 0;
+num_files = 0;
+xhr = false;
+
+// Filenames to ignore
+ignore_files = [
+    '.DS_Store'
+]
+
+// Human readable file sizes
+function humanFileSize(size) {
+    if(size == 0){ return '0 B'; }
+    var i = Math.floor( Math.log(size) / Math.log(1000) );
+    return ( size / Math.pow(1000, i) ).toFixed(2) * 1 + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
+};
+
+// Upload files drag + drop
+document.addEventListener('DOMContentLoaded', function(event) {
+
+    dropArea = document.getElementById('dropDiv');
+
+    // Prevent all default behaviour for drag + drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, function(e){
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    // Highlight + unhighlight when dragging over
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, function(e){
+            document.getElementById('dropDiv').classList.add("border-primary");
+
+            // Just in case we had an upload already - show everything again
+            $('#upload_file_list, #upload_file_instructions').removeClass('d-none');
+            $('#upload_file_progress').addClass('d-none');
+            $('#upload_file_msg').text('').removeClass('bg-danger');
+            $('#upload_file_progress div').css('width', 0).text('').removeClass('bg-danger bg-success');
+        }, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, function(e){
+            document.getElementById('dropDiv').classList.remove("border-primary");
+        }, false);
+    });
+
+    // Action to stage files when dropped
+    dropArea.addEventListener('drop', function (e) {
+
+        function updateFileList(file, fpath){
+            let toobig = '';
+            if (file.size > upload_limit){
+                toobig = 'upload_file_toobig';
+                $('#upload_files_too_large').removeClass('d-none');
+            } else {
+                total_filesize += file.size;
+                num_files += 1;
+            }
+            $('#upload_file_list').append(
+                '<div class="upload_file '+toobig+'">'+
+                    '<code>'+fpath+' </code>'+
+                    '<span>'+humanFileSize(file.size)+'</span>'+
+                '</div>');
+            // Update the global counter elements
+            $('#upload_file_total').text(humanFileSize(total_filesize));
+            $('#upload_file_count').text(num_files + ' files');
+            if(total_filesize > upload_limit){
+                $('#upload_file_total').addClass('toobig');
+            } else {
+                $('#upload_file_total').removeClass('toobig');
+            }
+        }
+
+        // Thanks to https://stackoverflow.com/a/51150691/713980
+        function addFiles(e){
+            // if directory support is available
+            if(e.dataTransfer && e.dataTransfer.items){
+                var items = e.dataTransfer.items;
+                for (var i=0; i<items.length; i++) {
+                    var item = items[i].webkitGetAsEntry();
+                    if (item) {
+                        addDirectory(item);
+                    }
+                }
+                return;
+            }
+            // We could offer some Fallback support here,
+            // but this will only be used by a limited number of users
+            // so it's probably ok to keep the code simple and insist
+            // on new browsers or using the cli tool.
+            // Instead, show a warning and disable the upload.
+            $('#noDataTransfer_warning').removeClass('d-none');
+            $('#dropDiv').addClass('d-none');
+            $('#upload_file_btn').attr('disabled', true);
+            return;
+        }
+
+        function addDirectory(item) {
+            if (item.isDirectory) {
+                var directoryReader = item.createReader();
+                directoryReader.readEntries(function(entries) {
+                    entries.forEach(function(entry) {
+                        addDirectory(entry);
+                    });
+                });
+            } else {
+                // NB: This function call is async!
+                item.file(function(file){
+                    let fpath = item.fullPath.replace(/^\//, ''); // Strip leading slash
+                    if(ignore_files.indexOf(file.name) >= 0){
+                        console.log("Skipping file as matched filename ignore pattern: "+fpath);
+                    } else {
+                        // Update staging interface only if the file hasn't already been added
+                        if(Object.keys(upload_files).indexOf(fpath) < 0){
+                            updateFileList(file, fpath);
+                        }
+                        // Update dict
+                        upload_files[fpath] = file;
+                        // Hide the "Drop file here" text
+                        $('#upload_file_instructions').addClass('d-none');
+                    }
+                });
+            }
+        }
+
+        // Call the function
+        addFiles(e);
+
+    }, false);
+
+    // Upload files
+    $('#upload_file_btn').click(function(e){
+        e.preventDefault();
+
+        // Hide the file list and show the progress bar
+        $('#upload_file_list').addClass('d-none');
+        $('#upload_file_progress').removeClass('d-none');
+
+        // Build the FormData object
+        let formData = new FormData();
+        formData.append('project_id', '{{ project.public_id }}');
+        let i = 0;
+        let total_filesize = 0;
+        for(path in upload_files){
+            if (upload_files[path].size <= upload_limit){
+                total_filesize += upload_files[path].size;
+                formData.append('files', upload_files[path]);
+                formData.append('file_paths', path);
+                i += 1;
+            }
+        }
+        // Check that we still have something to upload after chucking those that are over the limit
+        if (i == 0){
+            alert("No files to upload");
+            return false;
+        }
+        // Check the combined filesize
+        // TODO - when refactoring to do a separate upload for each file, this won't be needed
+        if (total_filesize > upload_limit){
+            alert("Total combined filesize is over the upload limit: "+humanFileSize(upload_limit))
+            return false;
+        }
+
+        // Send
+        // Disable the upload button + show the cancel-upload button
+        $('#upload_file_btn').attr('disabled', true);
+        $('#cancel_upload_file_btn').removeClass('d-none');
+
+        // Activate the "Are you sure that you want to navigate away from this page" thing
+        window.onbeforeunload = function() {
+            return true;
+        };
+
+        // Note that we can't use 'fetch' yet as we want upload progress
+        xhr = new XMLHttpRequest();
+
+        // track upload progress
+        xhr.upload.onprogress = function(e) {
+            let pct = (e.loaded/e.total)*100.0;
+            if(pct == 100){
+                $('#upload_file_progress div').css('width', '100%').text('Encrypting and transferring to storage');
+            } else {
+                $('#upload_file_progress div').css('width', pct+'%').text(pct.toFixed(0)+'%');
+            }
+        };
+
+        // track completion: both successful or not
+        xhr.onloadend = function(e) {
+            try {
+                data = JSON.parse(this.response);
+                $('#upload_file_msg').text(data.message).removeClass('d-none');
+                if(data.uploaded_data_html){
+                    $('#uploaded-file-list').html(data.uploaded_data_html).removeClass('d-none');
+                    $('#no_uploaded_files').addClass('d-none');
+                }
+            } catch {
+                $('#upload_file_msg').text('Unexpected error').removeClass('d-none');
+            }
+            $('#upload_file_progress div').removeClass('progress-bar-animated');
+            $('#upload_file_btn').attr('disabled', false);
+            $('#cancel_upload_file_btn').addClass('d-none');
+            window.onbeforeunload = null;
+
+            if (xhr.status == 200) {
+                $('#upload_file_msg').addClass('text-success').removeClass('bg-danger text-white');
+                $('#upload_file_progress div').addClass('bg-success');
+            } else {
+                $('#upload_file_msg').addClass('bg-danger text-white').removeClass('text-success').prepend('<strong>Error: </strong>');
+                $('#upload_file_progress div').addClass('bg-danger');
+            }
+
+            // Reset
+            upload_files = [];
+            $('#upload_file_list').html('');
+        };
+
+        xhr.open("POST", "{{ url_for('project.data_upload') }}");
+        xhr.send(formData);
+
+    });
+
+    // Listener to cancel button
+    $('#cancel_upload_file_btn').click(function(e){
+        xhr.abort();
+        $('#upload_file_btn').attr('disabled', false);
+        $('#cancel_upload_file_btn').addClass('d-none');
+        $('#upload_file_msg').addClass('bg-danger text-white').removeClass('text-success').html('<strong>Upload cancelled</strong>');
+        $('#upload_file_progress div').addClass('bg-danger');
+        window.onbeforeunload = null;
+    });
+});
+
+{% endif %}
+
+</script>
 {% endblock %}

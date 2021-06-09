@@ -54,6 +54,22 @@ These values are publicly visible on GitHub and **should not be used in producti
 At the time of writing, much of the functionality will not work with the defaults.
 Please see the _Production_ section below for how to set what you need.
 
+### Uploads config
+
+In order to test uploading files through the web interface, you will need to configure 3 files in the `run_dir/sensitive` directory:
+
+* `s3_config.json` - JSON file with the endpoint url and keys for uploading data.
+* `.dds-cli.json` - Username and password credentials for DDS authentication when uploading data _(NOTE: will soon not be needed)_
+* `dds_app.cfg` - App config file that should look something like this:
+
+  ```bash
+  DDS_S3_CONFIG="/code/dds_web/sensitive/s3_config.json" # Tells the app where to find the s3_config.json file (NOTE: will soon not be needed)
+  DDS_SAFE_SPRING_PROJECT="PROJECT-NAME" # The s3 project name to use. Please ask one of the core developers for this value.
+  ```
+
+Note that uploads with the default projects shipped in the development database will probably not work.
+You will need to create a new project first, then use that for testing.
+
 ### Setting up users
 
 When you first initialise the database, a user with admin privileges will be automatically created.
