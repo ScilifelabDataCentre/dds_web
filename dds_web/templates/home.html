@@ -7,7 +7,16 @@
         <p class="lead">A cloud-based system for the delivery of data from SciLifeLab Facilities to their users.</p>
         <div class="row">
             <div class="col-xxl-8 offset-xxl-2 bg-light">
+                {% if g.current_user %}
+                <a class="btn btn-primary w-100 mb-2" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
+                    View projects
+                </a>
+                <a class="btn btn-success w-100 mb-2" href="{{ url_for('user.logout') }}">
+                    Log out
+                </a>
+                {% else %}
                 {% include "components/login_form.html" %}
+                {% endif %}
             </div>
         </div>
     </div>
