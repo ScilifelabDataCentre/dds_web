@@ -93,6 +93,13 @@ def user_page(loginname=None):
         timestamp=timestamp,
     )
 
+@user_blueprint.route("/<loginname>", methods=["GET"])
+@login_required
+def account_info(loginname=None):
+    """account page"""
+    test=session.get("is_facility")
+    return render_template("account/account.html",
+                            test=test)
 
 # @user_blueprint.route("/signup", methods=["GET", "POST"])
 # def signup():
