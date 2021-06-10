@@ -26,8 +26,8 @@
                         <i class="fas fa-user-circle d-block mx-auto"></i>
                         {{ g.current_user }}
                     </a>
-                    <div class="dropdown-content">
-                        <a href="{{ url_for('account.account_info', loginname=g.current_user) }}">Account</a>
+                    <div class="dropdown-content" data-toggle="dropdown">
+                        <a href="{{ url_for('user.account_info', loginname=g.current_user) }}">Account</a>
                     </div>
                 </li>
                 <li class="nav-item">
