@@ -92,10 +92,6 @@ def create_app():
 
         app.register_blueprint(project_blueprint, url_prefix="/project")
 
-        from account import account_blueprint
-
-        app.register_blueprint(account_blueprint, url_prefix="/account")
-
         return app
 
 
