@@ -22,19 +22,15 @@ COPY . /code
 COPY --from=compile_css /code/dds_web/static /code/dds_web/static
 
 # Install some necessary systems packages
-RUN apt-get update
-RUN apt-get install -y gfortran libopenblas-dev liblapack-dev
+RUN apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev
 
 # Install all dependencies
-RUN pip3 install -r /code/requirements.txt
+RUN pip3 install -r /code/requirements.txt && pip3 install gunicorn
 
 # Install DDS CLI for web upload
 ### TODO - Replace this with `dds_cli` when published to PyPI
 ### TODO - NOT FOR USE IN PRODUCTION! CURRENTLY USING DEV BRANCH
 RUN pip3 install git+https://github.com/ScilifelabDataCentre/dds_cli.git@dev
-
-# Install gnuicorn
-RUN pip3 install gunicorn
 
 # Add code directory in pythonpath
 ENV PYTHONPATH /code
