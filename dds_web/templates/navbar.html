@@ -21,15 +21,22 @@
                     </a>
                 </li>
                 {% if g.current_user %}
-                <li class="dropdown">
-                    <a class="nav-link" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" >
                         <i class="fas fa-user-circle d-block mx-auto"></i>
                         {{ g.current_user }}
                     </a>
-                    <div class="dropdown-content" data-toggle="dropdown">
-                        <a href="{{ url_for('user.account_info', loginname=g.current_user) }}">Account</a>
-                    </div>
-                </li>
+                    <ul class="dropdown-menu" >
+                        <li><a class="dropdown-item" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
+                            {% if g.is_admin %}
+                                Dashboard
+                            {% else %}
+                                Projects
+                            {% endif %}
+                        </a></li>
+                        <li></li><a class="dropdown-item" href="{{ url_for('user.account_info', loginname=g.current_user) }}">Account</a></li>
+                    </ul>
+                  </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('user.logout') }}">
                         <i class="far fa-sign-out d-block mx-auto"></i>
@@ -55,29 +62,3 @@
     </div>
 </nav>
 
-<style>
-.dropdown:hover .dropdown-content {
-    display: block;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #f9f9f9;
-  min-width: 90px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
-}
-
-.dropdown-content a {
-  float: none;
-  padding: 8px 10px;
-  text-decoration: none;
-  display: block;
-  text-align: left;
-}
-
-.dropdown-content a:hover {
-  background-color: #ddd;
-}
-</style>
