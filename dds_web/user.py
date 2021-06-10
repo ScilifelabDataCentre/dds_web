@@ -93,7 +93,7 @@ def user_page(loginname=None):
         timestamp=timestamp,
     )
 
-@user_blueprint.route("/<loginname>", methods=["GET"])
+@user_blueprint.route("/<loginname>_account", methods=["GET"])
 @login_required
 def account_info(loginname=None):
     """account page"""
