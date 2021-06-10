@@ -24,7 +24,6 @@ from cryptography.hazmat import backends
 # Own modules
 from dds_web import app, db, timestamp
 from dds_web.api.user import jwt_token
-from dds_web.api.user import is_facility
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
@@ -84,7 +83,7 @@ class ProjectAccess(flask_restful.Resource):
         if project["id"] in [x.public_id for x in current_user.projects]:
             app.logger.debug("Updating token...")
             token, error = jwt_token(
-                user_id=current_user.public_id,
+                username=current_user.username,
                 project_id=project["id"],
                 project_access=True,
                 permission=args["method"],
@@ -172,7 +171,7 @@ class GetPrivate(flask_restful.Resource):
             try:
                 decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
             except Exception as err:
-                app.logging.exception(err)
+                app.logger.exception(err)
                 return flask.make_response(str(err), 500)
 
             # print(f"Decrypted key: {decrypted_key}", flush=True)
