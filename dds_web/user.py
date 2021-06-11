@@ -97,8 +97,19 @@ def user_page(loginname=None):
 @login_required
 def account_info(loginname=None):
     """account page"""
-    test=session.get("is_facility")
+    test={
+            "id": 1,
+            "first_name": 'First',
+            "last_name": 'Last',
+            "username": 'username',
+            "password": 'a',
+            "settings": 'a',
+            "email": ['userX@email1.com', 'userX@email2.com'],
+            "phone": 'a',
+            "admin": 'a'
+        }
     return render_template("account/account.html",
+                            enumerate=enumerate,
                             test=test)
 
 # @user_blueprint.route("/signup", methods=["GET", "POST"])
