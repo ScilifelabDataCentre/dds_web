@@ -2,29 +2,34 @@
 
 {% block body %}
 <h1 class="mb-4"> Account Information</h1>
-<h2 class="py-5">layout test 1: no-hover</h2>
+<h2 class="py-5">layout test part 1: start</h2>
 <div class="w-75 mx-auto bg-light px-2 py-2">
-<!-- <div class="w-75 mx-auto bg-light px-5 py-4 mt-5"> -->
     <table class="table">
         <tbody>
             <tr>
-                <th>  Username </th>
-                <td> userX </td>
+                <th>  username </th>
+                <td> {{ test.username }} </td>
+                <td></td>
             <tr>
             <tr>
                 <th>  Name </th>
-                <td> First Last </td>
+                <td> {{ test.first_name }} {{ test.last_name }} </td>
+                <td>
+                </td>
+            {% for count, email in enumerate(test.email) %}
             <tr>
-                <th>  Email  </th>
-                <td> email1@email.com </td>
+                {% if  count == 0 %}
+                    <th>  Email  </th>
+                {% else %}
+                    <th></th>
+                {% endif %}
+                <td> {{ email }} </td>
+                <td>
+                </td>
             </tr>
-            <tr>
-                <th></th>
-                <td> email2@email.com </td>
-            </tr>
+            {% endfor %}
         </tbody>
     </table>
-
     <button class="btn btn-sm btn-outline-info mx-2" >
         <i class="far fa-user-edit me-1"></i>Edit
     </button>
@@ -33,27 +38,32 @@
     </button>
 </div>
 
-<h2 class="py-5">layout test 2</h2>
+<h2 class="py-5">layout test part 2: on-click</h2>
 <div class="w-75 mx-auto bg-light px-2 py-2">
 <!-- <div class="w-75 mx-auto bg-light px-5 py-4 mt-5"> -->
     <table class="table table-hover">
         <tbody>
             <tr>
-                <th>  Username </th>
-                <td> userX </td>
+                <th>  username </th>
+                <td> {{ test.username }} </td>
                 <td></td>
             <tr>
             <tr>
                 <th>  Name </th>
-                <td> First Last </td>
+                <td> {{ test.first_name }} {{ test.last_name }} </td>
                 <td>
                     <button class="btn btn-sm btn-outline-info" >
                         <i class="far fa-user-edit"></i>
                     </button>
                 </td>
+            {% for count, email in enumerate(test.email) %}
             <tr>
-                <th>  Email  </th>
-                <td> email1@email.com </td>
+                {% if  count == 0 %}
+                    <th>  Email  </th>
+                {% else %}
+                    <th></th>
+                {% endif %}
+                <td> {{ email }} </td>
                 <td>
                     <button class="btn btn-sm btn-outline-info" >
                         <i class="far fa-user-edit"></i>
@@ -66,44 +76,12 @@
                     </button> -->
                 </td>
             </tr>
-            <tr>
-                <th></th>
-                <td> email2@email.com </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-info " >
-                        <i class="far fa-user-edit"></i>
-                    </button>
-                    <!-- <button class="btn btn-sm btn-outline-danger" >
-                        <i class="far fa-envelope me-1"></i>Delete
-                    </button> -->
-                </td>
-            </tr>
+            {% endfor %}
         </tbody>
     </table>
-
-    <button class="btn btn-sm btn-outline-info mx-2" >
-        <i class="far fa-user-edit me-1"></i>Edit
-    </button>
     <button class="btn btn-sm btn-outline-info mx-2" >
         <i class="far fa-check-circle me-1"></i>Done
     </button>
-    <button class="btn btn-sm btn-outline-info mx-2" >
-        <i class="far fa-key me-1"></i>Change password
-    </button>
-
 </div>
-
-<!-- db fields -->
-<!-- fields = (
-    "id",
-    "first_name",
-    "last_name",
-    "username",
-    "password",
-    "settings",
-    "email",
-    "phone",
-    "admin",
-) -->
 
 {% endblock %}
