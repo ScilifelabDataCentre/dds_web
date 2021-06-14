@@ -81,16 +81,18 @@ def do_login(session, identifier:str, password:str = "") -> bool:
     except sqlalchemy.exc.SQLAlchemyError:
         return False
     user_info = account.user
-
     # Use the current login definitions for compatibility
-    session["current_user_id"] = user_info["id"]
-    session["current_user"] = user_info["username"]
-    session["current_user_id"] = user_info["id"]
-    session["is_admin"] = user_info.get("admin", False)
-    session["is_facility"] = is_facility
-    session["facility_name"] = user_info.get("facility_name")
-    session["facility_id"] = user_info.get("facility_id")
+    session["current_user"] = user_info.username
+    session["current_user_id"] = user_info.id
+    session["is_admin"] = user_info.role == "admin"
+    session["is_facility"] = user_info.role == "facility"
+    if session["is_facility"]:
+        facility_info = models.Facility.query.filter(
+            models.Facility.id == account.facility_id
+        ).first()    
 
+        session["facility_name"] = facility_info.name
+        session["facility_id"] = facility_info.id
     return True
 
 
@@ -113,10 +115,12 @@ def oidc_authorize():
         user_info = client.parse_id_token(token)
     else:
         user_info = client.userinfo()
+
     if do_login(flask.session, user_info["email"]):
-        flask.redirect(url_for("home"))
+        flask.current_app.logger.info(f"Passed login attempt")
+        return flask.redirect(flask.url_for("home"))
     else:
-        return flask.Response(status=403)
+        return flask.abort(status=403)
 
 
 @user_blueprint.route("/logout", methods=["GET"])
