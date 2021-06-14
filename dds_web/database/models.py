@@ -106,9 +106,7 @@ class User(db.Model):
     projects = db.relationship(
         "Project", secondary=project_users, backref=db.backref("users", lazy="dynamic")
     )
-    identifiers = db.relationship(
-        "Identifier", back_populates="user", cascade="all, delete-orphan"
-    )
+    identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         """Called by print, creates representation of object"""

@@ -2,7 +2,7 @@
 
 import flask
 from flask import render_template, request, current_app, session, redirect, url_for
-import sqlalchemy 
+import sqlalchemy
 
 from dds_web import timestamp, oauth
 from dds_web.api.login import ds_access
@@ -61,7 +61,7 @@ def login():
         return redirect(to_go_url)
 
 
-def do_login(session, identifier:str, password:str = "") -> bool:
+def do_login(session, identifier: str, password: str = "") -> bool:
     """
     Check if a user with matching identifier exists. If so, log in as that user.
 
@@ -89,7 +89,7 @@ def do_login(session, identifier:str, password:str = "") -> bool:
     if session["is_facility"]:
         facility_info = models.Facility.query.filter(
             models.Facility.id == account.facility_id
-        ).first()    
+        ).first()
 
         session["facility_name"] = facility_info.name
         session["facility_id"] = facility_info.id
@@ -106,7 +106,7 @@ def oidc_login():
     return client.authorize_redirect(redirect_uri)
 
 
-@user_blueprint.route('/login-oidc/authorize')
+@user_blueprint.route("/login-oidc/authorize")
 def oidc_authorize():
     """Authorize a login using OpenID Connect (e.g. Elixir AAI)."""
     client = oauth.create_client("default_login")
@@ -142,7 +142,7 @@ def logout():
 @login_required
 def user_page(loginname=None):
     """User home page"""
-    #return session
+    # return session
     if session.get("is_admin"):
         return redirect(url_for("admin.admin_page"))
     if session["is_facility"]:
