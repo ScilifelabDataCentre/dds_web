@@ -14,38 +14,31 @@
 
     <body>
         {% include 'navbar.html' %}
-        <div class="container pt-2">
+        <div class="container content pt-2">
             {% block body %}{% endblock body %}
         </div>
 
-        <div class="btn-group">
-            <a id="theme-toggle-light" href="#light"
-                class="btn btn-light border theme-switcher theme-toggle {{ 'd-none' if request.cookies.get('ddstheme',
-                'light') ==
-                'light' }}">
-                <i class="fas fa-moon"></i>
-            </a>
-            <a id="theme-toggle-light" href="#dark"
-                class="btn btn-light border theme-switcher theme-toggle {{ 'd-none' if request.cookies.get('ddstheme',
-                'light') ==
-                'dark' }}">
-                <i class="fas fa-sun"></i>
-            </a>
-            <button type="button" class="btn btn-light border dropdown-toggle dropdown-toggle-split"
-                data-bs-toggle="dropdown">
-            </button>
-            <ul class="dropdown-menu">
-                <li>
-                    <a class="dropdown-item theme-switcher" href="#light">
-                        <i class="fas fa-sun fa-fw me-2"></i> Light mode
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item theme-switcher" href="#dark">
-                        <i class="fas fa-moon fa-fw me-2"></i> Dark mode
-                    </a>
-                </li>
-            </ul>
+        <div class="footer border-top bg-light text-muted py-5 mt-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-check form-switch theme-switcher">
+                            <input class="form-check-input" type="checkbox" id="theme-switcher-check"
+                                {{ 'checked' if request.cookies.get('ddstheme', 'light') == 'dark' }}>
+                            <label class="form-check-label" for="theme-switcher-check">
+                                <i class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'dark' }} fas
+                                    fa-sun fa-fw me-2"></i>
+                                <i class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'light' }} fas
+                                    fa-moon fa-fw me-2"></i>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6 text-end small">
+                        The DDS web source code is available on GitHub:
+                        <a href="https://github.com/ScilifelabDataCentre/dds_web" class="text-muted">https://github.com/ScilifelabDataCentre/dds_web</a>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Javascript -->
