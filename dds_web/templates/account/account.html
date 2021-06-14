@@ -35,10 +35,9 @@
     </div>
 </div>
 
-
 <h1 class="mb-4"> Account Information</h1>
 <div class="container w-75 mx-auto">
-    <div class="container bg-light px-2 py-1">
+    <div class="bg-light px-2 py-1">
         <table class="table">
             <tbody>
                 <tr>
@@ -54,28 +53,29 @@
                             <i class="far fa-user-edit"></i>
                         </button>
                     </td>
-                {% for count, email in enumerate(test.email) %}
-                <tr>
-                    {% if  count == 0 %}
-                    <th>  Email  </th>
-                    {% else %}
-                    <th></th>
-                    {% endif %}
-                    <td> {{ email }} </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-info float-end" >
-                            <i class="far fa-user-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    {% for count, email in enumerate(test.email) %}
+                    <tr>
+                        {% if  count == 0 %}
+                        <th>  Email  </th>
+                        {% else %}
+                        <th></th>
+                        {% endif %}
+                        <td> {{ email }} </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info float-end" >
+                                <i class="far fa-user-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-end">
+            <button type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" data-bs-toggle="modal" data-bs-target="#changePass_modal">
+                <i class="far fa-lock me-2"></i>
+                Change password
+            </button>
+        </div>
     </div>
-    <button type="button" class="btn btn-sm btn-outline-info float-end my-2 mx-1" data-bs-toggle="modal" data-bs-target="#changePass_modal">
-        <i class="far fa-lock me-2"></i>
-        Change password
-    </button>
-</div>
-
-{% endblock %}
+    {% endblock %}
