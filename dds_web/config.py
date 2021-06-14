@@ -24,3 +24,8 @@ class Config(object):
 
     # Devel settings
     TEMPLATES_AUTO_RELOAD = True
+
+    # OIDC
+    OIDC_CLIENT_ID = ""
+    OIDC_CLIENT_SECRET = ""
+    OIDC_ACCESS_TOKEN_URL = ""

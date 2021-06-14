@@ -30,4 +30,8 @@
     {% endif %}
     <button type="submit" class="btn btn-success w-100 mb-2">Log In</button>
     <p class="text-center mb-1 small"><a class="text-muted text-decoration-none" href="#">Forgot your password?</a></p>
+
+    <p>
+      <a class="btn btn-primary mt-3 w-100" href="{{ url_for('user.oidc_login' )}}">Log In Using Open ID Connect</a>
+    </p>
 </form>

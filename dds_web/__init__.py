@@ -14,6 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_marshmallow import Marshmallow
 from logging.handlers import RotatingFileHandler
+from authlib.integrations import flask_client as auth_flask_client
 
 # Own modules
 
@@ -24,6 +25,7 @@ app = Flask(__name__, instance_relative_config=False)
 db = SQLAlchemy()
 ma = Marshmallow(app)
 C_TZ = pytz.timezone("Europe/Stockholm")
+oauth = auth_flask_client.OAuth(app)
 
 # FUNCTIONS ####################################################### FUNCTIONS #
 
@@ -58,6 +60,15 @@ def create_app():
 
     db.init_app(app)  # Initialize database
     # ma.init_app(app)
+
+    # initialize OIDC
+    oauth.register(
+        "default_login",
+        client_secret=app.config.get("OIDC_CLIENT_SECRET"),
+        client_id=app.config.get("OIDC_CLIENT_ID"),
+        server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
+        client_kwargs={"scope": "openid profile email"},
+    )
 
     with app.app_context():  # Everything in here has access to sessions
         from dds_web import routes  # Import routes
