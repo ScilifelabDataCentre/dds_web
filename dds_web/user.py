@@ -64,7 +64,7 @@ def login():
 def do_login(session, identifier:str, password:str = "") -> bool:
     """
     Check if a user with matching identifier exists. If so, log in as that user.
-    
+
     TODO:
       * Add support for passwords
 
