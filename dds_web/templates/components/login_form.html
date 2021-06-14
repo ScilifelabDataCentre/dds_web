@@ -6,9 +6,15 @@
         <p class="mb-0">{{ login_error_message }}</p>
     </div>
 {% endif %}
+<a class="btn btn-primary w-100 mb-2" href="{{ url_for('user.oidc_login' )}}">
+    <i class="fab fa-google me-2"></i>
+    Log in with Google
+</a>
+<hr>
+<p class="small text-muted text-center">or</p>
 <form method="POST" action="{{ url_for('user.login') }}" class="mt-2">
     <div class="input-group mb-3">
-        <span class="input-group-text bg-success"><i class="fas fa-user mx-1"></i></span>
+        <span class="input-group-text bg-success text-black"><i class="fas fa-user mx-1"></i></span>
         <div class="col">
             <div class="form-floating">
                 <input type="text" class="form-control" id="username" name="username" placeholder="Username">
@@ -17,7 +23,7 @@
         </div>
     </div>
     <div class="input-group mb-3">
-        <span class="input-group-text bg-success"><i class="fas fa-key mx-1"></i></span>
+        <span class="input-group-text bg-success text-black"><i class="fas fa-key mx-1"></i></span>
         <div class="col">
             <div class="form-floating">
                 <input type="password" class="form-control" id="password" name="password" placeholder="Password">
@@ -28,10 +34,9 @@
     {% if next %}
         <input type="hidden" name="next" value="{{ next }}">
     {% endif %}
-    <button type="submit" class="btn btn-success w-100 mb-2">Log In</button>
+    <button type="submit" class="btn btn-success w-100 mb-2">
+        <i class="fas fa-envelope me-2"></i>
+        Log in with email
+    </button>
     <p class="text-center mb-1 small"><a class="text-muted text-decoration-none" href="#">Forgot your password?</a></p>
-
-    <p>
-      <a class="btn btn-primary mt-3 w-100" href="{{ url_for('user.oidc_login' )}}">Log In Using Open ID Connect</a>
-    </p>
 </form>
