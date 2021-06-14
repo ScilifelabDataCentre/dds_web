@@ -25,4 +25,20 @@ $(function () {
     // Initialise Datatables
     $('.datatable').DataTable();
 
+    // Function to switch CSS theme file
+    $('.theme-switcher').click(function (e) {
+        e.preventDefault();
+        var theme = $(this).attr('href').replace('#', '');
+
+        // Switch the stylesheet
+        var newlink = '/static/css/dds_' + theme + '.css';
+        $('#dds-stylesheet').attr('href', newlink);
+
+        // Toggle the button
+        $('.theme-toggle').toggleClass('d-none');
+
+        // Set a cookie to remember
+        document.cookie = 'ddstheme=' + theme + '; expires=Thu, 2 Dec 2032 12:00:00 UTC; path=/';
+    });
+
 });

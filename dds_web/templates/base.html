@@ -5,7 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!-- TODO - bs5 version not yet on npm. When it is, install as an npm package. -->
         <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap5.min.css">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/dds_light.css') }}">
+        <link href="{{ url_for('static', filename='css/dds_{}.css'.format(request.cookies.get('ddstheme', 'light'))) }}"
+            rel="stylesheet" id="dds-stylesheet">
         <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.png') }}" type="png">
         <title>Data Delivery System</title>
     </head>
@@ -14,6 +15,36 @@
         {% include 'navbar.html' %}
         <div class="container pt-2">
             {% block body %}{% endblock body %}
+        </div>
+
+        <div class="btn-group">
+            <a id="theme-toggle-light" href="#light"
+                class="btn btn-light border theme-switcher theme-toggle {{ 'd-none' if request.cookies.get('ddstheme',
+                'light') ==
+                'light' }}">
+                <i class="fas fa-moon"></i>
+            </a>
+            <a id="theme-toggle-light" href="#dark"
+                class="btn btn-light border theme-switcher theme-toggle {{ 'd-none' if request.cookies.get('ddstheme',
+                'light') ==
+                'dark' }}">
+                <i class="fas fa-sun"></i>
+            </a>
+            <button type="button" class="btn btn-light border dropdown-toggle dropdown-toggle-split"
+                data-bs-toggle="dropdown">
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <a class="dropdown-item theme-switcher" href="#light">
+                        <i class="fas fa-sun fa-fw me-2"></i> Light mode
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item theme-switcher" href="#dark">
+                        <i class="fas fa-moon fa-fw me-2"></i> Dark mode
+                    </a>
+                </li>
+            </ul>
         </div>
 
         <!-- Javascript -->
