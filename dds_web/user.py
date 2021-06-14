@@ -77,12 +77,13 @@ def do_login(session, identifier:str, password:str = "") -> bool:
         bool: Whether the login attempt succeeded.
     """
     try:
-        account = models.Identifier.query.filter(models.Identifier.identifier == identifier).first().user
+        account = models.Identifier.query.filter(models.Identifier.identifier == identifier).first()
     except sqlalchemy.exc.SQLAlchemyError:
         return False
+    user_info = account.user
 
     # Use the current login definitions for compatibility
-    session["current_user_id"] = account["id"]
+    session["current_user_id"] = user_info["id"]
     session["current_user"] = user_info["username"]
     session["current_user_id"] = user_info["id"]
     session["is_admin"] = user_info.get("admin", False)
