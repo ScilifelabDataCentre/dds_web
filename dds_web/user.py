@@ -1,7 +1,8 @@
 "User display and login/logout HTMl endpoints."
 
 import flask
-from flask import Blueprint, render_template, request, current_app, session, redirect, url_for
+from flask import render_template, request, current_app, session, redirect, url_for
+import sqlalchemy 
 
 from dds_web import timestamp, oauth
 from dds_web.api.login import ds_access
@@ -13,7 +14,7 @@ from dds_web.utils import login_required
 # temp will be removed in next version
 from dds_web.development import cache_temp as tc
 
-user_blueprint = Blueprint("user", __name__)
+user_blueprint = flask.Blueprint("user", __name__)
 
 
 @user_blueprint.route("/login", methods=["GET", "POST"])
@@ -60,6 +61,38 @@ def login():
         return redirect(to_go_url)
 
 
+def do_login(session, identifier:str, password:str = "") -> bool:
+    """
+    Check if a user with matching identifier exists. If so, log in as that user.
+    
+    TODO:
+      * Add support for passwords
+
+    Args:
+        session: The Flask session to use.
+        identifer (str): User identifier to use for login.
+        password (str): Password in case a password is used for the login.
+
+    Returns:
+        bool: Whether the login attempt succeeded.
+    """
+    try:
+        account = models.Identifier.query.filter(models.Identifier.identifier == identifier).first().user
+    except sqlalchemy.exc.SQLAlchemyError:
+        return False
+
+    # Use the current login definitions for compatibility
+    session["current_user_id"] = account["id"]
+    session["current_user"] = user_info["username"]
+    session["current_user_id"] = user_info["id"]
+    session["is_admin"] = user_info.get("admin", False)
+    session["is_facility"] = is_facility
+    session["facility_name"] = user_info.get("facility_name")
+    session["facility_id"] = user_info.get("facility_id")
+
+    return True
+
+
 @user_blueprint.route("/login-oidc")
 def oidc_login():
     """Perform a login using OpenID Connect (e.g. Elixir AAI)."""
@@ -79,7 +112,10 @@ def oidc_authorize():
         user_info = client.parse_id_token(token)
     else:
         user_info = client.userinfo()
-    return flask.jsonify(user_info)
+    if do_login(flask.session, user_info["email"]):
+        flask.redirect(url_for("home"))
+    else:
+        return flask.Response(status=403)
 
 
 @user_blueprint.route("/logout", methods=["GET"])
