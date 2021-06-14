@@ -128,9 +128,9 @@ class Identifier(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
     # Foreign keys
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
+    identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
     user = db.relationship("User", back_populates="identifiers")
 
     def __repr__(self):
