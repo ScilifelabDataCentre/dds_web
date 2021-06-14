@@ -2,8 +2,8 @@
 ## Compile dist CSS
 ##############################
 FROM node:15-alpine AS compile_css
-COPY ./dds_web /code/dds_web
-WORKDIR /code/dds_web/static
+COPY ./dds_web/static /code/
+WORKDIR /code/
 RUN npm install -g npm@latest --quiet
 RUN npm install --quiet
 RUN npm run css
@@ -15,26 +15,25 @@ RUN npm run css
 # Set official image -- parent image
 FROM python:latest
 
+# Install some necessary systems packages
+RUN apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev
+
 # Copy the content to a code folder in container
-COPY . /code
+COPY ./requirements.txt /code/requirements.txt
 
 # Copy the compiled CSS from the first build step
-COPY --from=compile_css /code/dds_web/static /code/dds_web/static
-
-# Install some necessary systems packages
-RUN apt-get update
-RUN apt-get install -y gfortran libopenblas-dev liblapack-dev
+COPY --from=compile_css /code/ /code/dds_web/static
 
 # Install all dependencies
-RUN pip3 install -r /code/requirements.txt
+RUN pip3 install -r /code/requirements.txt && pip3 install gunicorn
 
 # Install DDS CLI for web upload
 ### TODO - Replace this with `dds_cli` when published to PyPI
 ### TODO - NOT FOR USE IN PRODUCTION! CURRENTLY USING DEV BRANCH
 RUN pip3 install git+https://github.com/ScilifelabDataCentre/dds_cli.git@dev
 
-# Install gnuicorn
-RUN pip3 install gunicorn
+# Copy the content to a code folder in container
+COPY . /code
 
 # Add code directory in pythonpath
 ENV PYTHONPATH /code
