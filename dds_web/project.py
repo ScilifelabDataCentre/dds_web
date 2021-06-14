@@ -38,7 +38,9 @@ def add_project():
         # Check no empty field from form
         for k in ["title", "owner", "description"]:
             if not request.form.get(k):
-                return make_response(jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440)
+                return make_response(
+                    jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440
+                )
 
         ruser_obj = models.User.query.filter_by(username=request.form.get("owner")).one_or_none()
         cuser_obj = models.User.query.filter_by(username=session.get("current_user")).one()
@@ -79,14 +81,18 @@ def project_info(project_id=None):
     if session.get("current_user") not in project_users:
         return abort(403, "You don't have access to this project")
     project_info = project_row.__dict__.copy()
-    project_info["users"] = ", ".join(db_utils.get_project_users(project_id=project_row.id, no_facility_users=True))
+    project_info["users"] = ", ".join(
+        db_utils.get_project_users(project_id=project_row.id, no_facility_users=True)
+    )
     project_info["date_created"] = timestamp(datetime_string=project_info["date_created"])
     if project_info.get("date_updated"):
         project_info["date_updated"] = timestamp(datetime_string=project_info["date_updated"])
     if project_info.get("size"):
         project_info["unformated_size"] = project_info["size"]
         project_info["size"] = format_byte_size(project_info["size"])
-    project_info["facility_name"] = db_utils.get_facility_column(fid=project_info["facility_id"], column="name")
+    project_info["facility_name"] = db_utils.get_facility_column(
+        fid=project_info["facility_id"], column="name"
+    )
     files_list = models.File.query.filter_by(project_id=project_info["id"]).all()
     if files_list:
         uploaded_data = dds_folder(files_list, project_id).generate_html_string()
@@ -111,11 +117,15 @@ def data_upload():
 
     # Check that we got a project ID
     if project_id is None:
-        return make_response(jsonify({"status": 433, "message": "Project ID not found in request"}), 433)
+        return make_response(
+            jsonify({"status": 433, "message": "Project ID not found in request"}), 433
+        )
 
     # Check that something was uploaded
     if not in_files or len(in_files) == 0:
-        return make_response(jsonify({"status": 433, "message": "No files were selected to upload"}), 433)
+        return make_response(
+            jsonify({"status": 433, "message": "No files were selected to upload"}), 433
+        )
 
     # Check that we have the same number of files and paths
     if len(in_files) != len(in_file_paths):
@@ -147,14 +157,18 @@ def data_upload():
             in_file.save(os.path.join(file_dir, file_name))
 
         with open("data_to_upload.txt", "w") as dfl:
-            dfl.write("\n".join([os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)]))
+            dfl.write(
+                "\n".join([os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)])
+            )
 
         cache_path = os.path.join(
             current_app.config.get("LOCAL_TEMP_CACHE"),
             "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
         )
         proc = subprocess.Popen(
-            shlex.split(f"dds put -c {cache_path} -p {project_id} -spf data_to_upload.txt --overwrite"),
+            shlex.split(
+                f"dds put -c {cache_path} -p {project_id} -spf data_to_upload.txt --overwrite"
+            ),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -171,7 +185,9 @@ def data_upload():
             project_info = project_row.__dict__.copy()
             files_list = models.File.query.filter_by(project_id=project_info["id"]).all()
             if files_list:
-                resp["uploaded_data_html"] = dds_folder(files_list, project_id).generate_html_string()
+                resp["uploaded_data_html"] = dds_folder(
+                    files_list, project_id
+                ).generate_html_string()
 
         # Remove the temporary upload space
         try:
@@ -213,7 +229,9 @@ def data_download(project_id):
             try:
                 shutil.rmtree(download_space)
             except Exception as e:
-                current_app.logger.error("Couldn't delete download space {}".format(download_space), flush=True)
+                current_app.logger.error(
+                    "Couldn't delete download space {}".format(download_space), flush=True
+                )
         return response
 
     if proc.returncode == 0:
@@ -249,9 +267,15 @@ class create_project_instance(object):
 
     def get_new_id(self, id=None):
         project_public_id = None
-        while not project_public_id or not self.__is_column_value_uniq("Project", "public_id", project_public_id):
-            facility_ref = db_utils.get_facility_column(fid=session.get("facility_id"), column="internal_ref")
-            facility_prjs = db_utils.get_facilty_projects(fid=session.get("facility_id"), only_id=True)
+        while not project_public_id or not self.__is_column_value_uniq(
+            "Project", "public_id", project_public_id
+        ):
+            facility_ref = db_utils.get_facility_column(
+                fid=session.get("facility_id"), column="internal_ref"
+            )
+            facility_prjs = db_utils.get_facilty_projects(
+                fid=session.get("facility_id"), only_id=True
+            )
             project_public_id = "{}{:03d}".format(facility_ref, len(facility_prjs) + 1)
         return project_public_id
 
