@@ -29,8 +29,9 @@
     "SciLifeLab"
   ],
   "dependencies": {
-    "bootstrap": "^5.0.1",
     "@popperjs/core": "^2.9.2",
+    "bootstrap": "^5.0.1",
+    "bootstrap-dark-5": "^1.0.1",
     "datatables.net": "^1.10.24",
     "jquery": "^3.6.0"
   },
