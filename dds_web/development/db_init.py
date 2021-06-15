@@ -221,7 +221,7 @@ def fill_db():
         Invoicing(
             size_stored=files[0].size_stored,
             time_uploaded=timestamp(),
-            file_id=files[0],
+            active_file=files[0],
             project_id=projects[0],
         )
     ]
@@ -374,7 +374,7 @@ def fill_db():
         facilities[0].projects.append(p)
 
     for i in invoicing:
-        files[0].file_versions.append(i)
+        files[0].invoicing_row = i
         projects[0].file_invoicing.append(i)
     # for x in projects:
     #     users[0].facility_projects.append(x)

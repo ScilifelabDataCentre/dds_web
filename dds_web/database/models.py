@@ -76,7 +76,7 @@ class Project(db.Model):
     # One project can have many files
     files = db.relationship("File", backref="project")
     # One project can have many rows in invoicing
-    file_invoicing = db.relationship("Invoicing", backref="project")
+    file_invoicing = db.relationship("Invoicing", backref="invoice_project")
 
     def __repr__(self):
         """Called by print, creates representation of object"""

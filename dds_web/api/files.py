@@ -86,7 +86,6 @@ class NewFile(flask_restful.Resource):
                 compressed=bool(args["compressed"] == "True"),
                 salt=args["salt"],
                 public_key=args["public_key"],
-                time_uploaded=timestamp(),
                 checksum=args["checksum"],
                 project_id=current_project,
             )
@@ -99,7 +98,7 @@ class NewFile(flask_restful.Resource):
                 active_file=new_file,
                 project_id=current_project,
             )
-            current_project.files.append(new_row)
+            current_project.file_invoicing.append(new_row)
             new_file.invoicing_row = new_row
 
             db.session.add(new_file)
