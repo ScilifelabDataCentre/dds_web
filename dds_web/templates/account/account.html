@@ -47,26 +47,35 @@
                     <td></td>
                 </tr>
                 <tr>
-                    <th>  Name </th>
-                    <td> {{ test.first_name }} {{ test.last_name }} </td>
-                    <td></td>
-                {% for count, email in enumerate(test.email) %}
-                <tr>
-                    {% if  count == 0 %}
-                        <th>  Email  </th>
-                        <td > {{ email }} <span class="mx-2 px-1 py-1 badge bg-info">Primary</span> </td>
-                    {% else %}
-                        <th></th>
-                        <td> {{ email }} </td>
-                    {% endif %}
-                    <td></td>
-                </tr>
-                {% endfor %}
-                <tr>
                     <th>  Permissions </th>
                     <td> {{ test_get }} </td>
                     <td></td>
                 </tr>
+                <tr>
+                    <th>  Name </th>
+                    <td> {{ test.first_name }} {{ test.last_name }} </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info float-end" id="editName" style="display:none" >
+                            <i class="far fa-user-edit"></i>
+                        </button>
+                    </td>
+                {% for count, email in enumerate(test.email) %}
+                <tr>
+                    {% if  count == 0 %}
+                        <th>  Email  </th>
+                        <td> {{ email }} <span class="badge bg-info mx-2 px-1 py-1 ">Primary</span> </td>
+                        <!-- change to if primary.. -->
+                    {% else %}
+                        <th></th>
+                        <td> {{ email }} </td>
+                    {% endif %}
+                    <td>
+                        <button class="btn btn-sm btn-outline-info float-end" id="editName{{count}}" style="display:none" >
+                            <i class="far fa-user-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
@@ -75,9 +84,13 @@
             <i class="far fa-lock me-2"></i>
             Change password
         </button>
-        <button type="button" class="btn btn-sm btn-outline-info float-end my-2 mx-1" data-bs-toggle="modal" data-bs-target="#editUser_modal">
+        <button type="button" class="btn btn-sm btn-outline-info my-2 mx-1" data-bs-toggle="modal" data-bs-target="#editUser_modal" id="editFields">
             <i class="far fa-user-edit me-2"></i>
             Edit
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-info float-end my-2 mx-1" data-bs-toggle="modal" data-bs-target="#editUser_modal" id="editClose" style="display:none">
+            <i class="far fa-check-circle me-2"></i>
+            Done
         </button>
     </div>
 </div>
@@ -92,6 +105,11 @@
                     <td></td>
                 </tr>
                 <tr>
+                    <th>  Permissions </th>
+                    <td> {{ test_get }} </td>
+                    <td></td>
+                </tr>
+                <tr>
                     <th>  Name </th>
                     <td> {{ test.first_name }} {{ test.last_name }} </td>
                     <td>
@@ -99,11 +117,12 @@
                             <i class="far fa-user-edit"></i>
                         </button>
                     </td>
+                    <td id="placeholder"></td>
                 {% for count, email in enumerate(test.email) %}
                 <tr>
                     {% if  count == 0 %}
                         <th>  Email  </th>
-                        <td > {{ email }} <span class="mx-2 px-1 py-1 badge bg-info">Primary</span> </td>
+                        <td > {{ email }} <span class="badge bg-info mx-2 px-1 py-1 ">Primary</span> </td>
                     {% else %}
                         <th></th>
                         <td> {{ email }} </td>
@@ -119,7 +138,7 @@
         </table>
     </div>
     <div class="text-end">
-        <button type="button" class="btn btn-sm btn-outline-info float-end my-2 mx-1" data-bs-toggle="modal" data-bs-target="#editUser_modal">
+        <button type="button" class="btn btn-sm btn-outline-info float-end my-2 mx-1" data-bs-toggle="modal" data-bs-target="#editUser_modal" id="closeEdit">
             <i class="far fa-check-circle me-2"></i>
             Done
         </button>
@@ -127,3 +146,19 @@
 </div>
 
 {% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+
+$("#editFields").on('click', function() {
+   $("#editName").toggle();
+   {% for count, email in enumerate(test.email) %}
+    $("#editName{{count}}").toggle();
+   {% endfor %}
+});
+
+
+</script>
+
+
+{% endblock javascript %}
