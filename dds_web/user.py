@@ -9,6 +9,10 @@ from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.utils import login_required
 
+
+from dds_web import db
+
+
 # temp will be removed in next version
 from dds_web.development import cache_temp as tc
 
@@ -92,25 +96,6 @@ def user_page(loginname=None):
         dbfunc=db_utils.get_facility_column,
         timestamp=timestamp,
     )
-
-@user_blueprint.route("/<loginname>_account", methods=["GET"])
-@login_required
-def account_info(loginname=None):
-    """account page"""
-    test={
-            "id": 1,
-            "first_name": 'First',
-            "last_name": 'Last',
-            "username": 'username',
-            "password": 'a',
-            "settings": 'a',
-            "email": ['userX@email1.com', 'userX@email2.com'],
-            "phone": 'a',
-            "admin": 'a'
-        }
-    return render_template("account/account.html",
-                            enumerate=enumerate,
-                            test=test)
 
 # @user_blueprint.route("/signup", methods=["GET", "POST"])
 # def signup():

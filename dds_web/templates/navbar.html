@@ -21,22 +21,22 @@
                     </a>
                 </li>
                 {% if g.current_user %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" >
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
+                        <i class="far fa-list-alt d-block mx-auto"></i>
+                        {% if g.is_admin %}
+                            Dashboard
+                        {% else %}
+                            Projects
+                        {% endif %}
+                    </a>
+                </li>
+                <li class="nav-item n">
+                    <a class="nav-link" href="{{ url_for('account.account_info', loginname=g.current_user) }}" >
                         <i class="fas fa-user-circle d-block mx-auto"></i>
                         {{ g.current_user }}
                     </a>
-                    <ul class="dropdown-menu" >
-                        <li><a class="dropdown-item" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
-                            {% if g.is_admin %}
-                                Dashboard
-                            {% else %}
-                                Projects
-                            {% endif %}
-                        </a></li>
-                        <li></li><a class="dropdown-item" href="{{ url_for('user.account_info', loginname=g.current_user) }}">Account</a></li>
-                    </ul>
-                  </li>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('user.logout') }}">
                         <i class="far fa-sign-out d-block mx-auto"></i>
