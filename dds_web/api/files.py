@@ -100,7 +100,7 @@ class NewFile(flask_restful.Resource):
                 project_id=current_project,
             )
             current_project.files.append(new_row)
-            new_file.invoicing_row.append(new_row)
+            new_file.invoicing_row = new_row
 
             db.session.add(new_file)
             db.session.add(new_row)
@@ -142,6 +142,20 @@ class NewFile(flask_restful.Resource):
 
             old_size = existing_file.size_original
 
+            # update old invoicing row
+            invoice_row = models.Invoicing.query.filter(
+                models.Invoicing.active_file == existing_file.id
+            ).first()
+            invoice_row.time_deleted = timestamp()
+
+            # create new invoice row
+            new_row = models.Invoicing(
+                size_stored=args["size_processed"],
+                time_uploaded=timestamp(),
+                active_file=existing_file,
+                project_id=current_project,
+            )
+
             # Update file info
             existing_file.subpath = args["subpath"]
             existing_file.size_original = args["size"]
@@ -151,6 +165,7 @@ class NewFile(flask_restful.Resource):
             existing_file.public_key = args["public_key"]
             existing_file.time_uploaded = timestamp()
             existing_file.checksum = args["checksum"]
+            existing_file.invoicing_row = new_row
 
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
