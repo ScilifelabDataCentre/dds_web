@@ -75,6 +75,8 @@ class Project(db.Model):
     # users = db.relationship("User", backref="project")
     # One project can have many files
     files = db.relationship("File", backref="project")
+    # One project can have many rows in invoicing
+    file_invoicing = db.relationship("Invoicing", backref="project")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -156,15 +158,43 @@ class File(db.Model):
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
-    time_uploaded = db.Column(db.String(50), unique=False, nullable=False)
-    time_deleted = db.Column(db.String(50), unique=False, nullable=True)
     time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
 
     # Foreign keys
     # One project can have many files
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
+    # Relationships
+    # One project can have many files in invoicing
+    files = db.relationship("Invoicing", backref="file")
+
     def __repr__(self):
         """Called by print, creates representation of object"""
 
         return f"<File {self.public_id}>"
+
+
+class Invoicing(db.Model):
+    """Data model for invoicing table. Keeps track of the amount saved in the db."""
+
+    # Table setup
+    __tablename__ = "invoicing"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
+    time_uploaded = db.Column(db.String(50), unique=False, nullable=False)
+    time_deleted = db.Column(db.String(50), unique=False, nullable=True)
+
+    # Foreign keys
+    # One file can have many rows in invoicing
+    file_id = db.Column(db.Integer, db.ForeignKey("files.id"))
+
+    # One project can have many files
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<File {self.id}>"
