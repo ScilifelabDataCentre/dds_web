@@ -36,7 +36,7 @@
 </div>
 
 
-<h1 class="mb-4"> Account Information</h1>
+<h1 class="mb-4"> Account Information </h1>
 <div class="container w-75 mx-auto mb-4">
     <div class="bg-light px-2 py-1">
         <table class="table">
@@ -49,18 +49,17 @@
                 <tr>
                     <th>  Name </th>
                     <td> {{ test.first_name }} {{ test.last_name }} </td>
-                    <td>
-                    </td>
+                    <td></td>
                 {% for count, email in enumerate(test.email) %}
                 <tr>
                     {% if  count == 0 %}
-                    <th>  Email  </th>
+                        <th>  Email  </th>
+                        <td > {{ email }} <span class="mx-2 px-1 py-1 badge bg-info">Primary</span> </td>
                     {% else %}
-                    <th></th>
+                        <th></th>
+                        <td> {{ email }} </td>
                     {% endif %}
-                    <td> {{ email }} </td>
-                    <td>
-                    </td>
+                    <td></td>
                 </tr>
                 {% endfor %}
                 <tr>
@@ -104,7 +103,7 @@
                 <tr>
                     {% if  count == 0 %}
                         <th>  Email  </th>
-                        <td > {{ email }} <span class="label label-primary">Primary</span></td>
+                        <td > {{ email }} <span class="mx-2 px-1 py-1 badge bg-info">Primary</span> </td>
                     {% else %}
                         <th></th>
                         <td> {{ email }} </td>
