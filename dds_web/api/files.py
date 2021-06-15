@@ -82,7 +82,7 @@ class NewFile(flask_restful.Resource):
                 name_in_bucket=args["name_in_bucket"],
                 subpath=args["subpath"],
                 size_original=args["size"],
-                size_in_system=args["size_processed"],
+                size_stored=args["size_processed"],
                 compressed=bool(args["compressed"] == "True"),
                 salt=args["salt"],
                 public_key=args["public_key"],
@@ -133,7 +133,7 @@ class NewFile(flask_restful.Resource):
             # Update file info
             existing_file.subpath = args["subpath"]
             existing_file.size_original = args["size"]
-            existing_file.size_in_system = args["size_processed"]
+            existing_file.size_stored = args["size_processed"]
             existing_file.compressed = bool(args["compressed"] == "True")
             existing_file.salt = args["salt"]
             existing_file.public_key = args["public_key"]
@@ -383,7 +383,7 @@ class FileInfo(flask_restful.Resource):
                     models.File.name_in_bucket,
                     models.File.subpath,
                     models.File.size_original,
-                    models.File.size_in_system,
+                    models.File.size_stored,
                     models.File.salt,
                     models.File.public_key,
                     models.File.checksum,
@@ -403,7 +403,7 @@ class FileInfo(flask_restful.Resource):
                             models.File.name_in_bucket,
                             models.File.subpath,
                             models.File.size_original,
-                            models.File.size_in_system,
+                            models.File.size_stored,
                             models.File.salt,
                             models.File.public_key,
                             models.File.checksum,
@@ -425,7 +425,7 @@ class FileInfo(flask_restful.Resource):
                     "name_in_bucket": x[1],
                     "subpath": x[2],
                     "size_original": x[3],
-                    "size_in_system": x[4],
+                    "size_stored": x[4],
                     "key_salt": x[5],
                     "public_key": x[6],
                     "checksum": x[7],
@@ -461,7 +461,7 @@ class FileInfoAll(flask_restful.Resource):
                     models.File.name_in_bucket,
                     models.File.subpath,
                     models.File.size_original,
-                    models.File.size_in_system,
+                    models.File.size_stored,
                     models.File.salt,
                     models.File.public_key,
                     models.File.checksum,
@@ -480,7 +480,7 @@ class FileInfoAll(flask_restful.Resource):
                     "name_in_bucket": x[1],
                     "subpath": x[2],
                     "size_original": x[3],
-                    "size_in_system": x[4],
+                    "size_stored": x[4],
                     "key_salt": x[5],
                     "public_key": x[6],
                     "checksum": x[7],

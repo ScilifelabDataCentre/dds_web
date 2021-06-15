@@ -208,7 +208,7 @@ def fill_db():
             name_in_bucket="testtesttest.txt",
             subpath="subpath",
             size_original=0,  # bytes
-            size_in_system=0,
+            size_stored=0,
             compressed=False,
             public_key="test",
             salt="test",
