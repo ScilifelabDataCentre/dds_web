@@ -89,6 +89,7 @@ class NewFile(flask_restful.Resource):
                 checksum=args["checksum"],
                 project_id=current_project,
             )
+            app.logger.debug("------------------------ %s", new_file)
             current_project.files.append(new_file)
 
             # New invoice row
@@ -98,8 +99,11 @@ class NewFile(flask_restful.Resource):
                 active_file=new_file,
                 project_id=current_project,
             )
+
+            app.logger.debug(new_row)
             current_project.file_invoicing.append(new_row)
             new_file.invoicing_row = new_row
+            app.logger.debug("-------HERE: %s", new_file.invoicing_row)
 
             db.session.add(new_file)
             db.session.add(new_row)
@@ -141,10 +145,13 @@ class NewFile(flask_restful.Resource):
 
             old_size = existing_file.size_original
 
+            app.logger.debug("OOOOOOOOOOOOOOOOO")
             # update old invoicing row
-            invoice_row = models.Invoicing.query.filter(
-                models.Invoicing.active_file == existing_file.id
-            ).first()
+            # invoice_row = models.Invoicing.query.filter(
+            #     models.Invoicing.active_file == existing_file.id
+            # ).first()
+
+            app.logger.debug(existing_file.invoicing_row)
             invoice_row.time_deleted = timestamp()
 
             # create new invoice row
@@ -164,8 +171,9 @@ class NewFile(flask_restful.Resource):
             existing_file.public_key = args["public_key"]
             existing_file.time_uploaded = timestamp()
             existing_file.checksum = args["checksum"]
-            existing_file.invoicing_row = new_row
+            existing_file.invoicing_row = new_row.id
 
+            db.session.add(new_row)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
