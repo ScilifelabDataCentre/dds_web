@@ -86,7 +86,7 @@ class NewFile(flask_restful.Resource):
                 compressed=bool(args["compressed"] == "True"),
                 salt=args["salt"],
                 public_key=args["public_key"],
-                date_uploaded=timestamp(),
+                time_uploaded=timestamp(),
                 checksum=args["checksum"],
                 project_id=current_project,
             )
@@ -137,7 +137,7 @@ class NewFile(flask_restful.Resource):
             existing_file.compressed = bool(args["compressed"] == "True")
             existing_file.salt = args["salt"]
             existing_file.public_key = args["public_key"]
-            existing_file.date_uploaded = timestamp()
+            existing_file.time_uploaded = timestamp()
             existing_file.checksum = args["checksum"]
 
             db.session.commit()
