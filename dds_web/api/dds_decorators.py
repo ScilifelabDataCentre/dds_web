@@ -45,7 +45,7 @@ def token_required(f):
 
             # NEW
             current_user = models.User.query.filter(
-                models.User.public_id == func.binary(data["public_id"])
+                models.User.username == func.binary(data["user"])
             ).first()
             project = data["project"]
         except Exception:

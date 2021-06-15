@@ -11,12 +11,16 @@ Official SciLifeLab colours (2020):
   Aqua: #4C979F
   Grape: #491F53
 */
-$body-color: #333;
-$body-bg: #fff;
 $primary: #045C64;
 $secondary: #491F53;
 $success: #A7C947; // TODO - A bit light for use as "success" for validation etc. Split into its own colour?
 $info: #4C979F;
+
+// Dark mode
+$primary-alt: #045C64;
+$secondary-alt: #491F53;
+$success-alt: #A7C947; // TODO - A bit light for use as "success" for validation etc. Split into its own colour?
+$info-alt: #4C979F;
 
 $font-family-sans-serif:
   // Custom - Lato (as recommended by SciLifeLab style guide)
@@ -24,10 +28,10 @@ $font-family-sans-serif:
   // Everything else is the default Bootstrap 5 sans-serif font stack..
   system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
 
-// Specific elements
+
+//
+// Override Bootstrap defaults
+//
 $navbar-nav-link-padding-x: 1rem;
 $form-floating-label-opacity: .4;
 
-.form-floating > label {
-  opacity: .65;
-}

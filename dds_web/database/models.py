@@ -91,12 +91,10 @@ class User(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(50), unique=True, nullable=False)
     username = db.Column(db.String(20), unique=True, nullable=False)
     password = db.Column(db.String(120), unique=False, nullable=False)
     role = db.Column(db.String(50), unique=False, nullable=False)
     permissions = db.Column(db.String(5), unique=False, nullable=False, default="--l--")
-
     # Foreign keys
     # One facility can have many users
     facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
@@ -108,11 +106,35 @@ class User(db.Model):
     projects = db.relationship(
         "Project", secondary=project_users, backref=db.backref("users", lazy="dynamic")
     )
+    identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
 
         return f"<User {self.public_id}>"
+
+
+class Identifier(db.Model):
+    """
+    Data model for user identifiers for login.
+
+    Elixir identifiers consists of 58 characters (40 hex + "@elixir-europe.org").
+    """
+
+    # Table setup
+    __tablename__ = "identifiers"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    # Foreign keys
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
+    identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
+    user = db.relationship("User", back_populates="identifiers")
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<Identifier {self.identifier}>"
 
 
 class File(db.Model):

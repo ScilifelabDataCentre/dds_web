@@ -49,6 +49,20 @@
 {% if g.is_facility %}
 
 <h2 class="mt-5 mb-4">Upload Files</h2>
+<h3>Command-line upload</h3>
+<p>
+    You can use the following command with the
+    <a href="https://github.com/ScilifelabDataCentre/dds_cli" target="_blank">dds_cli</a>
+    command line tools to upload data to this project.
+</p>
+<pre class="border bg-light p-3"><code>dds put --project {{ project.public_id }} --source [PATH TO DATA]</code></pre>
+<h3>Browser-based upload</h3>
+<p>
+    <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
+    Please note that the web-based file uploader should only be used for small numbers of files with small file sizes.
+    If you have 100s of files or files that are many GB in size, please use the
+    <a href="https://github.com/ScilifelabDataCentre/dds_cli" target="_blank">command-line tools</a> instead.
+</p>
 <div class="alert alert-danger d-none" id="noDataTransfer_warning">
     <strong>Warning:</strong> Your web browser does not support the
     <a href="https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer" target="_blank"><code>DataTransfer</code></a>

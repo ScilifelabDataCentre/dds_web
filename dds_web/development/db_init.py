@@ -109,7 +109,6 @@ def fill_db():
 
     users = [
         User(
-            public_id="public_user_id",
             username="username",
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             role="researcher",
@@ -117,7 +116,6 @@ def fill_db():
             facility_id=None,
         ),
         User(
-            public_id="public_admin_id",
             username="admin",
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             role="admin",
@@ -125,7 +123,6 @@ def fill_db():
             facility_id=None,
         ),
         User(
-            public_id="public_facility_admin_id",
             username="facility_admin",
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             role="facility",
@@ -133,7 +130,6 @@ def fill_db():
             facility_id=facilities[0],
         ),
         User(
-            public_id="public_facility_id",
             username="facility",
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             role="facility",

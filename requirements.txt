@@ -12,3 +12,4 @@ PyNaCl==1.4.0
 pytz==2020.1
 PyJWT==v1.7.1
 zstandard
+authlib

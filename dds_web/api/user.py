@@ -26,40 +26,14 @@ from dds_web.crypt.auth import gen_argon2hash, verify_password_argon2id
 ###############################################################################
 
 
-def is_facility(username):
-    """Checks if the user is a facility or not."""
-
-    is_fac, error = (False, "")
-    print(f"Username: {username}", flush=True)
-    # Check for user and which table to work in
-    try:
-        role = (
-            models.Role.query.filter(models.Role.username == func.binary(username))
-            .with_entities(models.Role.facility)
-            .first()
-        )
-        # user = models.Role.query.filter(models.Role.username.is_(username)).first()
-        # print(user, flush=True)
-    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        error = f"Database connection failed - {sqlerr}" + str(sqlerr)
-    else:
-        # Deny access if there is no such user
-        if not role or role is None:
-            is_fac, error = (None, "The user doesn't exist.")
-        else:
-            is_fac = role[0]
-
-    return is_fac, error
-
-
-def jwt_token(user_id, project_id, project_access=False, permission="ls"):
+def jwt_token(username, project_id, project_access=False, permission="ls"):
     """Generates and encodes a JWT token."""
 
     token, error = (None, "")
     try:
         token = jwt.encode(
             {
-                "public_id": user_id,
+                "user": username,
                 "project": {"id": project_id, "verified": project_access, "permission": permission},
                 "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
             },
@@ -96,19 +70,25 @@ class AuthenticateUser(flask_restful.Resource):
 
         # Check if user in db
         try:
-            user = models.User.query.filter(models.User.username == func.binary(auth.username)).first()
+            user = models.User.query.filter(
+                models.User.username == func.binary(auth.username)
+            ).first()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             return flask.make_response(f"Database connection failed: {sqlerr}", 500)
 
         if not user:
-            return flask.make_response(f"User not found in system. User access denied: '{auth.username}'", 401)
+            return flask.make_response(
+                f"User not found in system. User access denied: '{auth.username}'", 401
+            )
 
         # Verify user password and generate token
         if verify_password_argon2id(user.password, auth.password):
             if "l" not in list(user.permissions):
-                return flask.make_response(f"The user '{auth.username}' does not have any permissions", 401)
+                return flask.make_response(
+                    f"The user '{auth.username}' does not have any permissions", 401
+                )
 
-            token, error = jwt_token(user_id=user.public_id, project_id=project)
+            token, error = jwt_token(username=user.username, project_id=project)
             if token is None:
                 return flask.make_response(error, 500)
 

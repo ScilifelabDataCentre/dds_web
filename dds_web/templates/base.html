@@ -3,25 +3,50 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- TODO - bs5 version not yet on npm. When it is, install as an npm package. -->
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap5.min.css">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+        <!-- TODO - can this be imported into the SCSS? -->
+        <link href="{{ url_for('static', filename='node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css')
+            }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/dds_{}.css'.format(request.cookies.get('ddstheme', 'light'))) }}"
+            rel="stylesheet" id="dds-stylesheet">
         <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.png') }}" type="png">
         <title>Data Delivery System</title>
     </head>
 
     <body>
         {% include 'navbar.html' %}
-        <div class="container pt-2">
+        <div class="container content pt-2">
             {% block body %}{% endblock body %}
+        </div>
+
+        <div class="footer border-top bg-light text-muted py-5 mt-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-check form-switch theme-switcher">
+                            <input class="form-check-input" type="checkbox" id="theme-switcher-check"
+                                {{ 'checked' if request.cookies.get('ddstheme', 'light') == 'dark' }}>
+                            <label class="form-check-label" for="theme-switcher-check">
+                                <i class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'dark' }} fas
+                                    fa-sun fa-fw me-2"></i>
+                                <i class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'light' }} fas
+                                    fa-moon fa-fw me-2"></i>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6 text-end small">
+                        The DDS web source code is available on GitHub:
+                        <a href="https://github.com/ScilifelabDataCentre/dds_web" class="text-muted">https://github.com/ScilifelabDataCentre/dds_web</a>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Javascript -->
         <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js') }}"></script>
         <script src="{{ url_for('static', filename='node_modules/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ url_for('static', filename='node_modules/datatables.net/js/jquery.dataTables.min.js') }}"></script>
-        <!-- TODO - bs5 version not yet on npm. When it is, install as an npm package. -->
-        <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap5.min.js"></script>
+        <script src="{{ url_for('static', filename='node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js')
+            }}"></script>
         <!-- We could use FontAwesome through npm, but then we need configure secrets to access the Pro kit which is a hassle -->
         <script src="https://kit.fontawesome.com/8cd1f5d753.js" crossorigin="anonymous"></script>
         <script src="{{ url_for('static', filename='js/dds.js') }}"></script>

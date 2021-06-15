@@ -1,20 +1,56 @@
 {% extends 'base.html' %}
 {% block body %}
-<div class="w-75 mx-auto bg-light px-5 py-4 mt-5">
-    <h1>Welcome to the Data Delivery System Web Interface!</h1>
-    <p class="lead text-danger">This page is a work in progress and will be updated during further development.</p>
-    <p>
-        The Data Delivery System (DDS) is a system designed for the simple and secure delivery of data from SciLifeLab
-        facilities to their users.
-        The DDS uses Safespring's object-storage as the delivery medium and has built-in encryption and key management
-        in order to simplify the data delivery as much as possible.
-    </p>
-    <p>
-        In the Web Interface, both account types (facilities and users) can track projects and see all the uploaded data
-        within the projects connected to their accounts.
-        However, only facilities can upload, and only users can download the data. The Web Interface is for small and
-        few files only.
-        If something connected to upload and download does not work, try using a smaller file or folder.
-    </p>
+
+<div class="row mb-5 pb-3">
+    <div class="col-lg-6">
+        <h1 class="display-4">Welcome to the SciLifeLab Data Delivery System</h1>
+        <p class="lead">A cloud-based system for the delivery of data from SciLifeLab Facilities to their users.</p>
+        <div class="row">
+            <div class="col-xxl-8 offset-xxl-2 bg-light p-3">
+                {% if g.current_user %}
+                <a class="btn btn-primary w-100 mb-2" href="{{ url_for('user.user_page', loginname=g.current_user) }}">
+                    View projects
+                </a>
+                <a class="btn btn-success w-100" href="{{ url_for('user.logout') }}">
+                    Log out
+                </a>
+                {% else %}
+                {% include "components/login_form.html" %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 pt-5">
+        {% include "components/hero_image.svg" %}
+    </div>
 </div>
+
+
+<h2>Background</h2>
+<p class="lead">
+    SciLifeLab is a national resource, providing multiple unique technologies and expertise to life scientists in
+    Sweden.
+</p>
+<p>
+    When a <a href="https://www.scilifelab.se/services" target="_blank">service or platform</a> processes a project
+    for a research group, large quantities of data can be generated.
+    The Data Delivery System (DDS) is a system designed for the simple and secure delivery of this data from SciLifeLab
+    facilities to their users.
+</p>
+
+<h2>How it works</h2>
+<p>
+    The DDS uses cloud computing object-storage, provided by <a href="https://www.safespring.com/" target="_blank">Safespring</a>
+    to store the data ready for download.
+    The delivery system has built-in encryption and key management for highly secure yet user-friendly access to your
+    data.
+</p>
+<p>
+    In the Web Interface, both account types (facilities and users) can track projects and see all the uploaded data
+    within the projects connected to their accounts.
+    However, only facilities can upload, and only users can download the data. The Web Interface is for small and
+    few files only.
+    If something connected to upload and download does not work, try using a smaller file or folder.
+</p>
+
 {% endblock %}
