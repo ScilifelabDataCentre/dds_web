@@ -91,7 +91,19 @@ class NewFile(flask_restful.Resource):
                 project_id=current_project,
             )
             current_project.files.append(new_file)
+
+            # New invoice row
+            new_row = models.Invoicing(
+                size_stored=args["size_processed"],
+                time_uploaded=timestamp(),
+                active_file=new_file,
+                project_id=current_project,
+            )
+            current_project.files.append(new_row)
+            new_file.invoicing_row.append(new_row)
+
             db.session.add(new_file)
+            db.session.add(new_row)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             app.logger.debug(err)

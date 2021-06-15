@@ -165,8 +165,8 @@ class File(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
     # Relationships
-    # One project can have many files in invoicing
-    file_versions = db.relationship("Invoicing", backref="file")
+    # One project can have one
+    invoicing_row = db.relationship("Invoicing", backref="file_row", uselist=False)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -189,7 +189,7 @@ class Invoicing(db.Model):
 
     # Foreign keys
     # One file can have many rows in invoicing
-    file_id = db.Column(db.Integer, db.ForeignKey("files.id"))
+    active_file = db.Column(db.Integer, db.ForeignKey("files.id"), nullable=True)
 
     # One project can have many files
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
@@ -197,4 +197,4 @@ class Invoicing(db.Model):
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<File {self.id}>"
+        return f"<File Invoicing {self.id}>"
