@@ -166,7 +166,7 @@ class File(db.Model):
 
     # Relationships
     # One project can have many files in invoicing
-    files = db.relationship("Invoicing", backref="file")
+    file_versions = db.relationship("Invoicing", backref="file")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
