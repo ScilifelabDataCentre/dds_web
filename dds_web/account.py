@@ -33,20 +33,22 @@ def account_info(loginname=None):
             "phone": 'a',
             "admin": 'a'
         }
-    if session.get("is_admin"):
-        test_get=["test"]
-    if session["is_facility"]:
-        # test_get=["test"]
-        # projects_list = db_utils.get_facilty_projects(fid=session["facility_id"])
+    # if session.get("is_admin"):
+    #     if request.method == "GET":
+    #         account_name = session["current_user"]
+    #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
+    # if session["is_facility"]:
+    #     if request.method == "GET":
+    #         account_name = session["current_user"]
+    #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
+    # elif session.get("current_user") and session.get("usid"):
+    #     if request.method == "GET":
+    #         account_name = session["current_user"]
+    #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
+    if session.get("current_user"):
         if request.method == "GET":
-            account_name = request.form.get("account_name")
-            # user_role=db_utils.get_facility_column_by_username(account_name, "public_id")
-    else:
-        # test_get = db_utils.get_user_projects(uid=session["current_user_id"])
-        # test_get=db_utils.get_user_column_by_username(username=session["current_user_id"], column='role')
-        if request.method == "GET":
-            account_name = request.form.get("account_name")
-            # user_role=db_utils.get_user_column_by_username(account_name, "public_id")
+            account_name = session["current_user"]
+            account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
 
     return render_template("account/account.html",
                             enumerate=enumerate,
