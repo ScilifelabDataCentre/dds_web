@@ -6,7 +6,9 @@
         <!-- TODO - can this be imported into the SCSS? -->
         <link href="{{ url_for('static', filename='node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css')
             }}" rel="stylesheet">
-        <link href="{{ url_for('static', filename='css/dds_{}.css'.format(request.cookies.get('ddstheme', 'light'))) }}"
+        <meta name="color-scheme" content="light dark">
+        <link href="{{ url_for('static', filename='css/dds_{}.css'.format('auto' if not request.cookies.get('ddstheme')
+            else request.cookies.get('ddstheme'))) }}"
             rel="stylesheet" id="dds-stylesheet">
         <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.png') }}" type="png">
         <title>Data Delivery System</title>
