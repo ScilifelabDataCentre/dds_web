@@ -164,7 +164,7 @@ class DBConnector:
             # File names in root
             distinct_files = (
                 files.filter(models.File.subpath == func.binary(folder))
-                .with_entities(models.File.name, models.File.size)
+                .with_entities(models.File.name, models.File.size_original)
                 .all()
             )
 
@@ -215,7 +215,7 @@ class DBConnector:
 
             file_info = (
                 models.File.query.with_entities(
-                    sqlalchemy.func.sum(models.File.size).label("sizeSum")
+                    sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
                 )
                 .filter(
                     sqlalchemy.and_(
@@ -292,7 +292,7 @@ class DBConnector:
                     models.Project.public_id == func.binary(self.project["id"])
                 ).first()
                 for x in files:
-                    old_size = x.size
+                    old_size = x.size_original
                     db.session.delete(x)
                     current_project.size -= old_size
                 current_project.date_updated = timestamp()
@@ -374,7 +374,7 @@ class DBConnector:
             exists, name_in_bucket = (True, file.name_in_bucket)
             try:
                 # TODO (ina): put in own class
-                old_size = file.size
+                old_size = file.size_original
                 current_project = models.Project.query.filter(
                     models.Project.public_id == func.binary(self.project["id"])
                 ).first()
@@ -416,7 +416,7 @@ class DBConnector:
             for x in files_in_folder:
                 filename = x.name
                 nameinbucket = x.name_in_bucket
-                size = x.size
+                size = x.size_original
                 try:
                     db.session.delete(x)
                 except sqlalchemy.exc.SQLAlchemyError as err:
