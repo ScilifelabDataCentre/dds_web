@@ -82,8 +82,6 @@ class DBConnector:
                     models.File.name == func.binary(filename),
                 )
             ).first()
-
-            app.logger.debug("--------File: %s", file)
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
         else:
