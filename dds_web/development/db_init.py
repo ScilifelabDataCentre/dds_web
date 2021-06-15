@@ -214,6 +214,7 @@ def fill_db():
             salt="test",
             checksum="",
             time_uploaded=timestamp(),
+            time_deleted=timestamp(),
             project_id=projects[0],
         )
     ]

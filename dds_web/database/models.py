@@ -157,6 +157,7 @@ class File(db.Model):
     salt = db.Column(db.String(50), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
     time_uploaded = db.Column(db.String(50), unique=False, nullable=False)
+    time_deleted = db.Column(db.String(50), unique=False, nullable=True)
     time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
 
     # Foreign keys
