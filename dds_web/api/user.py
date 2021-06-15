@@ -70,17 +70,23 @@ class AuthenticateUser(flask_restful.Resource):
 
         # Check if user in db
         try:
-            user = models.User.query.filter(models.User.username == func.binary(auth.username)).first()
+            user = models.User.query.filter(
+                models.User.username == func.binary(auth.username)
+            ).first()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             return flask.make_response(f"Database connection failed: {sqlerr}", 500)
 
         if not user:
-            return flask.make_response(f"User not found in system. User access denied: '{auth.username}'", 401)
+            return flask.make_response(
+                f"User not found in system. User access denied: '{auth.username}'", 401
+            )
 
         # Verify user password and generate token
         if verify_password_argon2id(user.password, auth.password):
             if "l" not in list(user.permissions):
-                return flask.make_response(f"The user '{auth.username}' does not have any permissions", 401)
+                return flask.make_response(
+                    f"The user '{auth.username}' does not have any permissions", 401
+                )
 
             token, error = jwt_token(username=user.username, project_id=project)
             if token is None:
