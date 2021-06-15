@@ -523,7 +523,7 @@ class UpdateFile(flask_restful.Resource):
             if not file:
                 return flask.make_response(f"No such file: {file_name['name']}", 500)
 
-            file.latest_download = timestamp()
+            file.time_latest_download = timestamp()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             app.logger.exception(str(err))
