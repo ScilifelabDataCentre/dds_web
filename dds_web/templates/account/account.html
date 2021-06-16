@@ -34,62 +34,6 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="editEmail_modal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Update email address</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" id="create-user-form" action=""
-                    class="needs-validation" novalidate>
-                    <input type="hidden" name="task" value="create">
-                    <div class="form-floating mb-3">
-                        <input type="password" class="form-control" required>
-                        <label for="newuser_password">New Email</label>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <input type="password" class="form-control" required>
-                        <label for="newpass_password">Retype New Email</label>
-                    </div>
-                    <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
-                        <i class="far fa-save me-1"></i>
-                        Save
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="editUser_modal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Update name</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" id="create-user-form" action=""
-                    class="needs-validation" novalidate>
-                    <input type="hidden" name="task" value="create">
-                    <div class="form-floating mb-3">
-                        <input type="password" class="form-control" required>
-                        <label for="newuser_password">First Name</label>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <input type="password" class="form-control" required>
-                        <label for="newpass_password">Last Name</label>
-                    </div>
-                    <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
-                        <i class="far fa-save me-1"></i>
-                        Save
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 
 <h1 class="mb-4"> Account Information </h1>
 <div class="container w-75 mx-auto mb-4">
@@ -176,9 +120,9 @@ $(function() {
         $('[data-bs-toggle="tooltip"]').tooltip();
         $("#doneTag").toggle();
         $("#editTag").toggle()
+        $("#inputName").toggle()
     });
 });
-// $('[data-toggle="tooltip"]').tooltip()
 </script>
 
 
