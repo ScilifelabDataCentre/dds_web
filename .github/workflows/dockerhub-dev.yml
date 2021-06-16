@@ -1,21 +1,25 @@
-name: Docker Image CI
-
+name: Publish Docker image
 on:
   push:
     branches:
       - dev
-
 jobs:
-  build:
+  push_to_registry:
     if: github.repository == 'ScilifelabDataCentre/dds_web'
+    name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Publish to Docker Hub
-        uses: elgohr/Publish-Docker-Github-Action@master
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
         with:
-          name: scilifelabdatacentre/dds-backend
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          dockerfile: Dockerfile
-          tags: "dev"
+      - name: Push backend to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          file: Dockerfiles/Dockerfile.backend
+          context: .
+          push: true
+          tags: scilifelabdatacentre/dds-backend:dev
