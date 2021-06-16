@@ -376,6 +376,18 @@ class DBConnector:
                 current_project = models.Project.query.filter(
                     models.Project.public_id == func.binary(self.project["id"])
                 ).first()
+
+                # get current version
+                app.logger.debug("File id: %s", file.id)
+                current_file_version = models.Version.query.filter(
+                    sqlalchemy.and_(
+                        models.Version.active_file == func.binary(file.id),
+                        models.Version.time_deleted == None,
+                    )
+                ).first()
+                app.logger.debug(current_file_version)
+                current_file_version.time_deleted = timestamp()
+
                 db.session.delete(file)
                 current_project.size -= old_size
                 current_project.date_updated = timestamp()
