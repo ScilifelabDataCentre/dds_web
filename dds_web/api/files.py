@@ -89,24 +89,21 @@ class NewFile(flask_restful.Resource):
                 checksum=args["checksum"],
                 project_id=current_project,
             )
-            app.logger.debug("------------------------ %s", new_file)
-            current_project.files.append(new_file)
 
-            # New invoice row
-            new_row = models.Invoicing(
-                size_stored=args["size_processed"],
+            # New file version
+            new_version = models.Version(
+                size_stored=new_file.size_stored,
                 time_uploaded=timestamp(),
-                active_file=new_file,
+                active_file=new_file.id,
                 project_id=current_project,
             )
 
-            app.logger.debug(new_row)
-            current_project.file_invoicing.append(new_row)
-            new_file.invoicing_row = new_row
-            app.logger.debug("-------HERE: %s", new_file.invoicing_row)
+            # Update foreign keys
+            current_project.file_versions.append(new_version)
+            current_project.files.append(new_file)
+            new_file.versions.append(new_version)
 
             db.session.add(new_file)
-            db.session.add(new_row)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             app.logger.debug(err)
