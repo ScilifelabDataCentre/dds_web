@@ -54,10 +54,11 @@
                     <th>  Name </th>
                     <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
                     <td>
-                        <button class="btn btn-sm btn-outline-info float-end py-0" id="editName" style="display:none" data-bs-toggle="modal" data-bs-target="#editUser_modal">
+                        <button class="btn btn-sm btn-outline-info float-end py-0" id="editName" style="display:none">
                             <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
                         </button>
                     </td>
+                </tr>
                 {% for count, email in enumerate(account_info.email) %}
                 <tr>
                     {% if  count == 0 %}
@@ -65,7 +66,7 @@
                         <!-- TO DO: change to if primary for badge... -->
                         <td> {{ email }} <span class="badge bg-info mx-2 px-1 py-1 ">Primary</span> </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none" data-bs-toggle="modal" data-bs-target="#editEmail_modal" >
+                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none">
                                 <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit" ></i>
                             </button>
                         </td>
@@ -73,7 +74,7 @@
                         <th></th>
                         <td> {{ email }} </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none" data-bs-toggle="modal" data-bs-target="#editEmail_modal" >
+                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none">
                                 <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{count}}" style="display:none" >
@@ -125,16 +126,15 @@
 
 $(function() {
     $("#editFields").on('click', function() {
-        $("#editName").toggle();
-        {% for count, email in enumerate(account_info.email) %}
-        $("#editEmail{{count}}").toggle();
-        $("#deleteEmail{{count}}").toggle();
-        {% endfor %}
         $('[data-bs-toggle="tooltip"]').tooltip();
-        $("#editPassword").toggle();
+        $("#editName").toggle()
+        {% for count, email in enumerate(account_info.email) %}
+            $("#editEmail{{count}}").toggle();
+            $("#deleteEmail{{count}}").toggle();
+        {% endfor %}
         $("#doneTag").toggle();
-        $("#editTag").toggle()
-        $("#inputName").toggle()
+        $("#editTag").toggle();
+        $("#editPassword").toggle();
     });
 });
 </script>
