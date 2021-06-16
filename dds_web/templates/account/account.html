@@ -2,7 +2,7 @@
 
 {% block body %}
 
-<div class="modal fade" id="changePass_modal" tabindex="-1">
+<div class="modal fade" id="changePassword_modal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -66,7 +66,7 @@
 <h1 class="mb-4"> Account Information </h1>
 <div class="container w-75 mx-auto mb-4">
     <div class="bg-light px-2 py-1">
-        <table class="table">
+        <table class="table table-hover">
             <tbody>
                 <tr>
                     <th>  Username </th>
@@ -82,30 +82,30 @@
                     <th>  Name </th>
                     <td> {{ test.first_name }} {{ test.last_name }} </td>
                     <td>
-                        <button class="btn btn-sm btn-outline-info float-end py-0" id="editName" style="display:none" >
-                            <i class="far fa-user-edit"></i>
+                        <button class="btn btn-sm btn-outline-info float-end py-0" id="editName" style="display:none" data-bs-toggle="modal" data-bs-target="#editUser_modal">
+                            <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
                         </button>
                     </td>
                 {% for count, email in enumerate(test.email) %}
                 <tr>
                     {% if  count == 0 %}
                         <th>  Email  </th>
+                        <!-- TO DO: change to if primary for badge... -->
                         <td> {{ email }} <span class="badge bg-info mx-2 px-1 py-1 ">Primary</span> </td>
-                        <!-- change to if primary.. -->
                         <td>
-                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editName{{count}}" style="display:none" data-bs-toggle="modal" data-bs-target="#editUser_modal" >
-                                <i class="far fa-user-edit"></i>
+                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none" data-bs-toggle="modal" data-bs-target="#editUser_modal" >
+                                <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit" ></i>
                             </button>
                         </td>
                     {% else %}
                         <th></th>
                         <td> {{ email }} </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editName{{count}}" style="display:none" data-bs-toggle="modal" data-bs-target="#editUser_modal" >
-                                <i class="far fa-user-edit"></i>
+                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none" data-bs-toggle="modal" data-bs-target="#editUser_modal" >
+                                <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="delName{{count}}" style="display:none" >
-                                <i class="far fa-user-slash"></i>
+                            <button class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{count}}" style="display:none" >
+                                <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                             </button>
                         </td>
                     {% endif %}
@@ -115,7 +115,7 @@
         </table>
     </div>
     <div class="text-end">
-        <button type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" data-bs-toggle="modal" data-bs-target="#changePass_modal">
+        <button type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" data-bs-toggle="modal" data-bs-target="#changePassword_modal">
             <i class="far fa-lock me-2"></i>
             Change password
         </button>
@@ -133,13 +133,18 @@
 {% block javascript %}
 <script type="text/javascript">
 
-$("#editFields").on('click', function() {
-   $("#editName").toggle();
-   {% for count, email in enumerate(test.email) %}
-   $("#editName{{count}}").toggle();
-   $("#delName{{count}}").toggle();
-   {% endfor %}
+$(function() {
+    $("#editFields").on('click', function() {
+        $("#editName").toggle();
+        {% for count, email in enumerate(test.email) %}
+            $("#editEmail{{count}}").toggle();
+            $("#deleteEmail{{count}}").toggle();
+        {% endfor %}
+        $('[data-bs-toggle="tooltip"]').tooltip();
+        // $(this).html("Done")
+    });
 });
+// $('[data-toggle="tooltip"]').tooltip()
 </script>
 
 
