@@ -81,12 +81,12 @@ class NewFile(flask_restful.Resource):
                 name=args["name"],
                 name_in_bucket=args["name_in_bucket"],
                 subpath=args["subpath"],
-                size=args["size"],
-                size_encrypted=args["size_processed"],
+                size_original=args["size"],
+                size_stored=args["size_processed"],
                 compressed=bool(args["compressed"] == "True"),
                 salt=args["salt"],
                 public_key=args["public_key"],
-                date_uploaded=timestamp(),
+                time_uploaded=timestamp(),
                 checksum=args["checksum"],
                 project_id=current_project,
             )
@@ -128,16 +128,16 @@ class NewFile(flask_restful.Resource):
                     500,
                 )
 
-            old_size = existing_file.size
+            old_size = existing_file.size_original
 
             # Update file info
             existing_file.subpath = args["subpath"]
-            existing_file.size = args["size"]
-            existing_file.size_encrypted = args["size_processed"]
+            existing_file.size_original = args["size"]
+            existing_file.size_stored = args["size_processed"]
             existing_file.compressed = bool(args["compressed"] == "True")
             existing_file.salt = args["salt"]
             existing_file.public_key = args["public_key"]
-            existing_file.date_uploaded = timestamp()
+            existing_file.time_uploaded = timestamp()
             existing_file.checksum = args["checksum"]
 
             db.session.commit()
@@ -382,8 +382,8 @@ class FileInfo(flask_restful.Resource):
                     models.File.name,
                     models.File.name_in_bucket,
                     models.File.subpath,
-                    models.File.size,
-                    models.File.size_encrypted,
+                    models.File.size_original,
+                    models.File.size_stored,
                     models.File.salt,
                     models.File.public_key,
                     models.File.checksum,
@@ -402,8 +402,8 @@ class FileInfo(flask_restful.Resource):
                             models.File.name,
                             models.File.name_in_bucket,
                             models.File.subpath,
-                            models.File.size,
-                            models.File.size_encrypted,
+                            models.File.size_original,
+                            models.File.size_stored,
                             models.File.salt,
                             models.File.public_key,
                             models.File.checksum,
@@ -424,8 +424,8 @@ class FileInfo(flask_restful.Resource):
                 x[0]: {
                     "name_in_bucket": x[1],
                     "subpath": x[2],
-                    "size": x[3],
-                    "size_encrypted": x[4],
+                    "size_original": x[3],
+                    "size_stored": x[4],
                     "key_salt": x[5],
                     "public_key": x[6],
                     "checksum": x[7],
@@ -460,8 +460,8 @@ class FileInfoAll(flask_restful.Resource):
                     models.File.name,
                     models.File.name_in_bucket,
                     models.File.subpath,
-                    models.File.size,
-                    models.File.size_encrypted,
+                    models.File.size_original,
+                    models.File.size_stored,
                     models.File.salt,
                     models.File.public_key,
                     models.File.checksum,
@@ -479,8 +479,8 @@ class FileInfoAll(flask_restful.Resource):
                 x[0]: {
                     "name_in_bucket": x[1],
                     "subpath": x[2],
-                    "size": x[3],
-                    "size_encrypted": x[4],
+                    "size_original": x[3],
+                    "size_stored": x[4],
                     "key_salt": x[5],
                     "public_key": x[6],
                     "checksum": x[7],
@@ -523,7 +523,7 @@ class UpdateFile(flask_restful.Resource):
             if not file:
                 return flask.make_response(f"No such file: {file_name['name']}", 500)
 
-            file.latest_download = timestamp()
+            file.time_latest_download = timestamp()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             app.logger.exception(str(err))

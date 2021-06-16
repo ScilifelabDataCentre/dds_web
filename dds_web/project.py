@@ -304,7 +304,7 @@ class dds_folder(object):
     def arrange_files(self):
         """Method to arrange files that reflects folder structure"""
         for _file in self.files:
-            self.__parse_and_put_file(_file.name, _file.size, self.files_arranged)
+            self.__parse_and_put_file(_file.name, _file.size_original, self.files_arranged)
 
     def generate_html_string(self, arrange=True):
         """Generates html string for the files to pass in template"""

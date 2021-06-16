@@ -70,7 +70,7 @@ from dds_web.database.models import User, Project, Facility, File
 #     mfile = File(name=finfo['name'].format(project.id), directory_path=finfo['dpath'],
 #                  size=1, size_enc=1, extension='ext', compressed=True,
 #                  public_key='public_key', salt='salt',
-#                  date_uploaded='2020-05-25', project_id=project
+#                  time_uploaded='2020-05-25', project_id=project
 #                  )
 #     project.project_files.append(mfile)
 
@@ -207,13 +207,13 @@ def fill_db():
             name="notafile.txt",
             name_in_bucket="testtesttest.txt",
             subpath="subpath",
-            size=0,  # bytes
-            size_encrypted=0,
+            size_original=0,  # bytes
+            size_stored=0,
             compressed=False,
             public_key="test",
             salt="test",
             checksum="",
-            date_uploaded=timestamp(),
+            time_uploaded=timestamp(),
             project_id=projects[0],
         )
     ]
@@ -230,7 +230,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     #     File(
     #         name="Sample_1/data.txt",
@@ -243,7 +243,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     #     File(
     #         name="Sample_1/source.txt",
@@ -256,7 +256,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     #     File(
     #         name="Sample_1/meta/info.txt",
@@ -269,7 +269,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     #     File(
     #         name="Sample_2/data.txt",
@@ -282,7 +282,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     #     File(
     #         name="Sample_2/source.txt",
@@ -295,7 +295,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     #     File(
     #         name="Sample_2/meta/info.txt",
@@ -308,7 +308,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     #     File(
     #         name="sample_list.txt",
@@ -321,7 +321,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     #     File(
     #         name="Plates/Sample_1/layout.txt",
@@ -334,7 +334,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     #     File(
     #         name="Plates/Sample_2/layout.txt",
@@ -347,7 +347,7 @@ def fill_db():
     #         public_key="test",
     #         salt="test",
     #         checksum="",
-    #         date_uploaded=timestamp(),
+    #         time_uploaded=timestamp(),
     #     ),
     # ]
 

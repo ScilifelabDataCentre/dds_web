@@ -265,7 +265,7 @@ class UpdateProjectSize(flask_restful.Resource):
 
                 tot_file_size = (
                     models.File.query.with_entities(
-                        sqlalchemy.func.sum(models.File.size).label("sizeSum")
+                        sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
                     )
                     .filter(models.File.project_id == current_project.id)
                     .first()

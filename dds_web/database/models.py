@@ -150,14 +150,15 @@ class File(db.Model):
     name = db.Column(db.String(200), unique=False, nullable=False)
     name_in_bucket = db.Column(db.String(200), unique=False, nullable=False)
     subpath = db.Column(db.String(500), unique=False, nullable=False)
-    size = db.Column(db.BigInteger, unique=False, nullable=False)
-    size_encrypted = db.Column(db.BigInteger, unique=False, nullable=False)
+    size_original = db.Column(db.BigInteger, unique=False, nullable=False)
+    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
-    date_uploaded = db.Column(db.String(50), unique=False, nullable=False)
-    latest_download = db.Column(db.String(50), unique=False, nullable=True)
+    time_uploaded = db.Column(db.String(50), unique=False, nullable=False)
+    time_deleted = db.Column(db.String(50), unique=False, nullable=True)
+    time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
 
     # Foreign keys
     # One project can have many files

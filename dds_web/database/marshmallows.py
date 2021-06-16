@@ -69,7 +69,7 @@ class FileSchema(ma.Schema):
             "compressed",
             "public_key",
             "salt",
-            "date_uploaded",
+            "time_uploaded",
             "project_id",
         )
 
