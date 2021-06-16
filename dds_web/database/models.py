@@ -71,12 +71,11 @@ class Project(db.Model):
     facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
 
     # Relationships
-    # One project can have many users
-    # users = db.relationship("User", backref="project")
     # One project can have many files
     files = db.relationship("File", backref="project")
-    # One project can have many rows in invoicing
-    file_invoicing = db.relationship("Invoicing", backref="invoice_project")
+
+    # One project can have many file versions
+    file_versions = db.relationship("Version", backref="responsible_project")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -97,17 +96,18 @@ class User(db.Model):
     password = db.Column(db.String(120), unique=False, nullable=False)
     role = db.Column(db.String(50), unique=False, nullable=False)
     permissions = db.Column(db.String(5), unique=False, nullable=False, default="--l--")
+
     # Foreign keys
     # One facility can have many users
     facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
-    # One project can have many users
-    # project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
     # Relationships
     # One user can have many projects, and one projects can have many users
     projects = db.relationship(
         "Project", secondary=project_users, backref=db.backref("users", lazy="dynamic")
     )
+
+    # One user can have many identifiers
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -165,8 +165,7 @@ class File(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
     # Relationships
-    # One project can have one
-    invoicing_row = db.relationship("Invoicing", backref="file_row", uselist=False)
+    versions = db.relationship("Version", backref="file")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -174,11 +173,11 @@ class File(db.Model):
         return f"<File {self.public_id}>"
 
 
-class Invoicing(db.Model):
-    """Data model for invoicing table. Keeps track of the amount saved in the db."""
+class Version(db.Model):
+    """Data model for keeping track of all active and non active files. Used for invoicing."""
 
     # Table setup
-    __tablename__ = "invoicing"
+    __tablename__ = "versions"
     __table_args__ = {"extend_existing": True}
 
     # Columns
@@ -189,7 +188,9 @@ class Invoicing(db.Model):
 
     # Foreign keys
     # One file can have many rows in invoicing
-    active_file = db.Column(db.Integer, db.ForeignKey("files.id"), nullable=True)
+    active_file = db.Column(
+        db.Integer, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
+    )
 
     # One project can have many files
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
@@ -197,4 +198,4 @@ class Invoicing(db.Model):
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<File Invoicing {self.id}>"
+        return f"<File Version {self.id}>"

@@ -7,7 +7,7 @@ from flask import current_app
 
 from dds_web import db, timestamp
 
-from dds_web.database.models import User, Project, Facility, File, Invoicing
+from dds_web.database.models import User, Project, Facility, File, Version
 
 
 # def create_files_for_project(project):
@@ -217,8 +217,8 @@ def fill_db():
         )
     ]
 
-    invoicing = [
-        Invoicing(
+    versions = [
+        Version(
             size_stored=files[0].size_stored,
             time_uploaded=timestamp(),
             active_file=files[0],
@@ -373,9 +373,10 @@ def fill_db():
     for p in projects:
         facilities[0].projects.append(p)
 
-    for i in invoicing:
-        files[0].invoicing_row = i
-        projects[0].file_invoicing.append(i)
+    for v in versions:
+        projects[0].file_versions.append(v)
+        files[0].versions.append(v)
+
     # for x in projects:
     #     users[0].facility_projects.append(x)
     # for ind in [1, 3, 4, 6, 9]:
@@ -405,7 +406,7 @@ def fill_db():
     db.session.add_all(projects)
     db.session.add_all(users)
     db.session.add_all(files)
-    db.session.add_all(invoicing)
+    db.session.add_all(versions)
 
     # Required for change in db
     db.session.commit()
