@@ -1,4 +1,3 @@
-
 from flask import Blueprint, render_template, request, current_app, session, redirect, url_for
 
 from dds_web import timestamp
@@ -22,17 +21,7 @@ account_blueprint = Blueprint("account", __name__)
 @login_required
 def account_info(loginname=None):
     """account page"""
-    test={
-            "id": 1,
-            "first_name": 'First',
-            "last_name": 'Last',
-            "username": 'username',
-            "password": 'a',
-            "settings": 'a',
-            "email": ['userX@email1.com', 'userX@email2.com'],
-            "phone": 'a',
-            "admin": 'a'
-        }
+    account_info = {}
     # if session.get("is_admin"):
     #     if request.method == "GET":
     #         account_name = session["current_user"]
@@ -47,10 +36,15 @@ def account_info(loginname=None):
     #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
     if session.get("current_user"):
         if request.method == "GET":
-            account_name = session["current_user"]
-            account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
+            user = session["current_user"]
+            account_info['username'] = user
+            account_info['permissions'] = db_utils.get_user_column_by_username(user, "permissions")
+            account_info['first_name'] = 'First'
+            account_info['last_name'] = 'Last'
+            account_info['email'] = ["userX@email1.com", "userX@email2.com"]
 
-    return render_template("account/account.html",
-                            enumerate=enumerate,
-                            test=test,
-                            test_get=account_name)
+    return render_template(
+        "account/account.html",
+        enumerate=enumerate,
+        account_info=account_info
+    )
