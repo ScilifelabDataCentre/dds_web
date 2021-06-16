@@ -140,24 +140,16 @@ class NewFile(flask_restful.Resource):
                     500,
                 )
 
-            old_size = existing_file.size_original
+            # Get version row
+            current_file_version = models.Version.query.filter(
+                models.Version.active_file == func.binary(existing_file.id)
+            ).first()
 
-            app.logger.debug("OOOOOOOOOOOOOOOOO")
-            # update old invoicing row
-            # invoice_row = models.Invoicing.query.filter(
-            #     models.Invoicing.active_file == existing_file.id
-            # ).first()
+            # Same timestamp for deleted and created new file
+            new_timestamp = timestamp()
 
-            app.logger.debug(existing_file.invoicing_row)
-            invoice_row.time_deleted = timestamp()
-
-            # create new invoice row
-            new_row = models.Invoicing(
-                size_stored=args["size_processed"],
-                time_uploaded=timestamp(),
-                active_file=existing_file,
-                project_id=current_project,
-            )
+            # Overwritten == deleted/deactivated
+            current_file_version.time_deleted = new_timestamp
 
             # Update file info
             existing_file.subpath = args["subpath"]
@@ -166,11 +158,22 @@ class NewFile(flask_restful.Resource):
             existing_file.compressed = bool(args["compressed"] == "True")
             existing_file.salt = args["salt"]
             existing_file.public_key = args["public_key"]
-            existing_file.time_uploaded = timestamp()
+            existing_file.time_uploaded = new_timestamp
             existing_file.checksum = args["checksum"]
-            existing_file.invoicing_row = new_row.id
 
-            db.session.add(new_row)
+            # New version
+            new_version = models.Version(
+                size_stored=args["size_processed"],
+                time_uploaded=new_timestamp,
+                active_file=existing_file.id,
+                project_id=current_project,
+            )
+
+            # Update foreign keys and relationships
+            current_project.file_versions.append(new_version)
+            existing_file.versions.append(new_version)
+
+            db.session.add(new_version)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
