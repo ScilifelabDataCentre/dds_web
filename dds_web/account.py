@@ -7,10 +7,6 @@ from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.utils import login_required
 
-
-from dds_web import db
-
-
 # temp will be removed in next version
 from dds_web.development import cache_temp as tc
 
