@@ -43,4 +43,8 @@ def account_info(loginname=None):
             account_info["last_name"] = "Last"
             account_info["email"] = ["userX@email1.com", "userX@email2.com"]
 
+        # if request.method == "POST":
+            # username = request.form.get("username")
+            # password = request.form.get("password")
+
     return render_template("account/account.html", enumerate=enumerate, account_info=account_info)

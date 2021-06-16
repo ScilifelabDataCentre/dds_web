@@ -83,6 +83,20 @@
                     {% endif %}
                 </tr>
                 {% endfor %}
+                <!-- <tr>
+                    <th></th>
+                    <td></td>
+                    <form method="POST" style="display:none" id="inputName">
+                        <div class="input-group" >
+                            <td >
+                                <input type="text" class="form-control" id="username" name="username" placeholder="First Name">
+                            </td>
+                            <td >
+                                <input type="text" class="form-control" id="password" name="password" placeholder="Last Name">
+                            </td>
+                        </div>
+                    </form>
+                </tr> -->
             </tbody>
         </table>
     </div>
@@ -111,13 +125,13 @@
 
 $(function() {
     $("#editFields").on('click', function() {
-        $("#editPassword").toggle();
         $("#editName").toggle();
         {% for count, email in enumerate(account_info.email) %}
-            $("#editEmail{{count}}").toggle();
-            $("#deleteEmail{{count}}").toggle();
+        $("#editEmail{{count}}").toggle();
+        $("#deleteEmail{{count}}").toggle();
         {% endfor %}
         $('[data-bs-toggle="tooltip"]').tooltip();
+        $("#editPassword").toggle();
         $("#doneTag").toggle();
         $("#editTag").toggle()
         $("#inputName").toggle()
