@@ -148,10 +148,14 @@
             Change password
         </button>
         <button type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" value="true">
+            <span id="editTag">
             <i class="far fa-user-edit me-2"></i>
             Edit
-            <!-- <i class="far fa-check-circle me-2"></i>
-            Done -->
+            </span>
+            <span id="doneTag" style="display:none">
+            <i class="far fa-check-circle me-2" ></i>
+                Done
+            </span>
         </button>
     </div>
 </div>
@@ -162,7 +166,6 @@
 <script type="text/javascript">
 
 $(function() {
-    var toggled = false;
     $("#editFields").on('click', function() {
         $("#editPassword").toggle();
         $("#editName").toggle();
@@ -171,14 +174,8 @@ $(function() {
             $("#deleteEmail{{count}}").toggle();
         {% endfor %}
         $('[data-bs-toggle="tooltip"]').tooltip();
-        if(!toggled)
-        {
-          toggled = true;
-          $(this).html('<i class="far fa-check-circle me-2"></i>Done');
-        } else {
-          toggled = false;
-          $(this).html('<i class="far fa-user-edit me-2"></i>Edit');
-        }
+        $("#doneTag").toggle();
+        $("#editTag").toggle()
     });
 });
 // $('[data-toggle="tooltip"]').tooltip()
