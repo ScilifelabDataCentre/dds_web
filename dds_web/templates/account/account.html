@@ -70,23 +70,23 @@
             <tbody>
                 <tr>
                     <th>  Username </th>
-                    <td> {{ test.username }} </td>
+                    <td> {{ account_info.username }} </td>
                     <td></td>
                 </tr>
                 <tr>
                     <th>  Permissions </th>
-                    <td> {{ test_get }} </td>
+                    <td> {{ account_info.permissions }} </td>
                     <td></td>
                 </tr>
                 <tr>
                     <th>  Name </th>
-                    <td> {{ test.first_name }} {{ test.last_name }} </td>
+                    <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
                     <td>
                         <button class="btn btn-sm btn-outline-info float-end py-0" id="editName" style="display:none" data-bs-toggle="modal" data-bs-target="#editUser_modal">
                             <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
                         </button>
                     </td>
-                {% for count, email in enumerate(test.email) %}
+                {% for count, email in enumerate(account_info.email) %}
                 <tr>
                     {% if  count == 0 %}
                         <th>  Email  </th>
@@ -136,7 +136,7 @@
 $(function() {
     $("#editFields").on('click', function() {
         $("#editName").toggle();
-        {% for count, email in enumerate(test.email) %}
+        {% for count, email in enumerate(account_info.email) %}
             $("#editEmail{{count}}").toggle();
             $("#deleteEmail{{count}}").toggle();
         {% endfor %}
