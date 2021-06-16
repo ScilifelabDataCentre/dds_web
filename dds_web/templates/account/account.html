@@ -133,7 +133,7 @@
                                 <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{count}}" style="display:none" >
-                                <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
+                                <i class="far fa-trash-can "  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                             </button>
                         </td>
                     {% endif %}
@@ -143,7 +143,7 @@
         </table>
     </div>
     <div class="text-end">
-        <button type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" data-bs-toggle="modal" data-bs-target="#changePassword_modal">
+        <button type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="editPassword" data-bs-toggle="modal" data-bs-target="#changePassword_modal">
             <i class="far fa-lock me-2"></i>
             Change password
         </button>
@@ -162,14 +162,23 @@
 <script type="text/javascript">
 
 $(function() {
+    var toggled = false;
     $("#editFields").on('click', function() {
+        $("#editPassword").toggle();
         $("#editName").toggle();
         {% for count, email in enumerate(account_info.email) %}
             $("#editEmail{{count}}").toggle();
             $("#deleteEmail{{count}}").toggle();
         {% endfor %}
         $('[data-bs-toggle="tooltip"]').tooltip();
-        // $(this).html("Done")
+        if(!toggled)
+        {
+          toggled = true;
+          $(this).html('<i class="far fa-check-circle me-2"></i>Done');
+        } else {
+          toggled = false;
+          $(this).html('<i class="far fa-user-edit me-2"></i>Edit');
+        }
     });
 });
 // $('[data-toggle="tooltip"]').tooltip()
