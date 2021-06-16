@@ -378,14 +378,12 @@ class DBConnector:
                 ).first()
 
                 # get current version
-                app.logger.debug("File id: %s", file.id)
                 current_file_version = models.Version.query.filter(
                     sqlalchemy.and_(
                         models.Version.active_file == func.binary(file.id),
                         models.Version.time_deleted == None,
                     )
                 ).first()
-                app.logger.debug(current_file_version)
                 current_file_version.time_deleted = timestamp()
 
                 db.session.delete(file)
@@ -428,6 +426,14 @@ class DBConnector:
                 nameinbucket = x.name_in_bucket
                 size = x.size_original
                 try:
+                    # get current version
+                    current_file_version = models.Version.query.filter(
+                        sqlalchemy.and_(
+                            models.Version.active_file == func.binary(x.id),
+                            models.Version.time_deleted == None,
+                        )
+                    ).first()
+                    current_file_version.time_deleted = timestamp()
                     db.session.delete(x)
                 except sqlalchemy.exc.SQLAlchemyError as err:
                     db.session.rollback()
