@@ -35,15 +35,9 @@
                 </li>
                 {% else %}
                 <li class="nav-item mx-2">
-                    <a class="btn btn-outline-primary" href="#">
-                        <i class="far fa-user-plus d-block mx-auto"></i>
-                        Register
-                    </a>
-                </li>
-                <li class="nav-item mx-2">
-                    <a class="btn btn-success text-body" href="{{ url_for('user.login') }}">
+                    <a class="btn btn-success" href="{{ url_for('user.login') }}">
                         <i class="far fa-sign-in-alt d-block mx-auto"></i>
-                        Login
+                        Log In
                     </a>
                 </li>
                 {% endif %}

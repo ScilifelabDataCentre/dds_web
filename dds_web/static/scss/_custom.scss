@@ -1,4 +1,13 @@
+// Override bootstrap styles
+.form-floating > label {
+  opacity: .65;
+}
 
+.bg-light {
+  background-color: #99999922 !important;
+}
+
+// New custom styles
 .filesize_badge {
     @extend .badge, .border, .fw-light, .font-monospace;
     background-color: $light;
