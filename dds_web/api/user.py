@@ -17,7 +17,7 @@ import functools
 from sqlalchemy.sql import func
 
 # Own modules
-from dds_web import app
+from dds_web import app, timestamp
 from dds_web.database import models
 from dds_web.crypt.auth import gen_argon2hash, verify_password_argon2id
 from dds_web.api.dds_decorators import token_required
@@ -124,20 +124,36 @@ class ShowUsage(flask_restful.Resource):
 
         #
         try:
+            usage = {}
             for p in facility_info.projects:
                 app.logger.debug(f"Project: {p}")
+
+                usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0}
                 for f in p.files:
                     app.logger.debug(f"File: {f}")
-                    for v in f.versions:
-                        app.logger.debug(f"Version: {v}")
-                        app.logger.debug(v.size_stored)
-                        app.logger.debug(v.time_uploaded)
-                        app.logger.debug(v.time_deleted)
 
-                        if v.time_deleted is not None:
-                            app.logger.debug("ttest")
+                    for v in f.versions:
+                        # Calculate hours of the current file
+                        time_uploaded = datetime.datetime.strptime(
+                            v.time_uploaded,
+                            "%Y-%m-%d %H:%M:%S.%f%z",
+                        )
+                        time_deleted = datetime.datetime.strptime(
+                            v.time_deleted if v.time_deleted else timestamp(),
+                            "%Y-%m-%d %H:%M:%S.%f%z",
+                        )
+                        file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
+
+                        # Calculate GBHours
+                        gb_hours = (v.size_stored / 1e9) / file_hours
+                        app.logger.debug(f"GB Hours: {gb_hours}")
+
+                        # Add to project sum
+                        usage[p.public_id]["gbhours"] += gb_hours
+                        usage[p.public_id]["cost"] += gb_hours * 0.09
 
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response("Failed getting project files: {err}", 500)
 
-        return flask.jsonify({"facility info": "test"})
+        app.logger.debug(usage)
+        return flask.jsonify({"project usage": usage})

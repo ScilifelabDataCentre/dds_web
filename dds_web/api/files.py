@@ -147,16 +147,16 @@ class NewFile(flask_restful.Resource):
                     models.Version.time_deleted == None,
                 )
             ).all()
+            if len(current_file_version) > 1:
+                app.logger.warning(
+                    "There is more than one version of the file which does not yet have a deletion timestamp."
+                )
 
             # Same timestamp for deleted and created new file
             new_timestamp = timestamp()
 
             # Overwritten == deleted/deactivated
-            app.logger.debug(f"Should be 1: {current_file_version}")
             for version in current_file_version:
-                app.logger.debug(
-                    f"time deleted: {version.time_deleted}, type: {type(version.time_deleted)}"
-                )
                 if version.time_deleted is None:
                     version.time_deleted = new_timestamp
 
