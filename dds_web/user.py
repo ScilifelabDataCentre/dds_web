@@ -157,6 +157,7 @@ def user_page(loginname=None):
         timestamp=timestamp,
     )
 
+
 # @user_blueprint.route("/signup", methods=["GET", "POST"])
 # def signup():
 #     """Signup a user account"""
