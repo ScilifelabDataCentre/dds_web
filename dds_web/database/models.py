@@ -3,7 +3,7 @@
 # IMPORTS ########################################################### IMPORTS #
 
 # Own modules
-from dds_web import db
+from dds_web import db, timestamp
 
 # CLASSES ########################################################### CLASSES #
 
@@ -183,8 +183,8 @@ class Version(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
-    time_uploaded = db.Column(db.String(50), unique=False, nullable=False)
-    time_deleted = db.Column(db.String(50), unique=False, nullable=True)
+    time_uploaded = db.Column(db.String(50), unique=False, nullable=False, default=timestamp())
+    time_deleted = db.Column(db.String(50), unique=False, nullable=True, default=None)
 
     # Foreign keys
     # One file can have many rows in invoicing
