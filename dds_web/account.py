@@ -7,17 +7,13 @@ from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.utils import login_required
 
-
-from dds_web import db
-
-
 # temp will be removed in next version
 from dds_web.development import cache_temp as tc
 
 account_blueprint = Blueprint("account", __name__)
 
 
-@account_blueprint.route("/<loginname>", methods=["GET"])
+@account_blueprint.route("/<loginname>", methods=["GET", "POST"])
 @login_required
 def account_info(loginname=None):
     """account page"""
@@ -42,5 +38,10 @@ def account_info(loginname=None):
             account_info["first_name"] = "First"
             account_info["last_name"] = "Last"
             account_info["email"] = ["userX@email1.com", "userX@email2.com"]
+
+        if request.method == "POST":
+            pass
+            # username = request.form.get("username")
+            # password = request.form.get("password")
 
     return render_template("account/account.html", enumerate=enumerate, account_info=account_info)
