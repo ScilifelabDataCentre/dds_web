@@ -162,8 +162,6 @@ app.component('v-account-home', {
                                             <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
                                         </button>
                                     </td>
-                                    <td>
-                                </td>
                                 </tr>
                                 <template v-for="(email,i) in account_info.email" :key="email">
                                     <tr>
