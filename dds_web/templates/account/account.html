@@ -53,8 +53,21 @@
                 <tr>
                     <th>  Name </th>
                     <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
+                    <!-- <form method="POST">
+                            <td id="formFirstName" >
+                                <input type="text" class="form-control" id="firstName" placeholder="First Name">
+                            </td>
+                            <td id="formLastName" >
+                                <input type="text" class="form-control" id="lastName" placeholder="Last Name">
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info float-end py-0" id="editName" style="display:none">
+                                    <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
+                                </button>
+                            </td>
+                    </form> -->
                     <td>
-                        <button class="btn btn-sm btn-outline-info float-end py-0" id="editName" style="display:none">
+                        <button class="btn btn-sm btn-outline-info float-end py-0 px-1" id="editName">
                             <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
                         </button>
                     </td>
@@ -64,52 +77,55 @@
                     {% if  count == 0 %}
                         <th>  Email  </th>
                         <!-- TO DO: change to if primary for badge... -->
-                        <td> {{ email }} <span class="badge bg-info mx-2 px-1 py-1 ">Primary</span> </td>
+                        <td> {{ email }}
+                            <span class="badge bg-info mx-2 px-1 py-1 ">Primary</span>
+                            <!-- <a class="radio">
+                                <label><input type="radio" name="optradio" checked>Option 1</label>
+                            </a> -->
+                        </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none">
+                            <!-- <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none">
                                 <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit" ></i>
+                            </button> -->
+                            <button class="btn btn-sm btn-outline-danger float-end py-0 px-1" id="deleteEmail{{count}}" disabled>
+                                <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                             </button>
                         </td>
                     {% else %}
                         <th></th>
-                        <td> {{ email }} </td>
+                        <td> {{ email }}
+                            <!-- <label><input type="radio" name="optradio">Option 2</label> -->
+                            <!-- <div class="radio disabled">
+                                <label><input type="radio" name="optradio" disabled>Option 3</label>
+                            </div> -->
+                        </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none">
+                            <!-- <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none">
                                 <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{count}}" style="display:none" >
-                                <i class="far fa-trash-can "  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
+                            </button> -->
+                            <button class="btn btn-sm btn-outline-danger float-end py-0 px-1" id="deleteEmail{{count}}" >
+                                <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                             </button>
                         </td>
                     {% endif %}
                 </tr>
                 {% endfor %}
-                <!-- <tr>
-                    <th></th>
-                    <td></td>
-                    <form method="POST" style="display:none" id="inputName">
-                        <div class="input-group" >
-                            <td >
-                                <input type="text" class="form-control" id="username" name="username" placeholder="First Name">
-                            </td>
-                            <td >
-                                <input type="text" class="form-control" id="password" name="password" placeholder="Last Name">
-                            </td>
-                        </div>
-                    </form>
-                </tr> -->
             </tbody>
         </table>
     </div>
     <div class="text-end">
         <button type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="editPassword" data-bs-toggle="modal" data-bs-target="#changePassword_modal">
             <i class="far fa-lock me-2"></i>
-            Change password
+            Change Password
+        </button>
+        <button type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="addEmail">
+            <i class="far fa-envelope me-2"></i>
+            Add New Email Address
         </button>
         <button type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" value="true">
             <span id="editTag">
             <i class="far fa-user-edit me-2"></i>
-            Edit
+                Edit
             </span>
             <span id="doneTag" style="display:none">
             <i class="far fa-check-circle me-2" ></i>
@@ -125,17 +141,26 @@
 <script type="text/javascript">
 
 $(function() {
-    $("#editFields").on('click', function() {
-        $('[data-bs-toggle="tooltip"]').tooltip();
-        $("#editName").toggle()
-        {% for count, email in enumerate(account_info.email) %}
-            $("#editEmail{{count}}").toggle();
-            $("#deleteEmail{{count}}").toggle();
-        {% endfor %}
-        $("#doneTag").toggle();
-        $("#editTag").toggle();
-        $("#editPassword").toggle();
-    });
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+    // $("#editFields").on('click', function() {
+    //     $('[data-bs-toggle="tooltip"]').tooltip();
+    //     $("#editName").toggle()
+    //     $("#addEmail").toggle()
+    //     {% for count, email in enumerate(account_info.email) %}
+    //         $("#editEmail{{count}}").toggle();
+    //         $("#deleteEmail{{count}}").toggle();
+    //     {% endfor %}
+    //     $("#doneTag").toggle();
+    //     $("#editTag").toggle();
+    //     $("#editPassword").toggle();
+    // });
+    // $("#editName").on('click', function() {
+    //     $("#formFirstName").toggle();
+    //     $("#formLastName").toggle();
+    // });
 });
 </script>
 
