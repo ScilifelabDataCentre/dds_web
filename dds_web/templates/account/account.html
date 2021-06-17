@@ -34,6 +34,38 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="addEmail_modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="create-user-form" action=""
+                    class="needs-validation" novalidate>
+                    <input type="hidden" name="task" value="create">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" required>
+                        <label for="newuser_username">New Email Address</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" required>
+                        <label for="newuser_password">Repeat New Email Address</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" required>
+                        <label for="newpass_password">Code</label>
+                    </div>
+                    <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="far fa-save me-1"></i>
+                        Save
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <h1 class="mb-4"> Account Information </h1>
 <div class="container w-75 mx-auto mb-4">
@@ -79,14 +111,10 @@
                         <!-- TO DO: change to if primary for badge... -->
                         <td> {{ email }}
                             <span class="badge bg-info mx-2 px-1 py-1 ">Primary</span>
-                            <!-- <a class="radio">
-                                <label><input type="radio" name="optradio" checked>Option 1</label>
-                            </a> -->
+                            <!-- <span class="badge bg-info mx-2 px-1 py-1 ">Primary<input type="radio" name="primary" value="{{ email }}"></span>
+                            <input type="radio" class="btn-check" id="btn-check" autocomplete="off" value="{{ email }}"><span class="badge bg-info mx-2 px-1 py-1 ">Primary</span> -->
                         </td>
                         <td>
-                            <!-- <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none">
-                                <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit" ></i>
-                            </button> -->
                             <button class="btn btn-sm btn-outline-danger float-end py-0 px-1" id="deleteEmail{{count}}" disabled>
                                 <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                             </button>
@@ -94,15 +122,10 @@
                     {% else %}
                         <th></th>
                         <td> {{ email }}
-                            <!-- <label><input type="radio" name="optradio">Option 2</label> -->
-                            <!-- <div class="radio disabled">
-                                <label><input type="radio" name="optradio" disabled>Option 3</label>
-                            </div> -->
+                            <!-- <span class="badge bg-info mx-2 px-1 py-1 ">Primary<input type="radio" name="primary" value="{{ email }}"></span>
+                            <input type="radio" class="btn-check" id="btn-check" autocomplete="off" value="{{ email }}"><span class="badge bg-info mx-2 px-1 py-1 ">Primary</span> -->
                         </td>
                         <td>
-                            <!-- <button class="btn btn-sm btn-outline-info float-end py-0" id="editEmail{{count}}" style="display:none">
-                                <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
-                            </button> -->
                             <button class="btn btn-sm btn-outline-danger float-end py-0 px-1" id="deleteEmail{{count}}" >
                                 <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                             </button>
@@ -110,6 +133,21 @@
                     {% endif %}
                 </tr>
                 {% endfor %}
+                <tr>
+                    <form method="GET">
+                        <td id="formFirstName">
+                            <input name="formFirstName" type="text" class="form-control" id="firstName" placeholder="First Name" required>
+                        </td>
+                        <td id="formLastName" >
+                            <input name="formLastName" type="text" class="form-control" id="lastName" placeholder="Last Name" required>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-success float-end py-0" id="editName" type="submit">
+                                <i class="far fa-check-circle" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
+                            </button>
+                        </td>
+                    </form>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -118,7 +156,7 @@
             <i class="far fa-lock me-2"></i>
             Change Password
         </button>
-        <button type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="addEmail">
+        <button type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="addEmail" data-bs-toggle="modal" data-bs-target="#addEmail_modal">
             <i class="far fa-envelope me-2"></i>
             Add New Email Address
         </button>
@@ -141,10 +179,10 @@
 <script type="text/javascript">
 
 $(function() {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+    // var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    // var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    // return new bootstrap.Tooltip(tooltipTriggerEl)
+    // })
     // $("#editFields").on('click', function() {
     //     $('[data-bs-toggle="tooltip"]').tooltip();
     //     $("#editName").toggle()
