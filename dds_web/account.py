@@ -13,7 +13,7 @@ from dds_web.development import cache_temp as tc
 account_blueprint = Blueprint("account", __name__)
 
 
-@account_blueprint.route("/<loginname>", methods=["GET"])
+@account_blueprint.route("/<loginname>", methods=["GET", "POST"])
 @login_required
 def account_info(loginname=None):
     """account page"""
@@ -39,7 +39,8 @@ def account_info(loginname=None):
             account_info["last_name"] = "Last"
             account_info["email"] = ["userX@email1.com", "userX@email2.com"]
 
-        # if request.method == "POST":
+        if request.method == "POST":
+            pass
             # username = request.form.get("username")
             # password = request.form.get("password")
 
