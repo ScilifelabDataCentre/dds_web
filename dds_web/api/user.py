@@ -20,6 +20,7 @@ from sqlalchemy.sql import func
 from dds_web import app
 from dds_web.database import models
 from dds_web.crypt.auth import gen_argon2hash, verify_password_argon2id
+from dds_web.api.dds_decorators import token_required
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -98,3 +99,45 @@ class AuthenticateUser(flask_restful.Resource):
 
         # Failed - incorrect password
         return flask.make_response("Incorrect password!", 401)
+
+
+class ShowUsage(flask_restful.Resource):
+    """Calculate and display the amount of GB hours and the total cost."""
+
+    method_decorators = [token_required]
+
+    def get(self, current_user, _):
+
+        # Check that user is facility account
+        if current_user.role != "facility":
+            flask.make_response(
+                "Access denied - only facility accounts can get invoicing information.", 401
+            )
+
+        # Get safespring project name from facility table
+        try:
+            facility_info = models.Facility.query.filter(
+                models.Facility.id == func.binary(current_user.facility_id)
+            ).first()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(f"Failed getting facility information: {err}", 500)
+
+        #
+        try:
+            for p in facility_info.projects:
+                app.logger.debug(f"Project: {p}")
+                for f in p.files:
+                    app.logger.debug(f"File: {f}")
+                    for v in f.versions:
+                        app.logger.debug(f"Version: {v}")
+                        app.logger.debug(v.size_stored)
+                        app.logger.debug(v.time_uploaded)
+                        app.logger.debug(v.time_deleted)
+
+                        if v.time_deleted is not None:
+                            app.logger.debug("ttest")
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response("Failed getting project files: {err}", 500)
+
+        return flask.jsonify({"facility info": "test"})

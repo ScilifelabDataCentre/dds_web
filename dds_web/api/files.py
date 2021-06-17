@@ -142,14 +142,23 @@ class NewFile(flask_restful.Resource):
 
             # Get version row
             current_file_version = models.Version.query.filter(
-                models.Version.active_file == func.binary(existing_file.id)
-            ).first()
+                sqlalchemy.and_(
+                    models.Version.active_file == func.binary(existing_file.id),
+                    models.Version.time_deleted == None,
+                )
+            ).all()
 
             # Same timestamp for deleted and created new file
             new_timestamp = timestamp()
 
             # Overwritten == deleted/deactivated
-            current_file_version.time_deleted = new_timestamp
+            app.logger.debug(f"Should be 1: {current_file_version}")
+            for version in current_file_version:
+                app.logger.debug(
+                    f"time deleted: {version.time_deleted}, type: {type(version.time_deleted)}"
+                )
+                if version.time_deleted is None:
+                    version.time_deleted = new_timestamp
 
             # Update file info
             existing_file.subpath = args["subpath"]
