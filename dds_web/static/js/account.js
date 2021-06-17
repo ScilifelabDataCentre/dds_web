@@ -10,11 +10,11 @@ const vAccountHomeApp = {
     methods: {
         fetchAccount() {
             this.account_info = {
-              'username': 'vue_test_user1',
-              'email': ['test@example.com', 'test2@example.com'],
-              'permissions': 'example_permission',
-              'first_name': 'little_test',
-              'last_name': 'testsson'
+                'username': 'vue_test_user1',
+                'email': ['test@example.com', 'test2@example.com'],
+                'permissions': 'example_permission',
+                'first_name': 'little_test',
+                'last_name': 'testsson'
             };
             setTimeout(
                 () => {
