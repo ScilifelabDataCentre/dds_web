@@ -11,7 +11,6 @@ const vAccountHomeApp = {
         fetchAccount() {
             this.account_info = {
                 'username': 'vue_test_user1',
-                'email': ['test@example.com', 'test2@example.com'],
                 'emails':
                     [ {'address': 'test@example.com', 'primary': false},
                     {'address':'test2@example.com', 'primary': true} ],
