@@ -12,6 +12,9 @@ const vAccountHomeApp = {
             this.account_info = {
                 'username': 'vue_test_user1',
                 'email': ['test@example.com', 'test2@example.com'],
+                'emails':
+                    [ {'address': 'test@example.com', 'primary': false},
+                    {'address':'test2@example.com', 'primary': true} ],
                 'permissions': 'example_permission',
                 'first_name': 'little_test',
                 'last_name': 'testsson'
@@ -159,43 +162,33 @@ app.component('v-account-home', {
                                     <th>  Name </th>
                                     <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
                                     <td>
-                                        <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" id="editName">
+                                        <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" id="editName" >
                                             <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
                                         </button>
                                     </td>
                                 </tr>
-                                <template v-for="(email,i) in account_info.email" :key="email">
+                                <template v-for="(email, i) in account_info.emails" :key="email">
                                     <tr>
-                                        <template v-if="i == 0">
-                                            <th>  Email  </th>
-                                            <!-- TO DO: change to if primary for badge... -->
-                                            <td> {{ email }}
+                                        <th v-if="i==0">
+                                            Email
+                                        </th>
+                                        <th v-else>
+                                        </th>
+                                        <td>
+                                            {{email.address}}
+                                            <template v-if="email.primary==true">
                                                 <span v-if="!edit_mode" class="badge bg-info mx-2 px-1 py-1 ">Primary</span>
-                                            </td>
-                                            <td>
-                                                <button v-if="!edit_mode" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{i}}" disabled>
-                                                    <i class="far fa-trash-can "  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
-                                                </button>
-                                                <div class="float-end">
-                                                    <input v-if="edit_mode" type="radio" name="option_primary" id="option{{i}}" >
-                                                    <label v-if="edit_mode" class="btn btn-sm btn-info mx-2 px-0 py-0" for="option{{i}}">Primary</label>
-                                                </div>
-                                            </td>
-                                        </template>
-                                        <template v-else>
-                                            <th></th>
-                                            <td> {{ email }}
-                                            </td>
-                                            <td>
-                                                <button v-if="!edit_mode" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{i}}">
-                                                    <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
-                                                </button>
-                                                <div class="float-end">
-                                                    <input v-if="edit_mode" type="radio" name="option_primary" id="option{{i}}">
-                                                    <label v-if="edit_mode" class="btn btn-sm btn-info mx-2 px-0 py-0" for="option{{i}}">Primary</label>
-                                                </div>
-                                            </td>
-                                        </template>
+                                            </template>
+                                        </td>
+                                        <td>
+                                            <button v-if="!edit_mode" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" :disabled="email.primary">
+                                                <i class="far fa-trash-can "  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
+                                            </button>
+                                            <div class="float-end">
+                                                <input v-if="edit_mode" type="radio" name="option_primary" id="option{{i}}" >
+                                                <label v-if="edit_mode" class="btn btn-sm btn-info mx-2 px-0 py-0" for="option{{i}}">Primary</label>
+                                            </div>
+                                        </td>
                                     </tr>
                                 </template>
                             </tbody>
