@@ -124,17 +124,6 @@ class ShowUsage(flask_restful.Resource):
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(f"Failed getting facility information: {err}", 500)
 
-        # Get info from safespring invoice
-        # TODO (ina): Move to another class or function - will be calling the safespring api
-        csv_path = pathlib.Path("").parent / pathlib.Path("development/safespring_invoicespec.csv")
-        csv_contents = pandas.read_csv(csv_path, sep=";", header=1)
-        safespring_project_row = csv_contents.loc[
-            csv_contents["project"] == facility_info.safespring
-        ]
-
-        # Total GBHours for safespring project
-        # total_gbhours_sfsp = safespring_project_row.units.values[0]
-
         # Total number of GB hours saved in the db for the specific facility
         total_gbhours_db = 0.0
 
@@ -177,9 +166,7 @@ class ShowUsage(flask_restful.Resource):
                     {
                         "gbhours": str(usage[p]["gbhours"]),
                         "gbh_perc": str(proj_gbhour_percentage),
-                        "cost": str(
-                            safespring_project_row.subtotal.values[0] * proj_gbhour_percentage
-                        ),
+                        "cost": str(total_gbhours_db * 0.09),
                     }
                 )
 
@@ -195,3 +182,11 @@ class ShowUsage(flask_restful.Resource):
                 "project_usage": usage,
             }
         )
+
+        # # Get info from safespring invoice
+        # # TODO (ina): Move to another class or function - will be calling the safespring api
+        # csv_path = pathlib.Path("").parent / pathlib.Path("development/safespring_invoicespec.csv")
+        # csv_contents = pandas.read_csv(csv_path, sep=";", header=1)
+        # safespring_project_row = csv_contents.loc[
+        #     csv_contents["project"] == facility_info.safespring
+        # ]
