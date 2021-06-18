@@ -170,8 +170,6 @@ class ShowUsage(flask_restful.Resource):
                 }
             )
 
-        app.logger.debug(usage)
-
         return flask.jsonify(
             {
                 "total_usage": {
@@ -182,10 +180,36 @@ class ShowUsage(flask_restful.Resource):
             }
         )
 
-        # # Get info from safespring invoice
-        # # TODO (ina): Move to another class or function - will be calling the safespring api
-        # csv_path = pathlib.Path("").parent / pathlib.Path("development/safespring_invoicespec.csv")
-        # csv_contents = pandas.read_csv(csv_path, sep=";", header=1)
-        # safespring_project_row = csv_contents.loc[
-        #     csv_contents["project"] == facility_info.safespring
-        # ]
+
+class InvoiceUnit(flask_restful.Resource):
+    """Calculate the actual cost from the Safespring invoicing specification."""
+
+    method_decorators = [token_required]
+
+    def get(self, current_user, _):
+
+        # Check that user is facility account
+        if current_user.role != "facility":
+            flask.make_response(
+                "Access denied - only facility accounts can get invoicing information.", 401
+            )
+
+        # Get facility info from table (incl safespring proj name)
+        try:
+            facility_info = models.Facility.query.filter(
+                models.Facility.id == func.binary(current_user.facility_id)
+            ).first()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            return flask.make_response(f"Failed getting facility information: {err}", 500)
+
+        # Get info from safespring invoice
+        # TODO (ina): Move to another class or function - will be calling the safespring api
+        csv_path = pathlib.Path("").parent / pathlib.Path("development/safespring_invoicespec.csv")
+        csv_contents = pandas.read_csv(csv_path, sep=";", header=1)
+        safespring_project_row = csv_contents.loc[
+            csv_contents["project"] == facility_info.safespring
+        ]
+
+        app.logger.debug(safespring_project_row)
+
+        return flask.jsonify({"test": "ok"})
