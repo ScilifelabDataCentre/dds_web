@@ -116,7 +116,7 @@ class ShowUsage(flask_restful.Resource):
                 "Access denied - only facility accounts can get invoicing information.", 401
             )
 
-        # Get safespring project name from facility table
+        # Get facility info from table (incl safespring proj name)
         try:
             facility_info = models.Facility.query.filter(
                 models.Facility.id == func.binary(current_user.facility_id)
@@ -124,61 +124,60 @@ class ShowUsage(flask_restful.Resource):
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(f"Failed getting facility information: {err}", 500)
 
-        # Total number of GB hours saved in the db for the specific facility
+        # Total number of GB hours and cost saved in the db for the specific facility
         total_gbhours_db = 0.0
+        total_cost_db = 0.0
 
-        # Calculate the GBHours for each project
-        try:
+        # Project (bucket) specific info
+        usage = {}
+        for p in facility_info.projects:
 
-            # Project (bucket) specific info
-            usage = {}
-            for p in facility_info.projects:
+            # Define fields in usage dict
+            usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0}
 
-                usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0, "gbh_perc": 0.0}
-                for f in p.files:
+            for f in p.files:
+                for v in f.versions:
+                    # Calculate hours of the current file
+                    time_uploaded = datetime.datetime.strptime(
+                        v.time_uploaded,
+                        "%Y-%m-%d %H:%M:%S.%f%z",
+                    )
+                    time_deleted = datetime.datetime.strptime(
+                        v.time_deleted if v.time_deleted else timestamp(),
+                        "%Y-%m-%d %H:%M:%S.%f%z",
+                    )
+                    file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
 
-                    for v in f.versions:
-                        # Calculate hours of the current file
-                        time_uploaded = datetime.datetime.strptime(
-                            v.time_uploaded,
-                            "%Y-%m-%d %H:%M:%S.%f%z",
-                        )
-                        time_deleted = datetime.datetime.strptime(
-                            v.time_deleted if v.time_deleted else timestamp(),
-                            "%Y-%m-%d %H:%M:%S.%f%z",
-                        )
-                        file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
+                    # Calculate GBHours, if statement to avoid zerodivision exception
+                    gb_hours = ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
 
-                        # Calculate GBHours
-                        gb_hours = ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
+                    # Save file version gbhours to project info and increase total facility sum
+                    usage[p.public_id]["gbhours"] += gb_hours
+                    total_gbhours_db += gb_hours
 
-                        # Add to project sum and increase total
-                        usage[p.public_id]["gbhours"] += gb_hours
-                        total_gbhours_db += gb_hours
+                    # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
+                    cost_gbhour = 0.09 / (30 * 24)
+                    cost = gb_hours * cost_gbhour
 
-            for p in usage:
-                # GBHour percentage of total in database for facility
-                proj_gbhour_percentage = (
-                    (usage[p]["gbhours"] / total_gbhours_db) if total_gbhours_db else 0.0
-                )
+                    # Save file cost to project info and increase total facility cost
+                    usage[p.public_id]["cost"] += cost
+                    total_cost_db += cost
 
-                usage[p].update(
-                    {
-                        "gbhours": str(usage[p]["gbhours"]),
-                        "gbh_perc": str(proj_gbhour_percentage),
-                        "cost": str(total_gbhours_db * 0.09),
-                    }
-                )
-
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response("Failed getting project files: {err}", 500)
+            usage[p.public_id].update(
+                {
+                    "gbhours": round(usage[p.public_id]["gbhours"], 2),
+                    "cost": round(usage[p.public_id]["cost"], 2),
+                }
+            )
 
         app.logger.debug(usage)
 
         return flask.jsonify(
             {
-                "total_usage": str(total_gbhours_db),
-                "total_cost": str(safespring_project_row.subtotal.values[0]),
+                "total_usage": {
+                    "gbhours": round(total_gbhours_db, 2),
+                    "cost": round(total_cost_db, 2),
+                },
                 "project_usage": usage,
             }
         )
