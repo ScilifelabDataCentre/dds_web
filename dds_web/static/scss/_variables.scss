@@ -21,6 +21,7 @@ $primary-alt: #045C64;
 $secondary-alt: #491F53;
 $success-alt: #A7C947; // TODO - A bit light for use as "success" for validation etc. Split into its own colour?
 $info-alt: #4C979F;
+$light-alt: #343a40; // $gray-800 but this is before the bootstrap variables are loaded
 
 $font-family-sans-serif:
   // Custom - Lato (as recommended by SciLifeLab style guide)
