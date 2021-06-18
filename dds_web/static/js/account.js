@@ -12,8 +12,8 @@ const vAccountHomeApp = {
             this.account_info = {
                 'username': 'vue_test_user1',
                 'emails':
-                    [ {'address': 'test@example.com', 'primary': false},
-                    {'address':'test2@example.com', 'primary': true} ],
+                    [ {'address': 'test@example.com', 'primary': true},
+                    {'address':'test2@example.com', 'primary': false} ],
                 'permissions': 'example_permission',
                 'first_name': 'little_test',
                 'last_name': 'testsson'
@@ -181,11 +181,13 @@ app.component('v-account-home', {
                                         </td>
                                         <td>
                                             <button v-if="!edit_mode" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" :disabled="email.primary">
-                                                <i class="far fa-trash-can "  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
+                                                <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                                             </button>
-                                            <div class="float-end">
-                                                <input v-if="edit_mode" type="radio" name="option_primary" id="option{{i}}" >
-                                                <label v-if="edit_mode" class="btn btn-sm btn-info mx-2 px-0 py-0" for="option{{i}}">Primary</label>
+                                            <div v-if="edit_mode" class="float-end">
+                                                <label class="btn btn-sm btn-outline-info mx-2 px-1 py-0">
+                                                    <input v-if="edit_mode" class="form-check-input" type="radio" name="option_primary">
+                                                    Primary
+                                                </label>
                                             </div>
                                         </td>
                                     </tr>
@@ -202,16 +204,24 @@ app.component('v-account-home', {
                         <i class="far fa-envelope me-2"></i>
                         Add New Email Address
                         </button>
+                        <template v-if="account_info.emails.length>1">
                         <button type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" @click="toggleEdit">
                             <span v-if="!edit_mode" id="editTag">
                             <i class="far fa-inbox me-2"></i>
                             Change Primary Email
                             </span>
-                            <span v-if="edit_mode" id="doneTag">
-                            <i class="far fa-check-circle me-2" ></i>
-                                Save
+                            <span v-if="edit_mode" id="cancelTag">
+                            <i class="far fa-chevron-circle-left me-2" ></i>
+                                Cancel
                             </span>
                         </button>
+                        <button v-if="edit_mode" type="button" class="btn btn-sm btn-outline-success my-2 mx-1" id="editFields" @click="toggleEdit">
+                            <span  id="cancelTag">
+                            <i class="far fa-check-circle me-2" ></i>
+                                save
+                            </span>
+                        </button>
+                        </template>
                     </div>
                 </div>
             </div>
