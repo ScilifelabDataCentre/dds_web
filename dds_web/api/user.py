@@ -7,6 +7,7 @@
 # Standard library
 import datetime
 import binascii
+import pathlib
 
 # Installed
 import flask
@@ -15,6 +16,7 @@ import jwt
 import sqlalchemy
 import functools
 from sqlalchemy.sql import func
+import pandas
 
 # Own modules
 from dds_web import app, timestamp
@@ -122,13 +124,29 @@ class ShowUsage(flask_restful.Resource):
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(f"Failed getting facility information: {err}", 500)
 
-        #
+        # Get info from safespring invoice
+        # TODO (ina): Move to another class or function - will be calling the safespring api
+        csv_path = pathlib.Path("").parent / pathlib.Path("development/safespring_invoicespec.csv")
+        csv_contents = pandas.read_csv(csv_path, sep=";", header=1)
+        safespring_project_row = csv_contents.loc[
+            csv_contents["project"] == facility_info.safespring
+        ]
+
+        # Total cost for safespring project
+        total_cost = safespring_project_row.subtotal
+        app.logger.debug(total_cost)
+
+        # Total GBHours for safespring project
+        total_gbhours = safespring_project_row.units
+        app.logger.debug(total_gbhours)
+
+        # Calculate the GBHours for each project
         try:
             usage = {}
             for p in facility_info.projects:
                 app.logger.debug(f"Project: {p}")
 
-                usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0}
+                usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0, "percentage_of_total": 0.0}
                 for f in p.files:
                     app.logger.debug(f"File: {f}")
 
@@ -151,9 +169,13 @@ class ShowUsage(flask_restful.Resource):
                         # Add to project sum
                         usage[p.public_id]["gbhours"] += gb_hours
                         usage[p.public_id]["cost"] += gb_hours * 0.09
+                usage[p.public_id]["percentage_of_total"] = (
+                    usage[p.public_id]["gbhours"] / total_gbhours
+                )
 
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response("Failed getting project files: {err}", 500)
 
         app.logger.debug(usage)
+
         return flask.jsonify({"project usage": usage})
