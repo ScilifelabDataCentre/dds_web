@@ -24,7 +24,7 @@ jobs:
       - name: Push backend to Docker Hub
         uses: docker/build-push-action@v2
         with:
-          file: Dockerfiles/Dockerfile.backend
+          file: Dockerfiles/backend.Dockerfile
           context: .
           push: true
           tags: scilifelabdatacentre/dds-backend:${{ steps.docker-tag.outputs.tag }}
