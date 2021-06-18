@@ -38,11 +38,11 @@ def account_info(loginname=None):
             account_info["first_name"] = "First"
             account_info["last_name"] = "Last"
             account_info["email"] = [{"email": "userX@email1.com", "primary": False}, {"email": "userX@email2.com", "primary": True}]
+            account_info = sorted(account_info["email"], key=lambda k: k['primary'], reverse=True)
 
         if request.method == "POST":
             pass
             # username = request.form.get("username")
             # password = request.form.get("password")
 
-    account_info["email"] = sorted(account_info["email"], key=lambda k: k['primary'], reverse=True)
-    return render_template("account/account.html", enumerate=enumerate, account_info=account_info)
+    return render_template("account/account.html", account_info=account_info)
