@@ -132,23 +132,21 @@ class ShowUsage(flask_restful.Resource):
             csv_contents["project"] == facility_info.safespring
         ]
 
-        # Total cost for safespring project
-        total_cost = safespring_project_row.subtotal
-        app.logger.debug(total_cost)
-
         # Total GBHours for safespring project
-        total_gbhours = safespring_project_row.units
-        app.logger.debug(total_gbhours)
+        # total_gbhours_sfsp = safespring_project_row.units.values[0]
+
+        # Total number of GB hours saved in the db for the specific facility
+        total_gbhours_db = 0.0
 
         # Calculate the GBHours for each project
         try:
+
+            # Project (bucket) specific info
             usage = {}
             for p in facility_info.projects:
-                app.logger.debug(f"Project: {p}")
 
-                usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0, "percentage_of_total": 0.0}
+                usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0, "gbh_perc": 0.0}
                 for f in p.files:
-                    app.logger.debug(f"File: {f}")
 
                     for v in f.versions:
                         # Calculate hours of the current file
@@ -163,14 +161,26 @@ class ShowUsage(flask_restful.Resource):
                         file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
 
                         # Calculate GBHours
-                        gb_hours = (v.size_stored / 1e9) / file_hours
-                        app.logger.debug(f"GB Hours: {gb_hours}")
+                        gb_hours = ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
 
-                        # Add to project sum
+                        # Add to project sum and increase total
                         usage[p.public_id]["gbhours"] += gb_hours
-                        usage[p.public_id]["cost"] += gb_hours * 0.09
-                usage[p.public_id]["percentage_of_total"] = (
-                    usage[p.public_id]["gbhours"] / total_gbhours
+                        total_gbhours_db += gb_hours
+
+            for p in usage:
+                # GBHour percentage of total in database for facility
+                proj_gbhour_percentage = (
+                    (usage[p]["gbhours"] / total_gbhours_db) if total_gbhours_db else 0.0
+                )
+
+                usage[p].update(
+                    {
+                        "gbhours": str(usage[p]["gbhours"]),
+                        "gbh_perc": str(proj_gbhour_percentage),
+                        "cost": str(
+                            safespring_project_row.subtotal.values[0] * proj_gbhour_percentage
+                        ),
+                    }
                 )
 
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -178,4 +188,10 @@ class ShowUsage(flask_restful.Resource):
 
         app.logger.debug(usage)
 
-        return flask.jsonify({"project usage": usage})
+        return flask.jsonify(
+            {
+                "total_usage": str(total_gbhours_db),
+                "total_cost": str(safespring_project_row.subtotal.values[0]),
+                "project_usage": usage,
+            }
+        )
