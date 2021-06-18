@@ -53,6 +53,7 @@ app.component('v-account-home', {
     },
     created: function() {
         this.$root.fetchAccount();
+
     },
     methods: {
         toggleEdit() {
@@ -170,26 +171,29 @@ app.component('v-account-home', {
                                             <!-- TO DO: change to if primary for badge... -->
                                             <td> {{ email }}
                                                 <span v-if="!edit_mode" class="badge bg-info mx-2 px-1 py-1 ">Primary</span>
-
-                                                <input type="radio" class="btn-check" name="options" id="option1" autocomplete="off">
-                                                <label v-if="edit_mode" class="btn btn-sm btn-outline-info mx-2 px-0 py-0" for="option1">Primary</label>
                                             </td>
                                             <td>
-                                                <button v-if="!edit_mode" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{count}}" disabled>
+                                                <button v-if="!edit_mode" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{i}}" disabled>
                                                     <i class="far fa-trash-can "  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                                                 </button>
+                                                <div class="float-end">
+                                                    <input v-if="edit_mode" type="radio" name="option_primary" id="option{{i}}" >
+                                                    <label v-if="edit_mode" class="btn btn-sm btn-info mx-2 px-0 py-0" for="option{{i}}">Primary</label>
+                                                </div>
                                             </td>
                                         </template>
                                         <template v-else>
                                             <th></th>
                                             <td> {{ email }}
-                                                <input type="radio" class="btn-check" name="options" id="option4" autocomplete="off">
-                                                <label v-if="edit_mode" class="btn btn-sm btn-outline-info mx-2 px-0 py-0" for="option4">Primary</label>
                                             </td>
                                             <td>
-                                                <button v-if="!edit_mode" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{count}}">
-                                                    <i class="far fa-trash-can "  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
+                                                <button v-if="!edit_mode" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" id="deleteEmail{{i}}">
+                                                    <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                                                 </button>
+                                                <div class="float-end">
+                                                    <input v-if="edit_mode" type="radio" name="option_primary" id="option{{i}}">
+                                                    <label v-if="edit_mode" class="btn btn-sm btn-info mx-2 px-0 py-0" for="option{{i}}">Primary</label>
+                                                </div>
                                             </td>
                                         </template>
                                     </tr>
@@ -199,8 +203,8 @@ app.component('v-account-home', {
                     </div>
                     <div class="text-end">
                         <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="editPassword" data-bs-toggle="modal" data-bs-target="#changePassword_modal">
-                            <i class="far fa-lock me-2"></i>
-                            Change password
+                        <i class="far fa-lock me-2"></i>
+                        Change password
                         </button>
                         <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="addEmail" data-bs-toggle="modal" data-bs-target="#addEmail_modal">
                         <i class="far fa-envelope me-2"></i>
@@ -223,7 +227,5 @@ app.component('v-account-home', {
         `
     }
 )
-
-
 
 app.mount('#account-vue-start-point')
