@@ -12,8 +12,8 @@ const vAccountHomeApp = {
             this.account_info = {
                 'username': 'vue_test_user1',
                 'emails':
-                    [ {'address': 'test@example.com', 'primary': true},
-                    {'address':'test2@example.com', 'primary': false} ],
+                    [ {'address': 'test@example.com', 'primary': true}],
+                    // {'address':'test2@example.com', 'primary': false} ],
                 'permissions': 'example_permission',
                 'first_name': 'little_test',
                 'last_name': 'testsson'
@@ -174,7 +174,7 @@ app.component('v-account-home', {
                                         </th>
                                         <td>
                                             {{email.address}}
-                                            <template v-if="email.primary==true">
+                                            <template v-if="email.primary==true && account_info.emails.length>1">
                                                 <span v-if="!edit_mode" class="badge bg-info mx-2 px-1 py-1 ">Primary</span>
                                             </template>
                                         </td>
