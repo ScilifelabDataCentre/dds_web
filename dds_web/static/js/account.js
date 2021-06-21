@@ -38,6 +38,7 @@ const vAccountHomeApp = {
                     this.account_data_loading = false
                 })
             */
+        //    axios.get('/api/account', {this.$root.account_info. username})
         }
     }
 }
@@ -161,7 +162,7 @@ app.component('v-account-home', {
                                     <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
                                     <td>
                                         <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" id="editName" >
-                                            <i class="far fa-user-edit" data-bs-toggle="tooltip" data-bs-placement="right" title="Edit"></i>
+                                            <i class="far fa-user-edit"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -180,7 +181,7 @@ app.component('v-account-home', {
                                         </td>
                                         <td>
                                             <button v-if="!edit_mode && account_info.emails.length>1" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" :disabled="email.primary">
-                                                <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
+                                                <i class="far fa-trash-can"></i>
                                             </button>
                                             <div v-if="edit_mode" class="float-end">
                                                 <label class="btn btn-sm btn-outline-info mx-2 px-1 py-0">
