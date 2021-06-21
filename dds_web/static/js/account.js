@@ -83,7 +83,7 @@ app.component('v-account-home', {
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form method="POST" id="create-user-form" action=""
+                            <form method="POST" id="change-password-form" action=""
                                 class="needs-validation" novalidate>
                                 <input type="hidden" name="task" value="create">
                                 <div class="form-floating mb-3">
@@ -115,7 +115,7 @@ app.component('v-account-home', {
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form method="POST" id="create-user-form" action=""
+                            <form method="POST" id="add-email-form" action=""
                                 class="needs-validation" novalidate>
                                 <input type="hidden" name="task" value="create">
                                 <div class="form-floating mb-3">
@@ -125,6 +125,40 @@ app.component('v-account-home', {
                                 <div class="form-floating mb-3">
                                     <input type="password" class="form-control" required>
                                     <label for="newuser_password">Repeat New Email Address</label>
+                                </div>
+                                <!--
+                                <div class="form-floating mb-3">
+                                    <input type="password" class="form-control" required>
+                                    <label for="newpass_password">code</label>
+                                </div>
+                                -->
+                                <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
+                                    <i class="far fa-save me-1"></i>
+                                    Save
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editName_modal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Name</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" id="edit-name-form" action=""
+                                class="needs-validation" novalidate>
+                                <input type="hidden" name="task" value="create">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" required>
+                                    <label for="newuser_username">New First Name</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="password" class="form-control" required>
+                                    <label for="newuser_password">Nex Last Name</label>
                                 </div>
                                 <!--
                                 <div class="form-floating mb-3">
@@ -161,7 +195,7 @@ app.component('v-account-home', {
                                     <th>  Name </th>
                                     <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
                                     <td>
-                                        <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" id="editName" >
+                                        <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" id="editName" data-bs-toggle="modal" data-bs-target="#editName_modal">
                                             <i class="far fa-user-edit"></i>
                                         </button>
                                     </td>
