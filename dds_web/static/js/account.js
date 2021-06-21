@@ -12,7 +12,7 @@ const vAccountHomeApp = {
             this.account_info = {
                 'username': 'vue_test_user1',
                 'emails':
-                    [ {'address': 'test@example.com', 'primary': true}],
+                    [ {'address': 'test@example.com', 'primary': true} ],
                     // {'address':'test2@example.com', 'primary': false} ],
                 'permissions': 'example_permission',
                 'first_name': 'little_test',
@@ -179,7 +179,7 @@ app.component('v-account-home', {
                                             </template>
                                         </td>
                                         <td>
-                                            <button v-if="!edit_mode" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" :disabled="email.primary">
+                                            <button v-if="!edit_mode && account_info.emails.length>1" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" :disabled="email.primary">
                                                 <i class="far fa-trash-can"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete"></i>
                                             </button>
                                             <div v-if="edit_mode" class="float-end">
