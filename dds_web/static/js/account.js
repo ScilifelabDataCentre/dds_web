@@ -12,8 +12,8 @@ const vAccountHomeApp = {
             this.account_info = {
                 'username': 'vue_test_user1',
                 'emails':
-                    [ {'address': 'test@example.com', 'primary': true} ],
-                    // {'address':'test2@example.com', 'primary': false} ],
+                    [ {'address': 'test@example.com', 'primary': true},
+                    {'address':'test2@example.com', 'primary': false} ],
                 'permissions': 'example_permission',
                 'first_name': 'little_test',
                 'last_name': 'testsson'
@@ -158,14 +158,8 @@ app.component('v-account-home', {
                                 </div>
                                 <div class="form-floating mb-3">
                                     <input type="password" class="form-control" required>
-                                    <label for="newuser_password">Nex Last Name</label>
+                                    <label for="newuser_password">New Last Name</label>
                                 </div>
-                                <!--
-                                <div class="form-floating mb-3">
-                                    <input type="password" class="form-control" required>
-                                    <label for="newpass_password">code</label>
-                                </div>
-                                -->
                                 <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
                                     <i class="far fa-save me-1"></i>
                                     Save
@@ -208,7 +202,7 @@ app.component('v-account-home', {
                                         <th v-else>
                                         </th>
                                         <td>
-                                            {{email.address}}
+                                            {{ email.address }}
                                             <template v-if="email.primary==true && account_info.emails.length>1">
                                                 <span v-if="!edit_mode" class="badge bg-info mx-2 px-1 py-1 ">Primary</span>
                                             </template>
