@@ -226,7 +226,7 @@ class UserProjects(flask_restful.Resource):
                 total_gbhours_db += proj_gbhours
                 total_cost_db += proj_cost
 
-                project_info.update({"Usage": str(proj_gbhours), "Cost": str(proj_cost)})
+                project_info.update({"GBHours": str(proj_gbhours), "Cost": str(proj_cost)})
 
             all_projects.append(project_info)
 
