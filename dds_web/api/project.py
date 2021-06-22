@@ -195,6 +195,10 @@ class UserProjects(flask_restful.Resource):
         # TODO: Return different things depending on if facility or not
         columns = flask.request.json
 
+        test_dict = {"Project ID": "test" if "Project" in columns else None}
+
+        app.logger.debug(test_dict)
+
         all_projects = [
             {
                 columns[0]: x.public_id,
