@@ -193,7 +193,8 @@ class UserProjects(flask_restful.Resource):
             )
 
         # TODO: Return different things depending on if facility or not
-        columns = ["Project ID", "Title", "PI", "Status", "Last updated"]
+        columns = flask.request.json
+
         all_projects = [
             {
                 columns[0]: x.public_id,
@@ -203,11 +204,12 @@ class UserProjects(flask_restful.Resource):
                 columns[4]: timestamp(
                     datetime_string=x.date_updated if x.date_updated else x.date_created
                 ),
+                "Size": sum([f.size_stored for f in x.files]),
             }
             for x in current_user.projects
         ]
-        app.logger.debug(all_projects)
-        return flask.jsonify({"all_projects": all_projects, "columns": columns})
+
+        return flask.jsonify({"all_projects": all_projects})
 
 
 class RemoveContents(flask_restful.Resource):
