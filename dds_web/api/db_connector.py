@@ -8,6 +8,7 @@
 import traceback
 import os
 import time
+import datetime
 
 # Installed
 import flask
@@ -480,3 +481,33 @@ class DBConnector:
             error = str(err)
 
         return sfsp_proj, error
+
+    @staticmethod
+    def project_usage(project_object):
+
+        gbhours = 0.0
+        cost = 0.0
+
+        for f in project_object.files:
+            for v in f.versions:
+                # Calculate hours of the current file
+                time_uploaded = datetime.datetime.strptime(
+                    v.time_uploaded,
+                    "%Y-%m-%d %H:%M:%S.%f%z",
+                )
+                time_deleted = datetime.datetime.strptime(
+                    v.time_deleted if v.time_deleted else timestamp(),
+                    "%Y-%m-%d %H:%M:%S.%f%z",
+                )
+                file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
+
+                # Calculate GBHours, if statement to avoid zerodivision exception
+                gbhours += ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
+
+                # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
+                cost_gbhour = 0.09 / (30 * 24)
+
+                # Save file cost to project info and increase total facility cost
+                cost += gbhours * cost_gbhour
+
+        return round(gbhours, 2), round(cost, 2)
