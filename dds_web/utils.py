@@ -52,6 +52,10 @@ def working_directory(path, cleanup_after=False):
 def format_byte_size(b):
     """Take size in bytes and converts according to the size"""
     b = int(b)
+
+    if b == 0:
+        return "0 B"
+
     units = ["B", "KB", "MB", "GB", "TB"]
     for p in reversed(range(5)):
         if b > pow(1000, p):

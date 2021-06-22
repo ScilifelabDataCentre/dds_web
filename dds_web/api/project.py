@@ -22,6 +22,7 @@ from cryptography.hazmat import backends
 
 
 # Own modules
+from dds_web.utils import format_byte_size
 from dds_web import app, db, timestamp
 from dds_web.api.user import jwt_token
 from dds_web.database import models
@@ -193,22 +194,16 @@ class UserProjects(flask_restful.Resource):
             )
 
         # TODO: Return different things depending on if facility or not
-        columns = flask.request.json
-
-        test_dict = {"Project ID": "test" if "Project" in columns else None}
-
-        app.logger.debug(test_dict)
-
         all_projects = [
             {
-                columns[0]: x.public_id,
-                columns[1]: x.title,
-                columns[2]: x.pi,
-                columns[3]: x.status,
-                columns[4]: timestamp(
+                "Project ID": x.public_id,
+                "Title": x.title,
+                "PI": x.pi,
+                "Status": x.status,
+                "Last updated": timestamp(
                     datetime_string=x.date_updated if x.date_updated else x.date_created
                 ),
-                "Size": sum([f.size_stored for f in x.files]),
+                "Size": format_byte_size(sum([f.size_stored for f in x.files])),
             }
             for x in current_user.projects
         ]
