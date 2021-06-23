@@ -3,6 +3,8 @@
 import datetime
 import functools
 import os
+import pathlib
+import shutil
 
 import time
 import pytz
@@ -13,7 +15,7 @@ from contextlib import contextmanager
 from flask import g, request, redirect, url_for, abort, current_app
 from dds_web.database import models
 import sqlalchemy
-from dds_web import app, db
+from dds_web import app, db, timestamp
 
 # DECORATORS ####################################################### DECORATERS #
 
@@ -78,6 +80,13 @@ def print_date_time():
 
     # Create invoice specification
     # TODO (ina): Change to Safespring API call
+    parent_dir = pathlib.Path("").parent
+    current_time = timestamp()
+    app.logger.debug("current time: %s", current_time)
+    old_file = parent_dir / pathlib.Path("development/invoicing/safespring_invoicespec.csv")
+    to_file = parent_dir / pathlib.Path("development/invoicing/test1.csv")
+    shutil.copy(old_file, to_file)  # For newer Python.
+
     with app.app_context():
         try:
             all_facilities = models.Facility.query.all()
@@ -86,6 +95,8 @@ def print_date_time():
                 f"Failed getting facility information from database. Cannot generate invoicing information: {err}"
             )
         else:
+            for f in all_facilities:
+                pass
             app.logger.debug(all_facilities)
 
 
