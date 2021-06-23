@@ -4,8 +4,16 @@ import datetime
 import functools
 import os
 
+import time
+import pytz
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
+
 from contextlib import contextmanager
-from flask import g, request, redirect, url_for, abort
+from flask import g, request, redirect, url_for, abort, current_app
+from dds_web.database import models
+import sqlalchemy
+from dds_web import app, db
 
 # DECORATORS ####################################################### DECORATERS #
 
@@ -60,3 +68,47 @@ def format_byte_size(b):
     for p in reversed(range(5)):
         if b > pow(1000, p):
             return "{} {}".format(round(b / pow(1000, p), 2), units[p])
+
+
+def print_date_time():
+    print(
+        datetime.datetime.now(tz=pytz.timezone("Europe/Stockholm")),
+        flush=True,
+    )
+
+    # Create invoice specification
+    # TODO (ina): Change to Safespring API call
+    with app.app_context():
+        try:
+            all_facilities = models.Facility.query.all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            app.logger.warning(
+                f"Failed getting facility information from database. Cannot generate invoicing information: {err}"
+            )
+        else:
+            app.logger.debug(all_facilities)
+
+
+scheduler = BackgroundScheduler(
+    {
+        "apscheduler.jobstores.default": {
+            "type": "sqlalchemy",
+            "url": app.config.get("SQLALCHEMY_DATABASE_URI"),
+        },
+        "apscheduler.timezone": "Europe/Stockholm",
+    }
+)
+
+scheduler.add_job(
+    print_date_time,
+    "cron",
+    month="1-12",
+    day="1-30",
+    hour="0-23",
+    minute="0-59",
+    second="1,30",
+)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())

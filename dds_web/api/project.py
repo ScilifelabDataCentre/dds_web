@@ -234,7 +234,7 @@ class UserProjects(flask_restful.Resource):
             "project_info": all_projects,
             "total_usage": {
                 "gbhours": str(round(total_gbhours_db, 2)) if total_gbhours_db > 1.0 else str(0),
-                "cost": str(round(total_cost_db, 2)) if total_cost_db > 1.0 else str(0),
+                "cost": f"{round(total_cost_db, 2)} kr" if total_cost_db > 1.0 else f"0 kr",
             },
             "total_size": format_byte_size(total_size),
         }

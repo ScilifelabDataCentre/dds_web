@@ -9,7 +9,7 @@ import logging
 import os
 
 # Installed
-from flask import Flask, g, render_template, session
+from flask import Flask, g, render_template, session, current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_marshmallow import Marshmallow
@@ -17,7 +17,7 @@ from logging.handlers import RotatingFileHandler
 from authlib.integrations import flask_client as auth_flask_client
 
 # Own modules
-
+# from dds_web import app
 
 # GLOBAL VARIABLES ######################################### GLOBAL VARIABLES #
 
