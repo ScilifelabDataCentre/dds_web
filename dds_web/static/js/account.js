@@ -9,36 +9,17 @@ const vAccountHomeApp = {
     },
     methods: {
         fetchAccount() {
-            this.account_info = {
-                'username': 'vue_test_user1',
-                'emails':
-                    [ {'address': 'test@example.com', 'primary': true},
-                    {'address':'test2@example.com', 'primary': false} ],
-                'permissions': 'example_permission',
-                'first_name': 'little_test',
-                'last_name': 'testsson'
-            };
-            setTimeout(
-                () => {
-                    this.account_data_loading = false;
-                },
-                1000
-            )
-
-            /*
-            // This is what we really should be using
             axios
-                .get('/api/v1/account_info')
+                .get('/account/test')
                 .then(response => {
-                    this.account_info = response.data.account_info
+                    console.log(response)
+                    this.account_info = response.data
                     this.account_data_loading = false
                 })
                 .catch(error => {
                     this.error_messages.push('Unable to fetch account information')
                     this.account_data_loading = false
                 })
-            */
-        //    axios.get('/api/account', {this.$root.account_info. username})
         }
     }
 }
@@ -88,15 +69,15 @@ app.component('v-account-home', {
                                 <input type="hidden" name="task" value="create">
                                 <div class="form-floating mb-3">
                                     <input type="text" class="form-control" required>
-                                    <label for="newuser_username">Old Password</label>
+                                    <label for="newpass_old">Old Password</label>
                                 </div>
                                 <div class="form-floating mb-3">
                                     <input type="password" class="form-control" required>
-                                    <label for="newuser_password">New Password</label>
+                                    <label for="newpass_new">New Password</label>
                                 </div>
                                 <div class="form-floating mb-3">
                                     <input type="password" class="form-control" required>
-                                    <label for="newpass_password">Retype New Password</label>
+                                    <label for="newpass_repeatnew">Retype New Password</label>
                                 </div>
                                 <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
                                     <i class="far fa-save me-1"></i>
@@ -132,7 +113,7 @@ app.component('v-account-home', {
                                     <label for="newpass_password">code</label>
                                 </div>
                                 -->
-                                <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
+                                <button id="newemail_submit" type="submit" class="btn btn-primary w-100 mb-3">
                                     <i class="far fa-save me-1"></i>
                                     Save
                                 </button>
@@ -154,13 +135,13 @@ app.component('v-account-home', {
                                 <input type="hidden" name="task" value="create">
                                 <div class="form-floating mb-3">
                                     <input type="text" class="form-control" required>
-                                    <label for="newuser_username">New First Name</label>
+                                    <label for="newname_first">New First Name</label>
                                 </div>
                                 <div class="form-floating mb-3">
                                     <input type="password" class="form-control" required>
-                                    <label for="newuser_password">New Last Name</label>
+                                    <label for="newname_last">New Last Name</label>
                                 </div>
-                                <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
+                                <button id="newname_submit" type="submit" class="btn btn-primary w-100 mb-3">
                                     <i class="far fa-save me-1"></i>
                                     Save
                                 </button>

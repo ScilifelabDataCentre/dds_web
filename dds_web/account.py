@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, current_app, session, redirect, url_for
+from flask import Blueprint, render_template, request, current_app, session, redirect, url_for,json
 
 from dds_web import timestamp
 from dds_web.api.login import ds_access
@@ -17,32 +17,48 @@ account_blueprint = Blueprint("account", __name__)
 @login_required
 def account_info(loginname=None):
     """account page"""
-    account_info = {}
-    # if session.get("is_admin"):
-    #     if request.method == "GET":
-    #         account_name = session["current_user"]
-    #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
-    # if session["is_facility"]:
-    #     if request.method == "GET":
-    #         account_name = session["current_user"]
-    #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
-    # elif session.get("current_user") and session.get("usid"):
-    #     if request.method == "GET":
-    #         account_name = session["current_user"]
-    #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
-    if session.get("current_user"):
-        if request.method == "GET":
-            user = session["current_user"]
-            account_info["username"] = user
-            account_info["permissions"] = db_utils.get_user_column_by_username(user, "permissions")
-            account_info["first_name"] = "First"
-            account_info["last_name"] = "Last"
-            account_info["email"] = [{"email": "userX@email1.com", "primary": False}, {"email": "userX@email2.com", "primary": True}]
-            account_info = sorted(account_info["email"], key=lambda k: k['primary'], reverse=True)
 
-        if request.method == "POST":
-            pass
-            # username = request.form.get("username")
-            # password = request.form.get("password")
+    return render_template("account/account.html")
 
-    return render_template("account/account.html", account_info=account_info)
+@account_blueprint.route("/test")
+def account_test(loginname=None):
+    """account page"""
+
+    account_info = {
+            'username': 'vue_test_user1',
+            'emails': [ {'address':'test@example.com', 'primary': True},
+            {'address':'test2@example.com', 'primary': False}],
+            'permissions': 'example_permission',
+            'first_name': 'test',
+            'last_name': 'testsson'
+        }
+
+    return json.dumps(account_info)
+
+    # account_info = {}
+    # # if session.get("is_admin"):
+    # #     if request.method == "GET":
+    # #         account_name = session["current_user"]
+    # #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
+    # # if session["is_facility"]:
+    # #     if request.method == "GET":
+    # #         account_name = session["current_user"]
+    # #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
+    # # elif session.get("current_user") and session.get("usid"):
+    # #     if request.method == "GET":
+    # #         account_name = session["current_user"]
+    # #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
+    # if session.get("current_user"):
+    #     if request.method == "GET":
+    #         user = session["current_user"]
+    #         account_info["username"] = user
+    #         account_info["permissions"] = db_utils.get_user_column_by_username(user, "permissions")
+    #         account_info["first_name"] = "First"
+    #         account_info["last_name"] = "Last"
+    #         account_info["email"] = [{"email": "userX@email1.com", "primary": False}, {"email": "userX@email2.com", "primary": True}]
+    #         account_info = sorted(account_info["email"], key=lambda k: k['primary'], reverse=True)
+
+    #     if request.method == "POST":
+    #         pass
+    #         # username = request.form.get("username")
+    #         # password = request.form.get("password")
