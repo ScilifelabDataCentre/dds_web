@@ -203,7 +203,7 @@ class UserProjects(flask_restful.Resource):
                 columns[4]: timestamp(
                     datetime_string=x.date_updated if x.date_updated else x.date_created
                 ),
-                columns[5]: self._get_size_with_suffix(x.size),
+                columns[5]: UserProjects._get_size_with_suffix(x.size),
             }
             for x in current_user.projects
         ]
