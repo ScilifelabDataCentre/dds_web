@@ -10,6 +10,7 @@ import time
 import pytz
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
+import pandas
 
 from contextlib import contextmanager
 from flask import g, request, redirect, url_for, abort, current_app
@@ -73,19 +74,23 @@ def format_byte_size(b):
 
 
 def print_date_time():
-    print(
-        datetime.datetime.now(tz=pytz.timezone("Europe/Stockholm")),
-        flush=True,
-    )
 
     # Create invoice specification
     # TODO (ina): Change to Safespring API call
     parent_dir = pathlib.Path("").parent
-    current_time = timestamp()
-    app.logger.debug("current time: %s", current_time)
+
+    # From safespring
     old_file = parent_dir / pathlib.Path("development/invoicing/safespring_invoicespec.csv")
-    to_file = parent_dir / pathlib.Path("development/invoicing/test1.csv")
-    shutil.copy(old_file, to_file)  # For newer Python.
+
+    current_time = timestamp(ts_format="%Y-%m-%d_%H-%M-%S")
+    to_file = old_file
+    # to_file = parent_dir / pathlib.Path(f"development/invoicing/{current_time}.csv")
+
+    # shutil.copy(old_file, to_file)
+
+    # Get data
+    csv_contents = pandas.read_csv(to_file, sep=";", header=1)
+    app.logger.debug(csv_contents)
 
     with app.app_context():
         try:
@@ -96,8 +101,47 @@ def print_date_time():
             )
         else:
             for f in all_facilities:
-                pass
-            app.logger.debug(all_facilities)
+                safespring_project_row = csv_contents.loc[csv_contents["project"] == f.safespring]
+                # app.logger.debug(safespring_project_row.)
+
+                # Total number of GB hours and cost saved in the db for the specific facility
+                total_gbhours_db = 0.0
+                total_cost_db = 0.0
+
+                usage = {}
+                for p in f.projects:
+                    usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0}
+
+                    for fl in p.files:
+                        for v in fl.versions:
+                            # Calculate hours of the current file
+                            time_uploaded = datetime.datetime.strptime(
+                                v.time_uploaded,
+                                "%Y-%m-%d %H:%M:%S.%f%z",
+                            )
+                            time_deleted = datetime.datetime.strptime(
+                                v.time_deleted if v.time_deleted else timestamp(),
+                                "%Y-%m-%d %H:%M:%S.%f%z",
+                            )
+                            file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
+                            # Calculate GBHours, if statement to avoid zerodivision exception
+                            gb_hours = ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
+
+                            # Save file version gbhours to project info and increase total facility sum
+                            usage[p.public_id]["gbhours"] += gb_hours
+                            total_gbhours_db += gb_hours
+
+                for proj, vals in usage.items():
+                    gbhour_perc = vals["gbhours"] / total_gbhours_db
+
+                    app.logger.debug("safespring costts: %s", type(safespring_project_row))
+                    # # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
+                    # cost_gbhour = 0.09 / (30 * 24)
+                    # cost = gb_hours * cost_gbhour
+
+                    # # Save file cost to project info and increase total facility cost
+                    # usage[p.public_id]["cost"] += cost
+                    # total_cost_db += cost
 
 
 scheduler = BackgroundScheduler(
