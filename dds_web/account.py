@@ -24,30 +24,21 @@ def account_info(loginname=None):
 def account_test(loginname=None):
     """account page"""
 
+    user=session["current_user"]
+
     account_info = {
-            'username': 'vue_test_user1',
-            'emails': [ {'address':'test@example.com', 'primary': True},
-            {'address':'test2@example.com', 'primary': False}],
-            'permissions': 'example_permission',
+            'username': user,
+            'emails': [ {'address':'test@example.com', 'primary': False},
+            {'address':'test2@example.com', 'primary': True}],
+            'permissions': db_utils.get_user_column_by_username(user, "permissions"),
             'first_name': 'test',
-            'last_name': 'testsson'
+            'last_name': 'tester'
         }
+
+    account_info["emails"] = sorted(account_info["emails"], key=lambda k: k['primary'], reverse=True)
 
     return json.dumps(account_info)
 
-    # account_info = {}
-    # # if session.get("is_admin"):
-    # #     if request.method == "GET":
-    # #         account_name = session["current_user"]
-    # #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
-    # # if session["is_facility"]:
-    # #     if request.method == "GET":
-    # #         account_name = session["current_user"]
-    # #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
-    # # elif session.get("current_user") and session.get("usid"):
-    # #     if request.method == "GET":
-    # #         account_name = session["current_user"]
-    # #         account_name=db_utils.get_user_column_by_username(account_name, 'permissions')
     # if session.get("current_user"):
     #     if request.method == "GET":
     #         user = session["current_user"]
@@ -55,8 +46,8 @@ def account_test(loginname=None):
     #         account_info["permissions"] = db_utils.get_user_column_by_username(user, "permissions")
     #         account_info["first_name"] = "First"
     #         account_info["last_name"] = "Last"
-    #         account_info["email"] = [{"email": "userX@email1.com", "primary": False}, {"email": "userX@email2.com", "primary": True}]
-    #         account_info = sorted(account_info["email"], key=lambda k: k['primary'], reverse=True)
+    #         account_info["email"] = [{"address": "userX@email1.com", "primary": False}, {"address": "userX@email2.com", "primary": True}]
+    #         account_info["emails"] = sorted(account_info["emails"], key=lambda k: k['primary'], reverse=True)
 
     #     if request.method == "POST":
     #         pass
