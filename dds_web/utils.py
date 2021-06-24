@@ -163,9 +163,6 @@ scheduler.add_job(
     "cron",
     month="1-12",
     day="1-30",
-    hour="0-23",
-    minute="0-59",
-    second="1,30",
 )
 scheduler.start()
 
