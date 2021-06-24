@@ -56,6 +56,101 @@ app.component('v-account-home', {
                     </div>
                 </template>
             </template>
+            <div class="row mb-3">
+                <h1 class="mb-4"> Account Information </h1>
+                <div class="container w-75 mx-auto mb-4">
+                    <div class="bg-light px-2 py-1">
+                        <table class="table table-hover">
+                            <tbody>
+                                <tr>
+                                    <th>  Username </th>
+                                    <td> {{ account_info.username }} </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th>  Permissions </th>
+                                    <td> {{ account_info.permissions }} </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th>  Name </th>
+                                    <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
+                                    <td>
+                                        <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" id="editName" data-bs-toggle="modal" data-bs-target="#editName_modal">
+                                            <i class="far fa-user-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <template v-for="(email, i) in account_info.emails" :key="email">
+                                    <tr>
+                                        <th v-if="i==0">
+                                            Email
+                                        </th>
+                                        <th v-else>
+                                        </th>
+                                        <td>
+                                            {{ email.address }}
+                                            <template v-if="email.primary==true && account_info.emails.length>1">
+                                                <span v-if="!edit_mode" class="badge bg-info mx-2 px-1 py-1 ">Primary</span>
+                                            </template>
+                                        </td>
+                                        <td>
+                                            <button v-if="!edit_mode && account_info.emails.length>1" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" :disabled="email.primary">
+                                                <i class="far fa-trash-can"></i>
+                                            </button>
+                                            <div v-if="edit_mode" class="float-end">
+                                                <label class="btn btn-sm btn-outline-info mx-2 px-1 py-0">
+                                                    <input v-if="edit_mode" class="form-check-input" type="radio" name="option_primary">
+                                                    Primary
+                                                </label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template>
+                                    <tr>
+                                        <th>
+                                        </th>
+                                        <th>
+                                        </th>
+                                        <td>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end">
+                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="editPassword" data-bs-toggle="modal" data-bs-target="#changePassword_modal">
+                        <i class="far fa-lock me-2"></i>
+                        Change password
+                        </button>
+                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="addEmail" data-bs-toggle="modal" data-bs-target="#addEmail_modal">
+                        <i class="far fa-envelope me-2"></i>
+                        Add New Email Address
+                        </button>
+                        <template v-if="account_info.emails.length>1">
+                        <button type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" @click="toggleEdit" disabled>
+                            <span v-if="!edit_mode" id="editTag">
+                            <i class="far fa-inbox me-2"></i>
+                            Change Primary Email
+                            </span>
+                            <span v-if="edit_mode" id="cancelTag">
+                            <i class="far fa-chevron-circle-left me-2" ></i>
+                                Cancel
+                            </span>
+                        </button>
+                        <button v-if="edit_mode" type="button" class="btn btn-sm btn-outline-success my-2 mx-1" id="editFields" @click="toggleEdit">
+                            <span  id="cancelTag">
+                            <i class="far fa-check-circle me-2" ></i>
+                                save
+                            </span>
+                        </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <!-- Change Password Modal -->
             <div class="modal fade" id="changePassword_modal" tabindex="-1">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -147,90 +242,6 @@ app.component('v-account-home', {
                                 </button>
                             </form>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row mb-3">
-                <h1 class="mb-4"> Account Information </h1>
-                <div class="container w-75 mx-auto mb-4">
-                    <div class="bg-light px-2 py-1">
-                        <table class="table table-hover">
-                            <tbody>
-                                <tr>
-                                    <th>  Username </th>
-                                    <td> {{ account_info.username }} </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th>  Permissions </th>
-                                    <td> {{ account_info.permissions }} </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th>  Name </th>
-                                    <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
-                                    <td>
-                                        <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" id="editName" data-bs-toggle="modal" data-bs-target="#editName_modal">
-                                            <i class="far fa-user-edit"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <template v-for="(email, i) in account_info.emails" :key="email">
-                                    <tr>
-                                        <th v-if="i==0">
-                                            Email
-                                        </th>
-                                        <th v-else>
-                                        </th>
-                                        <td>
-                                            {{ email.address }}
-                                            <template v-if="email.primary==true && account_info.emails.length>1">
-                                                <span v-if="!edit_mode" class="badge bg-info mx-2 px-1 py-1 ">Primary</span>
-                                            </template>
-                                        </td>
-                                        <td>
-                                            <button v-if="!edit_mode && account_info.emails.length>1" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" :disabled="email.primary">
-                                                <i class="far fa-trash-can"></i>
-                                            </button>
-                                            <div v-if="edit_mode" class="float-end">
-                                                <label class="btn btn-sm btn-outline-info mx-2 px-1 py-0">
-                                                    <input v-if="edit_mode" class="form-check-input" type="radio" name="option_primary">
-                                                    Primary
-                                                </label>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="text-end">
-                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="editPassword" data-bs-toggle="modal" data-bs-target="#changePassword_modal">
-                        <i class="far fa-lock me-2"></i>
-                        Change password
-                        </button>
-                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="addEmail" data-bs-toggle="modal" data-bs-target="#addEmail_modal">
-                        <i class="far fa-envelope me-2"></i>
-                        Add New Email Address
-                        </button>
-                        <template v-if="account_info.emails.length>1">
-                        <button type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" @click="toggleEdit" disabled>
-                            <span v-if="!edit_mode" id="editTag">
-                            <i class="far fa-inbox me-2"></i>
-                            Change Primary Email
-                            </span>
-                            <span v-if="edit_mode" id="cancelTag">
-                            <i class="far fa-chevron-circle-left me-2" ></i>
-                                Cancel
-                            </span>
-                        </button>
-                        <button v-if="edit_mode" type="button" class="btn btn-sm btn-outline-success my-2 mx-1" id="editFields" @click="toggleEdit">
-                            <span  id="cancelTag">
-                            <i class="far fa-check-circle me-2" ></i>
-                                save
-                            </span>
-                        </button>
-                        </template>
                     </div>
                 </div>
             </div>
