@@ -24,12 +24,11 @@ def account_info(loginname=None):
 def account_test(loginname=None):
     """account page"""
 
-    user=session["current_user"]
+    username=session["current_user"]
 
     account_info = {
-            'username': user,
-            'emails': [ {'address':'test@example.com', 'primary': False},
-            {'address':'test2@example.com', 'primary': True}],
+            'username': username,
+            'emails': [],
             'permissions': None,
             'first_name': None,
             'last_name': None
@@ -38,22 +37,20 @@ def account_test(loginname=None):
     for info in account_info:
         if info != "username" or info !="emails":
             try:
-                account_info[info] = db_utils.get_user_column_by_username(user, info)
+                account_info[info] = db_utils.get_user_column_by_username(username, info)
             except:
                 pass
         if info == "emails":
-            pass
+            user_info_list = models.User.query.filter_by(username=username).all()
+            account_info["emails"] = [
+                {'address': getattr(user_row, "email", None),
+                'primary': getattr(user_row, "primary", False)}
+                for user_row in user_info_list
+            ]
 
-    # account_info = {
-    #         'username': user,
-    #         'emails': [ {'address':'test@example.com', 'primary': False},
-    #         {'address':'test2@example.com', 'primary': True}],
-    #         'permissions': db_utils.get_user_column_by_username(user, "permissions"),
-    #         'first_name': 'test',
-    #         'last_name': 'tester'
-    #     }
-
-    account_info["emails"] = sorted(account_info["emails"], key=lambda k: k['primary'], reverse=True)
+    account_info["emails"] = sorted(account_info["emails"],
+                                    key=lambda k: k['primary'],
+                                    reverse=True)
 
     return json.dumps(account_info)
 
