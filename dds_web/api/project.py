@@ -193,7 +193,7 @@ class UserProjects(flask_restful.Resource):
             )
 
         # TODO: Return different things depending on if facility or not
-        columns = ["Project ID", "Title", "PI", "Status", "Last updated"]
+        columns = ["Project ID", "Title", "PI", "Status", "Last updated", "Size"]
         all_projects = [
             {
                 columns[0]: x.public_id,
@@ -203,11 +203,21 @@ class UserProjects(flask_restful.Resource):
                 columns[4]: timestamp(
                     datetime_string=x.date_updated if x.date_updated else x.date_created
                 ),
+                columns[5]: self._get_size_with_suffix(x.size),
             }
             for x in current_user.projects
         ]
         app.logger.debug(all_projects)
         return flask.jsonify({"all_projects": all_projects, "columns": columns})
+
+    def _get_size_with_suffix(self, size):
+        """Converts a size in bytes to human readable format"""
+        suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+        for suffix in suffixes:
+            if size < 1000 or suffix == "YB":
+                break
+            size /= 1000
+        return f"{size:.2} {suffix}"
 
 
 class RemoveContents(flask_restful.Resource):
