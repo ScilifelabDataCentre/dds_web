@@ -210,9 +210,10 @@ class UserProjects(flask_restful.Resource):
         app.logger.debug(all_projects)
         return flask.jsonify({"all_projects": all_projects, "columns": columns})
 
-    def _get_size_with_suffix(self, size):
+    @staticmethod
+    def _get_size_with_suffix(size):
         """Converts a size in bytes to human readable format"""
-        suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+        suffixes = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
         for suffix in suffixes:
             if size < 1000 or suffix == "YB":
                 break
