@@ -5,6 +5,7 @@ import functools
 import os
 import pathlib
 import shutil
+import json
 
 import time
 import pytz
@@ -132,16 +133,19 @@ def print_date_time():
                             total_gbhours_db += gb_hours
 
                 for proj, vals in usage.items():
-                    gbhour_perc = vals["gbhours"] / total_gbhours_db
+                    gbhour_perc = (
+                        (vals["gbhours"] / total_gbhours_db)
+                        if 0.0 not in [vals["gbhours"], total_gbhours_db]
+                        else 0.0
+                    )
 
-                    app.logger.debug("safespring costts: %s", type(safespring_project_row))
-                    # # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
-                    # cost_gbhour = 0.09 / (30 * 24)
-                    # cost = gb_hours * cost_gbhour
+                    usage[proj]["cost"] = safespring_project_row.subtotal.values[0] * gbhour_perc
 
-                    # # Save file cost to project info and increase total facility cost
-                    # usage[p.public_id]["cost"] += cost
-                    # total_cost_db += cost
+                new_file = parent_dir / pathlib.Path(
+                    f"development/invoicing/{f.id}_{current_time}.json"
+                )
+                with new_file.open(mode="w") as file:
+                    json.dump(usage, file)
 
 
 scheduler = BackgroundScheduler(
