@@ -30,10 +30,28 @@ def account_test(loginname=None):
             'username': user,
             'emails': [ {'address':'test@example.com', 'primary': False},
             {'address':'test2@example.com', 'primary': True}],
-            'permissions': db_utils.get_user_column_by_username(user, "permissions"),
-            'first_name': 'test',
-            'last_name': 'tester'
+            'permissions': None,
+            'first_name': None,
+            'last_name': None
         }
+
+    for info in account_info:
+        if info != "username" or info !="emails":
+            try:
+                account_info[info] = db_utils.get_user_column_by_username(user, info)
+            except:
+                pass
+        if info == "emails":
+            pass
+
+    # account_info = {
+    #         'username': user,
+    #         'emails': [ {'address':'test@example.com', 'primary': False},
+    #         {'address':'test2@example.com', 'primary': True}],
+    #         'permissions': db_utils.get_user_column_by_username(user, "permissions"),
+    #         'first_name': 'test',
+    #         'last_name': 'tester'
+    #     }
 
     account_info["emails"] = sorted(account_info["emails"], key=lambda k: k['primary'], reverse=True)
 
