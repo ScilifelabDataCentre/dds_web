@@ -107,7 +107,6 @@ def print_date_time():
 
                 # Total number of GB hours and cost saved in the db for the specific facility
                 total_gbhours_db = 0.0
-                total_cost_db = 0.0
 
                 usage = {}
                 for p in f.projects:
@@ -141,11 +140,12 @@ def print_date_time():
 
                     usage[proj]["cost"] = safespring_project_row.subtotal.values[0] * gbhour_perc
 
-                new_file = parent_dir / pathlib.Path(
-                    f"development/invoicing/{f.id}_{current_time}.json"
-                )
-                with new_file.open(mode="w") as file:
-                    json.dump(usage, file)
+                # Maybe uncomment later - saves calculated info to json file
+                # new_file = parent_dir / pathlib.Path(
+                #     f"development/invoicing/{f.id}_{current_time}.json"
+                # )
+                # with new_file.open(mode="w") as file:
+                #     json.dump(usage, file)
 
 
 scheduler = BackgroundScheduler(
