@@ -22,6 +22,7 @@ from cryptography.hazmat import backends
 
 
 # Own modules
+import dds_web.utils
 from dds_web import app, db, timestamp
 from dds_web.api.user import jwt_token
 from dds_web.database import models
@@ -203,22 +204,12 @@ class UserProjects(flask_restful.Resource):
                 columns[4]: timestamp(
                     datetime_string=x.date_updated if x.date_updated else x.date_created
                 ),
-                columns[5]: UserProjects._get_size_with_suffix(x.size),
+                columns[5]: dds_web.utils.format_byte_size(x.size),
             }
             for x in current_user.projects
         ]
         app.logger.debug(all_projects)
         return flask.jsonify({"all_projects": all_projects, "columns": columns})
-
-    @staticmethod
-    def _get_size_with_suffix(size):
-        """Converts a size in bytes to human readable format"""
-        suffixes = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
-        for suffix in suffixes:
-            if size < 1000 or suffix == "YB":
-                break
-            size /= 1000
-        return f"{size:.2} {suffix}"
 
 
 class RemoveContents(flask_restful.Resource):
