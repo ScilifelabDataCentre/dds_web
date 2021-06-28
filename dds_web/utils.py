@@ -113,41 +113,46 @@ def invoice_units():
                 for p in f.projects:
                     usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0}
 
-                    for fl in p.files:
-                        for v in fl.versions:
+                    # for fl in p.files:
+                    for v in p.file_versions:
 
-                            if not v.time_invoiced:  # not included in invoice
-                                if v.time_deleted:  # deleted
-                                    pass  # period = time_deleted - time_uploaded, time_invoiced = time_deleted
-                                else:  # not deleted
-                                    pass  # period = current_time - time_uploaded, time_invoiced = current_time
-                            else:  # included in invoice
-                                if v.time_deleted:  # deleted
-                                    if v.time_deleted == v.time_invoiced:  # fully invoiced
-                                        pass  # do nothing
-                                    elif (
-                                        v.time_deleted > v.time_invoiced
-                                    ):  # deleted after invoiced last
-                                        pass  # period = time_deleted - time_invoiced, time_invoiced = time_deleted
-                                else:  # not deleted
-                                    pass  # period = current_time - time_invoiced, time_invoiced = current_time
+                        # Move on to next if full period already invoiced
+                        if v.time_deleted and v.time_invoiced and v.time_deleted == v.time_invoiced:
+                            app.logger.debug(f"Period invoiced fully : {v}")
+                            continue
 
-                            # Calculate hours of the current file
-                            time_uploaded = datetime.datetime.strptime(
-                                v.time_uploaded,
-                                "%Y-%m-%d %H:%M:%S.%f%z",
+                        start, end = ("", "")
+                        if not v.time_invoiced:  # not included in invoice
+                            app.logger.debug(f"Invoice = NULL : {v}")
+                            start = v.time_uploaded
+                            end = v.time_deleted if v.time_deleted else timestamp()
+                        else:  # included in invoice
+                            start = v.time_invoiced
+                            end = (
+                                v.time_deleted
+                                if v.time_deleted and v.time_deleted > v.time_invoiced
+                                else timestamp()
                             )
-                            time_deleted = datetime.datetime.strptime(
-                                v.time_deleted if v.time_deleted else timestamp(),
-                                "%Y-%m-%d %H:%M:%S.%f%z",
-                            )
-                            file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
-                            # Calculate GBHours, if statement to avoid zerodivision exception
-                            gb_hours = ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
 
-                            # Save file version gbhours to project info and increase total facility sum
-                            usage[p.public_id]["gbhours"] += gb_hours
-                            total_gbhours_db += gb_hours
+                        # Calculate hours of the current file
+                        period_start = datetime.datetime.strptime(
+                            start,
+                            "%Y-%m-%d %H:%M:%S.%f%z",
+                        )
+                        period_end = datetime.datetime.strptime(
+                            end,
+                            "%Y-%m-%d %H:%M:%S.%f%z",
+                        )
+                        file_hours = (period_end - period_start).seconds / (60 * 60)
+                        # Calculate GBHours, if statement to avoid zerodivision exception
+                        gb_hours = ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
+
+                        # Save file version gbhours to project info and increase total facility sum
+                        usage[p.public_id]["gbhours"] += gb_hours
+                        total_gbhours_db += gb_hours
+
+                        v.time_invoiced = end
+                        db.session.commit()
 
                 for proj, vals in usage.items():
                     gbhour_perc = (
