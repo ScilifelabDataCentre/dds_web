@@ -104,7 +104,6 @@ def invoice_units():
         else:
             for f in all_facilities:
                 safespring_project_row = csv_contents.loc[csv_contents["project"] == f.safespring]
-                # app.logger.debug(safespring_project_row.)
 
                 # Total number of GB hours and cost saved in the db for the specific facility
                 total_gbhours_db = 0.0
@@ -113,7 +112,7 @@ def invoice_units():
                 for p in f.projects:
                     usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0}
 
-                    # for fl in p.files:
+                    # All project file versions
                     for v in p.file_versions:
 
                         # Move on to next if full period already invoiced
