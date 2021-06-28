@@ -185,6 +185,7 @@ class Version(db.Model):
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     time_uploaded = db.Column(db.String(50), unique=False, nullable=False, default=timestamp())
     time_deleted = db.Column(db.String(50), unique=False, nullable=True, default=None)
+    time_invoiced = db.Column(db.String(50), unique=False, nullable=True, default=None)
 
     # Foreign keys
     # One file can have many rows in invoicing
