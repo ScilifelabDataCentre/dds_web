@@ -74,7 +74,7 @@ def format_byte_size(b):
             return "{} {}".format(round(b / pow(1000, p), 2), units[p])
 
 
-def print_date_time():
+def invoice_units():
 
     app.logger.debug("Executing scheduled job...")
 
@@ -160,7 +160,7 @@ scheduler = BackgroundScheduler(
 )
 
 scheduler.add_job(
-    print_date_time,
+    invoice_units,
     "cron",
     id="calc_costs",
     replace_existing=True,
