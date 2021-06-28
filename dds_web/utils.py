@@ -115,6 +115,23 @@ def invoice_units():
 
                     for fl in p.files:
                         for v in fl.versions:
+
+                            if not v.time_invoiced:  # not included in invoice
+                                if v.time_deleted:  # deleted
+                                    pass  # period = time_deleted - time_uploaded, time_invoiced = time_deleted
+                                else:  # not deleted
+                                    pass  # period = current_time - time_uploaded, time_invoiced = current_time
+                            else:  # included in invoice
+                                if v.time_deleted:  # deleted
+                                    if v.time_deleted == v.time_invoiced:  # fully invoiced
+                                        pass  # do nothing
+                                    elif (
+                                        v.time_deleted > v.time_invoiced
+                                    ):  # deleted after invoiced last
+                                        pass  # period = time_deleted - time_invoiced, time_invoiced = time_deleted
+                                else:  # not deleted
+                                    pass  # period = current_time - time_invoiced, time_invoiced = current_time
+
                             # Calculate hours of the current file
                             time_uploaded = datetime.datetime.strptime(
                                 v.time_uploaded,
