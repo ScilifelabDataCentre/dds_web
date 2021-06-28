@@ -76,6 +76,8 @@ def format_byte_size(b):
 
 def print_date_time():
 
+    app.logger.debug("Executing scheduled job...")
+
     # Create invoice specification
     # TODO (ina): Change to Safespring API call
     parent_dir = pathlib.Path("").parent
@@ -91,7 +93,6 @@ def print_date_time():
 
     # Get data
     csv_contents = pandas.read_csv(to_file, sep=";", header=1)
-    app.logger.debug(csv_contents)
 
     with app.app_context():
         try:
@@ -161,8 +162,13 @@ scheduler = BackgroundScheduler(
 scheduler.add_job(
     print_date_time,
     "cron",
+    id="calc_costs",
+    replace_existing=True,
     month="1-12",
     day="1-30",
+    hour="0-23",
+    minute="0-59",
+    second="0,30",
 )
 scheduler.start()
 
