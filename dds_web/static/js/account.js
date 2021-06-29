@@ -10,7 +10,7 @@ const vAccountHomeApp = {
     methods: {
         fetchAccount() {
             axios
-                .get('/account/test')
+                .get('/user/test') //api/v1/proj/list
                 .then(response => {
                     console.log(response)
                     this.account_info = response.data

@@ -158,6 +158,39 @@ def user_page(loginname=None):
     )
 
 
+@user_blueprint.route("/account", methods=["GET", "POST"])
+@login_required
+def account_info(loginname=None):
+    """account page"""
+
+    return render_template("user/account.html")
+
+@user_blueprint.route("/test")
+def account_test(loginname=None):
+    """account page"""
+
+    username=session["current_user"]
+
+    account_info = {}
+    account_info['username'] = username
+    account_info['permissions'] = db_utils.get_user_column_by_username(username, 'permissions')
+    account_info['first_name'] = None #db_utils.get_user_column_by_username(username, 'first_name')
+    account_info['last_name'] =  None #db_utils.get_user_column_by_username(username, 'last_name')
+
+    user_info_list = models.User.query.filter_by(username=username).all()
+    account_info["emails"] = [
+        {'address': getattr(user_row, "email", None),
+        'primary': getattr(user_row, "primary", False)}
+        for user_row in user_info_list
+    ]
+    account_info["emails"] = sorted(account_info["emails"],
+                                    key=lambda k: k['primary'],
+                                    reverse=True)
+
+    return account_info
+
+
+
 # @user_blueprint.route("/signup", methods=["GET", "POST"])
 # def signup():
 #     """Signup a user account"""
