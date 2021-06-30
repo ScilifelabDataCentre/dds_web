@@ -158,10 +158,10 @@ def user_page(loginname=None):
     )
 
 
-@user_blueprint.route("/account", methods=["GET", "POST"])
+@user_blueprint.route("/account")
 @login_required
-def account_info(loginname=None):
-    """account page"""
+def account_info():
+    """User account page"""
 
     return render_template("user/account.html")
 
