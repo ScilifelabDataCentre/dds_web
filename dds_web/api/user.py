@@ -20,7 +20,6 @@ from sqlalchemy.sql import func
 from dds_web import app
 from dds_web.database import models
 from dds_web.crypt.auth import gen_argon2hash, verify_password_argon2id
-from dds_web.api.dds_decorators import token_required
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -99,14 +98,3 @@ class AuthenticateUser(flask_restful.Resource):
 
         # Failed - incorrect password
         return flask.make_response("Incorrect password!", 401)
-
-class UserAccount(flask_restful.Resource):
-    method_decorators = [token_required]
-    def get(self, current_user, *args):
-        pass
-    def put(self, current_user, *args):
-        pass
-    def post(self, current_user, *args):
-        pass
-    def delete(self, current_user, *args):
-        pass
