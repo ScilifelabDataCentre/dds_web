@@ -51,3 +51,6 @@ api.add_resource(project.RemoveContents, "/proj/rm", endpoint="remove_contents")
 api.add_resource(project.GetPublic, "/proj/public", endpoint="public_key")
 api.add_resource(project.GetPrivate, "/proj/private", endpoint="private_key")
 api.add_resource(project.UpdateProjectSize, "/proj/size", endpoint="update_size")
+
+# Account
+api.add_resource(user.UserAccount, "/user/account", endpoint="account")
