@@ -184,22 +184,6 @@ def account_methods():
 
     username = session["current_user"]
 
-    if request.method == "POST":
-        # TO DO: POST request for adding a new email
-        # Might need to include a token for verifying email
-        return ""
-    if request.method == "DELETE":
-        # delete email
-        #   should not be able to delete primary
-        return ""
-    if request.method == "PUT":
-        # update name and change primary
-        # for k in ["firstName", "lastName"]:
-        #     if not request.form.get(k):
-        #         return make_response(
-        #             jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440
-        #         )
-        pass
     if request.method == "GET":
         # Fetch all user information
         account_info = {}
@@ -240,3 +224,19 @@ def account_methods():
         account_info["last_name"] = getattr(all_user_info[0], "last_name", None)
 
         return account_info
+    if request.method == "POST":
+        # TO DO: POST request for adding a new email
+        # Might need to include a token for verifying email
+        return ""
+    if request.method == "DELETE":
+        # delete email
+        #   should not be able to delete primary
+        return ""
+    if request.method == "PUT":
+        # update name and change primary
+        # for k in ["firstName", "lastName"]:
+        #     if not request.form.get(k):
+        #         return make_response(
+        #             jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440
+        #         )
+        pass
