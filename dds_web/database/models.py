@@ -95,6 +95,9 @@ class User(db.Model):
     password = db.Column(db.String(120), unique=False, nullable=False)
     role = db.Column(db.String(50), unique=False, nullable=False)
     permissions = db.Column(db.String(5), unique=False, nullable=False, default="--l--")
+    first_name = db.Column(db.String(50), unique=False, nullable=True)
+    last_name = db.Column(db.String(50), unique=False, nullable=True)
+
     # Foreign keys
     # One facility can have many users
     facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
