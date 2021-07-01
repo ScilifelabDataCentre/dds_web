@@ -108,6 +108,9 @@ class User(db.Model):
     )
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
 
+    # One user can have many email addresses
+    emails = db.relationship("Email", back_populates="user")
+
     def __repr__(self):
         """Called by print, creates representation of object"""
 
@@ -135,6 +138,28 @@ class Identifier(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<Identifier {self.identifier}>"
+
+
+class Email(db.Model):
+    """
+    Data model for user email addresses.
+    """
+
+    # Table setup
+    __tablename__ = "email"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    # Foreign key: One user can have multiple email addresses.
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
+    email = db.Column(db.String(80), unique=False, nullable=False)
+    primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    user = db.relationship("User", back_populates="emails")
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<Email {self.email}>"
 
 
 class File(db.Model):
