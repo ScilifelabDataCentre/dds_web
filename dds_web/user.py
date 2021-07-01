@@ -183,6 +183,7 @@ def account_methods():
     """account page"""
 
     username = session["current_user"]
+    uid = session["current_user_id"]
 
     if request.method == "GET":
         # Fetch all user information
@@ -190,14 +191,14 @@ def account_methods():
 
         account_info["username"] = username
 
-        # TO DO: Currently not extracted from db should fetch this from the Email db model.
-        all_user_info = models.User.query.filter_by(username=username).all()
+        emails = db_utils.get_user_emails(uid)
         account_info["emails"] = [
             {
                 "address": getattr(user_row, "email", None),
                 "primary": getattr(user_row, "primary", False),
             }
-            for user_row in all_user_info if getattr(user_row, "email", None) != None
+            for user_row in emails
+            if getattr(user_row, "email", None) != None
         ]
         account_info["emails"] = sorted(
             account_info["emails"], key=lambda k: k["primary"], reverse=True
@@ -220,8 +221,8 @@ def account_methods():
             ]
         )
 
-        account_info["first_name"] = getattr(all_user_info[0], "first_name", None)
-        account_info["last_name"] = getattr(all_user_info[0], "last_name", None)
+        account_info["first_name"] = db_utils.get_user_column_by_username(username, "first_name")
+        account_info["last_name"] = db_utils.get_user_column_by_username(username, "last_name")
 
         return account_info
     if request.method == "POST":
