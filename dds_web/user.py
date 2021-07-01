@@ -206,6 +206,7 @@ def account_methods():
 
         account_info["username"] = username
 
+        # TO DO: Currently not extracted from db should fetch this from the Email db model.
         all_user_info = models.User.query.filter_by(username=username).all()
         account_info["emails"] = [
             {
