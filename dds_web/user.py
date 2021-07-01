@@ -208,7 +208,6 @@ def account_methods():
             if not (True in [email.get("primary") for email in account_info["emails"]]):
                 update_to_primary = account_info["emails"][0]
                 update_to_primary["primary"] = True
-
         account_info["emails"] = sorted(
             account_info["emails"], key=lambda k: k["primary"], reverse=True
         )
