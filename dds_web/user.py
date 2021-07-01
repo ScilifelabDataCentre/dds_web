@@ -210,8 +210,7 @@ def account_methods():
                 update_to_primary = account_info["emails"][0]
                 update_to_primary["primary"] = True
 
-        permissions_str = db_utils.get_user_column_by_username(username, "permissions")
-        permissions_list = list(permissions_str)
+        permissions_list = list(db_utils.get_user_column_by_username(username, "permissions"))
         permissions_dict = {"g": "get", "l": "list", "p": "put", "r": "remove"}
         account_info["permissions"] = ", ".join(
             [
