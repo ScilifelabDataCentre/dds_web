@@ -112,7 +112,7 @@ class User(db.Model):
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
 
     # One user can have many email addresses
-    emails = db.relationship("Email", back_populates="user")
+    emails = db.relationship("Email", back_populates="user") #, lazy="dynamic", cascade="all, delete-orphan")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
