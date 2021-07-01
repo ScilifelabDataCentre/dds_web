@@ -210,14 +210,22 @@ def account_methods():
         account_info["emails"] = [
             {
                 "address": getattr(user_row, "email", None),
-                "primary": getattr(user_row, "primary_email", False),
+                "primary": getattr(
+                    user_row, "primary_email", False
+                ),  # note db may call attr other than this dict key
             }
             for user_row in all_user_info
         ]
-        # account_info['emails'] = [{"address": "userX@email1.com", "primary_email": False}, {"address": "userX@email2.com", "primary_email": True}]
+        # account_info['emails'] = [{"address": "userX@email1.com", "primary": False}, {"address": "userX@email2.com", "primary": False}]
         account_info["emails"] = sorted(
-            account_info["emails"], key=lambda k: k["primary_email"], reverse=True
+            account_info["emails"], key=lambda k: k["primary"], reverse=True
         )
+
+        # TO DO: Make this update in db also, i.e not only for printing
+        if len(account_info["emails"]) != 0:
+            if not (True in [email.get("primary") for email in account_info["emails"]]):
+                update_to_primary = account_info["emails"][0]
+                update_to_primary["primary"] = True
 
         permissions_str = db_utils.get_user_column_by_username(username, "permissions")
         permissions_list = list(permissions_str)
