@@ -210,9 +210,9 @@ def account_methods():
         account_info["emails"] = [
             {
                 "address": getattr(user_row, "email", None),
-                "primary": getattr(user_row, "primary_email", False),
+                "primary": getattr(user_row, "primary", False),
             }
-            for user_row in all_user_info
+            for user_row in all_user_info if getattr(user_row, "email", None) != None
         ]
         account_info["emails"] = sorted(
             account_info["emails"], key=lambda k: k["primary"], reverse=True
