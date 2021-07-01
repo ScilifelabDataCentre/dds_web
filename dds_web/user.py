@@ -157,6 +157,7 @@ def user_page(loginname=None):
         timestamp=timestamp,
     )
 
+
 # @user_blueprint.route("/signup", methods=["GET", "POST"])
 # def signup():
 #     """Signup a user account"""
@@ -165,6 +166,7 @@ def user_page(loginname=None):
 #         return render_template('user/signup.html', title='Signup')
 #     if request.method == "POST":
 #         pass
+
 
 @user_blueprint.route("/account")
 @login_required
@@ -175,316 +177,60 @@ def account_info():
 
 
 # TO DO: MAYBE MOVE THIS TO THE API (OR KEEP IT HERE IF API IS ONLY FOR CLI)
-@user_blueprint.route("/test", methods=["GET", "POST", "PUT", "DELETE"])
+@user_blueprint.route("/account_methods", methods=["POST", "DELETE", "GET", "PUT"])
 @login_required
-def account_test():
+def account_methods():
     """account page"""
-    username=session["current_user"]
+
+    username = session["current_user"]
+
     if request.method == "POST":
-        # new email
-        pass
+        # TO DO: POST request for adding a new email
+        # Might need to include a token for verifying email
+        return ""
     if request.method == "DELETE":
         # delete email
-        pass
+        #   should not be able to delete primary
+        return ""
     if request.method == "PUT":
-        # update name
+        # update name and change primary
+        # for k in ["firstName", "lastName"]:
+        #     if not request.form.get(k):
+        #         return make_response(
+        #             jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440
+        #         )
         pass
     if request.method == "GET":
-
+        # Fetch all user information
         account_info = {}
-        account_info['username'] = username
-        account_info['permissions'] = db_utils.get_user_column_by_username(username, 'permissions')
-        account_info['first_name'] = None #db_utils.get_user_column_by_username(username, 'first_name')
-        account_info['last_name'] =  None #db_utils.get_user_column_by_username(username, 'last_name')
-        account_info["emails"] = [{"address": "userX@email1.com", "primary": False}, {"address": "userX@email2.com", "primary": True}]
 
-        account_info["emails"] = sorted(account_info["emails"],
-                                    key=lambda k: k['primary'],
-                                    reverse=True)
-        # permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
-        #     if permissions_dict[args["method"]] not in list(current_user.permissions):
+        account_info["username"] = username
+
+        all_user_info = models.User.query.filter_by(username=username).all()
+        account_info["emails"] = [
+            {
+                "address": getattr(user_row, "email", None),
+                "primary": getattr(user_row, "primary_email", False),
+            }
+            for user_row in all_user_info
+        ]
+        # account_info['emails'] = [{"address": "userX@email1.com", "primary_email": False}, {"address": "userX@email2.com", "primary_email": True}]
+        account_info["emails"] = sorted(
+            account_info["emails"], key=lambda k: k["primary_email"], reverse=True
+        )
+
+        permissions_str = db_utils.get_user_column_by_username(username, "permissions")
+        permissions_list = list(permissions_str)
+        permissions_dict = {"g": "get", "l": "list", "p": "put", "r": "remove"}
+        account_info["permissions"] = ", ".join(
+            [
+                permissions_dict[permission]
+                for permission in permissions_list
+                if permission in permissions_dict
+            ]
+        )
+
+        account_info["first_name"] = getattr(all_user_info[0], "first_name", None)
+        account_info["last_name"] = getattr(all_user_info[0], "last_name", None)
 
         return account_info
-
-
-# @account_blueprint.route("/test")
-# def account_test(loginname=None):
-#     """account page"""
-
-#     username=session["current_user"]
-
-#     account_info = {
-#             'username': username,
-#             'emails': [], #[{"address": "userX@email1.com", "primary": False}, {"address": "userX@email2.com", "primary": True}]
-#             'permissions': None,
-#             'first_name': None,
-#             'last_name': None
-#         }
-
-#     for info in account_info:
-#         if info != "username" or info !="emails":
-#             try:
-#                 # TO DO: change to db.one_or_none()
-#                 account_info[info] = db_utils.get_user_column_by_username(username, info)
-#             except:
-#                 pass
-#         if info == "emails":
-#             user_info_list = models.User.query.filter_by(username=username).all()
-#             account_info["emails"] = [
-#                 {'address': getattr(user_row, "email", None),
-#                 'primary': getattr(user_row, "primary", False)}
-#                 for user_row in user_info_list
-#             ]
-
-#     account_info["emails"] = sorted(account_info["emails"],
-#                                     key=lambda k: k['primary'],
-#                                     reverse=True)
-
-#     return json.dumps(account_info)
-
-
-
-
-# class UserAccount(flask_restful.Resource):
-#     #method_decorators = [token_required]
-#     def get(self):
-#         # token = flask.response.json()
-#         # if "token" in token:
-#         #     a=True
-#         # else:
-#         #     a=False
-#         account_info = {}
-#         account_info['username'] = flask.session["current_user"]
-#         account_info['permissions'] = db_utils.get_user_column_by_username(flask.session["current_user"], 'permissions')
-#         account_info['first_name'] = None #db_utils.get_user_column_by_username(username, 'first_name')
-#         account_info['last_name'] =  args #db_utils.get_user_column_by_username(username, 'last_name')
-#         account_info["emails"]
-#         if flask.session.get("current_user") and flask.session.get("usid"):
-#             args = flask.request.args
-#             account_info['username'] = flask.session["current_user"]
-#             account_info['permissions'] = db_utils.get_user_column_by_username(flask.session["current_user"], 'permissions')
-#             account_info['first_name'] = None #db_utils.get_user_column_by_username(username, 'first_name')
-#             account_info['last_name'] =  args #db_utils.get_user_column_by_username(username, 'last_name')
-#             account_info["emails"] = [
-#                 {'address': "email",
-#                 'primary': False}
-#             ]
-
-        # username=session["current_user"]
-
-        # account_info = {}
-        # account_info['username'] = username
-        # account_info['permissions'] = db_utils.get_user_column_by_username(username, 'permissions')
-        # account_info['first_name'] = None #db_utils.get_user_column_by_username(username, 'first_name')
-        # account_info['last_name'] =  None #db_utils.get_user_column_by_username(username, 'last_name')
-
-        # user_info_list = models.User.query.filter_by(username=username).all()
-        # account_info["emails"] = [
-        #     {'address': getattr(user_row, "email", None),
-        #     'primary': getattr(user_row, "primary", False)}
-        #     for user_row in user_info_list
-        # ]
-        # account_info["emails"] = sorted(account_info["emails"],
-        #                                 key=lambda k: k['primary'],
-        #                                 reverse=True)
-
-        # return account_info
-        # [permission.value for permission in permissions if permission.key in permissions]
-        # Deny access if project or method not specified
-        # args = flask.request.args
-        # if "method" not in args:
-        #     app.logger.debug("No method in request.")
-        #     return flask.make_response("Invalid request.", 500)
-
-        # permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
-        # if permissions_dict[args["method"]] not in list(current_user.permissions):
-        #     return flask.make_response(
-        #         f"Attempted to '{args['method']}' in project '{project['id']}'. Permission denied.",
-        #         401,
-        #     )
-
-        # # app.logger.debug("Updating token...")
-        # # token, error = jwt_token(
-        # #     username=current_user.username,
-        # #     project_id=project["id"],
-        # #     project_access=True,
-        # #     permission=args["method"],
-        # # )
-        # # if token is None:
-        # #     return flask.make_response(error, 500)
-
-        # # # Project access granted
-        # # return flask.jsonify(
-        # #     {
-        # #         "dds-access-granted": True,
-        # #         "token": token.decode("UTF-8"),
-        # #     }
-        # # )
-        # #         # Project access denied
-        # # return flask.make_response("Project access denied", 401)
-
-        # # # Project access denied
-        # # return flask.make_response("Project access denied", 401)
-    # def get(self, current_user, project, *args):
-    #     """Get info regarding all projects which user is involved in."""
-
-    #     if project["permission"] != "ls":
-    #         return flask.make_response(
-    #             f"User {current_user.username} does not have permission to view projects.", 401
-    #         )
-
-    #     # TODO: Return different things depending on if facility or not
-    #     columns = ["Project ID", "Title", "PI", "Status", "Last updated"]
-    #     all_projects = [
-    #         {
-    #             columns[0]: x.public_id,
-    #             columns[1]: x.title,
-    #             columns[2]: x.pi,
-    #             columns[3]: x.status,
-    #             columns[4]: timestamp(
-    #                 datetime_string=x.date_updated if x.date_updated else x.date_created
-    #             ),
-    #         }
-    #         for x in current_user.projects
-    #     ]
-    #     app.logger.debug(all_projects)
-    #     return flask.jsonify({"all_projects": all_projects, "columns": columns})
-    # def put(self, current_user, *args):
-    #     pass
-    # def put(self, _, project):
-    #     """Update the project size and updated time stamp."""
-
-    #     updated, error = (False, "")
-    #     current_try, max_tries = (1, 5)
-    #     while current_try < max_tries:
-    #         try:
-    #             current_project = models.Project.query.filter(
-    #                 models.Project.public_id == func.binary(project["id"])
-    #             ).first()
-
-    #             tot_file_size = (
-    #                 models.File.query.with_entities(
-    #                     sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
-    #                 )
-    #                 .filter(models.File.project_id == current_project.id)
-    #                 .first()
-    #             )
-
-    #             current_project.size = tot_file_size.sizeSum
-    #             current_project.date_updated = timestamp()
-    #             db.session.commit()
-    #         except sqlalchemy.exc.SQLAlchemyError as err:
-    #             error = str(err)
-    #             db.session.rollback()
-    #             current_try += 1
-    #         else:
-    #             updated = True
-    #             break
-
-    #     return flask.jsonify({"updated": updated, "error": error, "tries": current_try})
-    # def post(self, current_user, *args):
-    #     pass
-        # def post(self, _, project):
-        # """Add new file to DB"""
-
-        # message = ""
-        # required_info = [
-        #     "name",
-        #     "name_in_bucket",
-        #     "subpath",
-        #     "size",
-        #     "size_processed",
-        #     "compressed",
-        #     "salt",
-        #     "public_key",
-        #     "checksum",
-        # ]
-        # args = flask.request.args
-        # if not all(x in args for x in required_info):
-        #     missing = [x for x in required_info if x not in args]
-        #     return flask.make_response(
-        #         f"Information missing ({missing}), cannot add file to database.", 500
-        #     )
-
-        # try:
-        #     current_project = models.Project.query.filter(
-        #         models.Project.public_id == func.binary(project["id"])
-        #     ).first()
-
-        #     # Check if file already in db
-        #     existing_file = (
-        #         models.File.query.filter(
-        #             sqlalchemy.and_(
-        #                 models.File.name == func.binary(args["name"]),
-        #                 models.File.project_id == func.binary(current_project.id),
-        #             )
-        #         )
-        #         .with_entities(models.File.id)
-        #         .first()
-        #     )
-
-        #     if existing_file or existing_file is not None:
-        #         return flask.make_response(
-        #             f"File '{args['name']}' already exists in the database!", 500
-        #         )
-
-        #     # Add new file to db
-        #     new_file = models.File(
-        #         public_id=os.urandom(16).hex(),
-        #         name=args["name"],
-        #         name_in_bucket=args["name_in_bucket"],
-        #         subpath=args["subpath"],
-        #         size_original=args["size"],
-        #         size_stored=args["size_processed"],
-        #         compressed=bool(args["compressed"] == "True"),
-        #         salt=args["salt"],
-        #         public_key=args["public_key"],
-        #         time_uploaded=timestamp(),
-        #         checksum=args["checksum"],
-        #         project_id=current_project,
-        #     )
-        #     current_project.files.append(new_file)
-        #     db.session.add(new_file)
-        #     db.session.commit()
-        # except sqlalchemy.exc.SQLAlchemyError as err:
-        #     app.logger.debug(err)
-        #     db.session.rollback()
-        #     return flask.make_response(
-        #         f"Failed to add new file '{args['name']}' to database: {err}", 500
-        #     )
-
-        # return flask.jsonify({"message": f"File '{args['name']}' added to db."})
-    # def delete(self, current_user, *args):
-    #     pass
-        # """Removes all project contents."""
-
-        # # Delete files
-        # removed, error = (False, "")
-        # with DBConnector() as dbconn:
-        #     removed, error = dbconn.delete_all()
-
-        #     # Return error if contents not deleted from db
-        #     if not removed:
-        #         return flask.make_response(error, 500)
-
-        #     # Delete from bucket
-        #     with ApiS3Connector() as s3conn:
-        #         if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-        #             return flask.make_response("No s3 info returned! " + s3conn.message, 500)
-
-        #         removed, error = s3conn.remove_all()
-
-        #         # Return error if contents not deleted from s3 bucket
-        #         if not removed:
-        #             db.session.rollback()
-        #             return flask.make_response(error, 500)
-
-        #         # Commit changes to db
-        #         try:
-        #             db.session.commit()
-        #         except sqlalchemy.exc.SQLAlchemyError as err:
-        #             return flask.make_response(str(err), 500)
-
-        # return flask.jsonify({"removed": removed, "error": error})
-
-
