@@ -22,6 +22,7 @@ from cryptography.hazmat import backends
 
 
 # Own modules
+import dds_web.utils
 from dds_web import app, db, timestamp
 from dds_web.api.user import jwt_token
 from dds_web.database import models
@@ -193,7 +194,7 @@ class UserProjects(flask_restful.Resource):
             )
 
         # TODO: Return different things depending on if facility or not
-        columns = ["Project ID", "Title", "PI", "Status", "Last updated"]
+        columns = ["Project ID", "Title", "PI", "Status", "Last updated", "Size"]
         all_projects = [
             {
                 columns[0]: x.public_id,
@@ -203,6 +204,7 @@ class UserProjects(flask_restful.Resource):
                 columns[4]: timestamp(
                     datetime_string=x.date_updated if x.date_updated else x.date_created
                 ),
+                columns[5]: dds_web.utils.format_byte_size(x.size),
             }
             for x in current_user.projects
         ]

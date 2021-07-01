@@ -49,10 +49,12 @@ def working_directory(path, cleanup_after=False):
         os.chdir(current_path)
 
 
-def format_byte_size(b):
+def format_byte_size(size):
     """Take size in bytes and converts according to the size"""
-    b = int(b)
-    units = ["B", "KB", "MB", "GB", "TB"]
-    for p in reversed(range(5)):
-        if b > pow(1000, p):
-            return "{} {}".format(round(b / pow(1000, p), 2), units[p])
+    suffixes = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    for suffix in suffixes:
+        if size >= 1000:
+            size /= 1000
+        else:
+            break
+    return f"{size:.2} {suffix}"
