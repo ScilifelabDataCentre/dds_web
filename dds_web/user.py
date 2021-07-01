@@ -195,20 +195,23 @@ def account_methods():
         account_info["emails"] = [
             {
                 "address": getattr(user_row, "email", None),
-                "primary": getattr(user_row, "primary", False),
+                "primary": getattr(user_row, "primary", False)
             }
             for user_row in emails
             if getattr(user_row, "email", None) != None
         ]
-        account_info["emails"] = sorted(
-            account_info["emails"], key=lambda k: k["primary"], reverse=True
-        )
+
+        # account_info["emails"] = [ {"address": "one@mail.com","primary": False}, {"address": "two@mail.com","primary":False} ]
 
         # TO DO: Make this update in db also, i.e not only for printing as it is now
         if len(account_info["emails"]) != 0:
             if not (True in [email.get("primary") for email in account_info["emails"]]):
                 update_to_primary = account_info["emails"][0]
                 update_to_primary["primary"] = True
+
+        account_info["emails"] = sorted(
+            account_info["emails"], key=lambda k: k["primary"], reverse=True
+        )
 
         permissions_list = list(db_utils.get_user_column_by_username(username, "permissions"))
         permissions_dict = {"g": "get", "l": "list", "p": "put", "r": "remove"}
@@ -224,14 +227,6 @@ def account_methods():
         account_info["last_name"] = db_utils.get_user_column_by_username(username, "last_name")
 
         return account_info
-    if request.method == "POST":
-        # TO DO: POST request for adding a new email
-        # Might need to include a token for verifying email
-        return ""
-    if request.method == "DELETE":
-        # delete email
-        #   should not be able to delete primary
-        return ""
     if request.method == "PUT":
         # update name and change primary
         # for k in ["firstName", "lastName"]:
@@ -239,4 +234,12 @@ def account_methods():
         #         return make_response(
         #             jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440
         #         )
-        pass
+        return ""
+    if request.method == "DELETE":
+        # delete email
+        #   should not be able to delete primary
+        return ""
+    if request.method == "POST":
+        # TO DO: POST request for adding a new email
+        # Might need to include a token for verifying email
+        return ""
