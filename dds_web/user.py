@@ -195,7 +195,7 @@ def account_methods():
         account_info["emails"] = [
             {
                 "address": getattr(user_row, "email", None),
-                "primary": getattr(user_row, "primary", False)
+                "primary": getattr(user_row, "primary", False),
             }
             for user_row in emails
             if getattr(user_row, "email", None) != None
