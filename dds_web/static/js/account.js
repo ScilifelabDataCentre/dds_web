@@ -136,7 +136,7 @@ app.component('v-account-home', {
                         Add New Email Address
                         </button>
                         <template v-if="account_info.emails.length>1">
-                        <button type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" @click="toggleEdit" disabled>
+                        <button type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" @click="toggleEdit">
                             <span v-if="!edit_mode" id="editTag">
                             <i class="far fa-inbox me-2"></i>
                             Change Primary Email
@@ -169,7 +169,7 @@ app.component('v-account-home', {
                                 class="needs-validation" novalidate>
                                 <input type="hidden" name="task" value="create">
                                 <div class="form-floating mb-3">
-                                    <input type="text" class="form-control" required>
+                                    <input type="password" class="form-control" required>
                                     <label for="newpass_old">Old Password</label>
                                 </div>
                                 <div class="form-floating mb-3">
@@ -206,7 +206,7 @@ app.component('v-account-home', {
                                     <label for="newuser_username">New Email Address</label>
                                 </div>
                                 <div class="form-floating mb-3">
-                                    <input type="password" class="form-control" required>
+                                    <input type="text" class="form-control" required>
                                     <label for="newuser_password">Repeat New Email Address</label>
                                 </div>
                                 <!--
