@@ -210,13 +210,10 @@ def account_methods():
         account_info["emails"] = [
             {
                 "address": getattr(user_row, "email", None),
-                "primary": getattr(
-                    user_row, "primary_email", False
-                ),  # note db may call attr other than this dict key
+                "primary": getattr(user_row, "primary_email", False),
             }
             for user_row in all_user_info
         ]
-        # account_info['emails'] = [{"address": "userX@email1.com", "primary": False}, {"address": "userX@email2.com", "primary": False}]
         account_info["emails"] = sorted(
             account_info["emails"], key=lambda k: k["primary"], reverse=True
         )
