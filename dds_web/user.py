@@ -221,7 +221,7 @@ def account_methods():
             account_info["emails"], key=lambda k: k["primary"], reverse=True
         )
 
-        # TO DO: Make this update in db also, i.e not only for printing
+        # TO DO: Make this update in db also, i.e not only for printing as it is now
         if len(account_info["emails"]) != 0:
             if not (True in [email.get("primary") for email in account_info["emails"]]):
                 update_to_primary = account_info["emails"][0]
