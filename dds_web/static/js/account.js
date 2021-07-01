@@ -10,7 +10,7 @@ const vAccountHomeApp = {
     methods: {
         fetchAccount() {
             axios
-                .get('/user/test')//.get('/api/v1/user/account')//, {headers: {token:''}}) //api/v1/proj/list
+                .get('/user/account_methods') //.get('/api/v1/user/account', {headers: {token:''}})
                 .then(response => {
                     console.log(response)
                     this.account_info = response.data
@@ -58,6 +58,12 @@ app.component('v-account-home', {
             </template>
             <div class="row mb-3">
                 <h1 class="mb-4"> Account Information </h1>
+                <!-- Response messages -->
+                <div id="response-container" class="alert alert-dismissible fade show my-4 d-none">
+                    <span></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <!-- User account information -->
                 <div class="container w-75 mx-auto mb-4">
                     <div class="bg-light px-2 py-1">
                         <table class="table table-hover">
@@ -76,7 +82,7 @@ app.component('v-account-home', {
                                     <th>  Name </th>
                                     <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
                                     <td>
-                                        <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" id="editName" data-bs-toggle="modal" data-bs-target="#editName_modal">
+                                        <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
                                             <i class="far fa-user-edit"></i>
                                         </button>
                                     </td>
@@ -125,7 +131,7 @@ app.component('v-account-home', {
                         <i class="far fa-lock me-2"></i>
                         Change password
                         </button>
-                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="addEmail" data-bs-toggle="modal" data-bs-target="#addEmail_modal">
+                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" data-bs-toggle="modal" data-bs-target="#addEmail_modal">
                         <i class="far fa-envelope me-2"></i>
                         Add New Email Address
                         </button>
@@ -151,7 +157,7 @@ app.component('v-account-home', {
                 </div>
             </div>
             <!-- Change Password Modal -->
-            <div class="modal fade" id="changePassword_modal" tabindex="-1">
+            <div class="modal fade" id="changePassword_modal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -159,7 +165,7 @@ app.component('v-account-home', {
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form method="POST" id="change-password-form" action=""
+                            <form method="PUT" id="change-password-form" action=""
                                 class="needs-validation" novalidate>
                                 <input type="hidden" name="task" value="create">
                                 <div class="form-floating mb-3">
@@ -183,7 +189,8 @@ app.component('v-account-home', {
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="addEmail_modal" tabindex="-1">
+            <!-- Add Email Modal -->
+            <div class="modal fade" id="addEmail_modal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -191,7 +198,7 @@ app.component('v-account-home', {
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form method="POST" id="add-email-form" action=""
+                            <form method="POST" id="addEmail_form" action=""
                                 class="needs-validation" novalidate>
                                 <input type="hidden" name="task" value="create">
                                 <div class="form-floating mb-3">
@@ -217,7 +224,8 @@ app.component('v-account-home', {
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="editName_modal" tabindex="-1">
+            <!-- Edit name modal-->
+            <div class="modal fade" id="editName_modal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -225,18 +233,17 @@ app.component('v-account-home', {
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form method="POST" id="edit-name-form" action=""
+                            <form method="PUT" id="editName_form" action="{{ url_for('user.account_methods') }}"
                                 class="needs-validation" novalidate>
-                                <input type="hidden" name="task" value="create">
                                 <div class="form-floating mb-3">
-                                    <input type="text" class="form-control" required>
-                                    <label for="newname_first">New First Name</label>
+                                    <input type="text" class="form-control" name="firstName" id="editName_first" required>
+                                    <label for="editName_first">First name</label>
                                 </div>
                                 <div class="form-floating mb-3">
-                                    <input type="password" class="form-control" required>
-                                    <label for="newname_last">New Last Name</label>
+                                    <input type="text" class="form-control" name="lastName" id="editName_last" required>
+                                    <label for="editName_last">Last name</label>
                                 </div>
-                                <button id="newname_submit" type="submit" class="btn btn-primary w-100 mb-3">
+                                <button type="submit" class="btn btn-primary w-100 mb-3">
                                     <i class="far fa-save me-1"></i>
                                     Save
                                 </button>
