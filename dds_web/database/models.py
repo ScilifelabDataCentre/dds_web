@@ -157,7 +157,7 @@ class Email(db.Model):
     # Columns
     # Foreign key: One user can have multiple email addresses.
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
-    email = db.Column(db.String(80), unique=False, nullable=False)
+    email = db.Column(db.String(80), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
     user = db.relationship("User", back_populates="emails")
 
