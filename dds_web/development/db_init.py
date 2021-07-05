@@ -113,6 +113,8 @@ def fill_db():
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             role="researcher",
             permissions="-gl--",
+            first_name="User",
+            last_name="Name",
             facility_id=None,
         ),
         User(
@@ -120,6 +122,8 @@ def fill_db():
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             role="admin",
             permissions="a-l--",
+            first_name="Ad",
+            last_name="Min",
             facility_id=None,
         ),
         User(
@@ -127,6 +131,8 @@ def fill_db():
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             role="facility",
             permissions="a-l--",
+            first_name="Facility",
+            last_name="Admin",
             facility_id=facilities[0],
         ),
         User(
@@ -134,6 +140,8 @@ def fill_db():
             password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
             role="facility",
             permissions="--lpr",
+            first_name="Faci",
+            last_name="Lity",
             facility_id=facilities[0],
         ),
     ]
@@ -365,6 +373,11 @@ def fill_db():
 
     for p in projects:
         facilities[0].projects.append(p)
+
+    # for e in emails:
+    #     pass
+
+
     # for x in projects:
     #     users[0].facility_projects.append(x)
     # for ind in [1, 3, 4, 6, 9]:
@@ -394,6 +407,7 @@ def fill_db():
     db.session.add_all(projects)
     db.session.add_all(users)
     db.session.add_all(files)
+    # db.session.add_all(emails)
 
     # Required for change in db
     db.session.commit()
