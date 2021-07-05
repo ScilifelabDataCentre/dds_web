@@ -113,16 +113,6 @@ app.component('v-account-home', {
                                         </td>
                                     </tr>
                                 </template>
-                                <template>
-                                    <tr>
-                                        <th>
-                                        </th>
-                                        <th>
-                                        </th>
-                                        <td>
-                                        </td>
-                                    </tr>
-                                </template>
                             </tbody>
                         </table>
                     </div>
