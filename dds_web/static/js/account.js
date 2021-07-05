@@ -136,18 +136,20 @@ app.component('v-account-home', {
                         Add New Email Address
                         </button>
                         <template v-if="account_info.emails.length>1">
-                        <button type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" @click="toggleEdit">
-                            <span v-if="!edit_mode" id="editTag">
+                        <button v-if="!edit_mode" type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" @click="toggleEdit">
+                            <span>
                             <i class="far fa-inbox me-2"></i>
                             Change Primary Email
                             </span>
-                            <span v-if="edit_mode" id="cancelTag">
+                        </button>
+                        <button v-if="edit_mode" type="button" class="btn btn-sm btn-outline-danger my-2 mx-1" @click="toggleEdit">
+                            <span>
                             <i class="far fa-chevron-circle-left me-2" ></i>
                                 Cancel
                             </span>
                         </button>
-                        <button v-if="edit_mode" type="button" class="btn btn-sm btn-outline-success my-2 mx-1" id="editFields" @click="toggleEdit">
-                            <span  id="cancelTag">
+                        <button v-if="edit_mode" type="button" class="btn btn-sm btn-outline-success my-2 mx-1" @click="toggleEdit">
+                            <span>
                             <i class="far fa-check-circle me-2" ></i>
                                 save
                             </span>
