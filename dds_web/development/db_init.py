@@ -377,7 +377,6 @@ def fill_db():
     # for e in emails:
     #     pass
 
-
     # for x in projects:
     #     users[0].facility_projects.append(x)
     # for ind in [1, 3, 4, 6, 9]:
