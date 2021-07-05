@@ -117,11 +117,11 @@ app.component('v-account-home', {
                         </table>
                     </div>
                     <div class="text-end">
-                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" id="editPassword" data-bs-toggle="modal" data-bs-target="#changePassword_modal">
+                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" disabled>
                         <i class="far fa-lock me-2"></i>
                         Change password
                         </button>
-                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" data-bs-toggle="modal" data-bs-target="#addEmail_modal">
+                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" disabled>
                         <i class="far fa-envelope me-2"></i>
                         Add New Email Address
                         </button>
@@ -145,74 +145,6 @@ app.component('v-account-home', {
                             </span>
                         </button>
                         </template>
-                    </div>
-                </div>
-            </div>
-            <!-- Change Password Modal -->
-            <div class="modal fade" id="changePassword_modal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Change Password</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form method="PUT" id="change-password-form" action=""
-                                class="needs-validation" novalidate>
-                                <input type="hidden" name="task" value="create">
-                                <div class="form-floating mb-3">
-                                    <input type="password" class="form-control" required>
-                                    <label for="newpass_old">Old Password</label>
-                                </div>
-                                <div class="form-floating mb-3">
-                                    <input type="password" class="form-control" required>
-                                    <label for="newpass_new">New Password</label>
-                                </div>
-                                <div class="form-floating mb-3">
-                                    <input type="password" class="form-control" required>
-                                    <label for="newpass_repeatnew">Retype New Password</label>
-                                </div>
-                                <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
-                                    <i class="far fa-save me-1"></i>
-                                    Save
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Add Email Modal -->
-            <div class="modal fade" id="addEmail_modal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Add New Email Address</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form method="POST" id="addEmail_form" action=""
-                                class="needs-validation" novalidate>
-                                <input type="hidden" name="task" value="create">
-                                <div class="form-floating mb-3">
-                                    <input type="text" class="form-control" required>
-                                    <label for="newuser_username">New Email Address</label>
-                                </div>
-                                <div class="form-floating mb-3">
-                                    <input type="text" class="form-control" required>
-                                    <label for="newuser_password">Repeat New Email Address</label>
-                                </div>
-                                <!--
-                                <div class="form-floating mb-3">
-                                    <input type="password" class="form-control" required>
-                                    <label for="newpass_password">code</label>
-                                </div>
-                                -->
-                                <button id="newemail_submit" type="submit" class="btn btn-primary w-100 mb-3">
-                                    <i class="far fa-save me-1"></i>
-                                    Save
-                                </button>
-                            </form>
-                        </div>
                     </div>
                 </div>
             </div>
