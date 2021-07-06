@@ -32,7 +32,8 @@ app.component('v-account-home', {
             new_name: {
                 first: "",
                 last: ""
-            }
+            },
+            hover: false
         }
     },
     computed: {
@@ -91,10 +92,13 @@ app.component('v-account-home', {
                         <div class="col-sm">
                             {{ account_info.first_name }} {{ account_info.last_name }}
                         </div>
-                        <div class="col-sm">
-                            <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
-                                <i class="far fa-user-edit"></i>
-                            </button>
+                        <div class="col-sm" @mouseover="hover = true" @mouseleave="hover = false">
+                                <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0">
+                                    <i class="far fa-user-edit"></i>
+                                </button>
+                                <small v-if="hover" class="card float-end py-0 px-1">
+                                    Edit
+                                </small>
                         </div>
                     </div>
                     <template v-for="(email, i) in account_info.emails" :key="email">
