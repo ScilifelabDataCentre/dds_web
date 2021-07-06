@@ -87,9 +87,9 @@ def invoice_units():
 
     current_time = timestamp(ts_format="%Y-%m-%d_%H-%M-%S")
     to_file = old_file
-    # to_file = parent_dir / pathlib.Path(f"development/invoicing/{current_time}.csv")
+    # to_file = parent_dir / pathlib.Path(f"development/invoicing/{current_time}.csv") # TODO (ina): uncomment later
 
-    # shutil.copy(old_file, to_file)
+    # shutil.copy(old_file, to_file)    # TODO (ina): uncomment later
 
     # Get data
     csv_contents = pandas.read_csv(to_file, sep=";", header=1)
@@ -103,6 +103,7 @@ def invoice_units():
             )
         else:
             for f in all_facilities:
+                # Get safespring project name
                 safespring_project_row = csv_contents.loc[csv_contents["project"] == f.safespring]
 
                 # Total number of GB hours and cost saved in the db for the specific facility
@@ -170,16 +171,51 @@ def invoice_units():
                 #     json.dump(usage, file)
 
 
+def remove_invoiced():
+    """Clean up in the Version table. Those rows which have an active file will not be deleted,
+    neither will the rows which have hours not included in previous invoices."""
+
+    app.logger.debug("Removing deleted and invoiced versions...")
+
+    with app.app_context():
+        try:
+            all_versions = models.Version.query.all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            app.logger.warning(
+                f"Failed getting facility information from database. Cannot generate invoicing information: {err}"
+            )
+        else:
+            for v in all_versions:
+                if v.time_deleted and v.time_invoiced and v.time_deleted == v.time_invoiced:
+                    deleted = datetime.datetime.strptime(
+                        v.time_deleted,
+                        "%Y-%m-%d %H:%M:%S.%f%z",
+                    )
+                    now = datetime.datetime.strptime(
+                        timestamp(),
+                        "%Y-%m-%d %H:%M:%S.%f%z",
+                    )
+                    diff = now - deleted
+                    app.logger.debug(diff.seconds)
+                    if diff.seconds > 60:  # TODO (ina): Change to correct interval -- 30 days?
+                        app.logger.debug(f"Deleting: {v}")
+                        db.session.delete(v)
+                        db.session.commit()
+
+
 scheduler = BackgroundScheduler(
     {
         "apscheduler.jobstores.default": {
             "type": "sqlalchemy",
-            "url": app.config.get("SQLALCHEMY_DATABASE_URI"),
+            # "url": app.config.get("SQLALCHEMY_DATABASE_URI"),
+            "engine": db.engine,
         },
         "apscheduler.timezone": "Europe/Stockholm",
     }
 )
 
+# Schedule invoicing calculations every 30 days
+# TODO (ina): Change to correct interval - 30 days
 scheduler.add_job(
     invoice_units,
     "cron",
@@ -190,6 +226,20 @@ scheduler.add_job(
     hour="0-23",
     minute="0-59",
     second="0,30",
+)
+
+# Schedule delete of rows in version table after a specific amount of time
+# TODO (ina): Change interval - 30 days?
+scheduler.add_job(
+    remove_invoiced,
+    "cron",
+    id="remove_versions",
+    replace_existing=True,
+    month="1-12",
+    day="1-30",
+    hour="0-23",
+    minute="0-59",
+    second="0",
 )
 scheduler.start()
 
