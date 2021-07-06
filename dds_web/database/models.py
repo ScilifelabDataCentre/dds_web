@@ -3,7 +3,7 @@
 # IMPORTS ########################################################### IMPORTS #
 
 # Own modules
-from dds_web import db
+from dds_web import db, timestamp
 
 # CLASSES ########################################################### CLASSES #
 
@@ -71,10 +71,11 @@ class Project(db.Model):
     facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
 
     # Relationships
-    # One project can have many users
-    # users = db.relationship("User", backref="project")
     # One project can have many files
     files = db.relationship("File", backref="project")
+
+    # One project can have many file versions
+    file_versions = db.relationship("Version", backref="responsible_project")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -95,17 +96,18 @@ class User(db.Model):
     password = db.Column(db.String(120), unique=False, nullable=False)
     role = db.Column(db.String(50), unique=False, nullable=False)
     permissions = db.Column(db.String(5), unique=False, nullable=False, default="--l--")
+
     # Foreign keys
     # One facility can have many users
     facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
-    # One project can have many users
-    # project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
     # Relationships
     # One user can have many projects, and one projects can have many users
     projects = db.relationship(
         "Project", secondary=project_users, backref=db.backref("users", lazy="dynamic")
     )
+
+    # One user can have many identifiers
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -156,15 +158,45 @@ class File(db.Model):
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
-    time_uploaded = db.Column(db.String(50), unique=False, nullable=False)
-    time_deleted = db.Column(db.String(50), unique=False, nullable=True)
     time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
 
     # Foreign keys
     # One project can have many files
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
+    # Relationships
+    versions = db.relationship("Version", backref="file")
+
     def __repr__(self):
         """Called by print, creates representation of object"""
 
         return f"<File {self.public_id}>"
+
+
+class Version(db.Model):
+    """Data model for keeping track of all active and non active files. Used for invoicing."""
+
+    # Table setup
+    __tablename__ = "versions"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
+    time_uploaded = db.Column(db.String(50), unique=False, nullable=False, default=timestamp())
+    time_deleted = db.Column(db.String(50), unique=False, nullable=True, default=None)
+    time_invoiced = db.Column(db.String(50), unique=False, nullable=True, default=None)
+
+    # Foreign keys
+    # One file can have many rows in invoicing
+    active_file = db.Column(
+        db.Integer, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
+    )
+
+    # One project can have many files
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<File Version {self.id}>"

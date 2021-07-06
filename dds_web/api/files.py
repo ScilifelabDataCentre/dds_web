@@ -87,11 +87,23 @@ class NewFile(flask_restful.Resource):
                 compressed=bool(args["compressed"] == "True"),
                 salt=args["salt"],
                 public_key=args["public_key"],
-                time_uploaded=timestamp(),
                 checksum=args["checksum"],
                 project_id=current_project,
             )
+
+            # New file version
+            new_version = models.Version(
+                size_stored=new_file.size_stored,
+                time_uploaded=timestamp(),
+                active_file=new_file.id,
+                project_id=current_project,
+            )
+
+            # Update foreign keys
+            current_project.file_versions.append(new_version)
             current_project.files.append(new_file)
+            new_file.versions.append(new_version)
+
             db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -129,7 +141,25 @@ class NewFile(flask_restful.Resource):
                     500,
                 )
 
-            old_size = existing_file.size_original
+            # Get version row
+            current_file_version = models.Version.query.filter(
+                sqlalchemy.and_(
+                    models.Version.active_file == func.binary(existing_file.id),
+                    models.Version.time_deleted == None,
+                )
+            ).all()
+            if len(current_file_version) > 1:
+                app.logger.warning(
+                    "There is more than one version of the file which does not yet have a deletion timestamp."
+                )
+
+            # Same timestamp for deleted and created new file
+            new_timestamp = timestamp()
+
+            # Overwritten == deleted/deactivated
+            for version in current_file_version:
+                if version.time_deleted is None:
+                    version.time_deleted = new_timestamp
 
             # Update file info
             existing_file.subpath = args["subpath"]
@@ -138,9 +168,22 @@ class NewFile(flask_restful.Resource):
             existing_file.compressed = bool(args["compressed"] == "True")
             existing_file.salt = args["salt"]
             existing_file.public_key = args["public_key"]
-            existing_file.time_uploaded = timestamp()
+            existing_file.time_uploaded = new_timestamp
             existing_file.checksum = args["checksum"]
 
+            # New version
+            new_version = models.Version(
+                size_stored=args["size_processed"],
+                time_uploaded=new_timestamp,
+                active_file=existing_file.id,
+                project_id=current_project,
+            )
+
+            # Update foreign keys and relationships
+            current_project.file_versions.append(new_version)
+            existing_file.versions.append(new_version)
+
+            db.session.add(new_version)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()

@@ -8,6 +8,7 @@
 import traceback
 import os
 import time
+import datetime
 
 # Installed
 import flask
@@ -82,8 +83,6 @@ class DBConnector:
                     models.File.name == func.binary(filename),
                 )
             ).first()
-
-            app.logger.debug("--------File: %s", file)
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
         else:
@@ -292,6 +291,16 @@ class DBConnector:
                     models.Project.public_id == func.binary(self.project["id"])
                 ).first()
                 for x in files:
+                    # get current version
+                    current_file_version = models.Version.query.filter(
+                        sqlalchemy.and_(
+                            models.Version.active_file == func.binary(x.id),
+                            models.Version.time_deleted == None,
+                        )
+                    ).first()
+                    current_file_version.time_deleted = timestamp()
+
+                    # Delete file and update project size
                     old_size = x.size_original
                     db.session.delete(x)
                     current_project.size -= old_size
@@ -378,6 +387,16 @@ class DBConnector:
                 current_project = models.Project.query.filter(
                     models.Project.public_id == func.binary(self.project["id"])
                 ).first()
+
+                # get current version
+                current_file_version = models.Version.query.filter(
+                    sqlalchemy.and_(
+                        models.Version.active_file == func.binary(file.id),
+                        models.Version.time_deleted == None,
+                    )
+                ).first()
+                current_file_version.time_deleted = timestamp()
+
                 db.session.delete(file)
                 current_project.size -= old_size
                 current_project.date_updated = timestamp()
@@ -388,45 +407,6 @@ class DBConnector:
                 deleted = True
 
         return exists, deleted, name_in_bucket, error
-
-    def delete_dir(self, foldername):
-        """Delete all files in a folder"""
-
-        exists, deleted, errors = (False, None, None)
-
-        # Get files in folder
-        try:
-            current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(self.project["id"])
-            ).first()
-
-            files_in_folder = models.File.query.filter(
-                models.File.project_id == func.binary(current_project.id),
-                models.File.subpath == func.binary(foldername),
-            ).all()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-
-        # Get bucket info and delete files
-        if files_in_folder or files_in_folder is not None:
-            exists, deleted, errors = (True, {}, {})
-            current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(self.project["id"])
-            ).first()
-            for x in files_in_folder:
-                filename = x.name
-                nameinbucket = x.name_in_bucket
-                size = x.size_original
-                try:
-                    db.session.delete(x)
-                except sqlalchemy.exc.SQLAlchemyError as err:
-                    db.session.rollback()
-                    errors[filename] = str(err)
-                else:
-                    current_project.size -= size
-                    deleted[filename] = {"name_in_bucket": nameinbucket}
-            current_project.date_updated = timestamp()
-        return exists, deleted, errors
 
     def cloud_project(self):
         """Get safespring project"""
@@ -454,3 +434,33 @@ class DBConnector:
             error = str(err)
 
         return sfsp_proj, error
+
+    @staticmethod
+    def project_usage(project_object):
+
+        gbhours = 0.0
+        cost = 0.0
+
+        for f in project_object.files:
+            for v in f.versions:
+                # Calculate hours of the current file
+                time_uploaded = datetime.datetime.strptime(
+                    v.time_uploaded,
+                    "%Y-%m-%d %H:%M:%S.%f%z",
+                )
+                time_deleted = datetime.datetime.strptime(
+                    v.time_deleted if v.time_deleted else timestamp(),
+                    "%Y-%m-%d %H:%M:%S.%f%z",
+                )
+                file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
+
+                # Calculate GBHours, if statement to avoid zerodivision exception
+                gbhours += ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
+
+                # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
+                cost_gbhour = 0.09 / (30 * 24)
+
+                # Save file cost to project info and increase total facility cost
+                cost += gbhours * cost_gbhour
+
+        return round(gbhours, 2), round(cost, 2)

@@ -18,7 +18,6 @@ from authlib.integrations import flask_client as auth_flask_client
 
 # Own modules
 
-
 # GLOBAL VARIABLES ######################################### GLOBAL VARIABLES #
 
 app = Flask(__name__, instance_relative_config=False)

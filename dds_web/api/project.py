@@ -194,22 +194,52 @@ class UserProjects(flask_restful.Resource):
             )
 
         # TODO: Return different things depending on if facility or not
-        columns = ["Project ID", "Title", "PI", "Status", "Last updated", "Size"]
-        all_projects = [
-            {
-                columns[0]: x.public_id,
-                columns[1]: x.title,
-                columns[2]: x.pi,
-                columns[3]: x.status,
-                columns[4]: timestamp(
-                    datetime_string=x.date_updated if x.date_updated else x.date_created
+        all_projects = list()
+
+        # Total number of GB hours and cost saved in the db for the specific facility
+        total_gbhours_db = 0.0
+        total_cost_db = 0.0
+        total_size = 0
+
+        usage = flask.request.args.get("usage") == "True" and current_user.role == "facility"
+
+        # Get info for all projects
+        for p in current_user.projects:
+            project_info = {
+                "Project ID": p.public_id,
+                "Title": p.title,
+                "PI": p.pi,
+                "Status": p.status,
+                "Last updated": timestamp(
+                    datetime_string=p.date_updated if p.date_updated else p.date_created
                 ),
-                columns[5]: dds_web.utils.format_byte_size(x.size),
+                "Size": dds_web.utils.format_byte_size(p.size),
             }
-            for x in current_user.projects
-        ]
-        app.logger.debug(all_projects)
-        return flask.jsonify({"all_projects": all_projects, "columns": columns})
+
+            # Get proj size and update total size
+            proj_size = sum([f.size_stored for f in p.files])
+            total_size += proj_size
+            project_info["Size"] = dds_web.utils.format_byte_size(proj_size)
+
+            if usage:
+                proj_gbhours, proj_cost = DBConnector().project_usage(p)
+                total_gbhours_db += proj_gbhours
+                total_cost_db += proj_cost
+
+                project_info.update({"GBHours": str(proj_gbhours), "Cost": str(proj_cost)})
+
+            all_projects.append(project_info)
+
+        return_info = {
+            "project_info": all_projects,
+            "total_usage": {
+                "gbhours": str(round(total_gbhours_db, 2)) if total_gbhours_db > 1.0 else str(0),
+                "cost": f"{round(total_cost_db, 2)} kr" if total_cost_db > 1.0 else f"0 kr",
+            },
+            "total_size": dds_web.utils.format_byte_size(total_size),
+        }
+
+        return flask.jsonify(return_info)
 
 
 class RemoveContents(flask_restful.Resource):
