@@ -29,7 +29,10 @@ const app = Vue.createApp(vAccountHomeApp)
 app.component('v-account-home', {
     data() {
         return {
-            edit_mode: false
+            new_name: {
+                first: "",
+                last: ""
+            }
         }
     },
     computed: {
@@ -39,8 +42,15 @@ app.component('v-account-home', {
         this.$root.fetchAccount();
     },
     methods: {
-        toggleEdit() {
-            this.edit_mode = !this.edit_mode
+        submitNewName() {
+            axios
+                .put('/user/account_methods', {new_name: this.new_name})
+                .then(response => {
+                    console.log(response)
+                })
+                .catch(error => {
+                    console.log(error)
+                })
         }
     },
     template:
@@ -64,87 +74,157 @@ app.component('v-account-home', {
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
                 <!-- User account information -->
-                <div class="container w-75 mx-auto mb-4">
-                    <div class="bg-light px-2 py-1">
-                        <table class="table table-hover">
-                            <tbody>
-                                <tr>
-                                    <th>  Username </th>
-                                    <td> {{ account_info.username }} </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th>  Permissions </th>
-                                    <td> {{ account_info.permissions }} </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th>  Name </th>
-                                    <td> {{ account_info.first_name }} {{ account_info.last_name }} </td>
-                                    <td>
-                                        <button v-if="!edit_mode" class="btn btn-sm btn-outline-info float-end py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
-                                            <i class="far fa-user-edit"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <template v-for="(email, i) in account_info.emails" :key="email">
-                                    <tr>
-                                        <th v-if="i==0">
-                                            Email
-                                        </th>
-                                        <th v-else>
-                                        </th>
-                                        <td>
-                                            {{ email.address }}
-                                            <template v-if="email.primary==true && account_info.emails.length>1">
-                                                <span v-if="!edit_mode" class="badge bg-info mx-2 px-1 py-1 ">Primary</span>
-                                            </template>
-                                        </td>
-                                        <td>
-                                            <button v-if="!edit_mode && account_info.emails.length>1" class="btn btn-sm btn-outline-danger float-end mx-1 py-0" :disabled="email.primary">
-                                                <i class="far fa-trash-can"></i>
-                                            </button>
-                                            <div v-if="edit_mode" class="float-end">
-                                                <label class="btn btn-sm btn-outline-info mx-2 px-1 py-0">
-                                                    <input v-if="edit_mode" class="form-check-input" type="radio" name="option_primary">
-                                                    Primary
-                                                </label>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                <div class="container w-75 mx-auto bg-light mb-4 px-3 py-1">
+                    <div class="row my-2">
+                        <div class="col-sm">
+                            <b>Username</b>
+                        </div>
+                        <div class="col-sm">
+                            {{ account_info.username }}
+                        </div>
+                        <div class="col-sm"></div>
                     </div>
-                    <div class="text-end">
-                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" disabled>
-                        <i class="far fa-lock me-2"></i>
-                        Change password
-                        </button>
-                        <button v-if="!edit_mode" type="button" class="btn btn-sm end btn-outline-info my-2 mx-1" disabled>
-                        <i class="far fa-envelope me-2"></i>
-                        Add New Email Address
-                        </button>
-                        <template v-if="account_info.emails.length>1">
-                        <button v-if="!edit_mode" type="button" class="btn btn-sm btn-outline-info my-2 mx-1" id="editFields" @click="toggleEdit">
-                            <span>
-                            <i class="far fa-inbox me-2"></i>
-                            Change Primary Email
-                            </span>
-                        </button>
-                        <button v-if="edit_mode" type="button" class="btn btn-sm btn-outline-danger my-2 mx-1" @click="toggleEdit">
-                            <span>
-                            <i class="far fa-chevron-circle-left me-2" ></i>
-                                Cancel
-                            </span>
-                        </button>
-                        <button v-if="edit_mode" type="button" class="btn btn-sm btn-outline-success my-2 mx-1" @click="toggleEdit">
-                            <span>
-                            <i class="far fa-check-circle me-2" ></i>
-                                save
-                            </span>
-                        </button>
-                        </template>
+                    <div class="row my-2">
+                        <div class="col-sm">
+                            <b>Name</b>
+                        </div>
+                        <div class="col-sm">
+                            {{ account_info.first_name }} {{ account_info.last_name }}
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
+                                <i class="far fa-user-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <template v-for="(email, i) in account_info.emails" :key="email">
+                        <div class="row my-2">
+                            <div class="col-sm">
+                                <b v-if="i==0">Email</b>
+                            </div>
+                            <div class="col-sm">
+                                {{ email.address }}
+                                <template v-if="email.primary==true && account_info.emails.length>1">
+                                    <span class="badge bg-info mx-2 px-1 me-2 ">Primary</span>
+                                </template>
+                            </div>
+                            <div class="col-sm">
+                                <template v-if="email.primary!=true && account_info.emails.length>1">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-info float-end mx-1 py-0" type="button" id="emailDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="far fa-angle-down"></i>
+                                        </button>
+                                        <ul class="dropdown-menu bg-light" aria-labelledby="emailDropdown">
+                                            <li>
+                                                <a class="dropdown-item text-info" href="#">
+                                                    <i class="far fa-thumb-tack me-2"></i>
+                                                    Set as Primary
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="#">
+                                                    <i class="far fa-trash-can me-2"></i>
+                                                    Delete
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <div class="row my-2">
+                        <div class="col-sm">
+                            <b></b>
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-sm btn-outline-info px-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
+                                <i class="far fa-plus me-2"></i>
+                                Add New Email Address
+                            </button>
+                        </div>
+                        <div class="col-sm"></div>
+                    </div>
+                    <div class="row my-2">
+                        <div class="col-sm">
+                            <b>Password</b>
+                        </div>
+                        <div class="col-sm">
+                            *******
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
+                            <i class="far fa-lock px-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Change Password Modal -->
+            <div class="modal fade" id="changePassword_modal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Change Password</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="PUT" id="change-password-form" action=""
+                                class="needs-validation" novalidate>
+                                <input type="hidden" name="task" value="create">
+                                <div class="form-floating mb-3">
+                                    <input type="password" class="form-control" required>
+                                    <label for="newpass_old">Old Password</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="password" class="form-control" required>
+                                    <label for="newpass_new">New Password</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="password" class="form-control" required>
+                                    <label for="newpass_repeatnew">Retype New Password</label>
+                                </div>
+                                <button id="newpass_submit" type="submit" class="btn btn-primary w-100 mb-3">
+                                    <i class="far fa-save me-1"></i>
+                                    Save
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Add Email Modal -->
+            <div class="modal fade" id="addEmail_modal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add New Email Address</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" id="addEmail_form" action=""
+                                class="needs-validation" novalidate>
+                                <input type="hidden" name="task" value="create">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" required>
+                                    <label for="newuser_username">New Email Address</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" required>
+                                    <label for="newuser_password">Repeat New Email Address</label>
+                                </div>
+                                <!--
+                                <div class="form-floating mb-3">
+                                    <input type="password" class="form-control" required>
+                                    <label for="newpass_password">code</label>
+                                </div>
+                                -->
+                                <button id="newemail_submit" type="submit" class="btn btn-primary w-100 mb-3">
+                                    <i class="far fa-save me-1"></i>
+                                    Save
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -157,14 +237,14 @@ app.component('v-account-home', {
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form method="PUT" id="editName_form" action="{{ url_for('user.account_methods') }}"
+                            <form @submit.prevent="submitNewName" method="PUT" id="editName_form" action="{{ url_for('user.account_methods') }}"
                                 class="needs-validation" novalidate>
                                 <div class="form-floating mb-3">
-                                    <input type="text" class="form-control" name="firstName" id="editName_first" required>
+                                    <input v-model="new_name.first" type="text" class="form-control" name="firstName" id="editName_first" required>
                                     <label for="editName_first">First name</label>
                                 </div>
                                 <div class="form-floating mb-3">
-                                    <input type="text" class="form-control" name="lastName" id="editName_last" required>
+                                    <input v-model="new_name.last" type="text" class="form-control" name="lastName" id="editName_last" required>
                                     <label for="editName_last">Last name</label>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100 mb-3">
