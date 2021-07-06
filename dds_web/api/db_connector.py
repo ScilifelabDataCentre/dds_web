@@ -408,53 +408,6 @@ class DBConnector:
 
         return exists, deleted, name_in_bucket, error
 
-    # def delete_dir(self, foldername):
-    #     """Delete all files in a folder"""
-
-    #     exists, deleted, errors = (False, None, None)
-
-    #     # Get files in folder
-    #     try:
-    #         current_project = models.Project.query.filter(
-    #             models.Project.public_id == func.binary(self.project["id"])
-    #         ).first()
-
-    #         files_in_folder = models.File.query.filter(
-    #             models.File.project_id == func.binary(current_project.id),
-    #             models.File.subpath == func.binary(foldername),
-    #         ).all()
-    #     except sqlalchemy.exc.SQLAlchemyError as err:
-    #         error = str(err)
-
-    #     # Get bucket info and delete files
-    #     if files_in_folder or files_in_folder is not None:
-    #         exists, deleted, errors = (True, {}, {})
-    #         current_project = models.Project.query.filter(
-    #             models.Project.public_id == func.binary(self.project["id"])
-    #         ).first()
-    #         for x in files_in_folder:
-    #             filename = x.name
-    #             nameinbucket = x.name_in_bucket
-    #             size = x.size_original
-    #             try:
-    #                 # get current version
-    #                 current_file_version = models.Version.query.filter(
-    #                     sqlalchemy.and_(
-    #                         models.Version.active_file == func.binary(x.id),
-    #                         models.Version.time_deleted == None,
-    #                     )
-    #                 ).first()
-    #                 current_file_version.time_deleted = timestamp()
-    #                 db.session.delete(x)
-    #             except sqlalchemy.exc.SQLAlchemyError as err:
-    #                 db.session.rollback()
-    #                 errors[filename] = str(err)
-    #             else:
-    #                 current_project.size -= size
-    #                 deleted[filename] = {"name_in_bucket": nameinbucket}
-    #         current_project.date_updated = timestamp()
-    #     return exists, deleted, errors
-
     def cloud_project(self):
         """Get safespring project"""
 
