@@ -179,13 +179,20 @@ def remove_invoiced():
 
     with app.app_context():
         try:
+            # Get all rows in version table
+            # TODO (ina, senthil): change to better method for when huge number of rows
             all_versions = models.Version.query.all()
         except sqlalchemy.exc.SQLAlchemyError as err:
+            # TODO (ina, senthil): Something else should happen here
             app.logger.warning(
-                f"Failed getting facility information from database. Cannot generate invoicing information: {err}"
+                "Failed getting facility information from database. "
+                f"Cannot generate invoicing information: {err}"
             )
         else:
             for v in all_versions:
+                # Delete those rows which corresponding file has been deleted and which
+                # have been fully invoiced - no more costs for the version after deletion,
+                # if the file was deleted more than 30 days ago
                 if v.time_deleted and v.time_invoiced and v.time_deleted == v.time_invoiced:
                     deleted = datetime.datetime.strptime(
                         v.time_deleted,
