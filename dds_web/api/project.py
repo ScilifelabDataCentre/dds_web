@@ -22,7 +22,7 @@ from cryptography.hazmat import backends
 
 
 # Own modules
-from dds_web.utils import format_byte_size
+import dds_web.utils
 from dds_web import app, db, timestamp
 from dds_web.api.user import jwt_token
 from dds_web.database import models
@@ -194,7 +194,6 @@ class UserProjects(flask_restful.Resource):
             )
 
         # TODO: Return different things depending on if facility or not
-
         all_projects = list()
 
         # Total number of GB hours and cost saved in the db for the specific facility
@@ -214,12 +213,13 @@ class UserProjects(flask_restful.Resource):
                 "Last updated": timestamp(
                     datetime_string=p.date_updated if p.date_updated else p.date_created
                 ),
+                "Size": dds_web.utils.format_byte_size(p.size),
             }
 
             # Get proj size and update total size
             proj_size = sum([f.size_stored for f in p.files])
             total_size += proj_size
-            project_info["Size"] = format_byte_size(proj_size)
+            project_info["Size"] = dds_web.utils.format_byte_size(proj_size)
 
             if usage:
                 proj_gbhours, proj_cost = DBConnector().project_usage(p)
@@ -236,7 +236,7 @@ class UserProjects(flask_restful.Resource):
                 "gbhours": str(round(total_gbhours_db, 2)) if total_gbhours_db > 1.0 else str(0),
                 "cost": f"{round(total_cost_db, 2)} kr" if total_cost_db > 1.0 else f"0 kr",
             },
-            "total_size": format_byte_size(total_size),
+            "total_size": dds_web.utils.format_byte_size(total_size),
         }
 
         return flask.jsonify(return_info)

@@ -14,6 +14,7 @@ import sqlalchemy
 from sqlalchemy.sql import func
 
 # Own modules
+import dds_web.utils
 from dds_web import timestamp, app
 from dds_web.database import models
 from dds_web import db, timestamp
@@ -276,7 +277,7 @@ class ListFiles(flask_restful.Resource):
                         "folder": False,
                     }
                     if show_size:
-                        info.update({"size": self.fix_size_format(num_bytes=x[1])})
+                        info.update({"size": dds_web.utils.fix_size_format(num_bytes=x[1])})
                     files_folders.append(info)
             if distinct_folders:
                 for x in distinct_folders:
@@ -290,33 +291,10 @@ class ListFiles(flask_restful.Resource):
                         if folder_size is None:
                             return flask.make_response(error, 500)
 
-                        info.update({"size": self.fix_size_format(num_bytes=folder_size)})
+                        info.update({"size": dds_web.utils.format_byte_size(folder_size)})
                     files_folders.append(info)
 
         return flask.jsonify({"files_folders": files_folders})
-
-    @staticmethod
-    def fix_size_format(num_bytes):
-        """Change size to kb, mb or gb"""
-
-        BYTES = 1
-        KB = 1e3
-        MB = 1e6
-        GB = 1e9
-
-        num_bytes = int(num_bytes)
-        chosen_format = [None, ""]
-        if num_bytes > GB:
-            chosen_format = [GB, "GB"]
-        elif num_bytes > MB:
-            chosen_format = [MB, "MB"]
-        elif num_bytes > KB:
-            chosen_format = [KB, "KB"]
-        else:
-            chosen_format = [BYTES, "bytes"]
-
-        altered = int(round(num_bytes / chosen_format[0]))
-        return str(altered), chosen_format[-1]
 
 
 class RemoveFile(flask_restful.Resource):
