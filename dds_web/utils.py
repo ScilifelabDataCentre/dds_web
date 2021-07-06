@@ -73,8 +73,10 @@ def format_byte_size(size):
 
 
 def invoice_units():
+    """Get invoicing specification from Safespring, calculate and save GBHours and cost for each
+    facility and project."""
 
-    app.logger.debug("Executing scheduled job...")
+    app.logger.debug("Calculating invoicing info...")
 
     # Create invoice specification
     # TODO (ina): Change to Safespring API call
