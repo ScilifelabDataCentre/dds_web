@@ -203,7 +203,6 @@ def remove_invoiced():
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
                     diff = now - deleted
-                    app.logger.debug(diff.seconds)
                     if diff.seconds > 60:  # TODO (ina): Change to correct interval -- 30 days?
                         app.logger.debug(f"Deleting: {v}")
                         db.session.delete(v)
