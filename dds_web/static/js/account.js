@@ -113,11 +113,11 @@ app.component('v-account-home', {
                                 </template>
                             </div>
                             <div class="col-sm">
-                                <template v-if="email.primary!=true && account_info.emails.length>1">
-                                    <button class="btn btn-sm btn-outline-danger float-end px-1 mx-1 py-0">
+                                <template v-if="account_info.emails.length>1">
+                                    <button class="btn btn-sm btn-outline-danger float-end px-1 mx-1 py-0" :disabled="email.primary==true">
                                         <i class="far fa-trash-can px-1"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0">
+                                    <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" :disabled="email.primary==true">
                                         <i class="far fa-thumb-tack px-1"></i>
                                     </button>
                                 </template>
@@ -125,13 +125,13 @@ app.component('v-account-home', {
                         </div>
                     </template>
                     <form method="PUT" action="" class="needs-validation" novalidate>
-                        <div class="row form-row my-2">
+                        <div class="row my-2">
                             <div class="col-sm"></div>
                             <div class="col-sm">
-                                <div class="col-sm-6 py-2">
+                                <div class="col-sm-8">
                                     <input type="email" class="form-control form-control-sm" placeholder="New Email" required>
                                 </div>
-                                <div class="col-sm-6">
+                                <div class="col-sm-8">
                                     <input type="email" class="form-control form-control-sm" placeholder="Repeat New Email" required>
                                 </div>
                             </div>
