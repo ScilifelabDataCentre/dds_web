@@ -67,8 +67,11 @@ app.component('v-account-home', {
                     </div>
                 </template>
             </template>
+            <!--
             <div class="row mb-3">
                 <h1 class="mb-4"> Account Information </h1>
+            </div>
+            -->
                 <!-- Response messages -->
                 <div id="response-container" class="alert alert-dismissible fade show my-4 d-none">
                     <span></span>
@@ -156,7 +159,7 @@ app.component('v-account-home', {
                         </div>
                     </div>
                 </div>
-            </div>
+            <!-- </div> -->
             <!-- Change Password Modal -->
             <div class="modal fade" id="changePassword_modal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
