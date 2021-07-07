@@ -5,8 +5,7 @@ const vAccountHomeApp = {
         return {
             error_messages: [],
             account_info: null,
-            account_data_loading: true,
-            account_info_test: "this is a test message"
+            account_data_loading: true
         }
     },
     methods: {
