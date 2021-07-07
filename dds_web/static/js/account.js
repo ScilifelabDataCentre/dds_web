@@ -96,9 +96,9 @@ app.component('v-account-home', {
                                 <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0">
                                     <i class="far fa-user-edit"></i>
                                 </button>
-                                <small v-if="hover" class="card float-end py-0 px-1">
+                                <b v-if="hover" class="card float-end py-0 px-1" display="inline-block" style="position: absolute;">
                                     Edit
-                                </small>
+                                </b>
                         </div>
                     </div>
                     <template v-for="(email, i) in account_info.emails" :key="email">
@@ -133,7 +133,13 @@ app.component('v-account-home', {
                                             </li>
                                         </ul>
                                     </div>
-                                </template>
+                                    <button class="btn btn-sm btn-outline-danger float-end px-1 mx-1 py-0">
+                                        <i class="far fa-trash-can"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" @mouseover="hover = true" @mouseleave="hover = false">
+                                        <i class="far fa-thumb-tack"></i>
+                                    </button>
+                                    </template>
                             </div>
                         </div>
                     </template>
@@ -143,8 +149,8 @@ app.component('v-account-home', {
                         </div>
                         <div class="col-sm">
                             <button class="btn btn-sm btn-outline-info px-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
-                                <i class="far fa-plus me-2"></i>
-                                Add New Email Address
+                                <i class="far fa-plus mx-1"></i>
+                                Add New Email
                             </button>
                         </div>
                         <div class="col-sm"></div>
