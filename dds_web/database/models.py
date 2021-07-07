@@ -163,7 +163,7 @@ class File(db.Model):
     checksum = db.Column(db.String(64), unique=False, nullable=False)
     time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
     expires = db.Column(
-        db.String(50),
+        db.Date(),
         unique=False,
         nullable=False,
         default=str(

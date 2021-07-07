@@ -17,7 +17,7 @@ from contextlib import contextmanager
 from flask import g, request, redirect, url_for, abort, current_app
 from dds_web.database import models
 import sqlalchemy
-from dds_web import app, db, timestamp
+from dds_web import app, db, timestamp, C_TZ
 
 # DECORATORS ####################################################### DECORATERS #
 
@@ -185,8 +185,7 @@ def remove_invoiced():
         except sqlalchemy.exc.SQLAlchemyError as err:
             # TODO (ina, senthil): Something else should happen here
             app.logger.warning(
-                "Failed getting facility information from database. "
-                f"Cannot generate invoicing information: {err}"
+                f"Failed getting verions from database. Cannot remove invoiced rows: {err}"
             )
         else:
             for v in all_versions:
@@ -207,6 +206,35 @@ def remove_invoiced():
                         app.logger.debug(f"Deleting: {v}")
                         db.session.delete(v)
                         db.session.commit()
+
+
+def remove_expired():
+    """Clean up in File table -- those which have been stored in the system for too long are moved to the DeletedFile table."""
+
+    app.logger.debug("Cleaning up File table...")
+
+    with app.app_context():
+        try:
+            # Get all rows in version table
+            # TODO (ina, senthil): change to better method for when huge number of rows
+            now = datetime.datetime.now(tz=C_TZ)
+            app.logger.debug("Now: %s", now)
+            files = models.File.query.filter(
+                now < C_TZ.localize(datetime.datetime.strptime(models.File.expires, "%Y-%m-%d"))
+            ).all()
+            app.logger.debug("Matching files : %s", files)
+
+            for f in files:
+                app.logger.debug("File: %s", f)
+                # app.logger.debug("File: %s", datetime.datetime.strptime(f.expires, "%Y-%m-%d"))
+                # app.logger.debug(
+                #     "Subtraction: %s",
+                #     now < C_TZ.localize(datetime.datetime.strptime(f.expires, "%Y-%m-%d")),
+                # )
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            # TODO (ina, senthil): Something else should happen here
+            app.logger.warning(f"test: {err}")
 
 
 scheduler = BackgroundScheduler(
@@ -246,6 +274,21 @@ scheduler.add_job(
     hour="0-23",
     minute="0-59",
     second="0",
+)
+
+# Schedule move of rows in files table after a specific amount of time
+# to DeletedFiles (does not exist yet) table
+# TODO (ina): Change interval - 1 day?
+scheduler.add_job(
+    remove_expired,
+    "cron",
+    id="remove_expired",
+    replace_existing=True,
+    month="1-12",
+    day="1-30",
+    hour="0-23",
+    minute="0-59",
+    second="0, 20, 40",
 )
 scheduler.start()
 
