@@ -68,7 +68,7 @@ app.component('v-account-home', {
                 </template>
             </template>
             <div class="container w-75 mx-auto bg-light mb-4 px-3 py-1">
-                <div class="row my-2">
+                <div class="row my-3">
                     <div class="col-sm">
                         <b>Username</b>
                     </div>
@@ -77,7 +77,7 @@ app.component('v-account-home', {
                     </div>
                     <div class="col-sm"></div>
                 </div>
-                <div class="row my-2">
+                <div class="row my-3">
                     <div class="col-sm">
                         <b>Name</b>
                     </div>
