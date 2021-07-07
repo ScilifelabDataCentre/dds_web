@@ -16,3 +16,4 @@ passphrase*
 **/*DataDelivery*
 **/docker-compose*.yml
 **/run_dir
+**/safespring_invoicespec.csv
