@@ -120,10 +120,10 @@ app.component('v-account-home', {
                     <div class="row my-2">
                         <div class="col-sm"></div>
                         <div class="col-sm">
-                                <input type="email" class="form-control form-control-sm" placeholder="New Email" required>
+                            <input type="email" class="form-control form-control-sm" placeholder="Add New Email" required>
                         </div>
                         <div class="col-sm">
-                                <button type="submit" class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
+                                <button type="submit" class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0">
                                     <i class="far fa-plus mx-1"></i>
                                 </button>
                         </div>
@@ -137,7 +137,7 @@ app.component('v-account-home', {
                         ************
                     </div>
                     <div class="col-sm">
-                        <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
+                        <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0">
                         <i class="far fa-lock px-1"></i>
                         </button>
                     </div>
