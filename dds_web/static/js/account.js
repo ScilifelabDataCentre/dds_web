@@ -96,9 +96,9 @@ app.component('v-account-home', {
                                 <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0">
                                     <i class="far fa-user-edit"></i>
                                 </button>
-                                <b v-if="hover" class="card float-end py-0 px-1" display="inline-block" style="position: absolute;">
+                                <small v-if="hover" class="card float-end py-0 px-1" display="inline-block" style="position: absolute;">
                                     Edit
-                                </b>
+                                </small>
                         </div>
                     </div>
                     <template v-for="(email, i) in account_info.emails" :key="email">
@@ -114,53 +114,40 @@ app.component('v-account-home', {
                             </div>
                             <div class="col-sm">
                                 <template v-if="email.primary!=true && account_info.emails.length>1">
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-info float-end mx-1 py-0" type="button" id="emailDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="far fa-angle-down"></i>
-                                        </button>
-                                        <ul class="dropdown-menu bg-light" aria-labelledby="emailDropdown">
-                                            <li>
-                                                <a class="dropdown-item text-info" href="#">
-                                                    <i class="far fa-thumb-tack me-2"></i>
-                                                    Set as Primary
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item text-danger" href="#">
-                                                    <i class="far fa-trash-can me-2"></i>
-                                                    Delete
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
                                     <button class="btn btn-sm btn-outline-danger float-end px-1 mx-1 py-0">
-                                        <i class="far fa-trash-can"></i>
+                                        <i class="far fa-trash-can px-1"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" @mouseover="hover = true" @mouseleave="hover = false">
-                                        <i class="far fa-thumb-tack"></i>
+                                    <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0">
+                                        <i class="far fa-thumb-tack px-1"></i>
                                     </button>
-                                    </template>
+                                </template>
                             </div>
                         </div>
                     </template>
-                    <div class="row my-2">
-                        <div class="col-sm">
-                            <b></b>
+                    <form method="PUT" action="" class="needs-validation" novalidate>
+                        <div class="row form-row my-2">
+                            <div class="col-sm"></div>
+                            <div class="col-sm">
+                                <div class="col-sm-6 py-2">
+                                    <input type="email" class="form-control form-control-sm" placeholder="New Email" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <input type="email" class="form-control form-control-sm" placeholder="Repeat New Email" required>
+                                </div>
+                            </div>
+                            <div class="col-sm">
+                                    <button type="submit" class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
+                                        <i class="far fa-plus mx-1"></i>
+                                    </button>
+                            </div>
                         </div>
-                        <div class="col-sm">
-                            <button class="btn btn-sm btn-outline-info px-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
-                                <i class="far fa-plus mx-1"></i>
-                                Add New Email
-                            </button>
-                        </div>
-                        <div class="col-sm"></div>
-                    </div>
+                    </form>
                     <div class="row my-2">
                         <div class="col-sm">
                             <b>Password</b>
                         </div>
                         <div class="col-sm">
-                            *******
+                            ************
                         </div>
                         <div class="col-sm">
                             <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
