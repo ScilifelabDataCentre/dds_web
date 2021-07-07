@@ -120,12 +120,7 @@ app.component('v-account-home', {
                     <div class="row my-2">
                         <div class="col-sm"></div>
                         <div class="col-sm">
-                            <div class="col-sm-8">
                                 <input type="email" class="form-control form-control-sm" placeholder="New Email" required>
-                            </div>
-                            <div class="col-sm-8">
-                                <input type="email" class="form-control form-control-sm" placeholder="Repeat New Email" required>
-                            </div>
                         </div>
                         <div class="col-sm">
                                 <button type="submit" class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0" data-bs-toggle="modal" data-bs-target="#editName_modal">
