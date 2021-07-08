@@ -17,7 +17,7 @@ from contextlib import contextmanager
 from flask import g, request, redirect, url_for, abort, current_app
 from dds_web.database import models
 import sqlalchemy
-from dds_web import app, db, timestamp
+from dds_web import app, db, timestamp, C_TZ
 
 # DECORATORS ####################################################### DECORATERS #
 
@@ -70,6 +70,18 @@ def format_byte_size(size):
         else:
             break
     return f"{size:.2} {suffix}"
+
+
+def page_query(q):
+    offset = 0
+    while True:
+        r = False
+        for elem in q.limit(1000).offset(offset):
+            r = True
+            yield elem
+        offset += 1000
+        if not r:
+            break
 
 
 def invoice_units():
@@ -185,8 +197,7 @@ def remove_invoiced():
         except sqlalchemy.exc.SQLAlchemyError as err:
             # TODO (ina, senthil): Something else should happen here
             app.logger.warning(
-                "Failed getting facility information from database. "
-                f"Cannot generate invoicing information: {err}"
+                f"Failed getting verions from database. Cannot remove invoiced rows: {err}"
             )
         else:
             for v in all_versions:
@@ -209,6 +220,56 @@ def remove_invoiced():
                         db.session.commit()
 
 
+def remove_expired():
+    """Clean up in File table -- those which have been stored in the system for too long are moved to the DeletedFile table."""
+
+    app.logger.debug("Cleaning up File table...")
+
+    # TODO (ina, senthil): Delete from bucket, change this to check everyday, get files which have expired by getting current time, and days_to_expire from facility info - unique times to expire the files for each facility.
+    with app.app_context():
+        try:
+            # Get all rows in version table
+            for file in page_query(
+                models.File.query.filter(models.File.expires <= datetime.datetime.now(tz=C_TZ))
+            ):
+
+                app.logger.debug("File: %s - Expires: %s", file, file.expires)
+
+                new_expired = models.ExpiredFile(
+                    public_id=file.public_id,
+                    name=file.name,
+                    name_in_bucket=file.name_in_bucket,
+                    subpath=file.subpath,
+                    size_original=file.size_original,
+                    size_stored=file.size_stored,
+                    compressed=file.compressed,
+                    public_key=file.public_key,
+                    salt=file.salt,
+                    checksum=file.checksum,
+                    time_latest_download=file.time_latest_download,
+                    project_id=file.project_id,
+                )
+
+                db.session.add(new_expired)
+
+                db.session.delete(file)
+                db.session.commit()
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            # TODO (ina, senthil): Something else should happen here
+            app.logger.warning(f"test: {err}")
+
+
+def permanent_delete():
+    """Permanently delete the files in expired files table."""
+
+    # TODO (ina, senthil): Check which rows have been stored in the ExpiredFile table for more than a month, delete them from S3 bucket and table.
+
+    app.logger.debug(
+        "Permanently deleting the expired files (not implemented atm, just scheduled function)"
+    )
+
+
 scheduler = BackgroundScheduler(
     {
         "apscheduler.jobstores.default": {
@@ -223,29 +284,44 @@ scheduler = BackgroundScheduler(
 # Schedule invoicing calculations every 30 days
 # TODO (ina): Change to correct interval - 30 days
 scheduler.add_job(
-    invoice_units,
-    "cron",
-    id="calc_costs",
-    replace_existing=True,
-    month="1-12",
-    day="1-30",
-    hour="0-23",
-    minute="0-59",
-    second="0,30",
+    invoice_units, "cron", id="calc_costs", replace_existing=True, month="1-12", day="1", hour="0"
 )
 
 # Schedule delete of rows in version table after a specific amount of time
-# TODO (ina): Change interval - 30 days?
+# Currently: First of every month
 scheduler.add_job(
     remove_invoiced,
     "cron",
     id="remove_versions",
     replace_existing=True,
     month="1-12",
+    day="1",
+    hour="0",
+)
+
+# Schedule move of rows in files table after a specific amount of time
+# to DeletedFiles (does not exist yet) table
+# Currently: Every day at midnight
+scheduler.add_job(
+    remove_expired,
+    "cron",
+    id="remove_expired",
+    replace_existing=True,
+    month="1-12",
+    day="1",
+    hour="0",
+)
+
+# Schedule delete rows in expiredfiles table after a specific amount of time
+# TODO (ina): Change interval - 1 day?
+scheduler.add_job(
+    permanent_delete,
+    "cron",
+    id="permanent_delete",
+    replace_existing=True,
+    month="1-12",
     day="1-30",
-    hour="0-23",
-    minute="0-59",
-    second="0",
+    hour="0",
 )
 scheduler.start()
 
