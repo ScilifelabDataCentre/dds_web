@@ -72,6 +72,18 @@ def format_byte_size(size):
     return f"{size:.2} {suffix}"
 
 
+def page_query(q):
+    offset = 0
+    while True:
+        r = False
+        for elem in q.limit(1000).offset(offset):
+            r = True
+            yield elem
+        offset += 1000
+        if not r:
+            break
+
+
 def invoice_units():
     """Get invoicing specification from Safespring, calculate and save GBHours and cost for each
     facility and project."""
@@ -216,16 +228,12 @@ def remove_expired():
     with app.app_context():
         try:
             # Get all rows in version table
-            # TODO (ina, senthil): change to better method for when huge number of rows
-            now = datetime.datetime.now(tz=C_TZ)
-            app.logger.debug("Now: %s", now)
-            files = models.File.query.filter(
-                now < C_TZ.localize(datetime.datetime.strptime(models.File.expires, "%Y-%m-%d"))
-            ).all()
-            app.logger.debug("Matching files : %s", files)
+            for item in page_query(
+                models.File.query.filter(models.File.expires >= datetime.datetime.now(tz=C_TZ))
+            ):
 
-            for f in files:
-                app.logger.debug("File: %s", f)
+                app.logger.debug("File: %s - Expires: %s", item, item.expires)
+
                 # app.logger.debug("File: %s", datetime.datetime.strptime(f.expires, "%Y-%m-%d"))
                 # app.logger.debug(
                 #     "Subtraction: %s",

@@ -163,12 +163,10 @@ class File(db.Model):
     checksum = db.Column(db.String(64), unique=False, nullable=False)
     time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
     expires = db.Column(
-        db.Date(),
+        db.DateTime(),
         unique=False,
         nullable=False,
-        default=str(
-            (datetime.datetime.now(tz=C_TZ) + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-        ),
+        default=datetime.datetime.now(tz=C_TZ) + datetime.timedelta(days=30),
     )
 
     # Foreign keys
