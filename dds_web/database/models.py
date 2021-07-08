@@ -24,6 +24,7 @@ class Facility(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     internal_ref = db.Column(db.String(10), unique=True, nullable=False)
     safespring = db.Column(db.String(120), unique=False, nullable=False)  # unique=True later
+    days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=30)
 
     # Relationships
     # One facility can have many users
@@ -76,7 +77,7 @@ class Project(db.Model):
     # Relationships
     # One project can have many files
     files = db.relationship("File", backref="project")
-    expires_files = db.relationship("ExpiredFile", backref="assigned_project")
+    expired_files = db.relationship("ExpiredFile", backref="assigned_project")
 
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
@@ -184,10 +185,10 @@ class File(db.Model):
 
 
 class ExpiredFile(db.Model):
-    """Data model for files."""
+    """Data model for expired files. Moved here when in system for more han a month."""
 
     # Table setup
-    __tablename__ = "files"
+    __tablename__ = "expired_files"
     __table_args__ = {"extend_existing": True}
 
     # Columns
@@ -217,7 +218,7 @@ class ExpiredFile(db.Model):
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<File {self.public_id}>"
+        return f"<ExpiredFile {self.public_id}>"
 
 
 class Version(db.Model):

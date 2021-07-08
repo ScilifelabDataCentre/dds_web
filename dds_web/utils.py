@@ -225,24 +225,49 @@ def remove_expired():
 
     app.logger.debug("Cleaning up File table...")
 
+    # TODO (ina, senthil): Delete from bucket, change this to check everyday, get files which have expired by getting current time, and days_to_expire from facility info - unique times to expire the files for each facility.
     with app.app_context():
         try:
             # Get all rows in version table
-            for item in page_query(
-                models.File.query.filter(models.File.expires >= datetime.datetime.now(tz=C_TZ))
+            for file in page_query(
+                models.File.query.filter(models.File.expires <= datetime.datetime.now(tz=C_TZ))
             ):
 
-                app.logger.debug("File: %s - Expires: %s", item, item.expires)
+                app.logger.debug("File: %s - Expires: %s", file, file.expires)
 
-                # app.logger.debug("File: %s", datetime.datetime.strptime(f.expires, "%Y-%m-%d"))
-                # app.logger.debug(
-                #     "Subtraction: %s",
-                #     now < C_TZ.localize(datetime.datetime.strptime(f.expires, "%Y-%m-%d")),
-                # )
+                new_expired = models.ExpiredFile(
+                    public_id=file.public_id,
+                    name=file.name,
+                    name_in_bucket=file.name_in_bucket,
+                    subpath=file.subpath,
+                    size_original=file.size_original,
+                    size_stored=file.size_stored,
+                    compressed=file.compressed,
+                    public_key=file.public_key,
+                    salt=file.salt,
+                    checksum=file.checksum,
+                    time_latest_download=file.time_latest_download,
+                    project_id=file.project_id,
+                )
+
+                db.session.add(new_expired)
+
+                db.session.delete(file)
+                db.session.commit()
 
         except sqlalchemy.exc.SQLAlchemyError as err:
             # TODO (ina, senthil): Something else should happen here
             app.logger.warning(f"test: {err}")
+
+
+def permanent_delete():
+    """Permanently delete the files in expired files table."""
+
+    # TODO (ina, senthil): Check which rows have been stored in the ExpiredFile table for more than a month, delete them from S3 bucket and table.
+
+    app.logger.debug(
+        "Permanently deleting the expired files (not implemented atm, just scheduled function)"
+    )
 
 
 scheduler = BackgroundScheduler(
@@ -259,44 +284,44 @@ scheduler = BackgroundScheduler(
 # Schedule invoicing calculations every 30 days
 # TODO (ina): Change to correct interval - 30 days
 scheduler.add_job(
-    invoice_units,
-    "cron",
-    id="calc_costs",
-    replace_existing=True,
-    month="1-12",
-    day="1-30",
-    hour="0-23",
-    minute="0-59",
-    second="0,30",
+    invoice_units, "cron", id="calc_costs", replace_existing=True, month="1-12", day="1", hour="0"
 )
 
 # Schedule delete of rows in version table after a specific amount of time
-# TODO (ina): Change interval - 30 days?
+# Currently: First of every month
 scheduler.add_job(
     remove_invoiced,
     "cron",
     id="remove_versions",
     replace_existing=True,
     month="1-12",
-    day="1-30",
-    hour="0-23",
-    minute="0-59",
-    second="0",
+    day="1",
+    hour="0",
 )
 
 # Schedule move of rows in files table after a specific amount of time
 # to DeletedFiles (does not exist yet) table
-# TODO (ina): Change interval - 1 day?
+# Currently: Every day at midnight
 scheduler.add_job(
     remove_expired,
     "cron",
     id="remove_expired",
     replace_existing=True,
     month="1-12",
+    day="1",
+    hour="0",
+)
+
+# Schedule delete rows in expiredfiles table after a specific amount of time
+# TODO (ina): Change interval - 1 day?
+scheduler.add_job(
+    permanent_delete,
+    "cron",
+    id="permanent_delete",
+    replace_existing=True,
+    month="1-12",
     day="1-30",
-    hour="0-23",
-    minute="0-59",
-    second="0, 20, 40",
+    hour="0",
 )
 scheduler.start()
 
