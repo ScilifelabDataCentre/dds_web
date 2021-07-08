@@ -76,6 +76,7 @@ class Project(db.Model):
     # Relationships
     # One project can have many files
     files = db.relationship("File", backref="project")
+    expires_files = db.relationship("ExpiredFile", backref="assigned_project")
 
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
@@ -175,6 +176,43 @@ class File(db.Model):
 
     # Relationships
     versions = db.relationship("Version", backref="file")
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<File {self.public_id}>"
+
+
+class ExpiredFile(db.Model):
+    """Data model for files."""
+
+    # Table setup
+    __tablename__ = "files"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    public_id = db.Column(db.String(50), unique=True, nullable=False)
+    name = db.Column(db.String(200), unique=False, nullable=False)
+    name_in_bucket = db.Column(db.String(200), unique=False, nullable=False)
+    subpath = db.Column(db.String(500), unique=False, nullable=False)
+    size_original = db.Column(db.BigInteger, unique=False, nullable=False)
+    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
+    compressed = db.Column(db.Boolean, nullable=False)
+    public_key = db.Column(db.String(64), unique=False, nullable=False)
+    salt = db.Column(db.String(50), unique=False, nullable=False)
+    checksum = db.Column(db.String(64), unique=False, nullable=False)
+    time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
+    expired = db.Column(
+        db.DateTime(),
+        unique=False,
+        nullable=False,
+        default=datetime.datetime.now(tz=C_TZ),
+    )
+
+    # Foreign keys
+    # One project can have many files
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
     def __repr__(self):
         """Called by print, creates representation of object"""
