@@ -64,12 +64,14 @@ def working_directory(path, cleanup_after=False):
 def format_byte_size(size):
     """Take size in bytes and converts according to the size"""
     suffixes = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+
     for suffix in suffixes:
         if size >= 1000:
             size /= 1000
         else:
             break
-    return f"{size:.2} {suffix}"
+
+    return f"{size:.2} {suffix}" if isinstance(size, float) else f"{size} {suffix}"
 
 
 def page_query(q):
