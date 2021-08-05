@@ -53,7 +53,7 @@ def login():
 
         usid = os.urandom(3).hex()
         session["usid"] = usid
-        tc.store_temp_ucache(username, password, usid)
+        # tc.store_temp_ucache(username, password, usid)
         if request.form.get("next"):
             to_go_url = request.form.get("next")
         else:
