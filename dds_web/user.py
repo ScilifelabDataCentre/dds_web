@@ -10,6 +10,7 @@ from dds_web.crypt.auth import validate_user_credentials
 from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.utils import login_required
+from dds_web import app
 
 user_blueprint = flask.Blueprint("user", __name__)
 
@@ -42,16 +43,17 @@ def login():
         session["is_facility"] = is_facility
         session["facility_name"] = user_info.get("facility_name")
         session["facility_id"] = user_info.get("facility_id")
+        session["usid"] = user_info["id"]
+
         # temp admin fix
         if session["is_admin"]:
-            return redirect(url_for("admin.admin_page"))
-
-        session["usid"] = user_info["id"]
-        # tc.store_temp_ucache(username, password, usid)
-        if request.form.get("next"):
-            to_go_url = request.form.get("next")
+            to_go_url = url_for("admin.admin_page")
         else:
-            to_go_url = url_for("user.user_page", loginname=request.form.get("username"))
+            if request.form.get("next"):
+                to_go_url = request.form.get("next")
+            else:
+                to_go_url = url_for("user.user_page", loginname=session["current_user"])
+
         return redirect(to_go_url)
 
 
