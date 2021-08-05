@@ -43,7 +43,6 @@ def login():
         session["is_facility"] = is_facility
         session["facility_name"] = user_info.get("facility_name")
         session["facility_id"] = user_info.get("facility_id")
-        session["usid"] = user_info["id"]
 
         # temp admin fix
         if session["is_admin"]:
