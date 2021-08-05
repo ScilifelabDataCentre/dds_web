@@ -45,8 +45,6 @@ def login():
         # temp admin fix
         if session["is_admin"]:
             return redirect(url_for("admin.admin_page"))
-        # temp should be removed in next version
-        import os
 
         session["usid"] = user_info["id"]
         # tc.store_temp_ucache(username, password, usid)
