@@ -2,7 +2,8 @@
 
 {% block body %}
 
-<h1 class="mb-4"><span class="badge bg-light text-muted border">{{ project.public_id }}</span> {{ project.title }}</h1>
+<h1 class="mb-4"><span class="badge bg-light text-muted border">{{
+        project.public_id }}</span> {{ project.title }}</h1>
 <table class="table table-hover">
     <tbody>
         <tr>
@@ -56,21 +57,26 @@
     command line tools to upload data to this project.
 </p>
 <pre class="border bg-light p-3"><code>dds put --project {{ project.public_id }} --source [PATH TO DATA]</code></pre>
-<h3>Browser-based upload</h3>
+<h3>Browser-based upload -- CURRENTLY DEACTIVATED</h3>
 <p>
     <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
-    Please note that the web-based file uploader should only be used for small numbers of files with small file sizes.
+    Please note that the web-based file uploader should only be used for small
+    numbers of files with small file sizes.
     If you have 100s of files or files that are many GB in size, please use the
-    <a href="https://github.com/ScilifelabDataCentre/dds_cli" target="_blank">command-line tools</a> instead.
+    <a href="https://github.com/ScilifelabDataCentre/dds_cli" target="_blank">command-line
+        tools</a> instead.
 </p>
 <div class="alert alert-danger d-none" id="noDataTransfer_warning">
     <strong>Warning:</strong> Your web browser does not support the
-    <a href="https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer" target="_blank"><code>DataTransfer</code></a>
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer"
+        target="_blank"><code>DataTransfer</code></a>
     web API. Directory file paths of uploads cannot not be maintained.
-    Please try using a newer browser or the <code>dds</code> command line client.
+    Please try using a newer browser or the <code>dds</code> command line
+    client.
 </div>
 <div id="upload_files_too_large" class="alert alert-danger d-none">
-    Some files are too large to be uploaded via the web interface (filesizes highlighted in red - limit is <code>{{
+    Some files are too large to be uploaded via the web interface (filesizes
+    highlighted in red - limit is <code>{{
         format_size(upload_limit) }}</code>).
     <strong>These will be skipped in the upload.</strong>
     Please use the command line tool to upload these files instead.
@@ -79,7 +85,8 @@
     <span id="upload_file_instructions">Drag & drop your files here!</span>
     <div id="upload_file_list" style="max-height:205px; overflow-y: auto;"></div>
     <div id="upload_file_progress" class="progress d-none">
-        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+        <div class="progress-bar progress-bar-striped progress-bar-animated"
+            style="width: 0%"></div>
     </div>
 </div>
 <button id="upload_file_btn" class="btn btn-primary">
@@ -101,24 +108,29 @@
 {% if uploaded_data and not g.is_facility %}
 
 {% if project.unformated_size <= download_limit %}
-<a href="{{ url_for('project.data_download', project_id=project.public_id) }}" class="btn btn-primary btn-custom
+<a href="{{ url_for('project.data_download', project_id=project.public_id) }}"
+    class="btn btn-primary btn-custom
     float-end">
-    <i class="fas fa-download me-2"></i> Download all
+    <i class="fas fa-download me-2"></i> Download all -- CURRENTLY DEACTIVATED
 </a>
 {% else %}
 <div class="alert alert-info" role="alert">
-    This project is too large to be downloaded via a web browser (over {{format_size(download_limit) }}).
+    This project is too large to be downloaded via a web browser (over
+    {{format_size(download_limit) }}).
     Files / folders that are under the threshold can be downloaded individually.
-    Alternatively, Please use the <code>dds_cli</code> command line tool, available here:
+    Alternatively, Please use the <code>dds_cli</code> command line tool,
+    available here:
     <a href="https://github.com/scilifelabdataCentre/dds_cli">https://github.com/scilifelabdataCentre/dds_cli</a>
 </div>
 {% endif %}
 
 {% endif %}
 
-<div id="uploaded-file-list" class="{{ '' if uploaded_data else 'd-none' }}">{{ uploaded_data | safe }}</div>
+<div id="uploaded-file-list" class="{{ '' if uploaded_data else 'd-none' }}">{{
+    uploaded_data | safe }}</div>
 
-<div id="no_uploaded_files" class="alert alert-light border {{ 'd-none' if uploaded_data else '' }}">
+<div id="no_uploaded_files" class="alert alert-light border {{ 'd-none' if
+    uploaded_data else '' }}">
     No files found.
 </div>
 
