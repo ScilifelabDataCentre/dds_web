@@ -59,19 +59,8 @@ def verify_password_argon2id(db_pw, input_pw):
 def validate_user_credentials(username, password):
     """Verifies if the given username and password is the match."""
 
-    # get type of the user
-    # try:
-    #     user_role = models.Role.query.filter(models.Role.username == func.binary(username)).first()
-    # except SQLAlchemyError as e:
-    #     print(str(e), flush=True)
-
-    # Exit if user not exisit in Roles table
-
-    # if user_role is None:
-    #     return (False, None, "User doesn't exist (Credentials are case sensitive)", None)
-    # is_facility = user_role.facility == 1
-    # table = models.Facility if is_facility else models.User
-
+    # TODO (ina): This is a version of the REST API authentication, both should use the same
+    # base methods and call common functions where they are identical.
     try:
         uaccount = models.User.query.filter(models.User.username == func.binary(username)).first()
     except SQLAlchemyError as e:
