@@ -11,9 +11,6 @@ from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.utils import login_required
 
-# temp will be removed in next version
-from dds_web.development import cache_temp as tc
-
 user_blueprint = flask.Blueprint("user", __name__)
 
 
@@ -51,8 +48,7 @@ def login():
         # temp should be removed in next version
         import os
 
-        usid = os.urandom(3).hex()
-        session["usid"] = usid
+        session["usid"] = user_info["id"]
         # tc.store_temp_ucache(username, password, usid)
         if request.form.get("next"):
             to_go_url = request.form.get("next")
@@ -61,7 +57,7 @@ def login():
         return redirect(to_go_url)
 
 
-def do_login(session, identifier: str, password: str = "") -> bool:
+def do_login(session, identifier: str, password: str = ""):
     """
     Check if a user with matching identifier exists. If so, log in as that user.
 
@@ -76,6 +72,7 @@ def do_login(session, identifier: str, password: str = "") -> bool:
     Returns:
         bool: Whether the login attempt succeeded.
     """
+
     try:
         account = models.Identifier.query.filter(models.Identifier.identifier == identifier).first()
     except sqlalchemy.exc.SQLAlchemyError:
@@ -126,8 +123,6 @@ def oidc_authorize():
 @user_blueprint.route("/logout", methods=["GET"])
 def logout():
     """Logout of a user account"""
-    # temp should be removed in next version
-    tc.clear_temp_ucache(session.get("current_user"), session.get("usid"))
     session.pop("current_user", None)
     session.pop("current_user_id", None)
     session.pop("is_facility", None)
