@@ -2,10 +2,39 @@
 
 import argon2
 
-from sqlalchemy.exc import SQLAlchemyError
+import sqlalchemy
 
 from dds_web.database import models
 from sqlalchemy.sql import func
+from dds_web import exceptions
+from dds_web 
+
+
+def verify_user_pass(username, password):
+    """Verify that user exists and password is correct."""
+
+    # Verify existing user
+    try:
+        user = models.User.query.filter(models.User.username == func.binary(username)).first()
+    except sqlalchemy.exc.SQLAlchemyError:
+        raise
+
+    # User does not exist
+    if not user:
+        raise exceptions.AuthenticationError("Incorrect username and/or password!")
+
+    # Verify password and generate token
+    if verify_password_argon2id(user.password, password):
+        if "l" not in list(user.permissions):
+            raise exceptions.AuthenticationError(
+                f"The user '{username}' does not have any permissions"
+            )
+
+        # Password correct
+        return True
+
+    # Password incorrect
+    return False
 
 
 def gen_argon2hash(
@@ -61,6 +90,7 @@ def validate_user_credentials(username, password):
 
     # TODO (ina): This is a version of the REST API authentication, both should use the same
     # base methods and call common functions where they are identical.
+    # Check if user in db
     try:
         uaccount = models.User.query.filter(models.User.username == func.binary(username)).first()
     except SQLAlchemyError as e:

@@ -10,7 +10,7 @@ from dds_web.crypt.auth import validate_user_credentials
 from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.utils import login_required
-from dds_web import app
+from dds_web.crypt import auth
 
 user_blueprint = flask.Blueprint("user", __name__)
 
@@ -22,7 +22,7 @@ def login():
     if request.method == "GET":
         if session.get("is_admin"):
             return redirect(url_for("admin.admin_page"))
-        elif session.get("current_user") and session.get("usid"):
+        elif session.get("current_user"):
             return redirect(url_for("user.user_page", loginname=session["current_user"]))
         else:
             return render_template("user/login.html", next=request.args.get("next"))
