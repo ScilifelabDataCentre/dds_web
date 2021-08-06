@@ -62,14 +62,11 @@ class AuthenticateUser(flask_restful.Resource):
         # Get username and password from CLI request
         auth = flask.request.authorization
         if not auth or not auth.username or not auth.password:
-            return flask.make_response("Could not verify", 401)
+            return flask.make_response("User credentials missing.", 401)
 
         # Project not required, will be checked for future operations
         args = flask.request.args
-        if "project" not in args:
-            project = None
-        else:
-            project = args["project"]
+        project = args.get("project")
 
         # Check if user in db
         try:
@@ -80,9 +77,7 @@ class AuthenticateUser(flask_restful.Resource):
             return flask.make_response(f"Database connection failed: {sqlerr}", 500)
 
         if not user:
-            return flask.make_response(
-                f"User not found in system. User access denied: '{auth.username}'", 401
-            )
+            return flask.make_response(f"Incorrect username and/or password!", 401)
 
         # Verify user password and generate token
         if verify_password_argon2id(user.password, auth.password):
@@ -100,7 +95,7 @@ class AuthenticateUser(flask_restful.Resource):
             return flask.jsonify({"token": token.decode("UTF-8")})
 
         # Failed - incorrect password
-        return flask.make_response("Incorrect password!", 401)
+        return flask.make_response(f"Incorrect username and/or password!", 401)
 
 
 class ShowUsage(flask_restful.Resource):
