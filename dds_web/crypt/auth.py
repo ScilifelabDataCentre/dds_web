@@ -7,7 +7,7 @@ import sqlalchemy
 from dds_web.database import models
 from sqlalchemy.sql import func
 from dds_web import exceptions
-from dds_web 
+from flask import session
 
 
 def verify_user_pass(username, password):
@@ -35,6 +35,43 @@ def verify_user_pass(username, password):
 
     # Password incorrect
     return False
+
+
+def user_session_info(username):
+    """Gets session info about the user."""
+
+    try:
+        user = (
+            models.User.query.filter(models.User.username == func.binary(username))
+            .with_entities(models.User.role, models.User.facility_id)
+            .first()
+        )
+    except sqlalchemy.exc.SQLAlchemyError:
+        raise
+
+    if not user:
+        pass  # raise exception -- no user
+
+    user_info = {"current_user": username, "is_facility": False, "is_admin": False}
+    if user[0] == "admin":
+        user_info["is_admin"] = True
+    elif user[0] == "facility":
+        if not user[1]:
+            pass  # raise -- missing facility id despite facility
+        try:
+            facility_info = (
+                models.Facility.query.filter(models.Facility.id == func.binary(user[1]))
+                .with_entities(models.Facility.name)
+                .first()
+            )
+        except sqlalchemy.exc.SQLAlchemyError:
+            raise
+
+        user_info.update(
+            {"is_facility": True, "facility_id": user[1], "facility_name": facility_info[0]}
+        )
+
+    return user_info
 
 
 def gen_argon2hash(

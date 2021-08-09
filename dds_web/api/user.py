@@ -73,8 +73,10 @@ class AuthenticateUser(flask_restful.Resource):
         try:
             user_ok = dds_auth.verify_user_pass(username=auth.username, password=auth.password)
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            app.logger.exception(sqlerr)
             return flask.make_response(str(sqlerr), 500)
         except exceptions.AuthenticationError as autherr:
+            app.logger.exception(autherr)
             return flask.make_response(str(autherr), 401)
 
         # User credentials incorrect

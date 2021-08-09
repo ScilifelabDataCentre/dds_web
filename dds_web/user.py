@@ -6,11 +6,12 @@ import sqlalchemy
 
 from dds_web import timestamp, oauth
 from dds_web.api.login import ds_access
-from dds_web.crypt.auth import validate_user_credentials
+from dds_web.crypt import auth as dds_auth
 from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.utils import login_required
-from dds_web.crypt import auth
+from dds_web import exceptions
+from dds_web import app
 
 user_blueprint = flask.Blueprint("user", __name__)
 
@@ -30,21 +31,36 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        credentials_validated, is_facility, message, user_info = validate_user_credentials(
-            username, password
-        )
-        if not credentials_validated:
-            return render_template(
-                "user/login.html", next=request.form.get("next"), login_error_message=message
-            )
-        session["current_user"] = user_info["username"]
-        session["current_user_id"] = user_info["id"]
-        session["is_admin"] = user_info.get("admin", False)
-        session["is_facility"] = is_facility
-        session["facility_name"] = user_info.get("facility_name")
-        session["facility_id"] = user_info.get("facility_id")
 
-        # temp admin fix
+        try:
+            user_ok = dds_auth.verify_user_pass(username=username, password=password)
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            # TODO (ina): Create custom error page
+            app.logger.exception(sqlerr)
+            return str(sqlerr), 500
+        except exceptions.AuthenticationError as autherr:
+            app.logger.exception(autherr)
+            return render_template(
+                "user/login.html", next=request.form.get("next"), login_error_message=str(autherr)
+            )
+
+        if not user_ok:
+            return render_template(
+                "user/login.html",
+                next=request.form.get("next"),
+                login_error_message="Incorrect username and/or password!",
+            )
+
+        try:
+            user_info = dds_auth.user_session_info(username=username)
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            # TODO (ina): Create custom error page
+            app.logger.exception(sqlerr)
+            return str(sqlerr), 500
+        # add another exception here
+
+        session.update(**user_info)
+
         if session["is_admin"]:
             to_go_url = url_for("admin.admin_page")
         else:
@@ -54,6 +70,31 @@ def login():
                 to_go_url = url_for("user.user_page", loginname=session["current_user"])
 
         return redirect(to_go_url)
+        # credentials_validated, is_facility, message, user_info = validate_user_credentials(
+        #     username, password
+        # )
+        # if not credentials_validated:
+        #     return render_template(
+        #         "user/login.html", next=request.form.get("next"), login_error_message=message
+        #     )
+
+        # session["current_user"] = user_info["username"]
+        # session["current_user_id"] = user_info["id"]
+        # session["is_admin"] = user_info.get("admin", False)
+        # session["is_facility"] = is_facility
+        # session["facility_name"] = user_info.get("facility_name")
+        # session["facility_id"] = user_info.get("facility_id")
+
+        # temp admin fix
+        # if session["is_admin"]:
+        #     to_go_url = url_for("admin.admin_page")
+        # else:
+        #     if request.form.get("next"):
+        #         to_go_url = request.form.get("next")
+        #     else:
+        #         to_go_url = url_for("user.user_page", loginname=session["current_user"])
+
+        # return redirect(to_go_url)
 
 
 def do_login(session, identifier: str, password: str = ""):
