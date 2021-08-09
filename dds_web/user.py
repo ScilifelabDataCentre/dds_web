@@ -36,7 +36,7 @@ def login():
 
         # Authenticate user
         try:
-            user_ok = dds_auth.verify_user_pass(username=username, password=password)
+            _ = dds_auth.verify_user_pass(username=username, password=password)
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             # TODO (ina): Create custom error page
             app.logger.exception(sqlerr)

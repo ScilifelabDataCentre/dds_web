@@ -19,12 +19,11 @@ def verify_user_pass(username, password):
     except sqlalchemy.exc.SQLAlchemyError:
         raise
 
-    # User does not exist or password does not match
-    if not user or not verify_password_argon2id(user.password, password):
-        raise exceptions.AuthenticationError("Incorrect username and/or password!")
+    # User exists and password matches
+    if user and verify_password_argon2id(user.password, password):
+        return True
 
-    # Password correct
-    return True
+    raise exceptions.AuthenticationError("Incorrect username and/or password!")
 
 
 def user_session_info(username):
