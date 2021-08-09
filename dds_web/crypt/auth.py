@@ -19,23 +19,12 @@ def verify_user_pass(username, password):
     except sqlalchemy.exc.SQLAlchemyError:
         raise
 
-    # User does not exist
-    if not user:
+    # User does not exist or password does not match
+    if not user or not verify_password_argon2id(user.password, password):
         raise exceptions.AuthenticationError("Incorrect username and/or password!")
 
-    # Verify password and generate token
-    if verify_password_argon2id(user.password, password):
-        # TODO (ina): Look into moving this (below)
-        # if "l" not in list(user.permissions):
-        #     raise exceptions.AuthenticationError(
-        #         f"The user '{username}' does not have any permissions"
-        #     )
-
-        # Password correct
-        return True
-
-    # Password incorrect
-    return False
+    # Password correct
+    return True
 
 
 def user_session_info(username):

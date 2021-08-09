@@ -47,14 +47,6 @@ def login():
                 "user/login.html", next=request.form.get("next"), login_error_message=str(autherr)
             )
 
-        # User authentication not passed
-        if not user_ok:
-            return render_template(
-                "user/login.html",
-                next=request.form.get("next"),
-                login_error_message="Incorrect username and/or password!",
-            )
-
         # Get session info on user and update session
         try:
             user_info = dds_auth.user_session_info(username=username)
