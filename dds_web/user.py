@@ -231,13 +231,17 @@ def account_methods():
 
         return account_info
     if request.method == "PUT":
+        try:
+            a = request.json["new_name"]
+        except:
+            a = "no"
         # update name and change primary
         # for k in ["firstName", "lastName"]:
         #     if not request.form.get(k):
         #         return make_response(
         #             jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440
         #         )
-        return ""
+        return a
     if request.method == "DELETE":
         # delete email
         #   should not be able to delete primary
