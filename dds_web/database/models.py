@@ -118,7 +118,7 @@ class User(db.Model):
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<User {self.public_id}>"
+        return f"<User {self.username}>"
 
 
 class Identifier(db.Model):

@@ -61,18 +61,35 @@ def get_user_projects(current_user) -> (list):
     return projects
 
 
-def get_project_users(project_id, no_facility_users=False) -> (list):
+def get_project_users(project_id, no_facility_users=False) -> (list, list):
     """Get list of users related to the project"""
-    project_users = []
-    project_user_rows = (
-        db.session.query(models.project_users).filter_by(project_id=project_id).all()
-    )
-    for row in project_user_rows:
-        user = models.User.query.filter_by(id=row.user_id).one()
-        if no_facility_users and (user.role != "researcher"):
-            continue
-        project_users.append(user.username)
-    return project_users
+
+    # project_users = []
+    try:
+        users = (
+            models.User.query.join(models.project_users)
+            .filter(
+                (models.project_users.c.user == models.User.username)
+                & (models.project_users.c.project_id == project_id)
+            )
+            .all()
+        )
+        # project_users = (
+        #     db.session.query(models.project_users)
+        #     .filter_by(project_id=project_id)
+        #     .with_entities(models.project_users.c.user)
+        #     .all()
+        # )
+    except sqlalchemy.exc.SQLAlchemyError:
+        raise
+
+    app.logger.debug(users)
+    # for row in project_user_rows:
+    #     user = models.User.query.filter_by(id=row.user_id).one()
+    #     if no_facility_users and (user.role != "researcher"):
+    #         continue
+    #     project_users.append(user.username)
+    return [user.username for user in users]
 
 
 def get_full_column_from_table(table, column) -> (list):
