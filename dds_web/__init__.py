@@ -51,8 +51,10 @@ def create_app():
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
     # Set logger, to be used in the app
-    log_file = os.path.join(app.config.get("LOGS_DIR"), "dds.log")
-    log_formatter = logging.Formatter("%(asctime)s %(module)s [%(levelname)s] %(message)s")
+    log_file = os.path.join(app.config.get("LOGS_DIR"), "actions.log")
+    log_formatter = logging.Formatter(
+        "[%(asctime)s] [%(levelname)s] %(module)s : %(test)s \n%(message)s"
+    )
     handler = RotatingFileHandler(log_file, maxBytes=100000000, backupCount=1)
     handler.setFormatter(log_formatter)
     app.logger.addHandler(handler)
@@ -68,7 +70,7 @@ def create_app():
         server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
         client_kwargs={"scope": "openid profile email"},
     )
-
+    app.logger.debug("helly", extra={"test": "helly"})
     with app.app_context():  # Everything in here has access to sessions
         from dds_web import routes  # Import routes
         from dds_web.database import models
