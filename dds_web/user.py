@@ -188,8 +188,12 @@ def user_page(loginname=None):
     if session.get("is_facility"):
         projects_list = db_utils.get_facilty_projects(fid=session["facility_id"])
     else:
-        projects_list = []
-        projects_list = db_utils.get_user_projects(current_user=session.get("current_user"))
+        try:
+            projects_list = db_utils.get_user_projects(current_user=session.get("current_user"))
+        except sqlalchemy.exc.SQLAlchemy as sqlerr:
+            # TODO (ina): Create custom error page
+            app.logger.exception(sqlerr)
+            return str(sqlerr), 500
 
     # TO DO: change dbfunc passing in future
     return render_template(
