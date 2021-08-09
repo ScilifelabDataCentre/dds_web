@@ -1,8 +1,12 @@
 class AuthenticationError(Exception):
-    """Errors due to user authentication.
-
-    Return the message with Rich no-entry-sign emoji either side.
-    """
+    """Errors due to user authentication."""
 
     def __str__(self):
-        return f":no_entry_sign: {self.args[0]} :no_entry_sign:"
+        return f"{self.args[0]}"
+
+
+class DatabaseInconsistencyError(Exception):
+    """Errors due to database inconcistencies."""
+
+    def __str__(self):
+        return f"{self.args[0]}"

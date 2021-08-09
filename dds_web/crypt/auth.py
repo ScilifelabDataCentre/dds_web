@@ -25,6 +25,7 @@ def verify_user_pass(username, password):
 
     # Verify password and generate token
     if verify_password_argon2id(user.password, password):
+        # TODO (ina): Look into moving this (below)
         if "l" not in list(user.permissions):
             raise exceptions.AuthenticationError(
                 f"The user '{username}' does not have any permissions"
@@ -40,6 +41,7 @@ def verify_user_pass(username, password):
 def user_session_info(username):
     """Gets session info about the user."""
 
+    # Get user role and facility ID
     try:
         user = (
             models.User.query.filter(models.User.username == func.binary(username))
@@ -49,15 +51,23 @@ def user_session_info(username):
     except sqlalchemy.exc.SQLAlchemyError:
         raise
 
+    # Raise exception if there is no user
     if not user:
-        pass  # raise exception -- no user
+        raise exceptions.DatabaseInconsistencyError("Unable to retrieve user role.")
 
+    # Setup session info default
     user_info = {"current_user": username, "is_facility": False, "is_admin": False}
+
+    # Admin and facility specific info
     if user[0] == "admin":
         user_info["is_admin"] = True
     elif user[0] == "facility":
         if not user[1]:
-            pass  # raise -- missing facility id despite facility
+            raise exceptions.DatabaseInconsistencyError(
+                "Missing facility ID for facility type user."
+            )
+
+        # Get facility name from database
         try:
             facility_info = (
                 models.Facility.query.filter(models.Facility.id == func.binary(user[1]))

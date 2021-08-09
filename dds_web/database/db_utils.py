@@ -1,7 +1,9 @@
 """ Utility function that makes DB calls """
 
-from dds_web import db
+from dds_web import db, app
 from dds_web.database import models
+from sqlalchemy import func
+import sqlalchemy
 
 
 def get_facility_column(fid, column) -> (str):
@@ -28,16 +30,23 @@ def get_user_column_by_username(username, column) -> (str):
     return getattr(user, column)
 
 
-def get_user_projects(uid, only_id=False) -> (list):
+def get_user_projects(current_user) -> (list):
     """Gets all the project for the username ID"""
-    # project_list = models.Project.query.filter_by(owner=uid).all()
-    project_list = db.session.query(models.project_users).filter_by(user_id=uid).all()
-    project_ids = [prj.project_id for prj in project_list]
-    return (
-        project_ids
-        if only_id
-        else models.Project.query.filter(models.Project.id.in_(project_ids)).all()
-    )
+
+    # Join Project and association table and get user projects
+    try:
+        projects = (
+            models.Project.query.join(models.project_users)
+            .filter(
+                (models.project_users.c.project_id == models.Project.id)
+                & (models.project_users.c.user == current_user)
+            )
+            .all()
+        )
+    except sqlalchemy.exc.SQLAlchemyError:
+        raise
+
+    return projects
 
 
 def get_project_users(project_id, no_facility_users=False) -> (list):

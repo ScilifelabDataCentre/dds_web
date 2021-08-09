@@ -28,10 +28,13 @@ def login():
         else:
             return render_template("user/login.html", next=request.args.get("next"))
 
+    # Login form procedure
     if request.method == "POST":
+        # Get username and password from form
         username = request.form.get("username")
         password = request.form.get("password")
 
+        # Authenticate user
         try:
             user_ok = dds_auth.verify_user_pass(username=username, password=password)
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
@@ -44,6 +47,7 @@ def login():
                 "user/login.html", next=request.form.get("next"), login_error_message=str(autherr)
             )
 
+        # User authentication not passed
         if not user_ok:
             return render_template(
                 "user/login.html",
@@ -51,13 +55,13 @@ def login():
                 login_error_message="Incorrect username and/or password!",
             )
 
+        # Get session info on user and update session
         try:
             user_info = dds_auth.user_session_info(username=username)
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+        except (sqlalchemy.exc.SQLAlchemyError, exceptions.DatabaseInconsistencyError) as err:
             # TODO (ina): Create custom error page
-            app.logger.exception(sqlerr)
-            return str(sqlerr), 500
-        # add another exception here
+            app.logger.exception(err)
+            return str(err), 500
 
         session.update(**user_info)
 
@@ -69,6 +73,7 @@ def login():
             else:
                 to_go_url = url_for("user.user_page", loginname=session["current_user"])
 
+        app.logger.debug(session)
         return redirect(to_go_url)
         # credentials_validated, is_facility, message, user_info = validate_user_credentials(
         #     username, password
@@ -120,7 +125,7 @@ def do_login(session, identifier: str, password: str = ""):
     user_info = account.user
     # Use the current login definitions for compatibility
     session["current_user"] = user_info.username
-    session["current_user_id"] = user_info.id
+    # session["current_user_id"] = user_info.id
     session["is_admin"] = user_info.role == "admin"
     session["is_facility"] = user_info.role == "facility"
     if session["is_facility"]:
@@ -164,12 +169,12 @@ def oidc_authorize():
 def logout():
     """Logout of a user account"""
     session.pop("current_user", None)
-    session.pop("current_user_id", None)
+    # session.pop("current_user_id", None)
     session.pop("is_facility", None)
     session.pop("is_admin", None)
     session.pop("facility_name", None)
     session.pop("facility_id", None)
-    session.pop("usid", None)
+    # session.pop("usid", None)
     return redirect(url_for("home"))
 
 
@@ -180,10 +185,12 @@ def user_page(loginname=None):
     # return session
     if session.get("is_admin"):
         return redirect(url_for("admin.admin_page"))
-    if session["is_facility"]:
+    if session.get("is_facility"):
         projects_list = db_utils.get_facilty_projects(fid=session["facility_id"])
     else:
-        projects_list = db_utils.get_user_projects(uid=session["current_user_id"])
+        projects_list = []
+        projects_list = db_utils.get_user_projects(current_user=session.get("current_user"))
+
     # TO DO: change dbfunc passing in future
     return render_template(
         "project/list_project.html",
