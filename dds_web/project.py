@@ -111,135 +111,141 @@ def project_info(project_id=None):
 @project_blueprint.route("upload", methods=["POST"])
 @login_required
 def data_upload():
-    project_id = request.form.get("project_id", None)
-    in_file_paths = request.form.getlist("file_paths")
-    in_files = request.files.getlist("files")  # NB: request.files not request.form
+    """Upload data -- DEACTIVATED"""
 
-    # Check that we got a project ID
-    if project_id is None:
-        return make_response(
-            jsonify({"status": 433, "message": "Project ID not found in request"}), 433
-        )
+    pass
+    # project_id = request.form.get("project_id", None)
+    # in_file_paths = request.form.getlist("file_paths")
+    # in_files = request.files.getlist("files")  # NB: request.files not request.form
 
-    # Check that something was uploaded
-    if not in_files or len(in_files) == 0:
-        return make_response(
-            jsonify({"status": 433, "message": "No files were selected to upload"}), 433
-        )
+    # # Check that we got a project ID
+    # if project_id is None:
+    #     return make_response(
+    #         jsonify({"status": 433, "message": "Project ID not found in request"}), 433
+    #     )
 
-    # Check that we have the same number of files and paths
-    if len(in_files) != len(in_file_paths):
-        return make_response(
-            jsonify(
-                {
-                    "status": 433,
-                    "message": f"Number of uploaded files ({len(in_files)}) did not match number of file paths! ({len(in_file_paths)})",
-                }
-            ),
-            433,
-        )
+    # # Check that something was uploaded
+    # if not in_files or len(in_files) == 0:
+    #     return make_response(
+    #         jsonify({"status": 433, "message": "No files were selected to upload"}), 433
+    #     )
 
-    upload_space = os.path.join(
-        current_app.config["UPLOAD_FOLDER"],
-        "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")),
-    )
-    current_app.logger.info(f"Uploading {len(in_files)} files to {upload_space}")
+    # # Check that we have the same number of files and paths
+    # if len(in_files) != len(in_file_paths):
+    #     return make_response(
+    #         jsonify(
+    #             {
+    #                 "status": 433,
+    #                 "message": f"Number of uploaded files ({len(in_files)}) did not match number of file paths! ({len(in_file_paths)})",
+    #             }
+    #         ),
+    #         433,
+    #     )
 
-    os.mkdir(upload_space)
-    with working_directory(upload_space):
-        upload_file_dest = os.path.abspath(os.path.join(upload_space, "data"))
-        os.mkdir(upload_file_dest)
-        for idx, in_file in enumerate(in_files):
-            file_dir = os.path.join(upload_file_dest, os.path.dirname(in_file_paths[idx]))
-            file_name = os.path.basename(in_file_paths[idx])
-            if not os.path.isdir(file_dir):
-                os.makedirs(file_dir)
-            in_file.save(os.path.join(file_dir, file_name))
+    # upload_space = os.path.join(
+    #     current_app.config["UPLOAD_FOLDER"],
+    #     "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")),
+    # )
+    # current_app.logger.info(f"Uploading {len(in_files)} files to {upload_space}")
 
-        with open("data_to_upload.txt", "w") as dfl:
-            dfl.write(
-                "\n".join([os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)])
-            )
+    # os.mkdir(upload_space)
+    # with working_directory(upload_space):
+    #     upload_file_dest = os.path.abspath(os.path.join(upload_space, "data"))
+    #     os.mkdir(upload_file_dest)
+    #     for idx, in_file in enumerate(in_files):
+    #         file_dir = os.path.join(upload_file_dest, os.path.dirname(in_file_paths[idx]))
+    #         file_name = os.path.basename(in_file_paths[idx])
+    #         if not os.path.isdir(file_dir):
+    #             os.makedirs(file_dir)
+    #         in_file.save(os.path.join(file_dir, file_name))
 
-        cache_path = os.path.join(
-            current_app.config.get("LOCAL_TEMP_CACHE"),
-            "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
-        )
-        proc = subprocess.Popen(
-            shlex.split(
-                f"dds put -c {cache_path} -p {project_id} -spf data_to_upload.txt --overwrite"
-            ),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        out, err = proc.communicate(input=None)
+    #     with open("data_to_upload.txt", "w") as dfl:
+    #         dfl.write(
+    #             "\n".join([os.path.join(upload_file_dest, i) for i in os.listdir(upload_file_dest)])
+    #         )
 
-    resp = {"status": 200, "message": ""}
-    if proc.returncode == 0:
-        current_app.logger.info(out)
-        resp = {"status": 200, "message": "Data successfully uploaded to S3"}
+    #     cache_path = os.path.join(
+    #         current_app.config.get("LOCAL_TEMP_CACHE"),
+    #         "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
+    #     )
+    #     proc = subprocess.Popen(
+    #         shlex.split(
+    #             f"dds put -c {cache_path} -p {project_id} -spf data_to_upload.txt --overwrite"
+    #         ),
+    #         stdout=subprocess.PIPE,
+    #         stderr=subprocess.PIPE,
+    #     )
+    #     out, err = proc.communicate(input=None)
 
-        # Get an updated file tree
-        project_row = models.Project.query.filter_by(public_id=project_id).one_or_none()
-        if project_row:
-            project_info = project_row.__dict__.copy()
-            files_list = models.File.query.filter_by(project_id=project_info["id"]).all()
-            if files_list:
-                resp["uploaded_data_html"] = dds_folder(
-                    files_list, project_id
-                ).generate_html_string()
+    # resp = {"status": 200, "message": ""}
+    # if proc.returncode == 0:
+    #     current_app.logger.info(out)
+    #     resp = {"status": 200, "message": "Data successfully uploaded to S3"}
 
-        # Remove the temporary upload space
-        try:
-            shutil.rmtree(upload_space)
-        except:
-            print("Couldn't remove upload space '{}'".format(upload_space), flush=True)
-            current_app.logger.error(err)
-    else:
-        resp = {"status": 515, "message": "Couldn't send data to S3"}
-        current_app.logger.error(err)
+    #     # Get an updated file tree
+    #     project_row = models.Project.query.filter_by(public_id=project_id).one_or_none()
+    #     if project_row:
+    #         project_info = project_row.__dict__.copy()
+    #         files_list = models.File.query.filter_by(project_id=project_info["id"]).all()
+    #         if files_list:
+    #             resp["uploaded_data_html"] = dds_folder(
+    #                 files_list, project_id
+    #             ).generate_html_string()
 
-    return make_response(jsonify(resp), resp["status"])
+    #     # Remove the temporary upload space
+    #     try:
+    #         shutil.rmtree(upload_space)
+    #     except:
+    #         print("Couldn't remove upload space '{}'".format(upload_space), flush=True)
+    #         current_app.logger.error(err)
+    # else:
+    #     resp = {"status": 515, "message": "Couldn't send data to S3"}
+    #     current_app.logger.error(err)
+
+    # return make_response(jsonify(resp), resp["status"])
 
 
 @project_blueprint.route("download/<project_id>", methods=["GET"])
 @login_required
 def data_download(project_id):
-    data_path = request.form.get("data_path", None)
-    download_space = os.path.join(
-        current_app.config["DOWNLOAD_FOLDER"],
-        "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")),
-    )
-    cache_path = os.path.join(
-        current_app.config.get("LOCAL_TEMP_CACHE"),
-        "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
-    )
-    cmd = shlex.split(f"dds get -c {cache_path} -p {project_id} -d {download_space}")
-    if data_path:
-        cmd.extend(["-s", data_path])
-    else:
-        cmd.append("-a")
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate(input=None)
+    """Download data -- DEACTIVATED"""
 
-    # Clean up after success
-    @after_this_request
-    def clean_download_space(response):
-        if os.path.exists(download_space):
-            try:
-                shutil.rmtree(download_space)
-            except Exception as e:
-                current_app.logger.error(
-                    "Couldn't delete download space {}".format(download_space), flush=True
-                )
-        return response
+    pass
+    # data_path = request.form.get("data_path", None)
+    # download_space = os.path.join(
+    #     current_app.config["DOWNLOAD_FOLDER"],
+    #     "{}_T{}".format(project_id, timestamp(ts_format="%y%m%d%H%M%S")),
+    # )
+    # cache_path = os.path.join(
+    #     current_app.config.get("LOCAL_TEMP_CACHE"),
+    #     "{}_{}_cache.json".format(session.get("current_user"), session.get("usid")),
+    # )
+    # cmd = shlex.split(f"dds get -c {cache_path} -p {project_id} -d {download_space}")
+    # if data_path:
+    #     cmd.extend(["-s", data_path])
+    # else:
+    #     cmd.append("-a")
+    # proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # out, err = proc.communicate(input=None)
 
-    if proc.returncode == 0:
-        download_file_path = compile_download_file_path(download_space, project_id)
-        return send_file(download_file_path, as_attachment=True)
-    else:
-        current_app.logger.error(err)
-        abort(500, "Download failed, try again and if still see this message contact DC")
+    # # Clean up after success
+    # @after_this_request
+    # def clean_download_space(response):
+    #     if os.path.exists(download_space):
+    #         try:
+    #             shutil.rmtree(download_space)
+    #         except Exception as e:
+    #             current_app.logger.error(
+    #                 "Couldn't delete download space {}".format(download_space), flush=True
+    #             )
+    #     return response
+
+    # if proc.returncode == 0:
+    #     download_file_path = compile_download_file_path(download_space, project_id)
+    #     return send_file(download_file_path, as_attachment=True)
+    # else:
+    #     current_app.logger.error(err)
+    #     abort(500, "Download failed, try again and if still see this message contact DC")
 
 
 ########## HELPER CLASSES AND FUNCTIONS ##########

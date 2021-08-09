@@ -25,12 +25,13 @@ def fill_db():
     projects = [
         Project(
             public_id="public_project_id",
-            title="project_title",
+            title="test project_title",
             category="Category",
             date_created=timestamp(),
             date_updated=timestamp(),
             status="Ongoing",
-            description="This is a test project",
+            description="This is a test project. You will be able to upload to but NOT download "
+            "from this project. Create a new project to test the entire system. ",
             pi="PI",
             size=7357,
             bucket=f"publicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
