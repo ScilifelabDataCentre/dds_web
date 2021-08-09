@@ -182,15 +182,16 @@ def logout():
 @login_required
 def user_page(loginname=None):
     """User home page"""
-    # return session
+
     if session.get("is_admin"):
         return redirect(url_for("admin.admin_page"))
-    if session.get("is_facility"):
-        projects_list = db_utils.get_facilty_projects(fid=session["facility_id"])
     else:
         try:
-            projects_list = db_utils.get_user_projects(current_user=session.get("current_user"))
-        except sqlalchemy.exc.SQLAlchemy as sqlerr:
+            if session.get("is_facility"):
+                projects_list = db_utils.get_facilty_projects(facility_id=session["facility_id"])
+            else:
+                projects_list = db_utils.get_user_projects(current_user=session.get("current_user"))
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             # TODO (ina): Create custom error page
             app.logger.exception(sqlerr)
             return str(sqlerr), 500

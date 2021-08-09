@@ -18,10 +18,19 @@ def get_facility_column_by_username(fname, column) -> (str):
     return getattr(facility, column)
 
 
-def get_facilty_projects(fid, only_id=False) -> (list):
+def get_facilty_projects(facility_id) -> (list):
     """Gets all the project for the facility ID"""
-    project_list = models.Project.query.filter_by(facility_id=fid).all()
-    return project_list if not only_id else [prj.id for prj in project_list]
+
+    # Get all projects connected to facility
+    try:
+        project_list = models.Project.query.filter_by(facility_id=facility_id).all()
+    except sqlalchemy.exc.SQLAlchemyError:
+        raise
+
+    if not project_list:
+        project_list = []
+
+    return project_list
 
 
 def get_user_column_by_username(username, column) -> (str):
@@ -45,6 +54,9 @@ def get_user_projects(current_user) -> (list):
         )
     except sqlalchemy.exc.SQLAlchemyError:
         raise
+
+    if not projects:
+        projects = []
 
     return projects
 
