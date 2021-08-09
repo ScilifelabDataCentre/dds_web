@@ -26,10 +26,10 @@ def verify_user_pass(username, password):
     # Verify password and generate token
     if verify_password_argon2id(user.password, password):
         # TODO (ina): Look into moving this (below)
-        if "l" not in list(user.permissions):
-            raise exceptions.AuthenticationError(
-                f"The user '{username}' does not have any permissions"
-            )
+        # if "l" not in list(user.permissions):
+        #     raise exceptions.AuthenticationError(
+        #         f"The user '{username}' does not have any permissions"
+        #     )
 
         # Password correct
         return True
