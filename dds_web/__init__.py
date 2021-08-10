@@ -14,6 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_marshmallow import Marshmallow
 from logging.handlers import RotatingFileHandler
+from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 
 # Own modules
@@ -50,14 +51,49 @@ def create_app():
     # User config file, if using in production
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
-    # Set logger, to be used in the app
-    log_file = os.path.join(app.config.get("LOGS_DIR"), "actions.log")
-    log_formatter = logging.Formatter(
-        "[%(asctime)s] [%(levelname)s] %(module)s : %(test)s \n%(message)s"
+    # Setup logging handlers
+    dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "general": {"format": "[%(asctime)s] %(module)s [%(levelname)s] %(message)s"},
+                "actions": {
+                    "format": "[%(asctime)s] [%(levelname)s] %(module)s - [Action: %(action)s] [User: %(current_user)s] \n\t%(message)s"
+                },
+            },
+            "handlers": {
+                "general": {
+                    "level": logging.DEBUG,
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "filename": os.path.join(app.config.get("LOGS_DIR"), "dds.log"),
+                    "maxBytes": 100000000,
+                    "backupCount": 1,
+                    "formatter": "general",
+                },
+                "actions": {
+                    "level": logging.INFO,
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "filename": os.path.join(app.config.get("LOGS_DIR"), "actions.log"),
+                    "maxBytes": 100000000,
+                    "backupCount": 1,
+                    "formatter": "actions",
+                },
+            },
+            "loggers": {
+                "general": {
+                    "handlers": ["general"],
+                    "level": logging.DEBUG,
+                    "propagate": False,
+                },
+                "actions": {"handlers": ["actions"], "level": logging.INFO, "propagate": False},
+            },
+        }
     )
-    handler = RotatingFileHandler(log_file, maxBytes=100000000, backupCount=1)
-    handler.setFormatter(log_formatter)
-    app.logger.addHandler(handler)
+
+    # Set app.logger as the general logger
+    app.logger = logging.getLogger("general")
+    app.logger.debug("Logging initiated.")
 
     db.init_app(app)  # Initialize database
     # ma.init_app(app)
@@ -70,7 +106,6 @@ def create_app():
         server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
         client_kwargs={"scope": "openid profile email"},
     )
-    app.logger.debug("helly", extra={"test": "helly"})
     with app.app_context():  # Everything in here has access to sessions
         from dds_web import routes  # Import routes
         from dds_web.database import models

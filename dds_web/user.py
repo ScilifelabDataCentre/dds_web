@@ -3,6 +3,7 @@
 import flask
 from flask import render_template, request, current_app, session, redirect, url_for
 import sqlalchemy
+import logging
 
 from dds_web import timestamp, oauth
 from dds_web.api.login import ds_access
