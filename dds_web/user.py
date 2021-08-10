@@ -224,23 +224,3 @@ def account_methods():
         account_info["last_name"] = db_utils.get_user_column_by_username(username, "last_name")
 
         return account_info
-    if request.method == "PUT":
-        try:
-            a = request.json["new_name"]
-        except:
-            a = "no"
-        # update name and change primary
-        # for k in ["firstName", "lastName"]:
-        #     if not request.form.get(k):
-        #         return make_response(
-        #             jsonify({"status": 440, "message": f"Field '{k}' should not be empty"}), 440
-        #         )
-        return a
-    if request.method == "DELETE":
-        # delete email
-        #   should not be able to delete primary
-        return ""
-    if request.method == "POST":
-        # TO DO: POST request for adding a new email
-        # Might need to include a token for verifying email
-        return ""

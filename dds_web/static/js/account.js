@@ -76,7 +76,7 @@ app.component('v-account-home', {
                     <div class="col-sm">
                         {{ account_info.first_name }} {{ account_info.last_name }}
                     </div>
-                    <div>
+                    <div class="col-sm">
                             <button class="btn btn-sm btn-outline-info float-end px-1 mx-1 py-0">
                                 <i class="far fa-user-edit"></i>
                             </button>
@@ -136,16 +136,5 @@ app.component('v-account-home', {
         `
     }
 )
-
-// app.component('v-account-response', {
-//     template:
-//         /*html*/`
-//         <!-- Response messages -->
-//         <div id="response-container" class="alert alert-dismissible fade show my-4 d-none">
-//             <span></span>
-//             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-//         </div>
-//         `
-// } )
 
 app.mount('#account-vue-start-point')
