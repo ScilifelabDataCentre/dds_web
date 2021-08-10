@@ -26,7 +26,6 @@ from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.crypt.key_gen import project_keygen
 from dds_web.utils import login_required, working_directory, format_byte_size
-import sqlalchemy
 
 project_blueprint = Blueprint("project", __name__)
 
@@ -75,31 +74,16 @@ def add_project():
 @login_required
 def project_info(project_id=None):
     """Get the given project's info"""
-
-    # Get project object
-    try:
-        project_row = models.Project.query.filter(
-            models.Project.public_id == project_id
-        ).one_or_none()
-    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        return abort(500, str(sqlerr))
-
+    project_row = models.Project.query.filter_by(public_id=project_id).one_or_none()
     if not project_row:
-        return abort(404, "The project doesn't exist")
-
-    # Check that user has access to project
+        return abort(404, "Project doesn't exist")
     project_users = db_utils.get_project_users(project_id=project_row.id)
     if session.get("current_user") not in project_users:
         return abort(403, "You don't have access to this project")
-
-    # TODO (ina): Look through, feels like this could be simplified
     project_info = project_row.__dict__.copy()
-
-    # NOTE (ina): Not sure I understand why we would want to display all users here
-    # project_info["users"] = ", ".join(
-    #     db_utils.get_project_users(project_id=project_row.id, no_facility_users=True)
-    # )
-    project_info["users"] = "do we want to display this?"
+    project_info["users"] = ", ".join(
+        db_utils.get_project_users(project_id=project_row.id, no_facility_users=True)
+    )
     project_info["date_created"] = timestamp(datetime_string=project_info["date_created"])
     if project_info.get("date_updated"):
         project_info["date_updated"] = timestamp(datetime_string=project_info["date_updated"])
@@ -109,8 +93,6 @@ def project_info(project_id=None):
     project_info["facility_name"] = db_utils.get_facility_column(
         fid=project_info["facility_id"], column="name"
     )
-
-    # NOTE (ina): I'm guessing this will be very slow and use a lot of space if there are a huge number of files -- change method here?
     files_list = models.File.query.filter_by(project_id=project_info["id"]).all()
     if files_list:
         uploaded_data = dds_folder(files_list, project_id).generate_html_string()
