@@ -6,10 +6,11 @@ import sqlalchemy
 
 from dds_web import timestamp, oauth
 from dds_web.api.login import ds_access
-from dds_web.crypt.auth import validate_user_credentials
+from dds_web.crypt import auth as dds_auth
 from dds_web.database import models
 from dds_web.database import db_utils
 from dds_web.utils import login_required
+from dds_web import exceptions
 from dds_web import app
 
 user_blueprint = flask.Blueprint("user", __name__)
@@ -22,29 +23,48 @@ def login():
     if request.method == "GET":
         if session.get("is_admin"):
             return redirect(url_for("admin.admin_page"))
-        elif session.get("current_user") and session.get("usid"):
+        elif session.get("current_user"):
             return redirect(url_for("user.user_page", loginname=session["current_user"]))
         else:
             return render_template("user/login.html", next=request.args.get("next"))
 
+    # Login form procedure
     if request.method == "POST":
+        # Get username and password from form
         username = request.form.get("username")
         password = request.form.get("password")
-        credentials_validated, is_facility, message, user_info = validate_user_credentials(
-            username, password
-        )
-        if not credentials_validated:
-            return render_template(
-                "user/login.html", next=request.form.get("next"), login_error_message=message
-            )
-        session["current_user"] = user_info["username"]
-        session["current_user_id"] = user_info["id"]
-        session["is_admin"] = user_info.get("admin", False)
-        session["is_facility"] = is_facility
-        session["facility_name"] = user_info.get("facility_name")
-        session["facility_id"] = user_info.get("facility_id")
 
-        # temp admin fix
+        # Authenticate user
+        try:
+            user_ok = dds_auth.verify_user_pass(username=username, password=password)
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            # TODO (ina): Create custom error page
+            app.logger.exception(sqlerr)
+            return str(sqlerr), 500
+        except exceptions.AuthenticationError as autherr:
+            app.logger.exception(autherr)
+            return render_template(
+                "user/login.html", next=request.form.get("next"), login_error_message=str(autherr)
+            )
+
+        # User authentication not passed
+        if not user_ok:
+            return render_template(
+                "user/login.html",
+                next=request.form.get("next"),
+                login_error_message="Incorrect username and/or password!",
+            )
+
+        # Get session info on user and update session
+        try:
+            user_info = dds_auth.user_session_info(username=username)
+        except (sqlalchemy.exc.SQLAlchemyError, exceptions.DatabaseInconsistencyError) as err:
+            # TODO (ina): Create custom error page
+            app.logger.exception(err)
+            return str(err), 500
+
+        session.update(**user_info)
+
         if session["is_admin"]:
             to_go_url = url_for("admin.admin_page")
         else:
@@ -53,7 +73,33 @@ def login():
             else:
                 to_go_url = url_for("user.user_page", loginname=session["current_user"])
 
+        app.logger.debug(session)
         return redirect(to_go_url)
+        # credentials_validated, is_facility, message, user_info = validate_user_credentials(
+        #     username, password
+        # )
+        # if not credentials_validated:
+        #     return render_template(
+        #         "user/login.html", next=request.form.get("next"), login_error_message=message
+        #     )
+
+        # session["current_user"] = user_info["username"]
+        # session["current_user_id"] = user_info["id"]
+        # session["is_admin"] = user_info.get("admin", False)
+        # session["is_facility"] = is_facility
+        # session["facility_name"] = user_info.get("facility_name")
+        # session["facility_id"] = user_info.get("facility_id")
+
+        # temp admin fix
+        # if session["is_admin"]:
+        #     to_go_url = url_for("admin.admin_page")
+        # else:
+        #     if request.form.get("next"):
+        #         to_go_url = request.form.get("next")
+        #     else:
+        #         to_go_url = url_for("user.user_page", loginname=session["current_user"])
+
+        # return redirect(to_go_url)
 
 
 def do_login(session, identifier: str, password: str = ""):
@@ -79,7 +125,7 @@ def do_login(session, identifier: str, password: str = ""):
     user_info = account.user
     # Use the current login definitions for compatibility
     session["current_user"] = user_info.username
-    session["current_user_id"] = user_info.id
+    # session["current_user_id"] = user_info.id
     session["is_admin"] = user_info.role == "admin"
     session["is_facility"] = user_info.role == "facility"
     if session["is_facility"]:
@@ -123,12 +169,12 @@ def oidc_authorize():
 def logout():
     """Logout of a user account"""
     session.pop("current_user", None)
-    session.pop("current_user_id", None)
+    # session.pop("current_user_id", None)
     session.pop("is_facility", None)
     session.pop("is_admin", None)
     session.pop("facility_name", None)
     session.pop("facility_id", None)
-    session.pop("usid", None)
+    # session.pop("usid", None)
     return redirect(url_for("home"))
 
 
@@ -136,13 +182,20 @@ def logout():
 @login_required
 def user_page(loginname=None):
     """User home page"""
-    # return session
+
     if session.get("is_admin"):
         return redirect(url_for("admin.admin_page"))
-    if session["is_facility"]:
-        projects_list = db_utils.get_facilty_projects(fid=session["facility_id"])
     else:
-        projects_list = db_utils.get_user_projects(uid=session["current_user_id"])
+        try:
+            if session.get("is_facility"):
+                projects_list = db_utils.get_facilty_projects(facility_id=session["facility_id"])
+            else:
+                projects_list = db_utils.get_user_projects(current_user=session.get("current_user"))
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            # TODO (ina): Create custom error page
+            app.logger.exception(sqlerr)
+            return str(sqlerr), 500
+
     # TO DO: change dbfunc passing in future
     return render_template(
         "project/list_project.html",
