@@ -33,7 +33,7 @@ oauth = auth_flask_client.OAuth(app)
 def prepare():
     # Test line for global
     g.current_user = session.get("current_user")
-    g.current_user_id = session.get("current_user_id")
+    # g.current_user_id = session.get("current_user_id")
     g.is_facility = session.get("is_facility")
     g.is_admin = session.get("is_admin")
     if g.is_facility:
