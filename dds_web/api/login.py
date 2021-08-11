@@ -48,42 +48,42 @@ from dds_web.database import db_utils
 #     return True, s3_info.id, ""
 
 
-def ds_access(username, password, role) -> (bool, int, str):
-    """Finds facility in db and validates the password given by user.
+# def ds_access(username, password, role) -> (bool, int, str):
+#     """Finds facility in db and validates the password given by user.
 
-    Args:
-        username:   The users username
-        password:   The users password
+#     Args:
+#         username:   The users username
+#         password:   The users password
 
-    Returns:
-        tuple:  If access to DS granted, facility/user ID and error message
+#     Returns:
+#         tuple:  If access to DS granted, facility/user ID and error message
 
-    """
+#     """
 
-    if role == "facility":
-        table = models.Facility
-    elif role == "user":
-        table = models.User
-    else:
-        pass  # TODO (ina/senthil) : cancel/custom error here?
+#     if role == "facility":
+#         table = models.Facility
+#     elif role == "user":
+#         table = models.User
+#     else:
+#         pass  # TODO (ina/senthil) : cancel/custom error here?
 
-    # Get user from database
-    try:
-        user = (
-            table.query.filter_by(username=username).with_entities(table.id, table.password).first()
-        )
-    except sqlalchemy.exc.SQLAlchemyError as e:
-        print(str(e), flush=True)
+#     # Get user from database
+#     try:
+#         user = (
+#             table.query.filter_by(username=username).with_entities(table.id, table.password).first()
+#         )
+#     except sqlalchemy.exc.SQLAlchemyError as e:
+#         app.logger.exception(str(e))
 
-    # Return error if username doesn't exist in database
-    if user is None:
-        return False, 0, "The user does not exist"
+#     # Return error if username doesn't exist in database
+#     if user is None:
+#         return False, 0, "The user does not exist"
 
-    # Return error if the password doesn't match
-    if not verify_password(user[1], password):
-        return False, 0, "Incorrect password!"
+#     # Return error if the password doesn't match
+#     if not verify_password(user[1], password):
+#         return False, 0, "Incorrect password!"
 
-    return True, user[0], ""
+#     return True, user[0], ""
 
 
 def project_access(uid, project, owner, role="facility") -> (bool, str):
@@ -128,18 +128,19 @@ def project_access(uid, project, owner, role="facility") -> (bool, str):
     return True, project_info[1], ""
 
 
-def verify_password(db_pw, input_pw):
-    password_hasher = argon2.PasswordHasher()
-    try:
-        password_hasher.verify(db_pw, input_pw)
-    except (
-        argon2.exceptions.VerifyMismatchError,
-        argon2.exceptions.VerificationError,
-        argon2.exceptions.InvalidHash,
-    ) as err:
-        print(err, flush=True)
-        return False
-    return True
+# def verify_password(db_pw, input_pw):
+#     password_hasher = argon2.PasswordHasher()
+#     try:
+#         password_hasher.verify(db_pw, input_pw)
+#     except (
+#         argon2.exceptions.VerifyMismatchError,
+#         argon2.exceptions.VerificationError,
+#         argon2.exceptions.InvalidHash,
+#     ) as err:
+#         # possibly raise here instead like in other places
+#         app.logger.info(err)
+#         return False
+#     return True
 
 
 # def secure_password_hash(password_settings: str,
@@ -203,40 +204,40 @@ def gen_access_token(project, length: int = 16) -> (str):
     return token
 
 
-def validate_token(token: str, project_id):
-    """Checks that the token specified in the request is valid.
+# def validate_token(token: str, project_id):
+#     """Checks that the token specified in the request is valid.
 
-    Args:
-        token (str):    The request token
+#     Args:
+#         token (str):    The request token
 
-    Returns:
-        bool:   True if token validated
-    """
+#     Returns:
+#         bool:   True if token validated
+#     """
 
-    validated = False  # Returned variable - changes is validated
+#     validated = False  # Returned variable - changes is validated
 
-    # Get token from db matching the specified token in request
-    try:
-        token_info = models.Tokens.query.filter_by(token=token, project_id=project_id).first()
-    except sqlalchemy.exc.SQLAlchemyError as e:
-        print(e, flush=True)
-        return validated
+#     # Get token from db matching the specified token in request
+#     try:
+#         token_info = models.Tokens.query.filter_by(token=token, project_id=project_id).first()
+#     except sqlalchemy.exc.SQLAlchemyError as e:
+#         print(e, flush=True)
+#         return validated
 
-    # Access to project delivery not granted if the token is not in db
-    if token_info is None:
-        return validated
+#     # Access to project delivery not granted if the token is not in db
+#     if token_info is None:
+#         return validated
 
-    # Transform timestamps in db to datetime object
-    try:
-        date_time_created = datetime.datetime.strptime(token_info.created, "%Y-%m-%d %H:%M:%S.%f%z")
-        date_time_expires = datetime.datetime.strptime(token_info.expires, "%Y-%m-%d %H:%M:%S.%f%z")
-    except ValueError as e:
-        print(e, flush=True)
-        return validated
+#     # Transform timestamps in db to datetime object
+#     try:
+#         date_time_created = datetime.datetime.strptime(token_info.created, "%Y-%m-%d %H:%M:%S.%f%z")
+#         date_time_expires = datetime.datetime.strptime(token_info.expires, "%Y-%m-%d %H:%M:%S.%f%z")
+#     except ValueError as e:
+#         print(e, flush=True)
+#         return validated
 
-    # Get current time and check if it is within correct interval
-    now = datetime.datetime.now(tz=C_TZ)
-    if date_time_created < now < date_time_expires:
-        validated = True
+#     # Get current time and check if it is within correct interval
+#     now = datetime.datetime.now(tz=C_TZ)
+#     if date_time_created < now < date_time_expires:
+#         validated = True
 
-    return validated
+#     return validated

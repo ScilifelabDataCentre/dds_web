@@ -6,7 +6,6 @@ import sqlalchemy
 import logging
 
 from dds_web import timestamp, oauth
-from dds_web.api.login import ds_access
 from dds_web.crypt import auth as dds_auth
 from dds_web.database import models
 from dds_web.database import db_utils

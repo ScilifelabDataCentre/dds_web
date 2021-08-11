@@ -38,7 +38,7 @@ class DDSRotatingFileHandler(logging.handlers.RotatingFileHandler):
         filename,
         basedir,
         mode="a",
-        maxBytes=4,
+        maxBytes=1e9,
         backupCount=0,
         encoding=None,
         delay=0,
@@ -127,10 +127,9 @@ def create_app():
             "handlers": {
                 "general": {
                     "level": logging.DEBUG,
-                    "class": "logging.handlers.RotatingFileHandler",
-                    "filename": os.path.join(app.config.get("LOG_DIR"), "dds.log"),
-                    "maxBytes": 100000000,
-                    "backupCount": 1,
+                    "class": "dds_web.DDSRotatingFileHandler",
+                    "filename": "dds",
+                    "basedir": app.config.get("LOG_DIR"),
                     "formatter": "general",
                 },
                 "actions": {
@@ -154,10 +153,10 @@ def create_app():
 
     # Set app.logger as the general logger
     app.logger = logging.getLogger("general")
-    app.logger.debug("Logging initiated.")
+    app.logger.info("Logging initiated.")
 
-    test = logging.getLogger("actions")
-    test.info("testing......", extra={"action": "test", "current_user": "ma"})
+    action_logger = logging.getLogger("actions")
+    action_logger.info("Logging initiated.", extra={"action": "initiation", "current_user": "root"})
 
     db.init_app(app)  # Initialize database
     # ma.init_app(app)
@@ -185,7 +184,7 @@ def create_app():
                 fill_db()
             except Exception as err:
                 # don't care why, this will be removed soon anyway
-                print(f"-----------------{err}", flush=True)
+                app.logger.exception(str(err))
 
         from dds_web.api import api_blueprint
 

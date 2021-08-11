@@ -108,7 +108,7 @@ class ApiS3Connector:
             # 3. Get bucket name
             bucketname, error = dbconn.get_bucket_name()
 
-        print(s3keys, flush=True)
+        app.logger.debug(f"{s3keys}")
         return safespring_project, s3keys, endpoint_url, bucketname, error
 
     def get_safespring_project(self):

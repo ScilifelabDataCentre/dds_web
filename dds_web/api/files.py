@@ -458,7 +458,7 @@ class FileInfo(flask_restful.Resource):
         try:
             return flask.jsonify({"files": files_single, "folders": files_in_folders})
         except Exception as err:
-            print(str(err), flush=True)
+            app.logger.exception(str(err))
 
 
 class FileInfoAll(flask_restful.Resource):

@@ -175,8 +175,6 @@ class GetPrivate(flask_restful.Resource):
                 app.logger.exception(err)
                 return flask.make_response(str(err), 500)
 
-            # print(f"Decrypted key: {decrypted_key}", flush=True)
-
             return flask.jsonify({"private": decrypted_key.hex().upper()})
 
 
