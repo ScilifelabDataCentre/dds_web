@@ -28,6 +28,23 @@ ma = Marshmallow(app)
 C_TZ = pytz.timezone("Europe/Stockholm")
 oauth = auth_flask_client.OAuth(app)
 
+# CLASSES ########################################################### CLASSES #
+
+
+class DDSRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    def __init__(
+        self, filename, basedir, mode="a", maxBytes=10, backupCount=0, encoding=None, delay=0
+    ):
+        """ """
+
+        self.basedir_ = pathlib.Path(basedir)
+        self.active_file_name = self.basedir_ / pathlib.Path(filename)
+
+        logging.handlers.RotatingFileHandler.__init__(
+            self, self.active_file_name, mode, maxBytes, backupCount, encoding, delay
+        )
+
+
 # FUNCTIONS ####################################################### FUNCTIONS #
 
 
@@ -74,9 +91,10 @@ def create_app():
                 },
                 "actions": {
                     "level": logging.INFO,
-                    "class": "logging.handlers.RotatingFileHandler",
-                    "filename": os.path.join(app.config.get("LOG_DIR"), "actions.log"),
-                    "maxBytes": 100000000,
+                    "class": "dds_web.DDSRotatingFileHandler",
+                    "filename": "actions.log",
+                    "basedir": app.config.get("LOG_DIR"),
+                    "maxBytes": 10,
                     "backupCount": 1,
                     "formatter": "actions",
                 },
@@ -96,6 +114,8 @@ def create_app():
     app.logger = logging.getLogger("general")
     app.logger.debug("Logging initiated.")
 
+    action_logger = logging.getLogger("actions")
+    action_logger.info("testingtesting", extra={"action": "do", "current_user": "something"})
     db.init_app(app)  # Initialize database
     # ma.init_app(app)
 
