@@ -124,7 +124,7 @@ If you prefer, you can make a copy of the `.env` file somewhere and make edits t
 Then use the `--env-file` argument when running `docker-compose`, eg:
 
 ```bash
-docker-compose up --env-file ~/my_setup.env
+docker-compose --env-file ~/my_setup.env up
 ```
 
 ### Config file

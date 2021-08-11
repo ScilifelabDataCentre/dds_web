@@ -33,3 +33,4 @@ my_*
 dds_conf.yml
 safespring_invoicespec.csv
 dds_web/development/invoicing/*
+env_variables.env

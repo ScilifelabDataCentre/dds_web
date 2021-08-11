@@ -5,7 +5,7 @@ class Config(object):
     SECRET_KEY = "RANDOM_HASH_HERE"
 
     # DB related config
-    # SQLALCHEMY_DATABASE_URI = "mysql+pymysql://TEST_USER:TEST_PASSWORD@db/DeliverySystem"
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://TEST_USER:TEST_PASSWORD@db/DeliverySystem"
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -15,7 +15,7 @@ class Config(object):
 
     # Expected paths - these are the bind paths *inside* the container
     USE_LOCAL_DB = True
-    LOGS_DIR = "/dds_web/logs"
+    LOG_DIR = "/dds_web/logs"
     UPLOAD_FOLDER = "/dds_web/uploads"
     DOWNLOAD_FOLDER = "/dds_web/downloads"
     LOCAL_TEMP_CACHE = "/dds_web/local_temp_cache"

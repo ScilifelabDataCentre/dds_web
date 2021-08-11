@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import pytz
 import logging
 import os
+import pathlib
 
 # Installed
 from flask import Flask, g, render_template, session
@@ -66,7 +67,7 @@ def create_app():
                 "general": {
                     "level": logging.DEBUG,
                     "class": "logging.handlers.RotatingFileHandler",
-                    "filename": os.path.join(app.config.get("LOGS_DIR"), "dds.log"),
+                    "filename": os.path.join(app.config.get("LOG_DIR"), "dds.log"),
                     "maxBytes": 100000000,
                     "backupCount": 1,
                     "formatter": "general",
@@ -74,7 +75,7 @@ def create_app():
                 "actions": {
                     "level": logging.INFO,
                     "class": "logging.handlers.RotatingFileHandler",
-                    "filename": os.path.join(app.config.get("LOGS_DIR"), "actions.log"),
+                    "filename": os.path.join(app.config.get("LOG_DIR"), "actions.log"),
                     "maxBytes": 100000000,
                     "backupCount": 1,
                     "formatter": "actions",
