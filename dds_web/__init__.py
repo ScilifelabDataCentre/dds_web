@@ -8,6 +8,7 @@ import pytz
 import logging
 import os
 import pathlib
+import time
 
 # Installed
 from flask import Flask, g, render_template, session
@@ -37,7 +38,7 @@ class DDSRotatingFileHandler(logging.handlers.RotatingFileHandler):
         filename,
         basedir,
         mode="a",
-        maxBytes=1e9,
+        maxBytes=4,
         backupCount=0,
         encoding=None,
         delay=0,
@@ -48,6 +49,7 @@ class DDSRotatingFileHandler(logging.handlers.RotatingFileHandler):
         reaches <maxBytes> --> Current logging always to <filename>.log.
         """
 
+        self.today_ = datetime.now() if not hasattr(self, "today_") else self.today_
         self.basedir_ = pathlib.Path(basedir)  # Log directory
         self.basename = pathlib.Path(filename)  # Base for all filenames
         self.active_file_name = self.basedir_ / self.basename.with_suffix(".log")  # Active file
@@ -73,9 +75,15 @@ class DDSRotatingFileHandler(logging.handlers.RotatingFileHandler):
                 # Create time stamp and rename the current log file to contain rollover timestamp
                 new_today = datetime.now()
                 replacement_name = pathlib.Path(
-                    str(self.basename) + "_" + new_today.strftime("%Y-%m-%d-%H-%M-%S") + ".log"
+                    str(self.basename)
+                    + "_"
+                    + self.today_.strftime("%Y-%m-%d-%H-%M-%S")
+                    + "_"
+                    + new_today.strftime("%Y-%m-%d-%H-%M-%S")
+                    + ".log"
                 )
                 self.active_file_name.rename(target=pathlib.Path(self.basedir_ / replacement_name))
+                self.today_ = new_today
                 return 1
 
         return 0
@@ -148,7 +156,8 @@ def create_app():
     app.logger = logging.getLogger("general")
     app.logger.debug("Logging initiated.")
 
-    action_logger = logging.getLogger("actions")
+    test = logging.getLogger("actions")
+    test.info("testing......", extra={"action": "test", "current_user": "ma"})
 
     db.init_app(app)  # Initialize database
     # ma.init_app(app)
