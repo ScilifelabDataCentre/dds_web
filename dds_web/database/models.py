@@ -118,9 +118,7 @@ class User(db.Model):
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
 
     # One user can have many email addresses
-    emails = db.relationship(
-        "Email", back_populates="user", lazy="dynamic", cascade="all, delete-orphan"
-    )
+    emails = db.relationship("Email", backref="users", lazy="dynamic", cascade="all, delete-orphan")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -161,11 +159,12 @@ class Email(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    # Foreign key: One user can have multiple email addresses.
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(80), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
-    user = db.relationship("User", back_populates="emails")
+
+    # Foreign key: One user can have multiple email addresses.
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
 
     def __repr__(self):
         """Called by print, creates representation of object"""

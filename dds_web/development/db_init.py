@@ -7,7 +7,7 @@ from flask import current_app
 
 from dds_web import db, timestamp
 
-from dds_web.database.models import User, Project, Facility, File, Version
+from dds_web.database.models import User, Project, Facility, File, Version, Email
 
 
 def fill_db():
@@ -107,10 +107,35 @@ def fill_db():
         )
     ]
 
+    emails = [
+        Email(
+            user_id = users[0],
+            email = "one@email.com",
+            primary = True),
+        Email(
+            user_id = users[0],
+            email = "two@email.com",
+            primary = False),
+        Email(
+            user_id = users[1],
+            email = "three@email.com",
+            primary = True),
+        Email(
+            user_id = users[1],
+            email = "four@email.com",
+            primary = False),
+    ]
+
     # Foreign key/relationship updates
     for p in projects:
         for u in users:
             u.projects.append(p)
+
+    for e in emails[0:2]:
+        users[0].emails.append(e)
+
+    for e in emails[2:4]:
+        users[1].emails.append(e)
 
     for u in users:
         if u.facility_id:
@@ -119,6 +144,8 @@ def fill_db():
     for f in files:
         projects[0].files.append(f)
 
+    for p in projects:
+        facilities[0].projects.append(p)
     for p in projects:
         facilities[0].projects.append(p)
 
@@ -131,6 +158,7 @@ def fill_db():
     db.session.add_all(users)
     db.session.add_all(files)
     db.session.add_all(versions)
+    db.session.add_all(emails)
 
     # Required for change in db
     db.session.commit()

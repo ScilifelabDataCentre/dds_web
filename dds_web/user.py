@@ -196,16 +196,16 @@ def account_methods():
         ]
 
         # TO DO: the database does not contain any email addresses yet. When it does this line with dummy data should be removed.
-        account_info["emails"] = [
-            {"address": "one@mail.com", "primary": False},
-            {"address": "two@mail.com", "primary": False},
-        ]
+        # account_info["emails"] = [
+        #     {"address": "one@mail.com", "primary": False},
+        #     {"address": "two@mail.com", "primary": False},
+        # ]
 
         # TO DO: Make this update in db also, i.e not only for printing as it is now
-        if len(account_info["emails"]) != 0:
-            if not (True in [email.get("primary") for email in account_info["emails"]]):
-                update_to_primary = account_info["emails"][0]
-                update_to_primary["primary"] = True
+        # if len(account_info["emails"]) != 0:
+        #     if not (True in [email.get("primary") for email in account_info["emails"]]):
+        #         update_to_primary = account_info["emails"][0]
+        #         update_to_primary["primary"] = True
         account_info["emails"] = sorted(
             account_info["emails"], key=lambda k: k["primary"], reverse=True
         )
