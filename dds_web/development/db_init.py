@@ -134,8 +134,6 @@ def fill_db():
 
     for p in projects:
         facilities[0].projects.append(p)
-    for p in projects:
-        facilities[0].projects.append(p)
 
     for v in versions:
         projects[0].file_versions.append(v)

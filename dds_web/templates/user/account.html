@@ -2,21 +2,37 @@
 
 {% block body %}
 
-<div class="row mb-3">
-  <h1 class="mb-4"> Account Information </h1>
+<div class="container w-75 mx-auto bg-light mb-4 px-3 py-1">
+    <div class="row my-3">
+        <div class="col-sm">
+            <b>Username</b>
+        </div>
+        <div class="col-sm">
+            {{ account_info.username }}
+        </div>
+    </div>
+    <div class="row my-3">
+        <div class="col-sm">
+            <b>Name</b>
+        </div>
+        <div class="col-sm">
+            {{ account_info.first_name }} {{ account_info.last_name }}
+        </div>
+    </div>
+    {% for i, email in enumerate(account_info.emails) %}
+        <div class="row my-2">
+            <div class="col-sm">
+                {% if i == 0 %}
+                    <b> Email </b>
+                {% endif %}
+            </div>
+            <div class="col-sm">
+                {{ email.address }}
+                {% if email.primary == true and len(account_info.emails) > 1 %}
+                    <span class="badge bg-info mx-2 px-1 me-2 "> Primary </span>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
 </div>
-
-<div id='account-vue-start-point'>
-    <v-account-home/>
-</div>
-
-
 {% endblock %}
-
-{% block javascript %}
-
-<script src="{{ url_for('static', filename='node_modules/vue/dist/vue.global.js') }}"></script>
-<script src="{{ url_for('static', filename='node_modules/axios/dist/axios.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/account.js') }}"></script>
-
-{% endblock javascript %}

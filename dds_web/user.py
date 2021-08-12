@@ -1,7 +1,7 @@
 "User display and login/logout HTMl endpoints."
 
 import flask
-from flask import render_template, request, current_app, session, redirect, url_for, jsonify
+from flask import render_template, request, current_app, session, redirect, url_for
 import sqlalchemy
 
 from dds_web import timestamp, oauth
@@ -162,19 +162,10 @@ def user_page(loginname=None):
 #         pass
 
 
-@user_blueprint.route("/account")
+@user_blueprint.route("/account", methods=["GET"])
 @login_required
 def account_info():
     """User account page"""
-
-    return render_template("user/account.html")
-
-
-# TO DO: MAYBE MOVE THIS TO THE API (OR KEEP IT HERE IF API IS ONLY FOR CLI)
-@user_blueprint.route("/account_methods", methods=["POST", "DELETE", "GET", "PUT"])
-@login_required
-def account_methods():
-    """account page"""
 
     username = session["current_user"]
     uid = session["current_user_id"]
@@ -212,4 +203,4 @@ def account_methods():
         account_info["first_name"] = db_utils.get_user_column_by_username(username, "first_name")
         account_info["last_name"] = db_utils.get_user_column_by_username(username, "last_name")
 
-        return account_info
+    return render_template("user/account.html", enumerate=enumerate, len=len, account_info=account_info)
