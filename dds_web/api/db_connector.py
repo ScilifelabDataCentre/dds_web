@@ -11,7 +11,7 @@ import time
 import datetime
 
 # Installed
-import flask
+import flask  # used
 import sqlalchemy
 from sqlalchemy.sql import func
 

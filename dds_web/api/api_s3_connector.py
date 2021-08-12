@@ -12,15 +12,13 @@ import sys
 import dataclasses
 import functools
 
-# import requests
 import pathlib
 import json
 
 # Installed
 import boto3
 import botocore
-import sqlalchemy
-import flask
+import flask  # used
 
 # Own modules
 from dds_web import app

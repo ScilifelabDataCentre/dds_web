@@ -43,7 +43,9 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
             },
             app.config["SECRET_KEY"],
         )
-    except Exception:
+        app.logger.debug(f"token: {token}")
+    except Exception as err:
+        app.logger.exception(err)
         raise
     else:
         return token

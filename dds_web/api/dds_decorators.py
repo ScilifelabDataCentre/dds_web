@@ -33,7 +33,7 @@ def token_required(f):
         # Get the token from the header
         if "x-access-token" in flask.request.headers:
             token = flask.request.headers["x-access-token"]
-
+            app.logger.debug(f"token recieved: {token}")
         # Deny access if token is missing
         if token is None or not token:
             return flask.make_response("Token is missing!", 401)
