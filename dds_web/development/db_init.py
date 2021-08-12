@@ -6,6 +6,7 @@ import uuid
 from flask import current_app
 
 from dds_web import db, timestamp
+from dds_web.crypt import auth
 
 from dds_web.database.models import User, Project, Facility, File, Version, Email
 
@@ -46,7 +47,7 @@ def fill_db():
     users = [
         User(
             username="username",
-            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
+            password=auth.gen_argon2hash(password="password"),
             role="researcher",
             permissions="-gl--",
             first_name="User",
@@ -55,7 +56,7 @@ def fill_db():
         ),
         User(
             username="admin",
-            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
+            password=auth.gen_argon2hash(password="password"),
             role="admin",
             permissions="a-l--",
             first_name="Ad",
@@ -64,7 +65,7 @@ def fill_db():
         ),
         User(
             username="facility_admin",
-            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
+            password=auth.gen_argon2hash(password="password"),
             role="facility",
             permissions="a-l--",
             first_name="Facility",
@@ -73,7 +74,7 @@ def fill_db():
         ),
         User(
             username="facility",
-            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
+            password=auth.gen_argon2hash(password="password"),
             role="facility",
             permissions="--lpr",
             first_name="Faci",

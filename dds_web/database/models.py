@@ -41,7 +41,7 @@ class Facility(db.Model):
 project_users = db.Table(
     "project_users",
     db.Column("project_id", db.Integer, db.ForeignKey("projects.id")),
-    db.Column("user_id", db.Integer, db.ForeignKey("users.id")),
+    db.Column("user", db.String(20), db.ForeignKey("users.username")),
 )
 
 
@@ -96,8 +96,8 @@ class User(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
+    # id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(20), primary_key=True, autoincrement=False)
     password = db.Column(db.String(120), unique=False, nullable=False)
     role = db.Column(db.String(50), unique=False, nullable=False)
     permissions = db.Column(db.String(5), unique=False, nullable=False, default="--l--")
@@ -123,7 +123,7 @@ class User(db.Model):
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<User {self.public_id}>"
+        return f"<User {self.username}>"
 
 
 class Identifier(db.Model):
@@ -139,7 +139,7 @@ class Identifier(db.Model):
 
     # Columns
     # Foreign keys
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
+    username = db.Column(db.String(20), db.ForeignKey("users.username"), primary_key=True)
     identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
     user = db.relationship("User", back_populates="identifiers")
 

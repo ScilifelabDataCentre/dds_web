@@ -2,10 +2,74 @@
 
 import argon2
 
-from sqlalchemy.exc import SQLAlchemyError
+import sqlalchemy
 
 from dds_web.database import models
 from sqlalchemy.sql import func
+from dds_web import exceptions
+from flask import session
+
+
+def verify_user_pass(username, password):
+    """Verify that user exists and password is correct."""
+
+    # Verify existing user
+    try:
+        user = models.User.query.filter(models.User.username == func.binary(username)).first()
+    except sqlalchemy.exc.SQLAlchemyError:
+        raise
+
+    # User exists and password correct
+    if user and verify_password_argon2id(user.password, password):
+        return True
+
+    raise exceptions.AuthenticationError("Incorrect username and/or password!")
+
+
+def user_session_info(username):
+    """Gets session info about the user."""
+
+    # Get user role and facility ID
+    try:
+        user = (
+            models.User.query.filter(models.User.username == func.binary(username))
+            .with_entities(models.User.role, models.User.facility_id)
+            .first()
+        )
+    except sqlalchemy.exc.SQLAlchemyError:
+        raise
+
+    # Raise exception if there is no user
+    if not user:
+        raise exceptions.DatabaseInconsistencyError("Unable to retrieve user role.")
+
+    # Setup session info default
+    user_info = {"current_user": username, "is_facility": False, "is_admin": False}
+
+    # Admin and facility specific info
+    if user[0] == "admin":
+        user_info["is_admin"] = True
+    elif user[0] == "facility":
+        if not user[1]:
+            raise exceptions.DatabaseInconsistencyError(
+                "Missing facility ID for facility type user."
+            )
+
+        # Get facility name from database
+        try:
+            facility_info = (
+                models.Facility.query.filter(models.Facility.id == func.binary(user[1]))
+                .with_entities(models.Facility.name)
+                .first()
+            )
+        except sqlalchemy.exc.SQLAlchemyError:
+            raise
+
+        user_info.update(
+            {"is_facility": True, "facility_id": user[1], "facility_name": facility_info[0]}
+        )
+
+    return user_info
 
 
 def gen_argon2hash(
@@ -54,34 +118,3 @@ def verify_password_argon2id(db_pw, input_pw):
     # TODO (ina): Add check_needs_rehash?
 
     return True
-
-
-def validate_user_credentials(username, password):
-    """Verifies if the given username and password is the match."""
-
-    # TODO (ina): This is a version of the REST API authentication, both should use the same
-    # base methods and call common functions where they are identical.
-    try:
-        uaccount = models.User.query.filter(models.User.username == func.binary(username)).first()
-    except SQLAlchemyError as e:
-        print(str(e), flush=True)
-        return (False, None, "Username not found (Credentials are case sensitive)", None)
-
-    if not verify_password_argon2id(uaccount.password, password):
-        return (False, None, "Incorrect password", None)
-
-    uinfo = {"username": uaccount.username, "id": uaccount.id}
-    if uaccount.role == "facility":
-        try:
-            facility_info = models.Facility.query.filter(
-                models.Facility.id == func.binary(uaccount.facility_id)
-            ).first()
-        except SQLAlchemyError as e:
-            return (False, None, "No facility found.", None)
-
-        uinfo["facility_name"] = facility_info.name
-        uinfo["facility_id"] = facility_info.id
-    elif uaccount.role == "admin":
-        uinfo["admin"] = True
-
-    return (True, uaccount.role == "facility", "Validate successful", uinfo)

@@ -1,6 +1,6 @@
 argon2_cffi
 boto3
-cryptography==3.3.2
+cryptography==3.4.7
 Flask==1.1.2
 flask-marshmallow==0.14.0
 Flask-RESTful==0.3.8
@@ -14,3 +14,4 @@ PyJWT==v1.7.1
 zstandard
 authlib
 apscheduler
+pytest==6.2.4
