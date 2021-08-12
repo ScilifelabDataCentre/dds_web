@@ -19,23 +19,11 @@ def verify_user_pass(username, password):
     except sqlalchemy.exc.SQLAlchemyError:
         raise
 
-    # User does not exist
-    if not user:
-        raise exceptions.AuthenticationError("Incorrect username and/or password!")
-
-    # Verify password and generate token
-    if verify_password_argon2id(user.password, password):
-        # TODO (ina): Look into moving this (below)
-        # if "l" not in list(user.permissions):
-        #     raise exceptions.AuthenticationError(
-        #         f"The user '{username}' does not have any permissions"
-        #     )
-
-        # Password correct
+    # User exists and password correct
+    if user and verify_password_argon2id(user.password, password):
         return True
 
-    # Password incorrect
-    return False
+    raise exceptions.AuthenticationError("Incorrect username and/or password!")
 
 
 def user_session_info(username):
@@ -130,35 +118,3 @@ def verify_password_argon2id(db_pw, input_pw):
     # TODO (ina): Add check_needs_rehash?
 
     return True
-
-
-def validate_user_credentials(username, password):
-    """Verifies if the given username and password is the match."""
-
-    # TODO (ina): This is a version of the REST API authentication, both should use the same
-    # base methods and call common functions where they are identical.
-    # Check if user in db
-    try:
-        uaccount = models.User.query.filter(models.User.username == func.binary(username)).first()
-    except SQLAlchemyError as e:
-        print(str(e), flush=True)
-        return (False, None, "Username not found (Credentials are case sensitive)", None)
-
-    if not verify_password_argon2id(uaccount.password, password):
-        return (False, None, "Incorrect password", None)
-
-    uinfo = {"username": uaccount.username, "id": uaccount.id}
-    if uaccount.role == "facility":
-        try:
-            facility_info = models.Facility.query.filter(
-                models.Facility.id == func.binary(uaccount.facility_id)
-            ).first()
-        except SQLAlchemyError as e:
-            return (False, None, "No facility found.", None)
-
-        uinfo["facility_name"] = facility_info.name
-        uinfo["facility_id"] = facility_info.id
-    elif uaccount.role == "admin":
-        uinfo["admin"] = True
-
-    return (True, uaccount.role == "facility", "Validate successful", uinfo)
