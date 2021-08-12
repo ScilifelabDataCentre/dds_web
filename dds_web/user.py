@@ -37,14 +37,10 @@ def login():
         # Authenticate user
         try:
             user_ok = dds_auth.verify_user_pass(username=username, password=password)
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            # TODO (ina): Create custom error page
-            app.logger.exception(sqlerr)
-            return str(sqlerr), 500
-        except exceptions.AuthenticationError as autherr:
-            app.logger.exception(autherr)
+        except (sqlalchemy.exc.SQLAlchemyError, exceptions.AuthenticationError) as err:
+            app.logger.exception(err)
             return render_template(
-                "user/login.html", next=request.form.get("next"), login_error_message=str(autherr)
+                "user/login.html", next=request.form.get("next"), login_error_message=str(err)
             )
 
         # User authentication not passed
