@@ -19,6 +19,14 @@
             {{ account_info.first_name }} {{ account_info.last_name }}
         </div>
     </div>
+    <div class="row my-3">
+        <div class="col-sm">
+            <b>Permissions</b>
+        </div>
+        <div class="col-sm">
+            {{ account_info.permissions }}
+        </div>
+    </div>
     {% for i, email in enumerate(account_info.emails) %}
         <div class="row my-2">
             <div class="col-sm">
