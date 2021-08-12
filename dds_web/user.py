@@ -217,15 +217,14 @@ def account_info():
     """User account page"""
 
     username = session["current_user"]
-    uid = session["current_user_id"]
 
     if request.method == "GET":
-        # Fetch all user informationand save to account_info dict.
+        # Fetch all user information and save to account_info dict.
         account_info = {}
 
         account_info["username"] = username
 
-        emails = db_utils.get_user_emails(uid)
+        emails = db_utils.get_user_emails(username)
         account_info["emails"] = [
             {
                 "address": getattr(user_row, "email", None),
@@ -252,4 +251,6 @@ def account_info():
         account_info["first_name"] = db_utils.get_user_column_by_username(username, "first_name")
         account_info["last_name"] = db_utils.get_user_column_by_username(username, "last_name")
 
-    return render_template("user/account.html", enumerate=enumerate, len=len, account_info=account_info)
+    return render_template(
+        "user/account.html", enumerate=enumerate, len=len, account_info=account_info
+    )
