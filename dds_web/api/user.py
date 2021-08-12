@@ -23,6 +23,8 @@ from dds_web import app, timestamp
 from dds_web.database import models
 from dds_web.crypt.auth import gen_argon2hash, verify_password_argon2id
 from dds_web.api.dds_decorators import token_required
+from dds_web import exceptions
+from dds_web.crypt import auth as dds_auth
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -32,7 +34,6 @@ from dds_web.api.dds_decorators import token_required
 def jwt_token(username, project_id, project_access=False, permission="ls"):
     """Generates and encodes a JWT token."""
 
-    token, error = (None, "")
     try:
         token = jwt.encode(
             {
@@ -42,10 +43,10 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
             },
             app.config["SECRET_KEY"],
         )
-    except Exception as err:
-        token, error = (None, str(err))
-
-    return token, error
+    except Exception:
+        raise
+    else:
+        return token
 
 
 ###############################################################################
@@ -62,45 +63,34 @@ class AuthenticateUser(flask_restful.Resource):
         # Get username and password from CLI request
         auth = flask.request.authorization
         if not auth or not auth.username or not auth.password:
-            return flask.make_response("Could not verify", 401)
+            return flask.make_response("User credentials missing.", 401)
 
         # Project not required, will be checked for future operations
         args = flask.request.args
-        if "project" not in args:
-            project = None
-        else:
-            project = args["project"]
+        project = args.get("project")
 
-        # Check if user in db
+        # Verify username and password
         try:
-            user = models.User.query.filter(
-                models.User.username == func.binary(auth.username)
-            ).first()
+            user_ok = dds_auth.verify_user_pass(username=auth.username, password=auth.password)
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            return flask.make_response(f"Database connection failed: {sqlerr}", 500)
+            app.logger.exception(sqlerr)
+            return flask.make_response(str(sqlerr), 500)
+        except exceptions.AuthenticationError as autherr:
+            app.logger.exception(autherr)
+            return flask.make_response(str(autherr), 401)
 
-        if not user:
-            return flask.make_response(
-                f"User not found in system. User access denied: '{auth.username}'", 401
-            )
+        # User credentials incorrect
+        if not user_ok:
+            return flask.make_response("Incorrect username and/or password!", 401)
 
-        # Verify user password and generate token
-        if verify_password_argon2id(user.password, auth.password):
-            if "l" not in list(user.permissions):
-                return flask.make_response(
-                    f"The user '{auth.username}' does not have any permissions", 401
-                )
-
-            token, error = jwt_token(username=user.username, project_id=project)
-            if token is None:
-                return flask.make_response(error, 500)
-
-            # Success - return token
+        # Generate and return jwt token
+        try:
+            token = jwt_token(username=auth.username, project_id=project)
+        except Exception as err:
+            return flask.make_response(str(err), 500)
+        else:
             app.logger.debug("Token generated. Returning to CLI.")
             return flask.jsonify({"token": token.decode("UTF-8")})
-
-        # Failed - incorrect password
-        return flask.make_response("Incorrect password!", 401)
 
 
 class ShowUsage(flask_restful.Resource):

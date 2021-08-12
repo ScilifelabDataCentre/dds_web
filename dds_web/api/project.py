@@ -83,13 +83,14 @@ class ProjectAccess(flask_restful.Resource):
         app.logger.debug("User projects: %s", current_user.projects)
         if project["id"] in [x.public_id for x in current_user.projects]:
             app.logger.debug("Updating token...")
-            token, error = jwt_token(
-                username=current_user.username,
-                project_id=project["id"],
-                project_access=True,
-                permission=args["method"],
-            )
-            if token is None:
+            try:
+                token = jwt_token(
+                    username=current_user.username,
+                    project_id=project["id"],
+                    project_access=True,
+                    permission=args["method"],
+                )
+            except Exception as error:  # should be changed -- not specific enough but leaving for now
                 return flask.make_response(error, 500)
 
             # Project access granted
