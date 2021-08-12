@@ -108,22 +108,10 @@ def fill_db():
     ]
 
     emails = [
-        Email(
-            user_id = users[0],
-            email = "one@email.com",
-            primary = True),
-        Email(
-            user_id = users[0],
-            email = "two@email.com",
-            primary = False),
-        Email(
-            user_id = users[1],
-            email = "three@email.com",
-            primary = True),
-        Email(
-            user_id = users[1],
-            email = "four@email.com",
-            primary = False),
+        Email(user_id=users[0], email="one@email.com", primary=True),
+        Email(user_id=users[0], email="two@email.com", primary=False),
+        Email(user_id=users[1], email="three@email.com", primary=True),
+        Email(user_id=users[1], email="four@email.com", primary=False),
     ]
 
     # Foreign key/relationship updates
