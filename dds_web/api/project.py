@@ -60,7 +60,7 @@ class ProjectAccess(flask_restful.Resource):
         app.logger.debug("Getting project from db.")
         try:
             attempted_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(project["id"])
+                models.Project.public_id == project["id"]
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             return flask.make_response(f"Database connection failed: {sqlerr}", 500)

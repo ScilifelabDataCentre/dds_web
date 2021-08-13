@@ -15,7 +15,7 @@ def verify_user_pass(username, password):
 
     # Verify existing user
     try:
-        user = models.User.query.filter(models.User.username == func.binary(username)).first()
+        user = models.User.query.filter(models.User.username == username).first()
     except sqlalchemy.exc.SQLAlchemyError:
         raise
 
