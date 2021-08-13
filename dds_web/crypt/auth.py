@@ -15,11 +15,11 @@ def verify_user_pass(username, password):
 
     # Verify existing user
     try:
-        user = models.User.query.filter(models.User.username == func.binary(username)).first()
+        user = models.User.query.filter(models.User.username == username).first()
     except sqlalchemy.exc.SQLAlchemyError:
         raise
 
-    # User exists and password matches
+    # User exists and password correct
     if user and verify_password_argon2id(user.password, password):
         return True
 
@@ -118,6 +118,7 @@ def verify_password_argon2id(db_pw, input_pw):
     # TODO (ina): Add check_needs_rehash?
 
     return True
+<<<<<<< HEAD
 
 
 # def validate_user_credentials(username, password):
@@ -151,3 +152,5 @@ def verify_password_argon2id(db_pw, input_pw):
 #         uinfo["admin"] = True
 
 #     return (True, uaccount.role == "facility", "Validate successful", uinfo)
+=======
+>>>>>>> binary_safespring_fix

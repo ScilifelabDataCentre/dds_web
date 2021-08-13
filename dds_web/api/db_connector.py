@@ -432,6 +432,7 @@ class DBConnector:
             sfsp_proj = current_project_facility_safespring[1]
         except sqlalchemy.exc.SQLAlchemyError as err:
             error = str(err)
+            app.logger.exception(err)
 
         return sfsp_proj, error
 

@@ -61,6 +61,7 @@ class ApiS3Connector:
             self.resource = None
 
         except (ValueError, IOError, AssertionError) as err:
+            app.logger.exception(err)
             flask.abort(500, str(err))
 
     @connect_cloud
@@ -82,7 +83,10 @@ class ApiS3Connector:
 
         with DBConnector() as dbconn:
             safespring_project, error = dbconn.cloud_project()
-        assert safespring_project
+            app.logger.debug(f"Safespring project: {safespring_project}")
+
+        if safespring_project is None:
+            raise Exception("this is not working")
 
         s3keys = {}
         bucketname = None

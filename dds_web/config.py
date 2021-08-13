@@ -1,3 +1,6 @@
+import os
+
+
 class Config(object):
     """Base config"""
 
@@ -19,8 +22,8 @@ class Config(object):
     UPLOAD_FOLDER = "/dds_web/uploads"
     DOWNLOAD_FOLDER = "/dds_web/downloads"
     LOCAL_TEMP_CACHE = "/dds_web/local_temp_cache"
-    DDS_S3_CONFIG = "/code/dds_web/s3_config.json"
-    DDS_SAFE_SPRING_PROJECT = "SAFESPRING-PROJECT-NOT-SET"
+    DDS_S3_CONFIG = "/code/dds_web/sensitive/s3_config.json"
+    DDS_SAFE_SPRING_PROJECT = os.environ.get("DDS_SAFE_SPRING_PROJECT")
 
     # Devel settings
     TEMPLATES_AUTO_RELOAD = True

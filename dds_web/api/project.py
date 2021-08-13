@@ -60,7 +60,7 @@ class ProjectAccess(flask_restful.Resource):
         app.logger.debug("Getting project from db.")
         try:
             attempted_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(project["id"])
+                models.Project.public_id == project["id"]
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             return flask.make_response(f"Database connection failed: {sqlerr}", 500)
@@ -83,7 +83,6 @@ class ProjectAccess(flask_restful.Resource):
         app.logger.debug("User projects: %s", current_user.projects)
         if project["id"] in [x.public_id for x in current_user.projects]:
             app.logger.debug("Updating token...")
-
             try:
                 token = jwt_token(
                     username=current_user.username,
@@ -91,8 +90,8 @@ class ProjectAccess(flask_restful.Resource):
                     project_access=True,
                     permission=args["method"],
                 )
-            except Exception as err:  # Should be changed here and in dds_decorators to better excp
-                return flask.make_response(str(err), 500)
+            except Exception as error:  # should be changed -- not specific enough but leaving for now
+                return flask.make_response(error, 500)
 
             # Project access granted
             return flask.jsonify(

@@ -27,10 +27,7 @@ def get_facilty_projects(facility_id) -> (list):
     except sqlalchemy.exc.SQLAlchemyError:
         raise
 
-    if not project_list:
-        project_list = []
-
-    return project_list
+    return project_list if project_list else []
 
 
 def get_user_column_by_username(username, column) -> (str):
@@ -55,10 +52,7 @@ def get_user_projects(current_user) -> (list):
     except sqlalchemy.exc.SQLAlchemyError:
         raise
 
-    if not projects:
-        projects = []
-
-    return projects
+    return projects if projects else []
 
 
 def get_project_users(project_id, no_facility_users=False) -> (list, list):
