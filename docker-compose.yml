@@ -39,6 +39,7 @@ services:
       context: ./
     command: python3 app.py
     environment:
+      - DDS_SAFE_SPRING_PROJECT=$DDS_SAFE_SPRING_PROJECT
       - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
       - FLASK_ENV=development
       - DDS_CLI_ENV=development

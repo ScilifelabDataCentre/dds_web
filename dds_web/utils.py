@@ -10,6 +10,7 @@ import json
 import time
 import pytz
 import atexit
+import apscheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 import pandas
 
@@ -282,6 +283,8 @@ scheduler = BackgroundScheduler(
         "apscheduler.timezone": "Europe/Stockholm",
     }
 )
+
+scheduler.print_jobs()
 
 # Schedule invoicing calculations every 30 days
 # TODO (ina): Change to correct interval - 30 days
