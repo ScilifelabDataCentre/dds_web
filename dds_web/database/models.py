@@ -164,7 +164,7 @@ class Email(db.Model):
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     # Foreign key: One user can have multiple email addresses.
-    user = db.Column(db.Integer, db.ForeignKey("users.username"))
+    user = db.Column(db.String(20), db.ForeignKey("users.username"))
 
     def __repr__(self):
         """Called by print, creates representation of object"""
