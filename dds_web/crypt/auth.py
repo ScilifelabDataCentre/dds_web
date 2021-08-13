@@ -118,39 +118,3 @@ def verify_password_argon2id(db_pw, input_pw):
     # TODO (ina): Add check_needs_rehash?
 
     return True
-<<<<<<< HEAD
-
-
-# def validate_user_credentials(username, password):
-#     """Verifies if the given username and password is the match."""
-
-#     # TODO (ina): This is a version of the REST API authentication, both should use the same
-#     # base methods and call common functions where they are identical.
-#     # Check if user in db
-#     try:
-#         uaccount = models.User.query.filter(models.User.username == func.binary(username)).first()
-#     except SQLAlchemyError as e:
-#         # TODO (ina): change to raise instead
-#         app.logger.exception(e)
-#         return (False, None, "Username not found (Credentials are case sensitive)", None)
-
-#     if not verify_password_argon2id(uaccount.password, password):
-#         return (False, None, "Incorrect password", None)
-
-#     uinfo = {"username": uaccount.username, "id": uaccount.id}
-#     if uaccount.role == "facility":
-#         try:
-#             facility_info = models.Facility.query.filter(
-#                 models.Facility.id == func.binary(uaccount.facility_id)
-#             ).first()
-#         except SQLAlchemyError as e:
-#             return (False, None, "No facility found.", None)
-
-#         uinfo["facility_name"] = facility_info.name
-#         uinfo["facility_id"] = facility_info.id
-#     elif uaccount.role == "admin":
-#         uinfo["admin"] = True
-
-#     return (True, uaccount.role == "facility", "Validate successful", uinfo)
-=======
->>>>>>> binary_safespring_fix
