@@ -277,7 +277,7 @@ class ListFiles(flask_restful.Resource):
                         "folder": False,
                     }
                     if show_size:
-                        info.update({"size": dds_web.utils.fix_size_format(num_bytes=x[1])})
+                        info.update({"size": dds_web.utils.format_byte_size(x[1])})
                     files_folders.append(info)
             if distinct_folders:
                 for x in distinct_folders:
