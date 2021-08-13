@@ -44,11 +44,10 @@ def token_required(f):
             data = jwt.decode(token, app.config["SECRET_KEY"])
 
             # NEW
-            current_user = models.User.query.filter(
-                models.User.username == func.binary(data["user"])
-            ).first()
+            current_user = models.User.query.filter(models.User.username == data["user"]).first()
             project = data["project"]
-        except Exception:
+        except Exception as err:
+            app.logger.exception(err)
             return flask.make_response("Token is invalid!", 401)
         else:
             return f(current_user, project, *args, **kwargs)

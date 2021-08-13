@@ -297,9 +297,7 @@ class create_project_instance(object):
             facility_ref = db_utils.get_facility_column(
                 fid=session.get("facility_id"), column="internal_ref"
             )
-            facility_prjs = db_utils.get_facilty_projects(
-                fid=session.get("facility_id"), only_id=True
-            )
+            facility_prjs = db_utils.get_facilty_projects(facility_id=session.get("facility_id"))
             project_public_id = "{}{:03d}".format(facility_ref, len(facility_prjs) + 1)
         return project_public_id
 
