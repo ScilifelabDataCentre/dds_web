@@ -24,7 +24,7 @@ import sqlalchemy
 from dds_web import app, timestamp
 from dds_web.database import models
 from dds_web.crypt.auth import gen_argon2hash, verify_password_argon2id
-from dds_web.api.dds_decorators import token_required
+from dds_web.api.dds_decorators import token_required, log_action
 from dds_web import exceptions
 from dds_web.crypt import auth as dds_auth
 
@@ -61,6 +61,8 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 class AuthenticateUser(flask_restful.Resource):
     """Handles the authentication of the user."""
 
+    method_decorators = [log_action]
+
     def get(self):
         """Checks the username, password and generates the token."""
 
@@ -84,8 +86,8 @@ class AuthenticateUser(flask_restful.Resource):
             return flask.make_response(str(sqlerr), 500)
         except exceptions.AuthenticationError as autherr:
             app.logger.exception(autherr)
-            action_logger.info(
-                msg="Denied", extra={"action": "Authentication", "current_user": auth.username}
+            action_logger.warning(
+                msg="DENIED", extra={"action": "Authentication", "current_user": auth.username}
             )
             return flask.make_response(str(autherr), 401)
 

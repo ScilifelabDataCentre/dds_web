@@ -69,12 +69,22 @@ class ProjectAccess(flask_restful.Resource):
         if not attempted_project:
             return flask.make_response(f"Project does not exist: {project['id']}", 401)
 
+        # Logger
+        action_logger = logging.getLogger("actions")
+
         # Check if attempted action is ok for user
         app.logger.debug(
             "User permissions: %s, attempted method: %s", current_user.permissions, args["method"]
         )
         permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
         if permissions_dict[args["method"]] not in list(current_user.permissions):
+            action_logger.warning(
+                msg="DENIED",
+                extra={
+                    "action": f"{args['method'].upper()} :: {project['id']}",
+                    "current_user": current_user,
+                },
+            )
             return flask.make_response(
                 f"Attempted to '{args['method']}' in project '{project['id']}'. Permission denied.",
                 401,
@@ -94,6 +104,13 @@ class ProjectAccess(flask_restful.Resource):
             except Exception as error:  # should be changed -- not specific enough but leaving for now
                 return flask.make_response(error, 500)
 
+            action_logger.info(
+                msg="OK",
+                extra={
+                    "action": f"{args['method']} | Project: {project['id']}",
+                    "current_user": current_user,
+                },
+            )
             # Project access granted
             return flask.jsonify(
                 {
@@ -101,6 +118,14 @@ class ProjectAccess(flask_restful.Resource):
                     "token": token.decode("UTF-8"),
                 }
             )
+
+        action_logger.warning(
+            msg="DENIED",
+            extra={
+                "action": f"{args['method'].upper()} :: {project['id']}",
+                "current_user": current_user,
+            },
+        )
 
         # Project access denied
         return flask.make_response("Project access denied", 401)

@@ -139,10 +139,15 @@ def create_app():
                     "basedir": app.config.get("LOG_DIR"),
                     "formatter": "actions",
                 },
+                "console": {
+                    "level": logging.DEBUG,
+                    "class": "logging.StreamHandler",
+                    "formatter": "general",
+                },
             },
             "loggers": {
                 "general": {
-                    "handlers": ["general"],
+                    "handlers": ["general", "console"],
                     "level": logging.DEBUG,
                     "propagate": False,
                 },
