@@ -55,22 +55,6 @@ def token_required(f):
     return validate_token
 
 
-def log_action(f):
-
-    """Decorator function for logging ok or denied action by which user."""
-
-    @functools.wraps(f)
-    def check_and_save(*args, **kwargs):
-
-        test = f(*args, **kwargs)
-
-        app.logger.debug(f"test: {test}, type: {type(test)}")
-
-        return test
-
-    return check_and_save
-
-
 # PROJECTS ######################################################### PROJECTS #
 
 

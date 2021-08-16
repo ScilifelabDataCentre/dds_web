@@ -24,7 +24,8 @@ import sqlalchemy
 from dds_web import app, timestamp
 from dds_web.database import models
 from dds_web.crypt.auth import gen_argon2hash, verify_password_argon2id
-from dds_web.api.dds_decorators import token_required, log_action
+from dds_web.api.dds_decorators import token_required
+from dds_web.api.errors import MissingCredentialsError, DatabaseError
 from dds_web import exceptions
 from dds_web.crypt import auth as dds_auth
 
@@ -61,15 +62,13 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 class AuthenticateUser(flask_restful.Resource):
     """Handles the authentication of the user."""
 
-    method_decorators = [log_action]
-
     def get(self):
         """Checks the username, password and generates the token."""
 
         # Get username and password from CLI request
         auth = flask.request.authorization
         if not auth or not auth.username or not auth.password:
-            return flask.make_response("User credentials missing.", 401)
+            raise MissingCredentialsError
 
         # Project not required, will be checked for future operations
         args = flask.request.args
@@ -82,8 +81,7 @@ class AuthenticateUser(flask_restful.Resource):
         try:
             _ = dds_auth.verify_user_pass(username=auth.username, password=auth.password)
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            app.logger.exception(sqlerr)
-            return flask.make_response(str(sqlerr), 500)
+            flask_restful.abort(500, message=str(sqlerr))
         except exceptions.AuthenticationError as autherr:
             app.logger.exception(autherr)
             action_logger.warning(
