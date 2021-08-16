@@ -7,16 +7,18 @@
 # Standard library
 import datetime
 import binascii
+import logging
 import pathlib
 
 # Installed
+from sqlalchemy.sql import func
+
 import flask
 import flask_restful
-import jwt
-import sqlalchemy
 import functools
-from sqlalchemy.sql import func
+import jwt
 import pandas
+import sqlalchemy
 
 # Own modules
 from dds_web import app, timestamp
@@ -71,6 +73,9 @@ class AuthenticateUser(flask_restful.Resource):
         args = flask.request.args
         project = args.get("project")
 
+        # Logger
+        action_logger = logging.getLogger("actions")
+
         # Verify username and password
         try:
             _ = dds_auth.verify_user_pass(username=auth.username, password=auth.password)
@@ -79,6 +84,9 @@ class AuthenticateUser(flask_restful.Resource):
             return flask.make_response(str(sqlerr), 500)
         except exceptions.AuthenticationError as autherr:
             app.logger.exception(autherr)
+            action_logger.info(
+                msg="Denied", extra={"action": "Authentication", "current_user": auth.username}
+            )
             return flask.make_response(str(autherr), 401)
 
         # Generate and return jwt token
@@ -88,6 +96,9 @@ class AuthenticateUser(flask_restful.Resource):
             return flask.make_response(str(err), 500)
         else:
             app.logger.debug("Token generated. Returning to CLI.")
+            action_logger.info(
+                msg="OK", extra={"action": "Authentication", "current_user": auth.username}
+            )
             return flask.jsonify({"token": token.decode("UTF-8")})
 
 

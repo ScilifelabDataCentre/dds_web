@@ -3,6 +3,7 @@
 ###############################################################################
 
 # Standard library
+import logging
 
 # Installed
 import flask
@@ -14,7 +15,6 @@ from dds_web.api import project
 from dds_web.api import s3
 from dds_web.api import files
 from dds_web.api.errors import errors
-
 
 ###############################################################################
 # BLUEPRINTS ##################################################### BLUEPRINTS #

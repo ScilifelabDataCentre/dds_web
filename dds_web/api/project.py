@@ -6,6 +6,7 @@
 
 # Standard library
 import functools
+import logging
 
 # Installed
 import flask_restful

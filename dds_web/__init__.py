@@ -121,7 +121,7 @@ def create_app():
             "formatters": {
                 "general": {"format": "[%(asctime)s] %(module)s [%(levelname)s] %(message)s"},
                 "actions": {
-                    "format": "[%(asctime)s] [%(levelname)s] %(module)s - [Action: %(action)s] [User: %(current_user)s] \n\t%(message)s"
+                    "format": "[%(asctime)s] [%(levelname)s] %(module)s - [User: %(current_user)s] [Action: %(action)s] [%(message)s]"
                 },
             },
             "handlers": {
@@ -155,8 +155,8 @@ def create_app():
     app.logger = logging.getLogger("general")
     app.logger.info("Logging initiated.")
 
-    action_logger = logging.getLogger("actions")
-    action_logger.info("Logging initiated.", extra={"action": "initiation", "current_user": "root"})
+    # action_logger = logging.getLogger("actions")
+    # action_logger.info("Logging initiated.", extra={"action": "initiation", "current_user": "root", })
 
     db.init_app(app)  # Initialize database
     # ma.init_app(app)
@@ -190,15 +190,15 @@ def create_app():
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
-        from user import user_blueprint
+        from dds_web.user import user_blueprint
 
         app.register_blueprint(user_blueprint, url_prefix="/user")
 
-        from admin import admin_blueprint
+        from dds_web.admin import admin_blueprint
 
         app.register_blueprint(admin_blueprint, url_prefix="/admin")
 
-        from project import project_blueprint
+        from dds_web.project import project_blueprint
 
         app.register_blueprint(project_blueprint, url_prefix="/project")
 
