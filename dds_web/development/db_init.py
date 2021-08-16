@@ -8,7 +8,7 @@ from flask import current_app
 from dds_web import db, timestamp
 from dds_web.crypt import auth
 
-from dds_web.database.models import User, Project, Facility, File, Version
+from dds_web.database.models import User, Project, Facility, File, Version, Email
 
 
 def fill_db():
@@ -50,6 +50,8 @@ def fill_db():
             password=auth.gen_argon2hash(password="password"),
             role="researcher",
             permissions="-gl--",
+            first_name="User",
+            last_name="Name",
             facility_id=None,
         ),
         User(
@@ -57,6 +59,8 @@ def fill_db():
             password=auth.gen_argon2hash(password="password"),
             role="admin",
             permissions="a-l--",
+            first_name="Ad",
+            last_name="Min",
             facility_id=None,
         ),
         User(
@@ -64,6 +68,8 @@ def fill_db():
             password=auth.gen_argon2hash(password="password"),
             role="facility",
             permissions="a-l--",
+            first_name="Facility",
+            last_name="Admin",
             facility_id=facilities[0],
         ),
         User(
@@ -71,6 +77,8 @@ def fill_db():
             password=auth.gen_argon2hash(password="password"),
             role="facility",
             permissions="--lpr",
+            first_name="Faci",
+            last_name="Lity",
             facility_id=facilities[0],
         ),
     ]
@@ -100,10 +108,23 @@ def fill_db():
         )
     ]
 
+    emails = [
+        Email(user=users[0], email="one@email.com", primary=True),
+        Email(user=users[0], email="two@email.com", primary=False),
+        Email(user=users[1], email="three@email.com", primary=True),
+        Email(user=users[1], email="four@email.com", primary=False),
+    ]
+
     # Foreign key/relationship updates
     for p in projects:
         for u in users:
             u.projects.append(p)
+
+    for e in emails[0:2]:
+        users[0].emails.append(e)
+
+    for e in emails[2:4]:
+        users[1].emails.append(e)
 
     for u in users:
         if u.facility_id:
@@ -124,6 +145,7 @@ def fill_db():
     db.session.add_all(users)
     db.session.add_all(files)
     db.session.add_all(versions)
+    db.session.add_all(emails)
 
     # Required for change in db
     db.session.commit()
