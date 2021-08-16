@@ -101,6 +101,8 @@ class User(db.Model):
     password = db.Column(db.String(120), unique=False, nullable=False)
     role = db.Column(db.String(50), unique=False, nullable=False)
     permissions = db.Column(db.String(5), unique=False, nullable=False, default="--l--")
+    first_name = db.Column(db.String(50), unique=False, nullable=True)
+    last_name = db.Column(db.String(50), unique=False, nullable=True)
 
     # Foreign keys
     # One facility can have many users
@@ -114,6 +116,9 @@ class User(db.Model):
 
     # One user can have many identifiers
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
+
+    # One user can have many email addresses
+    emails = db.relationship("Email", backref="users", lazy="dynamic", cascade="all, delete-orphan")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -142,6 +147,29 @@ class Identifier(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<Identifier {self.identifier}>"
+
+
+class Email(db.Model):
+    """
+    Data model for user email addresses.
+    """
+
+    # Table setup
+    __tablename__ = "emails"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    email = db.Column(db.String(80), unique=True, nullable=False)
+    primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+
+    # Foreign key: One user can have multiple email addresses.
+    user = db.Column(db.String(20), db.ForeignKey("users.username"))
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<Email {self.email}>"
 
 
 class File(db.Model):

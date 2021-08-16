@@ -201,3 +201,48 @@ def user_page(loginname=None):
 #         return render_template('user/signup.html', title='Signup')
 #     if request.method == "POST":
 #         pass
+
+
+@user_blueprint.route("/account", methods=["GET"])
+@login_required
+def account_info():
+    """User account page"""
+
+    username = session["current_user"]
+
+    if request.method == "GET":
+        # Fetch all user information and save to account_info dict.
+        account_info = {}
+
+        account_info["username"] = username
+
+        emails = db_utils.get_user_emails(username)
+        account_info["emails"] = [
+            {
+                "address": getattr(user_row, "email", None),
+                "primary": getattr(user_row, "primary", False),
+            }
+            for user_row in emails
+            if getattr(user_row, "email", None) != None
+        ]
+
+        account_info["emails"] = sorted(
+            account_info["emails"], key=lambda k: k["primary"], reverse=True
+        )
+
+        permissions_list = list(db_utils.get_user_column_by_username(username, "permissions"))
+        permissions_dict = {"g": "get", "l": "list", "p": "put", "r": "remove"}
+        account_info["permissions"] = ", ".join(
+            [
+                permissions_dict[permission]
+                for permission in permissions_list
+                if permission in permissions_dict
+            ]
+        )
+
+        account_info["first_name"] = db_utils.get_user_column_by_username(username, "first_name")
+        account_info["last_name"] = db_utils.get_user_column_by_username(username, "last_name")
+
+    return render_template(
+        "user/account.html", enumerate=enumerate, len=len, account_info=account_info
+    )
