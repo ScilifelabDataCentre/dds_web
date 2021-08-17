@@ -30,7 +30,13 @@ from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.dds_decorators import token_required, project_access_required
-from dds_web.api.errors import MissingMethodError, JwtTokenError, MissingProjectIDError
+from dds_web.api.errors import (
+    MissingMethodError,
+    JwtTokenError,
+    MissingProjectIDError,
+    DatabaseError,
+    NoSuchProjectError,
+)
 
 ###############################################################################
 # ENDPOINTS ####################################################### ENDPOINTS #
@@ -67,10 +73,12 @@ class ProjectAccess(flask_restful.Resource):
                 models.Project.public_id == project["id"]
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            return flask.make_response(f"Database connection failed: {sqlerr}", 500)
+            raise DatabaseError(
+                message=str(sqlerr), username=current_user.username, project=project_id
+            )
 
         if not attempted_project:
-            return flask.make_response(f"Project does not exist: {project['id']}", 401)
+            raise NoSuchProjectError(username=current_user.username, project=project_id)
 
         # Logger
         action_logger = logging.getLogger("actions")

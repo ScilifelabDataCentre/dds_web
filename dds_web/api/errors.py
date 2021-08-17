@@ -13,6 +13,26 @@ class ItemDeletionError(exceptions.HTTPException):
     pass
 
 
+class InvalidUserCredentialsError(exceptions.HTTPException):
+    """Errors due to user authentication."""
+
+    def __init__(self, message="Incorrect username and/or password.", username=None, project=None):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+        action_logger.warning(
+            message,
+            extra={
+                **extra_info,
+                "current_user": username,
+                "action": actions.get(flask.request.endpoint),
+                "project": project,
+            },
+        )
+
+
+# ----------------------------------------------------------------------------------- #
 class DatabaseError(exceptions.HTTPException):
     """Baseclass for database related issues."""
 
@@ -34,23 +54,11 @@ class DatabaseError(exceptions.HTTPException):
         )
 
 
-class InvalidUserCredentialsError(exceptions.HTTPException):
-    """Errors due to user authentication."""
+class NoSuchProjectError(DatabaseError):
+    """The project does not exist in the database"""
 
-    def __init__(self, message="Incorrect username and/or password.", username=None, project=None):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-        action_logger.warning(
-            message,
-            extra={
-                **extra_info,
-                "current_user": username,
-                "action": actions.get(flask.request.endpoint),
-                "project": project,
-            },
-        )
+    def __init__(self, username, project, message="Project not found in database."):
+        super().__init__(message, username=username, project=project)
 
 
 # ----------------------------------------------------------------------------------- #
@@ -109,13 +117,17 @@ class TokenNotFoundError(DDSArgumentError):
         super().__init__(message)
 
 
+# ----------------------------------------------------------------------------------- #
+
 errors = {
     "ItemDeletionError": {"message": "Removal of item(s) from S3 bucket failed.", "status": 500},
     "DatabaseError": {"status": 500},
+    "NoSuchProjectError": {"status": 400},
     "InvalidUserCredentialsError": {"status": 400},
     "JwtTokenError": {"status": 500},
     "JwtTokenGenerationError": {"status": 500},
     "JwtTokenDecodingError": {"status": 500},
+    "MissingProjectIDError": {"status": 500},
     "DDSArgumentError": {"status": 400},
     "MissingCredentialsError": {"status": 400},
     "MissingMethodError": {"status": 400},
