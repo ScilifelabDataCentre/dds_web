@@ -26,28 +26,6 @@ from dds_web import actions
 # LOGGING ########################################################## LOGGING #
 
 
-def log_action(f):
-    @functools.wraps(f)
-    def check_and_log(*args, **kwargs):
-
-        extra_info = {
-            "current_user": flask.request.authorization.username,
-            "project": flask.request.args.get("project"),
-            "result": "OK",
-            "action": actions.get(flask.request.endpoint),
-        }
-
-        response = f(*args, **kwargs)
-
-        action_logger = logging.getLogger("actions")
-        if response.status_code == 200:
-            action_logger.info("", extra=extra_info)
-
-        return response
-
-    return check_and_log
-
-
 # AUTH ################################################################# AUTH #
 
 
