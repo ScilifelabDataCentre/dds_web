@@ -13,10 +13,10 @@ class ItemDeletionError(exceptions.HTTPException):
     pass
 
 
-class InvalidUserCredentialsError(exceptions.HTTPException):
-    """Errors due to user authentication."""
+class AuthenticationError(exceptions.HTTPException):
+    """Base class for errors due to authentication failure."""
 
-    def __init__(self, message="Incorrect username and/or password.", username=None, project=None):
+    def __init__(self, message, username=None, project=None):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -30,6 +30,22 @@ class InvalidUserCredentialsError(exceptions.HTTPException):
                 "project": project,
             },
         )
+
+
+class InvalidUserCredentialsError(AuthenticationError):
+    """Errors occurring during user authentication."""
+
+    def __init__(self, username, message="Incorrect username and/or password."):
+        super().__init__(message=message, username=username)
+
+
+class ProjectPermissionsError(AuthenticationError):
+    """Errors due to incorrect project permissions."""
+
+    def __init__(
+        self, username, project, message="The user does not have the necessary permissions."
+    ):
+        super().__init__(message=message, username=username, project=project)
 
 
 # ----------------------------------------------------------------------------------- #
@@ -123,7 +139,9 @@ errors = {
     "ItemDeletionError": {"message": "Removal of item(s) from S3 bucket failed.", "status": 500},
     "DatabaseError": {"status": 500},
     "NoSuchProjectError": {"status": 400},
+    "AuthenticationError": {"status": 400},
     "InvalidUserCredentialsError": {"status": 400},
+    "ProjectPermissionsError": {"status": 400},
     "JwtTokenError": {"status": 500},
     "JwtTokenGenerationError": {"status": 500},
     "JwtTokenDecodingError": {"status": 500},
