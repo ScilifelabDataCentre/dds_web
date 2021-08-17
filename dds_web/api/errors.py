@@ -37,7 +37,7 @@ class DatabaseError(exceptions.HTTPException):
 class InvalidUserCredentialsError(exceptions.HTTPException):
     """Errors due to user authentication."""
 
-    def __init__(self, message="Incorrect username and/or password!", username=None, project=None):
+    def __init__(self, message="Incorrect username and/or password.", username=None, project=None):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -53,8 +53,9 @@ class InvalidUserCredentialsError(exceptions.HTTPException):
         )
 
 
-class JwtTokenGenerationError(exceptions.HTTPException):
-    """Errors when generating the JWT token during authentication."""
+# ----------------------------------------------------------------------------------- #
+class JwtTokenError(exceptions.HTTPException):
+    """Base class for exceptions triggered when handling the JWT tokens."""
 
     def __init__(self, message):
         super().__init__(message)
@@ -62,6 +63,22 @@ class JwtTokenGenerationError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
+class JwtTokenGenerationError(JwtTokenError):
+    """Errors when generating the JWT token during authentication."""
+
+
+class JwtTokenDecodingError(JwtTokenError):
+    """Errors occuring when decoding the JWT token."""
+
+
+class MissingProjectIDError(JwtTokenError):
+    """Errors due to missing project ID in request."""
+
+    def __init__(self, message="Attempting to validate users project access without project ID"):
+        super().__init__(message)
+
+
+# ----------------------------------------------------------------------------------- #
 class DDSArgumentError(exceptions.HTTPException):
     """Base class for errors occurring due to missing request arguments."""
 
@@ -96,7 +113,9 @@ errors = {
     "ItemDeletionError": {"message": "Removal of item(s) from S3 bucket failed.", "status": 500},
     "DatabaseError": {"status": 500},
     "InvalidUserCredentialsError": {"status": 400},
+    "JwtTokenError": {"status": 500},
     "JwtTokenGenerationError": {"status": 500},
+    "JwtTokenDecodingError": {"status": 500},
     "DDSArgumentError": {"status": 400},
     "MissingCredentialsError": {"status": 400},
     "MissingMethodError": {"status": 400},

@@ -30,7 +30,7 @@ from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.dds_decorators import token_required, project_access_required
-from dds_web.api.errors import MissingMethodError
+from dds_web.api.errors import MissingMethodError, JwtTokenError, MissingProjectIDError
 
 ###############################################################################
 # ENDPOINTS ####################################################### ENDPOINTS #
@@ -53,10 +53,12 @@ class ProjectAccess(flask_restful.Resource):
             raise MissingMethodError
 
         # Check if project id specified
+        if not project:
+            raise MissingProjectIDError
+
         project_id = project.get("id")
         if not project_id:
-            app.logger.debug("No project retrieved from token.")
-            return flask.make_response("No project specified.", 401)
+            raise MissingProjectIDError
 
         # Check if project exists
         app.logger.debug("Getting project from db.")

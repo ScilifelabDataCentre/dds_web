@@ -12,11 +12,18 @@ import jwt
 import boto3
 import botocore
 from sqlalchemy.sql import func
+import sqlalchemy
 
 # Own modules
 from dds_web import app
 from dds_web.database import models
-from dds_web.api.errors import MissingCredentialsError, TokenNotFoundError
+from dds_web.api.errors import (
+    MissingCredentialsError,
+    TokenNotFoundError,
+    JwtTokenDecodingError,
+    DatabaseError,
+    JwtTokenError,
+)
 from dds_web import actions
 
 ###############################################################################
@@ -41,14 +48,18 @@ def token_required(f):
         # Verify the token
         try:
             # Decode
-            data = jwt.decode(token, app.config["SECRET_KEY"])
+            data = jwt.decode(token, app.config.get("SECRET_KEY"))
 
-            # NEW
-            current_user = models.User.query.filter(models.User.username == data["user"]).first()
-            project = data["project"]
-        except Exception as err:
-            app.logger.exception(err)
-            return flask.make_response("Token is invalid!", 401)
+            username = data.get("user")
+            if not username:
+                raise JwtTokenError(message="Username not found in token.")
+
+            current_user = models.User.query.filter(models.User.username == username).first()
+            project = data.get("project")
+        except jwt.exceptions.InvalidTokenError as tokerr:
+            raise JwtTokenDecodingError(message=str(tokerr))
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError(message=str(sqlerr))
         else:
             return f(current_user, project, *args, **kwargs)
 
