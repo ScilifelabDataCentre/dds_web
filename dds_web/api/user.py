@@ -10,9 +10,13 @@ import binascii
 import logging
 import pathlib
 
+# import json
+
 # Installed
 from sqlalchemy.sql import func
+from werkzeug.exceptions import HTTPException
 
+# from flask import json
 import flask
 import flask_restful
 import functools
@@ -23,11 +27,13 @@ import sqlalchemy
 # Own modules
 from dds_web import app, timestamp
 from dds_web.database import models
-from dds_web.crypt.auth import gen_argon2hash, verify_password_argon2id
-from dds_web.api.dds_decorators import token_required
-from dds_web.api.errors import MissingCredentialsError, DatabaseError
+
+# from dds_web.crypt import auth import gen_argon2hash, verify_password_argon2id
+from dds_web.api.dds_decorators import token_required, log_action
+from dds_web.api.errors import MissingCredentialsError, DatabaseError, InvalidUserCredentialsError
 from dds_web import exceptions
 from dds_web.crypt import auth as dds_auth
+from dds_web.api.errors import JwtTokenGenerationError
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -47,9 +53,14 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
             app.config["SECRET_KEY"],
         )
         app.logger.debug(f"token: {token}")
-    except Exception as err:
-        app.logger.exception(err)
-        raise
+    except (
+        TypeError,
+        KeyError,
+        jwt.exceptions.InvalidKeyError,
+        jwt.exceptions.InvalidAlgorithmError,
+        jwt.exceptions.MissingRequiredClaimError,
+    ) as err:
+        raise JwtTokenGenerationError(str(err))
     else:
         return token
 
@@ -61,6 +72,8 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 
 class AuthenticateUser(flask_restful.Resource):
     """Handles the authentication of the user."""
+
+    method_decorators = [log_action]
 
     def get(self):
         """Checks the username, password and generates the token."""
@@ -74,31 +87,16 @@ class AuthenticateUser(flask_restful.Resource):
         args = flask.request.args
         project = args.get("project")
 
-        # Logger
-        action_logger = logging.getLogger("actions")
-
         # Verify username and password
         try:
             _ = dds_auth.verify_user_pass(username=auth.username, password=auth.password)
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            flask_restful.abort(500, message=str(sqlerr))
-        except exceptions.AuthenticationError as autherr:
-            app.logger.exception(autherr)
-            action_logger.warning(
-                msg="DENIED", extra={"action": "Authentication", "current_user": auth.username}
-            )
-            return flask.make_response(str(autherr), 401)
 
-        # Generate and return jwt token
-        try:
+            # Generate jwt token
             token = jwt_token(username=auth.username, project_id=project)
-        except Exception as err:
-            return flask.make_response(str(err), 500)
+
+        except (DatabaseError, InvalidUserCredentialsError, JwtTokenGenerationError):
+            raise
         else:
-            app.logger.debug("Token generated. Returning to CLI.")
-            action_logger.info(
-                msg="OK", extra={"action": "Authentication", "current_user": auth.username}
-            )
             return flask.jsonify({"token": token.decode("UTF-8")})
 
 

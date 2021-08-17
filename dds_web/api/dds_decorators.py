@@ -4,6 +4,7 @@
 
 # Standard library
 import functools
+import logging
 
 # Installed
 import flask
@@ -15,10 +16,37 @@ from sqlalchemy.sql import func
 # Own modules
 from dds_web import app
 from dds_web.database import models
+from dds_web.api.errors import MissingCredentialsError
 
 ###############################################################################
 # DECORATORS ##################################################### DECORATORS #
 ###############################################################################
+
+# LOGGING ########################################################## LOGGING #
+
+
+def log_action(f):
+    @functools.wraps(f)
+    def check_and_log(*args, **kwargs):
+        # app.logger.debug(flask.request.authorization)
+        # app.logger.debug(flask.request.args)
+
+        app.logger.warning(flask.request.endpoint)
+
+        username = flask.request.authorization.username
+        project = flask.request.args.get("project")
+
+        response = f(*args, **kwargs)
+        app.logger.warning(flask.request)
+        app.logger.warning(response)
+
+        action_logger = logging.getLogger("actions")
+        if response.status_code == 200:
+            action_logger.info("OK", extra={})
+        return response
+
+    return check_and_log
+
 
 # AUTH ################################################################# AUTH #
 
