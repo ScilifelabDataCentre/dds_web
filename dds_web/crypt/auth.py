@@ -18,7 +18,7 @@ def verify_user_pass(username, password):
     try:
         user = models.User.query.filter(models.User.username == username).first()
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise DatabaseError(str(sqlerr))
+        raise DatabaseError(message=str(sqlerr), username=username)
 
     # User exists and password correct
     if user and verify_password_argon2id(user.password, password):

@@ -28,6 +28,7 @@ db = SQLAlchemy()
 ma = Marshmallow(app)
 C_TZ = pytz.timezone("Europe/Stockholm")
 oauth = auth_flask_client.OAuth(app)
+actions = {"api_blueprint.auth": "User Authentication"}
 
 # CLASSES ########################################################### CLASSES #
 

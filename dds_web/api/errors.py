@@ -1,11 +1,16 @@
 from werkzeug import exceptions
 import logging
 import flask
+from dds_web import actions
 
 general_logger = logging.getLogger("general")
 action_logger = logging.getLogger("actions")
 
 extra_info = {"result": "DENIED"}
+
+
+class ItemDeletionError(exceptions.HTTPException):
+    pass
 
 
 class MissingCredentialsError(exceptions.HTTPException):
@@ -15,17 +20,23 @@ class MissingCredentialsError(exceptions.HTTPException):
         general_logger.info(message)
 
 
-class ItemDeletionError(exceptions.HTTPException):
-    pass
-
-
 class DatabaseError(exceptions.HTTPException):
     def __init__(
         self, message="The DDS encountered an Flask-SQLAlchemy issue.", username=None, project=None
     ):
         super().__init__(message)
 
-        general_logger.info(message)
+        general_logger.warning(message)
+
+        action_logger.warning(
+            message,
+            extra={
+                **extra_info,
+                "current_user": username,
+                "action": actions.get(flask.request.endpoint),
+                "project": project,
+            },
+        )
 
 
 class InvalidUserCredentialsError(exceptions.HTTPException):
@@ -34,21 +45,24 @@ class InvalidUserCredentialsError(exceptions.HTTPException):
     def __init__(self, message="Incorrect username and/or password!", username=None, project=None):
         super().__init__(message)
 
-        general_logger.info(message)
+        general_logger.warning(message)
 
         action_logger.warning(
             message,
             extra={
                 **extra_info,
                 "current_user": username,
-                "action": "User authentication",
+                "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
         )
 
 
 class JwtTokenGenerationError(exceptions.HTTPException):
-    pass
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
 
 
 errors = {

@@ -60,7 +60,7 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
         jwt.exceptions.InvalidAlgorithmError,
         jwt.exceptions.MissingRequiredClaimError,
     ) as err:
-        raise JwtTokenGenerationError(str(err))
+        raise JwtTokenGenerationError(message=str(err))
     else:
         return token
 

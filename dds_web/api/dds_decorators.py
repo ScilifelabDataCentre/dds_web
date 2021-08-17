@@ -17,6 +17,7 @@ from sqlalchemy.sql import func
 from dds_web import app
 from dds_web.database import models
 from dds_web.api.errors import MissingCredentialsError
+from dds_web import actions
 
 ###############################################################################
 # DECORATORS ##################################################### DECORATORS #
@@ -29,14 +30,18 @@ def log_action(f):
     @functools.wraps(f)
     def check_and_log(*args, **kwargs):
 
-        username = flask.request.authorization.username
-        project = flask.request.args.get("project")
+        extra_info = {
+            "current_user": flask.request.authorization.username,
+            "project": flask.request.args.get("project"),
+            "result": "OK",
+            "action": actions.get(flask.request.endpoint),
+        }
 
         response = f(*args, **kwargs)
 
         action_logger = logging.getLogger("actions")
         if response.status_code == 200:
-            action_logger.info("OK", extra={})
+            action_logger.info("", extra=extra_info)
 
         return response
 
