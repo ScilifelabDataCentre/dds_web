@@ -13,14 +13,9 @@ class ItemDeletionError(exceptions.HTTPException):
     pass
 
 
-class MissingCredentialsError(exceptions.HTTPException):
-    def __init__(self, message="Missing username and/or password."):
-        super().__init__(message)
-
-        general_logger.info(message)
-
-
 class DatabaseError(exceptions.HTTPException):
+    """Baseclass for database related issues."""
+
     def __init__(
         self, message="The DDS encountered an Flask-SQLAlchemy issue.", username=None, project=None
     ):
@@ -59,16 +54,51 @@ class InvalidUserCredentialsError(exceptions.HTTPException):
 
 
 class JwtTokenGenerationError(exceptions.HTTPException):
+    """Errors when generating the JWT token during authentication."""
+
     def __init__(self, message):
         super().__init__(message)
 
         general_logger.warning(message)
 
 
+class DDSArgumentError(exceptions.HTTPException):
+    """Base class for errors occurring due to missing request arguments."""
+
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class MissingCredentialsError(DDSArgumentError):
+    """Raised when username and/or password arguments are missing from a request."""
+
+    def __init__(self, message="Missing username and/or password."):
+        super().__init__(message)
+
+
+class MissingMethodError(DDSArgumentError):
+    """Raised when none of the following are found in a request: put, get, ls, rm."""
+
+    def __init__(self, message="No method found in request."):
+        super().__init__(message)
+
+
+class TokenNotFoundError(DDSArgumentError):
+    """Missing token in request."""
+
+    def __init__(self, message="JWT Token not found in HTTP header."):
+        super().__init__(message)
+
+
 errors = {
     "ItemDeletionError": {"message": "Removal of item(s) from S3 bucket failed.", "status": 500},
-    "MissingCredentialsError": {"status": 400},
     "DatabaseError": {"status": 500},
     "InvalidUserCredentialsError": {"status": 400},
     "JwtTokenGenerationError": {"status": 500},
+    "DDSArgumentError": {"status": 400},
+    "MissingCredentialsError": {"status": 400},
+    "MissingMethodError": {"status": 400},
+    "TokenNotFoundError": {"status": 400},
 }

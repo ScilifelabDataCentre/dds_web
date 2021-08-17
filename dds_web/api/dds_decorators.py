@@ -16,15 +16,12 @@ from sqlalchemy.sql import func
 # Own modules
 from dds_web import app
 from dds_web.database import models
-from dds_web.api.errors import MissingCredentialsError
+from dds_web.api.errors import MissingCredentialsError, TokenNotFoundError
 from dds_web import actions
 
 ###############################################################################
 # DECORATORS ##################################################### DECORATORS #
 ###############################################################################
-
-# LOGGING ########################################################## LOGGING #
-
 
 # AUTH ################################################################# AUTH #
 
@@ -37,12 +34,9 @@ def token_required(f):
         token = None
 
         # Get the token from the header
-        if "x-access-token" in flask.request.headers:
-            token = flask.request.headers["x-access-token"]
-            app.logger.debug(f"token recieved: {token}")
-        # Deny access if token is missing
-        if token is None or not token:
-            return flask.make_response("Token is missing!", 401)
+        token = flask.request.headers.get("x-access-token")
+        if not token:
+            raise TokenNotFoundError
 
         # Verify the token
         try:

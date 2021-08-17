@@ -30,7 +30,7 @@ from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.dds_decorators import token_required, project_access_required
-
+from dds_web.api.errors import MissingMethodError
 
 ###############################################################################
 # ENDPOINTS ####################################################### ENDPOINTS #
@@ -48,12 +48,13 @@ class ProjectAccess(flask_restful.Resource):
         args = flask.request.args
 
         # Deny access if project or method not specified
-        if "method" not in args:
-            app.logger.debug("No method in request.")
-            return flask.make_response("Invalid request.", 500)
+        method = args.get("method")
+        if not method:
+            raise MissingMethodError
 
         # Check if project id specified
-        if project["id"] is None:
+        project_id = project.get("id")
+        if not project_id:
             app.logger.debug("No project retrieved from token.")
             return flask.make_response("No project specified.", 401)
 
