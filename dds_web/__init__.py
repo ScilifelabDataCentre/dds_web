@@ -121,7 +121,7 @@ def create_app():
             "formatters": {
                 "general": {"format": "[%(asctime)s] %(module)s [%(levelname)s] %(message)s"},
                 "actions": {
-                    "format": "[%(asctime)s] [%(levelname)s] %(module)s - [User: %(current_user)s] [Action: %(action)s] [%(message)s]"
+                    "format": "[%(asctime)s] [%(levelname)s] <%(module)s> :: [%(result)s | Attempted : %(action)s | Project : %(project)s | User : %(current_user)s]"
                 },
             },
             "handlers": {

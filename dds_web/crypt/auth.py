@@ -24,7 +24,7 @@ def verify_user_pass(username, password):
     if user and verify_password_argon2id(user.password, password):
         return True
 
-    raise InvalidUserCredentialsError
+    raise InvalidUserCredentialsError(username=username)
 
 
 def user_session_info(username):
