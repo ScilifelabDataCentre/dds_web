@@ -21,6 +21,7 @@ from dds_web.database import models
 from dds_web import db
 from dds_web.api.dds_decorators import token_required
 from dds_web.api.api_s3_connector import ApiS3Connector
+from dds_web.api.errors import MissingTokenOutputError
 
 ###############################################################################
 # CLASSES ########################################################### CLASSES #
@@ -36,7 +37,7 @@ class DBConnector:
         try:
             self.current_user, self.project = args
         except ValueError as err:
-            flask.abort(500, str(err))
+            raise MissingTokenOutputError(message=str(err))
 
     def __enter__(self):
         return self

@@ -121,6 +121,10 @@ class MissingProjectIDError(JwtTokenError):
         super().__init__(message)
 
 
+class MissingTokenOutputError(JwtTokenError):
+    """Raised when a class or function has not recieved the correct output from the JWT token"""
+
+
 # ----------------------------------------------------------------------------------- #
 
 
@@ -157,6 +161,9 @@ class TokenNotFoundError(DDSArgumentError):
 # ----------------------------------------------------------------------------------- #
 
 
+# ----------------------------------------------------------------------------------- #
+
+
 errors = {
     "ItemDeletionError": {"message": "Removal of item(s) from S3 bucket failed.", "status": 500},
     "IncorrectDecoratorUsageException": {"status": 500},
@@ -169,6 +176,7 @@ errors = {
     "JwtTokenGenerationError": {"status": 500},
     "JwtTokenDecodingError": {"status": 500},
     "MissingProjectIDError": {"status": 500},
+    "MissingTokenOutputError": {"status": 500},
     "DDSArgumentError": {"status": 400},
     "MissingCredentialsError": {"status": 400},
     "MissingMethodError": {"status": 400},
