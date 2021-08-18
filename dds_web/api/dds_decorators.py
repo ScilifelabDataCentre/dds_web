@@ -23,6 +23,8 @@ from dds_web.api.errors import (
     JwtTokenDecodingError,
     DatabaseError,
     JwtTokenError,
+    MissingProjectIDError,
+    IncorrectDecoratorUsageException,
 )
 from dds_web import actions
 
@@ -76,13 +78,12 @@ def project_access_required(f):
     def verify_project_access(current_user, project, *args, **kwargs):
         """Verifies that the user has been granted access to the project."""
 
-        if project["id"] is None:
-            return flask.make_response("Project ID missing. Cannot proceed", 401)
+        if not project.get("id"):
+            raise MissingProjectIDError(message="Project ID not found.")
 
-        if not project["verified"]:
-            return flask.make_response(
-                f"Access to project {project['id']} not yet verified. " "Checkout token settings.",
-                401,
+        if not project.get("verified"):
+            raise IncorrectDecoratorUsageException(
+                message=f"Access to project {project['id']} not yet verified. "
             )
 
         return f(current_user, project, *args, **kwargs)

@@ -13,6 +13,21 @@ class ItemDeletionError(exceptions.HTTPException):
     pass
 
 
+# ----------------------------------------------------------------------------------- #
+
+
+class IncorrectDecoratorUsageException(exceptions.HTTPException):
+    """Errors occuring in DDS decorators, e.g. due to incorrect order or overall usage"""
+
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+# ----------------------------------------------------------------------------------- #
+
+
 class AuthenticationError(exceptions.HTTPException):
     """Base class for errors due to authentication failure."""
 
@@ -49,6 +64,8 @@ class ProjectPermissionsError(AuthenticationError):
 
 
 # ----------------------------------------------------------------------------------- #
+
+
 class DatabaseError(exceptions.HTTPException):
     """Baseclass for database related issues."""
 
@@ -78,6 +95,8 @@ class NoSuchProjectError(DatabaseError):
 
 
 # ----------------------------------------------------------------------------------- #
+
+
 class JwtTokenError(exceptions.HTTPException):
     """Base class for exceptions triggered when handling the JWT tokens."""
 
@@ -103,6 +122,8 @@ class MissingProjectIDError(JwtTokenError):
 
 
 # ----------------------------------------------------------------------------------- #
+
+
 class DDSArgumentError(exceptions.HTTPException):
     """Base class for errors occurring due to missing request arguments."""
 
@@ -135,8 +156,10 @@ class TokenNotFoundError(DDSArgumentError):
 
 # ----------------------------------------------------------------------------------- #
 
+
 errors = {
     "ItemDeletionError": {"message": "Removal of item(s) from S3 bucket failed.", "status": 500},
+    "IncorrectDecoratorUsageException": {"status": 500},
     "DatabaseError": {"status": 500},
     "NoSuchProjectError": {"status": 400},
     "AuthenticationError": {"status": 400},
