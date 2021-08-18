@@ -175,7 +175,6 @@ class DBConnector:
     def folder_size(self, folder_name="."):
         """Get total size of folder"""
 
-        tot_file_size, error = (None, "")
         try:
             current_project = models.Project.query.filter(
                 models.Project.public_id == func.binary(self.project["id"])
@@ -193,12 +192,11 @@ class DBConnector:
                 )
                 .first()
             )
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-        else:
-            tot_file_size = file_info.sizeSum
 
-        return tot_file_size, error
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+        else:
+            return file_info.sizeSum
 
     def delete_all(self):
         """Delete all files in project."""

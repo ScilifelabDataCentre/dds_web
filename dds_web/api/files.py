@@ -289,9 +289,10 @@ class ListFiles(flask_restful.Resource):
                     }
 
                     if show_size:
-                        folder_size, error = dbconn.folder_size(folder_name=x)
-                        if folder_size is None:
-                            return flask.make_response(error, 500)
+                        try:
+                            folder_size = dbconn.folder_size(folder_name=x)
+                        except DatabaseError:
+                            raise
 
                         info.update({"size": dds_web.utils.format_byte_size(folder_size)})
                     files_folders.append(info)
