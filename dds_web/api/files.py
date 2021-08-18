@@ -266,10 +266,10 @@ class ListFiles(flask_restful.Resource):
                 )
 
             # Get files and folders
-            distinct_files, distinct_folders, error = dbconn.items_in_subpath(folder=subpath)
-
-            if error != "":
-                return flask.make_response(error, 500)
+            try:
+                distinct_files, distinct_folders = dbconn.items_in_subpath(folder=subpath)
+            except DatabaseError:
+                raise
 
             # Collect file and folder info to return to CLI
             if distinct_files:
