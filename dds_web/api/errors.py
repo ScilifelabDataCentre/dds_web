@@ -47,23 +47,40 @@ class AuthenticationError(exceptions.HTTPException):
         )
 
 
-class InvalidUserCredentialsError(AuthenticationError):
+class InvalidUserCredentialsError(exceptions.HTTPException):
     """Errors occurring during user authentication."""
 
     def __init__(self, username, message="Incorrect username and/or password."):
-        super().__init__(message=message, username=username)
+        super().__init__(message)
+
+        action_logger.warning(
+            message,
+            extra={
+                **extra_info,
+                "current_user": username,
+                "action": actions.get(flask.request.endpoint),
+                "project": None,
+            },
+        )
 
 
-class ProjectPermissionsError(AuthenticationError):
+class ProjectPermissionsError(exceptions.HTTPException):
     """Errors due to incorrect project permissions."""
 
     def __init__(
         self, username, project, message="The user does not have the necessary permissions."
     ):
-        super().__init__(message=message, username=username, project=project)
+        super().__init__(message)
 
-
-# ----------------------------------------------------------------------------------- #
+        action_logger.warning(
+            message,
+            extra={
+                **extra_info,
+                "current_user": username,
+                "action": actions.get(flask.request.endpoint),
+                "project": project,
+            },
+        )
 
 
 class DatabaseError(exceptions.HTTPException):
@@ -87,14 +104,32 @@ class DatabaseError(exceptions.HTTPException):
         )
 
 
-class NoSuchProjectError(DatabaseError):
+class NoSuchProjectError(exceptions.HTTPException):
     """The project does not exist in the database"""
 
     def __init__(self, username, project, message="The specified project does not exist."):
-        super().__init__(message, username=username, project=project)
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+        action_logger.warning(
+            message,
+            extra={
+                **extra_info,
+                "current_user": username,
+                "action": actions.get(flask.request.endpoint),
+                "project": project,
+            },
+        )
 
 
-# ----------------------------------------------------------------------------------- #
+class BucketNotFoundError(exceptions.HTTPException):
+    """No bucket name found in the database."""
+
+    def __init__(self, message="No bucket found for the specified project."):
+        super().__init__(message)
+
+        general_logger.warning(message)
 
 
 class JwtTokenError(exceptions.HTTPException):
@@ -106,23 +141,40 @@ class JwtTokenError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class JwtTokenGenerationError(JwtTokenError):
+class JwtTokenGenerationError(exceptions.HTTPException):
     """Errors when generating the JWT token during authentication."""
 
+    def __init__(self, message):
+        super().__init__(message)
 
-class JwtTokenDecodingError(JwtTokenError):
+        general_logger.warning(message)
+
+
+class JwtTokenDecodingError(exceptions.HTTPException):
     """Errors occuring when decoding the JWT token."""
 
+    def __init__(self, message):
+        super().__init__(message)
 
-class MissingProjectIDError(JwtTokenError):
+        general_logger.warning(message)
+
+
+class MissingProjectIDError(exceptions.HTTPException):
     """Errors due to missing project ID in request."""
 
     def __init__(self, message="Attempting to validate users project access without project ID"):
         super().__init__(message)
 
+        general_logger.warning(message)
 
-class MissingTokenOutputError(JwtTokenError):
+
+class MissingTokenOutputError(exceptions.HTTPException):
     """Raised when a class or function has not recieved the correct output from the JWT token"""
+
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
 
 
 # ----------------------------------------------------------------------------------- #
@@ -137,25 +189,31 @@ class DDSArgumentError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class MissingCredentialsError(DDSArgumentError):
+class MissingCredentialsError(exceptions.HTTPException):
     """Raised when username and/or password arguments are missing from a request."""
 
     def __init__(self, message="Missing username and/or password."):
         super().__init__(message)
 
+        general_logger.warning(message)
 
-class MissingMethodError(DDSArgumentError):
+
+class MissingMethodError(exceptions.HTTPException):
     """Raised when none of the following are found in a request: put, get, ls, rm."""
 
     def __init__(self, message="No method found in request."):
         super().__init__(message)
 
+        general_logger.warning(message)
 
-class TokenNotFoundError(DDSArgumentError):
+
+class TokenNotFoundError(exceptions.HTTPException):
     """Missing token in request."""
 
     def __init__(self, message="JWT Token not found in HTTP header."):
         super().__init__(message)
+
+        general_logger.warning(message)
 
 
 # ----------------------------------------------------------------------------------- #

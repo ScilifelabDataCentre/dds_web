@@ -21,7 +21,7 @@ from dds_web.database import models
 from dds_web import db
 from dds_web.api.dds_decorators import token_required
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.errors import MissingTokenOutputError
+from dds_web.api.errors import MissingTokenOutputError, DatabaseError, BucketNotFoundError
 
 ###############################################################################
 # CLASSES ########################################################### CLASSES #
@@ -52,22 +52,29 @@ class DBConnector:
     def get_bucket_name(self):
         """Get bucket name from database"""
 
-        bucketname, error = (None, "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(
+                message="Project ID not found. Cannot get project bucket."
+            )
+
         try:
             bucket = (
-                models.Project.query.filter(
-                    models.Project.public_id == func.binary(self.project["id"])
-                )
+                models.Project.query.filter(models.Project.public_id == func.binary(project_id))
                 .with_entities(models.Project.bucket)
                 .first()
             )
-            app.logger.debug("Bucket: %s", bucket)
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-        else:
+
+            if not bucket:
+                raise BucketNotFoundError
+
             bucketname = bucket[0]
 
-        return bucketname, error
+            app.logger.debug("Bucket: %s", bucket)
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+        else:
+            return bucketname
 
     def filename_in_bucket(self, filename):
         """Get filename in bucket."""
