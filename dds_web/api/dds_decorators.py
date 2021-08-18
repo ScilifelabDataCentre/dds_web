@@ -25,6 +25,7 @@ from dds_web.api.errors import (
     JwtTokenError,
     MissingProjectIDError,
     IncorrectDecoratorUsageException,
+    BucketNotFoundError,
 )
 from dds_web import actions
 
@@ -139,10 +140,7 @@ def bucket_must_exists(func):
         try:
             self.resource.meta.client.head_bucket(Bucket=self.bucketname)
         except botocore.client.ClientError as err:
-            return (
-                False,
-                f"Project does not yet have a " f"dedicated bucket in the S3 instance: {err}",
-            )
+            raise BucketNotFoundError(message=str(err))
 
         return func(self, *args, **kwargs)
 

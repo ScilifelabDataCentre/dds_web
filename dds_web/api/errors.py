@@ -170,6 +170,15 @@ class BucketNotFoundError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
+class S3ConnectionError(exceptions.HTTPException):
+    """Error when attempting to connect or perform action with S3 connection."""
+
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
 class JwtTokenError(exceptions.HTTPException):
     """Base class for exceptions triggered when handling the JWT tokens."""
 
@@ -213,9 +222,6 @@ class MissingTokenOutputError(exceptions.HTTPException):
         super().__init__(message)
 
         general_logger.warning(message)
-
-
-# ----------------------------------------------------------------------------------- #
 
 
 class DDSArgumentError(exceptions.HTTPException):
@@ -279,4 +285,5 @@ errors = {
     "TokenNotFoundError": {"status": 400},
     "EmptyProjectException": {"status": 400},
     "DeletionError": {"status": 500},
+    "S3ConnectionError": {"status": 500},
 }

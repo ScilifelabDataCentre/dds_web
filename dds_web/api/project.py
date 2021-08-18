@@ -35,6 +35,7 @@ from dds_web.api.errors import (
     EmptyProjectException,
     DeletionError,
     MissingTokenOutputError,
+    BucketNotFoundError,
 )
 
 ###############################################################################
@@ -264,7 +265,7 @@ class RemoveContents(flask_restful.Resource):
             raise MissingTokenOutputError(message="Project ID not found. Cannot delete contents.")
 
         # Delete files
-        removed, error = (False, "")
+        removed = False
         with DBConnector() as dbconn:
             try:
                 removed = dbconn.delete_all()
@@ -297,10 +298,10 @@ class RemoveContents(flask_restful.Resource):
                     db.session.commit()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 raise DatabaseError(message=str(err))
-            except DeletionError:
+            except (DeletionError, BucketNotFoundError):
                 raise
 
-        return flask.jsonify({"removed": removed, "error": error})
+        return flask.jsonify({"removed": removed})
 
 
 class UpdateProjectSize(flask_restful.Resource):
