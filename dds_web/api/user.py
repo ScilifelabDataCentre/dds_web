@@ -6,20 +6,14 @@
 
 # Standard library
 import datetime
-import binascii
-import logging
 import pathlib
-
-# import json
 
 # Installed
 from sqlalchemy.sql import func
-from werkzeug.exceptions import HTTPException
 
 # from flask import json
 import flask
 import flask_restful
-import functools
 import jwt
 import pandas
 import sqlalchemy
@@ -27,8 +21,6 @@ import sqlalchemy
 # Own modules
 from dds_web import app, timestamp
 from dds_web.database import models
-
-# from dds_web.crypt import auth import gen_argon2hash, verify_password_argon2id
 from dds_web.api.dds_decorators import token_required
 from dds_web.api.errors import MissingCredentialsError, DatabaseError, InvalidUserCredentialsError
 from dds_web import exceptions

@@ -73,7 +73,7 @@ class DatabaseError(exceptions.HTTPException):
 class NoSuchProjectError(DatabaseError):
     """The project does not exist in the database"""
 
-    def __init__(self, username, project, message="Project not found in database."):
+    def __init__(self, username, project, message="The specified project does not exist."):
         super().__init__(message, username=username, project=project)
 
 

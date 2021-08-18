@@ -5,17 +5,12 @@
 ###############################################################################
 
 # Standard library
-import functools
 import logging
 
 # Installed
 import flask_restful
 import flask
 import sqlalchemy
-import pathlib
-import json
-import boto3
-import botocore
 from sqlalchemy.sql import func
 from cryptography.hazmat.primitives.kdf import scrypt
 from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
@@ -32,7 +27,6 @@ from dds_web.api.db_connector import DBConnector
 from dds_web.api.dds_decorators import token_required, project_access_required
 from dds_web.api.errors import (
     MissingMethodError,
-    JwtTokenError,
     MissingProjectIDError,
     DatabaseError,
     NoSuchProjectError,
