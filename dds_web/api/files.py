@@ -331,47 +331,50 @@ class RemoveDir(flask_restful.Resource):
 
         not_removed_dict, not_exist_list = ({}, [])
 
-        with DBConnector() as dbconn:
-            with ApiS3Connector() as s3conn:
-                # Error if not enough info
-                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                    return (
-                        not_removed_dict,
-                        not_exist_list,
-                        "No s3 info returned! " + s3conn.message,
-                    )
+        try:
+            with DBConnector() as dbconn:
 
-                for x in flask.request.json:
-                    # Get all files in the folder
-                    in_db, folder_deleted, error = dbconn.delete_folder(folder=x)
+                with ApiS3Connector() as s3conn:
+                    # Error if not enough info
+                    if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+                        return (
+                            not_removed_dict,
+                            not_exist_list,
+                            "No s3 info returned! " + s3conn.message,
+                        )
 
-                    if not in_db:
-                        db.session.rollback()
-                        not_exist_list.append(x)
-                        continue
+                    for x in flask.request.json:
+                        # Get all files in the folder
+                        in_db, folder_deleted, error = dbconn.delete_folder(folder=x)
 
-                    # Error with db --> folder error
-                    if not folder_deleted:
-                        db.session.rollback()
-                        not_removed_dict[x] = error
-                        continue
+                        if not in_db:
+                            db.session.rollback()
+                            not_exist_list.append(x)
+                            continue
 
-                    # Delete from s3
-                    folder_deleted, error = s3conn.remove_folder(folder=x)
+                        # Error with db --> folder error
+                        if not folder_deleted:
+                            db.session.rollback()
+                            not_removed_dict[x] = error
+                            continue
 
-                    if not folder_deleted:
-                        db.session.rollback()
-                        not_removed_dict[x] = error
-                        continue
+                        # Delete from s3
+                        folder_deleted, error = s3conn.remove_folder(folder=x)
 
-                    # Commit to db if no error so far
-                    try:
-                        db.session.commit()
-                    except sqlalchemy.exc.SQLAlchemyError as err:
-                        db.session.rollback()
-                        not_removed_dict[x] = str(err)
-                        continue
+                        if not folder_deleted:
+                            db.session.rollback()
+                            not_removed_dict[x] = error
+                            continue
 
+                        # Commit to db if no error so far
+                        try:
+                            db.session.commit()
+                        except sqlalchemy.exc.SQLAlchemyError as err:
+                            db.session.rollback()
+                            not_removed_dict[x] = str(err)
+                            continue
+        except (ValueError,):
+            raise
         return flask.jsonify({"not_removed": not_removed_dict, "not_exists": not_exist_list})
 
 

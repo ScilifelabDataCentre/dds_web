@@ -170,8 +170,35 @@ class BucketNotFoundError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
+class S3ProjectNotFoundError(exceptions.HTTPException):
+    """No Safespring project found in database or connection failed."""
+
+    def __init__(self, username, message="Safespring S3 project not found.", project=None):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
 class S3ConnectionError(exceptions.HTTPException):
     """Error when attempting to connect or perform action with S3 connection."""
+
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class S3InfoNotFoundError(exceptions.HTTPException):
+    """S3 info could not be found."""
+
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class KeyNotFoundError(exceptions.HTTPException):
+    """S3 keys not found."""
 
     def __init__(self, message):
         super().__init__(message)
@@ -286,4 +313,7 @@ errors = {
     "EmptyProjectException": {"status": 400},
     "DeletionError": {"status": 500},
     "S3ConnectionError": {"status": 500},
+    "S3ProjectNotFoundError": {"status": 500},
+    "S3InfoNotFoundError": {"status": 500},
+    "KeyNotFoundError": {"status": 500},
 }

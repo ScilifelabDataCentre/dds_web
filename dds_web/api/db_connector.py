@@ -26,6 +26,8 @@ from dds_web.api.errors import (
     DatabaseError,
     BucketNotFoundError,
     EmptyProjectException,
+    NoSuchProjectError,
+    S3ProjectNotFoundError,
 )
 
 ###############################################################################
@@ -243,7 +245,8 @@ class DBConnector:
     def delete_folder(self, folder):
         """Delete all items in folder"""
 
-        exists, deleted, error = (False, False, "")
+        exists = False
+        deleted = False
         try:
             current_project = models.Project.query.filter(
                 models.Project.public_id == func.binary(self.project["id"])
@@ -261,7 +264,7 @@ class DBConnector:
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
+            raise DatabaseError(message=str(err))
 
         if files and files is not None:
             exists = True
@@ -390,7 +393,9 @@ class DBConnector:
     def cloud_project(self):
         """Get safespring project"""
 
-        sfsp_proj, error = ("", "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(message="Project ID not found. Cannot get S3 project.")
 
         # Get current project
         try:
@@ -401,19 +406,22 @@ class DBConnector:
                 )
                 .add_columns(models.Facility.safespring)
                 .filter(models.Facility.id == func.binary(models.Project.facility_id))
-                .filter(models.Project.public_id == func.binary(self.project["id"]))
+                .filter(models.Project.public_id == func.binary(project_id))
             ).first()
 
             app.logger.debug("Safespring project: %s", current_project_facility_safespring)
             if not current_project_facility_safespring:
-                error = "No safespring project found for responsible facility."
+                raise S3ProjectNotFoundError(
+                    message="No safespring project found for responsible facility.",
+                    username=self.current_user.username,
+                    project=project_id,
+                )
 
             sfsp_proj = current_project_facility_safespring[1]
         except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-            app.logger.exception(err)
-
-        return sfsp_proj, error
+            raise DatabaseError(message=str(err))
+        else:
+            return sfsp_proj
 
     @staticmethod
     def project_usage(project_object):
