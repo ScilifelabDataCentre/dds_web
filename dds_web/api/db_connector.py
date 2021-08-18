@@ -106,14 +106,22 @@ class DBConnector:
     def items_in_subpath(self, folder="."):
         """Get all items in root folder of project"""
 
-        distinct_files, distinct_folders, error = ([], [], "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(
+                message="Project ID not found. Cannot get project bucket."
+            )
+
+        distinct_files = []
+        distinct_folders = []
         # Get everything in root:
         # Files have subpath "." and folders do not have child folders
         # Get everything in folder:
         # Files have subpath == folder and folders have child folders (regexp)
+        # TODO (ina): fix join
         try:
             current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(self.project["id"])
+                models.Project.public_id == func.binary(project_id)
             ).first()
 
             # All files in project
@@ -160,9 +168,9 @@ class DBConnector:
                 distinct_folders = list(split_paths)
 
         except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-
-        return distinct_files, distinct_folders, error
+            raise DatabaseError(message=str(err))
+        else:
+            return distinct_files, distinct_folders
 
     def folder_size(self, folder_name="."):
         """Get total size of folder"""
