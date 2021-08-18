@@ -21,6 +21,7 @@ from dds_web import db, timestamp
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.dds_decorators import token_required, project_access_required
+from dds_web.api.errors import MissingTokenOutputError, DatabaseError
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -251,11 +252,12 @@ class ListFiles(flask_restful.Resource):
         # Check project not empty
         with DBConnector() as dbconn:
             # Get number of files in project and return if empty or error
-            num_files, error = dbconn.project_size()
-            if num_files == 0:
-                if error != "":
-                    return flask.make_response(error, 500)
+            try:
+                num_files = dbconn.project_size()
+            except (MissingTokenOutputError, DatabaseError):
+                raise
 
+            if num_files == 0:
                 return flask.jsonify(
                     {
                         "num_items": num_files,
