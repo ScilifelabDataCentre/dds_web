@@ -104,6 +104,44 @@ class DatabaseError(exceptions.HTTPException):
         )
 
 
+class EmptyProjectException(exceptions.HTTPException):
+    """Something is attempted on an empty project."""
+
+    def __init__(self, project, username=None, message="The project is empty."):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+        action_logger.warning(
+            message,
+            extra={
+                **extra_info,
+                "current_user": username,
+                "action": actions.get(flask.request.endpoint),
+                "project": project,
+            },
+        )
+
+
+class DeletionError(exceptions.HTTPException):
+    """Deletion of item failed."""
+
+    def __init__(self, username, project, message="Deletion failed."):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+        action_logger.warning(
+            message,
+            extra={
+                **extra_info,
+                "current_user": username,
+                "action": actions.get(flask.request.endpoint),
+                "project": project,
+            },
+        )
+
+
 class NoSuchProjectError(exceptions.HTTPException):
     """The project does not exist in the database"""
 
@@ -239,4 +277,6 @@ errors = {
     "MissingCredentialsError": {"status": 400},
     "MissingMethodError": {"status": 400},
     "TokenNotFoundError": {"status": 400},
+    "EmptyProjectException": {"status": 400},
+    "DeletionError": {"status": 500},
 }

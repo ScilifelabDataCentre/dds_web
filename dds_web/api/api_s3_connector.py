@@ -34,6 +34,7 @@ from dds_web.api.errors import (
     MissingTokenOutputError,
     BucketNotFoundError,
     DatabaseError,
+    DeletionError,
 )
 
 ###############################################################################
@@ -133,16 +134,13 @@ class ApiS3Connector:
     def remove_all(self, *args, **kwargs):
         """Removes all contents from the project specific s3 bucket."""
 
-        removed, error = (False, "")
         try:
             bucket = self.resource.Bucket(self.bucketname)
             bucket.objects.all().delete()
         except botocore.client.ClientError as err:
-            error = str(err)
+            raise DeletionError(message=str(err), username=None, project=self.project.get("id"))
         else:
-            removed = True
-
-        return removed, error
+            return True
 
     @bucket_must_exists
     def remove_folder(self, folder, *args, **kwargs):

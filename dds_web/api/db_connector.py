@@ -21,7 +21,12 @@ from dds_web.database import models
 from dds_web import db
 from dds_web.api.dds_decorators import token_required
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.errors import MissingTokenOutputError, DatabaseError, BucketNotFoundError
+from dds_web.api.errors import (
+    MissingTokenOutputError,
+    DatabaseError,
+    BucketNotFoundError,
+    EmptyProjectException,
+)
 
 ###############################################################################
 # CLASSES ########################################################### CLASSES #
@@ -175,9 +180,16 @@ class DBConnector:
     def folder_size(self, folder_name="."):
         """Get total size of folder"""
 
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(
+                message="Project ID not found. Cannot get project bucket."
+            )
+
+        # Sum up folder file sizes
         try:
             current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(self.project["id"])
+                models.Project.public_id == func.binary(project_id)
             ).first()
 
             file_info = (
@@ -201,10 +213,13 @@ class DBConnector:
     def delete_all(self):
         """Delete all files in project."""
 
-        deleted, error = (False, "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(message="Project ID not found. Cannot delete files.")
+
         try:
             current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(self.project["id"])
+                models.Project.public_id == func.binary(project_id)
             ).first()
 
             num_deleted = models.File.query.filter(
@@ -218,15 +233,12 @@ class DBConnector:
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            error = str(err)
+            raise DatabaseError(message=str(err))
         else:
             if num_deleted == 0:
-                error = f"There are no files within project {self.project['id']}."
-                deleted = False
-            else:
-                deleted = True
+                raise EmptyProjectException(project=project_id)
 
-        return deleted, error
+            return True
 
     def delete_folder(self, folder):
         """Delete all items in folder"""

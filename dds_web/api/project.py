@@ -32,6 +32,9 @@ from dds_web.api.errors import (
     NoSuchProjectError,
     ProjectPermissionsError,
     JwtTokenGenerationError,
+    EmptyProjectException,
+    DeletionError,
+    MissingTokenOutputError,
 )
 
 ###############################################################################
@@ -253,35 +256,49 @@ class RemoveContents(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def delete(self, _, project):
+    def delete(self, current_user, project):
         """Removes all project contents."""
+
+        project_id = project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(message="Project ID not found. Cannot delete contents.")
 
         # Delete files
         removed, error = (False, "")
         with DBConnector() as dbconn:
-            removed, error = dbconn.delete_all()
+            try:
+                removed = dbconn.delete_all()
+            except (DatabaseError, EmptyProjectException):
+                raise
 
             # Return error if contents not deleted from db
             if not removed:
-                return flask.make_response(error, 500)
+                raise DeletionError(
+                    message="No project contents deleted.",
+                    username=current_user.username,
+                    project=project_id,
+                )
 
             # Delete from bucket
-            with ApiS3Connector() as s3conn:
-                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                    return flask.make_response("No s3 info returned! " + s3conn.message, 500)
+            try:
+                with ApiS3Connector() as s3conn:
+                    removed = s3conn.remove_all()
 
-                removed, error = s3conn.remove_all()
+                    # Return error if contents not deleted from s3 bucket
+                    if not removed:
+                        db.session.rollback()
+                        raise DeletionError(
+                            message="Deleting project contents failed.",
+                            username=current_user.username,
+                            project=project_id,
+                        )
 
-                # Return error if contents not deleted from s3 bucket
-                if not removed:
-                    db.session.rollback()
-                    return flask.make_response(error, 500)
-
-                # Commit changes to db
-                try:
+                    # Commit changes to db
                     db.session.commit()
-                except sqlalchemy.exc.SQLAlchemyError as err:
-                    return flask.make_response(str(err), 500)
+            except sqlalchemy.exc.SQLAlchemyError as err:
+                raise DatabaseError(message=str(err))
+            except DeletionError:
+                raise
 
         return flask.jsonify({"removed": removed, "error": error})
 
