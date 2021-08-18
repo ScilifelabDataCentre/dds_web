@@ -58,6 +58,7 @@ class DBConnector:
                 message="Project ID not found. Cannot get project bucket."
             )
 
+        # Get bucket from db
         try:
             bucket = (
                 models.Project.query.filter(models.Project.public_id == func.binary(project_id))
@@ -75,28 +76,6 @@ class DBConnector:
             raise DatabaseError(message=str(err))
         else:
             return bucketname
-
-    def filename_in_bucket(self, filename):
-        """Get filename in bucket."""
-
-        name_in_bucket, error = (None, "")
-        try:
-            current_project = models.Project.query.filter(
-                models.Project.public_id == self.project["id"]
-            ).first()
-
-            file = models.File.query.filter(
-                sqlalchemy.and_(
-                    models.File.project_id == func.binary(current_project.id),
-                    models.File.name == func.binary(filename),
-                )
-            ).first()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-        else:
-            name_in_bucket = file[0]
-
-        return name_in_bucket, error
 
     def project_size(self):
         """Get size of project"""

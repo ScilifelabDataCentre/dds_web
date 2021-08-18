@@ -29,7 +29,12 @@ from dds_web.api.dds_decorators import (
     token_required,
     project_access_required,
 )
-from dds_web.api.errors import ItemDeletionError
+from dds_web.api.errors import (
+    ItemDeletionError,
+    MissingTokenOutputError,
+    BucketNotFoundError,
+    DatabaseError,
+)
 
 ###############################################################################
 # LOGGING ########################################################### LOGGING #
@@ -56,13 +61,18 @@ class ApiS3Connector:
                 self.keys,
                 self.url,
                 self.bucketname,
-                self.message,
             ) = self.get_s3_info()
             self.resource = None
 
-        except (ValueError, IOError, AssertionError) as err:
-            app.logger.exception(err)
-            flask.abort(500, str(err))
+        except (
+            ValueError,
+            IOError,
+            AssertionError,
+            MissingTokenOutputError,
+            BucketNotFoundError,
+            DatabaseError,
+        ):
+            raise
 
     @connect_cloud
     def __enter__(self):
@@ -106,12 +116,15 @@ class ApiS3Connector:
         assert "access_key" in s3keys, "s3 access key not found!"
         assert "secret_key" in s3keys, "s3 secret key not found!"
 
-        with DBConnector() as dbconn:
-            # 3. Get bucket name
-            bucketname, error = dbconn.get_bucket_name()
+        try:
+            with DBConnector() as dbconn:
+                # 3. Get bucket name
+                bucketname = dbconn.get_bucket_name()
+        except (MissingTokenOutputError, BucketNotFoundError, DatabaseError):
+            raise
 
         app.logger.debug(f"{s3keys}")
-        return safespring_project, s3keys, endpoint_url, bucketname, error
+        return safespring_project, s3keys, endpoint_url, bucketname
 
     def get_safespring_project(self):
         """Get the safespring project"""
