@@ -8,30 +8,21 @@
 import logging
 import traceback
 
-import sys
-import dataclasses
-import functools
-
-# import requests
 import pathlib
 import json
 
 # Installed
-import boto3
 import botocore
-import sqlalchemy
 import flask
 
 # Own modules
 from dds_web import app
-from dds_web.database import models
 from dds_web.api.dds_decorators import (
     connect_cloud,
     bucket_must_exists,
     token_required,
     project_access_required,
 )
-from dds_web.api.errors import ItemDeletionError
 
 ###############################################################################
 # LOGGING ########################################################### LOGGING #
@@ -114,9 +105,6 @@ class ApiS3Connector:
 
         print(s3keys, flush=True)
         return safespring_project, s3keys, endpoint_url, bucketname, error
-
-    def get_safespring_project(self):
-        """Get the safespring project"""
 
     @bucket_must_exists
     def remove_all(self, *args, **kwargs):
