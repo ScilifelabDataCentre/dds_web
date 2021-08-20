@@ -18,7 +18,6 @@ sensitive
 filenumber*
 testfile*
 files
-test*
 dp_venv
 *settings.json*
 *info.md*
