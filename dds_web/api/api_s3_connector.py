@@ -8,21 +8,15 @@
 import logging
 import traceback
 
-import sys
-import dataclasses
-import functools
-
 import pathlib
 import json
 
 # Installed
-import boto3
 import botocore
-import flask  # used
+import flask
 
 # Own modules
 from dds_web import app
-from dds_web.database import models
 from dds_web.api.dds_decorators import (
     connect_cloud,
     bucket_must_exists,
