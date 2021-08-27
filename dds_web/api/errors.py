@@ -287,6 +287,16 @@ class TokenNotFoundError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
+class PublicKeyNotFoundError(exceptions.HTTPException):
+    """Public key not found in database"""
+
+    def __init__(self, project, message="No key found for current project"):
+        self.message = f"{message}: {project}"
+        super().__init__(self.message)
+
+        general_logger.warning(self.message)
+
+
 # ----------------------------------------------------------------------------------- #
 
 
@@ -316,4 +326,5 @@ errors = {
     "S3ProjectNotFoundError": {"status": 500},
     "S3InfoNotFoundError": {"status": 500},
     "KeyNotFoundError": {"status": 500},
+    "PublicKeyNotFoundError": {"status": 500},
 }

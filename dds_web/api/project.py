@@ -36,6 +36,7 @@ from dds_web.api.errors import (
     DeletionError,
     MissingTokenOutputError,
     BucketNotFoundError,
+    PublicKeyNotFoundError,
 )
 
 ###############################################################################
@@ -121,22 +122,24 @@ class GetPublic(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def get(self, _, project):
+    def get(self, current_user, project):
         """Get public key from database."""
 
         app.logger.debug("Getting the public key.")
         try:
             proj_pub = (
-                models.Project.query.filter_by(public_id=project["id"])
+                models.Project.query.filter_by(public_id=project.get("id"))
                 .with_entities(models.Project.public_key)
                 .first()
             )
 
             if not proj_pub:
-                return flask.make_response("No public key found.", 500)
+                raise PublicKeyNotFoundError(project=project.get("id"))
 
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(str(err), 500)
+            raise DatabaseError(
+                message=str(err), username=current_user.username, project=project.get("id")
+            )
         else:
             return flask.jsonify({"public": proj_pub[0]})
 

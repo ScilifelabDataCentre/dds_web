@@ -20,7 +20,13 @@ def fill_db():
             name="Facility 1",
             internal_ref="fac",
             safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
-        )
+        ),
+        Facility(
+            public_id="public_facility_id_2",
+            name="Facility 2",
+            internal_ref="fac2",
+            safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
+        ),
     ]
 
     projects = [
@@ -41,7 +47,24 @@ def fill_db():
             privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
             privkey_nonce="D652B8C4554B675FB780A6EE",
             facility_id=facilities[0],
-        )
+        ),
+        Project(
+            public_id="unused_project_id",
+            title="unused project",
+            category="Category",
+            date_created=timestamp(),
+            date_updated=timestamp(),
+            status="Ongoing",
+            description="This is a test project to check for permissions.",
+            pi="PI",
+            size=7357,
+            bucket=f"unusedprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            public_key="08D0D813DD7DD2541DF58A7E5AB651D20299F741732B0DC8B297A2D4CB43626C",
+            private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
+            privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
+            privkey_nonce="D652B8C4554B675FB780A6EE",
+            facility_id=facilities[1],
+        ),
     ]
 
     users = [
@@ -117,8 +140,9 @@ def fill_db():
 
     # Foreign key/relationship updates
     for p in projects:
-        for u in users:
-            u.projects.append(p)
+        if p.public_id != "unused_project_id":
+            for u in users:
+                u.projects.append(p)
 
     for e in emails[0:2]:
         users[0].emails.append(e)
