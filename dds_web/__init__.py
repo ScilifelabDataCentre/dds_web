@@ -45,16 +45,9 @@ def prepare():
         g.facility_id = session.get("facility_id")
 
 
-def create_app():
-    """Construct the core application."""
+def setup_logging():
+    """Setup loggers"""
 
-    # Defaults
-    app.config.from_object("dds_web.config.Config")
-
-    # User config file, if using in production
-    app.config.from_envvar("DDS_APP_CONFIG", silent=True)
-
-    # Setup logging handlers
     dictConfig(
         {
             "version": 1,
@@ -70,14 +63,14 @@ def create_app():
                     "level": logging.DEBUG,
                     "class": "dds_web.dds_rotating_file_handler.DDSRotatingFileHandler",
                     "filename": "dds",
-                    "basedir": app.config.get("LOG_DIR"),
+                    "basedir": app.config.get("LOGS_DIR"),
                     "formatter": "general",
                 },
                 "actions": {
                     "level": logging.INFO,
                     "class": "dds_web.dds_rotating_file_handler.DDSRotatingFileHandler",
                     "filename": "actions",
-                    "basedir": app.config.get("LOG_DIR"),
+                    "basedir": app.config.get("LOGS_DIR"),
                     "formatter": "actions",
                 },
                 "console": {
@@ -97,15 +90,22 @@ def create_app():
         }
     )
 
+
+def create_app():
+    """Construct the core application."""
+
+    # App config file
+    app.config.from_envvar("DDS_APP_CONFIG", silent=True)
+
+    # Setup logging handlers
+    setup_logging()
+
     # Set app.logger as the general logger
     app.logger = logging.getLogger("general")
     app.logger.info("Logging initiated.")
 
-    # action_logger = logging.getLogger("actions")
-    # action_logger.info("Logging initiated.", extra={"action": "initiation", "current_user": "root", })
-
-    db.init_app(app)  # Initialize database
-    # ma.init_app(app)
+    # Initialize database
+    db.init_app(app)
 
     # initialize OIDC
     oauth.register(
