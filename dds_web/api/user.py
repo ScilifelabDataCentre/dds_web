@@ -87,7 +87,7 @@ class AuthenticateUser(flask_restful.Resource):
         except (DatabaseError, InvalidUserCredentialsError, JwtTokenGenerationError):
             raise
         else:
-            return flask.jsonify({"token": token.decode("UTF-8")})
+            return flask.jsonify({"token": token})
 
 
 class ShowUsage(flask_restful.Resource):

@@ -29,6 +29,7 @@ class Facility(db.Model):
     # Relationships
     # One facility can have many users
     users = db.relationship("User", backref="facility")
+
     # One facility can have many projects
     projects = db.relationship("Project", backref="responsible_facility")
 

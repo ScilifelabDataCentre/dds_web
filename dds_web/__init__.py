@@ -4,20 +4,15 @@
 
 # Standard library
 from datetime import datetime, timedelta
-import pytz
 import logging
-import os
-import pathlib
+import pytz
 import time
 
 # Installed
-from flask import Flask, g, render_template, session
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
-from flask_marshmallow import Marshmallow
-from logging.handlers import RotatingFileHandler
-from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
+from flask import Flask, g, session
+from flask_sqlalchemy import SQLAlchemy
+from logging.config import dictConfig
 
 # Own modules
 
@@ -25,9 +20,8 @@ from authlib.integrations import flask_client as auth_flask_client
 
 app = Flask(__name__, instance_relative_config=False)
 db = SQLAlchemy()
-ma = Marshmallow(app)
 C_TZ = pytz.timezone("Europe/Stockholm")
-oauth = auth_flask_client.OAuth(app)
+# oauth = auth_flask_client.OAuth(app)  # FIXME
 actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth": "Project Access"}
 
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -107,6 +101,7 @@ def create_app():
     # Initialize database
     db.init_app(app)
 
+    # FIXME
     # initialize OIDC
     # oauth.register(
     #     "default_login",
@@ -117,7 +112,6 @@ def create_app():
     # )
 
     with app.app_context():  # Everything in here has access to sessions
-        # from dds_web import routes  # Import routes
         from dds_web.database import models
 
         db.create_all()  # Create database tables for our data models
@@ -137,7 +131,7 @@ def create_app():
         # Active REST API
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
-        # Web interface deactivated
+        # Web interface deactivated - FIXME
         # from dds_web.user import user_blueprint
         # app.register_blueprint(user_blueprint, url_prefix="/user")
         # from dds_web.admin import admin_blueprint
