@@ -108,45 +108,42 @@ def create_app():
     db.init_app(app)
 
     # initialize OIDC
-    oauth.register(
-        "default_login",
-        client_secret=app.config.get("OIDC_CLIENT_SECRET"),
-        client_id=app.config.get("OIDC_CLIENT_ID"),
-        server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
-        client_kwargs={"scope": "openid profile email"},
-    )
+    # oauth.register(
+    #     "default_login",
+    #     client_secret=app.config.get("OIDC_CLIENT_SECRET"),
+    #     client_id=app.config.get("OIDC_CLIENT_ID"),
+    #     server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
+    #     client_kwargs={"scope": "openid profile email"},
+    # )
+
     with app.app_context():  # Everything in here has access to sessions
-        from dds_web import routes  # Import routes
+        # from dds_web import routes  # Import routes
         from dds_web.database import models
 
-        # db.drop_all()       # Make sure it's the latest db
         db.create_all()  # Create database tables for our data models
 
         # puts in test info for local DB, will be removed later
-        if app.config["USE_LOCAL_DB"]:
+        if app.config.get("USE_LOCAL_DB"):
             try:
-                from dds_web.development.db_init import fill_db
+                # Circular import if not imported here
+                from dds_web.development import db_init
 
-                fill_db()
+                db_init.fill_db()
             except Exception as err:
-                # don't care why, this will be removed soon anyway
                 app.logger.exception(str(err))
 
         from dds_web.api import api_blueprint
 
+        # Active REST API
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
-        from dds_web.user import user_blueprint
-
-        app.register_blueprint(user_blueprint, url_prefix="/user")
-
-        from dds_web.admin import admin_blueprint
-
-        app.register_blueprint(admin_blueprint, url_prefix="/admin")
-
-        from dds_web.project import project_blueprint
-
-        app.register_blueprint(project_blueprint, url_prefix="/project")
+        # Web interface deactivated
+        # from dds_web.user import user_blueprint
+        # app.register_blueprint(user_blueprint, url_prefix="/user")
+        # from dds_web.admin import admin_blueprint
+        # app.register_blueprint(admin_blueprint, url_prefix="/admin")
+        # from dds_web.project import project_blueprint
+        # app.register_blueprint(project_blueprint, url_prefix="/project")
 
         return app
 

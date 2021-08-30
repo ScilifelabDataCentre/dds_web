@@ -139,37 +139,62 @@ def fill_db():
     ]
 
     # Foreign key/relationship updates
-    for p in projects:
-        if p.public_id != "unused_project_id":
-            for u in users:
-                u.projects.append(p)
+    try:
+        for p in projects:
+            if p.public_id != "unused_project_id":
+                for u in users:
+                    u.projects.append(p)
+    except Exception:
+        raise
 
-    for e in emails[0:2]:
-        users[0].emails.append(e)
+    try:
+        for e in emails[0:2]:
+            users[0].emails.append(e)
+    except Exception:
+        raise
 
-    for e in emails[2:4]:
-        users[1].emails.append(e)
+    try:
+        for e in emails[2:4]:
+            users[1].emails.append(e)
+    except Exception:
+        raise
 
-    for u in users:
-        if u.facility_id:
-            facilities[0].users.append(u)
+    try:
+        for u in users:
+            if u.facility_id:
+                facilities[0].users.append(u)
+    except Exception:
+        raise
 
-    for f in files:
-        projects[0].files.append(f)
+    try:
+        for f in files:
+            projects[0].files.append(f)
+    except Exception:
+        raise
 
-    for p in projects:
-        facilities[0].projects.append(p)
+    try:
+        for p in projects:
+            facilities[0].projects.append(p)
+    except Exception:
+        raise
 
-    for v in versions:
-        projects[0].file_versions.append(v)
-        files[0].versions.append(v)
+    try:
 
-    db.session.add_all(facilities)
-    db.session.add_all(projects)
-    db.session.add_all(users)
-    db.session.add_all(files)
-    db.session.add_all(versions)
-    db.session.add_all(emails)
+        for v in versions:
+            projects[0].file_versions.append(v)
+            files[0].versions.append(v)
+    except Exception:
+        raise
+
+    # As long as we add the facilities, the rest will be filled due to foreign key constraints etc
+    # NOTE: This results in integrityerror on restart!
+    try:
+        db.session.add_all(facilities)
+    except Exception:
+        raise
 
     # Required for change in db
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        raise
