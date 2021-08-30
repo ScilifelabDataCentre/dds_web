@@ -26,6 +26,7 @@ from dds_web.database import db_utils
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
 
+
 def project_access(uid, project, owner, role="facility") -> (bool, str):
     """Checks the users access to the specified project
 
@@ -96,4 +97,3 @@ def gen_access_token(project, length: int = 16) -> (str):
     db.session.commit()
 
     return token
-
