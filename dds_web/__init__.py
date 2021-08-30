@@ -22,21 +22,23 @@ app = Flask(__name__, instance_relative_config=False)
 db = SQLAlchemy()
 C_TZ = pytz.timezone("Europe/Stockholm")
 # oauth = auth_flask_client.OAuth(app)  # FIXME
+
+# TODO: Add more actions (for action logging)
 actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth": "Project Access"}
 
 # FUNCTIONS ####################################################### FUNCTIONS #
 
 
-@app.before_request
-def prepare():
-    # Test line for global
-    g.current_user = session.get("current_user")
-    # g.current_user_id = session.get("current_user_id")
-    g.is_facility = session.get("is_facility")
-    g.is_admin = session.get("is_admin")
-    if g.is_facility:
-        g.facility_name = session.get("facility_name")
-        g.facility_id = session.get("facility_id")
+# @app.before_request
+# def prepare():
+#     # Test line for global
+#     g.current_user = session.get("current_user")
+#     # g.current_user_id = session.get("current_user_id")
+#     g.is_facility = session.get("is_facility")
+#     g.is_admin = session.get("is_admin")
+#     if g.is_facility:
+#         g.facility_name = session.get("facility_name")
+#         g.facility_id = session.get("facility_id")
 
 
 def setup_logging():

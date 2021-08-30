@@ -5,7 +5,6 @@
 # Standard library
 
 # Installed
-# from flask_marshmallow import Marshmallow
 
 # Own modules
 from dds_web import create_app
