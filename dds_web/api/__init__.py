@@ -10,6 +10,7 @@ import flask
 import flask_restful
 
 # Own modules
+from dds_web.api import admin
 from dds_web.api import user
 from dds_web.api import project
 from dds_web.api import s3
@@ -27,6 +28,10 @@ api = flask_restful.Api(api_blueprint, errors=errors)
 ####################################################################################################
 # RESOURCES ############################################################################ RESOURCES #
 ####################################################################################################
+
+# Admin #################################################################################### Admin #
+
+api.add_resource(admin.AddUser, "/user/add", endpoint="add_user")
 
 # Login/access ###################################################################### Login/access #
 api.add_resource(user.AuthenticateUser, "/user/auth", endpoint="auth")

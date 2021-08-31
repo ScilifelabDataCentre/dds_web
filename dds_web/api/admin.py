@@ -5,9 +5,13 @@
 # Standard library
 
 # Installed
+import flask
 import flask_restful
 
 # Own modules
+from dds_web import app, db
+from dds_web.crypt import auth
+from dds_web.database import models
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -19,6 +23,21 @@ import flask_restful
 ###############################################################################
 
 
-class AvailableOptions(flask_restful.Resource):
-    """Collects which options (e.g. list users, list projects, add user, approve user, etc)
-    the user can do."""
+class AddUser(flask_restful.Resource):
+    def post(self):
+
+        app.logger.info(self)
+
+        new_user = models.User(
+            username="new_user",
+            password=auth.gen_argon2hash(password="password"),
+            role="researcher",
+            first_name="New",
+            last_name="User",
+            facility_id=None,
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        return flask.jsonify({"test": "test"})
