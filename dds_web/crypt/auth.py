@@ -8,6 +8,7 @@ from dds_web.database import models
 from sqlalchemy.sql import func
 from dds_web import exceptions
 from flask import session
+from dds_web.api.errors import InvalidUserCredentialsError, DatabaseError
 
 
 def verify_user_pass(username, password):
@@ -16,14 +17,14 @@ def verify_user_pass(username, password):
     # Verify existing user
     try:
         user = models.User.query.filter(models.User.username == username).first()
-    except sqlalchemy.exc.SQLAlchemyError:
-        raise
+    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+        raise DatabaseError(message=str(sqlerr), username=username)
 
     # User exists and password correct
     if user and verify_password_argon2id(user.password, password):
         return True
 
-    raise exceptions.AuthenticationError("Incorrect username and/or password!")
+    raise InvalidUserCredentialsError(username=username)
 
 
 def user_session_info(username):

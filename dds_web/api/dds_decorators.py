@@ -4,6 +4,7 @@
 
 # Standard library
 import functools
+import logging
 
 # Installed
 import flask
@@ -11,10 +12,22 @@ import jwt
 import boto3
 import botocore
 from sqlalchemy.sql import func
+import sqlalchemy
 
 # Own modules
 from dds_web import app
 from dds_web.database import models
+from dds_web.api.errors import (
+    MissingCredentialsError,
+    TokenNotFoundError,
+    JwtTokenDecodingError,
+    DatabaseError,
+    JwtTokenError,
+    MissingProjectIDError,
+    IncorrectDecoratorUsageException,
+    BucketNotFoundError,
+)
+from dds_web import actions
 
 ###############################################################################
 # DECORATORS ##################################################### DECORATORS #
@@ -31,24 +44,25 @@ def token_required(f):
         token = None
 
         # Get the token from the header
-        if "x-access-token" in flask.request.headers:
-            token = flask.request.headers["x-access-token"]
-
-        # Deny access if token is missing
-        if token is None or not token:
-            return flask.make_response("Token is missing!", 401)
+        token = flask.request.headers.get("x-access-token")
+        if not token:
+            raise TokenNotFoundError
 
         # Verify the token
         try:
             # Decode
-            data = jwt.decode(token, app.config["SECRET_KEY"])
+            data = jwt.decode(token, app.config.get("SECRET_KEY"))
 
-            # NEW
-            current_user = models.User.query.filter(models.User.username == data["user"]).first()
-            project = data["project"]
-        except Exception as err:
-            app.logger.exception(err)
-            return flask.make_response("Token is invalid!", 401)
+            username = data.get("user")
+            if not username:
+                raise JwtTokenError(message="Username not found in token.")
+
+            current_user = models.User.query.filter(models.User.username == username).first()
+            project = data.get("project")
+        except jwt.exceptions.InvalidTokenError as tokerr:
+            raise JwtTokenDecodingError(message=str(tokerr))
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError(message=str(sqlerr))
         else:
             return f(current_user, project, *args, **kwargs)
 
@@ -65,13 +79,12 @@ def project_access_required(f):
     def verify_project_access(current_user, project, *args, **kwargs):
         """Verifies that the user has been granted access to the project."""
 
-        if project["id"] is None:
-            return flask.make_response("Project ID missing. Cannot proceed", 401)
+        if not project.get("id"):
+            raise MissingProjectIDError(message="Project ID not found.")
 
-        if not project["verified"]:
-            return flask.make_response(
-                f"Access to project {project['id']} not yet verified. " "Checkout token settings.",
-                401,
+        if not project.get("verified"):
+            raise IncorrectDecoratorUsageException(
+                message=f"Access to project {project['id']} not yet verified. "
             )
 
         return f(current_user, project, *args, **kwargs)
@@ -127,10 +140,7 @@ def bucket_must_exists(func):
         try:
             self.resource.meta.client.head_bucket(Bucket=self.bucketname)
         except botocore.client.ClientError as err:
-            return (
-                False,
-                f"Project does not yet have a " f"dedicated bucket in the S3 instance: {err}",
-            )
+            raise BucketNotFoundError(message=str(err))
 
         return func(self, *args, **kwargs)
 

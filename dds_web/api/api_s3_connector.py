@@ -23,6 +23,18 @@ from dds_web.api.dds_decorators import (
     token_required,
     project_access_required,
 )
+from dds_web.api.errors import (
+    ItemDeletionError,
+    MissingTokenOutputError,
+    BucketNotFoundError,
+    DatabaseError,
+    DeletionError,
+    S3ProjectNotFoundError,
+    S3InfoNotFoundError,
+    KeyNotFoundError,
+    S3ConnectionError,
+)
+
 
 ###############################################################################
 # LOGGING ########################################################### LOGGING #
@@ -49,13 +61,19 @@ class ApiS3Connector:
                 self.keys,
                 self.url,
                 self.bucketname,
-                self.message,
             ) = self.get_s3_info()
             self.resource = None
 
-        except (ValueError, IOError, AssertionError) as err:
-            app.logger.exception(err)
-            flask.abort(500, str(err))
+        except (ValueError, IOError, AssertionError, FileNotFoundError) as err:
+            raise S3ConnectionError(message=str(err))
+        except (
+            MissingTokenOutputError,
+            BucketNotFoundError,
+            DatabaseError,
+            S3ProjectNotFoundError,
+            KeyNotFoundError,
+        ):
+            raise
 
     @connect_cloud
     def __enter__(self):
@@ -74,52 +92,69 @@ class ApiS3Connector:
         safespring_project = None
         from dds_web.api.db_connector import DBConnector
 
-        with DBConnector() as dbconn:
-            safespring_project, error = dbconn.cloud_project()
-            app.logger.debug(f"Safespring project: {safespring_project}")
+        try:
+            with DBConnector() as dbconn:
+                safespring_project = dbconn.cloud_project()
+                app.logger.debug(f"Safespring project: {safespring_project}")
 
-        if safespring_project is None:
-            raise Exception("this is not working")
+                if not safespring_project:
+                    raise S3ProjectNotFoundError(
+                        username=self.current_user.username, project=self.project.get("id")
+                    )
+        except (MissingTokenOutputError, S3ProjectNotFoundError, DatabaseError):
+            raise
 
         s3keys = {}
         bucketname = None
-        error = ("",)
         # 1. Get keys
         # TODO (ina): Change -- these should not be saved in file
         # print(flask.current_app.config["DDS_S3_CONFIG"], flush=True)
-        s3path = pathlib.Path(flask.current_app.config["DDS_S3_CONFIG"])
-        # s3path = pathlib.Path.cwd() / pathlib.Path("sensitive/s3_config.json")
-        with s3path.open(mode="r") as f:
-            s3keys = json.load(f)["sfsp_keys"][safespring_project]
+        s3_config_path = flask.current_app.config.get("DDS_S3_CONFIG")
+        if not s3_config_path:
+            raise S3InfoNotFoundError(message="API failed getting the s3 config file path.")
 
-        # 2. Get endpoint url
-        with s3path.open(mode="r") as f:
-            endpoint_url = json.load(f)["endpoint_url"]
+        s3path = pathlib.Path(s3_config_path)
 
-        assert "access_key" in s3keys, "s3 access key not found!"
-        assert "secret_key" in s3keys, "s3 secret key not found!"
+        if not s3path.exists():
+            raise FileNotFoundError("DDS S3 config file not found.")
 
-        with DBConnector() as dbconn:
-            # 3. Get bucket name
-            bucketname, error = dbconn.get_bucket_name()
+        try:
+            with s3path.open(mode="r") as f:
+                s3keys = json.load(f).get("sfsp_keys").get(safespring_project)
 
-        print(s3keys, flush=True)
-        return safespring_project, s3keys, endpoint_url, bucketname, error
+            # 2. Get endpoint url
+            with s3path.open(mode="r") as f:
+                endpoint_url = json.load(f).get("endpoint_url")
+
+            if None in [s3keys.get("access_key"), s3keys.get("secret_key")]:
+                raise KeyNotFoundError(
+                    "Safespring S3 access or secret key not found in s3 config file."
+                )
+
+        except KeyNotFoundError:
+            raise
+
+        try:
+            with DBConnector() as dbconn:
+                # 3. Get bucket name
+                bucketname = dbconn.get_bucket_name()
+        except (MissingTokenOutputError, BucketNotFoundError, DatabaseError):
+            raise
+
+        app.logger.debug(f"{s3keys}")
+        return safespring_project, s3keys, endpoint_url, bucketname
 
     @bucket_must_exists
     def remove_all(self, *args, **kwargs):
         """Removes all contents from the project specific s3 bucket."""
 
-        removed, error = (False, "")
         try:
             bucket = self.resource.Bucket(self.bucketname)
             bucket.objects.all().delete()
         except botocore.client.ClientError as err:
-            error = str(err)
+            raise DeletionError(message=str(err), username=None, project=self.project.get("id"))
         else:
-            removed = True
-
-        return removed, error
+            return True
 
     @bucket_must_exists
     def remove_folder(self, folder, *args, **kwargs):

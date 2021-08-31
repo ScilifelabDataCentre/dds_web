@@ -11,7 +11,7 @@ import time
 import datetime
 
 # Installed
-import flask
+import flask  # used
 import sqlalchemy
 from sqlalchemy.sql import func
 
@@ -21,6 +21,14 @@ from dds_web.database import models
 from dds_web import db
 from dds_web.api.dds_decorators import token_required
 from dds_web.api.api_s3_connector import ApiS3Connector
+from dds_web.api.errors import (
+    MissingTokenOutputError,
+    DatabaseError,
+    BucketNotFoundError,
+    EmptyProjectException,
+    NoSuchProjectError,
+    S3ProjectNotFoundError,
+)
 
 ###############################################################################
 # CLASSES ########################################################### CLASSES #
@@ -36,7 +44,7 @@ class DBConnector:
         try:
             self.current_user, self.project = args
         except ValueError as err:
-            flask.abort(500, str(err))
+            raise MissingTokenOutputError(message=str(err))
 
     def __enter__(self):
         return self
@@ -51,52 +59,45 @@ class DBConnector:
     def get_bucket_name(self):
         """Get bucket name from database"""
 
-        bucketname, error = (None, "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(
+                message="Project ID not found. Cannot get project bucket."
+            )
+
+        # Get bucket from db
         try:
             bucket = (
-                models.Project.query.filter(
-                    models.Project.public_id == func.binary(self.project["id"])
-                )
+                models.Project.query.filter(models.Project.public_id == func.binary(project_id))
                 .with_entities(models.Project.bucket)
                 .first()
             )
-            app.logger.debug("Bucket: %s", bucket)
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-        else:
+
+            if not bucket:
+                raise BucketNotFoundError
+
             bucketname = bucket[0]
 
-        return bucketname, error
-
-    def filename_in_bucket(self, filename):
-        """Get filename in bucket."""
-
-        name_in_bucket, error = (None, "")
-        try:
-            current_project = models.Project.query.filter(
-                models.Project.public_id == self.project["id"]
-            ).first()
-
-            file = models.File.query.filter(
-                sqlalchemy.and_(
-                    models.File.project_id == func.binary(current_project.id),
-                    models.File.name == func.binary(filename),
-                )
-            ).first()
+            app.logger.debug("Bucket: %s", bucket)
         except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
+            raise DatabaseError(message=str(err))
         else:
-            name_in_bucket = file[0]
-
-        return name_in_bucket, error
+            return bucketname
 
     def project_size(self):
-        """Get size of project"""
+        """Get size (number of files in) of project"""
 
-        num_proj_files, error = (0, "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(
+                message="Project ID not found. Cannot get project bucket."
+            )
+
+        # Check the number of files in the project
+        # TODO (ina): fix join
         try:
             current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(self.project["id"])
+                models.Project.public_id == func.binary(project_id)
             ).first()
 
             num_proj_files = models.File.query.filter(
@@ -105,54 +106,29 @@ class DBConnector:
 
             app.logger.debug("Number of project files: %s", num_proj_files)
         except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-
-        return num_proj_files, error
-
-    # def update_project_size(self, new_size):
-
-    #     updated, error, current_try, max_retries = (False, "", 0, 5)
-
-    #     while current_try < max_retries:
-    #         try:
-    #             current_project = models.Project.query.filter_by(id=self.project["id"]).first()
-    #             if not current_project or current_project is None:
-    #                 return updated, f"Could not find project {self.project['id']}!"
-
-    #             current_project.size += int(new_size)
-    #             current_project.date_updated = timestamp()
-    #             db.session.commit()
-    #         except sqlalchemy.exc.SQLAlchemyError as err:
-    #             print(f"{current_try}: Trying again....", flush=True)
-    #             db.session.rollback()
-    #             error = str(err)
-    #             current_try += 1
-    #             time.sleep(2)
-    #         else:
-    #             updated, error = (True, "")
-    #             print(f"OK! Updated on {current_try}/{max_retries}")
-    #             break
-
-    # current_project = models.Project.query.filter_by(id=project["id"]).first()
-    # if not current_project or current_project is None:
-    #     return flask.make_response(f"Could not find project {project['id']}!")
-    # current_project.size += old_size - int(args["size"])
-    # current_project.date_updated = timestamp()
-    # db.session.commit()
-
-    #     return updated, error
+            raise DatabaseError(message=str(err))
+        else:
+            return num_proj_files
 
     def items_in_subpath(self, folder="."):
         """Get all items in root folder of project"""
 
-        distinct_files, distinct_folders, error = ([], [], "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(
+                message="Project ID not found. Cannot get project bucket."
+            )
+
+        distinct_files = []
+        distinct_folders = []
         # Get everything in root:
         # Files have subpath "." and folders do not have child folders
         # Get everything in folder:
         # Files have subpath == folder and folders have child folders (regexp)
+        # TODO (ina): fix join
         try:
             current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(self.project["id"])
+                models.Project.public_id == func.binary(project_id)
             ).first()
 
             # All files in project
@@ -199,17 +175,23 @@ class DBConnector:
                 distinct_folders = list(split_paths)
 
         except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-
-        return distinct_files, distinct_folders, error
+            raise DatabaseError(message=str(err))
+        else:
+            return distinct_files, distinct_folders
 
     def folder_size(self, folder_name="."):
         """Get total size of folder"""
 
-        tot_file_size, error = (None, "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(
+                message="Project ID not found. Cannot get project bucket."
+            )
+
+        # Sum up folder file sizes
         try:
             current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(self.project["id"])
+                models.Project.public_id == func.binary(project_id)
             ).first()
 
             file_info = (
@@ -224,20 +206,22 @@ class DBConnector:
                 )
                 .first()
             )
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-        else:
-            tot_file_size = file_info.sizeSum
 
-        return tot_file_size, error
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+        else:
+            return file_info.sizeSum
 
     def delete_all(self):
         """Delete all files in project."""
 
-        deleted, error = (False, "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(message="Project ID not found. Cannot delete files.")
+
         try:
             current_project = models.Project.query.filter(
-                models.Project.public_id == func.binary(self.project["id"])
+                models.Project.public_id == func.binary(project_id)
             ).first()
 
             num_deleted = models.File.query.filter(
@@ -251,20 +235,18 @@ class DBConnector:
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            error = str(err)
+            raise DatabaseError(message=str(err))
         else:
             if num_deleted == 0:
-                error = f"There are no files within project {self.project['id']}."
-                deleted = False
-            else:
-                deleted = True
+                raise EmptyProjectException(project=project_id)
 
-        return deleted, error
+            return True
 
     def delete_folder(self, folder):
         """Delete all items in folder"""
 
-        exists, deleted, error = (False, False, "")
+        exists = False
+        deleted = False
         try:
             current_project = models.Project.query.filter(
                 models.Project.public_id == func.binary(self.project["id"])
@@ -282,7 +264,7 @@ class DBConnector:
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
+            raise DatabaseError(message=str(err))
 
         if files and files is not None:
             exists = True
@@ -411,7 +393,9 @@ class DBConnector:
     def cloud_project(self):
         """Get safespring project"""
 
-        sfsp_proj, error = ("", "")
+        project_id = self.project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(message="Project ID not found. Cannot get S3 project.")
 
         # Get current project
         try:
@@ -422,19 +406,22 @@ class DBConnector:
                 )
                 .add_columns(models.Facility.safespring)
                 .filter(models.Facility.id == func.binary(models.Project.facility_id))
-                .filter(models.Project.public_id == func.binary(self.project["id"]))
+                .filter(models.Project.public_id == func.binary(project_id))
             ).first()
 
             app.logger.debug("Safespring project: %s", current_project_facility_safespring)
             if not current_project_facility_safespring:
-                error = "No safespring project found for responsible facility."
+                raise S3ProjectNotFoundError(
+                    message="No safespring project found for responsible facility.",
+                    username=self.current_user.username,
+                    project=project_id,
+                )
 
             sfsp_proj = current_project_facility_safespring[1]
         except sqlalchemy.exc.SQLAlchemyError as err:
-            error = str(err)
-            app.logger.exception(err)
-
-        return sfsp_proj, error
+            raise DatabaseError(message=str(err))
+        else:
+            return sfsp_proj
 
     @staticmethod
     def project_usage(project_object):

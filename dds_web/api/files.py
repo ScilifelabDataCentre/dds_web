@@ -21,6 +21,7 @@ from dds_web import db, timestamp
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.dds_decorators import token_required, project_access_required
+from dds_web.api.errors import MissingTokenOutputError, DatabaseError
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -251,11 +252,12 @@ class ListFiles(flask_restful.Resource):
         # Check project not empty
         with DBConnector() as dbconn:
             # Get number of files in project and return if empty or error
-            num_files, error = dbconn.project_size()
-            if num_files == 0:
-                if error != "":
-                    return flask.make_response(error, 500)
+            try:
+                num_files = dbconn.project_size()
+            except (MissingTokenOutputError, DatabaseError):
+                raise
 
+            if num_files == 0:
                 return flask.jsonify(
                     {
                         "num_items": num_files,
@@ -264,10 +266,10 @@ class ListFiles(flask_restful.Resource):
                 )
 
             # Get files and folders
-            distinct_files, distinct_folders, error = dbconn.items_in_subpath(folder=subpath)
-
-            if error != "":
-                return flask.make_response(error, 500)
+            try:
+                distinct_files, distinct_folders = dbconn.items_in_subpath(folder=subpath)
+            except DatabaseError:
+                raise
 
             # Collect file and folder info to return to CLI
             if distinct_files:
@@ -287,9 +289,10 @@ class ListFiles(flask_restful.Resource):
                     }
 
                     if show_size:
-                        folder_size, error = dbconn.folder_size(folder_name=x)
-                        if folder_size is None:
-                            return flask.make_response(error, 500)
+                        try:
+                            folder_size = dbconn.folder_size(folder_name=x)
+                        except DatabaseError:
+                            raise
 
                         info.update({"size": dds_web.utils.format_byte_size(folder_size)})
                     files_folders.append(info)
@@ -328,47 +331,50 @@ class RemoveDir(flask_restful.Resource):
 
         not_removed_dict, not_exist_list = ({}, [])
 
-        with DBConnector() as dbconn:
-            with ApiS3Connector() as s3conn:
-                # Error if not enough info
-                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                    return (
-                        not_removed_dict,
-                        not_exist_list,
-                        "No s3 info returned! " + s3conn.message,
-                    )
+        try:
+            with DBConnector() as dbconn:
 
-                for x in flask.request.json:
-                    # Get all files in the folder
-                    in_db, folder_deleted, error = dbconn.delete_folder(folder=x)
+                with ApiS3Connector() as s3conn:
+                    # Error if not enough info
+                    if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+                        return (
+                            not_removed_dict,
+                            not_exist_list,
+                            "No s3 info returned! " + s3conn.message,
+                        )
 
-                    if not in_db:
-                        db.session.rollback()
-                        not_exist_list.append(x)
-                        continue
+                    for x in flask.request.json:
+                        # Get all files in the folder
+                        in_db, folder_deleted, error = dbconn.delete_folder(folder=x)
 
-                    # Error with db --> folder error
-                    if not folder_deleted:
-                        db.session.rollback()
-                        not_removed_dict[x] = error
-                        continue
+                        if not in_db:
+                            db.session.rollback()
+                            not_exist_list.append(x)
+                            continue
 
-                    # Delete from s3
-                    folder_deleted, error = s3conn.remove_folder(folder=x)
+                        # Error with db --> folder error
+                        if not folder_deleted:
+                            db.session.rollback()
+                            not_removed_dict[x] = error
+                            continue
 
-                    if not folder_deleted:
-                        db.session.rollback()
-                        not_removed_dict[x] = error
-                        continue
+                        # Delete from s3
+                        folder_deleted, error = s3conn.remove_folder(folder=x)
 
-                    # Commit to db if no error so far
-                    try:
-                        db.session.commit()
-                    except sqlalchemy.exc.SQLAlchemyError as err:
-                        db.session.rollback()
-                        not_removed_dict[x] = str(err)
-                        continue
+                        if not folder_deleted:
+                            db.session.rollback()
+                            not_removed_dict[x] = error
+                            continue
 
+                        # Commit to db if no error so far
+                        try:
+                            db.session.commit()
+                        except sqlalchemy.exc.SQLAlchemyError as err:
+                            db.session.rollback()
+                            not_removed_dict[x] = str(err)
+                            continue
+        except (ValueError,):
+            raise
         return flask.jsonify({"not_removed": not_removed_dict, "not_exists": not_exist_list})
 
 
@@ -458,7 +464,7 @@ class FileInfo(flask_restful.Resource):
         try:
             return flask.jsonify({"files": files_single, "folders": files_in_folders})
         except Exception as err:
-            print(str(err), flush=True)
+            app.logger.exception(str(err))
 
 
 class FileInfoAll(flask_restful.Resource):

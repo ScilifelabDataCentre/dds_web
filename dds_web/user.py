@@ -3,9 +3,9 @@
 import flask
 from flask import render_template, request, current_app, session, redirect, url_for
 import sqlalchemy
+import logging
 
 from dds_web import timestamp, oauth
-from dds_web.api.login import ds_access
 from dds_web.crypt import auth as dds_auth
 from dds_web.database import models
 from dds_web.database import db_utils
@@ -41,14 +41,6 @@ def login():
             app.logger.exception(err)
             return render_template(
                 "user/login.html", next=request.form.get("next"), login_error_message=str(err)
-            )
-
-        # User authentication not passed
-        if not user_ok:
-            return render_template(
-                "user/login.html",
-                next=request.form.get("next"),
-                login_error_message="Incorrect username and/or password!",
             )
 
         # Get session info on user and update session

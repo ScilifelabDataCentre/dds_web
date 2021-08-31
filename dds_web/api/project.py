@@ -5,16 +5,12 @@
 ###############################################################################
 
 # Standard library
-import functools
+import logging
 
 # Installed
 import flask_restful
 import flask
 import sqlalchemy
-import pathlib
-import json
-import boto3
-import botocore
 from sqlalchemy.sql import func
 from cryptography.hazmat.primitives.kdf import scrypt
 from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
@@ -29,7 +25,19 @@ from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.dds_decorators import token_required, project_access_required
-
+from dds_web.api.errors import (
+    MissingMethodError,
+    MissingProjectIDError,
+    DatabaseError,
+    NoSuchProjectError,
+    ProjectPermissionsError,
+    JwtTokenGenerationError,
+    EmptyProjectException,
+    DeletionError,
+    MissingTokenOutputError,
+    BucketNotFoundError,
+    PublicKeyNotFoundError,
+)
 
 ###############################################################################
 # ENDPOINTS ####################################################### ENDPOINTS #
@@ -47,14 +55,17 @@ class ProjectAccess(flask_restful.Resource):
         args = flask.request.args
 
         # Deny access if project or method not specified
-        if "method" not in args:
-            app.logger.debug("No method in request.")
-            return flask.make_response("Invalid request.", 500)
+        method = args.get("method")
+        if not method:
+            raise MissingMethodError
 
         # Check if project id specified
-        if project["id"] is None:
-            app.logger.debug("No project retrieved from token.")
-            return flask.make_response("No project specified.", 401)
+        if not project:
+            raise MissingProjectIDError
+
+        project_id = project.get("id")
+        if not project_id:
+            raise MissingProjectIDError
 
         # Check if project exists
         app.logger.debug("Getting project from db.")
@@ -63,35 +74,34 @@ class ProjectAccess(flask_restful.Resource):
                 models.Project.public_id == project["id"]
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            return flask.make_response(f"Database connection failed: {sqlerr}", 500)
+            raise DatabaseError(
+                message=str(sqlerr), username=current_user.username, project=project_id
+            )
 
         if not attempted_project:
-            return flask.make_response(f"Project does not exist: {project['id']}", 401)
+            raise NoSuchProjectError(username=current_user.username, project=project_id)
 
         # Check if attempted action is ok for user
-        app.logger.debug(
-            "User permissions: %s, attempted method: %s", current_user.permissions, args["method"]
-        )
         permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
-        if permissions_dict[args["method"]] not in list(current_user.permissions):
-            return flask.make_response(
-                f"Attempted to '{args['method']}' in project '{project['id']}'. Permission denied.",
-                401,
+        if permissions_dict.get(method) not in list(current_user.permissions):
+            raise ProjectPermissionsError(
+                message=f"User does not have permission to `{method}` in the specified project.",
+                username=current_user.username,
+                project=project_id,
             )
 
         # Check if user has access to project
-        app.logger.debug("User projects: %s", current_user.projects)
-        if project["id"] in [x.public_id for x in current_user.projects]:
+        if project_id in [x.public_id for x in current_user.projects]:
             app.logger.debug("Updating token...")
             try:
                 token = jwt_token(
                     username=current_user.username,
-                    project_id=project["id"],
+                    project_id=project_id,
                     project_access=True,
                     permission=args["method"],
                 )
-            except Exception as error:  # should be changed -- not specific enough but leaving for now
-                return flask.make_response(error, 500)
+            except JwtTokenGenerationError:
+                raise
 
             # Project access granted
             return flask.jsonify(
@@ -102,7 +112,9 @@ class ProjectAccess(flask_restful.Resource):
             )
 
         # Project access denied
-        return flask.make_response("Project access denied", 401)
+        raise ProjectPermissionsError(
+            message="Project access denied.", username=current_user.username, project=project_id
+        )
 
 
 class GetPublic(flask_restful.Resource):
@@ -110,22 +122,24 @@ class GetPublic(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def get(self, _, project):
+    def get(self, current_user, project):
         """Get public key from database."""
 
         app.logger.debug("Getting the public key.")
         try:
             proj_pub = (
-                models.Project.query.filter_by(public_id=project["id"])
+                models.Project.query.filter_by(public_id=project.get("id"))
                 .with_entities(models.Project.public_key)
                 .first()
             )
 
             if not proj_pub:
-                return flask.make_response("No public key found.", 500)
+                raise PublicKeyNotFoundError(project=project.get("id"))
 
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(str(err), 500)
+            raise DatabaseError(
+                message=str(err), username=current_user.username, project=project.get("id")
+            )
         else:
             return flask.jsonify({"public": proj_pub[0]})
 
@@ -175,8 +189,6 @@ class GetPrivate(flask_restful.Resource):
             except Exception as err:
                 app.logger.exception(err)
                 return flask.make_response(str(err), 500)
-
-            # print(f"Decrypted key: {decrypted_key}", flush=True)
 
             return flask.jsonify({"private": decrypted_key.hex().upper()})
 
@@ -248,37 +260,51 @@ class RemoveContents(flask_restful.Resource):
 
     method_decorators = [project_access_required, token_required]
 
-    def delete(self, _, project):
+    def delete(self, current_user, project):
         """Removes all project contents."""
 
+        project_id = project.get("id")
+        if not project_id:
+            raise MissingTokenOutputError(message="Project ID not found. Cannot delete contents.")
+
         # Delete files
-        removed, error = (False, "")
+        removed = False
         with DBConnector() as dbconn:
-            removed, error = dbconn.delete_all()
+            try:
+                removed = dbconn.delete_all()
+            except (DatabaseError, EmptyProjectException):
+                raise
 
             # Return error if contents not deleted from db
             if not removed:
-                return flask.make_response(error, 500)
+                raise DeletionError(
+                    message="No project contents deleted.",
+                    username=current_user.username,
+                    project=project_id,
+                )
 
             # Delete from bucket
-            with ApiS3Connector() as s3conn:
-                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                    return flask.make_response("No s3 info returned! " + s3conn.message, 500)
+            try:
+                with ApiS3Connector() as s3conn:
+                    removed = s3conn.remove_all()
 
-                removed, error = s3conn.remove_all()
+                    # Return error if contents not deleted from s3 bucket
+                    if not removed:
+                        db.session.rollback()
+                        raise DeletionError(
+                            message="Deleting project contents failed.",
+                            username=current_user.username,
+                            project=project_id,
+                        )
 
-                # Return error if contents not deleted from s3 bucket
-                if not removed:
-                    db.session.rollback()
-                    return flask.make_response(error, 500)
-
-                # Commit changes to db
-                try:
+                    # Commit changes to db
                     db.session.commit()
-                except sqlalchemy.exc.SQLAlchemyError as err:
-                    return flask.make_response(str(err), 500)
+            except sqlalchemy.exc.SQLAlchemyError as err:
+                raise DatabaseError(message=str(err))
+            except (DeletionError, BucketNotFoundError):
+                raise
 
-        return flask.jsonify({"removed": removed, "error": error})
+        return flask.jsonify({"removed": removed})
 
 
 class UpdateProjectSize(flask_restful.Resource):
