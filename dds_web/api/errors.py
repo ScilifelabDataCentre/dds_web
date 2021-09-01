@@ -64,6 +64,27 @@ class InvalidUserCredentialsError(exceptions.HTTPException):
         )
 
 
+class UserAlreadyExistsException(exceptions.HTTPException):
+    """Raised when trying to create a user that already exists in DDS database"""
+
+    # FIXME
+
+    def __init__(self, username, message="The user already exists"):
+
+        self.message = f"{message}: {username}"
+        super().__init__(self.message)
+
+        action_logger.error(
+            self.message,
+            extra={
+                **extra_info,
+                "current_user": username,
+                "action": actions.get(flask.request.endpoint),
+                "project": None,
+            },
+        )
+
+
 class ProjectPermissionsError(exceptions.HTTPException):
     """Errors due to incorrect project permissions."""
 
@@ -304,6 +325,7 @@ class PublicKeyNotFoundError(exceptions.HTTPException):
 
 
 errors = {
+    "UserAlreadyExistsException": {"status": 403},
     "ItemDeletionError": {"message": "Removal of item(s) from S3 bucket failed.", "status": 500},
     "IncorrectDecoratorUsageException": {"status": 500},
     "DatabaseError": {"status": 500},

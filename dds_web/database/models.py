@@ -173,6 +173,23 @@ class Email(db.Model):
         return f"<Email {self.email}>"
 
 
+class Invite(db.Model):
+    """Invites for users not yet confirmed in DDS"""
+
+    # Table setup
+    __tablename = "invites"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    email = db.Column(db.String(80), unique=True, nullable=False)
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<Invite {self.email}>"
+
+
 class File(db.Model):
     """Data model for files."""
 

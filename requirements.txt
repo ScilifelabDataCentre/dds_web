@@ -5,8 +5,10 @@ boto3==1.18.31
 cryptography==3.4.7
 Flask==1.1.2
 flask-admin==1.5.8 
+Flask-Mail==0.9.1 
 flask-marshmallow==0.14.0
 Flask-RESTful==0.3.8
+Flask-Security-Too==4.1.0 
 Flask-SQLAlchemy==2.5.1
 immutabledict==2.2.0
 marshmallow-sqlalchemy==0.24.1

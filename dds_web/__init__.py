@@ -13,8 +13,12 @@ from authlib.integrations import flask_client as auth_flask_client
 from flask import Flask, g, session
 from flask_sqlalchemy import SQLAlchemy
 from logging.config import dictConfig
-import flask_admin
-import flask_admin.contrib.sqla as sqla
+
+import flask_mail
+
+
+# import flask_admin
+# import flask_admin.contrib.sqla as sqla
 
 # Own modules
 
@@ -22,12 +26,18 @@ import flask_admin.contrib.sqla as sqla
 
 app = Flask(__name__, instance_relative_config=False)
 db = SQLAlchemy()
-admin = flask_admin.Admin()
+mail = flask_mail.Mail()
+# admin = flask_admin.Admin()
 C_TZ = pytz.timezone("Europe/Stockholm")
 # oauth = auth_flask_client.OAuth(app)  # FIXME
 
 # TODO: Add more actions (for action logging)
-actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth": "Project Access"}
+actions = {
+    "api_blueprint.auth": "User Authentication",
+    "api_blueprint.proj_auth": "Project Access",
+    "api_blueprint.register_user": "Register New User",
+}
+
 
 # FUNCTIONS ####################################################### FUNCTIONS #
 
@@ -105,12 +115,12 @@ def create_app():
 
     # Initialize database
     db.init_app(app)
-
+    mail.init_app(app)
     # Setup admin
-    import dds_web.database.models as models
+    # import dds_web.database.models as models
 
-    admin.init_app(app)
-    admin.add_view(sqla.ModelView(models.User, db.session))
+    # admin.init_app(app)
+    # admin.add_view(sqla.ModelView(models.User, db.session))
 
     # FIXME
     # initialize OIDC

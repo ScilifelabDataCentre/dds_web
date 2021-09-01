@@ -10,8 +10,6 @@ import pathlib
 
 # Installed
 from sqlalchemy.sql import func
-
-# from flask import json
 import flask
 import flask_restful
 import jwt
@@ -19,10 +17,15 @@ import pandas
 import sqlalchemy
 
 # Own modules
-from dds_web import app, timestamp
+from dds_web import app, timestamp, db
 from dds_web.database import models
 from dds_web.api.dds_decorators import token_required
-from dds_web.api.errors import MissingCredentialsError, DatabaseError, InvalidUserCredentialsError
+from dds_web.api.errors import (
+    MissingCredentialsError,
+    DatabaseError,
+    InvalidUserCredentialsError,
+    UserAlreadyExistsException,
+)
 from dds_web import exceptions
 from dds_web.crypt import auth as dds_auth
 from dds_web.api.errors import JwtTokenGenerationError
@@ -60,6 +63,39 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 ###############################################################################
 # ENDPOINTS ####################################################### ENDPOINTS #
 ###############################################################################
+
+
+class NewUser(flask_restful.Resource):
+    """Handles the creation of a new user"""
+
+    def post(self):
+        """Create user from the args specified"""
+
+        args = flask.request.args
+        username = args.get("username")
+
+        try:
+            existing_user = models.User.query.filter_by(username=username).first()
+
+            if existing_user:
+                raise UserAlreadyExistsException(username=username)
+
+            new_user = models.User(
+                username=username,
+                password="test",
+                role="researcher",
+                permissions="-----",
+                first_name="test user",
+                last_name="last name",
+                facility_id=None,
+            )
+
+            db.session.add(new_user)
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError(message=str(sqlerr))
+
+        return flask.jsonify({"user added": True})
 
 
 class AuthenticateUser(flask_restful.Resource):
