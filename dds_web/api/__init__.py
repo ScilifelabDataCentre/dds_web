@@ -31,7 +31,6 @@ api = flask_restful.Api(api_blueprint, errors=errors)
 # New user ############################################################################## New user #
 api.add_resource(admin.InviteUser, "/user/invite", endpoint="invite_user")
 api.add_resource(admin.ConfirmEmail, "/confirm_email/<token>", endpoint="confirm_email")
-api.add_resource(user.NewUser, "/user/register", endpoint="register_user")
 
 # Login/access ###################################################################### Login/access #
 api.add_resource(user.AuthenticateUser, "/user/auth", endpoint="auth")

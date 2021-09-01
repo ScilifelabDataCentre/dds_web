@@ -9,17 +9,20 @@ import flask
 import flask_mail
 import flask_restful
 import itsdangerous
+import marshmallow
 import sqlalchemy
 
 # Own modules
 from dds_web import app, db, mail
 from dds_web.crypt import auth
 from dds_web.database import models
+from dds_web.api import marshmallows
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
 ###############################################################################
 
+invitation_schema = marshmallows.InviteUserSchema()
 
 ###############################################################################
 # ENDPOINTS ####################################################### ENDPOINTS #
@@ -29,27 +32,40 @@ from dds_web.database import models
 class InviteUser(flask_restful.Resource):
     def post(self):
 
-        args = flask.request.args
-        email = args.get("email")
-
         try:
-            new_invite = models.Invite(email=email)
+            # Use schema to validate and check args
+            new_invite = invitation_schema.load(flask.request.args)
+
+            app.logger.info(f"New invite: {new_invite}")
+
+            if models.Invite.query.filter_by(email=new_invite.email).first():
+                app.logger.info(f"Email {new_invite.email} already has a pending invitation.")
+                return
+            elif models.Email.query.filter_by(email=new_invite.email).first():
+                app.logger.info(
+                    f"The email {new_invite.email} is already registered to an existing user."
+                )
+                return
+
+            # Add to database
             db.session.add(new_invite)
             db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError:
+        except (marshmallow.ValidationError, sqlalchemy.exc.SQLAlchemyError):
             raise
 
+        # Create URL safe token for invitation link
         s = itsdangerous.URLSafeTimedSerializer(app.config["SECRET_KEY"])
-        token = s.dumps(email, salt="email-confirm")
+        token = s.dumps(new_invite.email, salt="email-confirm")
 
+        # Create link for invitation email
         link = flask.url_for("api_blueprint.confirm_email", token=token, _external=True)
-        print(link, flush=True)
 
-        msg = flask_mail.Message("Confirm email", sender="localhost", recipients=[email])
+        # Compose and send email
+        msg = flask_mail.Message("Confirm email", sender="localhost", recipients=[new_invite.email])
         msg.body = f"Your link is {link}"
-
         mail.send(msg)
-        return flask.jsonify({"email": email, "token": token})
+
+        return flask.jsonify({"email": new_invite.email, "token": token})
 
 
 class ConfirmEmail(flask_restful.Resource):

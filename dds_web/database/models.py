@@ -183,6 +183,8 @@ class Invite(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(80), unique=True, nullable=False)
+    is_facility = db.Column(db.Boolean)
+    is_researcher = db.Column(db.Boolean)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
