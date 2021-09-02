@@ -10,6 +10,17 @@ class InviteUserSchema(marshmallow.Schema):
         required=True, validate=marshmallow.validate.OneOf(choices=["Data_Producer", "Recipient"])
     )
 
+    @marshmallow.validates("email")
+    def validate_email(self, value):
+        """Check that email is not used by anyone in db."""
+
+        if models.Invite.query.filter_by(email=value).first():
+            raise marshmallow.ValidationError(f"Email '{value}' already has a pending invitation.")
+        elif models.Email.query.filter_by(email=value).first():
+            raise marshmallow.ValidationError(
+                f"The email '{value}' is already registered to an existing user."
+            )
+
     @marshmallow.post_load
     def make_invite(self, data, **kwargs):
         """Deserialize to an Invite object"""

@@ -5,6 +5,7 @@
 # Standard library
 
 # Installed
+from flask_restful import fields
 import flask
 import flask_mail
 import flask_restful
@@ -14,12 +15,13 @@ import sqlalchemy
 
 # Own modules
 from dds_web import app, db, mail
+from dds_web.api import errors
 from dds_web.crypt import auth
 from dds_web.database import models
 from dds_web.api import marshmallows
 
 ###############################################################################
-# FUNCTIONS ####################################################### FUNCTIONS #
+# MARSHMALLOW ##################################################### MARSHMALLOW #
 ###############################################################################
 
 invitation_schema = marshmallows.InviteUserSchema()
@@ -31,27 +33,21 @@ invitation_schema = marshmallows.InviteUserSchema()
 
 class InviteUser(flask_restful.Resource):
     def post(self):
+        """Create an invite and send email."""
 
         try:
             # Use schema to validate and check args
             new_invite = invitation_schema.load(flask.request.args)
 
-            app.logger.info(f"New invite: {new_invite}")
-
-            if models.Invite.query.filter_by(email=new_invite.email).first():
-                app.logger.info(f"Email {new_invite.email} already has a pending invitation.")
-                return
-            elif models.Email.query.filter_by(email=new_invite.email).first():
-                app.logger.info(
-                    f"The email {new_invite.email} is already registered to an existing user."
-                )
-                return
-
             # Add to database
             db.session.add(new_invite)
             db.session.commit()
-        except (marshmallow.ValidationError, sqlalchemy.exc.SQLAlchemyError):
-            raise
+
+        except marshmallow.ValidationError as valerr:
+            app.logger.info(valerr)
+            return flask.jsonify(valerr.messages)
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise errors.DatabaseError(message=str(sqlerr))
 
         # Create URL safe token for invitation link
         s = itsdangerous.URLSafeTimedSerializer(app.config["SECRET_KEY"])
@@ -65,7 +61,8 @@ class InviteUser(flask_restful.Resource):
         msg.body = f"Your link is {link}"
         mail.send(msg)
 
-        return flask.jsonify({"email": new_invite.email, "token": token})
+        # TODO: Format response with marshal with?
+        return flask.jsonify({"email": new_invite.email})
 
 
 class ConfirmEmail(flask_restful.Resource):
