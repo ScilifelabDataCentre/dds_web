@@ -19,6 +19,7 @@ import jwt
 import pandas
 import sqlalchemy
 import wtforms
+import wtforms.validators
 
 # Own modules
 from dds_web import app, timestamp, db
@@ -70,8 +71,11 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 
 
 class RegistrationForm(flask_wtf.FlaskForm):
-    username = wtforms.StringField("username")
-    password = wtforms.PasswordField("password")
+    username = wtforms.StringField(
+        "username",
+        validators=[wtforms.validators.InputRequired()],
+    )
+    password = wtforms.PasswordField("password", validators=[wtforms.validators.InputRequired()])
 
 
 class ConfirmEmail(flask_restful.Resource):
@@ -81,7 +85,7 @@ class ConfirmEmail(flask_restful.Resource):
         s = itsdangerous.URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
         try:
-            email = s.loads(token, salt="email-confirm", max_age=3600)
+            email = s.loads(token, salt="email-confirm", max_age=10000)
         except itsdangerous.exc.SignatureExpired:
             return "The token is expired!"
 
@@ -97,7 +101,7 @@ class NewUser(flask_restful.Resource):
 
         form = RegistrationForm()
 
-        if form.validate_on_submit():
+        if form.validate():
             return f"Username: {form.username.data}, Password: {form.password.data}"
 
         # args = flask.request.args
