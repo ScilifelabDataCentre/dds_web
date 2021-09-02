@@ -62,18 +62,6 @@ class InviteUser(flask_restful.Resource):
         mail.send(msg)
 
         # TODO: Format response with marshal with?
-        return flask.jsonify({"email": new_invite.email})
+        return flask.jsonify({"email": new_invite.email, "message": "Invite successful!"})
 
 
-class ConfirmEmail(flask_restful.Resource):
-    def get(self, token):
-        """ """
-
-        s = itsdangerous.URLSafeTimedSerializer(app.config["SECRET_KEY"])
-
-        try:
-            email = s.loads(token, salt="email-confirm", max_age=20)
-        except itsdangerous.exc.SignatureExpired:
-            return "The token is expired!"
-
-        return "the token works!"

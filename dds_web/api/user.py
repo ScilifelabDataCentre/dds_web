@@ -10,11 +10,15 @@ import pathlib
 
 # Installed
 from sqlalchemy.sql import func
+
 import flask
 import flask_restful
+import flask_wtf
+import itsdangerous
 import jwt
 import pandas
 import sqlalchemy
+import wtforms
 
 # Own modules
 from dds_web import app, timestamp, db
@@ -65,37 +69,62 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 ###############################################################################
 
 
+class RegistrationForm(flask_wtf.FlaskForm):
+    username = wtforms.StringField("username")
+    password = wtforms.PasswordField("password")
+
+
+class ConfirmEmail(flask_restful.Resource):
+    def get(self, token):
+        """ """
+
+        s = itsdangerous.URLSafeTimedSerializer(app.config["SECRET_KEY"])
+
+        try:
+            email = s.loads(token, salt="email-confirm", max_age=3600)
+        except itsdangerous.exc.SignatureExpired:
+            return "The token is expired!"
+
+        form = RegistrationForm()
+        return flask.make_response(flask.render_template("index.html", form=form))
+
+
 class NewUser(flask_restful.Resource):
     """Handles the creation of a new user"""
 
     def post(self):
         """Create user from the args specified"""
 
-        args = flask.request.args
-        username = args.get("username")
+        form = RegistrationForm()
 
-        try:
-            existing_user = models.User.query.filter_by(username=username).first()
+        if form.validate_on_submit():
+            return f"Username: {form.username.data}, Password: {form.password.data}"
 
-            if existing_user:
-                raise UserAlreadyExistsException(username=username)
+        # args = flask.request.args
+        # username = args.get("username")
 
-            new_user = models.User(
-                username=username,
-                password="test",
-                role="researcher",
-                permissions="-----",
-                first_name="test user",
-                last_name="last name",
-                facility_id=None,
-            )
+        # try:
+        #     existing_user = models.User.query.filter_by(username=username).first()
 
-            db.session.add(new_user)
-            db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(message=str(sqlerr))
+        #     if existing_user:
+        #         raise UserAlreadyExistsException(username=username)
 
-        return flask.jsonify({"user added": True})
+        #     new_user = models.User(
+        #         username=username,
+        #         password="test",
+        #         role="researcher",
+        #         permissions="-----",
+        #         first_name="test user",
+        #         last_name="last name",
+        #         facility_id=None,
+        #     )
+
+        #     db.session.add(new_user)
+        #     db.session.commit()
+        # except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+        #     raise DatabaseError(message=str(sqlerr))
+
+        # return flask.jsonify({"user added": True})
 
 
 class AuthenticateUser(flask_restful.Resource):
