@@ -1,0 +1,83 @@
+<html>
+    <head>
+        <title>Registration form</title>
+    </head>
+    <body>
+        <h1>Create your DDS account</h1>
+        <form method="POST" action="{{ url_for('api_blueprint.new_user') }}">
+            {{ form.csrf_token }}
+
+            <!-- First name -->
+            {{ form.first_name.label }}
+            {{ form.first_name }}
+            <ul>
+                {% for error in form.first_name.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Last name -->
+            {{ form.last_name.label }}
+            {{ form.last_name }}
+            <ul>
+                {% for error in form.last_name.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Facility name -->
+            {{ form.facility_name.label }}
+            {{ form.facility_name }}
+            <ul>
+                {% for error in form.facility_name.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Email -->
+            {{ form.email.label }}
+            {{ form.email }}
+            <ul>
+                {% for error in form.email.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Username -->
+            {{ form.username.label }}
+            {{ form.username }}
+            <ul>
+                {% for error in form.username.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Password -->
+            {{ form.password.label }}
+            {{ form.password }}
+            {{ form.confirm.label }}
+            {{ form.confirm }}
+            <ul>
+                {% for error in form.password.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Submit button -->
+            {{ form.submit }}
+
+        </form>
+    </body>
+</html>

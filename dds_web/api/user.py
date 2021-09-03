@@ -71,11 +71,40 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 
 
 class RegistrationForm(flask_wtf.FlaskForm):
+    """User registration form."""
+
+    first_name = wtforms.StringField("first name", validators=[wtforms.validators.InputRequired()])
+    last_name = wtforms.StringField("last name", validators=[wtforms.validators.InputRequired()])
+    facility_name = wtforms.StringField(
+        "facility name",
+        validators=[wtforms.validators.InputRequired()],
+        # render_kw={"disabled": True},
+    )
+    email = wtforms.StringField(
+        "email",
+        validators=[wtforms.validators.Email()],
+        # render_kw={"disabled": True}
+    )
     username = wtforms.StringField(
         "username",
-        validators=[wtforms.validators.InputRequired()],
+        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=8, max=20)],
     )
-    password = wtforms.PasswordField("password", validators=[wtforms.validators.InputRequired()])
+
+    # At least: (one lower case letter)(one upper case letter)(one digit)(special character)
+    password = wtforms.PasswordField(
+        "password",
+        validators=[
+            wtforms.validators.InputRequired(),
+            wtforms.validators.Length(min=10, max=64),
+            wtforms.validators.EqualTo("confirm", message="Passwords must match!"),
+            wtforms.validators.Regexp(
+                regex="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])",
+                message="At least one: Lower case letter, Upper case letter, Digit, Special character.",
+            ),
+        ],
+    )
+    confirm = wtforms.PasswordField("Repeat password")
+    submit = wtforms.SubmitField("submit")
 
 
 class ConfirmEmail(flask_restful.Resource):
@@ -90,7 +119,13 @@ class ConfirmEmail(flask_restful.Resource):
             return "The token is expired!"
 
         form = RegistrationForm()
-        return flask.make_response(flask.render_template("index.html", form=form))
+
+        # Prefill fields
+        form.facility_name.data = "Test facility"
+        form.email.data = email
+        form.username.data = email.split("@")[0]
+
+        return flask.make_response(flask.render_template("user/register.html", form=form))
 
 
 class NewUser(flask_restful.Resource):
@@ -101,11 +136,15 @@ class NewUser(flask_restful.Resource):
 
         form = RegistrationForm()
 
-        if form.validate():
-            return f"Username: {form.username.data}, Password: {form.password.data}"
+        if form.validate_on_submit():
+            return flask.make_response(
+                f"First name: {form.first_name.data}, Last name: {form.last_name.data}\n"
+                f"Facility name: {form.facility_name.data}\n"
+                f"Email: {form.email.data}\n"
+                f"Username: {form.username.data}"
+            )
 
-        # args = flask.request.args
-        # username = args.get("username")
+        return flask.make_response(flask.render_template("user/register.html", form=form))
 
         # try:
         #     existing_user = models.User.query.filter_by(username=username).first()
