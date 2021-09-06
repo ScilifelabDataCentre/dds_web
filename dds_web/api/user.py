@@ -137,6 +137,7 @@ class NewUser(flask_restful.Resource):
         form = RegistrationForm()
 
         if form.validate_on_submit():
+
             return flask.make_response(
                 f"First name: {form.first_name.data}, Last name: {form.last_name.data}\n"
                 f"Facility name: {form.facility_name.data}\n"
