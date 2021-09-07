@@ -16,6 +16,7 @@ import flask_restful
 import flask_wtf
 import itsdangerous
 import jwt
+import marshmallow
 import pandas
 import sqlalchemy
 import wtforms
@@ -35,6 +36,7 @@ from dds_web.api.errors import (
 from dds_web import exceptions
 from dds_web.crypt import auth as dds_auth
 from dds_web.api.errors import JwtTokenGenerationError
+from dds_web.api import marshmallows
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -71,29 +73,6 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 ###############################################################################
 
 
-# class FacilityField(wtforms.StringField):
-#     def process_formdata(self, valuelist):
-#         app.logger.warning(f"TEST: {valuelist}")
-#         if valuelist:
-#             facility_name = valuelist[0]
-
-#             try:
-#                 facility_id = (
-#                     models.Facility.query.filter(models.Facility.name == facility_name)
-#                     .with_entities(models.Facility.id)
-#                     .first()
-#                 )
-#             except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-#                 raise DatabaseError(str(sqlerr))
-
-#             # Raise exception if facility does not exist
-#             if not facility_id:
-#                 raise DatabaseError(message=f"Non-existent facility ID: {facility_id}")
-
-#             # Set facility name if exists
-#             self.data = facility_id[0]
-
-
 class RegistrationForm(flask_wtf.FlaskForm):
     """User registration form."""
 
@@ -101,8 +80,8 @@ class RegistrationForm(flask_wtf.FlaskForm):
     last_name = wtforms.StringField("last name", validators=[wtforms.validators.InputRequired()])
     facility_name = wtforms.StringField(
         "facility name",
-        validators=[wtforms.validators.InputRequired()],
-        # render_kw={"disabled": True},
+        # validators=[wtforms.validators.InputRequired()],
+        # render_kw={"readonly": True},
     )
     email = wtforms.StringField(
         "email",
@@ -130,10 +109,6 @@ class RegistrationForm(flask_wtf.FlaskForm):
     confirm = wtforms.PasswordField("Repeat password")
     submit = wtforms.SubmitField("submit")
 
-    def validate_facility_name(form, field):
-        pass
-        # raise wtforms.ValidationError(field.data)
-
 
 class ConfirmInvite(flask_restful.Resource):
     def get(self, token):
@@ -158,7 +133,7 @@ class ConfirmInvite(flask_restful.Resource):
             raise NoSuchInviteError(email=email)
 
         # Get facility info from db
-        facility_name = ""
+        facility_name = None
         if invite_row.is_facility:
             try:
                 facility_info = (
@@ -181,8 +156,9 @@ class ConfirmInvite(flask_restful.Resource):
         # Initiate form
         form = RegistrationForm()
 
-        # Prefill fields
+        # Prefill fields - facility readonly if filled, otherwise disabled
         form.facility_name.data = facility_name
+        form.facility_name.render_kw = {"readonly": True} if facility_name else {"disabled": True}
         form.email.data = email
         form.username.data = email.split("@")[0]
 
@@ -198,38 +174,20 @@ class NewUser(flask_restful.Resource):
         form = RegistrationForm()
 
         if form.validate_on_submit():
+            try:
+                user_schema = marshmallows.NewUserSchema()
+                new_user = user_schema.load(form.data)
+                db.session.add(new_user)
+                db.session.commit()
+            except marshmallow.ValidationError as valerr:
+                app.logger.info(valerr)
+                return flask.jsonify(valerr.messages)
+            except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
+                raise DatabaseError(message=str("sqlerr"))
 
-            return flask.make_response(
-                f"First name: {form.first_name.data}, Last name: {form.last_name.data}\n"
-                f"Facility name: {form.facility_name.data}\n"
-                f"Email: {form.email.data}\n"
-                f"Username: {form.username.data}"
-            )
+            return "User added!!"
 
         return flask.make_response(flask.render_template("user/register.html", form=form))
-
-        # try:
-        #     existing_user = models.User.query.filter_by(username=username).first()
-
-        #     if existing_user:
-        #         raise UserAlreadyExistsException(username=username)
-
-        #     new_user = models.User(
-        #         username=username,
-        #         password="test",
-        #         role="researcher",
-        #         permissions="-----",
-        #         first_name="test user",
-        #         last_name="last name",
-        #         facility_id=None,
-        #     )
-
-        #     db.session.add(new_user)
-        #     db.session.commit()
-        # except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        #     raise DatabaseError(message=str(sqlerr))
-
-        # return flask.jsonify({"user added": True})
 
 
 class AuthenticateUser(flask_restful.Resource):
