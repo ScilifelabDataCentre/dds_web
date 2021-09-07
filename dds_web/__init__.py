@@ -129,7 +129,7 @@ def create_app():
 
                 fill_db()
             except Exception as err:
-                # don't care why, this will be removed soon anyway
+                # Look into why, but this will be removed soon anyway
                 app.logger.exception(str(err))
 
         from dds_web.api import api_blueprint
