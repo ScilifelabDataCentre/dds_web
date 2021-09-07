@@ -54,7 +54,7 @@ class InviteUser(flask_restful.Resource):
         token = s.dumps(new_invite.email, salt="email-confirm")
 
         # Create link for invitation email
-        link = flask.url_for("api_blueprint.confirm_email", token=token, _external=True)
+        link = flask.url_for("api_blueprint.confirm_invite", token=token, _external=True)
 
         # Compose and send email
         msg = flask_mail.Message("Confirm email", sender="localhost", recipients=[new_invite.email])

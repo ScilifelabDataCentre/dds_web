@@ -30,6 +30,7 @@ from dds_web.api.errors import (
     DatabaseError,
     InvalidUserCredentialsError,
     UserAlreadyExistsException,
+    NoSuchInviteError,
 )
 from dds_web import exceptions
 from dds_web.crypt import auth as dds_auth
@@ -70,6 +71,29 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 ###############################################################################
 
 
+# class FacilityField(wtforms.StringField):
+#     def process_formdata(self, valuelist):
+#         app.logger.warning(f"TEST: {valuelist}")
+#         if valuelist:
+#             facility_name = valuelist[0]
+
+#             try:
+#                 facility_id = (
+#                     models.Facility.query.filter(models.Facility.name == facility_name)
+#                     .with_entities(models.Facility.id)
+#                     .first()
+#                 )
+#             except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+#                 raise DatabaseError(str(sqlerr))
+
+#             # Raise exception if facility does not exist
+#             if not facility_id:
+#                 raise DatabaseError(message=f"Non-existent facility ID: {facility_id}")
+
+#             # Set facility name if exists
+#             self.data = facility_id[0]
+
+
 class RegistrationForm(flask_wtf.FlaskForm):
     """User registration form."""
 
@@ -106,22 +130,59 @@ class RegistrationForm(flask_wtf.FlaskForm):
     confirm = wtforms.PasswordField("Repeat password")
     submit = wtforms.SubmitField("submit")
 
+    def validate_facility_name(form, field):
+        pass
+        # raise wtforms.ValidationError(field.data)
 
-class ConfirmEmail(flask_restful.Resource):
+
+class ConfirmInvite(flask_restful.Resource):
     def get(self, token):
         """ """
 
         s = itsdangerous.URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
         try:
+            # Get email from token
             email = s.loads(token, salt="email-confirm", max_age=10000)
-        except itsdangerous.exc.SignatureExpired:
-            return "The token is expired!"
 
+            # Get row from invite table
+            invite_row = models.Invite.query.filter(models.Invite.email == email).first()
+
+        except itsdangerous.exc.SignatureExpired:
+            raise
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError(str(sqlerr))
+
+        # Check the invite exists
+        if not invite_row:
+            raise NoSuchInviteError(email=email)
+
+        # Get facility info from db
+        facility_name = ""
+        if invite_row.is_facility:
+            try:
+                facility_info = (
+                    models.Facility.query.filter(models.Facility.id == invite_row.facility_id)
+                    .with_entities(models.Facility.name)
+                    .first()
+                )
+            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+                raise DatabaseError(str(sqlerr))
+
+            # Raise exception if facility does not exist
+            if not facility_info:
+                raise DatabaseError(
+                    message=f"User invite connected to a non-existent facility ID: {invite_row.facility_id}"
+                )
+
+            # Set facility name if exists
+            facility_name = facility_info[0]
+
+        # Initiate form
         form = RegistrationForm()
 
         # Prefill fields
-        form.facility_name.data = "Test facility"
+        form.facility_name.data = facility_name
         form.email.data = email
         form.username.data = email.split("@")[0]
 

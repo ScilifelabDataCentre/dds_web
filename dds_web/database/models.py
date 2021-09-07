@@ -107,7 +107,7 @@ class User(db.Model):
 
     # Foreign keys
     # One facility can have many users
-    facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
+    facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"), nullable=True)
 
     # Relationships
     # One user can have many projects, and one projects can have many users

@@ -318,6 +318,16 @@ class PublicKeyNotFoundError(exceptions.HTTPException):
         general_logger.warning(self.message)
 
 
+class NoSuchInviteError(exceptions.HTTPException):
+    """No invite found in database"""
+
+    def __init__(self, email, message="There is no invitation for the found email adress"):
+        self.message = f"{message}: '{email}'"
+        super().__init__(self.message)
+
+        general_logger.warning(self.message)
+
+
 # ----------------------------------------------------------------------------------- #
 
 
@@ -349,4 +359,5 @@ errors = {
     "S3InfoNotFoundError": {"status": 500},
     "KeyNotFoundError": {"status": 500},
     "PublicKeyNotFoundError": {"status": 500},
+    "NoSuchInviteError": {"status": 400},
 }

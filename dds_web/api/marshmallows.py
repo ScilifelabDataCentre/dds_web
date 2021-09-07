@@ -46,9 +46,13 @@ class InviteUserSchema(marshmallow.Schema):
         """Deserialize to an Invite object"""
 
         facility_id = (
-            models.Facility.query.filter_by(name=data.get("facility_name"))
-            .with_entities(models.Facility.id)
-            .first()[0]
+            (
+                models.Facility.query.filter_by(name=data.get("facility_name"))
+                .with_entities(models.Facility.id)
+                .first()[0]
+            )
+            if data.get("facility_name")
+            else None
         )
 
         return models.Invite(
