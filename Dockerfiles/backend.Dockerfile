@@ -1,15 +1,5 @@
-##############################
-## Compile dist CSS
-##############################
-FROM node:15-alpine AS compile_css
-COPY ./dds_web/static /code/
-WORKDIR /code/
-RUN npm install -g npm@latest --quiet
-RUN npm install --quiet
-RUN npm run css
-
 #############################
-## Build main container
+## Build main API container
 #############################
 
 # Set official image -- parent image
@@ -20,9 +10,6 @@ RUN apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev
 
 # Copy the content to a code folder in container
 COPY ./requirements.txt /code/requirements.txt
-
-# Copy the compiled CSS from the first build step
-COPY --from=compile_css /code/ /code/dds_web/static
 
 # Install all dependencies
 RUN pip3 install -r /code/requirements.txt && pip3 install gunicorn
