@@ -145,6 +145,7 @@ def create_app():
 
                 db_init.fill_db()
             except Exception as err:
+                # Look into why, but this will be removed soon anyway
                 app.logger.exception(str(err))
 
         from dds_web.api import api_blueprint

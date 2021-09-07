@@ -14,4 +14,4 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Check code lints with Black
-        uses: jpetrucciani/black-check@master
+        uses: psf/black@stable
