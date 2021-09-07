@@ -63,5 +63,3 @@ class InviteUser(flask_restful.Resource):
 
         # TODO: Format response with marshal with?
         return flask.jsonify({"email": new_invite.email, "message": "Invite successful!"})
-
-
