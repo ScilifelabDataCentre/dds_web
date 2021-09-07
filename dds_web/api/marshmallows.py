@@ -45,10 +45,17 @@ class InviteUserSchema(marshmallow.Schema):
     def make_invite(self, data, **kwargs):
         """Deserialize to an Invite object"""
 
+        facility_id = (
+            models.Facility.query.filter_by(name=data.get("facility_name"))
+            .with_entities(models.Facility.id)
+            .first()[0]
+        )
+
         return models.Invite(
             **{
                 "email": data.get("email"),
                 "is_facility": data.get("role") == "facility",
                 "is_researcher": data.get("role") == "researcher",
+                "facility_id": facility_id,
             }
         )

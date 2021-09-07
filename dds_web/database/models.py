@@ -177,7 +177,7 @@ class Invite(db.Model):
     """Invites for users not yet confirmed in DDS"""
 
     # Table setup
-    __tablename = "invites"
+    __tablename__ = "invites"
     __table_args__ = {"extend_existing": True}
 
     # Columns
@@ -185,6 +185,7 @@ class Invite(db.Model):
     email = db.Column(db.String(80), unique=True, nullable=False)
     is_facility = db.Column(db.Boolean)
     is_researcher = db.Column(db.Boolean)
+    facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
 
     def __repr__(self):
         """Called by print, creates representation of object"""
