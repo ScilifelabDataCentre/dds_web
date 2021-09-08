@@ -24,6 +24,7 @@ import wtforms.validators
 
 # Own modules
 from dds_web import app, timestamp, db
+import dds_web.forms
 from dds_web.database import models
 from dds_web.api.dds_decorators import token_required
 from dds_web.api.errors import (
@@ -73,43 +74,6 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
 ###############################################################################
 
 
-class RegistrationForm(flask_wtf.FlaskForm):
-    """User registration form."""
-
-    first_name = wtforms.StringField("first name", validators=[wtforms.validators.InputRequired()])
-    last_name = wtforms.StringField("last name", validators=[wtforms.validators.InputRequired()])
-    facility_name = wtforms.StringField(
-        "facility name",
-        # validators=[wtforms.validators.InputRequired()],
-        # render_kw={"readonly": True},
-    )
-    email = wtforms.StringField(
-        "email",
-        validators=[wtforms.validators.Email()],
-        # render_kw={"disabled": True}
-    )
-    username = wtforms.StringField(
-        "username",
-        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=8, max=20)],
-    )
-
-    # At least: (one lower case letter)(one upper case letter)(one digit)(special character)
-    password = wtforms.PasswordField(
-        "password",
-        validators=[
-            wtforms.validators.InputRequired(),
-            wtforms.validators.Length(min=10, max=64),
-            wtforms.validators.EqualTo("confirm", message="Passwords must match!"),
-            wtforms.validators.Regexp(
-                regex="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])",
-                message="At least one: Lower case letter, Upper case letter, Digit, Special character.",
-            ),
-        ],
-    )
-    confirm = wtforms.PasswordField("Repeat password")
-    submit = wtforms.SubmitField("submit")
-
-
 class ConfirmInvite(flask_restful.Resource):
     def get(self, token):
         """ """
@@ -154,7 +118,7 @@ class ConfirmInvite(flask_restful.Resource):
             facility_name = facility_info[0]
 
         # Initiate form
-        form = RegistrationForm()
+        form = dds_web.forms.RegistrationForm()
 
         # Prefill fields - facility readonly if filled, otherwise disabled
         form.facility_name.data = facility_name
@@ -169,23 +133,25 @@ class NewUser(flask_restful.Resource):
     """Handles the creation of a new user"""
 
     def post(self):
-        """Create user from the args specified"""
+        """Create user from form"""
 
-        form = RegistrationForm()
+        form = dds_web.forms.RegistrationForm()
 
+        # Validate form - validators defined in form class
         if form.validate_on_submit():
+
+            # Create new user row by loading form data into schema
             try:
                 user_schema = marshmallows.NewUserSchema()
                 new_user = user_schema.load(form.data)
-                db.session.add(new_user)
-                db.session.commit()
+
             except marshmallow.ValidationError as valerr:
                 app.logger.info(valerr)
                 return flask.jsonify(valerr.messages)
             except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
                 raise DatabaseError(message=str("sqlerr"))
 
-            return "User added!!"
+            return f"User added: {new_user}"
 
         return flask.make_response(flask.render_template("user/register.html", form=form))
 
