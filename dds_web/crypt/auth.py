@@ -1,18 +1,58 @@
 """Password related cryptography stuff"""
 
 import argon2
-
+import jwt
 import sqlalchemy
+
+from jwt import DecodeError
 
 from dds_web.database import models
 from sqlalchemy.sql import func
-from dds_web import exceptions
-from flask import session
+from dds_web import app, basic_auth, exceptions, token_auth
 from dds_web.api.errors import InvalidUserCredentialsError, DatabaseError
 
 
+@basic_auth.get_user_roles
+def get_user_roles(user):
+    return get_user_roles_common(user)
+
+
+@token_auth.get_user_roles
+def get_user_roles(user):
+    return get_user_roles_common(user)
+
+
+def get_user_roles_common(user):
+    if "a" in user.permissions:
+        return "admin"
+    else:
+        return "user"
+
+
+@token_auth.verify_token
+def verify_token(token):
+    try:
+        data = jwt.decode(token, app.config.get("SECRET_KEY"), algorithms="HS256")
+        username = data.get("user")
+        if username:
+            user = models.User.query.get(username)
+            if user:
+                return user
+        return None
+    except DecodeError:
+        return None
+
+
+@basic_auth.verify_password
+def verify_password(username, password):
+    user = models.User.query.get(username)
+    if user and verify_password_argon2id(user.password, password):
+        return user
+    return None
+
+
 def verify_user_pass(username, password):
-    """Verify that user exists and password is correct."""
+    """DEPRECATED (WILL BE REPLACED): Verify that user exists and password is correct."""
 
     # Verify existing user
     try:

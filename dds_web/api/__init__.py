@@ -2,9 +2,6 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
-# Standard library
-import logging
-
 # Installed
 import flask
 import flask_restful
@@ -33,8 +30,8 @@ api.add_resource(admin.InviteUser, "/user/invite", endpoint="invite_user")
 api.add_resource(user.ConfirmInvite, "/confirm_invite/<token>", endpoint="confirm_invite")
 api.add_resource(user.NewUser, "/user/new", endpoint="new_user")
 
-# Login/access ###################################################################### Login/access #
-api.add_resource(user.AuthenticateUser, "/user/auth", endpoint="auth")
+# Login/access ################################################# Login/access #
+api.add_resource(user.Token, "/user/token", endpoint="token")
 api.add_resource(project.ProjectAccess, "/proj/auth", endpoint="proj_auth")
 
 # S3

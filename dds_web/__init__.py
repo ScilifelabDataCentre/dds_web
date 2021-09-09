@@ -9,16 +9,13 @@ import pytz
 import time
 
 # Installed
-from authlib.integrations import flask_client as auth_flask_client
 from flask import Flask, g, session
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
-
+from authlib.integrations import flask_client as auth_flask_client
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 import flask_mail
-
-
-# import flask_admin
-# import flask_admin.contrib.sqla as sqla
 
 # Own modules
 
@@ -29,15 +26,15 @@ db = SQLAlchemy()
 mail = flask_mail.Mail()
 # admin = flask_admin.Admin()
 C_TZ = pytz.timezone("Europe/Stockholm")
-# oauth = auth_flask_client.OAuth(app)  # FIXME
-
-# TODO: Add more actions (for action logging)
+oauth = auth_flask_client.OAuth(app)
 actions = {
     "api_blueprint.auth": "User Authentication",
     "api_blueprint.proj_auth": "Project Access",
     "api_blueprint.register_user": "Register New User",
 }
-
+basic_auth = HTTPBasicAuth()
+token_auth = HTTPTokenAuth()
+auth = MultiAuth(basic_auth, token_auth)
 
 # FUNCTIONS ####################################################### FUNCTIONS #
 

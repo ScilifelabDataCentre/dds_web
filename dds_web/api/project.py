@@ -94,12 +94,7 @@ class ProjectAccess(flask_restful.Resource):
         if project_id in [x.public_id for x in current_user.projects]:
             app.logger.debug("Updating token...")
             try:
-                token = jwt_token(
-                    username=current_user.username,
-                    project_id=project_id,
-                    project_access=True,
-                    permission=args["method"],
-                )
+                token = jwt_token(username=current_user.username)
             except JwtTokenGenerationError:
                 raise
 
