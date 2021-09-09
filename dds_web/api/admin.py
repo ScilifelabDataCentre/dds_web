@@ -14,9 +14,8 @@ import marshmallow
 import sqlalchemy
 
 # Own modules
-from dds_web import app, db, mail
+from dds_web import app, db, mail, auth
 from dds_web.api import errors
-from dds_web.crypt import auth
 from dds_web.database import models
 from dds_web.api import marshmallows
 
@@ -32,6 +31,7 @@ invitation_schema = marshmallows.InviteUserSchema()
 
 
 class InviteUser(flask_restful.Resource):
+    @auth.login_required(role=["admin", "user"])
     def post(self):
         """Create an invite and send email."""
 

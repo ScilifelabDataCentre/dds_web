@@ -65,12 +65,11 @@ def jwt_token(username):
 ###############################################################################
 
 
-<<<<<<< HEAD
 class ConfirmInvite(flask_restful.Resource):
     def get(self, token):
         """ """
 
-        s = itsdangerous.URLSafeTimedSerializer(app.config["SECRET_KEY"])
+        s = itsdangerous.URLSafeTimedSerializer(app.config.get("SECRET_KEY"))
 
         try:
             # Get email from token
@@ -148,12 +147,8 @@ class NewUser(flask_restful.Resource):
         return flask.make_response(flask.render_template("user/register.html", form=form))
 
 
-class AuthenticateUser(flask_restful.Resource):
-    """Handles the authentication of the user."""
-=======
 class Token(flask_restful.Resource):
     """Generates token for the user."""
->>>>>>> dev
 
     @auth.login_required(role=["admin", "user"])
     def get(self):
