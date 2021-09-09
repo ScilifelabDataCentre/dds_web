@@ -38,7 +38,7 @@ def jwt_token(username):
                 "exp": datetime.utcnow() + timedelta(hours=48),
             },
             app.config["SECRET_KEY"],
-            algorithm="HS256"
+            algorithm="HS256",
         )
         app.logger.debug(f"token: {token}")
     except (
@@ -61,7 +61,7 @@ def jwt_token(username):
 class Token(flask_restful.Resource):
     """Generates token for the user."""
 
-    @auth.login_required(role=['admin', 'user'])
+    @auth.login_required(role=["admin", "user"])
     def get(self):
         try:
             token = jwt_token(username=auth.current_user().username)
