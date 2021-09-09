@@ -94,10 +94,7 @@ def setup_logging():
 def create_app():
     """Construct the core application."""
 
-    # Default development config
-    app.config.from_object("dds_web.config.Config")
-
-    # User config file, if e.g. using in production
+    # App config file
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
     # Setup logging handlers

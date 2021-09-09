@@ -6,13 +6,15 @@
 
 The Delivery Portal consists of two components:
 
-* The _backend api_ handling the requests and the logic behind the scenes.
+* The _web interface_ where the research groups and facilities will be able to follow the data
+delivery progress. The web interface will also be an option for the delivery within small
+projects, e.g. small and/or few files.
   * <https://github.com/ScilifelabDataCentre/dds_web> (this repository)
 * The _command line interface (CLI)_. This will be used for data delivery within larger projects
 and/or projects resulting in the production of large amounts of data, e.g. sequence data.
   * <https://github.com/ScilifelabDataCentre/dds_cli>
 
-The backend interface is built using [Flask](https://flask.palletsprojects.com/en/2.0.x/).
+The web interface is built using [Flask](https://flask.palletsprojects.com/en/2.0.x/).
 
 ## Development
 
@@ -34,6 +36,15 @@ one for the SQL database (`mariadb`) and one for the application.
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
 If using this method, you can stop the web server with the command `docker-compose down`.
 
+### Compiling CSS & JS
+
+The website uses SASS / SCSS for its stylesheets, allowing customisation of Bootstrap styles.
+To manage the CSS and JavaScript packages, we use `npm`, though you shouldn't need to worry about this.
+
+When you run `docker-compose up` for the first time, the `npm install` command will fetch all
+required packages to your local folder and build the compiled CSS file.
+A process will then sit and watch for any changes to `.scss` files and automatically recompile
+the `.css` files on save.
 
 ### Config settings
 
@@ -48,6 +59,7 @@ Please see the _Production_ section below for how to set what you need.
 In order to test uploading files through the web interface, you will need to configure 3 files in the `run_dir/sensitive` directory:
 
 * `s3_config.json` - JSON file with the endpoint url and keys for uploading data.
+* `.dds-cli.json` - Username and password credentials for DDS authentication when uploading data _(NOTE: will soon not be needed)_
 * `dds_app.cfg` - App config file that should look something like this:
 
   ```bash
@@ -91,7 +103,7 @@ The other difference is that the docker image comes with compiled CSS files read
 but the docker-compose script mounts the local volume. So for development you need to run `npm`
 but for production there is no need.
 
-In addition to using `gunicorn` to serve files and running the MySQL database separately,
+In addition to using `gunicorn` to serve files and runing the MySQL database separately,
 you will also need to overwrite all (or most) of the default configuration values.
 
 ### Environment variables
