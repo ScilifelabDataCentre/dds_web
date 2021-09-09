@@ -6,18 +6,14 @@
 from datetime import datetime, timedelta
 import pytz
 import logging
-import os
-import pathlib
-import time
 
 # Installed
-from flask import Flask, g, render_template, session
+from flask import Flask, g, session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
 from flask_marshmallow import Marshmallow
-from logging.handlers import RotatingFileHandler
 from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 
 # Own modules
 
@@ -29,6 +25,9 @@ ma = Marshmallow(app)
 C_TZ = pytz.timezone("Europe/Stockholm")
 oauth = auth_flask_client.OAuth(app)
 actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth": "Project Access"}
+basic_auth = HTTPBasicAuth()
+token_auth = HTTPTokenAuth()
+auth = MultiAuth(basic_auth, token_auth)
 
 # FUNCTIONS ####################################################### FUNCTIONS #
 

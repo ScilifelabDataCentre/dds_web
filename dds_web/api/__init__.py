@@ -2,9 +2,6 @@
 # IMPORTS ########################################################### IMPORTS #
 ###############################################################################
 
-# Standard library
-import logging
-
 # Installed
 import flask
 import flask_restful
@@ -29,7 +26,7 @@ api = flask_restful.Api(api_blueprint, errors=errors)
 ###############################################################################
 
 # Login/access ################################################# Login/access #
-api.add_resource(user.AuthenticateUser, "/user/auth", endpoint="auth")
+api.add_resource(user.Token, "/user/token", endpoint="token")
 api.add_resource(project.ProjectAccess, "/proj/auth", endpoint="proj_auth")
 
 # S3
