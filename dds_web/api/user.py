@@ -5,7 +5,7 @@
 ###############################################################################
 
 # Standard library
-from datetime import datetime, timedelta
+import datetime
 import pathlib
 
 # Installed
@@ -35,9 +35,9 @@ def jwt_token(username):
         token = jwt.encode(
             {
                 "user": username,
-                "exp": datetime.utcnow() + timedelta(hours=48),
+                "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
             },
-            app.config["SECRET_KEY"],
+            app.config.get("SECRET_KEY"),
             algorithm="HS256",
         )
         app.logger.debug(f"token: {token}")
