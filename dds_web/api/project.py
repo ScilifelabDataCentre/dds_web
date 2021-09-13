@@ -1,8 +1,8 @@
 """Project module."""
 
-###############################################################################
-# IMPORTS ########################################################### IMPORTS #
-###############################################################################
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
 import logging
@@ -19,7 +19,7 @@ from cryptography.hazmat import backends
 
 # Own modules
 import dds_web.utils
-from dds_web import app, db, timestamp
+from dds_web import app, db
 from dds_web.api.user import jwt_token
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
@@ -39,9 +39,9 @@ from dds_web.api.errors import (
     PublicKeyNotFoundError,
 )
 
-###############################################################################
-# ENDPOINTS ####################################################### ENDPOINTS #
-###############################################################################
+####################################################################################################
+# ENDPOINTS ############################################################################ ENDPOINTS #
+####################################################################################################
 
 
 class ProjectAccess(flask_restful.Resource):
@@ -218,7 +218,7 @@ class UserProjects(flask_restful.Resource):
                 "Title": p.title,
                 "PI": p.pi,
                 "Status": p.status,
-                "Last updated": timestamp(
+                "Last updated": dds_web.utils.timestamp(
                     datetime_string=p.date_updated if p.date_updated else p.date_created
                 ),
                 "Size": dds_web.utils.format_byte_size(p.size),
@@ -326,7 +326,7 @@ class UpdateProjectSize(flask_restful.Resource):
                 )
 
                 current_project.size = tot_file_size.sizeSum
-                current_project.date_updated = timestamp()
+                current_project.date_updated = dds_web.utils.timestamp()
                 db.session.commit()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)

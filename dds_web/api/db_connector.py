@@ -1,8 +1,8 @@
-"""API DB Connector module"""
+"""API DB Connector module."""
 
-###############################################################################
-# IMPORTS ########################################################### IMPORTS #
-###############################################################################
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
 import traceback
@@ -16,7 +16,7 @@ import sqlalchemy
 from sqlalchemy.sql import func
 
 # Own modules
-from dds_web import timestamp, app
+from dds_web import app
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.dds_decorators import token_required
@@ -29,10 +29,11 @@ from dds_web.api.errors import (
     NoSuchProjectError,
     S3ProjectNotFoundError,
 )
+import dds_web.utils
 
-###############################################################################
-# CLASSES ########################################################### CLASSES #
-###############################################################################
+####################################################################################################
+# CLASSES ################################################################################ CLASSES #
+####################################################################################################
 
 
 @token_required
@@ -231,7 +232,7 @@ class DBConnector:
             # TODO (ina): put in class
             # change project size
             current_project.size = 0
-            current_project.date_updated = timestamp()
+            current_project.date_updated = dds_web.utils.timestamp()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
@@ -280,13 +281,13 @@ class DBConnector:
                             models.Version.time_deleted == None,
                         )
                     ).first()
-                    current_file_version.time_deleted = timestamp()
+                    current_file_version.time_deleted = dds_web.utils.timestamp()
 
                     # Delete file and update project size
                     old_size = x.size_original
                     db.session.delete(x)
                     current_project.size -= old_size
-                current_project.date_updated = timestamp()
+                current_project.date_updated = dds_web.utils.timestamp()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)
             else:
@@ -377,11 +378,11 @@ class DBConnector:
                         models.Version.time_deleted == None,
                     )
                 ).first()
-                current_file_version.time_deleted = timestamp()
+                current_file_version.time_deleted = dds_web.utils.timestamp()
 
                 db.session.delete(file)
                 current_project.size -= old_size
-                current_project.date_updated = timestamp()
+                current_project.date_updated = dds_web.utils.timestamp()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 db.session.rollback()
                 error = str(err)
@@ -437,7 +438,7 @@ class DBConnector:
                     "%Y-%m-%d %H:%M:%S.%f%z",
                 )
                 time_deleted = datetime.datetime.strptime(
-                    v.time_deleted if v.time_deleted else timestamp(),
+                    v.time_deleted if v.time_deleted else dds_web.utils.timestamp(),
                     "%Y-%m-%d %H:%M:%S.%f%z",
                 )
                 file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)

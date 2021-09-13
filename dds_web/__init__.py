@@ -1,6 +1,8 @@
 """Initialize Flask app."""
 
-# IMPORTS ########################################################### IMPORTS #
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
 from datetime import datetime, timedelta
@@ -17,31 +19,35 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 
 # Own modules
 
-# GLOBAL VARIABLES ######################################### GLOBAL VARIABLES #
+####################################################################################################
+# GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
+####################################################################################################
 
-app = Flask(__name__, instance_relative_config=False)
-db = SQLAlchemy()
-ma = Marshmallow(app)
+# Current time zone
 C_TZ = pytz.timezone("Europe/Stockholm")
+
+# Initiate app
+app = Flask(__name__, instance_relative_config=False)
+
+# Database - not yet init
+db = SQLAlchemy()
+
+# Marshmallows for parsing and validating
+ma = Marshmallow(app)
+
+# Authentication
 oauth = auth_flask_client.OAuth(app)
-actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth": "Project Access"}
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth()
 auth = MultiAuth(basic_auth, token_auth)
 
-# FUNCTIONS ####################################################### FUNCTIONS #
+# Actions for logging
+actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth": "Project Access"}
 
 
-@app.before_request
-def prepare():
-    # Test line for global
-    g.current_user = session.get("current_user")
-    # g.current_user_id = session.get("current_user_id")
-    g.is_facility = session.get("is_facility")
-    g.is_admin = session.get("is_admin")
-    if g.is_facility:
-        g.facility_name = session.get("facility_name")
-        g.facility_id = session.get("facility_id")
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
 
 
 def setup_logging():
@@ -54,7 +60,10 @@ def setup_logging():
             "formatters": {
                 "general": {"format": "[%(asctime)s] %(module)s [%(levelname)s] %(message)s"},
                 "actions": {
-                    "format": "[%(asctime)s] [%(levelname)s] <%(module)s> :: [%(result)s | Attempted : %(action)s | Project : %(project)s | User : %(current_user)s]"
+                    "format": (
+                        "[%(asctime)s] [%(levelname)s] <%(module)s> :: [%(result)s | "
+                        "Attempted : %(action)s | Project : %(project)s | User : %(current_user)s]"
+                    )
                 },
             },
             "handlers": {
@@ -138,27 +147,3 @@ def create_app():
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
         return app
-
-
-def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
-    """Gets the current time. Formats timestamp.
-
-    Returns:
-        str:    Timestamp in format 'YY-MM-DD_HH-MM-SS'
-
-    """
-
-    if datetime_string is not None:
-        datetime_stamp = datetime.strptime(datetime_string, ts_format)
-        return str(datetime_stamp.date())
-
-    now = datetime.now(tz=C_TZ) if dts is None else dts
-    t_s = str(now.strftime(ts_format))
-    return t_s
-
-
-def token_expiration(valid_time: int = 48):
-    now = datetime.now(tz=C_TZ)
-    expire = now + timedelta(hours=valid_time)
-
-    return timestamp(dts=expire)

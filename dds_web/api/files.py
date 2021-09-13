@@ -1,8 +1,8 @@
 """Files module."""
 
-###############################################################################
-# IMPORTS ########################################################### IMPORTS #
-###############################################################################
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
 import os
@@ -15,17 +15,17 @@ from sqlalchemy.sql import func
 
 # Own modules
 import dds_web.utils
-from dds_web import timestamp, app
+from dds_web import app
 from dds_web.database import models
-from dds_web import db, timestamp
+from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.dds_decorators import token_required, project_access_required
 from dds_web.api.errors import MissingTokenOutputError, DatabaseError
 
-###############################################################################
-# FUNCTIONS ####################################################### FUNCTIONS #
-###############################################################################
+####################################################################################################
+# ENDPOINTS ############################################################################ ENDPOINTS #
+####################################################################################################
 
 
 class NewFile(flask_restful.Resource):
@@ -95,7 +95,7 @@ class NewFile(flask_restful.Resource):
             # New file version
             new_version = models.Version(
                 size_stored=new_file.size_stored,
-                time_uploaded=timestamp(),
+                time_uploaded=dds_web.utils.timestamp(),
                 active_file=new_file.id,
                 project_id=current_project,
             )
@@ -155,7 +155,7 @@ class NewFile(flask_restful.Resource):
                 )
 
             # Same timestamp for deleted and created new file
-            new_timestamp = timestamp()
+            new_timestamp = dds_web.utils.timestamp()
 
             # Overwritten == deleted/deactivated
             for version in current_file_version:
@@ -550,7 +550,7 @@ class UpdateFile(flask_restful.Resource):
             if not file:
                 return flask.make_response(f"No such file: {file_name['name']}", 500)
 
-            file.time_latest_download = timestamp()
+            file.time_latest_download = dds_web.utils.timestamp()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             app.logger.exception(str(err))

@@ -1,14 +1,26 @@
 """USED ONLY DURING DEVELOPMENT! Adds test data to the database."""
 
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
+
+# Standard library
 import os
 import uuid
 
+# Installed
 from flask import current_app
 
-from dds_web import db, timestamp
-from dds_web.crypt import auth
-
+# Own modules
+from dds_web import db
+from dds_web.security import auth
+import dds_web.utils
 from dds_web.database.models import User, Project, Facility, File, Version, Email
+
+
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
 
 
 def fill_db():
@@ -34,14 +46,14 @@ def fill_db():
             public_id="public_project_id",
             title="test project_title",
             category="Category",
-            date_created=timestamp(),
-            date_updated=timestamp(),
+            date_created=dds_web.utils.timestamp(),
+            date_updated=dds_web.utils.timestamp(),
             status="Ongoing",
             description="This is a test project. You will be able to upload to but NOT download "
             "from this project. Create a new project to test the entire system. ",
             pi="PI",
             size=7357,
-            bucket=f"publicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            bucket=f"publicproj-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
             public_key="08D0D813DD7DD2541DF58A7E5AB651D20299F741732B0DC8B297A2D4CB43626C",
             private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
             privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
@@ -52,13 +64,13 @@ def fill_db():
             public_id="unused_project_id",
             title="unused project",
             category="Category",
-            date_created=timestamp(),
-            date_updated=timestamp(),
+            date_created=dds_web.utils.timestamp(),
+            date_updated=dds_web.utils.timestamp(),
             status="Ongoing",
             description="This is a test project to check for permissions.",
             pi="PI",
             size=7357,
-            bucket=f"unusedprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            bucket=f"unusedprojectid-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
             public_key="08D0D813DD7DD2541DF58A7E5AB651D20299F741732B0DC8B297A2D4CB43626C",
             private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
             privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
@@ -125,7 +137,7 @@ def fill_db():
     versions = [
         Version(
             size_stored=files[0].size_stored,
-            time_uploaded=timestamp(),
+            time_uploaded=dds_web.utils.timestamp(),
             active_file=files[0],
             project_id=projects[0],
         )
