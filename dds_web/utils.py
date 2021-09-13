@@ -1,5 +1,10 @@
-"Various utility functions and classes."
+"Utility functions and classes useful within the DDS."
 
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
+
+# Standard library
 import datetime
 import functools
 import os
@@ -7,48 +12,25 @@ import pathlib
 import shutil
 import json
 
+# Installed
 import time
 import pytz
 import atexit
 import apscheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 import pandas
-
 from contextlib import contextmanager
 from flask import g, request, redirect, url_for, abort, current_app
-from dds_web.database import models
 import sqlalchemy
+
+# Own modules
+from dds_web.database import models
 from dds_web import app, db, C_TZ
 
-# DECORATORS ####################################################### DECORATERS #
 
-# Decorators for endpoints, taken from Per's Anubis package
-def login_required(f):
-    """Decorator for checking if logged in. Send to login page if not."""
-
-    @functools.wraps(f)
-    def wrap(*args, **kwargs):
-        if not g.current_user:
-            url = url_for("user.login", next=request.base_url)
-            return redirect(url)
-        return f(*args, **kwargs)
-
-    return wrap
-
-
-def admin_access_required(f):
-    """Decorator for checking if the user have admin access else abort."""
-
-    @functools.wraps(f)
-    def wrap(*args, **kwargs):
-        if not g.is_admin:
-            return abort(403, "Only admin can access this page")
-        return f(*args, **kwargs)
-
-    return wrap
-
-
-# Functions
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
 
 
 def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
@@ -68,7 +50,6 @@ def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"
     return t_s
 
 
-# context for changing working directory
 @contextmanager
 def working_directory(path, cleanup_after=False):
     """Contexter for changing working directory"""
