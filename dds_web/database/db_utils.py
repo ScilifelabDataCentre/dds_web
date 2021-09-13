@@ -1,9 +1,22 @@
-""" Utility function that makes DB calls """
+""" Utility function that makes DB calls."""
 
-from dds_web import db, app
-from dds_web.database import models
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
+
+# Standard library
+
+# Installed
 from sqlalchemy import func
 import sqlalchemy
+
+# Own modules
+from dds_web import db, app
+from dds_web.database import models
+
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
 
 
 def get_facility_column(fid, column) -> (str):
@@ -58,7 +71,6 @@ def get_user_projects(current_user) -> (list):
 def get_project_users(project_id, no_facility_users=False) -> (list, list):
     """Get list of users related to the project"""
 
-    # project_users = []
     try:
         users = (
             models.User.query.join(models.project_users)
@@ -68,21 +80,12 @@ def get_project_users(project_id, no_facility_users=False) -> (list, list):
             )
             .all()
         )
-        # project_users = (
-        #     db.session.query(models.project_users)
-        #     .filter_by(project_id=project_id)
-        #     .with_entities(models.project_users.c.user)
-        #     .all()
-        # )
+
     except sqlalchemy.exc.SQLAlchemyError:
         raise
 
     app.logger.debug(users)
-    # for row in project_user_rows:
-    #     user = models.User.query.filter_by(id=row.user_id).one()
-    #     if no_facility_users and (user.role != "researcher"):
-    #         continue
-    #     project_users.append(user.username)
+
     return [user.username for user in users]
 
 
