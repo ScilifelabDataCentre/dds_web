@@ -6,7 +6,7 @@ import uuid
 from flask import current_app
 
 from dds_web import db, timestamp
-from dds_web.crypt import auth
+from dds_web.security import auth
 
 from dds_web.database.models import User, Project, Facility, File, Version, Email
 
