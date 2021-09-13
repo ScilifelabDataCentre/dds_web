@@ -45,7 +45,7 @@ def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"
         datetime_stamp = datetime.strptime(datetime_string, ts_format)
         return str(datetime_stamp.date())
 
-    now = datetime.now(tz=C_TZ) if dts is None else dts
+    now = datetime.datetime.now(tz=C_TZ) if dts is None else dts
     t_s = str(now.strftime(ts_format))
     return t_s
 

@@ -15,7 +15,7 @@ import sqlalchemy
 
 # Own modules
 from dds_web.database import models
-from dds_web import app, basic_auth, exceptions, token_auth
+from dds_web import app, basic_auth, token_auth
 from dds_web.api.errors import InvalidUserCredentialsError, DatabaseError
 
 ####################################################################################################
