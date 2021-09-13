@@ -1,15 +1,26 @@
 """USED ONLY DURING DEVELOPMENT! Adds test data to the database."""
 
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
+
+# Standard library
 import os
 import uuid
 
+# Installed
 from flask import current_app
 
+# Own modules
 from dds_web import db
 from dds_web.security import auth
 import dds_web.utils
-
 from dds_web.database.models import User, Project, Facility, File, Version, Email
+
+
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
 
 
 def fill_db():

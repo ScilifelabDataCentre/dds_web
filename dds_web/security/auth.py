@@ -1,15 +1,26 @@
-"""Password related cryptography stuff"""
+"""Authentication related functions/tools."""
 
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
+
+# Standard library
+
+# Installed
+from jwt import DecodeError
+from sqlalchemy.sql import func
 import argon2
 import jwt
 import sqlalchemy
 
-from jwt import DecodeError
-
+# Own modules
 from dds_web.database import models
-from sqlalchemy.sql import func
 from dds_web import app, basic_auth, exceptions, token_auth
 from dds_web.api.errors import InvalidUserCredentialsError, DatabaseError
+
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
 
 
 @basic_auth.get_user_roles
