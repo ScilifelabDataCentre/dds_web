@@ -51,22 +51,6 @@ def verify_password(username, password):
     return None
 
 
-def verify_user_pass(username, password):
-    """DEPRECATED (WILL BE REPLACED): Verify that user exists and password is correct."""
-
-    # Verify existing user
-    try:
-        user = models.User.query.filter(models.User.username == username).first()
-    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise DatabaseError(message=str(sqlerr), username=username)
-
-    # User exists and password correct
-    if user and verify_password_argon2id(user.password, password):
-        return True
-
-    raise InvalidUserCredentialsError(username=username)
-
-
 def user_session_info(username):
     """Gets session info about the user."""
 
