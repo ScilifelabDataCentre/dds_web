@@ -118,7 +118,6 @@ def create_app():
         client_kwargs={"scope": "openid profile email"},
     )
     with app.app_context():  # Everything in here has access to sessions
-        from dds_web import routes  # Import routes
         from dds_web.database import models
 
         # db.drop_all()       # Make sure it's the latest db
@@ -137,18 +136,6 @@ def create_app():
         from dds_web.api import api_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
-
-        from dds_web.user import user_blueprint
-
-        app.register_blueprint(user_blueprint, url_prefix="/user")
-
-        from dds_web.admin import admin_blueprint
-
-        app.register_blueprint(admin_blueprint, url_prefix="/admin")
-
-        from dds_web.project import project_blueprint
-
-        app.register_blueprint(project_blueprint, url_prefix="/project")
 
         return app
 
