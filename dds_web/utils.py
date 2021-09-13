@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from flask import g, request, redirect, url_for, abort, current_app
 from dds_web.database import models
 import sqlalchemy
-from dds_web import app, db, timestamp, C_TZ
+from dds_web import app, db, C_TZ
 
 # DECORATORS ####################################################### DECORATERS #
 
@@ -46,6 +46,26 @@ def admin_access_required(f):
         return f(*args, **kwargs)
 
     return wrap
+
+
+# Functions
+
+
+def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
+    """Gets the current time. Formats timestamp.
+
+    Returns:
+        str:    Timestamp in format 'YY-MM-DD_HH-MM-SS'
+
+    """
+
+    if datetime_string is not None:
+        datetime_stamp = datetime.strptime(datetime_string, ts_format)
+        return str(datetime_stamp.date())
+
+    now = datetime.now(tz=C_TZ) if dts is None else dts
+    t_s = str(now.strftime(ts_format))
+    return t_s
 
 
 # context for changing working directory

@@ -16,7 +16,8 @@ import sqlalchemy
 from sqlalchemy.sql import func
 
 # Own modules
-from dds_web import timestamp, app
+from dds_web import app
+from dds_web import utils
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.dds_decorators import token_required

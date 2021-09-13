@@ -6,7 +6,8 @@
 import datetime
 
 # Own modules
-from dds_web import db, timestamp, C_TZ
+from dds_web import db, C_TZ
+import dds_web.utils
 
 # CLASSES ########################################################### CLASSES #
 
@@ -259,7 +260,9 @@ class Version(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
-    time_uploaded = db.Column(db.String(50), unique=False, nullable=False, default=timestamp())
+    time_uploaded = db.Column(
+        db.String(50), unique=False, nullable=False, default=dds_web.utils.timestamp()
+    )
     time_deleted = db.Column(db.String(50), unique=False, nullable=True, default=None)
     time_invoiced = db.Column(db.String(50), unique=False, nullable=True, default=None)
 

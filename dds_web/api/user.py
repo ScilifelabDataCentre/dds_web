@@ -18,10 +18,11 @@ import pandas
 import sqlalchemy
 
 # Own modules
-from dds_web import app, auth, timestamp
+from dds_web import app, auth
 from dds_web.database import models
 from dds_web.api.dds_decorators import token_required
 from dds_web.api.errors import JwtTokenGenerationError
+import dds_web.utils
 
 ###############################################################################
 # FUNCTIONS ####################################################### FUNCTIONS #
@@ -111,7 +112,7 @@ class ShowUsage(flask_restful.Resource):
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
                     time_deleted = datetime.datetime.strptime(
-                        v.time_deleted if v.time_deleted else timestamp(),
+                        v.time_deleted if v.time_deleted else dds_web.utils.timestamp(),
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
                     file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
