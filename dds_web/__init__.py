@@ -100,7 +100,10 @@ def setup_logging():
 def create_app():
     """Construct the core application."""
 
-    # App config file
+    # Default development config
+    app.config.from_object("dds_web.config.Config")
+
+    # User config file, if e.g. using in production
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
     # Setup logging handlers
@@ -149,14 +152,6 @@ def create_app():
 
         # Active REST API
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
-
-        # Web interface deactivated - FIXME
-        # from dds_web.user import user_blueprint
-        # app.register_blueprint(user_blueprint, url_prefix="/user")
-        # from dds_web.admin import admin_blueprint
-        # app.register_blueprint(admin_blueprint, url_prefix="/admin")
-        # from dds_web.project import project_blueprint
-        # app.register_blueprint(project_blueprint, url_prefix="/project")
 
         return app
 
