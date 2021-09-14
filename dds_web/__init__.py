@@ -33,7 +33,7 @@ app_obj = flask.Flask(__name__, instance_relative_config=False)
 # Database - not yet init
 db = SQLAlchemy()
 
-# Marschmallows for parsing and validating
+# Marshmallows for parsing and validating
 ma = Marshmallow(app_obj)
 
 # Authentication
@@ -139,12 +139,13 @@ def create_app():
         return app_obj
 
 
-@click.command('init-dev-db')
+@click.command("init-dev-db")
 @flask.cli.with_appcontext
 def fill_db_wrapper():
     app_obj.logger.info("Initializing development db")
     assert app_obj.config["USE_LOCAL_DB"]
     db.create_all()
     from dds_web.development.db_init import fill_db
+
     fill_db()
     app_obj.logger.info("DB filled")
