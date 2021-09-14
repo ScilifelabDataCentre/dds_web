@@ -128,16 +128,6 @@ def create_app():
     db.init_app(app)
     mail.init_app(app)
 
-    # FIXME
-    # initialize OIDC
-    # oauth.register(
-    #     "default_login",
-    #     client_secret=app.config.get("OIDC_CLIENT_SECRET"),
-    #     client_id=app.config.get("OIDC_CLIENT_ID"),
-    #     server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
-    #     client_kwargs={"scope": "openid profile email"},
-    # )
-
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
 
