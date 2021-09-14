@@ -90,14 +90,14 @@ class UserAlreadyExistsException(exceptions.HTTPException):
 
     def __init__(self, username, message="The user already exists"):
 
-        self.message = f"{message}: {username}"
+        # self.message = f"{message}: {username}"
         super().__init__(self.message)
 
         action_logger.error(
             self.message,
             extra={
                 **extra_info,
-                "current_user": username,
+                # "current_user": username,
                 "action": actions.get(flask.request.endpoint),
                 "project": None,
             },
