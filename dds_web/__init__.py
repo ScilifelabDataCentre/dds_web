@@ -127,11 +127,6 @@ def create_app():
     # Initialize database
     db.init_app(app)
     mail.init_app(app)
-    # Setup admin
-    # import dds_web.database.models as models
-
-    # admin.init_app(app)
-    # admin.add_view(sqla.ModelView(models.User, db.session))
 
     # FIXME
     # initialize OIDC
