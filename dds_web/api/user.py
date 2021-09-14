@@ -1,8 +1,8 @@
-"""Docstring"""
+"""User related endpoints e.g. authentication."""
 
-###############################################################################
-# IMPORTS ########################################################### IMPORTS #
-###############################################################################
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
 import datetime
@@ -11,7 +11,6 @@ import pathlib
 # Installed
 from sqlalchemy.sql import func
 
-# from flask import json
 import flask
 import flask_restful
 import jwt
@@ -19,30 +18,29 @@ import pandas
 import sqlalchemy
 
 # Own modules
-from dds_web import app, timestamp
+from dds_web import app, auth
 from dds_web.database import models
 from dds_web.api.dds_decorators import token_required
-from dds_web.api.errors import MissingCredentialsError, DatabaseError, InvalidUserCredentialsError
-from dds_web import exceptions
-from dds_web.crypt import auth as dds_auth
 from dds_web.api.errors import JwtTokenGenerationError
-
-###############################################################################
-# FUNCTIONS ####################################################### FUNCTIONS #
-###############################################################################
+import dds_web.utils
 
 
-def jwt_token(username, project_id, project_access=False, permission="ls"):
-    """Generates and encodes a JWT token."""
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
+
+
+def jwt_token(username):
+    """Generates a JWT token."""
 
     try:
         token = jwt.encode(
             {
                 "user": username,
-                "project": {"id": project_id, "verified": project_access, "permission": permission},
                 "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
             },
-            app.config["SECRET_KEY"],
+            app.config.get("SECRET_KEY"),
+            algorithm="HS256",
         )
         app.logger.debug(f"token: {token}")
     except (
@@ -57,37 +55,22 @@ def jwt_token(username, project_id, project_access=False, permission="ls"):
         return token
 
 
-###############################################################################
-# ENDPOINTS ####################################################### ENDPOINTS #
-###############################################################################
+####################################################################################################
+# ENDPOINTS ############################################################################ ENDPOINTS #
+####################################################################################################
 
 
-class AuthenticateUser(flask_restful.Resource):
-    """Handles the authentication of the user."""
+class Token(flask_restful.Resource):
+    """Generates token for the user."""
 
+    @auth.login_required(role=["admin", "user"])
     def get(self):
-        """Checks the username, password and generates the token."""
-
-        # Get username and password from CLI request
-        auth = flask.request.authorization
-        if not auth or not auth.username or not auth.password:
-            raise MissingCredentialsError
-
-        # Project not required, will be checked for future operations
-        args = flask.request.args
-        project = args.get("project")
-
-        # Verify username and password
         try:
-            _ = dds_auth.verify_user_pass(username=auth.username, password=auth.password)
-
-            # Generate jwt token
-            token = jwt_token(username=auth.username, project_id=project)
-
-        except (DatabaseError, InvalidUserCredentialsError, JwtTokenGenerationError):
+            token = jwt_token(username=auth.current_user().username)
+        except JwtTokenGenerationError:
             raise
         else:
-            return flask.jsonify({"token": token.decode("UTF-8")})
+            return flask.jsonify({"token": token})
 
 
 class ShowUsage(flask_restful.Resource):
@@ -130,7 +113,7 @@ class ShowUsage(flask_restful.Resource):
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
                     time_deleted = datetime.datetime.strptime(
-                        v.time_deleted if v.time_deleted else timestamp(),
+                        v.time_deleted if v.time_deleted else dds_web.utils.timestamp(),
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
                     file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
