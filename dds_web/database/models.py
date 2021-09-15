@@ -62,7 +62,7 @@ class Project(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(32), unique=True, nullable=False)
-    title = db.Column(db.String(100), unique=False, nullable=False)
+    title = db.Column(db.Text, unique=False, nullable=False)
     category = db.Column(db.String(40), unique=False, nullable=False)
     date_created = db.Column(db.String(50), nullable=False)
     date_updated = db.Column(db.String(50), nullable=True)
@@ -189,9 +189,9 @@ class File(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(50), unique=True, nullable=False)
-    name = db.Column(db.String(200), unique=False, nullable=False)
-    name_in_bucket = db.Column(db.String(200), unique=False, nullable=False)
-    subpath = db.Column(db.String(500), unique=False, nullable=False)
+    name = db.Column(db.Text, unique=False, nullable=False)
+    name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
+    subpath = db.Column(db.Text, unique=False, nullable=False)
     size_original = db.Column(db.BigInteger, unique=False, nullable=False)
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
@@ -220,7 +220,7 @@ class File(db.Model):
 
 
 class ExpiredFile(db.Model):
-    """Data model for expired files. Moved here when in system for more han a month."""
+    """Data model for expired files. Moved here when in system for more than a month."""
 
     # Table setup
     __tablename__ = "expired_files"
@@ -229,9 +229,9 @@ class ExpiredFile(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(50), unique=True, nullable=False)
-    name = db.Column(db.String(200), unique=False, nullable=False)
-    name_in_bucket = db.Column(db.String(200), unique=False, nullable=False)
-    subpath = db.Column(db.String(500), unique=False, nullable=False)
+    name = db.Column(db.Text, unique=False, nullable=False)
+    name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
+    subpath = db.Column(db.Text, unique=False, nullable=False)
     size_original = db.Column(db.BigInteger, unique=False, nullable=False)
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
