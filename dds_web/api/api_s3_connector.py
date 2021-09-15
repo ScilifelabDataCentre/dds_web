@@ -16,7 +16,6 @@ import botocore
 import flask
 
 # Own modules
-from dds_web import app
 from dds_web.api.dds_decorators import (
     connect_cloud,
     bucket_must_exists,
@@ -96,7 +95,7 @@ class ApiS3Connector:
         try:
             with DBConnector() as dbconn:
                 safespring_project = dbconn.cloud_project()
-                app.logger.debug(f"Safespring project: {safespring_project}")
+                flask.current_app.logger.debug(f"Safespring project: {safespring_project}")
 
                 if not safespring_project:
                     raise S3ProjectNotFoundError(
@@ -142,7 +141,7 @@ class ApiS3Connector:
         except (MissingTokenOutputError, BucketNotFoundError, DatabaseError):
             raise
 
-        app.logger.debug(f"{s3keys}")
+        flask.current_app.logger.debug(f"{s3keys}")
         return safespring_project, s3keys, endpoint_url, bucketname
 
     @bucket_must_exists
