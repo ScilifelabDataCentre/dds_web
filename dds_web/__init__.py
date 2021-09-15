@@ -8,7 +8,6 @@
 from datetime import datetime, timedelta
 import logging
 import pytz
-import time
 
 # Installed
 from flask import Flask, g, session
