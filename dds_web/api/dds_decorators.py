@@ -17,7 +17,7 @@ from sqlalchemy.sql import func
 import sqlalchemy
 
 # Own modules
-from dds_web import app
+from dds_web import app_obj
 from dds_web.database import models
 from dds_web.api.errors import (
     MissingCredentialsError,
@@ -53,7 +53,7 @@ def token_required(f):
         # Verify the token
         try:
             # Decode
-            data = jwt.decode(token, app.config.get("SECRET_KEY"))
+            data = jwt.decode(token, app_obj.config.get("SECRET_KEY"))
 
             username = data.get("user")
             if not username:
