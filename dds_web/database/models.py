@@ -168,7 +168,7 @@ class Email(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    email = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(254), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     # Foreign key: One user can have multiple email addresses.
@@ -189,7 +189,7 @@ class Invite(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    email = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(254), unique=True, nullable=False)
     is_facility = db.Column(db.Boolean)
     is_researcher = db.Column(db.Boolean)
     facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
