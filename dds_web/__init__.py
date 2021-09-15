@@ -10,8 +10,7 @@ import pytz
 import logging
 
 # Installed
-import flask
-import click
+from flask import Flask, g, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
@@ -27,17 +26,17 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 # Current time zone
 C_TZ = pytz.timezone("Europe/Stockholm")
 
-# Initiate app object
-app_obj = flask.Flask(__name__, instance_relative_config=False)
+# Initiate app
+app = Flask(__name__, instance_relative_config=False)
 
 # Database - not yet init
 db = SQLAlchemy()
 
 # Marshmallows for parsing and validating
-ma = Marshmallow(app_obj)
+ma = Marshmallow(app)
 
 # Authentication
-oauth = auth_flask_client.OAuth(app_obj)
+oauth = auth_flask_client.OAuth(app)
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth()
 auth = MultiAuth(basic_auth, token_auth)
@@ -72,14 +71,14 @@ def setup_logging():
                     "level": logging.DEBUG,
                     "class": "dds_web.dds_rotating_file_handler.DDSRotatingFileHandler",
                     "filename": "dds",
-                    "basedir": app_obj.config.get("LOGS_DIR"),
+                    "basedir": app.config.get("LOGS_DIR"),
                     "formatter": "general",
                 },
                 "actions": {
                     "level": logging.INFO,
                     "class": "dds_web.dds_rotating_file_handler.DDSRotatingFileHandler",
                     "filename": "actions",
-                    "basedir": app_obj.config.get("LOGS_DIR"),
+                    "basedir": app.config.get("LOGS_DIR"),
                     "formatter": "actions",
                 },
                 "console": {
@@ -104,48 +103,47 @@ def create_app():
     """Construct the core application."""
 
     # Default development config
-    app_obj.config.from_object("dds_web.config.Config")
+    app.config.from_object("dds_web.config.Config")
 
     # User config file, if e.g. using in production
-    app_obj.config.from_envvar("DDS_APP_CONFIG", silent=True)
+    app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
     # Setup logging handlers
     setup_logging()
 
     # Set app.logger as the general logger
-    app_obj.logger = logging.getLogger("general")
-    app_obj.logger.info("Logging initiated.")
+    app.logger = logging.getLogger("general")
+    app.logger.info("Logging initiated.")
 
     # Initialize database
-    db.init_app(app_obj)
-
-    app_obj.cli.add_command(fill_db_wrapper)
+    db.init_app(app)
 
     # initialize OIDC
     oauth.register(
         "default_login",
-        client_secret=app_obj.config.get("OIDC_CLIENT_SECRET"),
-        client_id=app_obj.config.get("OIDC_CLIENT_ID"),
-        server_metadata_url=app_obj.config.get("OIDC_ACCESS_TOKEN_URL"),
+        client_secret=app.config.get("OIDC_CLIENT_SECRET"),
+        client_id=app.config.get("OIDC_CLIENT_ID"),
+        server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
         client_kwargs={"scope": "openid profile email"},
     )
-    with app_obj.app_context():  # Everything in here has access to sessions
+    with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
+
+        # db.drop_all()       # Make sure it's the latest db
+        db.create_all()  # Create database tables for our data models
+
+        # puts in test info for local DB, will be removed later
+        if app.config["USE_LOCAL_DB"]:
+            try:
+                from dds_web.development.db_init import fill_db
+
+                fill_db()
+            except Exception as err:
+                # Look into why, but this will be removed soon anyway
+                app.logger.exception(str(err))
 
         from dds_web.api import api_blueprint
 
-        app_obj.register_blueprint(api_blueprint, url_prefix="/api/v1")
+        app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
-        return app_obj
-
-
-@click.command("init-dev-db")
-@flask.cli.with_appcontext
-def fill_db_wrapper():
-    app_obj.logger.info("Initializing development db")
-    assert app_obj.config["USE_LOCAL_DB"]
-    db.create_all()
-    from dds_web.development.db_init import fill_db
-
-    fill_db()
-    app_obj.logger.info("DB filled")
+        return app
