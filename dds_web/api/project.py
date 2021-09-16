@@ -153,7 +153,9 @@ class UserProjects(flask_restful.Resource):
         current_user = auth.current_user()
 
         if "l" not in current_user.permissions:
-            return AccessDeniedError(message=f"{current_user.username} does not have project listing permissions")
+            return AccessDeniedError(
+                message=f"{current_user.username} does not have project listing permissions"
+            )
 
         # TODO: Return different things depending on if facility or not
         all_projects = list()
