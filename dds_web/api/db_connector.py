@@ -83,9 +83,7 @@ class DBConnector:
         # TODO (ina): fix join
         try:
             # All files in project
-            files = models.File.query.filter(
-                models.File.project_id == func.binary(self.project.id)
-            )
+            files = models.File.query.filter(models.File.project_id == func.binary(self.project.id))
 
             # File names in root
             distinct_files = (

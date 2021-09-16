@@ -48,7 +48,9 @@ class AuthenticationError(exceptions.HTTPException):
 class AccessDeniedError(exceptions.HTTPException):
     """Errors due to incorrect project permissions."""
 
-    def __init__(self, username, project, message="The user does not have the necessary permissions."):
+    def __init__(
+        self, username, project, message="The user does not have the necessary permissions."
+    ):
         super().__init__(message)
 
         action_logger.warning(
@@ -235,8 +237,10 @@ class PublicKeyNotFoundError(exceptions.HTTPException):
 
 
 errors = {
-    "ItemDeletionError": {"message": "Removal of item(s) from S3 bucket failed.",
-                          "status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "ItemDeletionError": {
+        "message": "Removal of item(s) from S3 bucket failed.",
+        "status": http.HTTPStatus.INTERNAL_SERVER_ERROR,
+    },
     "DatabaseError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "NoSuchProjectError": {"status": http.HTTPStatus.BAD_REQUEST},
     "AuthenticationError": {"status": http.HTTPStatus.UNAUTHORIZED},

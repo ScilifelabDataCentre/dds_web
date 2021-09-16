@@ -42,19 +42,25 @@ def verify(current_user, project_public_id, access_method):
     if not project_public_id:
         raise MissingProjectIDError
 
-    app.logger.debug(f"Verifying access to project {project_public_id} by user {current_user.username}.")
+    app.logger.debug(
+        f"Verifying access to project {project_public_id} by user {current_user.username}."
+    )
     try:
-        project = models.Project.query.filter(models.Project.public_id==project_public_id).first()
+        project = models.Project.query.filter(models.Project.public_id == project_public_id).first()
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise DatabaseError(message=str(sqlerr), username=current_user.username, project=project_public_id)
+        raise DatabaseError(
+            message=str(sqlerr), username=current_user.username, project=project_public_id
+        )
 
     if not project:
         raise NoSuchProjectError(username=current_user.username, project=project_public_id)
 
     if project not in current_user.projects:
-        raise AccessDeniedError(message="Project access denied.",
-                                      username=current_user.username,
-                                      project=project_public_id)
+        raise AccessDeniedError(
+            message="Project access denied.",
+            username=current_user.username,
+            project=project_public_id,
+        )
 
     permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
     for method in access_method:
@@ -65,7 +71,9 @@ def verify(current_user, project_public_id, access_method):
                 project=project_public_id,
             )
 
-    app.logger.debug(f"Access to project {project_public_id} is granted for user {current_user.username}.")
+    app.logger.debug(
+        f"Access to project {project_public_id} is granted for user {current_user.username}."
+    )
     return project
 
 
@@ -78,9 +86,11 @@ class GetPublic(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(),
-                         project_public_id=args.get("project"),
-                         access_method=["get", "put"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["get", "put"],
+        )
 
         app.logger.debug("Getting the public key.")
 
@@ -99,7 +109,11 @@ class GetPrivate(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["get"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["get"],
+        )
 
         # TODO (ina): Change handling of private key -- not secure
         app.logger.debug("Getting the private key.")
@@ -139,8 +153,14 @@ class UserProjects(flask_restful.Resource):
         current_user = auth.current_user()
 
         if "l" not in current_user.permissions:
-            return flask.jsonify({"message": f"{current_user.username} does not have project listing permissions"}), \
-                   http.HTTPStatus.FORBIDDEN
+            return (
+                flask.jsonify(
+                    {
+                        "message": f"{current_user.username} does not have project listing permissions"
+                    }
+                ),
+                http.HTTPStatus.FORBIDDEN,
+            )
 
         # TODO: Return different things depending on if facility or not
         all_projects = list()
@@ -200,7 +220,9 @@ class RemoveContents(flask_restful.Resource):
 
         args = flask.request.args
         current_user = auth.current_user()
-        project = verify(current_user=current_user, project_public_id=args.get("project"), access_method=["rm"])
+        project = verify(
+            current_user=current_user, project_public_id=args.get("project"), access_method=["rm"]
+        )
 
         # Delete files
         removed = False
@@ -243,14 +265,17 @@ class RemoveContents(flask_restful.Resource):
 
 
 class UpdateProjectSize(flask_restful.Resource):
-
     @auth.login_required
     def put(self):
         """Update the project size and updated time stamp."""
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["put"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["put"],
+        )
 
         updated, error = (False, "")
         current_try, max_tries = (1, 5)

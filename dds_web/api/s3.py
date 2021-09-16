@@ -29,9 +29,11 @@ class S3Info(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(),
-                         project_public_id=args.get("project"),
-                         access_method=["get", "put", "rm"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["get", "put", "rm"],
+        )
 
         sfsp_proj, keys, url, bucketname, message = ApiS3Connector(project).get_s3_info()
 

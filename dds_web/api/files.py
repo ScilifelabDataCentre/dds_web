@@ -49,7 +49,11 @@ class NewFile(flask_restful.Resource):
         ]
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["put"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["put"],
+        )
 
         if not all(x in args for x in required_info):
             missing = [x for x in required_info if x not in args]
@@ -119,7 +123,11 @@ class NewFile(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["put"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["put"],
+        )
 
         if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
             return flask.make_response("Information missing, " "cannot add file to database.", 500)
@@ -200,7 +208,11 @@ class MatchFiles(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["put"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["put"],
+        )
 
         try:
             matching_files = (
@@ -227,7 +239,11 @@ class ListFiles(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["ls"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["ls"],
+        )
 
         # Check if to return file size
         show_size = False
@@ -301,7 +317,11 @@ class RemoveFile(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["rm"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["rm"],
+        )
 
         with DBConnector(project=project) as dbconn:
             not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
@@ -325,7 +345,11 @@ class RemoveDir(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["rm"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["rm"],
+        )
 
         not_removed_dict, not_exist_list = ({}, [])
 
@@ -385,7 +409,11 @@ class FileInfo(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["get"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["get"],
+        )
 
         # Get files and folders requested by CLI
         paths = flask.request.json
@@ -473,7 +501,11 @@ class FileInfoAll(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["get"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["get"],
+        )
 
         files = {}
         try:
@@ -524,7 +556,11 @@ class UpdateFile(flask_restful.Resource):
 
         args = flask.request.args
 
-        project = verify(current_user=auth.current_user(), project_public_id=args.get("project"), access_method=["get"])
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["get"],
+        )
 
         # Get file name from request from CLI
         file_name = args.get("name")
