@@ -6,21 +6,14 @@
 
 # Standard library
 import datetime
-import functools
 import os
 import pathlib
-import shutil
-import json
 
 # Installed
-import time
-import pytz
 import atexit
-import apscheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 import pandas
 from contextlib import contextmanager
-from flask import g, request, redirect, url_for, abort, current_app
 import sqlalchemy
 
 # Own modules
@@ -42,7 +35,7 @@ def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"
     """
 
     if datetime_string is not None:
-        datetime_stamp = datetime.strptime(datetime_string, ts_format)
+        datetime_stamp = datetime.datetime.strptime(datetime_string, ts_format)
         return str(datetime_stamp.date())
 
     now = datetime.datetime.now(tz=C_TZ) if dts is None else dts

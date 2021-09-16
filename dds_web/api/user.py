@@ -20,7 +20,6 @@ import sqlalchemy
 # Own modules
 from dds_web import app, auth
 from dds_web.database import models
-from dds_web.api.dds_decorators import token_required
 from dds_web.api.errors import JwtTokenGenerationError
 import dds_web.utils
 
@@ -63,22 +62,17 @@ def jwt_token(username):
 class Token(flask_restful.Resource):
     """Generates token for the user."""
 
-    @auth.login_required(role=["admin", "user"])
+    @auth.login_required
     def get(self):
-        try:
-            token = jwt_token(username=auth.current_user().username)
-        except JwtTokenGenerationError:
-            raise
-        else:
-            return flask.jsonify({"token": token})
+        return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
 
 
 class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
 
-    method_decorators = [token_required]
-
-    def get(self, current_user, _):
+    @auth.login_required
+    def get(self):
+        current_user = auth.current_user()
 
         # Check that user is facility account
         if current_user.role != "facility":
@@ -154,9 +148,9 @@ class ShowUsage(flask_restful.Resource):
 class InvoiceUnit(flask_restful.Resource):
     """Calculate the actual cost from the Safespring invoicing specification."""
 
-    method_decorators = [token_required]
-
-    def get(self, current_user, _):
+    @auth.login_required
+    def get(self):
+        current_user = auth.current_user()
 
         # Check that user is facility account
         if current_user.role != "facility":
