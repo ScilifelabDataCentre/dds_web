@@ -136,6 +136,10 @@ def create_app():
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
 
+        # Need to import auth so that the modifications to the auth objects take place
+        import dds_web.security.auth
+
+        # Register blueprints
         from dds_web.api import api_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
