@@ -20,7 +20,8 @@ import apscheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 import pandas
 from contextlib import contextmanager
-from flask import g, request, redirect, url_for, abort, current_app
+import flask
+from flask import g, request, redirect, url_for, abort
 import sqlalchemy
 
 # Own modules
@@ -92,7 +93,7 @@ def invoice_units():
     """Get invoicing specification from Safespring, calculate and save GBHours and cost for each
     facility and project."""
 
-    current_app.logger.debug("Calculating invoicing info...")
+    flask.current_app.logger.debug("Calculating invoicing info...")
 
     # Create invoice specification
     # TODO (ina): Change to Safespring API call
@@ -110,11 +111,11 @@ def invoice_units():
     # Get data
     csv_contents = pandas.read_csv(to_file, sep=";", header=1)
 
-    with current_app.app_context():
+    with flask.current_app.app_context():
         try:
             all_facilities = models.Facility.query.all()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            current_app.logger.warning(
+            flask.current_app.logger.warning(
                 f"Failed getting facility information from database. Cannot generate invoicing information: {err}"
             )
         else:
@@ -134,12 +135,12 @@ def invoice_units():
 
                         # Move on to next if full period already invoiced
                         if v.time_deleted and v.time_invoiced and v.time_deleted == v.time_invoiced:
-                            current_app.logger.debug(f"Period invoiced fully : {v}")
+                            flask.current_app.logger.debug(f"Period invoiced fully : {v}")
                             continue
 
                         start, end = ("", "")
                         if not v.time_invoiced:  # not included in invoice
-                            current_app.logger.debug(f"Invoice = NULL : {v}")
+                            flask.current_app.logger.debug(f"Invoice = NULL : {v}")
                             start = v.time_uploaded
                             end = v.time_deleted if v.time_deleted else timestamp()
                         else:  # included in invoice
@@ -191,16 +192,16 @@ def remove_invoiced():
     """Clean up in the Version table. Those rows which have an active file will not be deleted,
     neither will the rows which have hours not included in previous invoices."""
 
-    current_app.logger.debug("Removing deleted and invoiced versions...")
+    flask.current_app.logger.debug("Removing deleted and invoiced versions...")
 
-    with current_app.app_context():
+    with flask.current_app.app_context():
         try:
             # Get all rows in version table
             # TODO (ina, senthil): change to better method for when huge number of rows
             all_versions = models.Version.query.all()
         except sqlalchemy.exc.SQLAlchemyError as err:
             # TODO (ina, senthil): Something else should happen here
-            current_app.logger.warning(
+            flask.current_app.logger.warning(
                 f"Failed getting verions from database. Cannot remove invoiced rows: {err}"
             )
         else:
@@ -219,7 +220,7 @@ def remove_invoiced():
                     )
                     diff = now - deleted
                     if diff.seconds > 60:  # TODO (ina): Change to correct interval -- 30 days?
-                        current_app.logger.debug(f"Deleting: {v}")
+                        flask.current_app.logger.debug(f"Deleting: {v}")
                         db.session.delete(v)
                         db.session.commit()
 
@@ -227,17 +228,17 @@ def remove_invoiced():
 def remove_expired():
     """Clean up in File table -- those which have been stored in the system for too long are moved to the DeletedFile table."""
 
-    current_app.logger.debug("Cleaning up File table...")
+    flask.current_app.logger.debug("Cleaning up File table...")
 
     # TODO (ina, senthil): Delete from bucket, change this to check everyday, get files which have expired by getting current time, and days_to_expire from facility info - unique times to expire the files for each facility.
-    with current_app.app_context():
+    with flask.current_app.app_context():
         try:
             # Get all rows in version table
             for file in page_query(
                 models.File.query.filter(models.File.expires <= datetime.datetime.now(tz=C_TZ))
             ):
 
-                current_app.logger.debug("File: %s - Expires: %s", file, file.expires)
+                flask.current_app.logger.debug("File: %s - Expires: %s", file, file.expires)
 
                 new_expired = models.ExpiredFile(
                     public_id=file.public_id,
@@ -261,7 +262,7 @@ def remove_expired():
 
         except sqlalchemy.exc.SQLAlchemyError as err:
             # TODO (ina, senthil): Something else should happen here
-            current_app.logger.warning(f"test: {err}")
+            flask.current_app.logger.warning(f"test: {err}")
 
 
 def permanent_delete():
@@ -269,7 +270,7 @@ def permanent_delete():
 
     # TODO (ina, senthil): Check which rows have been stored in the ExpiredFile table for more than a month, delete them from S3 bucket and table.
 
-    current_app.logger.debug(
+    flask.current_app.logger.debug(
         "Permanently deleting the expired files (not implemented atm, just scheduled function)"
     )
 
@@ -278,7 +279,7 @@ scheduler = BackgroundScheduler(
     {
         "apscheduler.jobstores.default": {
             "type": "sqlalchemy",
-            # "url": current_app.config.get("SQLALCHEMY_DATABASE_URI"),
+            # "url": flask.current_app.config.get("SQLALCHEMY_DATABASE_URI"),
             "engine": db.engine,
         },
         "apscheduler.timezone": "Europe/Stockholm",
