@@ -49,7 +49,7 @@ class AccessDeniedError(exceptions.HTTPException):
     """Errors due to incorrect project permissions."""
 
     def __init__(
-        self, username, project, message="The user does not have the necessary permissions."
+        self, username, project=None, message="The user does not have the necessary permissions."
     ):
         super().__init__(message)
 
