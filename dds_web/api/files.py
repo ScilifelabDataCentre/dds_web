@@ -15,7 +15,6 @@ from sqlalchemy.sql import func
 
 # Own modules
 import dds_web.utils
-from dds_web import app
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
@@ -108,7 +107,7 @@ class NewFile(flask_restful.Resource):
             db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            app.logger.debug(err)
+            flask.current_app.logger.debug(err)
             db.session.rollback()
             return flask.make_response(
                 f"Failed to add new file '{args['name']}' to database: {err}", 500
@@ -150,7 +149,7 @@ class NewFile(flask_restful.Resource):
                 )
             ).all()
             if len(current_file_version) > 1:
-                app.logger.warning(
+                flask.current_app.logger.warning(
                     "There is more than one version of the file which does not yet have a deletion timestamp."
                 )
 
@@ -231,7 +230,7 @@ class ListFiles(flask_restful.Resource):
 
         args = flask.request.args
         if project["permission"] != "ls":
-            app.logger.debug("User does not have listing permissions.")
+            flask.current_app.logger.debug("User does not have listing permissions.")
             return flask.make_response(
                 f"User {current_user.username} does not have permission to list project contents.",
                 401,
@@ -464,7 +463,7 @@ class FileInfo(flask_restful.Resource):
         try:
             return flask.jsonify({"files": files_single, "folders": files_in_folders})
         except Exception as err:
-            app.logger.exception(str(err))
+            flask.current_app.logger.exception(str(err))
 
 
 class FileInfoAll(flask_restful.Resource):
@@ -538,7 +537,9 @@ class UpdateFile(flask_restful.Resource):
                 models.Project.public_id == func.binary(project["id"])
             ).first()
 
-            app.logger.debug("Updating file in current project: %s", current_project.public_id)
+            flask.current_app.logger.debug(
+                "Updating file in current project: %s", current_project.public_id
+            )
 
             file = models.File.query.filter(
                 sqlalchemy.and_(
@@ -553,10 +554,10 @@ class UpdateFile(flask_restful.Resource):
             file.time_latest_download = dds_web.utils.timestamp()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            app.logger.exception(str(err))
+            flask.current_app.logger.exception(str(err))
             return flask.make_response(str(err), 500)
         else:
-            app.logger.debug("File %s updated", file_name["name"])
+            flask.current_app.logger.debug("File %s updated", file_name["name"])
             db.session.commit()
 
         return flask.jsonify({"message": "File info updated."})

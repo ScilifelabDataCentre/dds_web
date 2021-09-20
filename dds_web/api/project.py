@@ -19,7 +19,7 @@ from cryptography.hazmat import backends
 
 # Own modules
 import dds_web.utils
-from dds_web import app, db
+from dds_web import db
 from dds_web.api.user import jwt_token
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
@@ -68,7 +68,7 @@ class ProjectAccess(flask_restful.Resource):
             raise MissingProjectIDError
 
         # Check if project exists
-        app.logger.debug("Getting project from db.")
+        flask.current_app.logger.debug("Getting project from db.")
         try:
             attempted_project = models.Project.query.filter(
                 models.Project.public_id == project["id"]
@@ -92,7 +92,7 @@ class ProjectAccess(flask_restful.Resource):
 
         # Check if user has access to project
         if project_id in [x.public_id for x in current_user.projects]:
-            app.logger.debug("Updating token...")
+            flask.current_app.logger.debug("Updating token...")
             try:
                 token = jwt_token(username=current_user.username)
             except JwtTokenGenerationError:
@@ -120,7 +120,7 @@ class GetPublic(flask_restful.Resource):
     def get(self, current_user, project):
         """Get public key from database."""
 
-        app.logger.debug("Getting the public key.")
+        flask.current_app.logger.debug("Getting the public key.")
         try:
             proj_pub = (
                 models.Project.query.filter_by(public_id=project.get("id"))
@@ -148,7 +148,7 @@ class GetPrivate(flask_restful.Resource):
         """Get private key from database"""
 
         # TODO (ina): Change handling of private key -- not secure
-        app.logger.debug("Getting the private key.")
+        flask.current_app.logger.debug("Getting the private key.")
         try:
             proj_priv = (
                 models.Project.query.filter_by(public_id=project["id"])
@@ -162,7 +162,7 @@ class GetPrivate(flask_restful.Resource):
         except sqlalchemy.exc.SQLAlchemyError as err:
             return flask.make_response(str(err), 500)
         else:
-            app_secret = app.config["SECRET_KEY"]
+            app_secret = flask.current_app.config["SECRET_KEY"]
             passphrase = app_secret.encode("utf-8")
 
             enc_key = bytes.fromhex(proj_priv[0])
@@ -182,7 +182,7 @@ class GetPrivate(flask_restful.Resource):
             try:
                 decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
             except Exception as err:
-                app.logger.exception(err)
+                flask.current_app.logger.exception(err)
                 return flask.make_response(str(err), 500)
 
             return flask.jsonify({"private": decrypted_key.hex().upper()})
