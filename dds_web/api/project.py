@@ -69,7 +69,7 @@ def verify(current_user, project_public_id, access_method):
 
     if not has_one_of_the_permissions:
         raise AccessDeniedError(
-            message=f"User does not have permission to `{method}` in the specified project.",
+            message="User does not have necessary permission(s) in the specified project.",
             username=current_user.username,
             project=project_public_id,
         )
@@ -137,12 +137,12 @@ class GetPrivate(flask_restful.Resource):
             backend=backends.default_backend(),
         )
 
-            key_enc_key = kdf.derive(passphrase)
-            try:
-                decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
-            except Exception as err:
-                flask.current_app.logger.exception(err)
-                return flask.make_response(str(err), 500)
+        key_enc_key = kdf.derive(passphrase)
+        try:
+            decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
+        except Exception as err:
+            flask.current_app.logger.exception(err)
+            return flask.make_response(str(err), 500)
 
         return flask.jsonify({"private": decrypted_key.hex().upper()})
 

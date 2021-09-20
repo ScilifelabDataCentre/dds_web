@@ -15,7 +15,7 @@ from sqlalchemy.sql import func
 
 # Own modules
 import dds_web.utils
-from dds_web import app, auth
+from dds_web import auth
 from dds_web.api.project import verify
 from dds_web.database import models
 from dds_web import db
@@ -569,7 +569,9 @@ class UpdateFile(flask_restful.Resource):
 
         # Update file info
         try:
-            flask.current_app.logger.debug("Updating file in current project: %s", project.public_id)
+            flask.current_app.logger.debug(
+                "Updating file in current project: %s", project.public_id
+            )
 
             file = models.File.query.filter(
                 sqlalchemy.and_(

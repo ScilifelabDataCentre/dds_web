@@ -7,6 +7,7 @@
 # Installed
 import argon2
 import http
+import flask
 import jwt
 
 # Own modules

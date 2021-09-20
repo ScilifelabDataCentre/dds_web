@@ -34,7 +34,7 @@ import dds_web.utils
 class DBConnector:
     """Class for performing database actions."""
 
-    def __init__(self, project):
+    def __init__(self, project=None):
         self.project = project
 
     def __enter__(self):
@@ -322,7 +322,9 @@ class DBConnector:
                 .filter(models.Project.public_id == func.binary(self.project.public_id))
             ).first()
 
-            flask.current_app.logger.debug("Safespring project: %s", current_project_facility_safespring)
+            flask.current_app.logger.debug(
+                "Safespring project: %s", current_project_facility_safespring
+            )
             if not current_project_facility_safespring:
                 raise S3ProjectNotFoundError(
                     message="No safespring project found for responsible facility.",

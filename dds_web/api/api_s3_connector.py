@@ -47,7 +47,7 @@ log.setLevel(logging.DEBUG)
 class ApiS3Connector:
     """Connects to Simple Storage Service."""
 
-    def __init__(self, project):
+    def __init__(self, project=None):
         self.project = project
         self.resource = None
 
