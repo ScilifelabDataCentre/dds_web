@@ -8,7 +8,6 @@
 import flask_restful
 import flask
 import sqlalchemy
-import http
 from cryptography.hazmat.primitives.kdf import scrypt
 from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
 from cryptography.hazmat import backends
@@ -62,14 +61,18 @@ def verify(current_user, project_public_id, access_method):
             project=project_public_id,
         )
 
+    has_one_of_the_permissions = False
     permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
     for method in access_method:
-        if permissions_dict.get(method) not in list(current_user.permissions):
-            raise AccessDeniedError(
-                message=f"User does not have permission to `{method}` in the specified project.",
-                username=current_user.username,
-                project=project_public_id,
-            )
+        if permissions_dict.get(method) in list(current_user.permissions):
+            has_one_of_the_permissions = True
+
+    if not has_one_of_the_permissions:
+        raise AccessDeniedError(
+            message=f"User does not have permission to `{method}` in the specified project.",
+            username=current_user.username,
+            project=project_public_id,
+        )
 
     app.logger.debug(
         f"Access to project {project_public_id} is granted for user {current_user.username}."
