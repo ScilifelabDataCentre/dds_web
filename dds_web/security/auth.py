@@ -12,7 +12,7 @@ import jwt
 # Own modules
 from dds_web.api.errors import AuthenticationError, AccessDeniedError
 from dds_web.database import models
-from dds_web import app, basic_auth, token_auth
+from dds_web import basic_auth, token_auth
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -56,7 +56,7 @@ def get_user_roles_common(user):
 @token_auth.verify_token
 def verify_token(token):
     try:
-        data = jwt.decode(token, app.config.get("SECRET_KEY"), algorithms="HS256")
+        data = jwt.decode(token, flask.current_app.config.get("SECRET_KEY"), algorithms="HS256")
         username = data.get("user")
         if username:
             user = models.User.query.get(username)

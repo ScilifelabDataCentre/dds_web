@@ -15,7 +15,7 @@ from cryptography.hazmat import backends
 
 # Own modules
 import dds_web.utils
-from dds_web import app, auth, db
+from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
@@ -41,7 +41,7 @@ def verify(current_user, project_public_id, access_method):
     if not project_public_id:
         raise MissingProjectIDError
 
-    app.logger.debug(
+    flask.current_app.logger.debug(
         f"Verifying access to project {project_public_id} by user {current_user.username}."
     )
     try:
@@ -74,7 +74,7 @@ def verify(current_user, project_public_id, access_method):
             project=project_public_id,
         )
 
-    app.logger.debug(
+    flask.current_app.logger.debug(
         f"Access to project {project_public_id} is granted for user {current_user.username}."
     )
     return project
@@ -95,7 +95,7 @@ class GetPublic(flask_restful.Resource):
             access_method=["get", "put"],
         )
 
-        app.logger.debug("Getting the public key.")
+        flask.current_app.logger.debug("Getting the public key.")
 
         if not project.public_key:
             raise PublicKeyNotFoundError(project=project.public_id)
@@ -119,9 +119,9 @@ class GetPrivate(flask_restful.Resource):
         )
 
         # TODO (ina): Change handling of private key -- not secure
-        app.logger.debug("Getting the private key.")
+        flask.current_app.logger.debug("Getting the private key.")
 
-        app_secret = app.config["SECRET_KEY"]
+        app_secret = flask.current_app.config.get("SECRET_KEY")
         passphrase = app_secret.encode("utf-8")
 
         enc_key = bytes.fromhex(project.private_key)
@@ -137,12 +137,12 @@ class GetPrivate(flask_restful.Resource):
             backend=backends.default_backend(),
         )
 
-        key_enc_key = kdf.derive(passphrase)
-        try:
-            decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
-        except Exception as err:
-            app.logger.exception(err)
-            return flask.make_response(str(err), 500)
+            key_enc_key = kdf.derive(passphrase)
+            try:
+                decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
+            except Exception as err:
+                flask.current_app.logger.exception(err)
+                return flask.make_response(str(err), 500)
 
         return flask.jsonify({"private": decrypted_key.hex().upper()})
 

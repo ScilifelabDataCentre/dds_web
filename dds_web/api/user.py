@@ -18,7 +18,7 @@ import pandas
 import sqlalchemy
 
 # Own modules
-from dds_web import app, auth
+from dds_web import auth
 from dds_web.database import models
 from dds_web.api.errors import JwtTokenGenerationError
 import dds_web.utils
@@ -38,10 +38,10 @@ def jwt_token(username):
                 "user": username,
                 "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
             },
-            app.config.get("SECRET_KEY"),
+            flask.current_app.config.get("SECRET_KEY"),
             algorithm="HS256",
         )
-        app.logger.debug(f"token: {token}")
+        flask.current_app.logger.debug(f"token: {token}")
     except (
         TypeError,
         KeyError,
@@ -174,6 +174,6 @@ class InvoiceUnit(flask_restful.Resource):
             csv_contents["project"] == facility_info.safespring
         ]
 
-        app.logger.debug(safespring_project_row)
+        flask.current_app.logger.debug(safespring_project_row)
 
         return flask.jsonify({"test": "ok"})

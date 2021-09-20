@@ -10,7 +10,8 @@ import pytz
 import logging
 
 # Installed
-from flask import Flask, g, session
+import flask
+import click
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
@@ -26,17 +27,14 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 # Current time zone
 C_TZ = pytz.timezone("Europe/Stockholm")
 
-# Initiate app
-app = Flask(__name__, instance_relative_config=False)
-
 # Database - not yet init
 db = SQLAlchemy()
 
 # Marshmallows for parsing and validating
-ma = Marshmallow(app)
+ma = Marshmallow()
 
 # Authentication
-oauth = auth_flask_client.OAuth(app)
+oauth = auth_flask_client.OAuth()
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth()
 auth = MultiAuth(basic_auth, token_auth)
@@ -50,7 +48,7 @@ actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth
 ####################################################################################################
 
 
-def setup_logging():
+def setup_logging(app):
     """Setup loggers"""
 
     dictConfig(
@@ -101,6 +99,8 @@ def setup_logging():
 
 def create_app():
     """Construct the core application."""
+    # Initiate app object
+    app = flask.Flask(__name__, instance_relative_config=False)
 
     # Default development config
     app.config.from_object("dds_web.config.Config")
@@ -109,7 +109,7 @@ def create_app():
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
     # Setup logging handlers
-    setup_logging()
+    setup_logging(app)
 
     # Set app.logger as the general logger
     app.logger = logging.getLogger("general")
@@ -117,6 +117,10 @@ def create_app():
 
     # Initialize database
     db.init_app(app)
+
+    ma.init_app(app)
+
+    oauth.init_app(app)
 
     # initialize OIDC
     oauth.register(
@@ -126,24 +130,30 @@ def create_app():
         server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
         client_kwargs={"scope": "openid profile email"},
     )
+
+    app.cli.add_command(fill_db_wrapper)
+
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
 
-        # db.drop_all()       # Make sure it's the latest db
-        db.create_all()  # Create database tables for our data models
+        # Need to import auth so that the modifications to the auth objects take place
+        import dds_web.security.auth
 
-        # puts in test info for local DB, will be removed later
-        if app.config["USE_LOCAL_DB"]:
-            try:
-                from dds_web.development.db_init import fill_db
-
-                fill_db()
-            except Exception as err:
-                # Look into why, but this will be removed soon anyway
-                app.logger.exception(str(err))
-
+        # Register blueprints
         from dds_web.api import api_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
         return app
+
+
+@click.command("init-dev-db")
+@flask.cli.with_appcontext
+def fill_db_wrapper():
+    flask.current_app.logger.info("Initializing development db")
+    assert flask.current_app.config["USE_LOCAL_DB"]
+    db.create_all()
+    from dds_web.development.db_init import fill_db
+
+    fill_db()
+    flask.current_app.logger.info("DB filled")

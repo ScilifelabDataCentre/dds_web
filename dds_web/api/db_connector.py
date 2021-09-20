@@ -10,11 +10,11 @@ import os
 import datetime
 
 # Installed
+import flask
 import sqlalchemy
 from sqlalchemy.sql import func
 
 # Own modules
-from dds_web import app
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
@@ -54,7 +54,7 @@ class DBConnector:
         if not bucket:
             raise BucketNotFoundError
         bucketname = bucket[0]
-        app.logger.debug("Bucket: %s", bucket)
+        flask.current_app.logger.debug("Bucket: %s", bucket)
         return bucketname
 
     def project_size(self):
@@ -65,7 +65,7 @@ class DBConnector:
                 models.File.project_id == func.binary(self.project.id)
             ).count()
 
-            app.logger.debug("Number of project files: %s", num_proj_files)
+            flask.current_app.logger.debug("Number of project files: %s", num_proj_files)
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError(message=str(err))
         else:
@@ -322,7 +322,7 @@ class DBConnector:
                 .filter(models.Project.public_id == func.binary(self.project.public_id))
             ).first()
 
-            app.logger.debug("Safespring project: %s", current_project_facility_safespring)
+            flask.current_app.logger.debug("Safespring project: %s", current_project_facility_safespring)
             if not current_project_facility_safespring:
                 raise S3ProjectNotFoundError(
                     message="No safespring project found for responsible facility.",
