@@ -53,9 +53,8 @@ class DBConnector:
         bucket = self.project.bucket
         if not bucket:
             raise BucketNotFoundError
-        bucketname = bucket[0]
         flask.current_app.logger.debug("Bucket: %s", bucket)
-        return bucketname
+        return bucket
 
     def project_size(self):
         """Get size (number of files in) of project"""

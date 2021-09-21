@@ -35,7 +35,7 @@ class S3Info(flask_restful.Resource):
             access_method=["get", "put", "rm"],
         )
 
-        sfsp_proj, keys, url, bucketname, message = ApiS3Connector(project).get_s3_info()
+        sfsp_proj, keys, url, bucketname = ApiS3Connector(project).get_s3_info()
 
         if any(x is None for x in [url, keys, bucketname]):
             return flask.make_response(f"No s3 info returned! {message}", 500)
