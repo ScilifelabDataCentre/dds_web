@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+
+  backend:
+    build:
+      dockerfile: Dockerfiles/backend.Dockerfile
+      context: ./
+      target: test
+    command: bash -c "ls -la && pytest"
+    restart: "no"
