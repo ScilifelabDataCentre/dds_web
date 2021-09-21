@@ -4,23 +4,37 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
-# Standard library
-
 # Installed
-from jwt import DecodeError
-from sqlalchemy.sql import func
 import argon2
+import http
+import flask
 import jwt
-import sqlalchemy
 
 # Own modules
+from dds_web.api.errors import AuthenticationError, AccessDeniedError
 from dds_web.database import models
 from dds_web import basic_auth, token_auth
-from dds_web.api.errors import InvalidUserCredentialsError, DatabaseError
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+@basic_auth.error_handler
+def auth_error(status):
+    return auth_error_common(status)
+
+
+@token_auth.error_handler
+def auth_error(status):
+    return auth_error_common(status)
+
+
+def auth_error_common(status):
+    if status == http.HTTPStatus.UNAUTHORIZED:
+        raise AuthenticationError()
+    elif status == http.HTTPStatus.FORBIDDEN:
+        raise AccessDeniedError(message="Insufficient credentials")
 
 
 @basic_auth.get_user_roles
@@ -50,7 +64,7 @@ def verify_token(token):
             if user:
                 return user
         return None
-    except DecodeError:
+    except jwt.DecodeError:
         return None
 
 
