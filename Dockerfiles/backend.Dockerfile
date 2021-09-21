@@ -27,4 +27,4 @@ ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class
 WORKDIR /code/dds_web
 
 # Run app -- needs to be in WORKDIR
-CMD ["gunicorn", "app:app"]
+CMD ["gunicorn", "run_app:app_obj"]

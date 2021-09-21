@@ -11,8 +11,9 @@ import flask_restful
 import flask
 
 # Own modules
+from dds_web import auth
+from dds_web.api.project import verify
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import token_required, project_access_required
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -22,12 +23,19 @@ from dds_web.api.dds_decorators import token_required, project_access_required
 class S3Info(flask_restful.Resource):
     """Gets the projects S3 keys"""
 
-    method_decorators = [project_access_required, token_required]
-
-    def get(self, current_user, _):
+    @auth.login_required
+    def get(self):
         """Get the safespring project"""
 
-        sfsp_proj, keys, url, bucketname, message = ApiS3Connector().get_s3_info()
+        args = flask.request.args
+
+        project = verify(
+            current_user=auth.current_user(),
+            project_public_id=args.get("project"),
+            access_method=["get", "put", "rm"],
+        )
+
+        sfsp_proj, keys, url, bucketname = ApiS3Connector(project).get_s3_info()
 
         if any(x is None for x in [url, keys, bucketname]):
             return flask.make_response(f"No s3 info returned! {message}", 500)
