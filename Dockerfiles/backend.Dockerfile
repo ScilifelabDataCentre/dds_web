@@ -24,7 +24,7 @@ ENV PYTHONPATH /code
 ## TEST CONTAINER
 ###################
 FROM base as test
-RUN pip3 install -r tests/requirements-test.txt
+RUN pip3 install -r /code/tests/requirements-test.txt
 
 #########################
 ## PRODUCTION CONTAINER
