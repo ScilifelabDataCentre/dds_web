@@ -97,7 +97,7 @@ def setup_logging(app):
     )
 
 
-def create_app():
+def create_app(testing=False):
     """Construct the core application."""
     # Initiate app object
     app = flask.Flask(__name__, instance_relative_config=False)
@@ -107,6 +107,9 @@ def create_app():
 
     # User config file, if e.g. using in production
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
+
+    # Disables error catching during request handling
+    app.config["TESTING"] = testing
 
     # Setup logging handlers
     setup_logging(app)
