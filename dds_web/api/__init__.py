@@ -29,7 +29,6 @@ api = flask_restful.Api(api_blueprint, errors=errors)
 
 # Login/access ###################################################################### Login/access #
 api.add_resource(user.Token, "/user/token", endpoint="token")
-api.add_resource(project.ProjectAccess, "/proj/auth", endpoint="proj_auth")
 
 # S3 ########################################################################################## S3 #
 api.add_resource(s3.S3Info, "/s3/proj", endpoint="proj_s3_info")

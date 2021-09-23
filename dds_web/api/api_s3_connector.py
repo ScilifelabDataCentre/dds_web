@@ -13,25 +13,21 @@ import json
 
 # Installed
 import botocore
+
 import flask
 
 # Own modules
 from dds_web.api.dds_decorators import (
     connect_cloud,
     bucket_must_exists,
-    token_required,
-    project_access_required,
 )
 from dds_web.api.errors import (
-    ItemDeletionError,
-    MissingTokenOutputError,
     BucketNotFoundError,
     DatabaseError,
     DeletionError,
     S3ProjectNotFoundError,
     S3InfoNotFoundError,
     KeyNotFoundError,
-    S3ConnectionError,
 )
 
 
@@ -48,32 +44,12 @@ log.setLevel(logging.DEBUG)
 ####################################################################################################
 
 
-@token_required
-@project_access_required
 class ApiS3Connector:
     """Connects to Simple Storage Service."""
 
-    def __init__(self, *args, **kwargs):
-        try:
-            self.current_user, self.project = args
-            (
-                self.safespring,
-                self.keys,
-                self.url,
-                self.bucketname,
-            ) = self.get_s3_info()
-            self.resource = None
-
-        except (ValueError, IOError, AssertionError, FileNotFoundError) as err:
-            raise S3ConnectionError(message=str(err))
-        except (
-            MissingTokenOutputError,
-            BucketNotFoundError,
-            DatabaseError,
-            S3ProjectNotFoundError,
-            KeyNotFoundError,
-        ):
-            raise
+    def __init__(self, project=None):
+        self.project = project
+        self.resource = None
 
     @connect_cloud
     def __enter__(self):
@@ -93,15 +69,13 @@ class ApiS3Connector:
         from dds_web.api.db_connector import DBConnector
 
         try:
-            with DBConnector() as dbconn:
+            with DBConnector(project=self.project) as dbconn:
                 safespring_project = dbconn.cloud_project()
                 flask.current_app.logger.debug(f"Safespring project: {safespring_project}")
 
                 if not safespring_project:
-                    raise S3ProjectNotFoundError(
-                        username=self.current_user.username, project=self.project.get("id")
-                    )
-        except (MissingTokenOutputError, S3ProjectNotFoundError, DatabaseError):
+                    raise S3ProjectNotFoundError()
+        except (S3ProjectNotFoundError, DatabaseError):
             raise
 
         s3keys = {}
@@ -135,10 +109,10 @@ class ApiS3Connector:
             raise
 
         try:
-            with DBConnector() as dbconn:
+            with DBConnector(project=self.project) as dbconn:
                 # 3. Get bucket name
                 bucketname = dbconn.get_bucket_name()
-        except (MissingTokenOutputError, BucketNotFoundError, DatabaseError):
+        except (BucketNotFoundError, DatabaseError):
             raise
 
         flask.current_app.logger.debug(f"{s3keys}")
@@ -149,7 +123,7 @@ class ApiS3Connector:
         """Removes all contents from the project specific s3 bucket."""
 
         try:
-            bucket = self.resource.Bucket(self.bucketname)
+            bucket = self.resource.Bucket(self.project.bucket)
             bucket.objects.all().delete()
         except botocore.client.ClientError as err:
             raise DeletionError(message=str(err), username=None, project=self.project.get("id"))
@@ -162,7 +136,7 @@ class ApiS3Connector:
 
         removed, error = (False, "")
         try:
-            self.resource.Bucket(self.bucketname).objects.filter(Prefix=f"{folder}/").delete()
+            self.resource.Bucket(self.project.bucket).objects.filter(Prefix=f"{folder}/").delete()
         except botocore.client.ClientError as err:
             error = str(err)
         else:
@@ -176,7 +150,7 @@ class ApiS3Connector:
 
         removed, error = (False, "")
         try:
-            _ = self.resource.meta.client.delete_object(Bucket=self.bucketname, Key=file)
+            _ = self.resource.meta.client.delete_object(Bucket=self.project.bucket, Key=file)
         except botocore.client.ClientError as err:
             error = str(err)
         else:
