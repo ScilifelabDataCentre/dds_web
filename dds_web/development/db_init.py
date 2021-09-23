@@ -26,13 +26,13 @@ facilities = [
         public_id="public_facility_id",
         name="Facility 1",
         internal_ref="fac",
-        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT", "dds.example.com"),
+        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     ),
     Facility(
         public_id="public_facility_id_2",
         name="Facility 2",
         internal_ref="fac2",
-        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT", "dds.example.com"),
+        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     ),
 ]
 
