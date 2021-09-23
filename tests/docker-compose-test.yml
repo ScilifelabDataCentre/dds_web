@@ -7,5 +7,5 @@ services:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./
       target: test
-    command: bash -c "ls -la && pytest"
+    command: bash -c "pytest"
     restart: "no"
