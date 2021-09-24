@@ -10,8 +10,6 @@ import os
 import pathlib
 
 # Installed
-import atexit
-from apscheduler.schedulers.background import BackgroundScheduler
 import pandas
 from contextlib import contextmanager
 import flask
@@ -266,64 +264,3 @@ def permanent_delete():
     flask.current_app.logger.debug(
         "Permanently deleting the expired files (not implemented atm, just scheduled function)"
     )
-
-
-scheduler = BackgroundScheduler(
-    {
-        "apscheduler.jobstores.default": {
-            "type": "sqlalchemy",
-            # "url": flask.current_app.config.get("SQLALCHEMY_DATABASE_URI"),
-            "engine": db.engine,
-        },
-        "apscheduler.timezone": "Europe/Stockholm",
-    }
-)
-
-scheduler.print_jobs()
-
-# Schedule invoicing calculations every 30 days
-# TODO (ina): Change to correct interval - 30 days
-scheduler.add_job(
-    invoice_units, "cron", id="calc_costs", replace_existing=True, month="1-12", day="1", hour="0"
-)
-
-# Schedule delete of rows in version table after a specific amount of time
-# Currently: First of every month
-scheduler.add_job(
-    remove_invoiced,
-    "cron",
-    id="remove_versions",
-    replace_existing=True,
-    month="1-12",
-    day="1",
-    hour="0",
-)
-
-# Schedule move of rows in files table after a specific amount of time
-# to DeletedFiles (does not exist yet) table
-# Currently: Every day at midnight
-scheduler.add_job(
-    remove_expired,
-    "cron",
-    id="remove_expired",
-    replace_existing=True,
-    month="1-12",
-    day="1",
-    hour="0",
-)
-
-# Schedule delete rows in expiredfiles table after a specific amount of time
-# TODO (ina): Change interval - 1 day?
-scheduler.add_job(
-    permanent_delete,
-    "cron",
-    id="permanent_delete",
-    replace_existing=True,
-    month="1-12",
-    day="1-30",
-    hour="0",
-)
-scheduler.start()
-
-# Shut down the scheduler when exiting the app
-atexit.register(lambda: scheduler.shutdown())
