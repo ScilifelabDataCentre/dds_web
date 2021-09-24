@@ -161,15 +161,15 @@ class UserProjects(flask_restful.Resource):
                 username=current_user.username,
             )
 
-        # TODO: Return different things depending on if facility or not
+        # TODO: Return different things depending on if unit or not
         all_projects = list()
 
-        # Total number of GB hours and cost saved in the db for the specific facility
+        # Total number of GB hours and cost saved in the db for the specific unit
         total_gbhours_db = 0.0
         total_cost_db = 0.0
         total_size = 0
 
-        usage = flask.request.args.get("usage") == "True" and current_user.role == "facility"
+        usage = flask.request.args.get("usage") == "True" and current_user.role == "unit"
 
         # Get info for all projects
         for p in current_user.projects:

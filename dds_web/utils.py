@@ -84,7 +84,7 @@ def page_query(q):
 
 def invoice_units():
     """Get invoicing specification from Safespring, calculate and save GBHours and cost for each
-    facility and project."""
+    unit and project."""
 
     flask.current_app.logger.debug("Calculating invoicing info...")
 
@@ -106,17 +106,17 @@ def invoice_units():
 
     with flask.current_app.app_context():
         try:
-            all_facilities = models.Facility.query.all()
+            all_units = models.Unit.query.all()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.warning(
-                f"Failed getting facility information from database. Cannot generate invoicing information: {err}"
+                f"Failed getting unit information from database. Cannot generate invoicing information: {err}"
             )
         else:
-            for f in all_facilities:
+            for f in all_units:
                 # Get safespring project name
                 safespring_project_row = csv_contents.loc[csv_contents["project"] == f.safespring]
 
-                # Total number of GB hours and cost saved in the db for the specific facility
+                # Total number of GB hours and cost saved in the db for the specific unit
                 total_gbhours_db = 0.0
 
                 usage = {}
@@ -157,7 +157,7 @@ def invoice_units():
                         # Calculate GBHours, if statement to avoid zerodivision exception
                         gb_hours = ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
 
-                        # Save file version gbhours to project info and increase total facility sum
+                        # Save file version gbhours to project info and increase total unit sum
                         usage[p.public_id]["gbhours"] += gb_hours
                         total_gbhours_db += gb_hours
 
@@ -223,7 +223,7 @@ def remove_expired():
 
     flask.current_app.logger.debug("Cleaning up File table...")
 
-    # TODO (ina, senthil): Delete from bucket, change this to check everyday, get files which have expired by getting current time, and days_to_expire from facility info - unique times to expire the files for each facility.
+    # TODO (ina, senthil): Delete from bucket, change this to check everyday, get files which have expired by getting current time, and days_to_expire from unit info - unique times to expire the files for each unit.
     with flask.current_app.app_context():
         try:
             # Get all rows in version table

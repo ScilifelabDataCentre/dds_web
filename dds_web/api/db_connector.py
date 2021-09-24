@@ -312,24 +312,24 @@ class DBConnector:
         # Get current project
         try:
 
-            current_project_facility_safespring = (
+            current_project_unit_safespring = (
                 models.Project.query.join(
-                    models.Facility, models.Project.facility_id == func.binary(models.Facility.id)
+                    models.Unit, models.Project.unit_id == func.binary(models.Unit.id)
                 )
-                .add_columns(models.Facility.safespring)
-                .filter(models.Facility.id == func.binary(models.Project.facility_id))
+                .add_columns(models.Unit.safespring)
+                .filter(models.Unit.id == func.binary(models.Project.unit_id))
                 .filter(models.Project.public_id == func.binary(self.project.public_id))
             ).first()
 
             flask.current_app.logger.debug(
-                "Safespring project: %s", current_project_facility_safespring
+                "Safespring project: %s", current_project_unit_safespring
             )
-            if not current_project_facility_safespring:
+            if not current_project_unit_safespring:
                 raise S3ProjectNotFoundError(
-                    message="No safespring project found for responsible facility.",
+                    message="No safespring project found for responsible unit.",
                 )
 
-            sfsp_proj = current_project_facility_safespring[1]
+            sfsp_proj = current_project_unit_safespring[1]
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError(message=str(err))
         else:
@@ -360,7 +360,7 @@ class DBConnector:
                 # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
                 cost_gbhour = 0.09 / (30 * 24)
 
-                # Save file cost to project info and increase total facility cost
+                # Save file cost to project info and increase total unit cost
                 cost += gbhours * cost_gbhour
 
         return round(gbhours, 2), round(cost, 2)
