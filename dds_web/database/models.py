@@ -18,27 +18,6 @@ import dds_web.utils
 ####################################################################################################
 
 
-class BaseMixin(db.Model):
-    __abstract__ = True
-    id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(100), nullable=False)
-    last_name = db.Column(db.String(100), nullable=False)
-
-
-class SubTable(BaseMixin, db.Model):
-
-    __tablename__ = "subtable"
-
-    subtable_name = db.Column(db.String(100), unique=True, nullable=False)
-
-
-class SubTableTwo(BaseMixin, db.Model):
-
-    __tablename__ = "subtabletwo"
-
-    subtabletwo_name = db.Column(db.String(100), unique=True, nullable=False)
-
-
 class Unit(db.Model):
     """Data model for unit accounts."""
 
