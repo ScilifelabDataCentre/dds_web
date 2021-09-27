@@ -97,7 +97,7 @@ def setup_logging(app):
     )
 
 
-def create_app(testing=False):
+def create_app(testing=False, database_uri=None):
     """Construct the core application."""
     # Initiate app object
     app = flask.Flask(__name__, instance_relative_config=False)
@@ -108,6 +108,9 @@ def create_app(testing=False):
     # User config file, if e.g. using in production
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
+    # Test related configs
+    if database_uri is not None:
+        app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     # Disables error catching during request handling
     app.config["TESTING"] = testing
 
@@ -137,6 +140,7 @@ def create_app(testing=False):
     app.cli.add_command(fill_db_wrapper)
 
     with app.app_context():  # Everything in here has access to sessions
+        db.create_all()  # TODO: remove this when we have migrations
         from dds_web.database import models
 
         # Need to import auth so that the modifications to the auth objects take place
