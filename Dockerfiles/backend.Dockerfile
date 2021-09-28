@@ -3,7 +3,7 @@
 #############################
 
 # Set official image -- parent image
-FROM python:latest
+FROM python:latest as base
 
 # Install some necessary systems packages
 RUN apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev
@@ -19,6 +19,17 @@ COPY . /code
 
 # Add code directory in pythonpath
 ENV PYTHONPATH /code
+
+###################
+## TEST CONTAINER
+###################
+FROM base as test
+RUN pip3 install -r /code/tests/requirements-test.txt
+
+#########################
+## PRODUCTION CONTAINER
+#########################
+FROM base as production
 
 # Add parameters for gunicorn
 ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class=gthread --forwarded-allow-ips='*' --access-logfile -"
