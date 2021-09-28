@@ -23,16 +23,16 @@ import dds_web.utils
 # Create Facilities
 units = [
     Unit(
-        public_id="public_unit_id",
+        public_id="unit1",
         name="Unit 1",
-        internal_ref="fac",
-        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
+        internal_ref="someunit",
+        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT", "dds.example.com"),
     ),
     Unit(
-        public_id="public_unit_id_2",
+        public_id="unit2",
         name="Unit 2",
-        internal_ref="fac2",
-        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
+        internal_ref="anotherunit",
+        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT", "dds.example.com"),
     ),
 ]
 
