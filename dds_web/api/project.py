@@ -62,9 +62,11 @@ def verify(current_user, project_public_id, access_method):
         )
 
     has_one_of_the_permissions = False
-    permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
     for method in access_method:
-        if permissions_dict.get(method) in list(current_user.permissions):
+        if method in ["put", "rm"]:
+            if current_user.role in ["unit", "admin"]:
+                has_one_of_the_permissions = True
+        else:  # get or ls
             has_one_of_the_permissions = True
 
     if not has_one_of_the_permissions:
@@ -154,12 +156,6 @@ class UserProjects(flask_restful.Resource):
     def get(self):
         """Get info regarding all projects which user is involved in."""
         current_user = auth.current_user()
-
-        if "l" not in current_user.permissions:
-            raise AccessDeniedError(
-                message="User does not have permission to ls.",
-                username=current_user.username,
-            )
 
         # TODO: Return different things depending on if unit or not
         all_projects = list()
