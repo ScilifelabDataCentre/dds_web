@@ -163,20 +163,21 @@ def fill_db_wrapper():
     fill_db()
     flask.current_app.logger.info("DB filled")
 
-    ####################################################################################################
-    # BACKGROUND SCHEDULER #############################################################################
-    ####################################################################################################
 
-    scheduler = BackgroundScheduler(
-        {
-            "apscheduler.jobstores.default": {
-                "type": "sqlalchemy",
-                # "url": flask.current_app.config.get("SQLALCHEMY_DATABASE_URI"),
-                "engine": db.engine,
-            },
-            "apscheduler.timezone": "Europe/Stockholm",
-        }
-    )
+####################################################################################################
+# BACKGROUND SCHEDULER ###################################################### BACKGROUND SCHEDULER #
+####################################################################################################
+
+scheduler = BackgroundScheduler(
+    {
+        "apscheduler.jobstores.default": {
+            "type": "sqlalchemy",
+            # "url": flask.current_app.config.get("SQLALCHEMY_DATABASE_URI"),
+            "engine": db.engine,
+        },
+        "apscheduler.timezone": "Europe/Stockholm",
+    }
+)
 
 
 scheduler.print_jobs()
