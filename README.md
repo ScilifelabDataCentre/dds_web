@@ -35,6 +35,29 @@ If you prefer, you can run the web servers in 'detached' mode with the `-d` flag
 If using this method, you can stop the web server with the command `docker-compose down`.
 
 
+### Python debugger inside docker
+It's possible to use the interactive debugging tool `pdb` inside Docker with this method:
+1. Edit the `docker-compose.yml` and for the `backend` service, add:
+```
+  tty: true
+  stdin_open: true
+```
+just under
+```
+  ports:
+    - 127.0.0.1:5000:5000
+```
+
+2. Put `import pbb; pdb.set_trace()` in the python code where you would like to activate the debugger.
+3. Run with docker-compose as normal.
+4. Find out the id of the container running the `backend`.
+```
+docker container ls
+```
+5. Attach to the running backend container:
+```
+docker container attach <container_id/name>
+```
 ### Config settings
 
 When run from the cloned repo, all settings are set to default values.
