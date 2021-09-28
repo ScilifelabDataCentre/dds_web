@@ -122,7 +122,7 @@ class User(db.Model):
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<User {self.username}>"
+        return f"<User {self.username}:{self.role}>"
 
 
 class ResearchUser(User):
@@ -136,7 +136,8 @@ class ResearchUser(User):
         "polymorphic_identity": "research_user",
     }
 
-    def role():
+    @property
+    def role(self):
         return "researcher"
 
 
@@ -150,6 +151,13 @@ class UnitUser(User):
     __mapper_args__ = {
         "polymorphic_identity": "unit_user",
     }
+
+    @property
+    def role(self):
+        if self.admin:
+            return "unit_admin"
+        else:
+            return "unit_user"
 
 
 class Identifier(db.Model):
