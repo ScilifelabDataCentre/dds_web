@@ -32,6 +32,7 @@ class Unit(db.Model):
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
     safespring = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=30)
+    counter = db.Column(db.Integer, unique=False, nullable=True)
 
     # Relationships
     # One unit can have many users
