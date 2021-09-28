@@ -86,7 +86,8 @@ class ShowUsage(flask_restful.Resource):
                 models.Unit.id == func.binary(current_user.unit_id)
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(f"Failed getting unit information: {err}", 500)
+            flask.current_app.logger.exception(err)
+            return flask.make_response(f"Failed getting unit information.", 500)
 
         # Total number of GB hours and cost saved in the db for the specific unit
         total_gbhours_db = 0.0
@@ -164,7 +165,8 @@ class InvoiceUnit(flask_restful.Resource):
                 models.Unit.id == func.binary(current_user.unit_id)
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(f"Failed getting unit information: {err}", 500)
+            flask.current_app.logger.exception(err)
+            return flask.make_response(f"Failed getting unit information.", 500)
 
         # Get info from safespring invoice
         # TODO (ina): Move to another class or function - will be calling the safespring api
