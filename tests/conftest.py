@@ -15,12 +15,10 @@ def demo_data():
     users = [
         User(
             username="username",
+            unit_id=None,
             password=auth.gen_argon2hash(password="password"),
             role="researcher",
-            permissions="-gl--",
-            first_name="User",
-            last_name="Name",
-            facility_id=None,
+            name="User Name",
         )
     ]
 
