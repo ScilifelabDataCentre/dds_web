@@ -35,7 +35,7 @@ class Facility(db.Model):
 
     # Relationships
     # One facility can have many users
-    users = db.relationship("User", backref="facility")
+    users = db.relationship("UnitUser", backref="facility")
     # One facility can have many projects
     projects = db.relationship("Project", backref="responsible_facility")
 
@@ -106,21 +106,13 @@ class User(db.Model):
     # id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(20), primary_key=True, autoincrement=False)
     password = db.Column(db.String(120), unique=False, nullable=False)
-    role = db.Column(db.String(50), unique=False, nullable=False)
-    permissions = db.Column(db.String(5), unique=False, nullable=False, default="--l--")
     first_name = db.Column(db.String(50), unique=False, nullable=True)
     last_name = db.Column(db.String(50), unique=False, nullable=True)
+    type = db.Column(db.String(50), unique=False, nullable=False)
 
-    # Foreign keys
-    # One facility can have many users
-    facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
+    __mapper_args__ = {"polymorphic_identity": "user", "polymorphic_on": "type"}
 
     # Relationships
-    # One user can have many projects, and one projects can have many users
-    projects = db.relationship(
-        "Project", secondary=project_users, backref=db.backref("users", lazy="dynamic")
-    )
-
     # One user can have many identifiers
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
 
@@ -131,6 +123,33 @@ class User(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<User {self.username}>"
+
+
+class ResearchUser(User):
+    username = db.Column(db.String(20), db.ForeignKey("users.username"), primary_key=True)
+    # One user can have many projects, and one projects can have many users
+    projects = db.relationship(
+        "Project", secondary=project_users, backref=db.backref("users", lazy="dynamic")
+    )
+
+    __mapper_args__ = {
+        "polymorphic_identity": "research_user",
+    }
+
+    def role():
+        return "researcher"
+
+
+class UnitUser(User):
+    username = db.Column(db.String(20), db.ForeignKey("users.username"), primary_key=True)
+    admin = db.Column(db.Boolean, unique=False, nullable=False)
+    # Foreign keys
+    # One facility can have many users
+    facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
+
+    __mapper_args__ = {
+        "polymorphic_identity": "unit_user",
+    }
 
 
 class Identifier(db.Model):

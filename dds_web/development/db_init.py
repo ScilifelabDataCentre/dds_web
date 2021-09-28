@@ -13,7 +13,16 @@ from flask import current_app
 # Own modules
 from dds_web import db
 from dds_web.security import auth
-from dds_web.database.models import User, Project, Facility, File, Version, Email
+from dds_web.database.models import (
+    User,
+    ResearchUser,
+    UnitUser,
+    Project,
+    Facility,
+    File,
+    Version,
+    Email,
+)
 import dds_web.utils
 
 ####################################################################################################
@@ -76,44 +85,36 @@ projects = [
 ]
 
 # Create Users
-users = [
-    User(
+research_users = [
+    ResearchUser(
         username="username",
         password=auth.gen_argon2hash(password="password"),
-        role="researcher",
-        permissions="-gl--",
         first_name="User",
         last_name="Name",
-        facility_id=None,
-    ),
-    User(
-        username="admin",
-        password=auth.gen_argon2hash(password="password"),
-        role="admin",
-        permissions="a-l--",
-        first_name="Ad",
-        last_name="Min",
-        facility_id=None,
-    ),
-    User(
+    )
+]
+
+unit_users = [
+    UnitUser(
         username="facility_admin",
         password=auth.gen_argon2hash(password="password"),
-        role="facility",
-        permissions="a-l--",
+        admin=True,
         first_name="Facility",
         last_name="Admin",
         facility_id=facilities[0],
     ),
-    User(
+    UnitUser(
         username="facility",
         password=auth.gen_argon2hash(password="password"),
-        role="facility",
-        permissions="--lpr",
+        admin=False,
         first_name="Faci",
         last_name="Lity",
         facility_id=facilities[0],
     ),
 ]
+
+users = research_users + unit_users
+print(users)
 
 # Create Files
 files = [
@@ -239,7 +240,7 @@ def fill_db():
     # Add all projects to all user projects (for now, development)
     for p in projects:
         if p.public_id != "unused_project_id":
-            for u in users:
+            for u in research_users:
                 u.projects.append(p)
 
     # Add the first two email rows to the first user emails
@@ -250,7 +251,7 @@ def fill_db():
         users[1].emails.append(e)
 
     # Add the user accounts which are facilities to the first facility
-    for u in users:
+    for u in unit_users:
         if u.facility_id:
             facilities[0].users.append(u)
 
@@ -277,3 +278,7 @@ def fill_db():
         db.session.commit()
     except Exception:
         raise
+
+    print(f"All users created in db: {User.query.all()}")
+    print(f"All Research Users created in db: {ResearchUser.query.all()}")
+    print(f"All Unit Users created in db: {UnitUser.query.all()}")
