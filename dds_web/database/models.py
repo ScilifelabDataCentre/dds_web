@@ -8,6 +8,7 @@
 import datetime
 
 # Installed
+import pytz
 
 # Own modules
 from dds_web import db, C_TZ
@@ -68,7 +69,11 @@ class Project(db.Model):
 
     public_id = db.Column(db.String(255), unique=True, nullable=False)
     title = db.Column(db.Text, unique=False, nullable=False)
-    date_created = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.utcnow)
+    date_created = db.Column(
+        db.DateTime(),
+        nullable=False,
+        default=dds_web.utils.current_time(),
+    )
     date_updated = db.Column(db.DateTime(), nullable=True)
     status = db.Column(db.String(20), nullable=False)
     description = db.Column(db.Text)

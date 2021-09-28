@@ -16,6 +16,7 @@ import pandas
 from contextlib import contextmanager
 import flask
 import sqlalchemy
+import pytz
 
 # Own modules
 from dds_web.database import models
@@ -25,6 +26,12 @@ from dds_web import db, C_TZ
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+def current_time(timezone="Europe/Stockholm"):
+    """Return the current time for the specific time zone"""
+
+    return datetime.datetime.now(pytz.timezone(timezone))
 
 
 def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):

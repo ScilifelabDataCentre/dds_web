@@ -4,6 +4,9 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
+# Standard Library
+import datetime
+
 # Installed
 import flask_restful
 import flask
@@ -289,13 +292,15 @@ class UpdateProjectSize(flask_restful.Resource):
                 )
 
                 project.size = tot_file_size.sizeSum
-                project.date_updated = dds_web.utils.timestamp()
+                project.date_updated = dds_web.utils.current_time()
+
                 db.session.commit()
             except sqlalchemy.exc.SQLAlchemyError as err:
-                error = str(err)
+                flask.current_app.logger.exception(err)
                 db.session.rollback()
                 current_try += 1
             else:
+                flask.current_app.logger.debug("Updated project size!")
                 updated = True
                 break
 
