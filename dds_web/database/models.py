@@ -240,7 +240,7 @@ class ExpiredFile(db.Model):
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
-    time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
+    time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
     expired = db.Column(
         db.DateTime(),
         unique=False,
@@ -267,21 +267,21 @@ class Version(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
-    time_uploaded = db.Column(
-        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time()
-    )
-    time_deleted = db.Column(db.String(50), unique=False, nullable=True, default=None)
-    time_invoiced = db.Column(db.String(50), unique=False, nullable=True, default=None)
 
-    # Foreign keys
-    # One file can have many rows in invoicing
+    # Foreign key - One project can have many files
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+
+    # Foreign key - One file can have many rows in invoicing
     active_file = db.Column(
         db.Integer, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
     )
 
-    # One project can have many files
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
+    time_uploaded = db.Column(
+        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time()
+    )
+    time_deleted = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
+    time_invoiced = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
