@@ -75,13 +75,13 @@ class Project(db.Model):
         default=dds_web.utils.current_time(),
     )
     date_updated = db.Column(db.DateTime(), nullable=True)
-    status = db.Column(db.String(20), nullable=False)
+    status = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)
-    pi = db.Column(db.String(50), unique=False, nullable=False)
+    pi = db.Column(db.String(255), unique=False, nullable=False)
     size = db.Column(db.BigInteger, unique=False, nullable=False)
-    bucket = db.Column(db.String(100), unique=True, nullable=False)
+    bucket = db.Column(db.String(255), unique=True, nullable=False)
     public_key = db.Column(db.String(64), nullable=False)
-    private_key = db.Column(db.String(200), nullable=False)
+    private_key = db.Column(db.String(255), nullable=False)
     privkey_salt = db.Column(db.String(32), nullable=False)
     privkey_nonce = db.Column(db.String(24), nullable=False)
 
