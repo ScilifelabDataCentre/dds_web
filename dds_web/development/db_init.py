@@ -13,24 +13,24 @@ from flask import current_app
 # Own modules
 from dds_web import db
 from dds_web.security import auth
-from dds_web.database.models import User, Project, Facility, File, Version, Email
+from dds_web.database.models import User, Project, Unit, File, Version, Email
 import dds_web.utils
 
 ####################################################################################################
 # ITEMS #################################################################################### ITEMS #
 ####################################################################################################
 
-# Create Facilities
-facilities = [
-    Facility(
-        public_id="public_facility_id",
-        name="Facility 1",
+# Create Units
+units = [
+    Unit(
+        public_id="public_unit_id",
+        name="Unit 1",
         internal_ref="fac",
         safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     ),
-    Facility(
-        public_id="public_facility_id_2",
-        name="Facility 2",
+    Unit(
+        public_id="public_unit_id_2",
+        name="Unit 2",
         internal_ref="fac2",
         safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     ),
@@ -54,7 +54,7 @@ projects = [
         private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
         privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
         privkey_nonce="D652B8C4554B675FB780A6EE",
-        facility_id=facilities[0],
+        unit_id=units[0],
     ),
     Project(
         public_id="unused_project_id",
@@ -71,7 +71,7 @@ projects = [
         private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
         privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
         privkey_nonce="D652B8C4554B675FB780A6EE",
-        facility_id=facilities[1],
+        unit_id=units[1],
     ),
 ]
 
@@ -84,7 +84,7 @@ users = [
         permissions="-gl--",
         first_name="User",
         last_name="Name",
-        facility_id=None,
+        unit_id=None,
     ),
     User(
         username="admin",
@@ -93,25 +93,25 @@ users = [
         permissions="a-l--",
         first_name="Ad",
         last_name="Min",
-        facility_id=None,
+        unit_id=None,
     ),
     User(
-        username="facility_admin",
+        username="unit_admin",
         password=auth.gen_argon2hash(password="password"),
-        role="facility",
+        role="unit",
         permissions="a-l--",
-        first_name="Facility",
+        first_name="Unit",
         last_name="Admin",
-        facility_id=facilities[0],
+        unit_id=units[0],
     ),
     User(
-        username="facility",
+        username="unit",
         password=auth.gen_argon2hash(password="password"),
-        role="facility",
+        role="unit",
         permissions="--lpr",
         first_name="Faci",
         last_name="Lity",
-        facility_id=facilities[0],
+        unit_id=units[0],
     ),
 ]
 
@@ -160,9 +160,9 @@ emails = [
 #     }
 # }
 development_rows = {
-    "facilities": {
-        "table": Facility,
-        "rows": facilities,
+    "units": {
+        "table": Unit,
+        "rows": units,
         "unique": "public_id",
     },
     "projects": {
@@ -249,18 +249,18 @@ def fill_db():
     for e in emails[2:4]:
         users[1].emails.append(e)
 
-    # Add the user accounts which are facilities to the first facility
+    # Add the user accounts which are units to the first unit
     for u in users:
-        if u.facility_id:
-            facilities[0].users.append(u)
+        if u.unit_id:
+            units[0].users.append(u)
 
     # Add all files to the first project
     for f in files:
         projects[0].files.append(f)
 
-    # Add all projects to the first facility
+    # Add all projects to the first unit
     for p in projects:
-        facilities[0].projects.append(p)
+        units[0].projects.append(p)
 
     # Add all file versions to the first project and the first file
     # NOTE (ina): Is this required? Perhaps remove project versions and just have project -> file -> version
@@ -268,9 +268,9 @@ def fill_db():
         projects[0].file_versions.append(v)
         files[0].versions.append(v)
 
-    # As long as we add the facilities, the rest will be filled due to foreign key constraints etc
+    # As long as we add the units, the rest will be filled due to foreign key constraints etc
     # NOTE: This results in integrityerror on restart!
-    db.session.add_all(facilities)
+    db.session.add_all(units)
 
     # Required for change in db
     try:

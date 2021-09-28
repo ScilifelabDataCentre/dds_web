@@ -18,11 +18,11 @@ import dds_web.utils
 ####################################################################################################
 
 
-class Facility(db.Model):
-    """Data model for facility accounts."""
+class Unit(db.Model):
+    """Data model for unit accounts."""
 
     # Table setup
-    __tablename__ = "facilities"
+    __tablename__ = "units"
     __table_args__ = {"extend_existing": True}
 
     # Columns
@@ -34,15 +34,15 @@ class Facility(db.Model):
     days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=30)
 
     # Relationships
-    # One facility can have many users
-    users = db.relationship("User", backref="facility")
-    # One facility can have many projects
-    projects = db.relationship("Project", backref="responsible_facility")
+    # One unit can have many users
+    users = db.relationship("User", backref="unit")
+    # One unit can have many projects
+    projects = db.relationship("Project", backref="responsible_unit")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<Facility {self.public_id}>"
+        return f"<Unit {self.public_id}>"
 
 
 project_users = db.Table(
@@ -78,8 +78,8 @@ class Project(db.Model):
     privkey_nonce = db.Column(db.String(24), nullable=False)
 
     # Foreign keys
-    # One facility can have many projects
-    facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
+    # One unit can have many projects
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
 
     # Relationships
     # One project can have many files
@@ -112,8 +112,8 @@ class User(db.Model):
     last_name = db.Column(db.String(50), unique=False, nullable=True)
 
     # Foreign keys
-    # One facility can have many users
-    facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
+    # One unit can have many users
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
 
     # Relationships
     # One user can have many projects, and one projects can have many users
