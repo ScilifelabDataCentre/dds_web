@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+
+  backend:
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
+    build:
+      dockerfile: Dockerfiles/backend.Dockerfile
+      context: ./
+      target: test
+    command: bash -c "pytest"
+    restart: "no"

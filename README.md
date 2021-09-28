@@ -82,6 +82,13 @@ Then run `docker-compose up` as normal. The images will be rebuilt from scratch 
 
 If there are still issues, try deleting the `pycache` folders and repeat the above steps.
 
+### Run tests
+Tests run on github actions on every pull request and push against master and dev. To run the tests locally, use this command:
+```bash
+docker-compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build --exit-code-from backend
+```
+This will create a test database in the mariadb container called `DeliverySystemTest` which will be populated before a test and emptied after a test has finished.
+
 ## Production
 
 When running in production, you will likely want to manually build and run the two containers.
