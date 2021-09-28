@@ -97,7 +97,7 @@ class NewFile(flask_restful.Resource):
             # New file version
             new_version = models.Version(
                 size_stored=new_file.size_stored,
-                time_uploaded=dds_web.utils.timestamp(),
+                time_uploaded=dds_web.utils.current_time(),
                 active_file=new_file.id,
                 project_id=project,
             )
@@ -161,7 +161,7 @@ class NewFile(flask_restful.Resource):
                 )
 
             # Same timestamp for deleted and created new file
-            new_timestamp = dds_web.utils.timestamp()
+            new_timestamp = dds_web.utils.current_time()
 
             # Overwritten == deleted/deactivated
             for version in current_file_version:
@@ -583,7 +583,7 @@ class UpdateFile(flask_restful.Resource):
             if not file:
                 return flask.make_response(f"No such file: {file_name['name']}", 500)
 
-            file.time_latest_download = dds_web.utils.timestamp()
+            file.time_latest_download = dds_web.utils.current_time()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             flask.current_app.logger.exception(str(err))

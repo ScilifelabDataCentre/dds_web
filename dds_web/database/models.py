@@ -271,7 +271,7 @@ class Version(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     time_uploaded = db.Column(
-        db.String(50), unique=False, nullable=False, default=dds_web.utils.timestamp()
+        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time()
     )
     time_deleted = db.Column(db.String(50), unique=False, nullable=True, default=None)
     time_invoiced = db.Column(db.String(50), unique=False, nullable=True, default=None)

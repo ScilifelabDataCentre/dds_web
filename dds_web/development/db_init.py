@@ -130,7 +130,6 @@ files = [
 versions = [
     Version(
         size_stored=files[0].size_stored,
-        time_uploaded=dds_web.utils.timestamp(),
         active_file=files[0],
         project_id=projects[0],
     )
