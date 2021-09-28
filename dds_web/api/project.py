@@ -63,8 +63,8 @@ def verify(current_user, project_public_id, access_method):
 
     has_one_of_the_permissions = False
     for method in access_method:
-        if "put" == method or "rm" == method:
-            if "unit" == current_user.role or "admin" == current_user.role:
+        if method in ["put", "rm"]:
+            if current_user.role in ["unit", "admin"]:
                 has_one_of_the_permissions = True
         else:  # get or ls
             has_one_of_the_permissions = True
