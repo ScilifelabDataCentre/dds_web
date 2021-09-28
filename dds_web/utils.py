@@ -21,6 +21,7 @@ import pytz
 # Own modules
 from dds_web.database import models
 from dds_web import db, C_TZ
+import dds_web.utils
 
 
 ####################################################################################################
@@ -31,7 +32,7 @@ from dds_web import db, C_TZ
 def current_time(timezone="Europe/Stockholm"):
     """Return the current time for the specific time zone"""
 
-    return datetime.datetime.now(pytz.timezone(timezone))
+    return datetime.datetime.now(tz=C_TZ)
 
 
 def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
@@ -236,7 +237,7 @@ def remove_expired():
         try:
             # Get all rows in version table
             for file in page_query(
-                models.File.query.filter(models.File.expires <= datetime.datetime.now(tz=C_TZ))
+                models.File.query.filter(models.File.expires <= dds_web.utils.current_time())
             ):
 
                 flask.current_app.logger.debug("File: %s - Expires: %s", file, file.expires)
