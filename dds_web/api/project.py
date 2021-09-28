@@ -181,9 +181,7 @@ class UserProjects(flask_restful.Resource):
                 "Title": p.title,
                 "PI": p.pi,
                 "Status": p.status,
-                "Last updated": dds_web.utils.timestamp(
-                    datetime_string=p.date_updated if p.date_updated else p.date_created
-                ),
+                "Last updated": p.date_updated if p.date_updated else p.date_created,
                 "Size": dds_web.utils.format_byte_size(p.size),
             }
 

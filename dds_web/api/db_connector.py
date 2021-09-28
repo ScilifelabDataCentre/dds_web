@@ -161,7 +161,7 @@ class DBConnector:
             # TODO (ina): put in class
             # change project size
             self.project.size = 0
-            self.project.date_updated = dds_web.utils.timestamp()
+            self.project.date_updated = dds_web.utils.current_time()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
@@ -203,13 +203,13 @@ class DBConnector:
                             models.Version.time_deleted == None,
                         )
                     ).first()
-                    current_file_version.time_deleted = dds_web.utils.timestamp()
+                    current_file_version.time_deleted = dds_web.utils.current_time()
 
                     # Delete file and update project size
                     old_size = x.size_original
                     db.session.delete(x)
                     self.project.size -= old_size
-                self.project.date_updated = dds_web.utils.timestamp()
+                self.project.date_updated = dds_web.utils.current_time()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)
             else:
@@ -293,11 +293,11 @@ class DBConnector:
                         models.Version.time_deleted == None,
                     )
                 ).first()
-                current_file_version.time_deleted = dds_web.utils.timestamp()
+                current_file_version.time_deleted = dds_web.utils.current_time()
 
                 db.session.delete(file)
                 self.project.size -= old_size
-                self.project.date_updated = dds_web.utils.timestamp()
+                self.project.date_updated = dds_web.utils.current_time()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 db.session.rollback()
                 error = str(err)
