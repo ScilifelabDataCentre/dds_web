@@ -35,6 +35,7 @@ def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"
 
     """
 
+    # print(f"\nTime stamp : {datetime.datetime.utcnow}\n")
     if datetime_string is not None:
         datetime_stamp = datetime.datetime.strptime(datetime_string, ts_format)
         return str(datetime_stamp.date())

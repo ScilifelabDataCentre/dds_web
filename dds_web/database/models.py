@@ -62,13 +62,15 @@ class Project(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(32), unique=True, nullable=False)
+
+    # Foreign key -- One unit can have many projects
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+
+    public_id = db.Column(db.String(255), unique=True, nullable=False)
     title = db.Column(db.Text, unique=False, nullable=False)
-    category = db.Column(db.String(40), unique=False, nullable=False)
-    date_created = db.Column(db.String(50), nullable=False)
-    date_updated = db.Column(db.String(50), nullable=True)
+    date_created = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.utcnow)
+    date_updated = db.Column(db.DateTime(), nullable=True)
     status = db.Column(db.String(20), nullable=False)
-    #    sensitive = db.Column(db.Boolean, nullable=False)
     description = db.Column(db.Text)
     pi = db.Column(db.String(50), unique=False, nullable=False)
     size = db.Column(db.BigInteger, unique=False, nullable=False)
@@ -77,10 +79,6 @@ class Project(db.Model):
     private_key = db.Column(db.String(200), nullable=False)
     privkey_salt = db.Column(db.String(32), nullable=False)
     privkey_nonce = db.Column(db.String(24), nullable=False)
-
-    # Foreign keys
-    # One unit can have many projects
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
 
     # Relationships
     # One project can have many files

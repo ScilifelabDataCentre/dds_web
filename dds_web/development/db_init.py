@@ -41,9 +41,6 @@ projects = [
     Project(
         public_id="public_project_id",
         title="test project_title",
-        category="Category",
-        date_created=dds_web.utils.timestamp(),
-        date_updated=dds_web.utils.timestamp(),
         status="Ongoing",
         description="This is a test project. You will be able to upload to but NOT download "
         "from this project. Create a new project to test the entire system. ",
@@ -59,9 +56,6 @@ projects = [
     Project(
         public_id="unused_project_id",
         title="unused project",
-        category="Category",
-        date_created=dds_web.utils.timestamp(),
-        date_updated=dds_web.utils.timestamp(),
         status="Ongoing",
         description="This is a test project to check for permissions.",
         pi="PI",
@@ -277,3 +271,6 @@ def fill_db():
         db.session.commit()
     except Exception:
         raise
+
+    project = Project.query.filter_by(public_id="public_project_id").first()
+    print(f"Date created: {project.date_created}\t Type: {type(project.date_created)}")
