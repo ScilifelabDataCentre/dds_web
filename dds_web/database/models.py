@@ -107,17 +107,14 @@ class User(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    # id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(20), primary_key=True, autoincrement=False)
-    password = db.Column(db.String(120), unique=False, nullable=False)
-    role = db.Column(db.String(50), unique=False, nullable=False)
-    permissions = db.Column(db.String(5), unique=False, nullable=False, default="--l--")
-    first_name = db.Column(db.String(50), unique=False, nullable=True)
-    last_name = db.Column(db.String(50), unique=False, nullable=True)
+    username = db.Column(db.String(50), primary_key=True, autoincrement=False)
 
-    # Foreign keys
-    # One unit can have many users
+    # Foreign keys - One unit can have many users
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+
+    password = db.Column(db.String(32), unique=False, nullable=False)
+    role = db.Column(db.String(20), unique=False, nullable=False)
+    name = db.Column(db.String(255), unique=False, nullable=True)
 
     # Relationships
     # One user can have many projects, and one projects can have many users
