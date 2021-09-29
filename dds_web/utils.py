@@ -21,7 +21,6 @@ import pytz
 # Own modules
 from dds_web.database import models
 from dds_web import db, C_TZ
-import dds_web.utils
 
 
 ####################################################################################################
@@ -104,7 +103,7 @@ def invoice_units():
     # From safespring
     old_file = parent_dir / pathlib.Path("development/invoicing/safespring_invoicespec.csv")
 
-    current_time = dds_web.utils.current_time()
+    current_time = current_time()
     to_file = old_file
     # to_file = parent_dir / pathlib.Path(f"development/invoicing/{current_time}.csv") # TODO (ina): uncomment later
 
@@ -144,13 +143,13 @@ def invoice_units():
                         if not v.time_invoiced:  # not included in invoice
                             flask.current_app.logger.debug(f"Invoice = NULL : {v}")
                             start = v.time_uploaded
-                            end = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
+                            end = v.time_deleted if v.time_deleted else current_time()
                         else:  # included in invoice
                             start = v.time_invoiced
                             end = (
                                 v.time_deleted
                                 if v.time_deleted and v.time_deleted > v.time_invoiced
-                                else dds_web.utils.current_time()
+                                else current_time()
                             )
 
                         # Calculate hours of the current file
@@ -216,7 +215,7 @@ def remove_invoiced():
                         v.time_deleted,
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
-                    now = dds_web.utils.current_time()
+                    now = current_time()
                     diff = now - deleted
                     if diff.seconds > 60:  # TODO (ina): Change to correct interval -- 30 days?
                         flask.current_app.logger.debug(f"Deleting: {v}")
@@ -233,9 +232,7 @@ def remove_expired():
     with flask.current_app.app_context():
         try:
             # Get all rows in version table
-            for file in page_query(
-                models.File.query.filter(models.File.expires <= dds_web.utils.current_time())
-            ):
+            for file in page_query(models.File.query.filter(models.File.expires <= current_time())):
 
                 flask.current_app.logger.debug("File: %s - Expires: %s", file, file.expires)
 
