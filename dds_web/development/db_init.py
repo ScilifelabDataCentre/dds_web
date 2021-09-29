@@ -73,26 +73,24 @@ projects = [
 users = [
     models.ResearchUser(
         username="username",
-        unit_id=None,
         password=auth.gen_argon2hash(password="password"),
         role="researcher",
         name="User Name",
     ),
     models.ResearchUser(
         username="admin",
-        unit_id=None,
         password=auth.gen_argon2hash(password="password"),
         role="admin",
         name="Ad Min",
     ),
-    models.ResearchUser(
+    models.UnitUser(
         username="unit_admin",
         unit_id=units[0],
         password=auth.gen_argon2hash(password="password"),
         role="unit",
         name="Unit Admin",
     ),
-    models.ResearchUser(
+    models.UnitUser(
         username="unit",
         unit_id=units[0],
         password=auth.gen_argon2hash(password="password"),
@@ -225,7 +223,12 @@ def fill_db():
     new_link.user = users[0]
     new_project.users.append(new_link)
 
+    another_link = models.ProjectUsers(owner=False)
+    another_link.user = users[2]
+    new_project.users.append(another_link)
+
     new_unit = units[0]
+    new_unit.users.append(users[2])
     new_unit.projects.append(new_project)
     db.session.add(new_unit)
     db.session.commit()
@@ -240,44 +243,44 @@ def fill_db():
     # db.session.add(new_unit)
     # db.session.commit()
 
-    # Add all projects to all user projects (for now, development)
-    for p in projects:
-        if p.public_id != "unused_project_id":
-            for u in users:
-                u.projects.append(p)
+    # # Add all projects to all user projects (for now, development)
+    # for p in projects:
+    #     if p.public_id != "unused_project_id":
+    #         for u in users:
+    #             u.projects.append(p)
 
-    # Add the first two email rows to the first user emails
-    # and the last two email rows to the second user
-    for e in emails[0:2]:
-        users[0].emails.append(e)
-    for e in emails[2:4]:
-        users[1].emails.append(e)
+    # # Add the first two email rows to the first user emails
+    # # and the last two email rows to the second user
+    # for e in emails[0:2]:
+    #     users[0].emails.append(e)
+    # for e in emails[2:4]:
+    #     users[1].emails.append(e)
 
-    # Add the user accounts which are units to the first unit
-    for u in users:
-        if u.unit_id:
-            units[0].users.append(u)
+    # # Add the user accounts which are units to the first unit
+    # for u in users:
+    #     if u.unit_id:
+    #         units[0].users.append(u)
 
-    # Add all files to the first project
-    for f in files:
-        projects[0].files.append(f)
+    # # Add all files to the first project
+    # for f in files:
+    #     projects[0].files.append(f)
 
-    # Add all projects to the first unit
-    for p in projects:
-        units[0].projects.append(p)
+    # # Add all projects to the first unit
+    # for p in projects:
+    #     units[0].projects.append(p)
 
-    # Add all file versions to the first project and the first file
-    # NOTE (ina): Is this required? Perhaps remove project versions and just have project -> file -> version
-    for v in versions:
-        projects[0].file_versions.append(v)
-        files[0].versions.append(v)
+    # # Add all file versions to the first project and the first file
+    # # NOTE (ina): Is this required? Perhaps remove project versions and just have project -> file -> version
+    # for v in versions:
+    #     projects[0].file_versions.append(v)
+    #     files[0].versions.append(v)
 
-    # As long as we add the units, the rest will be filled due to foreign key constraints etc
-    # NOTE: This results in integrityerror on restart!
-    db.session.add_all(units)
+    # # As long as we add the units, the rest will be filled due to foreign key constraints etc
+    # # NOTE: This results in integrityerror on restart!
+    # db.session.add_all(units)
 
-    # Required for change in db
-    try:
-        db.session.commit()
-    except Exception:
-        raise
+    # # Required for change in db
+    # try:
+    #     db.session.commit()
+    # except Exception:
+    #     raise

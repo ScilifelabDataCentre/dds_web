@@ -7,9 +7,6 @@
 # Standard library
 import datetime
 
-# Installed
-import pytz
-
 # Own modules
 from dds_web import db, C_TZ
 import dds_web.utils
@@ -37,7 +34,7 @@ class Unit(db.Model):
 
     # Relationships
     # One unit can have many users
-    users = db.relationship("User", backref="unit")
+    users = db.relationship("UnitUser", back_populates="unit")
     # One unit can have many projects
     projects = db.relationship("Project", backref="responsible_unit")
 
@@ -123,9 +120,6 @@ class User(db.Model):
     # Columns
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
 
-    # Foreign keys - One unit can have many users
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
-
     password = db.Column(db.String(98), unique=False, nullable=False)
     role = db.Column(db.String(20), unique=False, nullable=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
@@ -145,7 +139,7 @@ class User(db.Model):
     # One user can have many email addresses
     emails = db.relationship("Email", backref="users", lazy="dynamic", cascade="all, delete-orphan")
 
-    __mapper_args__ = {"polymorphic_on": type}
+    __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -156,7 +150,35 @@ class User(db.Model):
 class ResearchUser(User):
     """Data model for research user accounts."""
 
+    __tablename__ = "researchusers"
     __mapper_args__ = {"polymorphic_identity": "researchuser"}
+
+    # primary key and foreign key pointing to users
+    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+
+
+class UnitUser(User):
+    """Data model for unit user accounts"""
+
+    __tablename__ = "unitusers"
+    __mapper_args__ = {"polymorphic_identity": "unituser"}
+
+    # Primary key and foreign key pointing to users
+    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+
+    # Foreign key and backref with infrastructure
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
+    unit = db.relationship("Unit", back_populates="users")
+
+
+class SuperAdmin(User):
+    """Data model for super admin user accounts (Data Centre)."""
+
+    __tablename__ = "superadmins"
+    __mapper_args__ = {"polymorphic_identity": "superadmin"}
+
+    # Foreign key and backref with infrastructure
+    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
 
 
 class Identifier(db.Model):
