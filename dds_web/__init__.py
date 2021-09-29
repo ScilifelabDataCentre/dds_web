@@ -18,10 +18,6 @@ from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 
-# # imports related to scheduling
-import atexit
-from apscheduler.schedulers.background import BackgroundScheduler
-
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
 ####################################################################################################
@@ -146,6 +142,9 @@ def create_app():
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
+        # Set-up the schedulers
+        from dds_web.utils import scheduler_wrapper
+
         scheduler_wrapper()
 
         return app
@@ -161,83 +160,3 @@ def fill_db_wrapper():
 
     fill_db()
     flask.current_app.logger.info("DB filled")
-
-
-####################################################################################################
-# BACKGROUND SCHEDULER ###################################################### BACKGROUND SCHEDULER #
-####################################################################################################
-
-
-def scheduler_wrapper():
-    scheduler = BackgroundScheduler(
-        {
-            "apscheduler.jobstores.default": {
-                "type": "sqlalchemy",
-                # "url": flask.current_app.config.get("SQLALCHEMY_DATABASE_URI"),
-                "engine": db.engine,
-            },
-            "apscheduler.timezone": "Europe/Stockholm",
-        }
-    )
-    flask.current_app.logger.info("Initiated main scheduler")
-
-    # from dds_web.utils import invoice_units, remove_invoiced, remove_expired, permanent_delete
-
-    # Schedule invoicing calculations every 30 days
-    # TODO (ina): Change to correct interval - 30 days
-    scheduler.add_job(
-        invoice_units,
-        "cron",
-        id="calc_costs",
-        replace_existing=True,
-        month="1-12",
-        day="1-31",
-        hour="0",
-    )
-
-    # Schedule delete of rows in version table after a specific amount of time
-    # Currently: First of every month
-    scheduler.add_job(
-        remove_invoiced,
-        "cron",
-        id="remove_versions",
-        replace_existing=True,
-        month="1-12",
-        day="1",
-        hour="1",
-    )
-
-    # Schedule move of rows in files table after a specific amount of time
-    # to DeletedFiles (does not exist yet) table
-    # Currently: First of every month
-    scheduler.add_job(
-        remove_expired,
-        "cron",
-        id="remove_expired",
-        replace_existing=True,
-        month="1-12",
-        day="1",
-        hour="2",
-    )
-
-    # Schedule delete rows in expiredfiles table after a specific amount of time
-    # TODO (ina): Change interval - 1 day?
-    scheduler.add_job(
-        permanent_delete,
-        "cron",
-        id="permanent_delete",
-        replace_existing=True,
-        month="1-12",
-        day="1-31",
-        hour="3",
-    )
-
-    scheduler.start()
-    flask.current_app.logger.info("Started main scheduler")
-
-    # Shut down the scheduler when exiting the app
-    atexit.register(lambda: scheduler.shutdown())
-
-    # Print the currently scheduled jobs as verification:
-    flask.current_app.logger.info("Currently scheduled jobs:")
-    flask.current_app.logger.info(scheduler.print_jobs())
