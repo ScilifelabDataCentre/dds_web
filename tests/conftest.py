@@ -17,10 +17,9 @@ def demo_data():
             username="username",
             password=auth.gen_argon2hash(password="password"),
             role="researcher",
-            permissions="-gl--",
             first_name="User",
             last_name="Name",
-            facility_id=None,
+            unit_id=None,
         )
     ]
 
