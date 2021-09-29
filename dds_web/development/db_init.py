@@ -99,18 +99,6 @@ users = [
         role="unit",
         name="Unit",
     ),
-        public_id="file_public_id",
-        name="notafile.txt",
-        name_in_bucket="testtesttest.txt",
-        subpath=".",
-        size_original=0,  # bytes
-        size_stored=0,
-        compressed=False,
-        public_key="test",
-        salt="test",
-        checksum="",
-        project_id=projects[0],
-    )
 ]
 
 # Create Versions
