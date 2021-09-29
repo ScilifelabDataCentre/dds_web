@@ -134,7 +134,6 @@ def create_app():
     )
 
     app.cli.add_command(fill_db_wrapper)
-    app.cli.add_command(scheduler_wrapper)
 
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
@@ -146,6 +145,8 @@ def create_app():
         from dds_web.api import api_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+
+        scheduler_wrapper()
 
         return app
 
@@ -167,8 +168,6 @@ def fill_db_wrapper():
 ####################################################################################################
 
 
-@click.command("start-schedulers")
-@flask.cli.with_appcontext
 def scheduler_wrapper():
     scheduler = BackgroundScheduler(
         {
@@ -182,7 +181,7 @@ def scheduler_wrapper():
     )
     flask.current_app.logger.info("Initiated main scheduler")
 
-    from dds_web.utils import invoice_units, remove_invoiced, remove_expired, permanent_delete
+    # from dds_web.utils import invoice_units, remove_invoiced, remove_expired, permanent_delete
 
     # Schedule invoicing calculations every 30 days
     # TODO (ina): Change to correct interval - 30 days
@@ -241,4 +240,4 @@ def scheduler_wrapper():
 
     # Print the currently scheduled jobs as verification:
     flask.current_app.logger.info("Currently scheduled jobs:")
-    scheduler.print_jobs()
+    flask.current_app.logger.info(scheduler.print_jobs())
