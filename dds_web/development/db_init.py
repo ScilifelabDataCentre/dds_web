@@ -13,7 +13,7 @@ from flask import current_app
 # Own modules
 from dds_web import db
 from dds_web.security import auth
-from dds_web.database.models import User, Project, Unit, File, Version, Email
+from dds_web.database import models  # import User, Project, Unit, File, Version, Email
 import dds_web.utils
 
 ####################################################################################################
@@ -22,13 +22,13 @@ import dds_web.utils
 
 # Create Units
 units = [
-    Unit(
+    models.Unit(
         public_id="unit1",
         name="Unit 1",
         internal_ref="someunit",
         safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT", "dds.example.com"),
     ),
-    Unit(
+    models.Unit(
         public_id="unit2",
         name="Unit 2",
         internal_ref="anotherunit",
@@ -38,7 +38,7 @@ units = [
 
 # Create Projects
 projects = [
-    Project(
+    models.Project(
         public_id="public_project_id",
         title="test project_title",
         status="Ongoing",
@@ -53,7 +53,7 @@ projects = [
         privkey_nonce="D652B8C4554B675FB780A6EE",
         unit_id=units[0],
     ),
-    Project(
+    models.Project(
         public_id="unused_project_id",
         title="unused project",
         status="Ongoing",
@@ -71,28 +71,28 @@ projects = [
 
 # Create Users
 users = [
-    User(
+    models.ResearchUser(
         username="username",
         unit_id=None,
         password=auth.gen_argon2hash(password="password"),
         role="researcher",
         name="User Name",
     ),
-    User(
+    models.ResearchUser(
         username="admin",
         unit_id=None,
         password=auth.gen_argon2hash(password="password"),
         role="admin",
         name="Ad Min",
     ),
-    User(
+    models.ResearchUser(
         username="unit_admin",
         unit_id=units[0],
         password=auth.gen_argon2hash(password="password"),
         role="unit",
         name="Unit Admin",
     ),
-    User(
+    models.ResearchUser(
         username="unit",
         unit_id=units[0],
         password=auth.gen_argon2hash(password="password"),
@@ -103,7 +103,7 @@ users = [
 
 
 files = [
-    File(
+    models.File(
         project_id=projects[0],
         public_id="file_public_id",
         name="notafile.txt",
@@ -120,7 +120,7 @@ files = [
 
 # Create Versions
 versions = [
-    Version(
+    models.Version(
         size_stored=files[0].size_stored,
         active_file=files[0],
         project_id=projects[0],
@@ -129,10 +129,10 @@ versions = [
 
 # Create Emails
 emails = [
-    Email(user=users[0], email="one@email.com", primary=True),
-    Email(user=users[0], email="two@email.com", primary=False),
-    Email(user=users[1], email="three@email.com", primary=True),
-    Email(user=users[1], email="four@email.com", primary=False),
+    models.Email(user=users[0], email="one@email.com", primary=True),
+    models.Email(user=users[0], email="two@email.com", primary=False),
+    models.Email(user=users[1], email="three@email.com", primary=True),
+    models.Email(user=users[1], email="four@email.com", primary=False),
 ]
 
 # Add table rows to dict for development purposes
@@ -146,32 +146,32 @@ emails = [
 # }
 development_rows = {
     "units": {
-        "table": Unit,
+        "table": models.Unit,
         "rows": units,
         "unique": "public_id",
     },
     "projects": {
-        "table": Project,
+        "table": models.Project,
         "rows": projects,
         "unique": "public_id",
     },
     "users": {
-        "table": User,
+        "table": models.User,
         "rows": users,
         "unique": "username",
     },
     "files": {
-        "table": File,
+        "table": models.File,
         "rows": files,
         "unique": "public_id",
     },
     "versions": {
-        "table": Version,
+        "table": models.Version,
         "rows": versions,
         "unique": None,
     },
     "emails": {
-        "table": Email,
+        "table": models.Email,
         "rows": emails,
         "unique": "email",
     },

@@ -100,7 +100,7 @@ class Project(db.Model):
 
 
 class User(db.Model):
-    """Data model for user accounts."""
+    """Data model for user accounts - base user model for all user types."""
 
     # Table setup
     __tablename__ = "users"
@@ -116,6 +116,8 @@ class User(db.Model):
     role = db.Column(db.String(20), unique=False, nullable=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
 
+    type = db.Column(db.String(20), unique=False, nullable=False)
+
     # Relationships
     # One user can have many projects, and one projects can have many users
     projects = db.relationship(
@@ -128,10 +130,18 @@ class User(db.Model):
     # One user can have many email addresses
     emails = db.relationship("Email", backref="users", lazy="dynamic", cascade="all, delete-orphan")
 
+    __mapper_args__ = {"polymorphic_on": type}
+
     def __repr__(self):
         """Called by print, creates representation of object"""
 
         return f"<User {self.username}>"
+
+
+class ResearchUser(User):
+    """Data model for research user accounts."""
+
+    __mapper_args__ = {"polymorphic_identity": "researchuser"}
 
 
 class Identifier(db.Model):
