@@ -52,8 +52,8 @@ class ProjectUsers(db.Model):
 
     owner = db.Column(db.Boolean, nullable=False, default=False)
 
-    project = db.relationship("Project", back_populates="users")
-    user = db.relationship("User", back_populates="projects")
+    project = db.relationship("Project", back_populates="researchusers")
+    researchuser = db.relationship("ResearchUser", back_populates="projects")
 
 
 # project_users = db.Table(
@@ -102,7 +102,7 @@ class Project(db.Model):
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
 
-    users = db.relationship("ProjectUsers", back_populates="project")
+    researchusers = db.relationship("ProjectUsers", back_populates="project")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -131,7 +131,7 @@ class User(db.Model):
     # projects = db.relationship(
     #     "Project", secondary=project_users, backref=db.backref("users", lazy="dynamic")
     # )
-    projects = db.relationship("ProjectUsers", back_populates="user")
+    # projects = db.relationship("ProjectUsers", back_populates="user")
 
     # One user can have many identifiers
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
@@ -155,6 +155,7 @@ class ResearchUser(User):
 
     # primary key and foreign key pointing to users
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+    projects = db.relationship("ProjectUsers", back_populates="researchuser")
 
 
 class UnitUser(User):

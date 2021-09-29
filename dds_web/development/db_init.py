@@ -70,7 +70,7 @@ projects = [
 ]
 
 # Create Users
-users = [
+researchusers = [
     models.ResearchUser(
         username="username",
         password=auth.gen_argon2hash(password="password"),
@@ -83,6 +83,8 @@ users = [
         role="admin",
         name="Ad Min",
     ),
+]
+unitusers = [
     models.UnitUser(
         username="unit_admin",
         unit_id=units[0],
@@ -127,10 +129,10 @@ versions = [
 
 # Create Emails
 emails = [
-    models.Email(user=users[0], email="one@email.com", primary=True),
-    models.Email(user=users[0], email="two@email.com", primary=False),
-    models.Email(user=users[1], email="three@email.com", primary=True),
-    models.Email(user=users[1], email="four@email.com", primary=False),
+    models.Email(user=researchusers[0], email="one@email.com", primary=True),
+    models.Email(user=researchusers[0], email="two@email.com", primary=False),
+    models.Email(user=unitusers[0], email="three@email.com", primary=True),
+    models.Email(user=unitusers[0], email="four@email.com", primary=False),
 ]
 
 # Add table rows to dict for development purposes
@@ -142,38 +144,38 @@ emails = [
 #         "unique": <name of unique column in table>
 #     }
 # }
-development_rows = {
-    "units": {
-        "table": models.Unit,
-        "rows": units,
-        "unique": "public_id",
-    },
-    "projects": {
-        "table": models.Project,
-        "rows": projects,
-        "unique": "public_id",
-    },
-    "users": {
-        "table": models.User,
-        "rows": users,
-        "unique": "username",
-    },
-    "files": {
-        "table": models.File,
-        "rows": files,
-        "unique": "public_id",
-    },
-    "versions": {
-        "table": models.Version,
-        "rows": versions,
-        "unique": None,
-    },
-    "emails": {
-        "table": models.Email,
-        "rows": emails,
-        "unique": "email",
-    },
-}
+# development_rows = {
+#     "units": {
+#         "table": models.Unit,
+#         "rows": units,
+#         "unique": "public_id",
+#     },
+#     "projects": {
+#         "table": models.Project,
+#         "rows": projects,
+#         "unique": "public_id",
+#     },
+#     "users": {
+#         "table": models.User,
+#         "rows": users,
+#         "unique": "username",
+#     },
+#     "files": {
+#         "table": models.File,
+#         "rows": files,
+#         "unique": "public_id",
+#     },
+#     "versions": {
+#         "table": models.Version,
+#         "rows": versions,
+#         "unique": None,
+#     },
+#     "emails": {
+#         "table": models.Email,
+#         "rows": emails,
+#         "unique": "email",
+#     },
+# }
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
