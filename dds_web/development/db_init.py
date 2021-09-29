@@ -220,6 +220,25 @@ def fill_db():
 
     # Foreign key/relationship updates:
     # The model with the row db.relationship should append the row of the model with foreign key
+    new_project = projects[0]
+    new_link = models.ProjectUsers(owner=False)
+    new_link.user = users[0]
+    new_project.users.append(new_link)
+
+    new_unit = units[0]
+    new_unit.projects.append(new_project)
+    db.session.add(new_unit)
+    db.session.commit()
+
+    # new_project = projects[0]
+    # new_user = users[0]
+    # new_project.users.append(new_user)
+
+    # new_unit = units[0]
+    # new_unit.projects.append(new_project)
+
+    # db.session.add(new_unit)
+    # db.session.commit()
 
     # Add all projects to all user projects (for now, development)
     for p in projects:
