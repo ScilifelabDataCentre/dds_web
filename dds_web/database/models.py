@@ -112,7 +112,7 @@ class User(db.Model):
     # Foreign keys - One unit can have many users
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
 
-    password = db.Column(db.String(32), unique=False, nullable=False)
+    password = db.Column(db.String(98), unique=False, nullable=False)
     role = db.Column(db.String(20), unique=False, nullable=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
 

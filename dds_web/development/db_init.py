@@ -101,6 +101,23 @@ users = [
     ),
 ]
 
+
+files = [
+    File(
+        project_id=projects[0],
+        public_id="file_public_id",
+        name="notafile.txt",
+        name_in_bucket="testtesttest.txt",
+        subpath=".",
+        size_original=0,  # bytes
+        size_stored=0,
+        compressed=False,
+        public_key="test",
+        salt="test",
+        checksum="",
+    )
+]
+
 # Create Versions
 versions = [
     Version(
@@ -245,6 +262,3 @@ def fill_db():
         db.session.commit()
     except Exception:
         raise
-
-    project = Project.query.filter_by(public_id="public_project_id").first()
-    print(f"Date created: {project.date_created}\t Type: {type(project.date_created)}")
