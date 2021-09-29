@@ -99,11 +99,6 @@ users = [
         role="unit",
         name="Unit",
     ),
-]
-
-# Create Files
-files = [
-    File(
         public_id="file_public_id",
         name="notafile.txt",
         name_in_bucket="testtesttest.txt",
