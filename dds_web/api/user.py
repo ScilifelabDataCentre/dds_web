@@ -107,9 +107,8 @@ class ShowUsage(flask_restful.Resource):
                         v.time_uploaded,
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
-                    time_deleted = datetime.datetime.strptime(
-                        v.time_deleted if v.time_deleted else dds_web.utils.timestamp(),
-                        "%Y-%m-%d %H:%M:%S.%f%z",
+                    time_deleted = (
+                        v.time_deleted if v.time_deleted else dds_web.utils.current_time()
                     )
                     file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
 

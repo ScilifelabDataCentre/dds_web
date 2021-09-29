@@ -104,7 +104,7 @@ def invoice_units():
     # From safespring
     old_file = parent_dir / pathlib.Path("development/invoicing/safespring_invoicespec.csv")
 
-    current_time = timestamp(ts_format="%Y-%m-%d_%H-%M-%S")
+    current_time = dds_web.utils.current_time()
     to_file = old_file
     # to_file = parent_dir / pathlib.Path(f"development/invoicing/{current_time}.csv") # TODO (ina): uncomment later
 
@@ -144,13 +144,13 @@ def invoice_units():
                         if not v.time_invoiced:  # not included in invoice
                             flask.current_app.logger.debug(f"Invoice = NULL : {v}")
                             start = v.time_uploaded
-                            end = v.time_deleted if v.time_deleted else timestamp()
+                            end = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
                         else:  # included in invoice
                             start = v.time_invoiced
                             end = (
                                 v.time_deleted
                                 if v.time_deleted and v.time_deleted > v.time_invoiced
-                                else timestamp()
+                                else dds_web.utils.current_time()
                             )
 
                         # Calculate hours of the current file
@@ -216,10 +216,7 @@ def remove_invoiced():
                         v.time_deleted,
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
-                    now = datetime.datetime.strptime(
-                        timestamp(),
-                        "%Y-%m-%d %H:%M:%S.%f%z",
-                    )
+                    now = dds_web.utils.current_time()
                     diff = now - deleted
                     if diff.seconds > 60:  # TODO (ina): Change to correct interval -- 30 days?
                         flask.current_app.logger.debug(f"Deleting: {v}")
