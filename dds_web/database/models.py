@@ -8,7 +8,6 @@
 import datetime
 
 # Installed
-import pytz
 
 # Own modules
 from dds_web import db, C_TZ
