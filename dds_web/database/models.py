@@ -107,16 +107,7 @@ class User(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-<<<<<<< HEAD
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
-=======
-    # id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(20), primary_key=True, autoincrement=False)
-    password = db.Column(db.String(120), unique=False, nullable=False)
-    role = db.Column(db.String(50), unique=False, nullable=False)
-    first_name = db.Column(db.String(50), unique=False, nullable=True)
-    last_name = db.Column(db.String(50), unique=False, nullable=True)
->>>>>>> dev
 
     # Foreign keys - One unit can have many users
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
