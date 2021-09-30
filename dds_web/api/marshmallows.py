@@ -84,11 +84,18 @@ class NewUserSchema(marshmallow.Schema):
     """Schema for NewUser endpoint"""
 
     # TODO: Look through and match to db
-    username = marshmallow.fields.String(required=True)
+    username = marshmallow.fields.String(
+        required=True,
+        validate=marshmallow.validate.Regexp(
+            regex="^[[:alnum:]-]{6,25}$",
+            # username must only contain alphanumeric characters and hyphens and must be between 6-25 characters long
+            # \p{Pd} could be used to match any kind of dash instead of just the hyphen.
+        ),
+    )
     password = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(max=120)
     )
-    email = marshmallow.fields.Email(required=True)
+    email = marshmallow.fields.Email(required=True, validate=marshmallow.validate.Email())
     first_name = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(max=50)
     )
