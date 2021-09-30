@@ -14,6 +14,7 @@ import pandas
 from contextlib import contextmanager
 import flask
 import sqlalchemy
+import pytz
 
 # # imports related to scheduling
 import atexit
@@ -30,6 +31,12 @@ from dds_web import db, C_TZ
 ####################################################################################################
 
 
+def current_time(timezone="Europe/Stockholm"):
+    """Return the current time for the specific time zone"""
+
+    return datetime.datetime.now(tz=C_TZ)
+
+
 def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
     """Gets the current time. Formats timestamp.
 
@@ -38,6 +45,7 @@ def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"
 
     """
 
+    # print(f"\nTime stamp : {datetime.datetime.utcnow}\n")
     if datetime_string is not None:
         datetime_stamp = datetime.datetime.strptime(datetime_string, ts_format)
         return str(datetime_stamp.date())
@@ -98,7 +106,7 @@ def invoice_units():
     # From safespring
     old_file = parent_dir / pathlib.Path("development/invoicing/safespring_invoicespec.csv")
 
-    current_time = timestamp(ts_format="%Y-%m-%d_%H-%M-%S")
+    current_time = current_time()
     to_file = old_file
     # to_file = parent_dir / pathlib.Path(f"development/invoicing/{current_time}.csv") # TODO (ina): uncomment later
 
@@ -138,13 +146,13 @@ def invoice_units():
                         if not v.time_invoiced:  # not included in invoice
                             flask.current_app.logger.debug(f"Invoice = NULL : {v}")
                             start = v.time_uploaded
-                            end = v.time_deleted if v.time_deleted else timestamp()
+                            end = v.time_deleted if v.time_deleted else current_time()
                         else:  # included in invoice
                             start = v.time_invoiced
                             end = (
                                 v.time_deleted
                                 if v.time_deleted and v.time_deleted > v.time_invoiced
-                                else timestamp()
+                                else current_time()
                             )
 
                         # Calculate hours of the current file
@@ -210,10 +218,7 @@ def remove_invoiced():
                         v.time_deleted,
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
-                    now = datetime.datetime.strptime(
-                        timestamp(),
-                        "%Y-%m-%d %H:%M:%S.%f%z",
-                    )
+                    now = current_time()
                     diff = now - deleted
                     if diff.seconds > 60:  # TODO (ina): Change to correct interval -- 30 days?
                         flask.current_app.logger.debug(f"Deleting: {v}")
@@ -230,9 +235,7 @@ def remove_expired():
     with flask.current_app.app_context():
         try:
             # Get all rows in version table
-            for file in page_query(
-                models.File.query.filter(models.File.expires <= datetime.datetime.now(tz=C_TZ))
-            ):
+            for file in page_query(models.File.query.filter(models.File.expires <= current_time())):
 
                 flask.current_app.logger.debug("File: %s - Expires: %s", file, file.expires)
 

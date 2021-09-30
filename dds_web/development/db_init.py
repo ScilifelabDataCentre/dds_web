@@ -23,15 +23,15 @@ import dds_web.utils
 # Create Units
 units = [
     Unit(
-        public_id="public_unit_id",
+        public_id="unit1",
         name="Unit 1",
-        internal_ref="fac",
+        internal_ref="someunit",
         safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     ),
     Unit(
-        public_id="public_unit_id_2",
+        public_id="unit2",
         name="Unit 2",
-        internal_ref="fac2",
+        internal_ref="anotherunit",
         safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     ),
 ]
@@ -41,9 +41,6 @@ projects = [
     Project(
         public_id="public_project_id",
         title="test project_title",
-        category="Category",
-        date_created=dds_web.utils.timestamp(),
-        date_updated=dds_web.utils.timestamp(),
         status="Ongoing",
         description="This is a test project. You will be able to upload to but NOT download "
         "from this project. Create a new project to test the entire system. ",
@@ -59,9 +56,6 @@ projects = [
     Project(
         public_id="unused_project_id",
         title="unused project",
-        category="Category",
-        date_created=dds_web.utils.timestamp(),
-        date_updated=dds_web.utils.timestamp(),
         status="Ongoing",
         description="This is a test project to check for permissions.",
         pi="PI",
@@ -79,41 +73,38 @@ projects = [
 users = [
     User(
         username="username",
+        unit_id=None,
         password=auth.gen_argon2hash(password="password"),
         role="researcher",
-        first_name="User",
-        last_name="Name",
-        unit_id=None,
+        name="User Name",
     ),
     User(
         username="admin",
+        unit_id=None,
         password=auth.gen_argon2hash(password="password"),
         role="admin",
-        first_name="Ad",
-        last_name="Min",
-        unit_id=None,
+        name="Ad Min",
     ),
     User(
         username="unit_admin",
+        unit_id=units[0],
         password=auth.gen_argon2hash(password="password"),
         role="unit",
-        first_name="Unit",
-        last_name="Admin",
-        unit_id=units[0],
+        name="Unit Admin",
     ),
     User(
         username="unit",
+        unit_id=units[0],
         password=auth.gen_argon2hash(password="password"),
         role="unit",
-        first_name="Faci",
-        last_name="Lity",
-        unit_id=units[0],
+        name="Unit",
     ),
 ]
 
-# Create Files
+
 files = [
     File(
+        project_id=projects[0],
         public_id="file_public_id",
         name="notafile.txt",
         name_in_bucket="testtesttest.txt",
@@ -124,7 +115,6 @@ files = [
         public_key="test",
         salt="test",
         checksum="",
-        project_id=projects[0],
     )
 ]
 
@@ -132,7 +122,6 @@ files = [
 versions = [
     Version(
         size_stored=files[0].size_stored,
-        time_uploaded=dds_web.utils.timestamp(),
         active_file=files[0],
         project_id=projects[0],
     )

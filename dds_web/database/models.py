@@ -27,11 +27,12 @@ class Unit(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(50), unique=True, nullable=False)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    internal_ref = db.Column(db.String(10), unique=True, nullable=False)
-    safespring = db.Column(db.String(120), unique=False, nullable=False)  # unique=True later
+    public_id = db.Column(db.String(255), unique=True, nullable=False)
+    name = db.Column(db.String(255), unique=True, nullable=False)
+    internal_ref = db.Column(db.String(50), unique=True, nullable=False)
+    safespring = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=30)
+    counter = db.Column(db.Integer, unique=False, nullable=True)
 
     # Relationships
     # One unit can have many users
@@ -48,7 +49,7 @@ class Unit(db.Model):
 project_users = db.Table(
     "project_users",
     db.Column("project_id", db.Integer, db.ForeignKey("projects.id")),
-    db.Column("user", db.String(20), db.ForeignKey("users.username")),
+    db.Column("user", db.String(50), db.ForeignKey("users.username")),
 )
 
 
@@ -61,25 +62,27 @@ class Project(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(32), unique=True, nullable=False)
+
+    # Foreign key -- One unit can have many projects
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+
+    public_id = db.Column(db.String(255), unique=True, nullable=False)
     title = db.Column(db.Text, unique=False, nullable=False)
-    category = db.Column(db.String(40), unique=False, nullable=False)
-    date_created = db.Column(db.String(50), nullable=False)
-    date_updated = db.Column(db.String(50), nullable=True)
-    status = db.Column(db.String(20), nullable=False)
-    #    sensitive = db.Column(db.Boolean, nullable=False)
+    date_created = db.Column(
+        db.DateTime(),
+        nullable=False,
+        default=dds_web.utils.current_time(),
+    )
+    date_updated = db.Column(db.DateTime(), nullable=True)
+    status = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)
-    pi = db.Column(db.String(50), unique=False, nullable=False)
+    pi = db.Column(db.String(255), unique=False, nullable=False)
     size = db.Column(db.BigInteger, unique=False, nullable=False)
-    bucket = db.Column(db.String(100), unique=True, nullable=False)
+    bucket = db.Column(db.String(255), unique=True, nullable=False)
     public_key = db.Column(db.String(64), nullable=False)
-    private_key = db.Column(db.String(200), nullable=False)
+    private_key = db.Column(db.String(255), nullable=False)
     privkey_salt = db.Column(db.String(32), nullable=False)
     privkey_nonce = db.Column(db.String(24), nullable=False)
-
-    # Foreign keys
-    # One unit can have many projects
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
 
     # Relationships
     # One project can have many files
@@ -103,16 +106,14 @@ class User(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    # id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(20), primary_key=True, autoincrement=False)
-    password = db.Column(db.String(120), unique=False, nullable=False)
-    role = db.Column(db.String(50), unique=False, nullable=False)
-    first_name = db.Column(db.String(50), unique=False, nullable=True)
-    last_name = db.Column(db.String(50), unique=False, nullable=True)
+    username = db.Column(db.String(50), primary_key=True, autoincrement=False)
 
-    # Foreign keys
-    # One unit can have many users
+    # Foreign keys - One unit can have many users
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+
+    password = db.Column(db.String(98), unique=False, nullable=False)
+    role = db.Column(db.String(20), unique=False, nullable=False)
+    name = db.Column(db.String(255), unique=False, nullable=True)
 
     # Relationships
     # One user can have many projects, and one projects can have many users
@@ -145,7 +146,7 @@ class Identifier(db.Model):
 
     # Columns
     # Foreign keys
-    username = db.Column(db.String(20), db.ForeignKey("users.username"), primary_key=True)
+    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
     identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
     user = db.relationship("User", back_populates="identifiers")
 
@@ -166,11 +167,12 @@ class Email(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    email = db.Column(db.String(80), unique=True, nullable=False)
-    primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     # Foreign key: One user can have multiple email addresses.
-    user = db.Column(db.String(20), db.ForeignKey("users.username"))
+    user = db.Column(db.String(50), db.ForeignKey("users.username"))
+
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -187,7 +189,11 @@ class File(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(50), unique=True, nullable=False)
+
+    # Foreign keys: One project can have many files
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), index=True)
+
+    public_id = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.Text, unique=False, nullable=False)
     name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
     subpath = db.Column(db.Text, unique=False, nullable=False)
@@ -195,19 +201,15 @@ class File(db.Model):
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)
-    salt = db.Column(db.String(50), unique=False, nullable=False)
+    salt = db.Column(db.String(16), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
-    time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
+    time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
     expires = db.Column(
         db.DateTime(),
         unique=False,
         nullable=False,
-        default=datetime.datetime.now(tz=C_TZ) + datetime.timedelta(days=30),
+        default=dds_web.utils.current_time() + datetime.timedelta(days=30),
     )
-
-    # Foreign keys
-    # One project can have many files
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
     # Relationships
     versions = db.relationship("Version", backref="file")
@@ -237,12 +239,12 @@ class ExpiredFile(db.Model):
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(50), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
-    time_latest_download = db.Column(db.String(50), unique=False, nullable=True)
+    time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
     expired = db.Column(
         db.DateTime(),
         unique=False,
         nullable=False,
-        default=datetime.datetime.now(tz=C_TZ),
+        default=dds_web.utils.current_time(),
     )
 
     # Foreign keys
@@ -264,21 +266,21 @@ class Version(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
-    time_uploaded = db.Column(
-        db.String(50), unique=False, nullable=False, default=dds_web.utils.timestamp()
-    )
-    time_deleted = db.Column(db.String(50), unique=False, nullable=True, default=None)
-    time_invoiced = db.Column(db.String(50), unique=False, nullable=True, default=None)
 
-    # Foreign keys
-    # One file can have many rows in invoicing
+    # Foreign key - One project can have many files
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+
+    # Foreign key - One file can have many rows in invoicing
     active_file = db.Column(
         db.Integer, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
     )
 
-    # One project can have many files
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
+    time_uploaded = db.Column(
+        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time()
+    )
+    time_deleted = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
+    time_invoiced = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
