@@ -275,9 +275,6 @@ def permanent_delete():
 # BACKGROUND SCHEDULER ###################################################### BACKGROUND SCHEDULER #
 ####################################################################################################
 
-# Mind this discussion on the intricate peculiarities of running APScheduler in combination with Flask
-# https://github.com/agronholm/apscheduler/issues/250
-
 
 def scheduler_wrapper():
 
