@@ -51,7 +51,7 @@ projects = [
         private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
         privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
         privkey_nonce="D652B8C4554B675FB780A6EE",
-        unit_id=units[0],
+        # unit_id=units[0],
     ),
     models.Project(
         public_id="unused_project_id",
@@ -220,22 +220,18 @@ def fill_db():
 
     # Foreign key/relationship updates:
     # The model with the row db.relationship should append the row of the model with foreign key
-    project_1 = projects[0]
-    researchuser_1 = researchusers[0]
-    association_1 = models.ProjectUsers(owner=False, project_id=project_1, user_id=researchuser_1)
+    project = projects[0]
+    project_user_association = models.ProjectUsers(owner=False)
+    project_user_association.researchuser = researchusers[0]
+    project.researchusers.append(project_user_association)
 
-    # association_1.researchuser = researchuser_1
-    # project_1.researchusers.append(association_1)
-
-    unit_1 = units[0]
-    unituser_1 = unitusers[0]
-    unit_1.users.append(unituser_1)
-
-    unit_1.projects.append(project_1)
-    db.session.add(unit_1)
-    db.session.add(association_1)
+    unit = units[0]
+    unit.projects.append(project)
+    db.session.add(unit)
     db.session.commit()
 
+    print(models.Unit.query.filter_by(id=1).first().projects, flush=True)
+    print(models.Project.query.filter_by(unit_id=1).first(), flush=True)
     # new_project = projects[0]
     # new_user = users[0]
     # new_project.users.append(new_user)
