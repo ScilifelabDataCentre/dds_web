@@ -18,8 +18,6 @@ from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 
-# Own modules
-
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
 ####################################################################################################
@@ -150,6 +148,9 @@ def create_app(testing=False, database_uri=None):
         from dds_web.api import api_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+
+        # Set-up the schedulers
+        dds_web.utils.scheduler_wrapper()
 
         return app
 
