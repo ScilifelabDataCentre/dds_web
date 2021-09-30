@@ -1,15 +1,40 @@
-"""Password related cryptography stuff"""
+"""Authentication related functions/tools."""
 
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
+
+# Installed
 import argon2
+import http
+import flask
 import jwt
-import sqlalchemy
 
-from jwt import DecodeError
-
+# Own modules
+from dds_web.api.errors import AuthenticationError, AccessDeniedError
 from dds_web.database import models
-from sqlalchemy.sql import func
-from dds_web import app, basic_auth, exceptions, token_auth
-from dds_web.api.errors import InvalidUserCredentialsError, DatabaseError
+from dds_web import basic_auth, token_auth
+
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
+
+
+@basic_auth.error_handler
+def auth_error(status):
+    return auth_error_common(status)
+
+
+@token_auth.error_handler
+def auth_error(status):
+    return auth_error_common(status)
+
+
+def auth_error_common(status):
+    if status == http.HTTPStatus.UNAUTHORIZED:
+        raise AuthenticationError()
+    elif status == http.HTTPStatus.FORBIDDEN:
+        raise AccessDeniedError(message="Insufficient credentials")
 
 
 @basic_auth.get_user_roles
@@ -32,14 +57,14 @@ def get_user_roles_common(user):
 @token_auth.verify_token
 def verify_token(token):
     try:
-        data = jwt.decode(token, app.config.get("SECRET_KEY"), algorithms="HS256")
+        data = jwt.decode(token, flask.current_app.config.get("SECRET_KEY"), algorithms="HS256")
         username = data.get("user")
         if username:
             user = models.User.query.get(username)
             if user:
                 return user
         return None
-    except DecodeError:
+    except jwt.DecodeError:
         return None
 
 
@@ -50,52 +75,6 @@ def verify_password(username, password):
     if user and verify_password_argon2id(user.password, password):
         return user
     return None
-
-
-def user_session_info(username):
-    """Gets session info about the user."""
-
-    # Get user role and facility ID
-    try:
-        user = (
-            models.User.query.filter(models.User.username == func.binary(username))
-            .with_entities(models.User.role, models.User.facility_id)
-            .first()
-        )
-    except sqlalchemy.exc.SQLAlchemyError:
-        raise
-
-    # Raise exception if there is no user
-    if not user:
-        raise exceptions.DatabaseInconsistencyError("Unable to retrieve user role.")
-
-    # Setup session info default
-    user_info = {"current_user": username, "is_facility": False, "is_admin": False}
-
-    # Admin and facility specific info
-    if user[0] == "admin":
-        user_info["is_admin"] = True
-    elif user[0] == "facility":
-        if not user[1]:
-            raise exceptions.DatabaseInconsistencyError(
-                "Missing facility ID for facility type user."
-            )
-
-        # Get facility name from database
-        try:
-            facility_info = (
-                models.Facility.query.filter(models.Facility.id == func.binary(user[1]))
-                .with_entities(models.Facility.name)
-                .first()
-            )
-        except sqlalchemy.exc.SQLAlchemyError:
-            raise
-
-        user_info.update(
-            {"is_facility": True, "facility_id": user[1], "facility_name": facility_info[0]}
-        )
-
-    return user_info
 
 
 def gen_argon2hash(

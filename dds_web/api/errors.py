@@ -1,95 +1,58 @@
-from werkzeug import exceptions
+"""Custom exceptions for the DDS."""
+
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
+
+# Standard library
 import logging
+
+# Installed
+from werkzeug import exceptions
 import flask
+import http
+
+# Own modules
 from dds_web import actions
+
+####################################################################################################
+# LOGGING ################################################################################ LOGGING #
+####################################################################################################
 
 general_logger = logging.getLogger("general")
 action_logger = logging.getLogger("actions")
 
 extra_info = {"result": "DENIED"}
 
+####################################################################################################
+# EXCEPTIONS ########################################################################## EXCEPTIONS #
+####################################################################################################
+
 
 class ItemDeletionError(exceptions.HTTPException):
     pass
 
 
-# ----------------------------------------------------------------------------------- #
-
-
-class IncorrectDecoratorUsageException(exceptions.HTTPException):
-    """Errors occuring in DDS decorators, e.g. due to incorrect order or overall usage"""
-
-    def __init__(self, message):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-
-# ----------------------------------------------------------------------------------- #
+####################################################################################################
 
 
 class AuthenticationError(exceptions.HTTPException):
     """Base class for errors due to authentication failure."""
 
-    def __init__(self, message, username=None, project=None):
+    def __init__(self, message="Missing or incorrect credentials"):
         super().__init__(message)
 
         general_logger.warning(message)
 
-        action_logger.warning(
-            message,
-            extra={
-                **extra_info,
-                "current_user": username,
-                "action": actions.get(flask.request.endpoint),
-                "project": project,
-            },
-        )
 
-
-class InvalidUserCredentialsError(exceptions.HTTPException):
-    """Errors occurring during user authentication."""
-
-    def __init__(self, username, message="Incorrect username and/or password."):
-        super().__init__(message)
-
-        action_logger.warning(
-            message,
-            extra={
-                **extra_info,
-                "current_user": username,
-                "action": actions.get(flask.request.endpoint),
-                "project": None,
-            },
-        )
-
-
-class UserAlreadyExistsException(exceptions.HTTPException):
-    """Raised when trying to create a user that already exists in DDS database"""
-
-    # FIXME
-
-    def __init__(self, username, message="The user already exists"):
-
-        self.message = f"{message}: {username}"
-        super().__init__(self.message)
-
-        action_logger.error(
-            self.message,
-            extra={
-                **extra_info,
-                "current_user": username,
-                "action": actions.get(flask.request.endpoint),
-                "project": None,
-            },
-        )
-
-
-class ProjectPermissionsError(exceptions.HTTPException):
+class AccessDeniedError(exceptions.HTTPException):
     """Errors due to incorrect project permissions."""
 
     def __init__(
-        self, username, project, message="The user does not have the necessary permissions."
+        self,
+        username=None,
+        project=None,
+        message="The user does not have the necessary permissions.",
     ):
         super().__init__(message)
 
@@ -194,7 +157,7 @@ class BucketNotFoundError(exceptions.HTTPException):
 class S3ProjectNotFoundError(exceptions.HTTPException):
     """No Safespring project found in database or connection failed."""
 
-    def __init__(self, username, message="Safespring S3 project not found.", project=None):
+    def __init__(self, message="Safespring S3 project not found."):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -227,26 +190,8 @@ class KeyNotFoundError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class JwtTokenError(exceptions.HTTPException):
-    """Base class for exceptions triggered when handling the JWT tokens."""
-
-    def __init__(self, message):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-
 class JwtTokenGenerationError(exceptions.HTTPException):
     """Errors when generating the JWT token during authentication."""
-
-    def __init__(self, message):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-
-class JwtTokenDecodingError(exceptions.HTTPException):
-    """Errors occuring when decoding the JWT token."""
 
     def __init__(self, message):
         super().__init__(message)
@@ -263,15 +208,6 @@ class MissingProjectIDError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class MissingTokenOutputError(exceptions.HTTPException):
-    """Raised when a class or function has not recieved the correct output from the JWT token"""
-
-    def __init__(self, message):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-
 class DDSArgumentError(exceptions.HTTPException):
     """Base class for errors occurring due to missing request arguments."""
 
@@ -281,28 +217,10 @@ class DDSArgumentError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class MissingCredentialsError(exceptions.HTTPException):
-    """Raised when username and/or password arguments are missing from a request."""
-
-    def __init__(self, message="Missing username and/or password."):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-
 class MissingMethodError(exceptions.HTTPException):
     """Raised when none of the following are found in a request: put, get, ls, rm."""
 
     def __init__(self, message="No method found in request."):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-
-class TokenNotFoundError(exceptions.HTTPException):
-    """Missing token in request."""
-
-    def __init__(self, message="JWT Token not found in HTTP header."):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -335,29 +253,24 @@ class NoSuchInviteError(exceptions.HTTPException):
 
 
 errors = {
-    "UserAlreadyExistsException": {"status": 403},
-    "ItemDeletionError": {"message": "Removal of item(s) from S3 bucket failed.", "status": 500},
-    "IncorrectDecoratorUsageException": {"status": 500},
-    "DatabaseError": {"status": 500},
-    "NoSuchProjectError": {"status": 400},
-    "AuthenticationError": {"status": 400},
-    "InvalidUserCredentialsError": {"status": 400},
-    "ProjectPermissionsError": {"status": 400},
-    "JwtTokenError": {"status": 500},
-    "JwtTokenGenerationError": {"status": 500},
-    "JwtTokenDecodingError": {"status": 500},
-    "MissingProjectIDError": {"status": 500},
-    "MissingTokenOutputError": {"status": 500},
-    "DDSArgumentError": {"status": 400},
-    "MissingCredentialsError": {"status": 400},
-    "MissingMethodError": {"status": 400},
-    "TokenNotFoundError": {"status": 400},
-    "EmptyProjectException": {"status": 400},
-    "DeletionError": {"status": 500},
-    "S3ConnectionError": {"status": 500},
-    "S3ProjectNotFoundError": {"status": 500},
-    "S3InfoNotFoundError": {"status": 500},
-    "KeyNotFoundError": {"status": 500},
-    "PublicKeyNotFoundError": {"status": 500},
-    "NoSuchInviteError": {"status": 400},
+    "ItemDeletionError": {
+        "message": "Removal of item(s) from S3 bucket failed.",
+        "status": http.HTTPStatus.INTERNAL_SERVER_ERROR,
+    },
+    "DatabaseError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "NoSuchProjectError": {"status": http.HTTPStatus.BAD_REQUEST},
+    "AuthenticationError": {"status": http.HTTPStatus.UNAUTHORIZED},
+    "AccessDeniedError": {"status": http.HTTPStatus.FORBIDDEN},
+    "JwtTokenGenerationError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "MissingProjectIDError": {"status": http.HTTPStatus.BAD_REQUEST},
+    "DDSArgumentError": {"status": http.HTTPStatus.BAD_REQUEST},
+    "MissingMethodError": {"status": http.HTTPStatus.BAD_REQUEST},
+    "EmptyProjectException": {"status": http.HTTPStatus.BAD_REQUEST},
+    "DeletionError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "S3ConnectionError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "S3ProjectNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "S3InfoNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "PublicKeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
 }

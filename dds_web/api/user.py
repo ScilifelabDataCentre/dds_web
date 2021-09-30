@@ -1,8 +1,8 @@
-"""Docstring"""
+"""User related endpoints e.g. authentication."""
 
-###############################################################################
-# IMPORTS ########################################################### IMPORTS #
-###############################################################################
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
 import datetime
@@ -23,16 +23,16 @@ import wtforms
 import wtforms.validators
 
 # Own modules
-import dds_web.forms
-from dds_web import app, auth, timestamp
+from dds_web import auth
 from dds_web.database import models
-from dds_web.api.dds_decorators import token_required
 from dds_web.api.errors import JwtTokenGenerationError, DatabaseError, NoSuchInviteError
+import dds_web.utils
 from dds_web.api import marshmallows
 
-###############################################################################
-# FUNCTIONS ####################################################### FUNCTIONS #
-###############################################################################
+
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
 
 
 def jwt_token(username):
@@ -44,10 +44,10 @@ def jwt_token(username):
                 "user": username,
                 "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
             },
-            app.config.get("SECRET_KEY"),
+            flask.current_app.config.get("SECRET_KEY"),
             algorithm="HS256",
         )
-        app.logger.debug(f"token: {token}")
+        flask.current_app.logger.debug(f"token: {token}")
     except (
         TypeError,
         KeyError,
@@ -60,9 +60,9 @@ def jwt_token(username):
         return token
 
 
-###############################################################################
-# ENDPOINTS ####################################################### ENDPOINTS #
-###############################################################################
+####################################################################################################
+# ENDPOINTS ############################################################################ ENDPOINTS #
+####################################################################################################
 
 
 class ConfirmInvite(flask_restful.Resource):
@@ -150,22 +150,17 @@ class NewUser(flask_restful.Resource):
 class Token(flask_restful.Resource):
     """Generates token for the user."""
 
-    @auth.login_required(role=["admin", "user"])
+    @auth.login_required
     def get(self):
-        try:
-            token = jwt_token(username=auth.current_user().username)
-        except JwtTokenGenerationError:
-            raise
-        else:
-            return flask.jsonify({"token": token})
+        return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
 
 
 class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
 
-    method_decorators = [token_required]
-
-    def get(self, current_user, _):
+    @auth.login_required
+    def get(self):
+        current_user = auth.current_user()
 
         # Check that user is facility account
         if current_user.role != "facility":
@@ -200,7 +195,7 @@ class ShowUsage(flask_restful.Resource):
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
                     time_deleted = datetime.datetime.strptime(
-                        v.time_deleted if v.time_deleted else timestamp(),
+                        v.time_deleted if v.time_deleted else dds_web.utils.timestamp(),
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
                     file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
@@ -241,9 +236,9 @@ class ShowUsage(flask_restful.Resource):
 class InvoiceUnit(flask_restful.Resource):
     """Calculate the actual cost from the Safespring invoicing specification."""
 
-    method_decorators = [token_required]
-
-    def get(self, current_user, _):
+    @auth.login_required
+    def get(self):
+        current_user = auth.current_user()
 
         # Check that user is facility account
         if current_user.role != "facility":
@@ -267,6 +262,6 @@ class InvoiceUnit(flask_restful.Resource):
             csv_contents["project"] == facility_info.safespring
         ]
 
-        app.logger.debug(safespring_project_row)
+        flask.current_app.logger.debug(safespring_project_row)
 
         return flask.jsonify({"test": "ok"})

@@ -14,11 +14,6 @@ COPY ./requirements.txt /code/requirements.txt
 # Install all dependencies
 RUN pip3 install -r /code/requirements.txt && pip3 install gunicorn
 
-# Install DDS CLI for web upload
-### TODO - Replace this with `dds_cli` when published to PyPI
-### TODO - NOT FOR USE IN PRODUCTION! CURRENTLY USING DEV BRANCH
-# RUN pip3 install git+https://github.com/ScilifelabDataCentre/dds_cli.git@dev
-
 # Copy the content to a code folder in container
 COPY . /code
 
@@ -32,4 +27,4 @@ ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class
 WORKDIR /code/dds_web
 
 # Run app -- needs to be in WORKDIR
-CMD ["gunicorn", "app:app"]
+CMD ["gunicorn", "run_app:app_obj"]

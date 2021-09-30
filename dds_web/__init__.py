@@ -1,15 +1,17 @@
 """Initialize Flask app."""
 
-# IMPORTS ########################################################### IMPORTS #
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
 from datetime import datetime, timedelta
 import logging
 import pytz
-import time
 
 # Installed
-from flask import Flask, g, session
+import flask
+import click
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
@@ -19,39 +21,42 @@ import flask_mail
 
 # Own modules
 
-# GLOBAL VARIABLES ######################################### GLOBAL VARIABLES #
+####################################################################################################
+# GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
+####################################################################################################
 
-app = Flask(__name__, instance_relative_config=False)
-db = SQLAlchemy()
-mail = flask_mail.Mail()
-# admin = flask_admin.Admin()
+# Current time zone
 C_TZ = pytz.timezone("Europe/Stockholm")
-oauth = auth_flask_client.OAuth(app)
+
+# Database - not yet init
+db = SQLAlchemy()
+
+# Email setup - not yet init
+mail = flask_mail.Mail()
+
+# Marshmallows for parsing and validating
+ma = Marshmallow()
+
+# Authentication
+oauth = auth_flask_client.OAuth()
+basic_auth = HTTPBasicAuth()
+token_auth = HTTPTokenAuth()
+auth = MultiAuth(basic_auth, token_auth)
+
+# Actions for logging
 actions = {
     "api_blueprint.auth": "User Authentication",
     "api_blueprint.proj_auth": "Project Access",
     "api_blueprint.register_user": "Register New User",
 }
-basic_auth = HTTPBasicAuth()
-token_auth = HTTPTokenAuth()
-auth = MultiAuth(basic_auth, token_auth)
-
-# FUNCTIONS ####################################################### FUNCTIONS #
 
 
-# @app.before_request
-# def prepare():
-#     # Test line for global
-#     g.current_user = session.get("current_user")
-#     # g.current_user_id = session.get("current_user_id")
-#     g.is_facility = session.get("is_facility")
-#     g.is_admin = session.get("is_admin")
-#     if g.is_facility:
-#         g.facility_name = session.get("facility_name")
-#         g.facility_id = session.get("facility_id")
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
 
 
-def setup_logging():
+def setup_logging(app):
     """Setup loggers"""
 
     dictConfig(
@@ -61,7 +66,10 @@ def setup_logging():
             "formatters": {
                 "general": {"format": "[%(asctime)s] %(module)s [%(levelname)s] %(message)s"},
                 "actions": {
-                    "format": "[%(asctime)s] [%(levelname)s] <%(module)s> :: [%(result)s | Attempted : %(action)s | Project : %(project)s | User : %(current_user)s]"
+                    "format": (
+                        "[%(asctime)s] [%(levelname)s] <%(module)s> :: [%(result)s | "
+                        "Attempted : %(action)s | Project : %(project)s | User : %(current_user)s]"
+                    )
                 },
             },
             "handlers": {
@@ -99,12 +107,17 @@ def setup_logging():
 
 def create_app():
     """Construct the core application."""
+    # Initiate app object
+    app = flask.Flask(__name__, instance_relative_config=False)
 
-    # App config file
+    # Default development config
+    app.config.from_object("dds_web.config.Config")
+
+    # User config file, if e.g. using in production
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
     # Setup logging handlers
-    setup_logging()
+    setup_logging(app)
 
     # Set app.logger as the general logger
     app.logger = logging.getLogger("general")
@@ -112,74 +125,43 @@ def create_app():
 
     # Initialize database
     db.init_app(app)
-    mail.init_app(app)
-    # Setup admin
-    # import dds_web.database.models as models
 
-    # admin.init_app(app)
-    # admin.add_view(sqla.ModelView(models.User, db.session))
+    ma.init_app(app)
 
-    # FIXME
+    oauth.init_app(app)
+
     # initialize OIDC
-    # oauth.register(
-    #     "default_login",
-    #     client_secret=app.config.get("OIDC_CLIENT_SECRET"),
-    #     client_id=app.config.get("OIDC_CLIENT_ID"),
-    #     server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
-    #     client_kwargs={"scope": "openid profile email"},
-    # )
+    oauth.register(
+        "default_login",
+        client_secret=app.config.get("OIDC_CLIENT_SECRET"),
+        client_id=app.config.get("OIDC_CLIENT_ID"),
+        server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
+        client_kwargs={"scope": "openid profile email"},
+    )
+
+    app.cli.add_command(fill_db_wrapper)
 
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
 
-        db.create_all()  # Create database tables for our data models
+        # Need to import auth so that the modifications to the auth objects take place
+        import dds_web.security.auth
 
-        # puts in test info for local DB, will be removed later
-        if app.config.get("USE_LOCAL_DB"):
-            try:
-                # Circular import if not imported here
-                from dds_web.development import db_init
-
-                db_init.fill_db()
-            except Exception as err:
-                # Look into why, but this will be removed soon anyway
-                app.logger.exception(str(err))
-
+        # Register blueprints
         from dds_web.api import api_blueprint
 
-        # Active REST API
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
-
-        # Web interface deactivated - FIXME
-        # from dds_web.user import user_blueprint
-        # app.register_blueprint(user_blueprint, url_prefix="/user")
-        # from dds_web.admin import admin_blueprint
-        # app.register_blueprint(admin_blueprint, url_prefix="/admin")
-        # from dds_web.project import project_blueprint
-        # app.register_blueprint(project_blueprint, url_prefix="/project")
 
         return app
 
 
-def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
-    """Gets the current time. Formats timestamp.
+@click.command("init-dev-db")
+@flask.cli.with_appcontext
+def fill_db_wrapper():
+    flask.current_app.logger.info("Initializing development db")
+    assert flask.current_app.config["USE_LOCAL_DB"]
+    db.create_all()
+    from dds_web.development.db_init import fill_db
 
-    Returns:
-        str:    Timestamp in format 'YY-MM-DD_HH-MM-SS'
-
-    """
-
-    if datetime_string is not None:
-        datetime_stamp = datetime.strptime(datetime_string, ts_format)
-        return str(datetime_stamp.date())
-
-    now = datetime.now(tz=C_TZ) if dts is None else dts
-    t_s = str(now.strftime(ts_format))
-    return t_s
-
-
-def token_expiration(valid_time: int = 48):
-    now = datetime.now(tz=C_TZ)
-    expire = now + timedelta(hours=valid_time)
-
-    return timestamp(dts=expire)
+    fill_db()
+    flask.current_app.logger.info("DB filled")

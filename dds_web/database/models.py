@@ -1,14 +1,21 @@
-"""Data models."""
+"""Database table models."""
 
-# IMPORTS ########################################################### IMPORTS #
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
 import datetime
 
-# Own modules
-from dds_web import db, timestamp, C_TZ
+# Installed
 
-# CLASSES ########################################################### CLASSES #
+# Own modules
+from dds_web import db, C_TZ
+import dds_web.utils
+
+####################################################################################################
+# MODELS ################################################################################## MODELS #
+####################################################################################################
 
 
 class Facility(db.Model):
@@ -56,7 +63,7 @@ class Project(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(32), unique=True, nullable=False)
-    title = db.Column(db.String(100), unique=False, nullable=False)
+    title = db.Column(db.Text, unique=False, nullable=False)
     category = db.Column(db.String(40), unique=False, nullable=False)
     date_created = db.Column(db.String(50), nullable=False)
     date_updated = db.Column(db.String(50), nullable=True)
@@ -161,7 +168,7 @@ class Email(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    email = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(254), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     # Foreign key: One user can have multiple email addresses.
@@ -182,7 +189,7 @@ class Invite(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    email = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(254), unique=True, nullable=False)
     is_facility = db.Column(db.Boolean)
     is_researcher = db.Column(db.Boolean)
     facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
@@ -203,9 +210,9 @@ class File(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(50), unique=True, nullable=False)
-    name = db.Column(db.String(200), unique=False, nullable=False)
-    name_in_bucket = db.Column(db.String(200), unique=False, nullable=False)
-    subpath = db.Column(db.String(500), unique=False, nullable=False)
+    name = db.Column(db.Text, unique=False, nullable=False)
+    name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
+    subpath = db.Column(db.Text, unique=False, nullable=False)
     size_original = db.Column(db.BigInteger, unique=False, nullable=False)
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
@@ -234,7 +241,7 @@ class File(db.Model):
 
 
 class ExpiredFile(db.Model):
-    """Data model for expired files. Moved here when in system for more han a month."""
+    """Data model for expired files. Moved here when in system for more than a month."""
 
     # Table setup
     __tablename__ = "expired_files"
@@ -243,9 +250,9 @@ class ExpiredFile(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(50), unique=True, nullable=False)
-    name = db.Column(db.String(200), unique=False, nullable=False)
-    name_in_bucket = db.Column(db.String(200), unique=False, nullable=False)
-    subpath = db.Column(db.String(500), unique=False, nullable=False)
+    name = db.Column(db.Text, unique=False, nullable=False)
+    name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
+    subpath = db.Column(db.Text, unique=False, nullable=False)
     size_original = db.Column(db.BigInteger, unique=False, nullable=False)
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
@@ -280,7 +287,9 @@ class Version(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
-    time_uploaded = db.Column(db.String(50), unique=False, nullable=False, default=timestamp())
+    time_uploaded = db.Column(
+        db.String(50), unique=False, nullable=False, default=dds_web.utils.timestamp()
+    )
     time_deleted = db.Column(db.String(50), unique=False, nullable=True, default=None)
     time_invoiced = db.Column(db.String(50), unique=False, nullable=True, default=None)
 
