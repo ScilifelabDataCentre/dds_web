@@ -212,27 +212,28 @@ def fill_db():
     """Fills the database with initial entries used for development."""
 
     # Don't fill db with development rows if they already exist -- will result in integrityerror
-    for table, info in development_rows.items():
-        if not check_if_fill(
-            table=info.get("table"), rows=info.get("rows"), unique=info.get("unique")
-        ):
-            return
+    # for table, info in development_rows.items():
+    #     if not check_if_fill(
+    #         table=info.get("table"), rows=info.get("rows"), unique=info.get("unique")
+    #     ):
+    #         return
 
     # Foreign key/relationship updates:
     # The model with the row db.relationship should append the row of the model with foreign key
-    new_project = projects[0]
-    new_link = models.ProjectUsers(owner=False)
-    new_link.user = users[0]
-    new_project.users.append(new_link)
+    project_1 = projects[0]
+    researchuser_1 = researchusers[0]
+    association_1 = models.ProjectUsers(owner=False, project_id=project_1, user_id=researchuser_1)
 
-    another_link = models.ProjectUsers(owner=False)
-    another_link.user = users[2]
-    new_project.users.append(another_link)
+    # association_1.researchuser = researchuser_1
+    # project_1.researchusers.append(association_1)
 
-    new_unit = units[0]
-    new_unit.users.append(users[2])
-    new_unit.projects.append(new_project)
-    db.session.add(new_unit)
+    unit_1 = units[0]
+    unituser_1 = unitusers[0]
+    unit_1.users.append(unituser_1)
+
+    unit_1.projects.append(project_1)
+    db.session.add(unit_1)
+    db.session.add(association_1)
     db.session.commit()
 
     # new_project = projects[0]
