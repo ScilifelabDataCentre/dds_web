@@ -48,19 +48,12 @@ class ProjectUsers(db.Model):
     __tablename__ = "projectusers"
 
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+    user_id = db.Column(db.String(50), db.ForeignKey("researchusers.username"), primary_key=True)
 
     owner = db.Column(db.Boolean, nullable=False, default=False)
 
     project = db.relationship("Project", back_populates="researchusers")
     researchuser = db.relationship("ResearchUser", back_populates="projects")
-
-
-# project_users = db.Table(
-#     "project_users",
-#     db.Column("project_id", db.Integer, db.ForeignKey("projects.id")),
-#     db.Column("user", db.String(50), db.ForeignKey("users.username")),
-# )
 
 
 class Project(db.Model):
@@ -125,13 +118,6 @@ class User(db.Model):
     name = db.Column(db.String(255), unique=False, nullable=True)
 
     type = db.Column(db.String(20), unique=False, nullable=False)
-
-    # Relationships
-    # One user can have many projects, and one projects can have many users
-    # projects = db.relationship(
-    #     "Project", secondary=project_users, backref=db.backref("users", lazy="dynamic")
-    # )
-    # projects = db.relationship("ProjectUsers", back_populates="user")
 
     # One user can have many identifiers
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
