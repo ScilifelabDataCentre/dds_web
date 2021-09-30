@@ -13,6 +13,7 @@ pytz==2020.1
 zstandard
 authlib
 apscheduler
+werkzeug
 pytest==6.2.4
 Flask-HTTPAuth
 pyjwt==2.1.0
