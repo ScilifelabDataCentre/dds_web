@@ -5,7 +5,6 @@
 ####################################################################################################
 
 # Standard Library
-import datetime
 
 # Installed
 import flask_restful

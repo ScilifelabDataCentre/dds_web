@@ -103,6 +103,7 @@ class Project(db.Model):
         return f"<Project {self.public_id}>"
 
 
+# Users #################################################################################### Users #
 class User(db.Model):
     """Data model for user accounts - base user model for all user types."""
 
@@ -166,6 +167,9 @@ class SuperAdmin(User):
 
     # Foreign key and backref with infrastructure
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+
+
+####################################################################################################
 
 
 class Identifier(db.Model):
