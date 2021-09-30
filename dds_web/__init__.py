@@ -143,9 +143,7 @@ def create_app():
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
         # Set-up the schedulers
-        from dds_web.utils import scheduler_wrapper
-
-        scheduler_wrapper()
+        dds_web.utils.scheduler_wrapper()
 
         return app
 

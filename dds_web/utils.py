@@ -17,9 +17,8 @@ import sqlalchemy
 
 # # imports related to scheduling
 import atexit
-
 import werkzeug
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers import background
 
 # Own modules
 from dds_web.database import models
@@ -294,7 +293,7 @@ def scheduler_wrapper():
     if flask.helpers.get_debug_flag() and not werkzeug.serving.is_running_from_reloader():
         return
 
-    scheduler = BackgroundScheduler(
+    scheduler = background.BackgroundScheduler(
         {
             "apscheduler.jobstores.default": {
                 "type": "sqlalchemy",
@@ -377,4 +376,4 @@ def scheduler_wrapper():
     joblist = scheduler.get_jobs()
     flask.current_app.logger.info("Currently scheduled jobs:")
     for job in joblist:
-        flask.current_app.logger.info(f"{job}")
+        flask.current_app.logger.info(f"Job: {job}")
