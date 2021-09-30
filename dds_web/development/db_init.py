@@ -26,13 +26,13 @@ units = [
         public_id="unit1",
         name="Unit 1",
         internal_ref="someunit",
-        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT", "dds.example.com"),
+        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     ),
     Unit(
         public_id="unit2",
         name="Unit 2",
         internal_ref="anotherunit",
-        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT", "dds.example.com"),
+        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     ),
 ]
 
