@@ -16,6 +16,25 @@ import dds_web.utils
 ####################################################################################################
 
 
+# Association tables ########################################################## Association tables #
+
+
+class ProjectUsers(db.Model):
+    __tablename__ = "projectusers"
+
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
+    user_id = db.Column(db.String(50), db.ForeignKey("researchusers.username"), primary_key=True)
+
+    owner = db.Column(db.Boolean, nullable=False, default=False)
+
+    project = db.relationship("Project", back_populates="researchusers")
+    researchuser = db.relationship("ResearchUser", back_populates="projects")
+
+
+####################################################################################################
+# Tables ################################################################################## Tables #
+
+
 class Unit(db.Model):
     """Data model for unit accounts."""
 
@@ -42,18 +61,6 @@ class Unit(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<Unit {self.public_id}>"
-
-
-class ProjectUsers(db.Model):
-    __tablename__ = "projectusers"
-
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey("researchusers.username"), primary_key=True)
-
-    owner = db.Column(db.Boolean, nullable=False, default=False)
-
-    project = db.relationship("Project", back_populates="researchusers")
-    researchuser = db.relationship("ResearchUser", back_populates="projects")
 
 
 class Project(db.Model):
