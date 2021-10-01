@@ -13,6 +13,7 @@ import sqlalchemy
 from cryptography.hazmat.primitives.kdf import scrypt
 from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
 from cryptography.hazmat import backends
+from os import urandom
 
 
 # Own modules
@@ -31,6 +32,7 @@ from dds_web.api.errors import (
     BucketNotFoundError,
     PublicKeyNotFoundError,
 )
+from dds_web.crypt.key_gen import project_keygen
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -298,3 +300,70 @@ class UpdateProjectSize(flask_restful.Resource):
                 break
 
         return flask.jsonify({"updated": updated, "error": error, "tries": current_try})
+
+
+class CreateProject(flask_restful.Resource):
+    @auth.login_required
+    def post(self):
+        """Create a new project"""
+        p_info = flask.request.json
+        cur_user = auth.current_user()
+        # Check if the user actually exists
+        if not cur_user or cur_user.role != "researcher":  # role?
+            e_msg = "The user '{}' does not have the permissions to perform this operation".format(
+                cur_user
+            )
+            return flask.jsonify({"status": 440, "message": e_msg})
+
+        pi = models.User.query.filter_by(username=p_info["owner"]).one_or_none()
+        created_time = dds_web.utils.current_time()
+
+        try:
+            # lock Unit row
+            unit_row = (
+                db.session.query(models.Unit).filter_by(id=cur_user.unit_id).with_for_update().one()
+            )
+            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
+            public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
+
+            project_info = {
+                "unit_id": unit_row.id,
+                "public_id": public_id,
+                "title": p_info["title"],
+                "date_created": created_time,
+                "date_updated": created_time,
+                "status": "Ongoing",  # ?
+                "description": p_info["description"],
+                "pi": pi.username,
+                "size": 0,
+                "bucket": self.__create_bucket_name(public_id, created_time),
+            }
+            pkg = project_keygen(project_info["public_id"])
+            project_info.update(pkg.get_key_info_dict())
+
+            new_project = models.Project(**project_info)
+
+            db.session.add_all([new_project, unit_row])
+            db.session.commit()
+
+        except Exception as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            return flask.make_response(str(err), 500)
+
+        else:
+            return flask.jsonify(
+                {
+                    "status": 200,
+                    "message": "Added new project '{}'".format(new_project.title),
+                    "project_id": new_project.public_id,
+                }
+            )
+
+    def __create_bucket_name(self, public_id, created_time):
+        """Create a bucket name for the given project"""
+        return "{pid}-{tstamp}-{rstring}".format(
+            pid=public_id.lower(),
+            tstamp=dds_web.utils.timestamp(dts=created_time, ts_format="%y%m%d%H%M%S%f"),
+            rstring=urandom(4).hex(),
+        )
