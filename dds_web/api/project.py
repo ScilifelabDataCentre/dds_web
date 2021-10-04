@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Standard Library
+import functools
 
 # Installed
 import flask_restful
@@ -56,7 +57,7 @@ def verify(current_user, project_public_id, access_method):
     if not project:
         raise NoSuchProjectError(username=current_user.username, project=project_public_id)
 
-    if project not in current_user.projects:
+    if project not in user_projects(current_user=current_user):
         raise AccessDeniedError(
             message="Project access denied.",
             username=current_user.username,
@@ -82,6 +83,24 @@ def verify(current_user, project_public_id, access_method):
         f"Access to project {project_public_id} is granted for user {current_user.username}."
     )
     return project
+
+
+def user_projects(current_user):
+    """Temporary function: Get project in different manners depending on the user role."""
+
+    if current_user.role == "Super Admin":
+        user_projects = models.Project.query.all()
+    elif current_user.role in ["Unit Admin", "Unit Personnel"]:
+        user_projects = models.Project.query.filter(
+            models.Project.unit_id == current_user.unit_id
+        ).all()
+    else:
+        # Get list of projects - association table if researcher otherwise via unit
+        user_projects = models.Project.query.filter(
+            models.Project.id.in_([x.project_id for x in current_user.projects])
+        ).all()
+
+    return user_projects
 
 
 class GetPublic(flask_restful.Resource):
@@ -173,21 +192,11 @@ class UserProjects(flask_restful.Resource):
             "Unit Admin",
         ]
 
-        try: 
-            if current_user.role == "Super Admin":
-                user_projects = models.Project.query.all()
-            elif current_user.role in ["Unit Admin", "Unit Personnel"]:
-                user_projects = models.Project.query.filter(
-                    models.Project.unit_id == current_user.unit_id
-                ).all()
-            else current_user.role == "Researcher":
-                # Get list of projects - association table if researcher otherwise via unit
-                user_projects = models.Project.query.filter(
-                    models.Project.id.in_([x.project_id for x in current_user.projects])
-                ).all()
+        try:
+            project_list = user_projects(current_user=current_user)
 
             # Get info for all projects
-            for proj in user_projects:
+            for proj in project_list:
 
                 project_info = {
                     "Project ID": proj.public_id,

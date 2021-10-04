@@ -93,6 +93,7 @@ def page_query(q):
             break
 
 
+# TODO
 def invoice_units():
     """Get invoicing specification from Safespring, calculate and save GBHours and cost for each
     unit and project."""
