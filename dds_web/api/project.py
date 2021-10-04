@@ -32,7 +32,7 @@ from dds_web.api.errors import (
     BucketNotFoundError,
     PublicKeyNotFoundError,
 )
-from dds_web.crypt.key_gen import project_keygen
+from dds_web.crypt import key_gen
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -303,7 +303,7 @@ class UpdateProjectSize(flask_restful.Resource):
 
 
 class CreateProject(flask_restful.Resource):
-    @auth.login_required
+    @auth.login_required(role="admin")
     def post(self):
         """Create a new project"""
         p_info = flask.request.json
@@ -334,7 +334,7 @@ class CreateProject(flask_restful.Resource):
                 "size": 0,
                 "bucket": self.__create_bucket_name(public_id, created_time),
             }
-            pkg = project_keygen(project_info["public_id"])
+            pkg = key_gen.project_keygen(project_info["public_id"])
             project_info.update(pkg.get_key_info_dict())
 
             new_project = models.Project(**project_info)
@@ -345,9 +345,12 @@ class CreateProject(flask_restful.Resource):
         except Exception as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            return flask.make_response(str(err), 500)
+            return flask.make_response("Server Error: Project was not created", 500)
 
         else:
+            flask.current_app.logger.debug(
+                f"Project {public_id} created by user {cur_user.username}."
+            )
             return flask.jsonify(
                 {
                     "status": 200,
