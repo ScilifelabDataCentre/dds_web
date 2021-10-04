@@ -340,8 +340,8 @@ class CreateProject(flask_restful.Resource):
                 "size": 0,
                 "bucket": self.__create_bucket_name(public_id, created_time),
             }
-            pkg = key_gen.project_keygen(project_info["public_id"])
-            project_info.update(pkg.get_key_info_dict())
+            pkg = key_gen.ProjectKeys(project_info["public_id"])
+            project_info.update(pkg.key_dict())
 
             new_project = models.Project(**project_info)
             unit_row.projects.append(new_project)
@@ -349,7 +349,7 @@ class CreateProject(flask_restful.Resource):
 
             db.session.commit()
 
-        except Exception as err:
+        except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             return flask.make_response("Server Error: Project was not created\n", 500)

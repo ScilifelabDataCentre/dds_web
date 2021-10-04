@@ -10,18 +10,18 @@ from nacl import bindings
 from flask import current_app
 
 
-class project_keygen(object):
+class ProjectKeys:
     """Class with methods to generate keys"""
 
     def __init__(self, project_id):
         """Needs a project id"""
         self.project_id = project_id
-        self._set_project_id_bytes()
-        self._set_salt_and_nonce()
+        self._projectid_to_bytes()
+        self._gen_salt_and_nonce()
         self._set_passphrase()
-        self._set_private_and_public_keys()
+        self._generate_keypair()
 
-    def get_key_info_dict(self):
+    def key_dict(self):
         return dict(
             privkey_salt=self._salt.hex().upper(),
             privkey_nonce=self._nonce.hex().upper(),
@@ -29,11 +29,11 @@ class project_keygen(object):
             public_key=self._public_key_bytes.hex().upper(),
         )
 
-    def _set_project_id_bytes(self):
+    def _projectid_to_bytes(self):
         """Converts and set the project id in bytes"""
         self._project_id_bytes = bytes(self.project_id, "utf-8")
 
-    def _set_salt_and_nonce(self):
+    def _gen_salt_and_nonce(self):
         """Set salt and nonce i.e. random generated bit for encryption"""
         self._salt = urandom(16)
         self._nonce = urandom(12)
@@ -42,7 +42,7 @@ class project_keygen(object):
         """Sets the private encryption passphrase using app secret key"""
         self._passphrase = (current_app.config.get("SECRET_KEY")).encode("utf-8")
 
-    def _set_private_and_public_keys(self):
+    def _generate_keypair(self):
         """Generates salted, encrypted private and public key"""
         project_key_gen = x25519.X25519PrivateKey.generate()
         # generate private key bytes
