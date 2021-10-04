@@ -5,7 +5,6 @@
 ####################################################################################################
 
 # Standard Library
-import functools
 
 # Installed
 import flask_restful
