@@ -308,12 +308,7 @@ class CreateProject(flask_restful.Resource):
         """Create a new project"""
         p_info = flask.request.json
         cur_user = auth.current_user()
-        # Check if the user actually exists
-        if not cur_user or cur_user.role != "researcher":  # role?
-            e_msg = "The user '{}' does not have the permissions to perform this operation".format(
-                cur_user
-            )
-            return flask.jsonify({"status": 440, "message": e_msg})
+        # Add check for user permissions
 
         pi = models.User.query.filter_by(username=p_info["owner"]).one_or_none()
         created_time = dds_web.utils.current_time()
@@ -328,6 +323,7 @@ class CreateProject(flask_restful.Resource):
 
             project_info = {
                 "unit_id": unit_row.id,
+                "created_by": cur_user.username,
                 "public_id": public_id,
                 "title": p_info["title"],
                 "date_created": created_time,
