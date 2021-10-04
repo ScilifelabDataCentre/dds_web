@@ -47,7 +47,6 @@ def fill_db():
     researchuser_1 = models.ResearchUser(
         username="researchuser_1",
         password=auth.gen_argon2hash(password="password"),
-        role="researcher",
         name="First Research User",
     )
     # Create association with user - not owner of project
@@ -61,7 +60,6 @@ def fill_db():
     researchuser_2 = models.ResearchUser(
         username="researchuser_2",
         password=auth.gen_argon2hash(password="password"),
-        role="researcher",
         name="Second Research User",
     )
     # Create association with user - is owner of project
@@ -75,16 +73,17 @@ def fill_db():
     unituser_1 = models.UnitUser(
         username="unituser_1",
         password=auth.gen_argon2hash(password="password"),
-        role="unituser",
         name="First Unit User",
     )
     # Create second unit user
     unituser_2 = models.UnitUser(
         username="unituser_2",
         password=auth.gen_argon2hash(password="password"),
-        role="unituser",
         name="Second Unit User",
     )
+
+    # Add created project
+    unituser_1.created_projects.append(project_1)
 
     # Create first unit
     unit_1 = models.Unit(

@@ -42,8 +42,10 @@ class Unit(db.Model):
     __tablename__ = "units"
     __table_args__ = {"extend_existing": True}
 
-    # Columns
+    # Primary key
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    # Columns
     public_id = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.String(255), unique=True, nullable=False)
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
@@ -70,12 +72,16 @@ class Project(db.Model):
     __tablename__ = "projects"
     __table_args__ = {"extend_existing": True}
 
-    # Columns
+    # Primary key
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    # Foreign key -- One unit can have many projects
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+    # Foreign keys
+    # One unit can have many projects
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
+    # One unit can be created by one user
+    created_by = db.Column(db.String(50), db.ForeignKey("users.username"), nullable=False)
 
+    # Columns
     public_id = db.Column(db.String(255), unique=True, nullable=False)
     title = db.Column(db.Text, unique=False, nullable=False)
     date_created = db.Column(
@@ -132,6 +138,9 @@ class User(db.Model):
 
     # One user can have many email addresses
     emails = db.relationship("Email", backref="users", lazy="dynamic", cascade="all, delete-orphan")
+
+    # One user can create many projects
+    created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
