@@ -310,7 +310,6 @@ class CreateProject(flask_restful.Resource):
         cur_user = auth.current_user()
         # Add check for user permissions
 
-        # pi = models.User.query.filter_by(username=p_info["owner"]).one_or_none()
         created_time = dds_web.utils.current_time()
 
         try:
@@ -337,7 +336,7 @@ class CreateProject(flask_restful.Resource):
                 "date_updated": created_time,
                 "status": "Ongoing",  # ?
                 "description": p_info["description"],
-                "pi": "PI name",  # Not a foreign key, only a name
+                "pi": p_info.get("pi", ""),  # Not a foreign key, only a name
                 "size": 0,
                 "bucket": self.__create_bucket_name(public_id, created_time),
             }

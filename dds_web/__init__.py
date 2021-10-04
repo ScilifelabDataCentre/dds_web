@@ -150,7 +150,7 @@ def create_app(testing=False, database_uri=None):
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
         # Set-up the schedulers
-        # dds_web.utils.scheduler_wrapper()
+        dds_web.utils.scheduler_wrapper()
 
         return app
 
