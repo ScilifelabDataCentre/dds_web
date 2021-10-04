@@ -80,7 +80,7 @@ users = [
     ),
     User(
         username="admin",
-        unit_id=None,
+        unit_id=units[0],
         password=auth.gen_argon2hash(password="password"),
         role="admin",
         name="Ad Min",
