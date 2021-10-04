@@ -13,7 +13,7 @@ import sqlalchemy
 from cryptography.hazmat.primitives.kdf import scrypt
 from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
 from cryptography.hazmat import backends
-from os import urandom
+import os
 
 
 # Own modules
@@ -323,7 +323,6 @@ class CreateProject(flask_restful.Resource):
 
             project_info = {
                 "unit_id": unit_row.id,
-                "created_by": cur_user.username,
                 "public_id": public_id,
                 "title": p_info["title"],
                 "date_created": created_time,
@@ -338,8 +337,9 @@ class CreateProject(flask_restful.Resource):
             project_info.update(pkg.get_key_info_dict())
 
             new_project = models.Project(**project_info)
+            unit_row.projects.append(new_project)
+            cur_user.created_projects.append(new_project)
 
-            db.session.add_all([new_project, unit_row])
             db.session.commit()
 
         except Exception as err:
@@ -364,5 +364,5 @@ class CreateProject(flask_restful.Resource):
         return "{pid}-{tstamp}-{rstring}".format(
             pid=public_id.lower(),
             tstamp=dds_web.utils.timestamp(dts=created_time, ts_format="%y%m%d%H%M%S%f"),
-            rstring=urandom(4).hex(),
+            rstring=os.urandom(4).hex(),
         )

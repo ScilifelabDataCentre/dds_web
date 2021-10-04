@@ -129,6 +129,9 @@ class User(db.Model):
     # One user can have many email addresses
     emails = db.relationship("Email", backref="users", lazy="dynamic", cascade="all, delete-orphan")
 
+    # One user can create many projects
+    created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
+
     def __repr__(self):
         """Called by print, creates representation of object"""
 
