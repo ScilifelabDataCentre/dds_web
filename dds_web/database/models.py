@@ -20,13 +20,18 @@ import dds_web.utils
 
 
 class ProjectUsers(db.Model):
+
+    # Table setup
     __tablename__ = "projectusers"
 
+    # Primary keys / Foreign keys
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
     user_id = db.Column(db.String(50), db.ForeignKey("researchusers.username"), primary_key=True)
 
+    # Columns
     owner = db.Column(db.Boolean, nullable=False, default=False)
 
+    # Relationships - many to many
     project = db.relationship("Project", back_populates="researchusers")
     researchuser = db.relationship("ResearchUser", back_populates="projects")
 
