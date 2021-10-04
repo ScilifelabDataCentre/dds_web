@@ -246,14 +246,10 @@ class ListFiles(flask_restful.Resource):
         )
 
         # Check if to return file size
-        show_size = False
-        if "show_size" in args and args["show_size"] == "True":
-            show_size = True
+        show_size = args.get("show_size") == "True"
 
         # Check if to get from root or folder
-        subpath = "."
-        if "subpath" in args:
-            subpath = args["subpath"].rstrip(os.sep)
+        subpath = args.get("subpath").rstrip(os.sep) if args.get("subpath") else "."
 
         files_folders = list()
 

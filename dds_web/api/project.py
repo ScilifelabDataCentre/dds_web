@@ -154,7 +154,7 @@ class GetPrivate(flask_restful.Resource):
 class UserProjects(flask_restful.Resource):
     """Gets all projects registered to a specific user."""
 
-    @auth.login_required(role=["Researcher", "Unit Admin", "Unit Personnel"])
+    @auth.login_required
     def get(self):
         """Get info regarding all projects which user is involved in."""
         current_user = auth.current_user()
@@ -173,39 +173,47 @@ class UserProjects(flask_restful.Resource):
             "Unit Admin",
         ]
 
-        # Get list of projects - association table if researcher otherwise via unit
-        user_projects = models.Project.query.filter(
-            models.Project.id.in_([x.project_id for x in current_user.projects])
-            if current_user.role == "Researcher"
-            else models.Project.unit_id == current_user.unit_id
-        ).all()
+        try: 
+            if current_user.role == "Super Admin":
+                user_projects = models.Project.query.all()
+            elif current_user.role in ["Unit Admin", "Unit Personnel"]:
+                user_projects = models.Project.query.filter(
+                    models.Project.unit_id == current_user.unit_id
+                ).all()
+            else current_user.role == "Researcher":
+                # Get list of projects - association table if researcher otherwise via unit
+                user_projects = models.Project.query.filter(
+                    models.Project.id.in_([x.project_id for x in current_user.projects])
+                ).all()
 
-        # Get info for all projects
-        for proj in user_projects:
+            # Get info for all projects
+            for proj in user_projects:
 
-            project_info = {
-                "Project ID": proj.public_id,
-                "Title": proj.title,
-                "PI": proj.pi,
-                "Status": proj.status,
-                "Last updated": proj.date_updated if proj.date_updated else proj.date_created,
-                "Size": dds_web.utils.format_byte_size(proj.size),
-            }
+                project_info = {
+                    "Project ID": proj.public_id,
+                    "Title": proj.title,
+                    "PI": proj.pi,
+                    "Status": proj.status,
+                    "Last updated": proj.date_updated if proj.date_updated else proj.date_created,
+                    "Size": dds_web.utils.format_byte_size(proj.size),
+                }
 
-            # Get proj size and update total size
-            proj_size = sum([f.size_stored for f in proj.files])
-            total_size += proj_size
-            project_info["Size"] = dds_web.utils.format_byte_size(proj_size)
+                # Get proj size and update total size
+                proj_size = sum([f.size_stored for f in proj.files])
+                total_size += proj_size
+                project_info["Size"] = dds_web.utils.format_byte_size(proj_size)
 
-            # Get project usage if chosen and allowed
-            if return_usage:
-                proj_gbhours, proj_cost = DBConnector().project_usage(proj)
-                total_gbhours_db += proj_gbhours
-                total_cost_db += proj_cost
+                # Get project usage if chosen and allowed
+                if return_usage:
+                    proj_gbhours, proj_cost = DBConnector().project_usage(proj)
+                    total_gbhours_db += proj_gbhours
+                    total_cost_db += proj_cost
 
-                project_info.update({"GBHours": str(proj_gbhours), "Cost": str(proj_cost)})
+                    project_info.update({"GBHours": str(proj_gbhours), "Cost": str(proj_cost)})
 
-            all_projects.append(project_info)
+                all_projects.append(project_info)
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError
 
         return_info = {
             "project_info": all_projects,
