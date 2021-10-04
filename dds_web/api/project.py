@@ -310,14 +310,23 @@ class CreateProject(flask_restful.Resource):
         cur_user = auth.current_user()
         # Add check for user permissions
 
-        pi = models.User.query.filter_by(username=p_info["owner"]).one_or_none()
+        # pi = models.User.query.filter_by(username=p_info["owner"]).one_or_none()
         created_time = dds_web.utils.current_time()
 
         try:
             # lock Unit row
             unit_row = (
-                db.session.query(models.Unit).filter_by(id=cur_user.unit_id).with_for_update().one()
+                db.session.query(models.Unit)
+                .filter_by(id=cur_user.unit_id)
+                .with_for_update()
+                .one_or_none()
             )
+
+            if not unit_row:
+                raise Exception(
+                    "No unit associated to this user --> cannot create project. This message and exception should and will be changed."
+                )
+
             unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
             public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
 
@@ -329,7 +338,7 @@ class CreateProject(flask_restful.Resource):
                 "date_updated": created_time,
                 "status": "Ongoing",  # ?
                 "description": p_info["description"],
-                "pi": pi.username,
+                "pi": "PI name",  # Not a foreign key, only a name
                 "size": 0,
                 "bucket": self.__create_bucket_name(public_id, created_time),
             }
