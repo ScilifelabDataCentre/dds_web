@@ -65,6 +65,8 @@ class Project(db.Model):
 
     # Foreign key -- One unit can have many projects
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+    # Foreign key -- A user can have many projects
+    created_by = db.Column(db.String(50), db.ForeignKey("users.username"))
 
     public_id = db.Column(db.String(255), unique=True, nullable=False)
     title = db.Column(db.Text, unique=False, nullable=False)
