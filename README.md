@@ -48,7 +48,7 @@ just under
     - 127.0.0.1:5000:5000
 ```
 
-2. Put `import pbb; pdb.set_trace()` in the python code where you would like to activate the debugger.
+2. Put `import pdb; pdb.set_trace()` in the python code where you would like to activate the debugger.
 3. Run with docker-compose as normal.
 4. Find out the id of the container running the `backend`.
 ```
