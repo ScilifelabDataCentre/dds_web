@@ -122,7 +122,7 @@ class User(db.Model):
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
 
     password = db.Column(db.String(98), unique=False, nullable=False)
-    role = db.Column(db.String(20), unique=False, nullable=False)
+    # role = db.Column(db.String(20), unique=False, nullable=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
 
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -151,6 +151,10 @@ class ResearchUser(User):
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
     projects = db.relationship("ProjectUsers", back_populates="researchuser")
 
+    @property
+    def role(self):
+        return "researcher"
+
 
 class UnitUser(User):
     """Data model for unit user accounts"""
@@ -165,6 +169,15 @@ class UnitUser(User):
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
     unit = db.relationship("Unit", back_populates="users")
 
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
+
+    @property
+    def role(self):
+        if self.is_admin:
+            return "unit_admin"
+
+        return "unit_user"
+
 
 class SuperAdmin(User):
     """Data model for super admin user accounts (Data Centre)."""
@@ -174,6 +187,10 @@ class SuperAdmin(User):
 
     # Foreign key and backref with infrastructure
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+
+    @property
+    def role(self):
+        return "super_admin"
 
 
 ####################################################################################################
