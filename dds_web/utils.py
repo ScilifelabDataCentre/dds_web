@@ -303,11 +303,20 @@ def scheduler_wrapper():
             "apscheduler.timezone": "Europe/Stockholm",
         }
     )
-    flask.current_app.logger.info("Initiated main scheduler")
+
+    scheduler.start()
+    flask.current_app.logger.info("Started main scheduler")
+
+    # Extract all jobIDs currently scheduled
+    joblist = scheduler.get_jobs()
+    jobid = []
+    for job in joblist:
+        id = getattr(job, "id")
+        jobid.append(id)
 
     # Schedule invoicing calculations every 30 days
     # TODO (ina): Change to correct interval - 30 days
-    if not scheduler.get_job("calc_costs"):
+    if not "calc_costs" in jobid:
         flask.current_app.logger.info("Added job: calc_costs")
         scheduler.add_job(
             invoice_units,
@@ -322,7 +331,7 @@ def scheduler_wrapper():
 
     # Schedule delete of rows in version table after a specific amount of time
     # Currently: First of every month
-    if not scheduler.get_job("remove_versions"):
+    if not "remove_versions" in jobid:
         flask.current_app.logger.info("Added job: remove_versions")
         scheduler.add_job(
             remove_invoiced,
@@ -338,7 +347,7 @@ def scheduler_wrapper():
     # Schedule move of rows in files table after a specific amount of time
     # to DeletedFiles (does not exist yet) table
     # Currently: First of every month
-    if not scheduler.get_job("remove_expired"):
+    if not "remove_expired" in jobid:
         flask.current_app.logger.info("Added job: remove_expired")
         scheduler.add_job(
             remove_expired,
@@ -353,7 +362,7 @@ def scheduler_wrapper():
 
     # Schedule delete rows in expiredfiles table after a specific amount of time
     # TODO (ina): Change interval - 1 day?
-    if not scheduler.get_job("permanent_delete"):
+    if not "permanent_delete" in jobid:
         flask.current_app.logger.info("Added job: permanent_delete")
         scheduler.add_job(
             permanent_delete,
@@ -365,9 +374,6 @@ def scheduler_wrapper():
             day="1-31",
             hour="3",
         )
-
-    scheduler.start()
-    flask.current_app.logger.info("Started main scheduler")
 
     # Shut down the scheduler when exiting the app
     atexit.register(lambda: scheduler.shutdown())
