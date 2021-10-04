@@ -331,7 +331,6 @@ class CreateProject(flask_restful.Resource):
             public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
 
             project_info = {
-                "unit_id": unit_row.id,
                 "public_id": public_id,
                 "title": p_info["title"],
                 "date_created": created_time,
@@ -354,7 +353,7 @@ class CreateProject(flask_restful.Resource):
         except Exception as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            return flask.make_response("Server Error: Project was not created", 500)
+            return flask.make_response("Server Error: Project was not created\n", 500)
 
         else:
             flask.current_app.logger.debug(
