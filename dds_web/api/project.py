@@ -345,7 +345,7 @@ class CreateProject(flask_restful.Resource):
         except Exception as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            return flask.make_response("Server Error: Project was not created", 500)
+            return flask.make_response("Server Error: Project was not created\n", 500)
 
         else:
             flask.current_app.logger.debug(
