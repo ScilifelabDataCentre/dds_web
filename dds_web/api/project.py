@@ -167,7 +167,11 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        usage = flask.request.args.get("usage") == "True" and current_user.role == "unit"
+        # Unit users can get usage info
+        return_usage = flask.request.args.get("usage") == "True" and current_user.role in [
+            "Unit Personnel",
+            "Unit Admin",
+        ]
 
         if current_user.role == "Super Admin":
             project_list = models.ProjectUsers.query.all()
@@ -198,7 +202,7 @@ class UserProjects(flask_restful.Resource):
             total_size += proj_size
             project_info["Size"] = dds_web.utils.format_byte_size(proj_size)
 
-            if usage:
+            if return_usage:
                 proj_gbhours, proj_cost = DBConnector().project_usage(p)
                 total_gbhours_db += proj_gbhours
                 total_cost_db += proj_cost
