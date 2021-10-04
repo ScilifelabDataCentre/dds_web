@@ -162,7 +162,7 @@ class ResearchUser(User):
 
     @property
     def role(self):
-        return "researcher"
+        return "Researcher"
 
 
 class UnitUser(User):
@@ -183,9 +183,9 @@ class UnitUser(User):
     @property
     def role(self):
         if self.is_admin:
-            return "unit_admin"
+            return "Unit Admin"
 
-        return "unit_user"
+        return "Unit Personnel"
 
 
 class SuperAdmin(User):
@@ -199,7 +199,7 @@ class SuperAdmin(User):
 
     @property
     def role(self):
-        return "super_admin"
+        return "Super Admin"
 
 
 ####################################################################################################

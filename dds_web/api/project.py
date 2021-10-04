@@ -169,19 +169,32 @@ class UserProjects(flask_restful.Resource):
 
         usage = flask.request.args.get("usage") == "True" and current_user.role == "unit"
 
+        if current_user.role == "Super Admin":
+            project_list = models.ProjectUsers.query.all()
+        if current_user.role == "Researcher":
+            project_list = current_user.projects
+        elif current_user.role in ["Unit Admin", "Unit Personnel"]:
+            project_list = models.Project.query.filter_by(unit_id=current_user.unit_id).all()
+
         # Get info for all projects
-        for p in current_user.projects:
+        for p in project_list:
+
+            flask.current_app.logger.debug(f"Project: {p}")
+            project_item = models.Project.query.filter_by(id=p.project_id).first()
+
             project_info = {
-                "Project ID": p.public_id,
-                "Title": p.title,
-                "PI": p.pi,
-                "Status": p.status,
-                "Last updated": p.date_updated if p.date_updated else p.date_created,
-                "Size": dds_web.utils.format_byte_size(p.size),
+                "Project ID": project_item.public_id,
+                "Title": project_item.title,
+                "PI": project_item.pi,
+                "Status": project_item.status,
+                "Last updated": project_item.date_updated
+                if project_item.date_updated
+                else project_item.date_created,
+                "Size": dds_web.utils.format_byte_size(project_item.size),
             }
 
             # Get proj size and update total size
-            proj_size = sum([f.size_stored for f in p.files])
+            proj_size = sum([f.size_stored for f in project_item.files])
             total_size += proj_size
             project_info["Size"] = dds_web.utils.format_byte_size(proj_size)
 
