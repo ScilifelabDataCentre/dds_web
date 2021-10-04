@@ -154,7 +154,7 @@ class GetPrivate(flask_restful.Resource):
 class UserProjects(flask_restful.Resource):
     """Gets all projects registered to a specific user."""
 
-    @auth.login_required
+    @auth.login_required(role=["Researcher", "Unit Admin", "Unit Personnel"])
     def get(self):
         """Get info regarding all projects which user is involved in."""
         current_user = auth.current_user()
@@ -173,37 +173,33 @@ class UserProjects(flask_restful.Resource):
             "Unit Admin",
         ]
 
-        if current_user.role == "Super Admin":
-            project_list = models.ProjectUsers.query.all()
-        if current_user.role == "Researcher":
-            project_list = current_user.projects
-        elif current_user.role in ["Unit Admin", "Unit Personnel"]:
-            project_list = models.Project.query.filter_by(unit_id=current_user.unit_id).all()
+        # Get list of projects - association table if researcher otherwise via unit
+        user_projects = models.Project.query.filter(
+            models.Project.id.in_([x.project_id for x in current_user.projects])
+            if current_user.role == "Researcher"
+            else models.Project.unit_id == current_user.unit_id
+        ).all()
 
         # Get info for all projects
-        for p in project_list:
-
-            flask.current_app.logger.debug(f"Project: {p}")
-            project_item = models.Project.query.filter_by(id=p.project_id).first()
+        for proj in user_projects:
 
             project_info = {
-                "Project ID": project_item.public_id,
-                "Title": project_item.title,
-                "PI": project_item.pi,
-                "Status": project_item.status,
-                "Last updated": project_item.date_updated
-                if project_item.date_updated
-                else project_item.date_created,
-                "Size": dds_web.utils.format_byte_size(project_item.size),
+                "Project ID": proj.public_id,
+                "Title": proj.title,
+                "PI": proj.pi,
+                "Status": proj.status,
+                "Last updated": proj.date_updated if proj.date_updated else proj.date_created,
+                "Size": dds_web.utils.format_byte_size(proj.size),
             }
 
             # Get proj size and update total size
-            proj_size = sum([f.size_stored for f in project_item.files])
+            proj_size = sum([f.size_stored for f in proj.files])
             total_size += proj_size
             project_info["Size"] = dds_web.utils.format_byte_size(proj_size)
 
+            # Get project usage if chosen and allowed
             if return_usage:
-                proj_gbhours, proj_cost = DBConnector().project_usage(p)
+                proj_gbhours, proj_cost = DBConnector().project_usage(proj)
                 total_gbhours_db += proj_gbhours
                 total_cost_db += proj_cost
 
