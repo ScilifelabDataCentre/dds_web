@@ -187,10 +187,18 @@ class UnitUser(User):
 
     @property
     def role(self):
+        """User role is Unit Admin if the unit user has admin rights."""
+
         if self.is_admin:
             return "Unit Admin"
 
         return "Unit Personnel"
+
+    @property
+    def projects(self):
+        """Get the unit projects."""
+
+        return self.unit.projects
 
 
 class SuperAdmin(User):
@@ -204,7 +212,15 @@ class SuperAdmin(User):
 
     @property
     def role(self):
+        """Get user role."""
+
         return "Super Admin"
+
+    @property
+    def projects(self):
+        """Get list of projects: Super admins can access all projects."""
+
+        return Project.query.all()
 
 
 ####################################################################################################
