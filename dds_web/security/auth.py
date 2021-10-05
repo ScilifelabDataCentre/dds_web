@@ -48,10 +48,7 @@ def get_user_roles(user):
 
 
 def get_user_roles_common(user):
-    if "admin" == user.role:
-        return "admin"
-    else:
-        return "user"
+    return user.role
 
 
 @token_auth.verify_token
