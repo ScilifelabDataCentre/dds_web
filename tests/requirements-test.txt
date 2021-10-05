@@ -1,2 +1,7 @@
 pytest
 sqlalchemy-utils
+jwt
+http
+dataclasses
+requests
+simplejson

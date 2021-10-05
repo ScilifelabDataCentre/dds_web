@@ -19,7 +19,21 @@ def demo_data():
             password=auth.gen_argon2hash(password="password"),
             role="researcher",
             name="User Name",
-        )
+        ),
+        User(
+            username="projectowner",
+            unit_id=None,
+            password=auth.gen_argon2hash(password="password"),
+            role="projectadmin",
+            name="Project Leader Name",
+        ),
+        User(
+            username="admin",
+            unit_id=None,
+            password=auth.gen_argon2hash(password="password"),
+            role="facilityadmin",
+            name="Facility Admin Name",
+        ),
     ]
 
     return users
