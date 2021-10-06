@@ -17,6 +17,7 @@ from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
+import immutabledict
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -40,7 +41,14 @@ auth = MultiAuth(basic_auth, token_auth)
 # Actions for logging
 actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth": "Project Access"}
 
-
+ROLES = immutabledict.immutabledict(
+    {
+        "Super Admin": frozenset(("put", "get", "ls", "rm")),
+        "Unit Admin": frozenset(("put", "get", "ls", "rm")),
+        "Unit Personnel": frozenset(("put", "get", "ls", "rm")),
+        "Researcher": frozenset(("get", "ls")),
+    }
+)
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################

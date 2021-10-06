@@ -17,7 +17,7 @@ from cryptography.hazmat import backends
 
 # Own modules
 import dds_web.utils
-from dds_web import auth, db
+from dds_web import auth, db, ROLES
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
@@ -72,15 +72,7 @@ def verify(current_user, project_public_id, endpoint_methods):
 
     # Only Super Admins, Unit Admins and Unit Personnel can upload and remove, but all roles can
     # download and list
-    method_allowed = False
-    if (current_user.role in ["Super Admin", "Unit Admin", "Unit Personnel"]) and any(
-        method in ["put", "rm"] for method in endpoint_methods
-    ):
-        method_allowed = True
-    elif any(method in ["get", "ls"] for method in endpoint_methods):
-        method_allowed = True
-
-    if not method_allowed:
+    if not set(endpoint_methods).intersection(ROLES[current_user.role]):
         raise AccessDeniedError(
             message="User does not have necessary permission(s) in the specified project.",
             username=current_user.username,
