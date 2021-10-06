@@ -174,10 +174,15 @@ class UserProjects(flask_restful.Resource):
             "Unit Admin",
         ]
 
+        test_query = current_user.project_associations.filter(models.Project)
+        flask.current_app.logger.info(test_query)
+
         try:
+
             # Get info for all projects
             for proj in current_user.projects:
 
+                flask.current_app.logger.info(proj)
                 project_info = {
                     "Project ID": proj.public_id,
                     "Title": proj.title,

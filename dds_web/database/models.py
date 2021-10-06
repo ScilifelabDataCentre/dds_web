@@ -33,7 +33,7 @@ class ProjectUsers(db.Model):
 
     # Relationships - many to many
     project = db.relationship("Project", back_populates="researchusers")
-    researchuser = db.relationship("ResearchUser", back_populates="projects")
+    researchuser = db.relationship("ResearchUser", back_populates="project_associations")
 
 
 ####################################################################################################
@@ -163,11 +163,19 @@ class ResearchUser(User):
 
     # primary key and foreign key pointing to users
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
-    projects = db.relationship("ProjectUsers", back_populates="researchuser")
+    project_associations = db.relationship("ProjectUsers", back_populates="researchuser")
 
     @property
     def role(self):
+        """Get user role."""
+
         return "Researcher"
+
+    @property
+    def projects(self):
+        """Return list of project items."""
+
+        return [proj.project for proj in self.project_associations]
 
 
 class UnitUser(User):
