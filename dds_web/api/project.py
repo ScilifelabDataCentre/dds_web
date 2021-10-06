@@ -38,7 +38,7 @@ from dds_web.api.errors import (
 ####################################################################################################
 
 
-def verify(current_user, project_public_id, access_method):
+def verify(current_user, project_public_id, endpoint_methods):
 
     """Checks the user access to the given project with the given method."""
 
@@ -73,10 +73,11 @@ def verify(current_user, project_public_id, access_method):
     # Only Super Admins, Unit Admins and Unit Personnel can upload and remove, but all roles can
     # download and list
     method_allowed = False
-    if any(method in ["put", "rm"] for method in access_method):
-        if current_user.role in ["Super Admin", "Unit Admin", "Unit Personnel"]:
-            method_allowed = True
-    elif any(method in ["get", "ls"] for method in access_method):
+    if (current_user.role in ["Super Admin", "Unit Admin", "Unit Personnel"]) and any(
+        method in ["put", "rm"] for method in endpoint_methods
+    ):
+        method_allowed = True
+    elif any(method in ["get", "ls"] for method in endpoint_methods):
         method_allowed = True
 
     if not method_allowed:
@@ -95,16 +96,19 @@ def verify(current_user, project_public_id, access_method):
 class GetPublic(flask_restful.Resource):
     """Gets the public key beloning to the current project."""
 
-    @auth.login_required
+    @auth.login_required  # All roles can access this for different reasons
     def get(self):
         """Get public key from database."""
 
+        allowed_methods = ["get", "put"]
         args = flask.request.args
 
+        # Auth verifies user access, verify verifies the users access to the
+        # current project for the current purpose
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["get", "put"],
+            endpoint_methods=allowed_methods,
         )
 
         flask.current_app.logger.debug("Getting the public key.")

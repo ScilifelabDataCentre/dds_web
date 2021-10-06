@@ -32,7 +32,7 @@ class S3Info(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["get", "put", "rm"],
+            endpoint_methods=["get", "put", "rm"],
         )
 
         sfsp_proj, keys, url, bucketname = ApiS3Connector(project).get_s3_info()
