@@ -335,9 +335,7 @@ class CreateProject(flask_restful.Resource):
             )
 
             if not unit_row:
-                raise AccessDeniedError(
-                    message=f"Error: The user '{cur_user.username}' is not associated to a unit."
-                )
+                raise AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
 
             unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
             public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
