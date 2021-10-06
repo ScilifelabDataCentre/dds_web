@@ -43,6 +43,22 @@ def fill_db():
         privkey_nonce="D652B8C4554B675FB780A6EE",
     )
 
+    # Create second project - leave out foreign key
+    project_2 = models.Project(
+        public_id="project_2",
+        title="Second Project",
+        status="status not implemented yet",
+        description="This is a test project. You will be able to upload to but NOT download "
+        "from this project. Create a new project to test the entire system. ",
+        pi="PI Name",
+        size=0,
+        bucket=f"secondproject-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+        public_key="08D0D813DD7DD2541DF58A7E5AB651D20299F741732B0DC8B297A2D4CB43626C",
+        private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
+        privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
+        privkey_nonce="D652B8C4554B675FB780A6EE",
+    )
+
     # Create first research user
     researchuser_1 = models.ResearchUser(
         username="researchuser_1",
@@ -84,6 +100,7 @@ def fill_db():
 
     # Add created project
     unituser_1.created_projects.append(project_1)
+    unituser_2.created_projects.append(project_2)
 
     # Create first unit
     unit_1 = models.Unit(
@@ -93,7 +110,7 @@ def fill_db():
         safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     )
     # Connect project to unit. append (not =) due to many projects per unit
-    unit_1.projects.append(project_1)
+    unit_1.projects.extend([project_1, project_2])
     unit_1.users.extend([unituser_1, unituser_2])
 
     # Add unit to database - relationship will add the rest because of foreign key constraints
