@@ -131,7 +131,7 @@ class GetPrivate(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["get"],
+            endpoint_methods=["get"],
         )
 
         # TODO (ina): Change handling of private key -- not secure
@@ -239,7 +239,9 @@ class RemoveContents(flask_restful.Resource):
         args = flask.request.args
         current_user = auth.current_user()
         project = verify(
-            current_user=current_user, project_public_id=args.get("project"), access_method=["rm"]
+            current_user=current_user,
+            project_public_id=args.get("project"),
+            endpoint_methods=["rm"],
         )
 
         # Delete files
@@ -292,7 +294,7 @@ class UpdateProjectSize(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["put"],
+            endpoint_methods=["put"],
         )
 
         updated, error = (False, "")

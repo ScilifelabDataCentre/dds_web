@@ -52,7 +52,7 @@ class NewFile(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["put"],
+            endpoint_methods=["put"],
         )
 
         if not all(x in args for x in required_info):
@@ -126,7 +126,7 @@ class NewFile(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["put"],
+            endpoint_methods=["put"],
         )
 
         if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
@@ -211,7 +211,7 @@ class MatchFiles(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["put"],
+            endpoint_methods=["put"],
         )
 
         try:
@@ -242,7 +242,7 @@ class ListFiles(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["ls"],
+            endpoint_methods=["ls"],
         )
 
         # Check if to return file size
@@ -316,7 +316,7 @@ class RemoveFile(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["rm"],
+            endpoint_methods=["rm"],
         )
 
         with DBConnector(project=project) as dbconn:
@@ -344,7 +344,7 @@ class RemoveDir(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["rm"],
+            endpoint_methods=["rm"],
         )
 
         not_removed_dict, not_exist_list = ({}, [])
@@ -408,7 +408,7 @@ class FileInfo(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["get"],
+            endpoint_methods=["get"],
         )
 
         # Get files and folders requested by CLI
@@ -500,7 +500,7 @@ class FileInfoAll(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["get"],
+            endpoint_methods=["get"],
         )
 
         files = {}
@@ -555,7 +555,7 @@ class UpdateFile(flask_restful.Resource):
         project = verify(
             current_user=auth.current_user(),
             project_public_id=args.get("project"),
-            access_method=["get"],
+            endpoint_methods=["get"],
         )
 
         # Get file name from request from CLI
