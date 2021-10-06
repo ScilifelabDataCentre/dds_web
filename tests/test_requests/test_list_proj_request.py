@@ -11,21 +11,21 @@ from tests import user
 # TESTS #################################################################################### TESTS #
 
 
-def test_list_proj_no_token():
+def test_list_proj_no_token(client):
     """Token required"""
 
-    response = requests.get(dds_cli.DDSEndpoint.LIST_PROJ)
+    response = client.get(dds_cli.DDSEndpoint.LIST_PROJ)
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json()
     assert response_json.get("message")
     assert "Missing or incorrect credentials" in response_json.get("message")
 
 
-def test_list_proj_access_granted_ls():
+def test_list_proj_access_granted_ls(client):
     """Researcher should be able to list"""
 
     token = user.User(username="username", password="password").token
-    response = requests.get(dds_cli.DDSEndpoint.LIST_PROJ, headers=token)
+    response = client.get(dds_cli.DDSEndpoint.LIST_PROJ, headers=token)
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json()
     list_of_projects = response_json.get("project_info")

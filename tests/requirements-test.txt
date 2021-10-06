@@ -1,7 +1,7 @@
 pytest
 sqlalchemy-utils
 jwt
-http
 dataclasses
 requests
+http
 simplejson
