@@ -3,5 +3,4 @@ sqlalchemy-utils
 jwt
 dataclasses
 requests
-http
 simplejson
