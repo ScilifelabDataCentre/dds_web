@@ -226,6 +226,13 @@ class MissingMethodError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
+class InvalidMethodError(exceptions.HTTPException):
+    def __init__(self, message="Attempted method not accepted by API Endpoint."):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
 class PublicKeyNotFoundError(exceptions.HTTPException):
     """Public key not found in database"""
 
@@ -260,4 +267,5 @@ errors = {
     "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "PublicKeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "InvalidMethodError": {"status": http.HTTPStatus.BAD_REQUEST},
 }

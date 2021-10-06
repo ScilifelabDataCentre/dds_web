@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Standard Library
+import functools
 
 # Installed
 import flask_restful
@@ -30,59 +31,13 @@ from dds_web.api.errors import (
     DeletionError,
     BucketNotFoundError,
     PublicKeyNotFoundError,
+    InvalidMethodError,
 )
-
+from dds_web.api import marshmallows
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
-
-
-def verify(current_user, project_public_id, endpoint_methods):
-
-    """Checks the user access to the given project with the given method."""
-
-    if not project_public_id:
-        raise MissingProjectIDError
-
-    flask.current_app.logger.debug(
-        f"Verifying access to project {project_public_id} by user {current_user.username}."
-    )
-
-    # Get project row
-    try:
-        project = models.Project.query.filter(models.Project.public_id == project_public_id).first()
-
-    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise DatabaseError(
-            message=str(sqlerr), username=current_user.username, project=project_public_id
-        )
-
-    # Return error if there is no such project
-    if not project:
-        raise NoSuchProjectError(username=current_user.username, project=project_public_id)
-
-    # Check if user has access to project and return error if not
-    if project not in current_user.projects:
-        raise AccessDeniedError(
-            message="Project access denied.",
-            username=current_user.username,
-            project=project_public_id,
-        )
-
-    # Only Super Admins, Unit Admins and Unit Personnel can upload and remove, but all roles can
-    # download and list
-    if not set(endpoint_methods).intersection(ROLES[current_user.role]):
-        raise AccessDeniedError(
-            message="User does not have necessary permission(s) in the specified project.",
-            username=current_user.username,
-            project=project_public_id,
-        )
-
-    flask.current_app.logger.debug(
-        f"Access to project {project_public_id} is granted for user {current_user.username}."
-    )
-    return project
 
 
 class GetPublic(flask_restful.Resource):
@@ -92,23 +47,9 @@ class GetPublic(flask_restful.Resource):
     def get(self):
         """Get public key from database."""
 
-        allowed_methods = ["get", "put"]
-        args = flask.request.args
+        public_key = marshmallows.PublicKeySchema().load(flask.request.args)
 
-        # Auth verifies user access, verify verifies the users access to the
-        # current project for the current purpose
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=allowed_methods,
-        )
-
-        flask.current_app.logger.debug("Getting the public key.")
-
-        if not project.public_key:
-            raise PublicKeyNotFoundError(project=project.public_id)
-
-        return flask.jsonify({"public": project.public_key})
+        return flask.jsonify({"public": public_key})
 
 
 class GetPrivate(flask_restful.Resource):

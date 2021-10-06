@@ -54,6 +54,7 @@ def get_user_roles_common(user):
 
 @token_auth.verify_token
 def verify_token(token):
+    """Called by @auth.login_required if not username and password specified but token."""
     try:
         data = jwt.decode(token, flask.current_app.config.get("SECRET_KEY"), algorithms="HS256")
         username = data.get("user")
@@ -68,6 +69,7 @@ def verify_token(token):
 
 @basic_auth.verify_password
 def verify_password(username, password):
+    """Called by @auth.login_required."""
     user = models.User.query.get(username)
     if user and verify_password_argon2id(user.password, password):
         return user
