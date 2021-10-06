@@ -9,7 +9,7 @@ DATABASE_URI = "mysql+pymysql://root:{}@db/DeliverySystemTest".format(mysql_root
 
 
 def demo_data():
-    from dds_web.database.models import User
+    from dds_web.database.models import User, Unit
     from dds_web.security import auth
 
     users = [
@@ -19,10 +19,33 @@ def demo_data():
             password=auth.gen_argon2hash(password="password"),
             role="researcher",
             name="User Name",
+        ),
+        User(
+            username="admin",
+            unit_id=None,
+            password=auth.gen_argon2hash(password="password"),
+            role="admin",
+            name="Ad Min",
+        ),
+        User(
+            username="admin2",
+            unit_id=None,
+            password=auth.gen_argon2hash(password="password"),
+            role="admin",
+            name="Ad Min2",
+        ),
+    ]
+
+    units = [
+        Unit(
+            public_id="unit1",
+            name="Unit 1",
+            internal_ref="someunit",
+            safespring="dds.example.com",
         )
     ]
 
-    return users
+    return (users, units)
 
 
 @pytest.fixture
@@ -37,7 +60,10 @@ def client():
         with app.app_context():
             # Create all tables
             db.create_all()
-            users = demo_data()
+            users, units = demo_data()
+            db.session.add_all(units)
+            db.session.flush()
+            users[1].unit = units[0]
             db.session.add_all(users)
             db.session.commit()
 
