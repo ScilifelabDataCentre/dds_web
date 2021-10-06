@@ -39,6 +39,7 @@ from dds_web.api.errors import (
 
 
 def verify(current_user, project_public_id, access_method):
+
     """Checks the user access to the given project with the given method."""
 
     if not project_public_id:
@@ -47,16 +48,21 @@ def verify(current_user, project_public_id, access_method):
     flask.current_app.logger.debug(
         f"Verifying access to project {project_public_id} by user {current_user.username}."
     )
+
+    # Get project row
     try:
         project = models.Project.query.filter(models.Project.public_id == project_public_id).first()
+
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
         raise DatabaseError(
             message=str(sqlerr), username=current_user.username, project=project_public_id
         )
 
+    # Return error if there is no such project
     if not project:
         raise NoSuchProjectError(username=current_user.username, project=project_public_id)
 
+    # Check if user has access to project and return error if not
     if project not in current_user.projects:
         raise AccessDeniedError(
             message="Project access denied.",
@@ -64,15 +70,16 @@ def verify(current_user, project_public_id, access_method):
             project=project_public_id,
         )
 
-    has_one_of_the_permissions = False
-    for method in access_method:
-        if method in ["put", "rm"]:
-            if current_user.role in ["unit", "admin"]:
-                has_one_of_the_permissions = True
-        else:  # get or ls
-            has_one_of_the_permissions = True
+    # Only Super Admins, Unit Admins and Unit Personnel can upload and remove, but all roles can
+    # download and list
+    method_allowed = False
+    if any(method in ["put", "rm"] for method in access_method):
+        if current_user.role in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+            method_allowed = True
+    elif any(method in ["get", "ls"] for method in access_method):
+        method_allowed = True
 
-    if not has_one_of_the_permissions:
+    if not method_allowed:
         raise AccessDeniedError(
             message="User does not have necessary permission(s) in the specified project.",
             username=current_user.username,
