@@ -582,13 +582,13 @@ class UpdateFile(flask_restful.Resource):
             ).first()
 
             if not file:
-                return flask.make_response(f"No such file: {file_name}", 500)
+                return flask.make_response(f"No such file.", 500)
 
             file.time_latest_download = dds_web.utils.current_time()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             flask.current_app.logger.exception(str(err))
-            return flask.make_response(str(err), 500)
+            return flask.make_response("Update of file info failed.", 500)
         else:
             # flask.current_app.logger.debug("File %s updated", file_name)
             db.session.commit()
