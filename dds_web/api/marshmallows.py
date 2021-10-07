@@ -5,6 +5,7 @@
 # Standard Library
 import pathlib
 import json
+import os
 
 # Installed
 import flask
@@ -181,17 +182,77 @@ class ExistingFilesSchema(ProjectRequiredSchema, UploadPermissionsRequiredSchema
 class NewFileSchema(ProjectRequiredSchema, UploadPermissionsRequiredSchema):
     """Validates and creates a new file object."""
 
-    name = marshmallow.fields.String(required=True)
-    name_in_bucket = marshmallow.fields.String(required=True)
-    subpath = marshmallow.fields.String(required=True)
+    name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
+    name_in_bucket = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(min=1)
+    )
+    subpath = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
     size = marshmallow.fields.Integer(required=True)  # TODO: check that this accepts BIGINT
     size_processed = marshmallow.fields.Integer(required=True)
     compressed = marshmallow.fields.Boolean(required=True)
-    salt = marshmallow.fields.String(required=True)
-    public_key = marshmallow.fields.String(required=True)
-    checksum = marshmallow.fields.String(required=True)
+    public_key = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(equal=64)
+    )
+    salt = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(equal=32))
+    checksum = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(equal=64)
+    )
 
-    # @marshmallow.post_load
-    # def create_file(self, data, **kwargs):
-    #     """Create file object."""
-    #     ''
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def verify_file_not_exists(self, data, **kwargs):
+        """Check that the file does not match anything already in the database."""
+
+        # Generate new public file id and check that there isn't one in the database
+        public_id = os.urandom(16).hex()
+        try:
+            public_id_in_db = models.File.query.filter_by(public_id=public_id).one_or_none()
+        except sqlalchemy.exc.SQLAlchemyError:
+            raise
+        if public_id_in_db:
+            raise FileExistsError
+        data["public_id"] = public_id
+
+        # Check that there is no such file in the database
+
+        project = verify_project_exists(spec_proj=data.get("project"))
+        try:
+            file = (
+                models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name == sqlalchemy.func.binary(data.get("name")),
+                        models.File.project_id == sqlalchemy.func.binary(project.id),
+                    )
+                )
+                .with_entities(models.File.id)
+                .one_or_none()
+            )
+        except sqlalchemy.exc.SQLAlchemyError:
+            raise
+
+        if file:
+            raise FileExistsError
+
+        data["project"] = project
+
+    @marshmallow.post_load
+    def create_file(self, data, **kwargs):
+        """Create file object."""
+
+        new_file = models.File(
+            public_id=data.get("public_id"),
+            name=data.get("name"),
+            name_in_bucket=data.get("name_in_bucket"),
+            subpath=data.get("subpath"),
+            size_original=data.get("size"),
+            size_stored=data.get("size_processed"),
+            compressed=data.get("compressed"),
+            salt=data.get("salt"),
+            public_key=data.get("public_key"),
+            checksum=data.get("checksum"),
+        )
+
+        new_version = models.Version(
+            size_stored=new_file.size_stored, time_uploaded=utils.current_time()
+        )
+
+        return new_file, new_version, data.get("project")

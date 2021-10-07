@@ -34,97 +34,27 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required
     def post(self):
-        """Add new file to DB"""
+        """Add new file to DB."""
 
-        # flask.current_app.logger.debug(f"ARGS: {**flask.request.args, **flask.request.json}")
-        # return
-        test = marshmallows.NewFileSchema().load({**flask.request.json, **flask.request.args})
-        flask.current_app.logger.debug(f"TEST: {test}")
-        return
-        # file = marshmallows.NewFileSchema().load(flask.request.args)
-
-        message = ""
-        required_info = [
-            "name",
-            "name_in_bucket",
-            "subpath",
-            "size",
-            "size_processed",
-            "compressed",
-            "salt",
-            "public_key",
-            "checksum",
-        ]
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["put"],
+        new_file, new_version, project = marshmallows.NewFileSchema().load(
+            {**flask.request.json, **flask.request.args}
         )
 
-        if not all(x in args for x in required_info):
-            missing = [x for x in required_info if x not in args]
-            return flask.make_response(
-                f"Information missing ({missing}), cannot add file to database.", 500
-            )
-
         try:
-            # Check if file already in db
-            existing_file = (
-                models.File.query.filter(
-                    sqlalchemy.and_(
-                        models.File.name == func.binary(args["name"]),
-                        models.File.project_id == func.binary(project.id),
-                    )
-                )
-                .with_entities(models.File.id)
-                .first()
-            )
-
-            if existing_file or existing_file is not None:
-                return flask.make_response(
-                    f"File '{args['name']}' already exists in the database!", 500
-                )
-
-            # Add new file to db
-            new_file = models.File(
-                public_id=os.urandom(16).hex(),
-                name=args["name"],
-                name_in_bucket=args["name_in_bucket"],
-                subpath=args["subpath"],
-                size_original=args["size"],
-                size_stored=args["size_processed"],
-                compressed=bool(args["compressed"] == "True"),
-                salt=args["salt"],
-                public_key=args["public_key"],
-                checksum=args["checksum"],
-                project_id=project,
-            )
-
-            # New file version
-            new_version = models.Version(
-                size_stored=new_file.size_stored,
-                time_uploaded=dds_web.utils.current_time(),
-                active_file=new_file.id,
-                project_id=project,
-            )
-
             # Update foreign keys
             project.file_versions.append(new_version)
             project.files.append(new_file)
             new_file.versions.append(new_version)
 
-            db.session.add(new_file)
+            # db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.debug(err)
             db.session.rollback()
-            return flask.make_response(
-                f"Failed to add new file '{args['name']}' to database: {err}", 500
-            )
+            return flask.make_response(f"Failed to add new file to database.", 500)
 
-        return flask.jsonify({"message": f"File '{args['name']}' added to db."})
+        flask.current_app.logger.debug("File should be added....")
+        return flask.jsonify({"message": f"File '{new_file.name}' added to db."})
 
     @auth.login_required
     def put(self):
