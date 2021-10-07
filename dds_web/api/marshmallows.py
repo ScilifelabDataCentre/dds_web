@@ -60,13 +60,10 @@ def verify_method_access(spec_meth):
 ####################################################################################################
 
 
-class PublicKeySchema(marshmallow.Schema):
+class ProjectRequiredSchema(marshmallow.Schema):
+    """Schema for verifying an existing project in args and database."""
 
     project = marshmallow.fields.String(required=True)
-    method = marshmallow.fields.String(
-        required=True,
-        validate=[marshmallow.validate.OneOf(choices=["put", "get"]), verify_method_access],
-    )
 
     class Meta:
         unknown = marshmallow.RAISE
@@ -78,6 +75,15 @@ class PublicKeySchema(marshmallow.Schema):
         project = verify_project_exists(spec_proj=value)
         verify_project_access(project=project)
 
+
+class PublicKeySchema(ProjectRequiredSchema):
+    """Schema for verifying the methods access to the public key and returning the key."""
+
+    method = marshmallow.fields.String(
+        required=True,
+        validate=[marshmallow.validate.OneOf(choices=["put", "get"]), verify_method_access],
+    )
+
     @marshmallow.post_load
     def return_key(self, data, **kwargs):
         """Get and return public key."""
@@ -87,3 +93,33 @@ class PublicKeySchema(marshmallow.Schema):
             raise ddserr.PublicKeyNotFoundError(project=data.get("project"))
 
         return public_key
+
+
+class PrivateKeySchema(marshmallow.Schema):
+    """Schema for verifying the methods access to the private key and
+    returning the key along with nonce and salt."""
+
+    method = marshmallow.fields.String(
+        required=True,
+        validate=[marshmallow.validate.OneOf(choices=["get"]), verify_method_access],
+    )
+
+    @marshmallow.post_load
+    def return_key(self, data, **kwargs):
+        """Get and return project private key, nonce and salt."""
+
+        project_info = verify_project_exists(spec_proj=data.get("project"))
+
+        if not all(
+            [project_info.private_key, project_info.privkey_nonce, project_info.privkey_salt]
+        ):
+            raise ddserr.PrivateKeyNotFoundError(project=data.get("project"))
+
+        return (
+            bytes.fromhex(x)
+            for x in [
+                project_info.private_key,
+                project_info.privkey_nonce,
+                project_info.privkey_salt,
+            ]
+        )

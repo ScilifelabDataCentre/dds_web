@@ -181,15 +181,6 @@ class S3InfoNotFoundError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class KeyNotFoundError(exceptions.HTTPException):
-    """S3 keys not found."""
-
-    def __init__(self, message):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-
 class JwtTokenGenerationError(exceptions.HTTPException):
     """Errors when generating the JWT token during authentication."""
 
@@ -233,14 +224,24 @@ class InvalidMethodError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class PublicKeyNotFoundError(exceptions.HTTPException):
-    """Public key not found in database"""
+class KeyNotFoundError(exceptions.HTTPException):
+    """Key not found in database."""
 
     def __init__(self, project, message="No key found for current project"):
         self.message = f"{message}: {project}"
         super().__init__(self.message)
 
-        general_logger.warning(self.message)
+
+class PublicKeyNotFoundError(KeyNotFoundError):
+    """Public key not found in database."""
+
+
+class PrivateKeyNotFoundError(KeyNotFoundError):
+    """Private key not found in database."""
+
+
+class S3KeysNotFoundError(KeyNotFoundError):
+    """S3 keys not found."""
 
 
 ####################################################################################################
@@ -265,7 +266,7 @@ errors = {
     "S3ProjectNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "S3InfoNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "PublicKeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "InvalidMethodError": {"status": http.HTTPStatus.BAD_REQUEST},
 }

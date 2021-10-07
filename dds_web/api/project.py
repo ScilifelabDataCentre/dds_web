@@ -59,23 +59,14 @@ class GetPrivate(flask_restful.Resource):
     def get(self):
         """Get private key from database"""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["get"],
+        private_key_encrypted, nonce, salt = marshmallows.PrivateKeySchema().load(
+            flask.request.args
         )
 
         # TODO (ina): Change handling of private key -- not secure
-        flask.current_app.logger.debug("Getting the private key.")
 
         app_secret = flask.current_app.config.get("SECRET_KEY")
         passphrase = app_secret.encode("utf-8")
-
-        enc_key = bytes.fromhex(project.private_key)
-        nonce = bytes.fromhex(project.privkey_nonce)
-        salt = bytes.fromhex(project.privkey_salt)
 
         kdf = scrypt.Scrypt(
             salt=salt,
@@ -86,14 +77,17 @@ class GetPrivate(flask_restful.Resource):
             backend=backends.default_backend(),
         )
 
-        key_enc_key = kdf.derive(passphrase)
+        privkey_decryption_key = kdf.derive(passphrase)
         try:
-            decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
+            private_key = decrypt(
+                ciphertext=enc_key, aad=None, nonce=nonce, key=privkey_decryption_key
+            )
         except Exception as err:
             flask.current_app.logger.exception(err)
             return flask.make_response(str(err), 500)
 
-        return flask.jsonify({"private": decrypted_key.hex().upper()})
+        flask.current_app.logger.info("Returning private key...")
+        return flask.jsonify({"private": private_key.hex().upper()})
 
 
 class UserProjects(flask_restful.Resource):
