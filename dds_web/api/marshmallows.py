@@ -69,6 +69,17 @@ class ProjectRequiredSchema(marshmallow.Schema):
         verify_project_access(project=project)
 
 
+class UploadPermissionsRequiredSchema(marshmallow.Schema):
+    """Schema for verifying the current users permissions to upload"""
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def validate_put_access(self, data, **kwargs):
+        """Verify that the user has access to upload data."""
+
+        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+            raise marshmallow.ValidationError("User does not have upload permissions.")
+
+
 class PublicKeySchema(ProjectRequiredSchema):
     """Schema for returning the public key."""
 
@@ -147,15 +158,8 @@ class S3KeySchema(ProjectRequiredSchema):
         return project, safespring_project, endpoint_url, s3_keys
 
 
-class ExistingFilesSchema(ProjectRequiredSchema):
-    """ """
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def validate_put_access(self, data, **kwargs):
-        """Verify that the user has access to upload data."""
-
-        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
-            raise marshmallow.ValidationError("User does not have upload permissions.")
+class ExistingFilesSchema(ProjectRequiredSchema, UploadPermissionsRequiredSchema):
+    """Finds files in database matching requested."""
 
     @marshmallow.post_load
     def return_files(self, data, **kwargs):
@@ -172,3 +176,22 @@ class ExistingFilesSchema(ProjectRequiredSchema):
             raise
 
         return files
+
+
+class NewFileSchema(ProjectRequiredSchema, UploadPermissionsRequiredSchema):
+    """Validates and creates a new file object."""
+
+    name = marshmallow.fields.String(required=True)
+    name_in_bucket = marshmallow.fields.String(required=True)
+    subpath = marshmallow.fields.String(required=True)
+    size = marshmallow.fields.Integer(required=True)  # TODO: check that this accepts BIGINT
+    size_processed = marshmallow.fields.Integer(required=True)
+    compressed = marshmallow.fields.Boolean(required=True)
+    salt = marshmallow.fields.String(required=True)
+    public_key = marshmallow.fields.String(required=True)
+    checksum = marshmallow.fields.String(required=True)
+
+    # @marshmallow.post_load
+    # def create_file(self, data, **kwargs):
+    #     """Create file object."""
+    #     ''
