@@ -53,7 +53,6 @@ class NewFile(flask_restful.Resource):
             db.session.rollback()
             return flask.make_response(f"Failed to add new file to database.", 500)
 
-        flask.current_app.logger.debug("File should be added....")
         return flask.jsonify({"message": f"File '{new_file.name}' added to db."})
 
     @auth.login_required

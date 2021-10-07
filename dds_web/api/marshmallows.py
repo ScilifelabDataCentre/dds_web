@@ -69,8 +69,13 @@ class ProjectRequiredSchema(marshmallow.Schema):
         project = verify_project_exists(spec_proj=value)
         verify_project_access(project=project)
 
+    @marshmallow.post_load
+    def return_items(self, data, **kwargs):
 
-class UploadPermissionsRequiredSchema(marshmallow.Schema):
+        return verify_project_exists(spec_proj=data.get("project"))
+
+
+class UploadPermissionsRequiredSchema(ProjectRequiredSchema):
     """Schema for verifying the current users permissions to upload"""
 
     @marshmallow.validates_schema(skip_on_field_errors=True)
@@ -85,7 +90,7 @@ class PublicKeySchema(ProjectRequiredSchema):
     """Schema for returning the public key."""
 
     @marshmallow.post_load
-    def return_key(self, data, **kwargs):
+    def return_items(self, data, **kwargs):
         """Get and return public key."""
 
         public_key = verify_project_exists(spec_proj=data.get("project")).public_key
@@ -99,7 +104,7 @@ class PrivateKeySchema(ProjectRequiredSchema):
     """Schema for returning the private key along with nonce and salt."""
 
     @marshmallow.post_load
-    def return_key(self, data, **kwargs):
+    def return_items(self, data, **kwargs):
         """Get and return project private key, nonce and salt."""
 
         project_info = verify_project_exists(spec_proj=data.get("project"))
@@ -123,7 +128,7 @@ class S3KeySchema(ProjectRequiredSchema):
     """Validate and get S3 keys."""
 
     @marshmallow.post_load
-    def return_keys(self, data, **kwargs):
+    def return_items(self, data, **kwargs):
         """Get key"""
 
         # Get safespring project name
@@ -159,11 +164,11 @@ class S3KeySchema(ProjectRequiredSchema):
         return project, safespring_project, endpoint_url, s3_keys
 
 
-class ExistingFilesSchema(ProjectRequiredSchema, UploadPermissionsRequiredSchema):
+class ExistingFilesSchema(UploadPermissionsRequiredSchema):
     """Finds files in database matching requested."""
 
     @marshmallow.post_load
-    def return_files(self, data, **kwargs):
+    def return_items(self, data, **kwargs):
         """Return the required file information."""
 
         try:
@@ -179,7 +184,7 @@ class ExistingFilesSchema(ProjectRequiredSchema, UploadPermissionsRequiredSchema
         return files
 
 
-class NewFileSchema(ProjectRequiredSchema, UploadPermissionsRequiredSchema):
+class NewFileSchema(UploadPermissionsRequiredSchema):
     """Validates and creates a new file object."""
 
     name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
@@ -235,7 +240,7 @@ class NewFileSchema(ProjectRequiredSchema, UploadPermissionsRequiredSchema):
         data["project"] = project
 
     @marshmallow.post_load
-    def create_file(self, data, **kwargs):
+    def return_items(self, data, **kwargs):
         """Create file object."""
 
         new_file = models.File(
