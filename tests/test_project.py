@@ -26,7 +26,7 @@ def test_create_project_without_credentials(client):
         )
         .one_or_none()
     )
-    assert created_proj == None
+    assert created_proj is None
 
 
 def test_create_project_with_credentials(client):
@@ -69,7 +69,7 @@ def test_create_project_without_title_description(client):
         )
         .one_or_none()
     )
-    assert created_proj == None
+    assert created_proj is None
 
 
 def test_create_project_with_malformed_json(client):
@@ -91,7 +91,7 @@ def test_create_project_with_malformed_json(client):
         )
         .one_or_none()
     )
-    assert created_proj == None
+    assert created_proj is None
 
 
 def test_create_project_by_user_with_no_unit(client):
@@ -113,4 +113,4 @@ def test_create_project_by_user_with_no_unit(client):
         )
         .one_or_none()
     )
-    assert created_proj == None
+    assert created_proj is None
