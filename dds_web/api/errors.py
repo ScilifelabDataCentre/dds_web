@@ -129,20 +129,20 @@ class DeletionError(exceptions.HTTPException):
 class NoSuchProjectError(exceptions.HTTPException):
     """The project does not exist in the database"""
 
-    def __init__(self, username, project, message="The specified project does not exist."):
+    def __init__(self, message="The specified project does not exist."):
         super().__init__(message)
 
         general_logger.warning(message)
 
-        action_logger.warning(
-            message,
-            extra={
-                **extra_info,
-                "current_user": username,
-                "action": actions.get(flask.request.endpoint),
-                "project": project,
-            },
-        )
+        # action_logger.warning(
+        #     message,
+        #     extra={
+        #         **extra_info,
+        #         "current_user": username,
+        #         "action": actions.get(flask.request.endpoint),
+        #         "project": project,
+        #     },
+        # )
 
 
 class BucketNotFoundError(exceptions.HTTPException):

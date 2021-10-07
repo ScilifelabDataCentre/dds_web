@@ -35,7 +35,8 @@ def verify_project_exists(spec_proj):
         raise
 
     if not project:
-        raise marshmallow.ValidationError("Invalid project.")
+        flask.current_app.logger.warning("No such project!!")
+        raise ddserr.NoSuchProjectError
 
     return project
 
@@ -44,7 +45,11 @@ def verify_project_access(project):
     """Check users access to project."""
 
     if project not in auth.current_user().projects:
-        raise marshmallow.ValidationError("Project access denied.")
+        raise ddserr.AccessDeniedError(
+            message="Project access denied.",
+            username=auth.current_user().username,
+            project=project.public_id,
+        )
 
     return project
 
