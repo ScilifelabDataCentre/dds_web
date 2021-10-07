@@ -83,6 +83,7 @@ class Project(db.Model):
     # Foreign keys
     # One unit can have many projects
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
+
     # One unit can be created by one user
     created_by = db.Column(db.String(50), db.ForeignKey("users.username"), nullable=False)
 
@@ -114,6 +115,12 @@ class Project(db.Model):
     file_versions = db.relationship("Version", backref="responsible_project")
 
     researchusers = db.relationship("ProjectUsers", back_populates="project")
+
+    @property
+    def safespring_project(self):
+        """Get the safespring project name from responsible unit."""
+
+        return self.responsible_unit.safespring
 
     def __repr__(self):
         """Called by print, creates representation of object"""

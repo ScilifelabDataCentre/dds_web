@@ -22,6 +22,7 @@ from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import DatabaseError
+from dds_web.api import marshmallows
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -206,14 +207,9 @@ class MatchFiles(flask_restful.Resource):
     def get(self):
         """Matches specified files to files in db."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["put"],
-        )
-
+        test = marshmallows.ExistingFilesSchema().load(flask.request.args)
+        flask.current_app.logger.debug(f"TEST: {test}")
+        return
         try:
             matching_files = (
                 models.File.query.filter(models.File.name.in_(flask.request.json))

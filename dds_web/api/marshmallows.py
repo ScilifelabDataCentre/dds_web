@@ -3,6 +3,8 @@
 ####################################################################################################
 
 # Standard Library
+import pathlib
+import json
 
 # Installed
 import flask
@@ -46,15 +48,6 @@ def verify_project_access(project):
     return project
 
 
-def verify_method_access(spec_meth):
-    """Check that user has permission to perform method"""
-
-    if spec_meth not in ROLES[auth.current_user().role]:
-        raise marshmallow.ValidationError(
-            f"User does not have the neccessary permissions to perform this action: {spec_meth}"
-        )
-
-
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
@@ -77,12 +70,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
 
 
 class PublicKeySchema(ProjectRequiredSchema):
-    """Schema for verifying the methods access to the public key and returning the key."""
-
-    method = marshmallow.fields.String(
-        required=True,
-        validate=[marshmallow.validate.OneOf(choices=["put", "get"]), verify_method_access],
-    )
+    """Schema for returning the public key."""
 
     @marshmallow.post_load
     def return_key(self, data, **kwargs):
@@ -95,14 +83,8 @@ class PublicKeySchema(ProjectRequiredSchema):
         return public_key
 
 
-class PrivateKeySchema(marshmallow.Schema):
-    """Schema for verifying the methods access to the private key and
-    returning the key along with nonce and salt."""
-
-    method = marshmallow.fields.String(
-        required=True,
-        validate=[marshmallow.validate.OneOf(choices=["get"]), verify_method_access],
-    )
+class PrivateKeySchema(ProjectRequiredSchema):
+    """Schema for returning the private key along with nonce and salt."""
 
     @marshmallow.post_load
     def return_key(self, data, **kwargs):
@@ -123,3 +105,58 @@ class PrivateKeySchema(marshmallow.Schema):
                 project_info.privkey_salt,
             ]
         )
+
+
+class S3KeySchema(ProjectRequiredSchema):
+    """Validate and get S3 keys."""
+
+    @marshmallow.post_load
+    def return_keys(self, data, **kwargs):
+        """Get key"""
+
+        # Get safespring project name
+        project = verify_project_exists(spec_proj=data.get("project"))
+        safespring_project = project.safespring_project
+        if not safespring_project:
+            raise ddserr.S3ProjectNotFoundError
+
+        # Get path to key file
+        s3_keys_path_string = flask.current_app.config.get("DDS_S3_CONFIG")
+        if not s3_keys_path_string:
+            raise ddserr.S3InfoNotFoundError(message="API failed getting the s3 config file path.")
+
+        # Get safespring project keys
+        s3_keys_path = pathlib.Path(s3_keys_path_string)
+        if not s3_keys_path.exists():
+            raise FileNotFoundError("DDS S3 config file not found.")
+        try:
+            with s3_keys_path.open(mode="r") as f:
+                s3_keys = json.load(f).get("sfsp_keys").get(safespring_project)
+
+            with s3_keys_path.open(mode="r") as f:
+                endpoint_url = json.load(f).get("endpoint_url")
+
+            if not all([s3_keys.get("access_key"), s3_keys.get("secret_key")]):
+                raise ddserr.S3KeysNotFoundError(
+                    project=self.project,
+                    message="Safespring S3 access or secret key not found in s3 config file.",
+                )
+        except ddserr.S3KeysNotFoundError:
+            raise
+
+        return project, safespring_project, endpoint_url, s3_keys
+
+
+class ExistingFilesSchema(ProjectRequiredSchema):
+    """ """
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def validate_put_access(self, data, **kwargs):
+        """Verify that the user has access to upload data."""
+
+        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+            raise marshmallow.ValidationError("User does not have upload permissions.")
+
+    # @marshmallow.post_load
+    # def return_files(self, data, **kwargs):
+    #     """"""
