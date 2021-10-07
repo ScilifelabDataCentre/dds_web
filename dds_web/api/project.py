@@ -99,6 +99,7 @@ class UserProjects(flask_restful.Resource):
     @auth.login_required
     def get(self):
         """Get info regarding all projects which user is involved in."""
+
         current_user = auth.current_user()
 
         # TODO: Return different things depending on if unit or not
