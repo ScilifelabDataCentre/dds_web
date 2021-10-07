@@ -51,6 +51,7 @@ class GetPublic(flask_restful.Resource):
 
         public_key = marshmallows.PublicKeySchema().load(flask.request.args)
 
+        flask.current_app.logger.info("Returning public key...")
         return flask.jsonify({"public": public_key})
 
 
