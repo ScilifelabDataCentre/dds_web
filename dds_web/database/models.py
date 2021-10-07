@@ -206,7 +206,7 @@ class File(db.Model):
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)
-    salt = db.Column(db.String(16), unique=False, nullable=False)
+    salt = db.Column(db.String(32), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
     time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
     expires = db.Column(

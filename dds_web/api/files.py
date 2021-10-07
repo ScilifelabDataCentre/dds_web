@@ -573,15 +573,16 @@ class UpdateFile(flask_restful.Resource):
                 "Updating file in current project: %s", project.public_id
             )
 
+            flask.current_app.logger.debug(f"File name: {file_name}")
             file = models.File.query.filter(
                 sqlalchemy.and_(
                     models.File.project_id == func.binary(project.id),
-                    models.File.name == func.binary(file_name["name"]),
+                    models.File.name == func.binary(file_name),
                 )
             ).first()
 
             if not file:
-                return flask.make_response(f"No such file: {file_name['name']}", 500)
+                return flask.make_response(f"No such file: {file_name}", 500)
 
             file.time_latest_download = dds_web.utils.current_time()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -589,7 +590,7 @@ class UpdateFile(flask_restful.Resource):
             flask.current_app.logger.exception(str(err))
             return flask.make_response(str(err), 500)
         else:
-            flask.current_app.logger.debug("File %s updated", file_name["name"])
+            flask.current_app.logger.debug("File %s updated", file_name)
             db.session.commit()
 
         return flask.jsonify({"message": "File info updated."})
