@@ -207,23 +207,12 @@ class MatchFiles(flask_restful.Resource):
     def get(self):
         """Matches specified files to files in db."""
 
-        test = marshmallows.ExistingFilesSchema().load(flask.request.args)
-        flask.current_app.logger.debug(f"TEST: {test}")
-        return
-        try:
-            matching_files = (
-                models.File.query.filter(models.File.name.in_(flask.request.json))
-                .filter(models.File.project_id == func.binary(project.id))
-                .all()
-            )
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(f"Failed to get matching files in db: {err}", 500)
+        files = marshmallows.ExistingFilesSchema().load(flask.request.args)
+        flask.current_app.logger.debug(f"FILES: {files}")
 
-        # The files checked are not in the db
-        if not matching_files or matching_files is None:
-            return flask.jsonify({"files": None})
-
-        return flask.jsonify({"files": {x.name: x.name_in_bucket for x in matching_files}})
+        return flask.jsonify(
+            {"files": {f.name: f.name_in_bucket for f in files} if files else None}
+        )
 
 
 class ListFiles(flask_restful.Resource):

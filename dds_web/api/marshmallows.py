@@ -157,6 +157,18 @@ class ExistingFilesSchema(ProjectRequiredSchema):
         if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
             raise marshmallow.ValidationError("User does not have upload permissions.")
 
-    # @marshmallow.post_load
-    # def return_files(self, data, **kwargs):
-    #     """"""
+    @marshmallow.post_load
+    def return_files(self, data, **kwargs):
+        """Return the required file information."""
+
+        try:
+            files = models.File.query.filter(
+                sqlalchemy.and_(
+                    models.File.name.in_(flask.request.json),
+                    models.File.project_id == sqlalchemy.func.binary(data.get("project")),
+                )
+            ).all()
+        except sqlalchemy.exc.SQLAlchemyError:
+            raise
+
+        return files
