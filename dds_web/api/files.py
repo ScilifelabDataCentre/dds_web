@@ -590,7 +590,7 @@ class UpdateFile(flask_restful.Resource):
             flask.current_app.logger.exception(str(err))
             return flask.make_response(str(err), 500)
         else:
-            flask.current_app.logger.debug("File %s updated", file_name)
+            # flask.current_app.logger.debug("File %s updated", file_name)
             db.session.commit()
 
         return flask.jsonify({"message": "File info updated."})
