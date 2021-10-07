@@ -14,6 +14,7 @@ import sqlalchemy
 from cryptography.hazmat.primitives.kdf import scrypt
 from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
 from cryptography.hazmat import backends
+import os
 
 
 # Own modules
@@ -34,6 +35,7 @@ from dds_web.api.errors import (
     InvalidMethodError,
 )
 from dds_web.api import marshmallows
+from dds_web.crypt import key_gen
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -250,3 +252,76 @@ class UpdateProjectSize(flask_restful.Resource):
                 break
 
         return flask.jsonify({"updated": updated, "error": error, "tries": current_try})
+
+
+class CreateProject(flask_restful.Resource):
+    @auth.login_required(role="admin")
+    def post(self):
+        """Create a new project"""
+        p_info = flask.request.json
+        cur_user = auth.current_user()
+        # Add check for user permissions
+
+        created_time = dds_web.utils.current_time()
+
+        try:
+            # lock Unit row
+            unit_row = (
+                db.session.query(models.Unit)
+                .filter_by(id=cur_user.unit_id)
+                .with_for_update()
+                .one_or_none()
+            )
+
+            if not unit_row:
+                raise Exception(
+                    "No unit associated to this user --> cannot create project. This message and exception should and will be changed."
+                )
+
+            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
+            public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
+
+            project_info = {
+                "public_id": public_id,
+                "title": p_info["title"],
+                "date_created": created_time,
+                "date_updated": created_time,
+                "status": "Ongoing",  # ?
+                "description": p_info["description"],
+                "pi": p_info.get("pi", ""),  # Not a foreign key, only a name
+                "size": 0,
+                "bucket": self.__create_bucket_name(public_id, created_time),
+            }
+            pkg = key_gen.ProjectKeys(project_info["public_id"])
+            project_info.update(pkg.key_dict())
+
+            new_project = models.Project(**project_info)
+            unit_row.projects.append(new_project)
+            cur_user.created_projects.append(new_project)
+
+            db.session.commit()
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            return flask.make_response("Server Error: Project was not created\n", 500)
+
+        else:
+            flask.current_app.logger.debug(
+                f"Project {public_id} created by user {cur_user.username}."
+            )
+            return flask.jsonify(
+                {
+                    "status": 200,
+                    "message": "Added new project '{}'".format(new_project.title),
+                    "project_id": new_project.public_id,
+                }
+            )
+
+    def __create_bucket_name(self, public_id, created_time):
+        """Create a bucket name for the given project"""
+        return "{pid}-{tstamp}-{rstring}".format(
+            pid=public_id.lower(),
+            tstamp=dds_web.utils.timestamp(dts=created_time, ts_format="%y%m%d%H%M%S%f"),
+            rstring=os.urandom(4).hex(),
+        )
