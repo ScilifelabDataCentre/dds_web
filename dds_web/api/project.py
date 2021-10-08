@@ -31,6 +31,7 @@ from dds_web.api.errors import (
     DeletionError,
     BucketNotFoundError,
     PublicKeyNotFoundError,
+    DDSArgumentError,
 )
 from dds_web.crypt import key_gen
 
@@ -306,7 +307,19 @@ class CreateProject(flask_restful.Resource):
     @auth.login_required(role="admin")
     def post(self):
         """Create a new project"""
-        p_info = flask.request.json
+
+        if flask.request.is_json:
+            try:
+                p_info = flask.request.json
+            except:
+                raise DDSArgumentError(message="Error: Malformed data provided")
+        else:
+            raise DDSArgumentError(message="Error: Malformed data provided")
+
+        if "title" not in p_info or "description" not in p_info:
+            raise DDSArgumentError(
+                message="Error: Title/description missing when creating a project"
+            )
         cur_user = auth.current_user()
         # Add check for user permissions
 
@@ -322,9 +335,7 @@ class CreateProject(flask_restful.Resource):
             )
 
             if not unit_row:
-                raise Exception(
-                    "No unit associated to this user --> cannot create project. This message and exception should and will be changed."
-                )
+                raise AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
 
             unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
             public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
@@ -349,10 +360,10 @@ class CreateProject(flask_restful.Resource):
 
             db.session.commit()
 
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            return flask.make_response("Server Error: Project was not created\n", 500)
+            raise DatabaseError(message="Server Error: Project was not created")
 
         else:
             flask.current_app.logger.debug(
