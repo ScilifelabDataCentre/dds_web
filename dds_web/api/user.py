@@ -13,14 +13,13 @@ from sqlalchemy.sql import func
 
 import flask
 import flask_restful
-import jwt
+from jwcrypto import jwk, jwt
 import pandas
 import sqlalchemy
 
 # Own modules
 from dds_web import auth
 from dds_web.database import models
-from dds_web.api.errors import JwtTokenGenerationError
 import dds_web.utils
 
 
@@ -31,27 +30,15 @@ import dds_web.utils
 
 def jwt_token(username):
     """Generates a JWT token."""
-
-    try:
-        token = jwt.encode(
-            {
-                "user": username,
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
-            },
-            flask.current_app.config.get("SECRET_KEY"),
-            algorithm="HS256",
-        )
-        flask.current_app.logger.debug(f"token: {token}")
-    except (
-        TypeError,
-        KeyError,
-        jwt.exceptions.InvalidKeyError,
-        jwt.exceptions.InvalidAlgorithmError,
-        jwt.exceptions.MissingRequiredClaimError,
-    ) as err:
-        raise JwtTokenGenerationError(message=str(err))
-    else:
-        return token
+    expiration_time = datetime.datetime.utcnow() + datetime.timedelta(hours=48)
+    data = {
+        "sub": username,
+        "exp": expiration_time.timestamp(),
+    }
+    key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
+    token = jwt.JWT(header={"alg": "HS256"}, claims=data, algs=["HS256"])
+    token.make_signed_token(key)
+    return token.serialize()
 
 
 ####################################################################################################
