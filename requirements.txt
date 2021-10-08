@@ -16,6 +16,6 @@ apscheduler
 werkzeug
 pytest==6.2.4
 Flask-HTTPAuth
-pyjwt==2.1.0
+jwcrypto
 pandas
 requests
