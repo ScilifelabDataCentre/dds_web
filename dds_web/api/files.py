@@ -59,12 +59,7 @@ class NewFile(flask_restful.Resource):
     def put(self):
 
         args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["put"],
-        )
+        project = marshmallows.UpdatePermissionsRequiredSchema().load(args)
 
         if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
             return flask.make_response("Information missing, " "cannot add file to database.", 500)
@@ -158,12 +153,7 @@ class ListFiles(flask_restful.Resource):
         """Get a list of files within the specified folder."""
 
         args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["ls"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(args)
 
         # Check if to return file size
         show_size = args.get("show_size") == "True"
@@ -231,13 +221,7 @@ class RemoveFile(flask_restful.Resource):
     def delete(self):
         """Deletes the files"""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["rm"],
-        )
+        project = marshmallows.DeletePermissionsRequiredSchema().load(flask.request.args)
 
         with DBConnector(project=project) as dbconn:
             not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
@@ -259,13 +243,7 @@ class RemoveDir(flask_restful.Resource):
     def delete(self):
         """Deletes the folders."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["rm"],
-        )
+        project = marshmallows.DeletePermissionsRequiredSchema().load(flask.request.args)
 
         not_removed_dict, not_exist_list = ({}, [])
 
@@ -323,13 +301,7 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["get"],
-        )
+        project = marshmallows.FileInfoSchema().load(flask.request.args)
 
         # Get files and folders requested by CLI
         paths = flask.request.json
@@ -415,13 +387,7 @@ class FileInfoAll(flask_restful.Resource):
     def get(self):
         """Get file info."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["get"],
-        )
+        project = marshmallows.FileInfoSchema().load(flask.request.args)
 
         files = {}
         try:
@@ -471,12 +437,7 @@ class UpdateFile(flask_restful.Resource):
         """Update info in db."""
 
         args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            endpoint_methods=["get"],
-        )
+        project = marshmallows.UpdateDownloadTimeSchema().load(args)
 
         # Get file name from request from CLI
         file_name = args.get("name")
@@ -492,12 +453,12 @@ class UpdateFile(flask_restful.Resource):
             file = models.File.query.filter(
                 sqlalchemy.and_(
                     models.File.project_id == func.binary(project.id),
-                    models.File.name == func.binary(file_name["name"]),
+                    models.File.name == func.binary(file_name),
                 )
             ).first()
 
             if not file:
-                return flask.make_response(f"No such file: {file_name['name']}", 500)
+                return flask.make_response(f"No such file: {file_name}", 500)
 
             file.time_latest_download = dds_web.utils.current_time()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -505,7 +466,7 @@ class UpdateFile(flask_restful.Resource):
             flask.current_app.logger.exception(str(err))
             return flask.make_response(str(err), 500)
         else:
-            flask.current_app.logger.debug("File %s updated", file_name["name"])
+            flask.current_app.logger.debug("File %s updated", file_name)
             db.session.commit()
 
         return flask.jsonify({"message": "File info updated."})

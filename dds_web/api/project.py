@@ -66,6 +66,8 @@ class GetPrivate(flask_restful.Resource):
             flask.request.args
         )
 
+        flask.current_app.logger.debug(f"{private_key_encrypted}, {nonce}, {salt}")
+        # return
         # TODO (ina): Change handling of private key -- not secure
 
         app_secret = flask.current_app.config.get("SECRET_KEY")
@@ -83,7 +85,7 @@ class GetPrivate(flask_restful.Resource):
         privkey_decryption_key = kdf.derive(passphrase)
         try:
             private_key = decrypt(
-                ciphertext=enc_key, aad=None, nonce=nonce, key=privkey_decryption_key
+                ciphertext=private_key_encrypted, aad=None, nonce=nonce, key=privkey_decryption_key
             )
         except Exception as err:
             flask.current_app.logger.exception(err)
@@ -251,7 +253,7 @@ class UpdateProjectSize(flask_restful.Resource):
 
 
 class CreateProject(flask_restful.Resource):
-    @auth.login_required(role="admin")
+    @auth.login_required(role="Unit Personnel")
     def post(self):
         """Create a new project"""
         p_info = flask.request.json
@@ -280,6 +282,8 @@ class CreateProject(flask_restful.Resource):
             project_info = {
                 "public_id": public_id,
                 "title": p_info["title"],
+                "unit_id": unit_row,
+                "created_by": cur_user.username,
                 "date_created": created_time,
                 "date_updated": created_time,
                 "status": "Ongoing",  # ?
@@ -294,7 +298,6 @@ class CreateProject(flask_restful.Resource):
             new_project = models.Project(**project_info)
             unit_row.projects.append(new_project)
             cur_user.created_projects.append(new_project)
-
             db.session.commit()
 
         except sqlalchemy.exc.SQLAlchemyError as err:

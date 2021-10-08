@@ -40,7 +40,9 @@ class ProjectKeys:
 
     def _set_passphrase(self):
         """Sets the private encryption passphrase using app secret key"""
-        self._passphrase = (current_app.config.get("SECRET_KEY")).encode("utf-8")
+        app_secret = current_app.config.get("SECRET_KEY")
+        current_app.logger.debug(f"APP SECRET: {app_secret}")
+        self._passphrase = (app_secret).encode("utf-8")
 
     def _generate_keypair(self):
         """Generates salted, encrypted private and public key"""

@@ -95,6 +95,29 @@ class UploadPermissionsRequiredSchema(ProjectRequiredSchema):
             )
 
 
+class UpdatePermissionsRequiredSchema(UploadPermissionsRequiredSchema):
+    """TEMPORARY, WILL BE MERGED WITH UPLOADPERMISSIONS LATER.
+    Checks that a user has permissions to update file info."""
+
+    class Meta:
+        unknown = marshmallow.EXCLUDE
+
+
+class DeletePermissionsRequiredSchema(ProjectRequiredSchema):
+    """Schema for verifying the current users permissions to delete."""
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def validate_put_access(self, data, **kwargs):
+        """Verify that the user has access to delete data."""
+
+        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+            raise ddserr.AccessDeniedError(
+                message="User does not have upload permissions.",
+                username=auth.current_user().username,
+                project=data.get("project"),
+            )
+
+
 class PublicKeySchema(ProjectRequiredSchema):
     """Schema for returning the public key."""
 
@@ -270,3 +293,14 @@ class NewFileSchema(UploadPermissionsRequiredSchema):
         )
 
         return new_file, new_version, data.get("project")
+
+
+class FileInfoSchema(ProjectRequiredSchema):
+    """Returns file info."""
+
+
+class UpdateDownloadTimeSchema(ProjectRequiredSchema):
+    """Updates a files download time."""
+
+    class Meta:
+        unknown = marshmallow.EXCLUDE
