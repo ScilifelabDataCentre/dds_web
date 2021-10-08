@@ -169,13 +169,7 @@ class RemoveContents(flask_restful.Resource):
     def delete(self):
         """Removes all project contents."""
 
-        args = flask.request.args
-        current_user = auth.current_user()
-        project = verify(
-            current_user=current_user,
-            project_public_id=args.get("project"),
-            endpoint_methods=["rm"],
-        )
+        project = marshmallows.DeletePermissionsRequiredSchema().load(flask.request.args)
 
         # Delete files
         removed = False
