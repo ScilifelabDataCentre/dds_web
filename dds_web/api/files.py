@@ -144,7 +144,6 @@ class MatchFiles(flask_restful.Resource):
         """Matches specified files to files in db."""
 
         files = marshmallows.ExistingFilesSchema().load(flask.request.args)
-        flask.current_app.logger.debug(f"FILES: {files}")
 
         return flask.jsonify(
             {"files": {f.name: f.name_in_bucket for f in files} if files else None}

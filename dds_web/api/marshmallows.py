@@ -88,7 +88,11 @@ class UploadPermissionsRequiredSchema(ProjectRequiredSchema):
         """Verify that the user has access to upload data."""
 
         if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
-            raise marshmallow.ValidationError("User does not have upload permissions.")
+            raise ddserr.AccessDeniedError(
+                message="User does not have upload permissions.",
+                username=auth.current_user().username,
+                project=data.get("project"),
+            )
 
 
 class PublicKeySchema(ProjectRequiredSchema):
