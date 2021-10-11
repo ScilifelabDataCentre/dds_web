@@ -87,21 +87,6 @@ class ProjectRequiredSchema(marshmallow.Schema):
         return data.get("project_row")
 
 
-class DeletePermissionsRequiredSchema(ProjectRequiredSchema):
-    """Schema for verifying the current users permissions to delete."""
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def validate_put_access(self, data, **kwargs):
-        """Verify that the user has access to delete data."""
-
-        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
-            raise ddserr.AccessDeniedError(
-                message="User does not have upload permissions.",
-                username=auth.current_user().username,
-                project=data.get("project"),
-            )
-
-
 class PublicKeySchema(ProjectRequiredSchema):
     """Schema for returning the public key."""
 

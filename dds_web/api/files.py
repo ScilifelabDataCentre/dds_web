@@ -126,16 +126,15 @@ class RemoveFile(flask_restful.Resource):
     def delete(self):
         """Deletes the files"""
 
-        project = marshmallows.DeletePermissionsRequiredSchema().load(flask.request.args)
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
-        with DBConnector(project=project) as dbconn:
-            not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
-                files=flask.request.json
-            )
+        not_removed_dict, not_exist_list, error = dds_web.utils.delete_multiple(
+            project=project, files=flask.request.json
+        )
 
-            # S3 connection error
-            if not any([not_removed_dict, not_exist_list]) and error != "":
-                return flask.make_response(error, 500)
+        # S3 connection error
+        if not any([not_removed_dict, not_exist_list]) and error != "":
+            return flask.make_response(error, 500)
 
         # Return deleted and not deleted files
         return flask.jsonify({"not_removed": not_removed_dict, "not_exists": not_exist_list})
@@ -148,7 +147,7 @@ class RemoveDir(flask_restful.Resource):
     def delete(self):
         """Deletes the folders."""
 
-        project = marshmallows.DeletePermissionsRequiredSchema().load(flask.request.args)
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         not_removed_dict, not_exist_list = ({}, [])
 
