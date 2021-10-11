@@ -57,70 +57,14 @@ class NewFile(flask_restful.Resource):
     def put(self):
 
         args = flask.request.args
-        project = marshmallows.UpdatePermissionsRequiredSchema().load(args)
-
-        if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
-            return flask.make_response("Information missing, " "cannot add file to database.", 500)
+        existing_file, new_version, project = marshmallows.NewVersionSchema().load(
+            {**flask.request.json, **flask.request.args}
+        )
 
         try:
-            # Check if file already in db
-            existing_file = models.File.query.filter(
-                sqlalchemy.and_(
-                    models.File.name == func.binary(args["name"]),
-                    models.File.project_id == project.id,
-                )
-            ).first()
-
-            # Error if not found
-            if not existing_file or existing_file is None:
-                return flask.make_response(
-                    f"Cannot update non-existent file '{args['name']}' in the database!",
-                    500,
-                )
-
-            # Get version row
-            current_file_version = models.Version.query.filter(
-                sqlalchemy.and_(
-                    models.Version.active_file == func.binary(existing_file.id),
-                    models.Version.time_deleted == None,
-                )
-            ).all()
-            if len(current_file_version) > 1:
-                flask.current_app.logger.warning(
-                    "There is more than one version of the file which does not yet have a deletion timestamp."
-                )
-
-            # Same timestamp for deleted and created new file
-            new_timestamp = dds_web.utils.current_time()
-
-            # Overwritten == deleted/deactivated
-            for version in current_file_version:
-                if version.time_deleted is None:
-                    version.time_deleted = new_timestamp
-
-            # Update file info
-            existing_file.subpath = args["subpath"]
-            existing_file.size_original = args["size"]
-            existing_file.size_stored = args["size_processed"]
-            existing_file.compressed = bool(args["compressed"] == "True")
-            existing_file.salt = args["salt"]
-            existing_file.public_key = args["public_key"]
-            existing_file.time_uploaded = new_timestamp
-            existing_file.checksum = args["checksum"]
-
-            # New version
-            new_version = models.Version(
-                size_stored=args["size_processed"],
-                time_uploaded=new_timestamp,
-                active_file=existing_file.id,
-                project_id=project,
-            )
-
             # Update foreign keys and relationships
             project.file_versions.append(new_version)
             existing_file.versions.append(new_version)
-
-            db.session.add(new_version)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()

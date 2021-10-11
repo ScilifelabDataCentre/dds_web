@@ -79,14 +79,6 @@ class ProjectRequiredSchema(marshmallow.Schema):
         return verify_project_exists(spec_proj=data.get("project"))
 
 
-class UpdatePermissionsRequiredSchema(ProjectRequiredSchema):
-    """TEMPORARY, WILL BE MERGED WITH UPLOADPERMISSIONS LATER.
-    Checks that a user has permissions to update file info."""
-
-    class Meta:
-        unknown = marshmallow.EXCLUDE
-
-
 class DeletePermissionsRequiredSchema(ProjectRequiredSchema):
     """Schema for verifying the current users permissions to delete."""
 
@@ -277,6 +269,101 @@ class NewFileSchema(ProjectRequiredSchema):
         )
 
         return new_file, new_version, data.get("project")
+
+
+class NewVersionSchema(ProjectRequiredSchema):
+    """Checks that a user has permissions to update file info."""
+
+    name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
+    name_in_bucket = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(min=1)
+    )
+    subpath = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
+    size = marshmallow.fields.Integer(required=True)  # TODO: check that this accepts BIGINT
+    size_processed = marshmallow.fields.Integer(required=True)
+    compressed = marshmallow.fields.Boolean(required=True)
+    public_key = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(equal=64)
+    )
+    salt = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(equal=32))
+    checksum = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(equal=64)
+    )
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def verify_exists(self, data, **kwargs):
+        """Verify that the file exists -- cannot update non existent file."""
+
+        project = verify_project_exists(spec_proj=data.get("project"))
+        try:
+            existing_file = models.File.query.filter(
+                sqlalchemy.and_(
+                    models.File.name == func.binary(data.get("name")),
+                    models.File.project_id == project.id,
+                )
+            ).first()
+
+            if not existing_file:
+                raise FileNotFoundError
+
+            current_file_version = models.Version.query.filter(
+                sqlalchemy.and_(
+                    models.Version.active_file == func.binary(existing_file.id),
+                    models.Version.time_deleted == None,
+                )
+            ).all()
+
+            if len(current_file_version) > 1:
+                flask.current_app.logger.warning(
+                    "There is more than one version of the file which does not yet have a deletion timestamp."
+                )
+
+        except (sqlalchemy.exc.SQLAlchemyError, FileNotFoundError):
+            raise
+        else:
+            data.update(
+                {
+                    "file": existing_file,
+                    "version": current_file_version[0],
+                    "project": project,
+                }
+            )
+
+    @marshmallow.post_load
+    def return_items(self, data, **kwargs):
+        """Update file info."""
+
+        # Same timestamp for deleted and created new file
+        new_timestamp = dds_web.utils.current_time()
+
+        try:
+            # Overwritten == deleted / deactivated
+            old_version = data.get("version")
+            old_version.time_deleted = new_timestamp
+
+            # Update file info
+            file = data.get("file")
+            file.subpath = data.get("subpath")
+            file.size_original = data.get("size")
+            file.size_stored = data.get("size_processed")
+            file.compressed = data.get("compressed")
+            file.salt = data.get("salt")
+            file.public_key = data.get("public_key")
+            file.time_uploaded = new_timestamp
+            file.checksum = data.get("checksum")
+
+            # New version
+            new_version = models.Version(
+                size_stored=data.get("size_processed"),
+                time_uploaded=new_timestamp,
+                active_file=existing_file.id,
+                project_id=project,
+            )
+
+        except sqlalchemy.exc.SQLAlchemyError:
+            raise
+
+        return existing_file, new_version, data.get("project")
 
 
 class FileInfoSchema(ProjectRequiredSchema):
