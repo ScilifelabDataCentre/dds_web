@@ -127,28 +127,28 @@ class DBConnector:
         else:
             return distinct_files, distinct_folders
 
-    # def folder_size(self, folder_name="."):
-    #     """Get total size of folder"""
+    def folder_size(self, folder_name="."):
+        """Get total size of folder"""
 
-    #     # Sum up folder file sizes
-    #     try:
-    #         file_info = (
-    #             models.File.query.with_entities(
-    #                 sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
-    #             )
-    #             .filter(
-    #                 sqlalchemy.and_(
-    #                     models.File.project_id == func.binary(self.project.id),
-    #                     models.File.subpath.like(f"{folder_name}%"),
-    #                 )
-    #             )
-    #             .first()
-    #         )
+        # Sum up folder file sizes
+        try:
+            file_info = (
+                models.File.query.with_entities(
+                    sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
+                )
+                .filter(
+                    sqlalchemy.and_(
+                        models.File.project_id == func.binary(self.project.id),
+                        models.File.subpath.like(f"{folder_name}%"),
+                    )
+                )
+                .first()
+            )
 
-    #     except sqlalchemy.exc.SQLAlchemyError as err:
-    #         raise DatabaseError(message=str(err))
-    #     else:
-    #         return file_info.sizeSum
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+        else:
+            return file_info.sizeSum
 
     def delete_all(self):
         """Delete all files in project."""
@@ -172,139 +172,139 @@ class DBConnector:
 
             return True
 
-    # def delete_folder(self, folder):
-    #     """Delete all items in folder"""
+    def delete_folder(self, folder):
+        """Delete all items in folder"""
 
-    #     exists = False
-    #     deleted = False
-    #     try:
-    #         # File names in root
-    #         files = (
-    #             models.File.query.filter(models.File.project_id == func.binary(self.project.id))
-    #             .filter(
-    #                 sqlalchemy.or_(
-    #                     models.File.subpath == func.binary(folder),
-    #                     models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)?$"),
-    #                 )
-    #             )
-    #             .all()
-    #         )
-    #     except sqlalchemy.exc.SQLAlchemyError as err:
-    #         raise DatabaseError(message=str(err))
+        exists = False
+        deleted = False
+        try:
+            # File names in root
+            files = (
+                models.File.query.filter(models.File.project_id == func.binary(self.project.id))
+                .filter(
+                    sqlalchemy.or_(
+                        models.File.subpath == func.binary(folder),
+                        models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)?$"),
+                    )
+                )
+                .all()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
 
-    #     if files and files is not None:
-    #         exists = True
-    #         try:
-    #             for x in files:
-    #                 # get current version
-    #                 current_file_version = models.Version.query.filter(
-    #                     sqlalchemy.and_(
-    #                         models.Version.active_file == func.binary(x.id),
-    #                         models.Version.time_deleted == None,
-    #                     )
-    #                 ).first()
-    #                 current_file_version.time_deleted = dds_web.utils.current_time()
+        if files and files is not None:
+            exists = True
+            try:
+                for x in files:
+                    # get current version
+                    current_file_version = models.Version.query.filter(
+                        sqlalchemy.and_(
+                            models.Version.active_file == func.binary(x.id),
+                            models.Version.time_deleted == None,
+                        )
+                    ).first()
+                    current_file_version.time_deleted = dds_web.utils.current_time()
 
-    #                 # Delete file and update project size
-    #                 old_size = x.size_original
-    #                 db.session.delete(x)
-    #                 self.project.size -= old_size
-    #             self.project.date_updated = dds_web.utils.current_time()
-    #         except sqlalchemy.exc.SQLAlchemyError as err:
-    #             error = str(err)
-    #         else:
-    #             deleted = True
+                    # Delete file and update project size
+                    old_size = x.size_original
+                    db.session.delete(x)
+                    self.project.size -= old_size
+                self.project.date_updated = dds_web.utils.current_time()
+            except sqlalchemy.exc.SQLAlchemyError as err:
+                error = str(err)
+            else:
+                deleted = True
 
-    #     return exists, deleted, error
+        return exists, deleted, error
 
-    # def delete_multiple(self, files):
-    #     """Delete multiple files."""
+    def delete_multiple(self, files):
+        """Delete multiple files."""
 
-    #     not_removed_dict, not_exist_list, error = ({}, [], "")
+        not_removed_dict, not_exist_list, error = ({}, [], "")
 
-    #     with ApiS3Connector() as s3conn:
-    #         # Error if not enough info
-    #         if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-    #             return (
-    #                 not_removed_dict,
-    #                 not_exist_list,
-    #                 "No s3 info returned! " + s3conn.message,
-    #             )
+        with ApiS3Connector() as s3conn:
+            # Error if not enough info
+            if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+                return (
+                    not_removed_dict,
+                    not_exist_list,
+                    "No s3 info returned! " + s3conn.message,
+                )
 
-    #         # Delete each file
-    #         for x in files:
-    #             # Delete from db
-    #             in_db, delete_ok, name_in_bucket, error = self.delete_one(filename=x)
+            # Delete each file
+            for x in files:
+                # Delete from db
+                in_db, delete_ok, name_in_bucket, error = self.delete_one(filename=x)
 
-    #             # Non existant files cannot be deleted
-    #             if not in_db:
-    #                 not_exist_list.append(x)
-    #                 continue
+                # Non existant files cannot be deleted
+                if not in_db:
+                    not_exist_list.append(x)
+                    continue
 
-    #             # Failure to delete
-    #             if not delete_ok or name_in_bucket is None:
-    #                 db.session.rollback()
-    #                 not_removed_dict[x] = error
-    #                 continue
+                # Failure to delete
+                if not delete_ok or name_in_bucket is None:
+                    db.session.rollback()
+                    not_removed_dict[x] = error
+                    continue
 
-    #             # Remove from s3 bucket
-    #             delete_ok, error = s3conn.remove_one(file=name_in_bucket)
-    #             if not delete_ok:
-    #                 db.session.rollback()
-    #                 not_removed_dict[x] = error
-    #                 continue
+                # Remove from s3 bucket
+                delete_ok, error = s3conn.remove_one(file=name_in_bucket)
+                if not delete_ok:
+                    db.session.rollback()
+                    not_removed_dict[x] = error
+                    continue
 
-    #             # Commit to db if ok
-    #             try:
-    #                 db.session.commit()
-    #             except sqlalchemy.exc.SQLAlchemyError as err:
-    #                 db.session.rollback()
-    #                 not_removed_dict[x] = str(err)
-    #                 continue
+                # Commit to db if ok
+                try:
+                    db.session.commit()
+                except sqlalchemy.exc.SQLAlchemyError as err:
+                    db.session.rollback()
+                    not_removed_dict[x] = str(err)
+                    continue
 
-    #     return not_removed_dict, not_exist_list, error
+        return not_removed_dict, not_exist_list, error
 
-    # def delete_one(self, filename):
-    #     """Delete a single file in project."""
+    def delete_one(self, filename):
+        """Delete a single file in project."""
 
-    #     exists, deleted, name_in_bucket, error = (False, False, None, "")
+        exists, deleted, name_in_bucket, error = (False, False, None, "")
 
-    #     # Get matching files in project
-    #     try:
-    #         file = models.File.query.filter(
-    #             models.File.name == func.binary(filename),
-    #             models.File.project_id == func.binary(self.project.id),
-    #         ).first()
+        # Get matching files in project
+        try:
+            file = models.File.query.filter(
+                models.File.name == func.binary(filename),
+                models.File.project_id == func.binary(self.project.id),
+            ).first()
 
-    #     except sqlalchemy.exc.SQLAlchemyError as err:
-    #         error = str(err)
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            error = str(err)
 
-    #     # Delete if found, but do not commit yet
-    #     if file or file is not None:
-    #         exists, name_in_bucket = (True, file.name_in_bucket)
-    #         try:
-    #             # TODO (ina): put in own class
-    #             old_size = file.size_original
+        # Delete if found, but do not commit yet
+        if file or file is not None:
+            exists, name_in_bucket = (True, file.name_in_bucket)
+            try:
+                # TODO (ina): put in own class
+                old_size = file.size_original
 
-    #             # get current version
-    #             current_file_version = models.Version.query.filter(
-    #                 sqlalchemy.and_(
-    #                     models.Version.active_file == func.binary(file.id),
-    #                     models.Version.time_deleted == None,
-    #                 )
-    #             ).first()
-    #             current_file_version.time_deleted = dds_web.utils.current_time()
+                # get current version
+                current_file_version = models.Version.query.filter(
+                    sqlalchemy.and_(
+                        models.Version.active_file == func.binary(file.id),
+                        models.Version.time_deleted == None,
+                    )
+                ).first()
+                current_file_version.time_deleted = dds_web.utils.current_time()
 
-    #             db.session.delete(file)
-    #             self.project.size -= old_size
-    #             self.project.date_updated = dds_web.utils.current_time()
-    #         except sqlalchemy.exc.SQLAlchemyError as err:
-    #             db.session.rollback()
-    #             error = str(err)
-    #         else:
-    #             deleted = True
+                db.session.delete(file)
+                self.project.size -= old_size
+                self.project.date_updated = dds_web.utils.current_time()
+            except sqlalchemy.exc.SQLAlchemyError as err:
+                db.session.rollback()
+                error = str(err)
+            else:
+                deleted = True
 
-    #     return exists, deleted, name_in_bucket, error
+        return exists, deleted, name_in_bucket, error
 
     def cloud_project(self):
         """Get safespring project"""
