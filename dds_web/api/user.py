@@ -57,7 +57,7 @@ class Token(flask_restful.Resource):
 class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit User", "Unit Admin"])
     def get(self):
         current_user = auth.current_user()
 
