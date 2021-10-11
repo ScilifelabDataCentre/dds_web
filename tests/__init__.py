@@ -66,6 +66,16 @@ class UserAuth:
     def post_headers(self):
         return {"Authorization": f"Basic {self.basic()}"}
 
+    def token(self, client):
+
+        response = client.get(DDSEndpoint.TOKEN, auth=(self.as_tuple()))
+
+        # Get response from api
+        response_json = response.json
+        token = response_json.get("token")
+
+        return {"Authorization": f"Bearer {token}"}
+
 
 class DDSEndpoint:
     """Defines all DDS urls."""
