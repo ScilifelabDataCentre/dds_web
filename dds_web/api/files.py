@@ -87,8 +87,8 @@ class ListFiles(flask_restful.Resource):
         distinct_files, distinct_folders = marshmallows.FileSchema().load(flask.request.args)
 
         files_folders = list()
-        subpath = data.get("subpath")
-        show_size = data.get("show_size")
+        subpath = flask.request.args.get("subpath")
+        show_size = flask.request.args.get("show_size")
 
         # Collect file and folder info to return to CLI
         if distinct_files:

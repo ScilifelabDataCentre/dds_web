@@ -204,8 +204,10 @@ class MatchFilesSchema(ProjectRequiredSchema):
 class FileSchema(ProjectRequiredSchema):
     """Returns information on all files in project."""
 
-    show_size = marshmallow.fields.Boolean(required=False, default=False)
     subpath = marshmallow.fields.Boolean(required=False, default=None)
+
+    class Meta:
+        unknown = marshmallow.EXCLUDE
 
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def format_subpath(self, data, **kwargs):
