@@ -109,7 +109,7 @@ class ListFiles(flask_restful.Resource):
 
                 if show_size:
                     try:
-                        folder_size = dbconn.folder_size(folder_name=x)
+                        folder_size = dds_web.utils.folder_size(folder_name=x)
                     except DatabaseError:
                         raise
 
@@ -152,47 +152,45 @@ class RemoveDir(flask_restful.Resource):
         not_removed_dict, not_exist_list = ({}, [])
 
         try:
-            with DBConnector(project=project) as dbconn:
+            with ApiS3Connector() as s3conn:
+                # Error if not enough info
+                if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
+                    return (
+                        not_removed_dict,
+                        not_exist_list,
+                        "No s3 info returned! " + s3conn.message,
+                    )
 
-                with ApiS3Connector() as s3conn:
-                    # Error if not enough info
-                    if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                        return (
-                            not_removed_dict,
-                            not_exist_list,
-                            "No s3 info returned! " + s3conn.message,
-                        )
+                for x in flask.request.json:
+                    # Get all files in the folder
+                    in_db, folder_deleted, error = dds_web.utils.delete_folder(folder=x)
 
-                    for x in flask.request.json:
-                        # Get all files in the folder
-                        in_db, folder_deleted, error = dbconn.delete_folder(folder=x)
+                    if not in_db:
+                        db.session.rollback()
+                        not_exist_list.append(x)
+                        continue
 
-                        if not in_db:
-                            db.session.rollback()
-                            not_exist_list.append(x)
-                            continue
+                    # Error with db --> folder error
+                    if not folder_deleted:
+                        db.session.rollback()
+                        not_removed_dict[x] = error
+                        continue
 
-                        # Error with db --> folder error
-                        if not folder_deleted:
-                            db.session.rollback()
-                            not_removed_dict[x] = error
-                            continue
+                    # Delete from s3
+                    folder_deleted, error = s3conn.remove_folder(folder=x)
 
-                        # Delete from s3
-                        folder_deleted, error = s3conn.remove_folder(folder=x)
+                    if not folder_deleted:
+                        db.session.rollback()
+                        not_removed_dict[x] = error
+                        continue
 
-                        if not folder_deleted:
-                            db.session.rollback()
-                            not_removed_dict[x] = error
-                            continue
-
-                        # Commit to db if no error so far
-                        try:
-                            db.session.commit()
-                        except sqlalchemy.exc.SQLAlchemyError as err:
-                            db.session.rollback()
-                            not_removed_dict[x] = str(err)
-                            continue
+                    # Commit to db if no error so far
+                    try:
+                        db.session.commit()
+                    except sqlalchemy.exc.SQLAlchemyError as err:
+                        db.session.rollback()
+                        not_removed_dict[x] = str(err)
+                        continue
         except (ValueError,):
             raise
         return flask.jsonify({"not_removed": not_removed_dict, "not_exists": not_exist_list})
@@ -205,7 +203,7 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
-        project = marshmallows.FileInfoSchema().load(flask.request.args)
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         # Get files and folders requested by CLI
         paths = flask.request.json
@@ -291,7 +289,7 @@ class FileInfoAll(flask_restful.Resource):
     def get(self):
         """Get file info."""
 
-        project = marshmallows.FileInfoSchema().load(flask.request.args)
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         files = {}
         try:
@@ -340,11 +338,10 @@ class UpdateFile(flask_restful.Resource):
     def put(self):
         """Update info in db."""
 
-        args = flask.request.args
-        project = marshmallows.UpdateDownloadTimeSchema().load(args)
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         # Get file name from request from CLI
-        file_name = args.get("name")
+        file_name = flask.request.json.get("name")
         if not file_name:
             return flask.make_response("No file name specified. Cannot update file.", 500)
 

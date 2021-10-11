@@ -215,7 +215,7 @@ def delete_multiple(project, files):
 
     not_removed_dict, not_exist_list, error = ({}, [], "")
 
-    with api_s3_connector.ApiS3Connector(project=project) as s3conn:
+    with api_s3_connector.ApiS3Connector() as s3conn:
         # Error if not enough info
         if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
             return (
@@ -256,6 +256,76 @@ def delete_multiple(project, files):
                 continue
 
     return not_removed_dict, not_exist_list, error
+
+
+def delete_folder(project, folder):
+    """Delete all items in folder"""
+
+    exists = False
+    deleted = False
+    try:
+        # File names in root
+        files = (
+            models.File.query.filter(models.File.project_id == func.binary(project.id))
+            .filter(
+                sqlalchemy.or_(
+                    models.File.subpath == func.binary(folder),
+                    models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)?$"),
+                )
+            )
+            .all()
+        )
+    except sqlalchemy.exc.SQLAlchemyError as err:
+        raise DatabaseError(message=str(err))
+
+    if files and files is not None:
+        exists = True
+        try:
+            for x in files:
+                # get current version
+                current_file_version = models.Version.query.filter(
+                    sqlalchemy.and_(
+                        models.Version.active_file == func.binary(x.id),
+                        models.Version.time_deleted == None,
+                    )
+                ).first()
+                current_file_version.time_deleted = dds_web.utils.current_time()
+
+                # Delete file and update project size
+                old_size = x.size_original
+                db.session.delete(x)
+                project.size -= old_size
+            project.date_updated = dds_web.utils.current_time()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            error = str(err)
+        else:
+            deleted = True
+
+    return exists, deleted, error
+
+
+def folder_size(project, folder_name="."):
+    """Get total size of folder"""
+
+    # Sum up folder file sizes
+    try:
+        file_info = (
+            models.File.query.with_entities(
+                sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
+            )
+            .filter(
+                sqlalchemy.and_(
+                    models.File.project_id == func.binary(project.id),
+                    models.File.subpath.like(f"{folder_name}%"),
+                )
+            )
+            .first()
+        )
+
+    except sqlalchemy.exc.SQLAlchemyError as err:
+        raise DatabaseError(message=str(err))
+    else:
+        return file_info.sizeSum
 
 
 # TODO

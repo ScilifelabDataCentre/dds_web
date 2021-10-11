@@ -127,28 +127,28 @@ class DBConnector:
         else:
             return distinct_files, distinct_folders
 
-    def folder_size(self, folder_name="."):
-        """Get total size of folder"""
+    # def folder_size(self, folder_name="."):
+    #     """Get total size of folder"""
 
-        # Sum up folder file sizes
-        try:
-            file_info = (
-                models.File.query.with_entities(
-                    sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
-                )
-                .filter(
-                    sqlalchemy.and_(
-                        models.File.project_id == func.binary(self.project.id),
-                        models.File.subpath.like(f"{folder_name}%"),
-                    )
-                )
-                .first()
-            )
+    #     # Sum up folder file sizes
+    #     try:
+    #         file_info = (
+    #             models.File.query.with_entities(
+    #                 sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
+    #             )
+    #             .filter(
+    #                 sqlalchemy.and_(
+    #                     models.File.project_id == func.binary(self.project.id),
+    #                     models.File.subpath.like(f"{folder_name}%"),
+    #                 )
+    #             )
+    #             .first()
+    #         )
 
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
-        else:
-            return file_info.sizeSum
+    #     except sqlalchemy.exc.SQLAlchemyError as err:
+    #         raise DatabaseError(message=str(err))
+    #     else:
+    #         return file_info.sizeSum
 
     def delete_all(self):
         """Delete all files in project."""
@@ -172,50 +172,50 @@ class DBConnector:
 
             return True
 
-    def delete_folder(self, folder):
-        """Delete all items in folder"""
+    # def delete_folder(self, folder):
+    #     """Delete all items in folder"""
 
-        exists = False
-        deleted = False
-        try:
-            # File names in root
-            files = (
-                models.File.query.filter(models.File.project_id == func.binary(self.project.id))
-                .filter(
-                    sqlalchemy.or_(
-                        models.File.subpath == func.binary(folder),
-                        models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)?$"),
-                    )
-                )
-                .all()
-            )
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
+    #     exists = False
+    #     deleted = False
+    #     try:
+    #         # File names in root
+    #         files = (
+    #             models.File.query.filter(models.File.project_id == func.binary(self.project.id))
+    #             .filter(
+    #                 sqlalchemy.or_(
+    #                     models.File.subpath == func.binary(folder),
+    #                     models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)?$"),
+    #                 )
+    #             )
+    #             .all()
+    #         )
+    #     except sqlalchemy.exc.SQLAlchemyError as err:
+    #         raise DatabaseError(message=str(err))
 
-        if files and files is not None:
-            exists = True
-            try:
-                for x in files:
-                    # get current version
-                    current_file_version = models.Version.query.filter(
-                        sqlalchemy.and_(
-                            models.Version.active_file == func.binary(x.id),
-                            models.Version.time_deleted == None,
-                        )
-                    ).first()
-                    current_file_version.time_deleted = dds_web.utils.current_time()
+    #     if files and files is not None:
+    #         exists = True
+    #         try:
+    #             for x in files:
+    #                 # get current version
+    #                 current_file_version = models.Version.query.filter(
+    #                     sqlalchemy.and_(
+    #                         models.Version.active_file == func.binary(x.id),
+    #                         models.Version.time_deleted == None,
+    #                     )
+    #                 ).first()
+    #                 current_file_version.time_deleted = dds_web.utils.current_time()
 
-                    # Delete file and update project size
-                    old_size = x.size_original
-                    db.session.delete(x)
-                    self.project.size -= old_size
-                self.project.date_updated = dds_web.utils.current_time()
-            except sqlalchemy.exc.SQLAlchemyError as err:
-                error = str(err)
-            else:
-                deleted = True
+    #                 # Delete file and update project size
+    #                 old_size = x.size_original
+    #                 db.session.delete(x)
+    #                 self.project.size -= old_size
+    #             self.project.date_updated = dds_web.utils.current_time()
+    #         except sqlalchemy.exc.SQLAlchemyError as err:
+    #             error = str(err)
+    #         else:
+    #             deleted = True
 
-        return exists, deleted, error
+    #     return exists, deleted, error
 
     # def delete_multiple(self, files):
     #     """Delete multiple files."""

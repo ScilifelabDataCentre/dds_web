@@ -401,14 +401,3 @@ class NewVersionSchema(ProjectRequiredSchema):
         file.versions.append(new_version)
 
         return new_version
-
-
-class FileInfoSchema(ProjectRequiredSchema):
-    """Returns file info."""
-
-
-class UpdateDownloadTimeSchema(ProjectRequiredSchema):
-    """Updates a files download time."""
-
-    class Meta:
-        unknown = marshmallow.EXCLUDE
