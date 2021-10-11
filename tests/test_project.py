@@ -19,7 +19,7 @@ def test_create_project_without_credentials(client):
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
-            created_by="username",
+            created_by="researchuser",
             title=proj_data["title"],
             pi=proj_data["pi"],
             description=proj_data["description"],
@@ -42,7 +42,7 @@ def test_create_project_with_credentials(client):
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
-            created_by="admin",
+            created_by="unituser",
             title=proj_data["title"],
             pi=proj_data["pi"],
             description=proj_data["description"],
@@ -64,7 +64,7 @@ def test_create_project_without_title_description(client):
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
-            created_by="admin",
+            created_by="unituser",
             pi=proj_data["pi"],
         )
         .one_or_none()
@@ -84,7 +84,7 @@ def test_create_project_with_malformed_json(client):
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
-            created_by="admin",
+            created_by="unituser",
             title="",
             pi="",
             description="",

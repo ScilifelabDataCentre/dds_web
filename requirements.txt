@@ -19,4 +19,3 @@ Flask-HTTPAuth
 jwcrypto
 pandas
 requests
-itsdangerous==2.0.1
