@@ -17,6 +17,7 @@ from dds_web import utils
 from dds_web.api import errors as ddserr
 from dds_web import auth
 from dds_web.database import models
+from dds_web.api import db_connector
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -203,9 +204,38 @@ class MatchFilesSchema(ProjectRequiredSchema):
 class FileSchema(ProjectRequiredSchema):
     """Returns information on all files in project."""
 
+    show_size = marshmallow.fields.Boolean(required=False, default=False)
+    subpath = marshmallow.fields.Boolean(required=False, default=None)
+
     @marshmallow.validates_schema(skip_on_field_errors=True)
-    def check_project_size_larger_than_zero(self, data, **kwarg):
+    def format_subpath(self, data, **kwargs):
+        """Format subpath."""
+
+        subpath = data.get("subpath")
+        data["subpath"] = subpath.rstrip(os.sep) if subpath else "."
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def verify_files_in_project(self, data, **kwargs):
         """Checks that the project contains files."""
+
+        project = data.get("project_row")
+        num_files_in_project = utils.project_size_num(project=project)
+
+        if not num_files_in_project:
+            raise ddserr.EmptyProjectException(project=data.get("project"))
+
+    @marshmallow.post_load
+    def return_items(self, data, **kwargs):
+        """Return files from database."""
+
+        try:
+            distinct_files, distinct_folders = utils.items_in_subpath(
+                project=data.get("project_row"), folder=data.get("subpath")
+            )
+        except ddserr.DatabaseError:
+            raise
+
+        return distinct_files, distinct_folders
 
 
 class NewFileSchema(ProjectRequiredSchema):

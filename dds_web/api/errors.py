@@ -14,6 +14,7 @@ import http
 
 # Own modules
 from dds_web import actions
+from dds_web import auth
 
 ####################################################################################################
 # LOGGING ################################################################################ LOGGING #
@@ -100,7 +101,7 @@ class EmptyProjectException(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": username,
+                "current_user": auth.current_user(),
                 "action": actions.get(flask.request.endpoint),
                 "project": project,
             },

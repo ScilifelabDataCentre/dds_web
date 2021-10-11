@@ -84,64 +84,37 @@ class ListFiles(flask_restful.Resource):
     def get(self):
         """Get a list of files within the specified folder."""
 
-        args = flask.request.args
-        project = marshmallows.ProjectRequiredSchema().load(args)
-
-        # Check if to return file size
-        show_size = args.get("show_size") == "True"
-
-        # Check if to get from root or folder
-        subpath = args.get("subpath").rstrip(os.sep) if args.get("subpath") else "."
+        distinct_files, distinct_folders = marshmallows.FileSchema().load(flask.request.args)
 
         files_folders = list()
+        subpath = data.get("subpath")
+        show_size = data.get("show_size")
 
-        # Check project not empty
-        with DBConnector(project=project) as dbconn:
-            # Get number of files in project and return if empty or error
-            try:
-                num_files = dbconn.project_size()
-            except DatabaseError:
-                raise
+        # Collect file and folder info to return to CLI
+        if distinct_files:
+            for x in distinct_files:
+                info = {
+                    "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
+                    "folder": False,
+                }
+                if show_size:
+                    info.update({"size": dds_web.utils.format_byte_size(x[1])})
+                files_folders.append(info)
+        if distinct_folders:
+            for x in distinct_folders:
+                info = {
+                    "name": x if subpath == "." else x.split(os.sep)[-1],
+                    "folder": True,
+                }
 
-            if num_files == 0:
-                return flask.jsonify(
-                    {
-                        "num_items": num_files,
-                        "message": f"The project {project.public_id} is empty.",
-                    }
-                )
+                if show_size:
+                    try:
+                        folder_size = dbconn.folder_size(folder_name=x)
+                    except DatabaseError:
+                        raise
 
-            # Get files and folders
-            try:
-                distinct_files, distinct_folders = dbconn.items_in_subpath(folder=subpath)
-            except DatabaseError:
-                raise
-
-            # Collect file and folder info to return to CLI
-            if distinct_files:
-                for x in distinct_files:
-                    info = {
-                        "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
-                        "folder": False,
-                    }
-                    if show_size:
-                        info.update({"size": dds_web.utils.format_byte_size(x[1])})
-                    files_folders.append(info)
-            if distinct_folders:
-                for x in distinct_folders:
-                    info = {
-                        "name": x if subpath == "." else x.split(os.sep)[-1],
-                        "folder": True,
-                    }
-
-                    if show_size:
-                        try:
-                            folder_size = dbconn.folder_size(folder_name=x)
-                        except DatabaseError:
-                            raise
-
-                        info.update({"size": dds_web.utils.format_byte_size(folder_size)})
-                    files_folders.append(info)
+                    info.update({"size": dds_web.utils.format_byte_size(folder_size)})
+                files_folders.append(info)
 
         return flask.jsonify({"files_folders": files_folders})
 
