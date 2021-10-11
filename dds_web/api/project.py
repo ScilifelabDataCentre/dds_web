@@ -165,7 +165,7 @@ class UserProjects(flask_restful.Resource):
 class RemoveContents(flask_restful.Resource):
     """Removes all project contents."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Personnel", "Unit Admin", "Super Admin"])
     def delete(self):
         """Removes all project contents."""
 
