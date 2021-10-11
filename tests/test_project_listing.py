@@ -16,7 +16,7 @@ import tests
 
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
 proj_query = {"project": "public_project_id"}
-
+proj_query_restricted = {"project": "restricted_project_id"}
 # TESTS #################################################################################### TESTS #
 
 
@@ -67,11 +67,21 @@ def test_proj_public_no_project(client):
 def test_proj_public_insufficient_credentials(client):
     """If the project access has not been granted, the public key should not be provided."""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["admin2"]).token(client)
-    response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, query_string=proj_query, headers=token)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC, query_string=proj_query_restricted, headers=token
+    )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     response_json = response.json
-    assert "not have permission" in response_json.get("message")
+    assert "Project access denied" in response_json.get("message")
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["admin2"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC, query_string=proj_query_restricted, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    response_json = response.json
+    assert "Project access denied" in response_json.get("message")
 
 
 def test_project_public_researcher_get(client):

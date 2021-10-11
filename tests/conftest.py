@@ -82,10 +82,10 @@ def demo_data():
             privkey_nonce="847D75C4C548474FC54714AA",
         ),
         Project(
-            public_id="other_project_id",
-            title="Locked project",
+            public_id="restricted_project_id",
+            title="Elite project",
             status="Ongoing",
-            description="This is a test project without user access",
+            description="This is a test project without user access for researchers and Admin2",
             pi="PI",
             size=7357,
             bucket=f"unusedprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
@@ -120,10 +120,10 @@ def client():
             db.session.add_all(projects)
             projects[0].unit = units[0]
             projects[1].unit = units[1]
-            for p in projects:
-                if p.public_id != "unused_project_id":
-                    for u in users:
-                        u.projects.append(p)
+            users[0].projects.append(projects[0])
+            users[1].projects.append(projects[0])
+            users[1].projects.append(projects[2])
+            users[2].projects.append(projects[0])
             db.session.commit()
 
             try:
