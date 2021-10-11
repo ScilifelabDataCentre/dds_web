@@ -354,6 +354,9 @@ class CreateProject(flask_restful.Resource):
             pkg = key_gen.ProjectKeys(project_info["public_id"])
             project_info.update(pkg.key_dict())
 
+            if "sensitive" in p_info:
+                project_info["is_sensitive"] = p_info["sensitive"]
+
             new_project = models.Project(**project_info)
             unit_row.projects.append(new_project)
             cur_user.created_projects.append(new_project)
