@@ -212,7 +212,7 @@ class RemoveContents(flask_restful.Resource):
 
 
 class UpdateProjectSize(flask_restful.Resource):
-    @auth.login_required
+    @auth.login_required(role=["Unit Personnel", "Unit Admin", "Super Admin"])
     def put(self):
         """Update the project size and updated time stamp."""
 
@@ -231,6 +231,7 @@ class UpdateProjectSize(flask_restful.Resource):
                 )
 
                 project.size = tot_file_size.sizeSum
+                flask.current_app.logger.debug(f"Project size: {tot_file_size.sizeSum}")
                 project.date_updated = dds_web.utils.current_time()
 
                 db.session.commit()

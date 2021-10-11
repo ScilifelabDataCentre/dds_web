@@ -45,7 +45,6 @@ class NewFile(flask_restful.Resource):
             project.files.append(new_file)
             new_file.versions.append(new_version)
 
-            # db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.debug(err)
