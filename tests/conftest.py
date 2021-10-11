@@ -1,4 +1,5 @@
 import os
+import uuid
 import pytest
 from sqlalchemy_utils import create_database, database_exists
 
@@ -9,8 +10,9 @@ DATABASE_URI = "mysql+pymysql://root:{}@db/DeliverySystemTest".format(mysql_root
 
 
 def demo_data():
-    from dds_web.database.models import User, Unit
+    from dds_web.database.models import Project, User, Unit
     from dds_web.security import auth
+    from dds_web.utils import timestamp
 
     users = [
         User(
@@ -38,14 +40,63 @@ def demo_data():
 
     units = [
         Unit(
-            public_id="unit1",
-            name="Unit 1",
+            public_id="unit0",
+            name="Unit 0",
             internal_ref="someunit",
             safespring="dds.example.com",
-        )
+        ),
+        Unit(
+            public_id="unit1",
+            name="Unit 1",
+            internal_ref="anotherunit",
+            safespring="dds.example.com",
+        ),
     ]
 
-    return (users, units)
+    projects = [
+        Project(
+            public_id="public_project_id",
+            title="test project_title",
+            status="Ongoing",
+            description="This is a test project. You will be able to upload to but NOT download "
+            "from this project. Create a new project to test the entire system. ",
+            pi="PI",
+            size=7357,
+            bucket=f"publicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            public_key="2E2F3F1C91ECA5D4CBEFFB59A487511319E76FBA34709C6CC49BF9DC0EC8B10B",
+            private_key="494D26A977118F7E6AB6D87548E762DEB85C537292D65618FDC18A0EFAB6B860468F17BA26F7A0BDA4F23938A5A10801",
+            privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
+            privkey_nonce="847D75C4C548474FC54714AA",
+        ),
+        Project(
+            public_id="unused_project_id",
+            title="unused project",
+            status="Ongoing",
+            description="This is a test project to check for permissions.",
+            pi="PI",
+            size=7357,
+            bucket=f"unusedprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            public_key="2E2F3F1C91ECA5D4CBEFFB59A487511319E76FBA34709C6CC49BF9DC0EC8B10B",
+            private_key="494D26A977118F7E6AB6D87548E762DEB85C537292D65618FDC18A0EFAB6B860468F17BA26F7A0BDA4F23938A5A10801",
+            privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
+            privkey_nonce="847D75C4C548474FC54714AA",
+        ),
+        Project(
+            public_id="other_project_id",
+            title="Locked project",
+            status="Ongoing",
+            description="This is a test project without user access",
+            pi="PI",
+            size=7357,
+            bucket=f"unusedprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            public_key="2E2F3F1C91ECA5D4CBEFFB59A487511319E76FBA34709C6CC49BF9DC0EC8B10B",
+            private_key="494D26A977118F7E6AB6D87548E762DEB85C537292D65618FDC18A0EFAB6B860468F17BA26F7A0BDA4F23938A5A10801",
+            privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
+            privkey_nonce="847D75C4C548474FC54714AA",
+        ),
+    ]
+
+    return (users, units, projects)
 
 
 @pytest.fixture
@@ -60,11 +111,19 @@ def client():
         with app.app_context():
             # Create all tables
             db.create_all()
-            users, units = demo_data()
+            users, units, projects = demo_data()
             db.session.add_all(units)
             db.session.flush()
             users[1].unit = units[0]
             db.session.add_all(users)
+            db.session.flush()
+            db.session.add_all(projects)
+            projects[0].unit = units[0]
+            projects[1].unit = units[1]
+            for p in projects:
+                if p.public_id != "unused_project_id":
+                    for u in users:
+                        u.projects.append(p)
             db.session.commit()
 
             try:

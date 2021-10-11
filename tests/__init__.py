@@ -41,6 +41,7 @@ USER_CREDENTIALS = {
     "researcher": "username:password",
     "admin": "admin:password",
     "admin2": "admin2:password",
+    "facilityadmin": "admin:password",
 }
 
 ###############################################################################
