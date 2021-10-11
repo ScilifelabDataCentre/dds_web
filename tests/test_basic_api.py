@@ -33,7 +33,9 @@ def test_auth_incorrect_username_check_statuscode_401_incorrect_info(client):
     Message: Missing or incorrect credentials
     """
 
-    response = client.get(tests.DDSEndpoint.TOKEN, auth=("incorrect_username", "password"))
+    response = client.get(
+        tests.DDSEndpoint.TOKEN, auth=tests.UserAuth(tests.USER_CREDENTIALS["nouser"]).as_tuple()
+    )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
@@ -47,7 +49,8 @@ def test_auth_incorrect_username_and_password_check_statuscode_400_incorrect_inf
     """
 
     response = client.get(
-        tests.DDSEndpoint.TOKEN, auth=("incorrect_username", "incorrect_password")
+        tests.DDSEndpoint.TOKEN,
+        auth=tests.UserAuth(tests.USER_CREDENTIALS["nopassword"]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
@@ -61,7 +64,9 @@ def test_auth_incorrect_password_check_statuscode_400_incorrect_info(client):
     Message: Missing or incorrect credentials
     """
 
-    response = client.get(tests.DDSEndpoint.TOKEN, auth=("username", "incorrect_password"))
+    response = client.get(
+        tests.DDSEndpoint.TOKEN, auth=tests.UserAuth(tests.USER_CREDENTIALS["wronguser"]).as_tuple()
+    )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
@@ -74,7 +79,10 @@ def test_auth_correctauth_check_statuscode_200_correct_info(client):
     Token: includes the authenticated username
     """
 
-    response = client.get(tests.DDSEndpoint.TOKEN, auth=("username", "password"))
+    response = client.get(
+        tests.DDSEndpoint.TOKEN,
+        auth=tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).as_tuple(),
+    )
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
     assert response_json.get("token")

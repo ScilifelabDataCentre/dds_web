@@ -33,6 +33,11 @@ DDS_PROJ_NOT_REQUIRED_METHODS = ["ls", "rm"]
 
 # The credentials used for the tests
 USER_CREDENTIALS = {
+    "empty": ":",
+    "nouser": ":password",
+    "nopassword": "username:",
+    "wronguser": "scriptkiddie:password",
+    "researcher": "username:password",
     "researcher": "username:password",
     "admin": "admin:password",
     "admin2": "admin2:password",
@@ -48,13 +53,18 @@ class UserAuth:
         self.credentials = credentials
 
     # class can be extended by various means to act on the credentials
+
+    def plain(self):
+        return self.credentials
+
+    def as_tuple(self):
+        return tuple(self.credentials.split(":"))
+
     def basic(self):
         return b64encode(self.credentials.encode("utf-8")).decode("utf-8")
 
     def post_headers(self):
-        return {
-            "Authorization": f"Basic {b64encode(self.credentials.encode('utf-8')).decode('utf-8')}"
-        }
+        return {"Authorization": f"Basic {self.basic()}"}
 
 
 class DDSEndpoint:

@@ -26,7 +26,7 @@ def test_create_project_without_credentials(client):
         data=json.dumps(proj_data),
         content_type="application/json",
     )
-    assert response.status == http.HTTPStatus.FORBIDDEN
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
@@ -48,7 +48,7 @@ def test_create_project_with_credentials(client):
         data=json.dumps(proj_data),
         content_type="application/json",
     )
-    assert response.status == http.HTTPStatus.OK
+    assert response.status_code == http.HTTPStatus.OK
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
@@ -69,7 +69,7 @@ def test_create_project_without_title_description(client):
         data=json.dumps({"pi": "piName"}),
         content_type="application/json",
     )
-    assert response.status == http.HTTPStatus.BAD_REQUEST
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
@@ -88,7 +88,7 @@ def test_create_project_with_malformed_json(client):
         data="",
         content_type="application/json",
     )
-    assert response.status == http.HTTPStatus.BAD_REQUEST
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
@@ -109,7 +109,7 @@ def test_create_project_by_user_with_no_unit(client):
         data=json.dumps(proj_data),
         content_type="application/json",
     )
-    assert response.status == http.HTTPStatus.FORBIDDEN
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
