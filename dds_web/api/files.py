@@ -31,7 +31,7 @@ from dds_web.api import marshmallows
 class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Personnel", "Unit Admin", "Super Admin"])
     def post(self):
         """Add new file to DB."""
 
@@ -54,7 +54,7 @@ class NewFile(flask_restful.Resource):
 
         return flask.jsonify({"message": f"File '{new_file.name}' added to db."})
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Personnel", "Unit Admin", "Super Admin"])
     def put(self):
 
         args = flask.request.args
@@ -133,7 +133,7 @@ class NewFile(flask_restful.Resource):
 class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Personnel", "Unit Admin", "Super Admin"])
     def get(self):
         """Matches specified files to files in db."""
 
@@ -216,7 +216,7 @@ class ListFiles(flask_restful.Resource):
 class RemoveFile(flask_restful.Resource):
     """Removes files from the database and s3 with boto3."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Personnel", "Unit Admin", "Super Admin"])
     def delete(self):
         """Deletes the files"""
 
@@ -238,7 +238,7 @@ class RemoveFile(flask_restful.Resource):
 class RemoveDir(flask_restful.Resource):
     """Removes one or more full directories from the database and s3."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Personnel", "Unit Admin", "Super Admin"])
     def delete(self):
         """Deletes the folders."""
 

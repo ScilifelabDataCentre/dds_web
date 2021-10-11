@@ -247,7 +247,7 @@ class UpdateProjectSize(flask_restful.Resource):
 
 
 class CreateProject(flask_restful.Resource):
-    @auth.login_required(role="Unit Personnel")
+    @auth.login_required(role=["Unit Personnel", "Unit Admin", "Super Admin"])
     def post(self):
         """Create a new project"""
 
