@@ -79,7 +79,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
         return verify_project_exists(spec_proj=data.get("project"))
 
 
-class UpdatePermissionsRequiredSchema(UploadPermissionsRequiredSchema):
+class UpdatePermissionsRequiredSchema(ProjectRequiredSchema):
     """TEMPORARY, WILL BE MERGED WITH UPLOADPERMISSIONS LATER.
     Checks that a user has permissions to update file info."""
 
@@ -180,7 +180,7 @@ class S3KeySchema(ProjectRequiredSchema):
         return project, safespring_project, endpoint_url, s3_keys
 
 
-class ExistingFilesSchema(UploadPermissionsRequiredSchema):
+class ExistingFilesSchema(ProjectRequiredSchema):
     """Finds files in database matching requested."""
 
     @marshmallow.post_load
