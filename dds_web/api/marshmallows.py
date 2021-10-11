@@ -16,7 +16,6 @@ import sqlalchemy
 from dds_web import utils
 from dds_web.api import errors as ddserr
 from dds_web import auth
-from dds_web import ROLES
 from dds_web.database import models
 
 ####################################################################################################

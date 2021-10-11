@@ -41,14 +41,6 @@ auth = MultiAuth(basic_auth, token_auth)
 # Actions for logging
 actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth": "Project Access"}
 
-ROLES = immutabledict.immutabledict(
-    {
-        "Super Admin": frozenset(("put", "get", "ls", "rm")),
-        "Unit Admin": frozenset(("put", "get", "ls", "rm")),
-        "Unit Personnel": frozenset(("put", "get", "ls", "rm")),
-        "Researcher": frozenset(("get", "ls")),
-    }
-)
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################

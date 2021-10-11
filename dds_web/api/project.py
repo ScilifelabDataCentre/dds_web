@@ -19,7 +19,7 @@ import os
 
 # Own modules
 import dds_web.utils
-from dds_web import auth, db, ROLES
+from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
