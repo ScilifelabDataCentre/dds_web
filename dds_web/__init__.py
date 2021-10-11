@@ -17,7 +17,6 @@ from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
-import immutabledict
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -150,7 +149,7 @@ def create_app(testing=False, database_uri=None):
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 
         # Set-up the schedulers
-        # dds_web.utils.scheduler_wrapper()
+        dds_web.utils.scheduler_wrapper()
 
         return app
 
