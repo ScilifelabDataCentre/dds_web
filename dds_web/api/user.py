@@ -135,7 +135,7 @@ class ShowUsage(flask_restful.Resource):
 class InvoiceUnit(flask_restful.Resource):
     """Calculate the actual cost from the Safespring invoicing specification."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit User", "Unit Admin"])
     def get(self):
         current_user = auth.current_user()
 
