@@ -79,21 +79,6 @@ class ProjectRequiredSchema(marshmallow.Schema):
         return verify_project_exists(spec_proj=data.get("project"))
 
 
-class UploadPermissionsRequiredSchema(ProjectRequiredSchema):
-    """Schema for verifying the current users permissions to upload"""
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def validate_put_access(self, data, **kwargs):
-        """Verify that the user has access to upload data."""
-
-        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
-            raise ddserr.AccessDeniedError(
-                message="User does not have upload permissions.",
-                username=auth.current_user().username,
-                project=data.get("project"),
-            )
-
-
 class UpdatePermissionsRequiredSchema(UploadPermissionsRequiredSchema):
     """TEMPORARY, WILL BE MERGED WITH UPLOADPERMISSIONS LATER.
     Checks that a user has permissions to update file info."""
@@ -215,7 +200,7 @@ class ExistingFilesSchema(UploadPermissionsRequiredSchema):
         return files
 
 
-class NewFileSchema(UploadPermissionsRequiredSchema):
+class NewFileSchema(ProjectRequiredSchema):
     """Validates and creates a new file object."""
 
     name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
