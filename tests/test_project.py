@@ -92,25 +92,3 @@ def test_create_project_with_malformed_json(client):
         .one_or_none()
     )
     assert created_proj is None
-
-
-# def test_create_project_by_user_with_no_unit(client):
-#     credentials = b64encode(b"unituser:password").decode("utf-8")
-#     response = client.post(
-#         "/api/v1/proj/create",
-#         headers={"Authorization": f"Basic {credentials}"},
-#         data=json.dumps(proj_data),
-#         content_type="application/json",
-#     )
-#     assert response.status == "403 FORBIDDEN"
-#     created_proj = (
-#         db.session.query(models.Project)
-#         .filter_by(
-#             created_by="admin2",
-#             title=proj_data["title"],
-#             pi=proj_data["pi"],
-#             description=proj_data["description"],
-#         )
-#         .one_or_none()
-#     )
-#     assert created_proj is None
