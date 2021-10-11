@@ -73,10 +73,17 @@ class ProjectRequiredSchema(marshmallow.Schema):
         project = verify_project_exists(spec_proj=value)
         verify_project_access(project=project)
 
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def get_project_object(self, data, **kwargs):
+        """Set project row in data for access by validators."""
+
+        data["project_row"] = verify_project_exists(spec_proj=data.get("project"))
+
     @marshmallow.post_load
     def return_items(self, data, **kwargs):
+        """Return project object."""
 
-        return verify_project_exists(spec_proj=data.get("project"))
+        return data.get("project_row")
 
 
 class DeletePermissionsRequiredSchema(ProjectRequiredSchema):
@@ -101,7 +108,7 @@ class PublicKeySchema(ProjectRequiredSchema):
     def return_items(self, data, **kwargs):
         """Get and return public key."""
 
-        public_key = verify_project_exists(spec_proj=data.get("project")).public_key
+        public_key = data.get("project_row").public_key
         if not public_key:
             raise ddserr.PublicKeyNotFoundError(project=data.get("project"))
 
@@ -115,7 +122,7 @@ class PrivateKeySchema(ProjectRequiredSchema):
     def return_items(self, data, **kwargs):
         """Get and return project private key, nonce and salt."""
 
-        project_info = verify_project_exists(spec_proj=data.get("project"))
+        project_info = data.get("project_row")
 
         if not all(
             [project_info.private_key, project_info.privkey_nonce, project_info.privkey_salt]
@@ -140,7 +147,7 @@ class S3KeySchema(ProjectRequiredSchema):
         """Get key"""
 
         # Get safespring project name
-        project = verify_project_exists(spec_proj=data.get("project"))
+        project = data.get("project_row")
         safespring_project = project.safespring_project
         if not safespring_project:
             raise ddserr.S3ProjectNotFoundError
@@ -172,24 +179,33 @@ class S3KeySchema(ProjectRequiredSchema):
         return project, safespring_project, endpoint_url, s3_keys
 
 
-class ExistingFilesSchema(ProjectRequiredSchema):
+class MatchFilesSchema(ProjectRequiredSchema):
     """Finds files in database matching requested."""
 
     @marshmallow.post_load
     def return_items(self, data, **kwargs):
         """Return the required file information."""
 
+        project = data.get("project_row")
         try:
             files = models.File.query.filter(
                 sqlalchemy.and_(
                     models.File.name.in_(flask.request.json),
-                    models.File.project_id == sqlalchemy.func.binary(data.get("project")),
+                    models.File.project_id == sqlalchemy.func.binary(project.id),
                 )
             ).all()
         except sqlalchemy.exc.SQLAlchemyError:
             raise
 
         return files
+
+
+class FileSchema(ProjectRequiredSchema):
+    """Returns information on all files in project."""
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def check_project_size_larger_than_zero(self, data, **kwarg):
+        """Checks that the project contains files."""
 
 
 class NewFileSchema(ProjectRequiredSchema):
@@ -227,7 +243,7 @@ class NewFileSchema(ProjectRequiredSchema):
 
         # Check that there is no such file in the database
 
-        project = verify_project_exists(spec_proj=data.get("project"))
+        project = data.get("project_row")
         try:
             file = (
                 models.File.query.filter(
@@ -268,7 +284,13 @@ class NewFileSchema(ProjectRequiredSchema):
             size_stored=new_file.size_stored, time_uploaded=utils.current_time()
         )
 
-        return new_file, new_version, data.get("project")
+        project = data.get("project_row")
+        # Update foreign keys
+        project.file_versions.append(new_version)
+        project.files.append(new_file)
+        new_file.versions.append(new_version)
+
+        return new_file
 
 
 class NewVersionSchema(ProjectRequiredSchema):
@@ -294,11 +316,11 @@ class NewVersionSchema(ProjectRequiredSchema):
     def verify_exists(self, data, **kwargs):
         """Verify that the file exists -- cannot update non existent file."""
 
-        project = verify_project_exists(spec_proj=data.get("project"))
+        project = data.get("project_row")
         try:
             existing_file = models.File.query.filter(
                 sqlalchemy.and_(
-                    models.File.name == func.binary(data.get("name")),
+                    models.File.name == sqlalchemy.func.binary(data.get("name")),
                     models.File.project_id == project.id,
                 )
             ).first()
@@ -308,7 +330,7 @@ class NewVersionSchema(ProjectRequiredSchema):
 
             current_file_version = models.Version.query.filter(
                 sqlalchemy.and_(
-                    models.Version.active_file == func.binary(existing_file.id),
+                    models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
                     models.Version.time_deleted == None,
                 )
             ).all()
@@ -325,7 +347,6 @@ class NewVersionSchema(ProjectRequiredSchema):
                 {
                     "file": existing_file,
                     "version": current_file_version[0],
-                    "project": project,
                 }
             )
 
@@ -334,36 +355,35 @@ class NewVersionSchema(ProjectRequiredSchema):
         """Update file info."""
 
         # Same timestamp for deleted and created new file
-        new_timestamp = dds_web.utils.current_time()
+        new_timestamp = utils.current_time()
 
-        try:
-            # Overwritten == deleted / deactivated
-            old_version = data.get("version")
-            old_version.time_deleted = new_timestamp
+        # Overwritten == deleted / deactivated
+        old_version = data.get("version")
+        old_version.time_deleted = new_timestamp
 
-            # Update file info
-            file = data.get("file")
-            file.subpath = data.get("subpath")
-            file.size_original = data.get("size")
-            file.size_stored = data.get("size_processed")
-            file.compressed = data.get("compressed")
-            file.salt = data.get("salt")
-            file.public_key = data.get("public_key")
-            file.time_uploaded = new_timestamp
-            file.checksum = data.get("checksum")
+        # Update file info
+        file = data.get("file")
+        file.subpath = data.get("subpath")
+        file.size_original = data.get("size")
+        file.size_stored = data.get("size_processed")
+        file.compressed = data.get("compressed")
+        file.salt = data.get("salt")
+        file.public_key = data.get("public_key")
+        file.time_uploaded = new_timestamp
+        file.checksum = data.get("checksum")
 
-            # New version
-            new_version = models.Version(
-                size_stored=data.get("size_processed"),
-                time_uploaded=new_timestamp,
-                active_file=existing_file.id,
-                project_id=project,
-            )
+        # New version
+        new_version = models.Version(
+            size_stored=data.get("size_processed"),
+            time_uploaded=new_timestamp,
+        )
 
-        except sqlalchemy.exc.SQLAlchemyError:
-            raise
+        project = data.get("project_row")
+        # Update foreign keys and relationships
+        project.file_versions.append(new_version)
+        file.versions.append(new_version)
 
-        return existing_file, new_version, data.get("project")
+        return new_version
 
 
 class FileInfoSchema(ProjectRequiredSchema):

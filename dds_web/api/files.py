@@ -35,16 +35,9 @@ class NewFile(flask_restful.Resource):
     def post(self):
         """Add new file to DB."""
 
-        new_file, new_version, project = marshmallows.NewFileSchema().load(
-            {**flask.request.json, **flask.request.args}
-        )
+        new_file = marshmallows.NewFileSchema().load({**flask.request.json, **flask.request.args})
 
         try:
-            # Update foreign keys
-            project.file_versions.append(new_version)
-            project.files.append(new_file)
-            new_file.versions.append(new_version)
-
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.debug(err)
@@ -56,21 +49,18 @@ class NewFile(flask_restful.Resource):
     @auth.login_required(role=["Unit Personnel", "Unit Admin", "Super Admin"])
     def put(self):
 
-        args = flask.request.args
-        existing_file, new_version, project = marshmallows.NewVersionSchema().load(
+        new_version = marshmallows.NewVersionSchema().load(
             {**flask.request.json, **flask.request.args}
         )
 
         try:
-            # Update foreign keys and relationships
-            project.file_versions.append(new_version)
-            existing_file.versions.append(new_version)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
+            flask.current_app.logger.debug(err)
             db.session.rollback()
-            return flask.make_response(f"Failed updating file information: {err}", 500)
+            return flask.make_response(f"Failed updating file information.", 500)
 
-        return flask.jsonify({"message": f"File '{args['name']}' updated in db."})
+        return flask.jsonify({"message": f"File '{flask.request.json.get('name')}' updated in db."})
 
 
 class MatchFiles(flask_restful.Resource):
@@ -80,7 +70,7 @@ class MatchFiles(flask_restful.Resource):
     def get(self):
         """Matches specified files to files in db."""
 
-        files = marshmallows.ExistingFilesSchema().load(flask.request.args)
+        files = marshmallows.MatchFilesSchema().load(flask.request.args)
 
         return flask.jsonify(
             {"files": {f.name: f.name_in_bucket for f in files} if files else None}

@@ -216,7 +216,7 @@ class UpdateProjectSize(flask_restful.Resource):
     def put(self):
         """Update the project size and updated time stamp."""
 
-        project = marshmallows.UploadPermissionsRequiredSchema().load(flask.request.args)
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         updated, error = (False, "")
         current_try, max_tries = (1, 5)
