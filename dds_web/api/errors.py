@@ -223,18 +223,6 @@ class KeyNotFoundError(exceptions.HTTPException):
         super().__init__(self.message)
 
 
-class PublicKeyNotFoundError(KeyNotFoundError):
-    """Public key not found in database."""
-
-
-class PrivateKeyNotFoundError(KeyNotFoundError):
-    """Private key not found in database."""
-
-
-class S3KeysNotFoundError(KeyNotFoundError):
-    """S3 keys not found."""
-
-
 ####################################################################################################
 
 
@@ -256,7 +244,6 @@ errors = {
     "S3ConnectionError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "S3ProjectNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "S3InfoNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "S3KeysNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "PublicKeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
 }

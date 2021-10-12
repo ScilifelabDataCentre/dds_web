@@ -30,8 +30,8 @@ from dds_web.api.errors import (
     EmptyProjectException,
     DeletionError,
     BucketNotFoundError,
-    PublicKeyNotFoundError,
     DDSArgumentError,
+    KeyNotFoundError,
 )
 from dds_web.crypt import key_gen
 from dds_web.api import marshmallows
@@ -53,7 +53,7 @@ class GetPublic(flask_restful.Resource):
         flask.current_app.logger.debug("Getting the public key.")
 
         if not project.public_key:
-            raise PublicKeyNotFoundError(project=project.public_id)
+            raise KeyNotFoundError(project=project.public_id)
 
         return flask.jsonify({"public": project.public_key})
 

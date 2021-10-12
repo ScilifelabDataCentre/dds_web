@@ -27,7 +27,7 @@ from dds_web.api.errors import (
     DeletionError,
     S3ProjectNotFoundError,
     S3InfoNotFoundError,
-    S3KeysNotFoundError,
+    KeyNotFoundError,
 )
 
 
@@ -101,11 +101,11 @@ class ApiS3Connector:
                 endpoint_url = json.load(f).get("endpoint_url")
 
             if None in [s3keys.get("access_key"), s3keys.get("secret_key")]:
-                raise S3KeysNotFoundError(
+                raise KeyNotFoundError(
                     "Safespring S3 access or secret key not found in s3 config file."
                 )
 
-        except S3KeysNotFoundError:
+        except KeyNotFoundError:
             raise
 
         try:
