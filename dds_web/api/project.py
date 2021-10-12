@@ -273,6 +273,7 @@ class CreateProject(flask_restful.Resource):
             public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
 
             project_info = {
+                "created_by": auth.current_user(),
                 "public_id": public_id,
                 "title": p_info["title"],
                 "date_created": created_time,
