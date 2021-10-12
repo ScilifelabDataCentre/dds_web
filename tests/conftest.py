@@ -15,6 +15,7 @@ def demo_data():
     units = [
         Unit(
             name="Unit 1",
+            public_id=os.urandom(16).hex(),
             internal_ref="someunit",
             safespring="dds.example.com",
         )
