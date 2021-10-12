@@ -22,6 +22,7 @@ from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import DatabaseError
+from dds_web.api import marshmallows
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -31,7 +32,7 @@ from dds_web.api.errors import DatabaseError
 class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def post(self):
         """Add new file to DB"""
 
@@ -47,14 +48,8 @@ class NewFile(flask_restful.Resource):
             "public_key",
             "checksum",
         ]
-        args = flask.request.args
 
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["put"],
-        )
-
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
         if not all(x in args for x in required_info):
             missing = [x for x in required_info if x not in args]
             return flask.make_response(
@@ -118,16 +113,10 @@ class NewFile(flask_restful.Resource):
 
         return flask.jsonify({"message": f"File '{args['name']}' added to db."})
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def put(self):
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["put"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
             return flask.make_response("Information missing, " "cannot add file to database.", 500)
@@ -202,17 +191,11 @@ class NewFile(flask_restful.Resource):
 class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def get(self):
         """Matches specified files to files in db."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["put"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         try:
             matching_files = (
@@ -237,13 +220,7 @@ class ListFiles(flask_restful.Resource):
     def get(self):
         """Get a list of files within the specified folder."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["ls"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         # Check if to return file size
         show_size = False
@@ -311,17 +288,11 @@ class ListFiles(flask_restful.Resource):
 class RemoveFile(flask_restful.Resource):
     """Removes files from the database and s3 with boto3."""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def delete(self):
         """Deletes the files"""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["rm"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         with DBConnector(project=project) as dbconn:
             not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
@@ -339,17 +310,11 @@ class RemoveFile(flask_restful.Resource):
 class RemoveDir(flask_restful.Resource):
     """Removes one or more full directories from the database and s3."""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def delete(self):
         """Deletes the folders."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["rm"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         not_removed_dict, not_exist_list = ({}, [])
 
@@ -407,13 +372,7 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["get"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         # Get files and folders requested by CLI
         paths = flask.request.json
@@ -499,13 +458,7 @@ class FileInfoAll(flask_restful.Resource):
     def get(self):
         """Get file info."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["get"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         files = {}
         try:
@@ -554,13 +507,7 @@ class UpdateFile(flask_restful.Resource):
     def put(self):
         """Update info in db."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["get"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         # Get file name from request from CLI
         file_name = args.get("name")

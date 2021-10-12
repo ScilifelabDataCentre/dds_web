@@ -7,7 +7,6 @@
 # Standard library
 import datetime
 
-# Installed
 
 # Own modules
 from dds_web import db, C_TZ
@@ -17,6 +16,29 @@ import dds_web.utils
 # MODELS ################################################################################## MODELS #
 ####################################################################################################
 
+# Association tables ########################################################## Association tables #
+
+
+class ProjectUsers(db.Model):
+
+    # Table setup
+    __tablename__ = "projectusers"
+
+    # Primary keys / Foreign keys
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
+    user_id = db.Column(db.String(50), db.ForeignKey("researchusers.username"), primary_key=True)
+
+    # Columns
+    owner = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Relationships - many to many
+    project = db.relationship("Project", back_populates="researchusers")
+    researchuser = db.relationship("ResearchUser", back_populates="project_associations")
+
+
+####################################################################################################
+# Tables ################################################################################## Tables #
+
 
 class Unit(db.Model):
     """Data model for unit accounts."""
@@ -25,8 +47,10 @@ class Unit(db.Model):
     __tablename__ = "units"
     __table_args__ = {"extend_existing": True}
 
-    # Columns
+    # Primary key
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    # Columns
     public_id = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.String(255), unique=True, nullable=False)
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
@@ -36,21 +60,13 @@ class Unit(db.Model):
 
     # Relationships
     # One unit can have many users
-    users = db.relationship("User", backref="unit")
+    users = db.relationship("UnitUser", back_populates="unit")
     # One unit can have many projects
     projects = db.relationship("Project", backref="responsible_unit")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
-
         return f"<Unit {self.public_id}>"
-
-
-project_users = db.Table(
-    "project_users",
-    db.Column("project_id", db.Integer, db.ForeignKey("projects.id")),
-    db.Column("user", db.String(50), db.ForeignKey("users.username")),
-)
 
 
 class Project(db.Model):
@@ -60,14 +76,17 @@ class Project(db.Model):
     __tablename__ = "projects"
     __table_args__ = {"extend_existing": True}
 
-    # Columns
+    # Primary key
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    # Foreign key -- One unit can have many projects
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
-    # Foreign key -- A user can have many projects
-    created_by = db.Column(db.String(50), db.ForeignKey("users.username"))
+    # Foreign keys
+    # One unit can have many projects
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
 
+    # One unit can be created by one user
+    created_by = db.Column(db.String(50), db.ForeignKey("users.username"), nullable=False)
+
+    # Columns
     public_id = db.Column(db.String(255), unique=True, nullable=False)
     title = db.Column(db.Text, unique=False, nullable=False)
     date_created = db.Column(
@@ -85,14 +104,20 @@ class Project(db.Model):
     private_key = db.Column(db.String(255), nullable=False)
     privkey_salt = db.Column(db.String(32), nullable=False)
     privkey_nonce = db.Column(db.String(24), nullable=False)
-
     # Relationships
     # One project can have many files
     files = db.relationship("File", backref="project")
     expired_files = db.relationship("ExpiredFile", backref="assigned_project")
-
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
+
+    researchusers = db.relationship("ProjectUsers", back_populates="project")
+
+    @property
+    def safespring_project(self):
+        """Get the safespring project name from responsible unit."""
+
+        return self.responsible_unit.safespring
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -100,42 +125,114 @@ class Project(db.Model):
         return f"<Project {self.public_id}>"
 
 
+# Users #################################################################################### Users #
 class User(db.Model):
-    """Data model for user accounts."""
+    """Data model for user accounts - base user model for all user types."""
 
     # Table setup
     __tablename__ = "users"
     __table_args__ = {"extend_existing": True}
-
     # Columns
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
 
-    # Foreign keys - One unit can have many users
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
-
     password = db.Column(db.String(98), unique=False, nullable=False)
-    role = db.Column(db.String(20), unique=False, nullable=False)
+    # role = db.Column(db.String(20), unique=False, nullable=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
 
-    # Relationships
-    # One user can have many projects, and one projects can have many users
-    projects = db.relationship(
-        "Project", secondary=project_users, backref=db.backref("users", lazy="dynamic")
-    )
+    type = db.Column(db.String(20), unique=False, nullable=False)
 
     # One user can have many identifiers
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
-
     # One user can have many email addresses
     emails = db.relationship("Email", backref="users", lazy="dynamic", cascade="all, delete-orphan")
-
     # One user can create many projects
     created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
+
+    __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
     def __repr__(self):
         """Called by print, creates representation of object"""
 
         return f"<User {self.username}>"
+
+
+class ResearchUser(User):
+    """Data model for research user accounts."""
+
+    __tablename__ = "researchusers"
+    __mapper_args__ = {"polymorphic_identity": "researchuser"}
+
+    # primary key and foreign key pointing to users
+    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+    project_associations = db.relationship("ProjectUsers", back_populates="researchuser")
+
+    @property
+    def role(self):
+        """Get user role."""
+
+        return "Researcher"
+
+    @property
+    def projects(self):
+        """Return list of project items."""
+
+        return [proj.project for proj in self.project_associations]
+
+
+class UnitUser(User):
+    """Data model for unit user accounts"""
+
+    __tablename__ = "unitusers"
+    __mapper_args__ = {"polymorphic_identity": "unituser"}
+
+    # Primary key and foreign key pointing to users
+    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+
+    # Foreign key and backref with infrastructure
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
+    unit = db.relationship("Unit", back_populates="users")
+
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
+
+    @property
+    def role(self):
+        """User role is Unit Admin if the unit user has admin rights."""
+
+        if self.is_admin:
+            return "Unit Admin"
+
+        return "Unit Personnel"
+
+    @property
+    def projects(self):
+        """Get the unit projects."""
+
+        return self.unit.projects
+
+
+class SuperAdmin(User):
+    """Data model for super admin user accounts (Data Centre)."""
+
+    __tablename__ = "superadmins"
+    __mapper_args__ = {"polymorphic_identity": "superadmin"}
+
+    # Foreign key and backref with infrastructure
+    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+
+    @property
+    def role(self):
+        """Get user role."""
+
+        return "Super Admin"
+
+    @property
+    def projects(self):
+        """Get list of projects: Super admins can access all projects."""
+
+        return Project.query.all()
+
+
+####################################################################################################
 
 
 class Identifier(db.Model):
