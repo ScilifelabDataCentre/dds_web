@@ -293,6 +293,7 @@ class CreateProject(flask_restful.Resource):
 
             new_project = models.Project(**project_info)
             unit_row.projects.append(new_project)
+            cur_user.unit = unit_row
             cur_user.created_projects.append(new_project)
 
             db.session.commit()
