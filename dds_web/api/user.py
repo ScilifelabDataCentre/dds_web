@@ -21,6 +21,7 @@ import sqlalchemy
 from dds_web import auth
 from dds_web.database import models
 import dds_web.utils
+from dds_web.api import marshmallows
 
 
 ####################################################################################################
@@ -57,7 +58,7 @@ class Token(flask_restful.Resource):
 class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def get(self):
         current_user = auth.current_user()
 
@@ -135,7 +136,7 @@ class ShowUsage(flask_restful.Resource):
 class InvoiceUnit(flask_restful.Resource):
     """Calculate the actual cost from the Safespring invoicing specification."""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def get(self):
         current_user = auth.current_user()
 

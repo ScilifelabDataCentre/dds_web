@@ -9,40 +9,41 @@ DATABASE_URI = "mysql+pymysql://root:{}@db/DeliverySystemTest".format(mysql_root
 
 
 def demo_data():
-    from dds_web.database.models import User, Unit
+    from dds_web.database.models import ResearchUser, UnitUser, SuperAdmin, Unit
     from dds_web.security import auth
-
-    users = [
-        User(
-            username="username",
-            unit_id=None,
-            password=auth.gen_argon2hash(password="password"),
-            role="researcher",
-            name="User Name",
-        ),
-        User(
-            username="admin",
-            unit_id=None,
-            password=auth.gen_argon2hash(password="password"),
-            role="admin",
-            name="Ad Min",
-        ),
-        User(
-            username="admin2",
-            unit_id=None,
-            password=auth.gen_argon2hash(password="password"),
-            role="admin",
-            name="Ad Min2",
-        ),
-    ]
 
     units = [
         Unit(
-            public_id="unit1",
             name="Unit 1",
+            public_id=os.urandom(16).hex(),
             internal_ref="someunit",
             safespring="dds.example.com",
         )
+    ]
+
+    users = [
+        ResearchUser(
+            username="researchuser",
+            password=auth.gen_argon2hash(password="password"),
+            name="Research User",
+        ),
+        UnitUser(
+            username="unituser",
+            password=auth.gen_argon2hash(password="password"),
+            name="Unit User",
+            is_admin=False,
+        ),
+        UnitUser(
+            username="unitadmin",
+            password=auth.gen_argon2hash(password="password"),
+            name="Unit Admin",
+            is_admin=True,
+        ),
+        SuperAdmin(
+            username="superadmin",
+            password=auth.gen_argon2hash(password="password"),
+            name="Super Admin",
+        ),
     ]
 
     return (users, units)
@@ -53,17 +54,17 @@ def client():
     # Create database specific for tests
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
-
     app = create_app(testing=True, database_uri=DATABASE_URI)
-
     with app.test_client() as client:
         with app.app_context():
             # Create all tables
             db.create_all()
             users, units = demo_data()
-            db.session.add_all(units)
-            db.session.flush()
+
+            # db.session.add_all(units)
+            # db.session.flush()
             users[1].unit = units[0]
+            users[2].unit = units[0]
             db.session.add_all(users)
             db.session.commit()
 
