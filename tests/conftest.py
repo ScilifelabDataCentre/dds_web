@@ -59,10 +59,6 @@ def client():
             # Create all tables
             db.create_all()
             users, units = demo_data()
-            # db.session.add_all(units)
-            # db.session.flush()
-            # users[1].unit = units[0]
-            # users[2].unit = units[0]
             units[0].users.extend([users[1], users[2]])
             db.session.add_all(units)
             db.session.commit()
