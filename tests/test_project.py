@@ -49,7 +49,11 @@ def test_create_project_with_credentials(client):
         )
         .one_or_none()
     )
-    assert created_proj and created_proj.date_created > time_before_run
+    assert (
+        created_proj
+        and created_proj.date_created > time_before_run
+        and not created_proj.is_sensitive
+    )
 
 
 def test_create_project_without_title_description(client):
@@ -92,3 +96,26 @@ def test_create_project_with_malformed_json(client):
         .one_or_none()
     )
     assert created_proj is None
+
+def test_create_project_sensitive(client):
+    credentials = b64encode(b"unituser:password").decode("utf-8")
+    p_data = proj_data
+    p_data["sensitive"] = True
+    response = client.post(
+        "/api/v1/proj/create",
+        headers={"Authorization": f"Basic {credentials}"},
+        data=json.dumps(p_data),
+        content_type="application/json",
+    )
+    assert response.status == "200 OK"
+    created_proj = (
+        db.session.query(models.Project)
+        .filter_by(
+            created_by="unituser",
+            title=proj_data["title"],
+            pi=proj_data["pi"],
+            description=proj_data["description"],
+        )
+        .one_or_none()
+    )
+    assert created_proj and created_proj.is_sensitive

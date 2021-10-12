@@ -104,6 +104,8 @@ class Project(db.Model):
     private_key = db.Column(db.String(255), nullable=False)
     privkey_salt = db.Column(db.String(32), nullable=False)
     privkey_nonce = db.Column(db.String(24), nullable=False)
+    is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+
     # Relationships
     # One project can have many files
     files = db.relationship("File", backref="project")
