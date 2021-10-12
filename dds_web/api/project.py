@@ -274,6 +274,7 @@ class CreateProject(flask_restful.Resource):
 
             project_info = {
                 "created_by": auth.current_user(),
+                "unit_id": unit_row.id,
                 "public_id": public_id,
                 "title": p_info["title"],
                 "date_created": created_time,
