@@ -14,7 +14,6 @@ def demo_data():
 
     units = [
         Unit(
-            public_id="unit1",
             name="Unit 1",
             internal_ref="someunit",
             safespring="dds.example.com",
