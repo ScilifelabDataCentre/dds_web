@@ -73,4 +73,4 @@ def client():
                 # Removes all data from the database
                 for table in reversed(db.metadata.sorted_tables):
                     db.session.execute(table.delete())
-    db.session.commit()
+                db.session.commit()
