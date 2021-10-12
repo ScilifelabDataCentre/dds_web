@@ -60,7 +60,7 @@ def client():
             db.create_all()
             users, units = demo_data()
             # db.session.add_all(units)
-            # db.session.flush()
+            db.session.flush()
             users[1].unit = units[0]
             users[2].unit = units[0]
             db.session.add_all(users)
