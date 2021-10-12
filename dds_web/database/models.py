@@ -83,7 +83,7 @@ class Project(db.Model):
     # One project is associated to one unit. One unit can have many projects.
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
 
-    # One unit can be created by one user
+    # One project can be created by one user
     created_by = db.Column(db.String(50), db.ForeignKey("users.username"), nullable=False)
 
     # Columns
