@@ -15,8 +15,8 @@ import flask
 import flask_restful
 import flask_wtf
 import itsdangerous
-import jwt
 import marshmallow
+from jwcrypto import jwk, jwt
 import pandas
 import sqlalchemy
 import wtforms
@@ -37,27 +37,15 @@ from dds_web.api import marshmallows
 
 def jwt_token(username):
     """Generates a JWT token."""
-
-    try:
-        token = jwt.encode(
-            {
-                "user": username,
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=48),
-            },
-            flask.current_app.config.get("SECRET_KEY"),
-            algorithm="HS256",
-        )
-        flask.current_app.logger.debug(f"token: {token}")
-    except (
-        TypeError,
-        KeyError,
-        jwt.exceptions.InvalidKeyError,
-        jwt.exceptions.InvalidAlgorithmError,
-        jwt.exceptions.MissingRequiredClaimError,
-    ) as err:
-        raise JwtTokenGenerationError(message=str(err))
-    else:
-        return token
+    expiration_time = datetime.datetime.utcnow() + datetime.timedelta(hours=48)
+    data = {
+        "sub": username,
+        "exp": expiration_time.timestamp(),
+    }
+    key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
+    token = jwt.JWT(header={"alg": "HS256"}, claims=data, algs=["HS256"])
+    token.make_signed_token(key)
+    return token.serialize()
 
 
 ####################################################################################################
@@ -158,31 +146,32 @@ class Token(flask_restful.Resource):
 class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def get(self):
         current_user = auth.current_user()
 
-        # Check that user is facility account
-        if current_user.role != "facility":
+        # Check that user is unit account
+        if current_user.role != "unit":
             flask.make_response(
-                "Access denied - only facility accounts can get invoicing information.", 401
+                "Access denied - only unit accounts can get invoicing information.", 401
             )
 
-        # Get facility info from table (incl safespring proj name)
+        # Get unit info from table (incl safespring proj name)
         try:
-            facility_info = models.Facility.query.filter(
-                models.Facility.id == func.binary(current_user.facility_id)
+            unit_info = models.Unit.query.filter(
+                models.Unit.id == func.binary(current_user.unit_id)
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(f"Failed getting facility information: {err}", 500)
+            flask.current_app.logger.exception(err)
+            return flask.make_response(f"Failed getting unit information.", 500)
 
-        # Total number of GB hours and cost saved in the db for the specific facility
+        # Total number of GB hours and cost saved in the db for the specific unit
         total_gbhours_db = 0.0
         total_cost_db = 0.0
 
         # Project (bucket) specific info
         usage = {}
-        for p in facility_info.projects:
+        for p in unit_info.projects:
 
             # Define fields in usage dict
             usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0}
@@ -194,16 +183,15 @@ class ShowUsage(flask_restful.Resource):
                         v.time_uploaded,
                         "%Y-%m-%d %H:%M:%S.%f%z",
                     )
-                    time_deleted = datetime.datetime.strptime(
-                        v.time_deleted if v.time_deleted else dds_web.utils.timestamp(),
-                        "%Y-%m-%d %H:%M:%S.%f%z",
+                    time_deleted = (
+                        v.time_deleted if v.time_deleted else dds_web.utils.current_time()
                     )
                     file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
 
                     # Calculate GBHours, if statement to avoid zerodivision exception
                     gb_hours = ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
 
-                    # Save file version gbhours to project info and increase total facility sum
+                    # Save file version gbhours to project info and increase total unit sum
                     usage[p.public_id]["gbhours"] += gb_hours
                     total_gbhours_db += gb_hours
 
@@ -211,7 +199,7 @@ class ShowUsage(flask_restful.Resource):
                     cost_gbhour = 0.09 / (30 * 24)
                     cost = gb_hours * cost_gbhour
 
-                    # Save file cost to project info and increase total facility cost
+                    # Save file cost to project info and increase total unit cost
                     usage[p.public_id]["cost"] += cost
                     total_cost_db += cost
 
@@ -236,31 +224,30 @@ class ShowUsage(flask_restful.Resource):
 class InvoiceUnit(flask_restful.Resource):
     """Calculate the actual cost from the Safespring invoicing specification."""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def get(self):
         current_user = auth.current_user()
 
-        # Check that user is facility account
-        if current_user.role != "facility":
+        # Check that user is unit account
+        if current_user.role != "unit":
             flask.make_response(
-                "Access denied - only facility accounts can get invoicing information.", 401
+                "Access denied - only unit accounts can get invoicing information.", 401
             )
 
-        # Get facility info from table (incl safespring proj name)
+        # Get unit info from table (incl safespring proj name)
         try:
-            facility_info = models.Facility.query.filter(
-                models.Facility.id == func.binary(current_user.facility_id)
+            unit_info = models.Unit.query.filter(
+                models.Unit.id == func.binary(current_user.unit_id)
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(f"Failed getting facility information: {err}", 500)
+            flask.current_app.logger.exception(err)
+            return flask.make_response(f"Failed getting unit information.", 500)
 
         # Get info from safespring invoice
         # TODO (ina): Move to another class or function - will be calling the safespring api
         csv_path = pathlib.Path("").parent / pathlib.Path("development/safespring_invoicespec.csv")
         csv_contents = pandas.read_csv(csv_path, sep=";", header=1)
-        safespring_project_row = csv_contents.loc[
-            csv_contents["project"] == facility_info.safespring
-        ]
+        safespring_project_row = csv_contents.loc[csv_contents["project"] == unit_info.safespring]
 
         flask.current_app.logger.debug(safespring_project_row)
 

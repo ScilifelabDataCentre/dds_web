@@ -19,8 +19,6 @@ from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 import flask_mail
 
-# Own modules
-
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
 ####################################################################################################
@@ -105,7 +103,7 @@ def setup_logging(app):
     )
 
 
-def create_app():
+def create_app(testing=False, database_uri=None):
     """Construct the core application."""
     # Initiate app object
     app = flask.Flask(__name__, instance_relative_config=False)
@@ -115,6 +113,12 @@ def create_app():
 
     # User config file, if e.g. using in production
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
+
+    # Test related configs
+    if database_uri is not None:
+        app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
+    # Disables error catching during request handling
+    app.config["TESTING"] = testing
 
     # Setup logging handlers
     setup_logging(app)
@@ -142,6 +146,7 @@ def create_app():
     app.cli.add_command(fill_db_wrapper)
 
     with app.app_context():  # Everything in here has access to sessions
+        db.create_all()  # TODO: remove this when we have migrations
         from dds_web.database import models
 
         # Need to import auth so that the modifications to the auth objects take place
@@ -151,6 +156,9 @@ def create_app():
         from dds_web.api import api_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+
+        # Set-up the schedulers
+        dds_web.utils.scheduler_wrapper()
 
         return app
 

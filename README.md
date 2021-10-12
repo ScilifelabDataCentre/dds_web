@@ -1,6 +1,6 @@
 # SciLifeLab Data Centre - Data Delivery System
 
-**A single cloud-based system for all SciLifeLab facilities, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way.**
+**A single cloud-based system for all SciLifeLab units, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way.**
 
 > _This project is supported by EIT Digital, activity number 19390. This deliverable consists of design document and implementation report of application and validation of VEIL.AI technology in SciLifeLab context in Sweden._
 
@@ -35,6 +35,29 @@ If you prefer, you can run the web servers in 'detached' mode with the `-d` flag
 If using this method, you can stop the web server with the command `docker-compose down`.
 
 
+### Python debugger inside docker
+It's possible to use the interactive debugging tool `pdb` inside Docker with this method:
+1. Edit the `docker-compose.yml` and for the `backend` service, add:
+```
+  tty: true
+  stdin_open: true
+```
+just under
+```
+  ports:
+    - 127.0.0.1:5000:5000
+```
+
+2. Put `import pdb; pdb.set_trace()` in the python code where you would like to activate the debugger.
+3. Run with docker-compose as normal.
+4. Find out the id of the container running the `backend`.
+```
+docker container ls
+```
+5. Attach to the running backend container:
+```
+docker container attach <container_id/name>
+```
 ### Config settings
 
 When run from the cloned repo, all settings are set to default values.
@@ -81,6 +104,13 @@ docker volume prune
 Then run `docker-compose up` as normal. The images will be rebuilt from scratch before launch.
 
 If there are still issues, try deleting the `pycache` folders and repeat the above steps.
+
+### Run tests
+Tests run on github actions on every pull request and push against master and dev. To run the tests locally, use this command:
+```bash
+docker-compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build --exit-code-from backend
+```
+This will create a test database in the mariadb container called `DeliverySystemTest` which will be populated before a test and emptied after a test has finished.
 
 ## Production
 

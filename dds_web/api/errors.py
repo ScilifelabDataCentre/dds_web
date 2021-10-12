@@ -14,6 +14,7 @@ import http
 
 # Own modules
 from dds_web import actions
+from dds_web import auth
 
 ####################################################################################################
 # LOGGING ################################################################################ LOGGING #
@@ -50,7 +51,6 @@ class AccessDeniedError(exceptions.HTTPException):
 
     def __init__(
         self,
-        username=None,
         project=None,
         message="The user does not have the necessary permissions.",
     ):
@@ -60,7 +60,7 @@ class AccessDeniedError(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": username,
+                "current_user": auth.current_user(),
                 "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
@@ -70,9 +70,7 @@ class AccessDeniedError(exceptions.HTTPException):
 class DatabaseError(exceptions.HTTPException):
     """Baseclass for database related issues."""
 
-    def __init__(
-        self, message="The DDS encountered an Flask-SQLAlchemy issue.", username=None, project=None
-    ):
+    def __init__(self, message="The DDS encountered an Flask-SQLAlchemy issue.", project=None):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -81,7 +79,7 @@ class DatabaseError(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": username,
+                "current_user": auth.current_user(),
                 "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
@@ -100,7 +98,7 @@ class EmptyProjectException(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": username,
+                "current_user": auth.current_user(),
                 "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
@@ -110,7 +108,7 @@ class EmptyProjectException(exceptions.HTTPException):
 class DeletionError(exceptions.HTTPException):
     """Deletion of item failed."""
 
-    def __init__(self, username, project, message="Deletion failed."):
+    def __init__(self, project, message="Deletion failed."):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -119,7 +117,7 @@ class DeletionError(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": username,
+                "current_user": auth.current_user(),
                 "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
@@ -129,7 +127,7 @@ class DeletionError(exceptions.HTTPException):
 class NoSuchProjectError(exceptions.HTTPException):
     """The project does not exist in the database"""
 
-    def __init__(self, username, project, message="The specified project does not exist."):
+    def __init__(self, project, message="The specified project does not exist."):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -138,7 +136,7 @@ class NoSuchProjectError(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": username,
+                "current_user": auth.current_user(),
                 "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
@@ -174,15 +172,6 @@ class S3ConnectionError(exceptions.HTTPException):
 
 class S3InfoNotFoundError(exceptions.HTTPException):
     """S3 info could not be found."""
-
-    def __init__(self, message):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-
-class KeyNotFoundError(exceptions.HTTPException):
-    """S3 keys not found."""
 
     def __init__(self, message):
         super().__init__(message)
@@ -226,14 +215,12 @@ class MissingMethodError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class PublicKeyNotFoundError(exceptions.HTTPException):
-    """Public key not found in database"""
+class KeyNotFoundError(exceptions.HTTPException):
+    """Key not found in database."""
 
     def __init__(self, project, message="No key found for current project"):
         self.message = f"{message}: {project}"
         super().__init__(self.message)
-
-        general_logger.warning(self.message)
 
 
 class NoSuchInviteError(exceptions.HTTPException):
@@ -271,6 +258,5 @@ errors = {
     "S3ProjectNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "S3InfoNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "PublicKeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
 }

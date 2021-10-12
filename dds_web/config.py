@@ -29,12 +29,12 @@ class Config(object):
 
     # Expected paths - these are the bind paths *inside* the container
     USE_LOCAL_DB = True
-    LOG_DIR = "/dds_web/logs"
+    LOGS_DIR = "/dds_web/logs"
     UPLOAD_FOLDER = "/dds_web/uploads"
     DOWNLOAD_FOLDER = "/dds_web/downloads"
     LOCAL_TEMP_CACHE = "/dds_web/local_temp_cache"
     DDS_S3_CONFIG = "/code/dds_web/sensitive/s3_config.json"
-    DDS_SAFE_SPRING_PROJECT = os.environ.get("DDS_SAFE_SPRING_PROJECT")
+    DDS_SAFE_SPRING_PROJECT = os.environ.get("DDS_SAFE_SPRING_PROJECT", "dds.example.com")
 
     # Devel settings
     TEMPLATES_AUTO_RELOAD = True

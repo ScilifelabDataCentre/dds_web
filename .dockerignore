@@ -7,7 +7,6 @@ venv
 filenumber*
 testfile*
 files
-test*
 *settings.json*
 *info.md*
 create_account.py

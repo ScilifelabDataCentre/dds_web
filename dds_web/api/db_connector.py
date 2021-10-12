@@ -161,7 +161,7 @@ class DBConnector:
             # TODO (ina): put in class
             # change project size
             self.project.size = 0
-            self.project.date_updated = dds_web.utils.timestamp()
+            self.project.date_updated = dds_web.utils.current_time()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
@@ -203,13 +203,13 @@ class DBConnector:
                             models.Version.time_deleted == None,
                         )
                     ).first()
-                    current_file_version.time_deleted = dds_web.utils.timestamp()
+                    current_file_version.time_deleted = dds_web.utils.current_time()
 
                     # Delete file and update project size
                     old_size = x.size_original
                     db.session.delete(x)
                     self.project.size -= old_size
-                self.project.date_updated = dds_web.utils.timestamp()
+                self.project.date_updated = dds_web.utils.current_time()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)
             else:
@@ -222,7 +222,7 @@ class DBConnector:
 
         not_removed_dict, not_exist_list, error = ({}, [], "")
 
-        with ApiS3Connector() as s3conn:
+        with ApiS3Connector(project=self.project) as s3conn:
             # Error if not enough info
             if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
                 return (
@@ -293,11 +293,11 @@ class DBConnector:
                         models.Version.time_deleted == None,
                     )
                 ).first()
-                current_file_version.time_deleted = dds_web.utils.timestamp()
+                current_file_version.time_deleted = dds_web.utils.current_time()
 
                 db.session.delete(file)
                 self.project.size -= old_size
-                self.project.date_updated = dds_web.utils.timestamp()
+                self.project.date_updated = dds_web.utils.current_time()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 db.session.rollback()
                 error = str(err)
@@ -312,24 +312,24 @@ class DBConnector:
         # Get current project
         try:
 
-            current_project_facility_safespring = (
+            current_project_unit_safespring = (
                 models.Project.query.join(
-                    models.Facility, models.Project.facility_id == func.binary(models.Facility.id)
+                    models.Unit, models.Project.unit_id == func.binary(models.Unit.id)
                 )
-                .add_columns(models.Facility.safespring)
-                .filter(models.Facility.id == func.binary(models.Project.facility_id))
+                .add_columns(models.Unit.safespring)
+                .filter(models.Unit.id == func.binary(models.Project.unit_id))
                 .filter(models.Project.public_id == func.binary(self.project.public_id))
             ).first()
 
             flask.current_app.logger.debug(
-                "Safespring project: %s", current_project_facility_safespring
+                "Safespring project: %s", current_project_unit_safespring
             )
-            if not current_project_facility_safespring:
+            if not current_project_unit_safespring:
                 raise S3ProjectNotFoundError(
-                    message="No safespring project found for responsible facility.",
+                    message="No safespring project found for responsible unit.",
                 )
 
-            sfsp_proj = current_project_facility_safespring[1]
+            sfsp_proj = current_project_unit_safespring[1]
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError(message=str(err))
         else:
@@ -348,10 +348,7 @@ class DBConnector:
                     v.time_uploaded,
                     "%Y-%m-%d %H:%M:%S.%f%z",
                 )
-                time_deleted = datetime.datetime.strptime(
-                    v.time_deleted if v.time_deleted else dds_web.utils.timestamp(),
-                    "%Y-%m-%d %H:%M:%S.%f%z",
-                )
+                time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
                 file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
 
                 # Calculate GBHours, if statement to avoid zerodivision exception
@@ -360,7 +357,7 @@ class DBConnector:
                 # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
                 cost_gbhour = 0.09 / (30 * 24)
 
-                # Save file cost to project info and increase total facility cost
+                # Save file cost to project info and increase total unit cost
                 cost += gbhours * cost_gbhour
 
         return round(gbhours, 2), round(cost, 2)

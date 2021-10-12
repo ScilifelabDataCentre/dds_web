@@ -8,7 +8,8 @@
 import argon2
 import http
 import flask
-import jwt
+import json
+from jwcrypto import jwk, jwt
 
 # Own modules
 from dds_web.api.errors import AuthenticationError, AccessDeniedError
@@ -48,24 +49,22 @@ def get_user_roles(user):
 
 
 def get_user_roles_common(user):
-    if "a" in user.permissions:
-        return "admin"
-    else:
-        return "user"
+    """Return the users role as saved in the db."""
+
+    return user.role
 
 
 @token_auth.verify_token
 def verify_token(token):
-    try:
-        data = jwt.decode(token, flask.current_app.config.get("SECRET_KEY"), algorithms="HS256")
-        username = data.get("user")
-        if username:
-            user = models.User.query.get(username)
-            if user:
-                return user
-        return None
-    except jwt.DecodeError:
-        return None
+    key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
+    jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
+    data = json.loads(jwttoken.claims)
+    username = data.get("sub")
+    if username:
+        user = models.User.query.get(username)
+        if user:
+            return user
+    return None
 
 
 @basic_auth.verify_password

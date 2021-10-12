@@ -16,12 +16,12 @@ from sqlalchemy.sql import func
 # Own modules
 import dds_web.utils
 from dds_web import auth
-from dds_web.api.project import verify
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import DatabaseError
+from dds_web.api import marshmallows
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -31,7 +31,7 @@ from dds_web.api.errors import DatabaseError
 class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def post(self):
         """Add new file to DB"""
 
@@ -47,16 +47,12 @@ class NewFile(flask_restful.Resource):
             "public_key",
             "checksum",
         ]
-        args = flask.request.args
 
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["put"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
-        if not all(x in args for x in required_info):
-            missing = [x for x in required_info if x not in args]
+        file_info = flask.request.json
+        if not all(x in file_info for x in required_info):
+            missing = [x for x in required_info if x not in file_info]
             return flask.make_response(
                 f"Information missing ({missing}), cannot add file to database.", 500
             )
@@ -66,7 +62,7 @@ class NewFile(flask_restful.Resource):
             existing_file = (
                 models.File.query.filter(
                     sqlalchemy.and_(
-                        models.File.name == func.binary(args["name"]),
+                        models.File.name == func.binary(file_info.get("name")),
                         models.File.project_id == func.binary(project.id),
                     )
                 )
@@ -76,28 +72,28 @@ class NewFile(flask_restful.Resource):
 
             if existing_file or existing_file is not None:
                 return flask.make_response(
-                    f"File '{args['name']}' already exists in the database!", 500
+                    f"File '{file_info.get('name')}' already exists in the database!", 500
                 )
 
             # Add new file to db
             new_file = models.File(
                 public_id=os.urandom(16).hex(),
-                name=args["name"],
-                name_in_bucket=args["name_in_bucket"],
-                subpath=args["subpath"],
-                size_original=args["size"],
-                size_stored=args["size_processed"],
-                compressed=bool(args["compressed"] == "True"),
-                salt=args["salt"],
-                public_key=args["public_key"],
-                checksum=args["checksum"],
+                name=file_info.get("name"),
+                name_in_bucket=file_info.get("name_in_bucket"),
+                subpath=file_info.get("subpath"),
+                size_original=file_info.get("size"),
+                size_stored=file_info.get("size_processed"),
+                compressed=file_info.get("compressed"),
+                salt=file_info.get("salt"),
+                public_key=file_info.get("public_key"),
+                checksum=file_info.get("checksum"),
                 project_id=project,
             )
 
             # New file version
             new_version = models.Version(
                 size_stored=new_file.size_stored,
-                time_uploaded=dds_web.utils.timestamp(),
+                time_uploaded=dds_web.utils.current_time(),
                 active_file=new_file.id,
                 project_id=project,
             )
@@ -113,30 +109,25 @@ class NewFile(flask_restful.Resource):
             flask.current_app.logger.debug(err)
             db.session.rollback()
             return flask.make_response(
-                f"Failed to add new file '{args['name']}' to database: {err}", 500
+                f"Failed to add new file '{file_info.get('name')}' to database: {err}", 500
             )
 
-        return flask.jsonify({"message": f"File '{args['name']}' added to db."})
+        return flask.jsonify({"message": f"File '{file_info.get('name')}' added to db."})
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def put(self):
 
-        args = flask.request.args
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["put"],
-        )
-
-        if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
+        file_info = flask.request.json
+        if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
             return flask.make_response("Information missing, " "cannot add file to database.", 500)
 
         try:
             # Check if file already in db
             existing_file = models.File.query.filter(
                 sqlalchemy.and_(
-                    models.File.name == func.binary(args["name"]),
+                    models.File.name == func.binary(file_info.get("name")),
                     models.File.project_id == project.id,
                 )
             ).first()
@@ -144,7 +135,7 @@ class NewFile(flask_restful.Resource):
             # Error if not found
             if not existing_file or existing_file is None:
                 return flask.make_response(
-                    f"Cannot update non-existent file '{args['name']}' in the database!",
+                    f"Cannot update non-existent file '{file_info.get('name')}' in the database!",
                     500,
                 )
 
@@ -161,7 +152,7 @@ class NewFile(flask_restful.Resource):
                 )
 
             # Same timestamp for deleted and created new file
-            new_timestamp = dds_web.utils.timestamp()
+            new_timestamp = dds_web.utils.current_time()
 
             # Overwritten == deleted/deactivated
             for version in current_file_version:
@@ -169,18 +160,18 @@ class NewFile(flask_restful.Resource):
                     version.time_deleted = new_timestamp
 
             # Update file info
-            existing_file.subpath = args["subpath"]
-            existing_file.size_original = args["size"]
-            existing_file.size_stored = args["size_processed"]
-            existing_file.compressed = bool(args["compressed"] == "True")
-            existing_file.salt = args["salt"]
-            existing_file.public_key = args["public_key"]
+            existing_file.subpath = file_info.get("subpath")
+            existing_file.size_original = file_info.get("size")
+            existing_file.size_stored = file_info.get("size_processed")
+            existing_file.compressed = file_info.get("compressed")
+            existing_file.salt = file_info.get("salt")
+            existing_file.public_key = file_info.get("public_key")
             existing_file.time_uploaded = new_timestamp
-            existing_file.checksum = args["checksum"]
+            existing_file.checksum = file_info.get("checksum")
 
             # New version
             new_version = models.Version(
-                size_stored=args["size_processed"],
+                size_stored=file_info.get("size_processed"),
                 time_uploaded=new_timestamp,
                 active_file=existing_file.id,
                 project_id=project,
@@ -196,23 +187,17 @@ class NewFile(flask_restful.Resource):
             db.session.rollback()
             return flask.make_response(f"Failed updating file information: {err}", 500)
 
-        return flask.jsonify({"message": f"File '{args['name']}' updated in db."})
+        return flask.jsonify({"message": f"File '{file_info.get('name')}' updated in db."})
 
 
 class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def get(self):
         """Matches specified files to files in db."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["put"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         try:
             matching_files = (
@@ -237,23 +222,15 @@ class ListFiles(flask_restful.Resource):
     def get(self):
         """Get a list of files within the specified folder."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["ls"],
-        )
-
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        extra_args = flask.request.json
         # Check if to return file size
-        show_size = False
-        if "show_size" in args and args["show_size"] == "True":
-            show_size = True
+        show_size = extra_args.get("show_size")
 
         # Check if to get from root or folder
         subpath = "."
-        if "subpath" in args:
-            subpath = args["subpath"].rstrip(os.sep)
+        if extra_args.get("subpath"):
+            subpath = extra_args.get("subpath").rstrip(os.sep)
 
         files_folders = list()
 
@@ -311,17 +288,11 @@ class ListFiles(flask_restful.Resource):
 class RemoveFile(flask_restful.Resource):
     """Removes files from the database and s3 with boto3."""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def delete(self):
         """Deletes the files"""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["rm"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         with DBConnector(project=project) as dbconn:
             not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
@@ -339,24 +310,18 @@ class RemoveFile(flask_restful.Resource):
 class RemoveDir(flask_restful.Resource):
     """Removes one or more full directories from the database and s3."""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def delete(self):
         """Deletes the folders."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["rm"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         not_removed_dict, not_exist_list = ({}, [])
 
         try:
             with DBConnector(project=project) as dbconn:
 
-                with ApiS3Connector() as s3conn:
+                with ApiS3Connector(project=project) as s3conn:
                     # Error if not enough info
                     if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
                         return (
@@ -407,13 +372,7 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["get"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         # Get files and folders requested by CLI
         paths = flask.request.json
@@ -499,13 +458,7 @@ class FileInfoAll(flask_restful.Resource):
     def get(self):
         """Get file info."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["get"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         files = {}
         try:
@@ -554,16 +507,11 @@ class UpdateFile(flask_restful.Resource):
     def put(self):
         """Update info in db."""
 
-        args = flask.request.args
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["get"],
-        )
-
+        file_info = flask.request.json
         # Get file name from request from CLI
-        file_name = args.get("name")
+        file_name = file_info.get("name")
         if not file_name:
             return flask.make_response("No file name specified. Cannot update file.", 500)
 
@@ -573,23 +521,24 @@ class UpdateFile(flask_restful.Resource):
                 "Updating file in current project: %s", project.public_id
             )
 
+            flask.current_app.logger.debug(f"File name: {file_name}")
             file = models.File.query.filter(
                 sqlalchemy.and_(
                     models.File.project_id == func.binary(project.id),
-                    models.File.name == func.binary(file_name["name"]),
+                    models.File.name == func.binary(file_name),
                 )
             ).first()
 
             if not file:
-                return flask.make_response(f"No such file: {file_name['name']}", 500)
+                return flask.make_response(f"No such file.", 500)
 
-            file.time_latest_download = dds_web.utils.timestamp()
+            file.time_latest_download = dds_web.utils.current_time()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             flask.current_app.logger.exception(str(err))
-            return flask.make_response(str(err), 500)
+            return flask.make_response("Update of file info failed.", 500)
         else:
-            flask.current_app.logger.debug("File %s updated", file_name["name"])
+            # flask.current_app.logger.debug("File %s updated", file_name)
             db.session.commit()
 
         return flask.jsonify({"message": "File info updated."})

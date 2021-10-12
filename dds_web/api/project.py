@@ -4,6 +4,8 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
+# Standard Library
+
 # Installed
 import flask_restful
 import flask
@@ -11,6 +13,7 @@ import sqlalchemy
 from cryptography.hazmat.primitives.kdf import scrypt
 from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
 from cryptography.hazmat import backends
+import os
 
 
 # Own modules
@@ -27,57 +30,15 @@ from dds_web.api.errors import (
     EmptyProjectException,
     DeletionError,
     BucketNotFoundError,
-    PublicKeyNotFoundError,
+    DDSArgumentError,
+    KeyNotFoundError,
 )
+from dds_web.crypt import key_gen
+from dds_web.api import marshmallows
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
-
-
-def verify(current_user, project_public_id, access_method):
-    """Checks the user access to the given project with the given method."""
-
-    if not project_public_id:
-        raise MissingProjectIDError
-
-    flask.current_app.logger.debug(
-        f"Verifying access to project {project_public_id} by user {current_user.username}."
-    )
-    try:
-        project = models.Project.query.filter(models.Project.public_id == project_public_id).first()
-    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise DatabaseError(
-            message=str(sqlerr), username=current_user.username, project=project_public_id
-        )
-
-    if not project:
-        raise NoSuchProjectError(username=current_user.username, project=project_public_id)
-
-    if project not in current_user.projects:
-        raise AccessDeniedError(
-            message="Project access denied.",
-            username=current_user.username,
-            project=project_public_id,
-        )
-
-    has_one_of_the_permissions = False
-    permissions_dict = {"get": "g", "ls": "l", "put": "p", "rm": "r"}
-    for method in access_method:
-        if permissions_dict.get(method) in list(current_user.permissions):
-            has_one_of_the_permissions = True
-
-    if not has_one_of_the_permissions:
-        raise AccessDeniedError(
-            message="User does not have necessary permission(s) in the specified project.",
-            username=current_user.username,
-            project=project_public_id,
-        )
-
-    flask.current_app.logger.debug(
-        f"Access to project {project_public_id} is granted for user {current_user.username}."
-    )
-    return project
 
 
 class GetPublic(flask_restful.Resource):
@@ -87,18 +48,12 @@ class GetPublic(flask_restful.Resource):
     def get(self):
         """Get public key from database."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["get", "put"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         flask.current_app.logger.debug("Getting the public key.")
 
         if not project.public_key:
-            raise PublicKeyNotFoundError(project=project.public_id)
+            raise KeyNotFoundError(project=project.public_id)
 
         return flask.jsonify({"public": project.public_key})
 
@@ -110,13 +65,7 @@ class GetPrivate(flask_restful.Resource):
     def get(self):
         """Get private key from database"""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["get"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         # TODO (ina): Change handling of private key -- not secure
         flask.current_app.logger.debug("Getting the private key.")
@@ -155,21 +104,15 @@ class UserProjects(flask_restful.Resource):
         """Get info regarding all projects which user is involved in."""
         current_user = auth.current_user()
 
-        if "l" not in current_user.permissions:
-            raise AccessDeniedError(
-                message="User does not have permission to ls.",
-                username=current_user.username,
-            )
-
-        # TODO: Return different things depending on if facility or not
+        # TODO: Return different things depending on if unit or not
         all_projects = list()
 
-        # Total number of GB hours and cost saved in the db for the specific facility
+        # Total number of GB hours and cost saved in the db for the specific unit
         total_gbhours_db = 0.0
         total_cost_db = 0.0
         total_size = 0
 
-        usage = flask.request.args.get("usage") == "True" and current_user.role == "facility"
+        usage = flask.request.args.get("usage") == "True" and current_user.role == "unit"
 
         # Get info for all projects
         for p in current_user.projects:
@@ -178,9 +121,7 @@ class UserProjects(flask_restful.Resource):
                 "Title": p.title,
                 "PI": p.pi,
                 "Status": p.status,
-                "Last updated": dds_web.utils.timestamp(
-                    datetime_string=p.date_updated if p.date_updated else p.date_created
-                ),
+                "Last updated": p.date_updated if p.date_updated else p.date_created,
                 "Size": dds_web.utils.format_byte_size(p.size),
             }
 
@@ -213,15 +154,11 @@ class UserProjects(flask_restful.Resource):
 class RemoveContents(flask_restful.Resource):
     """Removes all project contents."""
 
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def delete(self):
         """Removes all project contents."""
 
-        args = flask.request.args
-        current_user = auth.current_user()
-        project = verify(
-            current_user=current_user, project_public_id=args.get("project"), access_method=["rm"]
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         # Delete files
         removed = False
@@ -241,7 +178,7 @@ class RemoveContents(flask_restful.Resource):
 
             # Delete from bucket
             try:
-                with ApiS3Connector() as s3conn:
+                with ApiS3Connector(project=project) as s3conn:
                     removed = s3conn.remove_all()
 
                     # Return error if contents not deleted from s3 bucket
@@ -264,17 +201,11 @@ class RemoveContents(flask_restful.Resource):
 
 
 class UpdateProjectSize(flask_restful.Resource):
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def put(self):
         """Update the project size and updated time stamp."""
 
-        args = flask.request.args
-
-        project = verify(
-            current_user=auth.current_user(),
-            project_public_id=args.get("project"),
-            access_method=["put"],
-        )
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
         updated, error = (False, "")
         current_try, max_tries = (1, 5)
@@ -289,14 +220,104 @@ class UpdateProjectSize(flask_restful.Resource):
                 )
 
                 project.size = tot_file_size.sizeSum
-                project.date_updated = dds_web.utils.timestamp()
+                project.date_updated = dds_web.utils.current_time()
+
                 db.session.commit()
             except sqlalchemy.exc.SQLAlchemyError as err:
-                error = str(err)
+                flask.current_app.logger.exception(err)
                 db.session.rollback()
                 current_try += 1
             else:
+                flask.current_app.logger.debug("Updated project size!")
                 updated = True
                 break
 
         return flask.jsonify({"updated": updated, "error": error, "tries": current_try})
+
+
+class CreateProject(flask_restful.Resource):
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    def post(self):
+        """Create a new project"""
+
+        if flask.request.is_json:
+            try:
+                p_info = flask.request.json
+            except:
+                raise DDSArgumentError(message="Error: Malformed data provided")
+        else:
+            raise DDSArgumentError(message="Error: Malformed data provided")
+
+        if "title" not in p_info or "description" not in p_info:
+            raise DDSArgumentError(
+                message="Error: Title/description missing when creating a project"
+            )
+        cur_user = auth.current_user()
+        # Add check for user permissions
+
+        created_time = dds_web.utils.current_time()
+
+        try:
+            # lock Unit row
+            unit_row = (
+                db.session.query(models.Unit)
+                .filter_by(id=cur_user.unit_id)
+                .with_for_update()
+                .one_or_none()
+            )
+
+            if not unit_row:
+                raise AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
+
+            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
+            public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
+
+            project_info = {
+                "created_by": auth.current_user().username,
+                "public_id": public_id,
+                "title": p_info["title"],
+                "date_created": created_time,
+                "date_updated": created_time,
+                "status": "Ongoing",  # ?
+                "description": p_info["description"],
+                "pi": p_info.get("pi", ""),  # Not a foreign key, only a name
+                "size": 0,
+                "bucket": self.__create_bucket_name(public_id, created_time),
+            }
+            pkg = key_gen.ProjectKeys(project_info["public_id"])
+            project_info.update(pkg.key_dict())
+
+            if "sensitive" in p_info:
+                project_info["is_sensitive"] = p_info["sensitive"]
+
+            new_project = models.Project(**project_info)
+            unit_row.projects.append(new_project)
+            # cur_user.unit = unit_row
+            cur_user.created_projects.append(new_project)
+
+            db.session.commit()
+
+        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise DatabaseError(message="Server Error: Project was not created")
+
+        else:
+            flask.current_app.logger.debug(
+                f"Project {public_id} created by user {cur_user.username}."
+            )
+            return flask.jsonify(
+                {
+                    "status": 200,
+                    "message": "Added new project '{}'".format(new_project.title),
+                    "project_id": new_project.public_id,
+                }
+            )
+
+    def __create_bucket_name(self, public_id, created_time):
+        """Create a bucket name for the given project"""
+        return "{pid}-{tstamp}-{rstring}".format(
+            pid=public_id.lower(),
+            tstamp=dds_web.utils.timestamp(dts=created_time, ts_format="%y%m%d%H%M%S%f"),
+            rstring=os.urandom(4).hex(),
+        )
