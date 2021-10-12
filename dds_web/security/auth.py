@@ -49,8 +49,9 @@ def get_user_roles(user):
 
 
 def get_user_roles_common(user):
-    flask.current_app.logger.debug(f"ROLE: {getattr(user, 'role')}")
-    return getattr(user, "role")
+    """Return the users role as saved in the db."""
+
+    return user.role
 
 
 @token_auth.verify_token
