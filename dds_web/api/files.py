@@ -507,8 +507,9 @@ class UpdateFile(flask_restful.Resource):
 
         project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
+        file_info = flask.request.json
         # Get file name from request from CLI
-        file_name = args.get("name")
+        file_name = file_info.get("name")
         if not file_name:
             return flask.make_response("No file name specified. Cannot update file.", 500)
 
