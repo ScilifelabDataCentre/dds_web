@@ -65,7 +65,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
     project = marshmallow.fields.String(required=True)
 
     class Meta:
-        unknown = marshmallow.RAISE
+        unknown = marshmallow.EXCLUDE  # TODO: Change to RAISE
 
     @marshmallow.validates("project")
     def validate_project(self, value):
