@@ -32,14 +32,12 @@ def demo_data():
             password=auth.gen_argon2hash(password="password"),
             name="Unit User",
             is_admin=False,
-            # unit_id=units[0],
         ),
         UnitUser(
             username="unitadmin",
             password=auth.gen_argon2hash(password="password"),
             name="Unit Admin",
             is_admin=True,
-            # unit_id=units[0],
         ),
         SuperAdmin(
             username="superadmin",
@@ -62,12 +60,12 @@ def client():
             # Create all tables
             db.create_all()
             users, units = demo_data()
+
             db.session.add_all(units)
             db.session.flush()
-            # users[1].unit = units[0]
-            units[0].users.append(users[1])
-            units[0].users.append(users[2])
-            db.session.add_all(units)
+            users[1].unit = units[0]
+            users[2].unit = units[0]
+            db.session.add_all(users)
             db.session.commit()
 
             try:
