@@ -138,7 +138,6 @@ class User(db.Model):
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
 
     password = db.Column(db.String(98), unique=False, nullable=False)
-    # role = db.Column(db.String(20), unique=False, nullable=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
 
     type = db.Column(db.String(20), unique=False, nullable=False)
