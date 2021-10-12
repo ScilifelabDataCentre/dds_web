@@ -223,16 +223,12 @@ class ListFiles(flask_restful.Resource):
         """Get a list of files within the specified folder."""
 
         project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
-
+        extra_args = flask.request.json
         # Check if to return file size
-        show_size = False
-        if "show_size" in args and args["show_size"] == "True":
-            show_size = True
+        show_size = extra_args.get("show_size")
 
         # Check if to get from root or folder
-        subpath = "."
-        if "subpath" in args:
-            subpath = args["subpath"].rstrip(os.sep)
+        subpath = extra_args.get("subpath").rstrip(os.sep) if "subpath" in extra_args else "."
 
         files_folders = list()
 
