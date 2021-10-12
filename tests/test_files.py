@@ -11,7 +11,7 @@ from dds_web.database import models
 import tests
 
 
-# CONFIG #################################################################################### CONFIG #
+# CONFIG ################################################################################## CONFIG #
 
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
 

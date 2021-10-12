@@ -1,10 +1,12 @@
 # IMPORTS ################################################################################ IMPORTS #
 
 # Standard library
+import flask
 import http
 
 # Installed
-import jwt
+from jwcrypto import jwk, jws
+from jwcrypto.common import JWException
 
 # Own
 import tests
@@ -86,7 +88,9 @@ def test_auth_correctauth_check_statuscode_200_correct_info(client):
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
     assert response_json.get("token")
-    # decoded_token = jwt.JWT.decode(
-    #    response_json.get("token"), key="", options={"verify_signature": False}
-    # )
-    # assert "username" == decoded_token.get("user")
+    jwstoken = jws.JWS()
+    jwstoken.deserialize(response_json.get("token"))
+    jwstoken.verify(jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY")))
+    # extracting JWS token payload before verification will raise a `InvalidJWSOperation` error, poorly documented in jwcrypto :-(
+    payload = jws.json_decode(jwstoken.payload)
+    assert payload.get("sub") == "username"

@@ -5,10 +5,6 @@ from base64 import b64encode
 # Copied from dds_cli __init__.py:
 
 __all__ = [
-    "DDS_METHODS",
-    "DDS_DIR_REQUIRED_METHODS",
-    "DDS_PROJ_REQUIRED_METHODS",
-    "DDS_PROJ_NOT_REQUIRED_METHODS",
     "USER_CREDENTIALS",
     "UserAuth",
     "DDSEndpoint",
