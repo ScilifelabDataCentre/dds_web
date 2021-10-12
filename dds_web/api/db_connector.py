@@ -222,7 +222,7 @@ class DBConnector:
 
         not_removed_dict, not_exist_list, error = ({}, [], "")
 
-        with ApiS3Connector() as s3conn:
+        with ApiS3Connector(project=self.project) as s3conn:
             # Error if not enough info
             if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
                 return (

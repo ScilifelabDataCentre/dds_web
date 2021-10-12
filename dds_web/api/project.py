@@ -178,7 +178,7 @@ class RemoveContents(flask_restful.Resource):
 
             # Delete from bucket
             try:
-                with ApiS3Connector() as s3conn:
+                with ApiS3Connector(project=project) as s3conn:
                     removed = s3conn.remove_all()
 
                     # Return error if contents not deleted from s3 bucket

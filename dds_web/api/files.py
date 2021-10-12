@@ -228,7 +228,9 @@ class ListFiles(flask_restful.Resource):
         show_size = extra_args.get("show_size")
 
         # Check if to get from root or folder
-        subpath = extra_args.get("subpath").rstrip(os.sep) if "subpath" in extra_args else "."
+        subpath = "."
+        if extra_args.get("subpath"):
+            subpath = extra_args.get("subpath").rstrip(os.sep)
 
         files_folders = list()
 
@@ -319,7 +321,7 @@ class RemoveDir(flask_restful.Resource):
         try:
             with DBConnector(project=project) as dbconn:
 
-                with ApiS3Connector() as s3conn:
+                with ApiS3Connector(project=project) as s3conn:
                     # Error if not enough info
                     if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
                         return (
