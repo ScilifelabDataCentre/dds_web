@@ -51,7 +51,6 @@ class Unit(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # Columns
-    public_id = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.String(255), unique=True, nullable=False)
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
     safespring = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
