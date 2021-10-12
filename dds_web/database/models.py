@@ -80,7 +80,7 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    # One unit can have many projects
+    # One project is associated to one unit. One unit can have many projects.
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
 
     # One unit can be created by one user
