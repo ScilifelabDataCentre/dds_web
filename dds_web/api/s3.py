@@ -12,7 +12,6 @@ import flask
 
 # Own modules
 from dds_web import auth
-from dds_web.api.project import verify
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api import marshmallows
 

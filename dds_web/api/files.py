@@ -16,7 +16,6 @@ from sqlalchemy.sql import func
 # Own modules
 import dds_web.utils
 from dds_web import auth
-from dds_web.api.project import verify
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
