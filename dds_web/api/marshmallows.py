@@ -3,9 +3,6 @@
 ####################################################################################################
 
 # Standard Library
-import pathlib
-import json
-import os
 
 # Installed
 import flask
@@ -13,11 +10,9 @@ import marshmallow
 import sqlalchemy
 
 # Own modules
-from dds_web import utils
 from dds_web.api import errors as ddserr
 from dds_web import auth
 from dds_web.database import models
-from dds_web.api import db_connector
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
