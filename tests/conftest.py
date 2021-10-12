@@ -31,12 +31,14 @@ def demo_data():
             password=auth.gen_argon2hash(password="password"),
             name="Unit User",
             is_admin=False,
+            unit_id=units[0],
         ),
         UnitUser(
             username="unitadmin",
             password=auth.gen_argon2hash(password="password"),
             name="Unit Admin",
             is_admin=True,
+            unit_id=units[0],
         ),
         SuperAdmin(
             username="superadmin",
