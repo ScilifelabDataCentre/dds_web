@@ -273,7 +273,7 @@ class CreateProject(flask_restful.Resource):
             public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
 
             project_info = {
-                "created_by": auth.current_user(),
+                # "created_by": auth.current_user().,
                 "unit_id": unit_row.id,
                 "public_id": public_id,
                 "title": p_info["title"],
@@ -293,7 +293,7 @@ class CreateProject(flask_restful.Resource):
 
             new_project = models.Project(**project_info)
             unit_row.projects.append(new_project)
-            cur_user.unit = unit_row
+            # cur_user.unit = unit_row
             cur_user.created_projects.append(new_project)
 
             db.session.commit()
