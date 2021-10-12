@@ -119,14 +119,15 @@ class NewFile(flask_restful.Resource):
 
         project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
 
-        if not all(x in args for x in ["name", "name_in_bucket", "subpath", "size"]):
+        file_info = flask.request.json
+        if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
             return flask.make_response("Information missing, " "cannot add file to database.", 500)
 
         try:
             # Check if file already in db
             existing_file = models.File.query.filter(
                 sqlalchemy.and_(
-                    models.File.name == func.binary(args["name"]),
+                    models.File.name == func.binary(file_info.get("name")),
                     models.File.project_id == project.id,
                 )
             ).first()
@@ -134,7 +135,7 @@ class NewFile(flask_restful.Resource):
             # Error if not found
             if not existing_file or existing_file is None:
                 return flask.make_response(
-                    f"Cannot update non-existent file '{args['name']}' in the database!",
+                    f"Cannot update non-existent file '{file_info.get('name')}' in the database!",
                     500,
                 )
 
@@ -159,18 +160,18 @@ class NewFile(flask_restful.Resource):
                     version.time_deleted = new_timestamp
 
             # Update file info
-            existing_file.subpath = args["subpath"]
-            existing_file.size_original = args["size"]
-            existing_file.size_stored = args["size_processed"]
-            existing_file.compressed = bool(args["compressed"] == "True")
-            existing_file.salt = args["salt"]
-            existing_file.public_key = args["public_key"]
+            existing_file.subpath = file_info.get("subpath")
+            existing_file.size_original = file_info.get("size")
+            existing_file.size_stored = file_info.get("size_processed")
+            existing_file.compressed = file_info.get("compressed")
+            existing_file.salt = file_info.get("salt")
+            existing_file.public_key = file_info.get("public_key")
             existing_file.time_uploaded = new_timestamp
-            existing_file.checksum = args["checksum"]
+            existing_file.checksum = file_info.get("checksum")
 
             # New version
             new_version = models.Version(
-                size_stored=args["size_processed"],
+                size_stored=file_info.get("size_processed"),
                 time_uploaded=new_timestamp,
                 active_file=existing_file.id,
                 project_id=project,
@@ -186,7 +187,7 @@ class NewFile(flask_restful.Resource):
             db.session.rollback()
             return flask.make_response(f"Failed updating file information: {err}", 500)
 
-        return flask.jsonify({"message": f"File '{args['name']}' updated in db."})
+        return flask.jsonify({"message": f"File '{file_info.get('name')}' updated in db."})
 
 
 class MatchFiles(flask_restful.Resource):
