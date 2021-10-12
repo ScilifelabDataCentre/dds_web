@@ -97,6 +97,7 @@ def test_create_project_with_malformed_json(client):
     )
     assert created_proj is None
 
+
 def test_create_project_sensitive(client):
     credentials = b64encode(b"unituser:password").decode("utf-8")
     p_data = proj_data
