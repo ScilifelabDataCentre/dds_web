@@ -19,18 +19,6 @@ __all__ = [
 # VARIABLES ####################################################### VARIABLES #
 ###############################################################################
 
-# Keep track of all allowed methods
-DDS_METHODS = ["put", "get", "ls", "rm"]
-
-# Methods to which a directory created by DDS
-DDS_DIR_REQUIRED_METHODS = ["put", "get"]
-
-# Methods which require a project ID
-DDS_PROJ_REQUIRED_METHODS = ["put", "get"]
-
-# Methods which do not require a project ID
-DDS_PROJ_NOT_REQUIRED_METHODS = ["ls", "rm"]
-
 # The credentials used for the tests
 USER_CREDENTIALS = {
     "empty": ":",

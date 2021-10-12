@@ -13,10 +13,10 @@ import tests
 
 # CONFIG #################################################################################### CONFIG #
 
-
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
 proj_query = {"project": "public_project_id"}
 proj_query_restricted = {"project": "restricted_project_id"}
+
 # TESTS #################################################################################### TESTS #
 
 

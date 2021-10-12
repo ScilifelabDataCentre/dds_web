@@ -13,7 +13,6 @@ import tests
 
 # CONFIG #################################################################################### CONFIG #
 
-
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
 
 # TESTS #################################################################################### TESTS #
