@@ -101,7 +101,6 @@ class InviteUserSchema(marshmallow.Schema):
     def validate_email(self, value):
         """Check that email is not used by anyone in db."""
 
-        flask.current_app.logger.debug("ENTERED INVITE")
         if models.Invite.query.filter_by(email=value).first():
             raise marshmallow.ValidationError(f"Email '{value}' already has a pending invitation.")
         elif models.Email.query.filter_by(email=value).first():
