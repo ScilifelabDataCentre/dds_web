@@ -29,8 +29,16 @@ from dds_web.api import marshmallows
 ####################################################################################################
 
 
+def encrypted_jwt_token(username):
+    """Encrypts a signed JWT token."""
+    token = jwt.JWT(header={"alg": "A256KW", "enc": "A256CBC-HS512"}, claims=jwt_token(username))
+    key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
+    token.make_encrypted_token(key)
+    return token.serialize()
+
+
 def jwt_token(username):
-    """Generates a JWT token."""
+    """Generates a signed JWT token."""
     expiration_time = datetime.datetime.utcnow() + datetime.timedelta(hours=48)
     data = {
         "sub": username,
@@ -52,7 +60,7 @@ class Token(flask_restful.Resource):
 
     @auth.login_required
     def get(self):
-        return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
+        return flask.jsonify({"token": encrypted_jwt_token(username=auth.current_user().username)})
 
 
 class ShowUsage(flask_restful.Resource):

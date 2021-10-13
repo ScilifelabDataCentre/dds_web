@@ -57,7 +57,8 @@ def get_user_roles_common(user):
 @token_auth.verify_token
 def verify_token(token):
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
-    jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
+    decrypted_token = jwt.JWT(key=key, jwt=token)
+    jwttoken = jwt.JWT(key=key, jwt=decrypted_token.claims, algs=["HS256"])
     data = json.loads(jwttoken.claims)
     username = data.get("sub")
     if username:
