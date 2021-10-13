@@ -14,7 +14,7 @@ import marshmallow
 import sqlalchemy
 
 # Own modules
-from dds_web import app, db, mail, auth
+from dds_web import db, mail, auth
 from dds_web.api import errors
 from dds_web.database import models
 from dds_web.api import marshmallows
@@ -44,13 +44,13 @@ class InviteUser(flask_restful.Resource):
             db.session.commit()
 
         except marshmallow.ValidationError as valerr:
-            app.logger.info(valerr)
+            flask.current_app.logger.info(valerr)
             return flask.jsonify(valerr.messages)
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise errors.DatabaseError(message=str(sqlerr))
 
         # Create URL safe token for invitation link
-        s = itsdangerous.URLSafeTimedSerializer(app.config["SECRET_KEY"])
+        s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
         token = s.dumps(new_invite.email, salt="email-confirm")
 
         # Create link for invitation email

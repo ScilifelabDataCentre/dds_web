@@ -301,6 +301,7 @@ class Invite(db.Model):
 
     # Columns
     email = db.Column(db.String(254), unique=True, nullable=False)
+    role = db.Column(db.String(20), unique=False, nullable=False)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
