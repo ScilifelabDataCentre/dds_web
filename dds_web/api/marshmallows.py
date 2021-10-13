@@ -114,9 +114,7 @@ class InviteUserSchema(marshmallow.Schema):
 
         curr_user_role = auth.current_user().role
         attempted_invite_role = data.get("role")
-        if curr_user_role == "Super Admin":
-            pass  # Super admins can invite anyone
-        elif curr_user_role == "Unit Admin":
+        if curr_user_role == "Unit Admin":
             if attempted_invite_role == "Super Admin":
                 raise marshmallow.ValidationError("permission to invite denied")
         elif curr_user_role == "Unit Personnel":
@@ -124,6 +122,7 @@ class InviteUserSchema(marshmallow.Schema):
                 raise marshmallow.ValidationError("permission to invite denied")
         elif curr_user_role == "Researcher":
             # research users can only invite in certain projects if they are set as the owner
+            # TODO: Add required project field for researchers to be able to invite (if owner)
             raise marshmallow.ValidationError("permission to invite denied")
 
     @marshmallow.post_load
