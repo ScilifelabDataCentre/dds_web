@@ -101,6 +101,7 @@ class InviteUserSchema(marshmallow.Schema):
     def validate_email(self, value):
         """Check that email is not used by anyone in db."""
 
+        flask.current_app.logger.debug("ENTERED INVITE")
         if models.Invite.query.filter_by(email=value).first():
             raise marshmallow.ValidationError(f"Email '{value}' already has a pending invitation.")
         elif models.Email.query.filter_by(email=value).first():
@@ -129,26 +130,15 @@ class InviteUserSchema(marshmallow.Schema):
     def make_invite(self, data, **kwargs):
         """Deserialize to an Invite object"""
 
-        # Get facility id for foreign key in invite
-        facility_id = (
-            (
-                models.Facility.query.filter_by(name=data.get("facility_name"))
-                .with_entities(models.Facility.id)
-                .first()[0]
-            )
-            if data.get("facility_name")
-            else None
-        )
+        if data.get("role") == "Super Admin":
+            # TODO: here the unit needs to be specified
+            raise marshmallow.ValidationError("currently not creating invites for superadmins")
 
         # Create and return invite row
-        return models.Invite(
-            **{
-                "email": data.get("email"),
-                "is_facility": data.get("role") == "facility",
-                "is_researcher": data.get("role") == "researcher",
-                "facility_id": facility_id,
-            }
-        )
+        new_invite = models.Invite(**{"email": data.get("email"), "role": data.get("role")})
+        auth.current_user().unit.invites.append(new_invite)
+
+        return new_invite
 
 
 class NewUserSchema(marshmallow.Schema):

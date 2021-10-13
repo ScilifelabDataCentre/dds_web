@@ -130,6 +130,7 @@ def create_app(testing=False, database_uri=None):
     # Initialize database
     db.init_app(app)
 
+    mail.init_app(app)
     ma.init_app(app)
 
     oauth.init_app(app)

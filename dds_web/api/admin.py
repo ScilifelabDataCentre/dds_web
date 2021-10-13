@@ -31,7 +31,7 @@ invitation_schema = marshmallows.InviteUserSchema()
 
 
 class InviteUser(flask_restful.Resource):
-    @auth.login_required(role=["Super Admin", "Unit Personnel", "Researcher"])
+    @auth.login_required
     def post(self):
         """Create an invite and send email."""
 
