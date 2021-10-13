@@ -7,6 +7,7 @@
 # Installed
 import flask
 import flask_restful
+import immutabledict
 
 # Own modules
 from dds_web.api import admin
@@ -59,3 +60,10 @@ api.add_resource(project.CreateProject, "/proj/create", endpoint="create_project
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.InvoiceUnit, "/invoice", endpoint="invoice")
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")
+
+# import pyximport
+
+# pyximport.install()
+# from dds_web.cython_tools import hello
+
+# test = hello.Immutable(1, 2)

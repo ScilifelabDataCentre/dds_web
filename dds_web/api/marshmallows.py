@@ -10,6 +10,7 @@
 import flask
 import marshmallow
 import sqlalchemy
+import immutabledict
 
 # Own modules
 from dds_web import db
@@ -110,6 +111,20 @@ class InviteUserSchema(marshmallow.Schema):
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def validate_user_invite_permissions(self, data, **kwargs):
         """Validate current users permissions to invite specified role."""
+
+        curr_user_role = auth.current_user().role
+        attempted_invite_role = data.get("role")
+        if curr_user_role == "Super Admin":
+            pass  # Super admins can invite anyone
+        elif curr_user_role == "Unit Admin":
+            if attempted_invite_role == "Super Admin":
+                raise marshmallow.ValidationError("permission to invite denied")
+        elif curr_user_role == "Unit Personnel":
+            if attempted_invite_role in ["Super Admin", "Unit Admin"]:
+                raise marshmallow.ValidationError("permission to invite denied")
+        elif curr_user_role == "Researcher":
+            # research users can only invite in certain projects if they are set as the owner
+            raise marshmallow.ValidationError("permission to invite denied")
 
     @marshmallow.post_load
     def make_invite(self, data, **kwargs):
