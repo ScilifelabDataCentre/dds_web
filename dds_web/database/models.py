@@ -63,6 +63,8 @@ class Unit(db.Model):
     users = db.relationship("UnitUser", back_populates="unit")
     # One unit can have many projects
     projects = db.relationship("Project", backref="responsible_unit")
+    # One unit can have many invites
+    invites = db.relationship("Invite", back_populates="unit")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -290,12 +292,15 @@ class Invite(db.Model):
     __tablename__ = "invites"
     __table_args__ = {"extend_existing": True}
 
-    # Columns
+    # Primary Key
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    # Foreign key
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+    unit = db.relationship("Unit", back_populates="invites")
+
+    # Columns
     email = db.Column(db.String(254), unique=True, nullable=False)
-    is_facility = db.Column(db.Boolean)
-    is_researcher = db.Column(db.Boolean)
-    facility_id = db.Column(db.Integer, db.ForeignKey("facilities.id"))
 
     def __repr__(self):
         """Called by print, creates representation of object"""

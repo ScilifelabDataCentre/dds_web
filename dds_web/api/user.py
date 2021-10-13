@@ -75,7 +75,7 @@ class ConfirmInvite(flask_restful.Resource):
         if not invite_row:
             raise NoSuchInviteError(email=email)
 
-        # Get facility info from db
+        # Get unit info from db
         facility_name = None
         if invite_row.is_facility:
             try:
