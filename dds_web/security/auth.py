@@ -49,6 +49,8 @@ def get_user_roles(user):
 
 
 def get_user_roles_common(user):
+    """Return the users role as saved in the db."""
+
     return user.role
 
 

@@ -21,11 +21,11 @@ USER_CREDENTIALS = {
     "nouser": ":password",
     "nopassword": "username:",
     "wronguser": "scriptkiddie:password",
-    "researcher": "username:password",
-    "researcher": "username:password",
-    "admin": "admin:password",
-    "admin2": "admin2:password",
-    "facilityadmin": "admin:password",
+    "researcher": "researchuser:password",
+    "projectowner": "projectowner:password",
+    "unituser": "unituser:password",
+    "unitadmin": "unitadmin:password",
+    "superadmin": "superadmin:password",
 }
 
 ###############################################################################

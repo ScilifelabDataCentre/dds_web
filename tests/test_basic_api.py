@@ -6,7 +6,6 @@ import http
 
 # Installed
 from jwcrypto import jwk, jws
-from jwcrypto.common import JWException
 
 # Own
 import tests
@@ -83,7 +82,7 @@ def test_auth_correctauth_check_statuscode_200_correct_info(client):
 
     response = client.get(
         tests.DDSEndpoint.TOKEN,
-        auth=tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).as_tuple(),
+        auth=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
@@ -91,6 +90,6 @@ def test_auth_correctauth_check_statuscode_200_correct_info(client):
     jwstoken = jws.JWS()
     jwstoken.deserialize(response_json.get("token"))
     jwstoken.verify(jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY")))
-    # extracting JWS token payload before verification will raise a `InvalidJWSOperation` error, poorly documented in jwcrypto :-(
+    # extracting JWS token payload before verification will raise a `InvalidJWSOperation` error
     payload = jws.json_decode(jwstoken.payload)
     assert payload.get("sub") == "username"

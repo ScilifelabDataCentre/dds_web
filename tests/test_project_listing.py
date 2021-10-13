@@ -33,7 +33,7 @@ def test_list_proj_no_token(client):
 def test_list_proj_access_granted_ls(client):
     """Researcher should be able to list"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).token(client)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
     response = client.get(tests.DDSEndpoint.LIST_PROJ, headers=token)
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
@@ -57,7 +57,7 @@ def test_proj_public_no_token(client):
 def test_proj_public_no_project(client):
     """Attempting to get public key without a project should not work"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).token(client)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, headers=token)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
@@ -67,7 +67,7 @@ def test_proj_public_no_project(client):
 def test_proj_public_insufficient_credentials(client):
     """If the project access has not been granted, the public key should not be provided."""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).token(client)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
     response = client.get(
         tests.DDSEndpoint.PROJ_PUBLIC, query_string=proj_query_restricted, headers=token
     )
@@ -87,7 +87,7 @@ def test_proj_public_insufficient_credentials(client):
 def test_project_public_researcher_get(client):
     """User should get access to public key"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).token(client)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, query_string=proj_query, headers=token)
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json

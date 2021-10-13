@@ -2,6 +2,7 @@ import os
 import uuid
 import pytest
 from sqlalchemy_utils import create_database, database_exists
+from dds_web.database.models import ResearchUser, UnitUser, SuperAdmin, Unit, Project, ProjectUsers
 
 from dds_web import create_app, db
 
@@ -10,46 +11,51 @@ DATABASE_URI = "mysql+pymysql://root:{}@db/DeliverySystemTest".format(mysql_root
 
 
 def demo_data():
-    from dds_web.database.models import Project, User, Unit
     from dds_web.security import auth
     from dds_web.utils import timestamp
 
-    users = [
-        User(
-            username="username",
-            unit_id=None,
-            password=auth.gen_argon2hash(password="password"),
-            role="researcher",
-            name="User Name",
-        ),
-        User(
-            username="admin",
-            unit_id=None,
-            password=auth.gen_argon2hash(password="password"),
-            role="admin",
-            name="Ad Min",
-        ),
-        User(
-            username="admin2",
-            unit_id=None,
-            password=auth.gen_argon2hash(password="password"),
-            role="admin",
-            name="Ad Min2",
-        ),
-    ]
-
     units = [
         Unit(
-            public_id="unit0",
-            name="Unit 0",
+            name="Unit 1",
+            public_id=os.urandom(16).hex(),
             internal_ref="someunit",
             safespring="dds.example.com",
+        )
+    ]
+
+    users = [
+        ResearchUser(
+            username="researchuser",
+            password=auth.gen_argon2hash(password="password"),
+            name="Research User",
         ),
-        Unit(
-            public_id="unit1",
-            name="Unit 1",
-            internal_ref="anotherunit",
-            safespring="dds.example.com",
+        ResearchUser(
+            username="projectowner",
+            password=auth.gen_argon2hash(password="password"),
+            name="Project Owner",
+        ),
+        UnitUser(
+            username="unituser",
+            password=auth.gen_argon2hash(password="password"),
+            name="Unit User",
+            is_admin=False,
+        ),
+        UnitUser(
+            username="unituser2",
+            password=auth.gen_argon2hash(password="password"),
+            name="Unit User 2",
+            is_admin=False,
+        ),
+        UnitUser(
+            username="unitadmin",
+            password=auth.gen_argon2hash(password="password"),
+            name="Unit Admin",
+            is_admin=True,
+        ),
+        SuperAdmin(
+            username="superadmin",
+            password=auth.gen_argon2hash(password="password"),
+            name="Super Admin",
         ),
     ]
 
@@ -96,7 +102,7 @@ def demo_data():
         ),
     ]
 
-    return (users, units, projects)
+    return (units, users, projects)
 
 
 @pytest.fixture
@@ -104,26 +110,36 @@ def client():
     # Create database specific for tests
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
-
     app = create_app(testing=True, database_uri=DATABASE_URI)
-
     with app.test_client() as client:
         with app.app_context():
-            # Create all tables
+
             db.create_all()
-            users, units, projects = demo_data()
-            db.session.add_all(units)
-            db.session.flush()
-            users[1].unit = units[0]
-            db.session.add_all(users)
-            db.session.flush()
-            db.session.add_all(projects)
-            projects[0].unit = units[0]
-            projects[1].unit = units[1]
-            users[0].projects.append(projects[0])
-            users[1].projects.append(projects[0])
-            users[1].projects.append(projects[2])
-            users[2].projects.append(projects[0])
+            units, users, projects = demo_data()
+            # Create association with user - not owner of project
+            project_1_user_1_association = ProjectUsers(owner=False)
+            # Connect research user to association row. = (not append) due to one user per ass. row
+            project_1_user_1_association.researchuser = users[0]
+            # Connect research user to project. append (not =) due to many users per project
+            projects[0].researchusers.append(project_1_user_1_association)
+
+            # Create association with user - is owner of project
+            project_1_user_2_association = ProjectUsers(owner=True)
+            # Connect research user to association row. = (not append) due to one user per ass. row
+            project_1_user_2_association.researchuser = users[1]
+            # Connect research user to project. append (not =) due to many users per project
+            projects[0].researchusers.append(project_1_user_2_association)
+
+            # Add created project
+            users[2].created_projects.append(projects[0])
+            users[3].created_projects.append(projects[1])
+
+            units[0].projects.extend([projects[0], projects[1]])
+            units[0].users.extend([users[2], users[3]])
+
+            db.session.add(units[0])
+            # db.session.add_all(users)
+            # db.session.add_all(projects)
             db.session.commit()
 
             try:

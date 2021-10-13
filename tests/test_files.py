@@ -31,7 +31,7 @@ def test_list_files_no_token(client):
 def test_list_files_incorrect_project(client):
     """Researcher (current user) should specify a project that exists"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["admin"]).token(client)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     response = client.get(
         tests.DDSEndpoint.LIST_FILES, headers=token, query_string={"project": "private_project_id"}
     )
@@ -44,7 +44,7 @@ def test_list_files_incorrect_project(client):
 def test_list_files_correct_project(client):
     """Researcher (current user) should get the list of files"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).token(client)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
     response = client.get(
         tests.DDSEndpoint.LIST_FILES, headers=token, query_string={"project": "public_project_id"}
     )

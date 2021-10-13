@@ -27,6 +27,7 @@ def connect_cloud(func):
     @functools.wraps(func)
     def init_resource(self, *args, **kwargs):
 
+        _, self.keys, self.url, self.bucketname = self.get_s3_info()
         if None in [self.keys, self.url]:
             self.keys, self.url, self.bucketname, self.message = (
                 None,
