@@ -259,4 +259,5 @@ errors = {
     "S3InfoNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "NoSuchInviteError": {"status": http.HTTPStatus.BAD_REQUEST},
 }
