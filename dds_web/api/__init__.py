@@ -10,7 +10,6 @@ import flask_restful
 import collections
 
 # Own modules
-from dds_web.api import admin
 from dds_web.api import user
 from dds_web.api import project
 from dds_web.api import s3

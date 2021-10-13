@@ -25,7 +25,7 @@ import wtforms.validators
 # Own modules
 from dds_web import auth
 from dds_web.database import models
-from dds_web.api.errors import JwtTokenGenerationError, DatabaseError, NoSuchInviteError
+from dds_web.api.errors import JwtTokenGenerationError, DatabaseError, InviteError
 import dds_web.utils
 from dds_web.api import marshmallows
 
@@ -108,7 +108,7 @@ class ConfirmInvite(flask_restful.Resource):
 
         # Check the invite exists
         if not invite_row:
-            raise NoSuchInviteError(email=email)
+            raise InviteError(message=f"There is no invitation for the found email adress: {email}")
 
         # Get unit info from db
         facility_name = None

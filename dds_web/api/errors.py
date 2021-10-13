@@ -223,11 +223,10 @@ class KeyNotFoundError(exceptions.HTTPException):
         super().__init__(self.message)
 
 
-class NoSuchInviteError(exceptions.HTTPException):
-    """No invite found in database"""
+class InviteError(exceptions.HTTPException):
+    """Invite related errors."""
 
-    def __init__(self, email, message="There is no invitation for the found email adress"):
-        self.message = f"{message}: '{email}'"
+    def __init__(self, message="An error occurred during invite handling."):
         super().__init__(self.message)
 
         general_logger.warning(self.message)
@@ -259,5 +258,5 @@ errors = {
     "S3InfoNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "NoSuchInviteError": {"status": http.HTTPStatus.BAD_REQUEST},
+    "InviteError": {"status": http.HTTPStatus.BAD_REQUEST},
 }

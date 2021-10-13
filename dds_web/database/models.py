@@ -317,7 +317,7 @@ class File(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
 
     # Foreign keys: One project can have many files
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), index=True)
