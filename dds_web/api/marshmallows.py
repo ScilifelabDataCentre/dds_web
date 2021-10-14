@@ -16,6 +16,7 @@ import immutabledict
 from dds_web import db
 from dds_web.api import errors as ddserr
 from dds_web import auth
+import dds_web.security.auth
 from dds_web.database import models
 
 ####################################################################################################
@@ -51,6 +52,15 @@ def verify_project_access(project):
         )
 
     return project
+
+
+def email_in_db(email):
+    """Check if the email is in the Email table."""
+
+    if models.Email.query.filter_by(email=email).first():
+        return True
+
+    return False
 
 
 ####################################################################################################
@@ -134,7 +144,7 @@ class InviteUserSchema(marshmallow.Schema):
 
         if models.Invite.query.filter_by(email=value).first():
             raise ddserr.InviteError(message=f"Email '{value}' already has a pending invitation.")
-        elif models.Email.query.filter_by(email=value).first():
+        elif email_in_db(email=value):
             raise ddserr.InviteError(
                 message=f"The email '{value}' is already registered to an existing user."
             )
@@ -211,26 +221,29 @@ class NewUserSchema(marshmallow.Schema):
         required=True, validate=marshmallow.validate.Length(max=50)
     )
 
-    facility_name = marshmallow.fields.String(required=False)
+    unit_name = marshmallow.fields.String(required=False)
 
     class Meta:
         """Exclude unknown fields e.g. csrf etc that are passed with form"""
 
         unknown = marshmallow.EXCLUDE
 
-    @marshmallow.pre_load
-    def hash_password(self, in_data, **_):
+    @marshmallow.validates("email")
+    def verify_new_email(self, value):
+        """Verify that the email is not used in the system already."""
 
-        if not in_data.get("password"):
-            raise marshmallow.ValidationError("Password required to create users.")
-
-        in_data["password"] = auth.gen_argon2hash(password=in_data.get("password"))
-
-        return in_data
+        flask.current_app.logger.info("testing email")
+        if email_in_db(email=value):
+            raise marshmallow.ValidationError(
+                message=f"The email '{value}' is already registered to an existing user."
+            )
 
     @marshmallow.post_load
     def make_user(self, data, **kwargs):
         """Deserialize to an User object"""
+
+        # Hash password
+        password = dds_web.security.auth.gen_argon2hash(password=in_data.get("password"))
 
         # Get facility row
         facility = (

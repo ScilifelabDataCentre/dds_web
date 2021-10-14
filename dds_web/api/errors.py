@@ -67,6 +67,14 @@ class AccessDeniedError(exceptions.HTTPException):
         )
 
 
+class DDSError(exceptions.HTTPException):
+    """General errors within the DDS that do not warrant a specific exception."""
+
+    def __init__(self, message="The Data Delivery System encountered an issue."):
+        super().__init__(message)
+        general_logger.warning(message)
+
+
 class DatabaseError(exceptions.HTTPException):
     """Baseclass for database related issues."""
 

@@ -18,7 +18,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
 
     first_name = wtforms.StringField("first name", validators=[wtforms.validators.InputRequired()])
     last_name = wtforms.StringField("last name", validators=[wtforms.validators.InputRequired()])
-    facility_name = wtforms.StringField("facility name")
+    unit_name = wtforms.StringField("facility name")
     email = wtforms.StringField(
         "email", validators=[wtforms.validators.Email()], render_kw={"readonly": True}
     )

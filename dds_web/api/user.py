@@ -126,7 +126,7 @@ class ConfirmInvite(flask_restful.Resource):
         # Prefill fields - facility readonly if filled, otherwise disabled
         form.unit_name.render_kw = {"disabled": True}
         if invite_row.unit:
-            form.unit_name.data = invite_row.unit
+            form.unit_name.data = invite_row.unit.name
             form.unit_name.render_kw = {"readonly": True}
         form.email.data = email
         form.username.data = email.split("@")[0]
@@ -147,12 +147,11 @@ class NewUser(flask_restful.Resource):
 
             # Create new user row by loading form data into schema
             try:
-                user_schema = marshmallows.NewUserSchema()
-                new_user = user_schema.load(form.data)
+                new_user = marshmallows.NewUserSchema().load(form.data)
 
             except marshmallow.ValidationError as valerr:
-                app.logger.info(valerr)
-                return flask.jsonify(valerr.messages)
+                flask.current_app.logger.info(valerr)
+                raise
             except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
                 raise DatabaseError(message=str("sqlerr"))
 
