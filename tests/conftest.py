@@ -94,7 +94,7 @@ def demo_data():
             description="This is a test project without user access for researchers and Admin2",
             pi="PI",
             size=7357,
-            bucket=f"unusedprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            bucket=f"eliteprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
             public_key="2E2F3F1C91ECA5D4CBEFFB59A487511319E76FBA34709C6CC49BF9DC0EC8B10B",
             private_key="494D26A977118F7E6AB6D87548E762DEB85C537292D65618FDC18A0EFAB6B860468F17BA26F7A0BDA4F23938A5A10801",
             privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",

@@ -22,6 +22,7 @@ USER_CREDENTIALS = {
     "nopassword": "username:",
     "wronguser": "scriptkiddie:password",
     "researcher": "researchuser:password",
+    "researchuser": "researchuser:password",
     "projectowner": "projectowner:password",
     "unituser": "unituser:password",
     "unitadmin": "unitadmin:password",

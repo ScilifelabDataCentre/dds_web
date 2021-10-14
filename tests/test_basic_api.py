@@ -92,4 +92,6 @@ def test_auth_correctauth_check_statuscode_200_correct_info(client):
     jwstoken.verify(jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY")))
     # extracting JWS token payload before verification will raise a `InvalidJWSOperation` error
     payload = jws.json_decode(jwstoken.payload)
-    assert payload.get("sub") == "username"
+    assert (
+        payload.get("sub") == tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).as_tuple()[0]
+    )
