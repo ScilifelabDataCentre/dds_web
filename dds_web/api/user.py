@@ -119,36 +119,15 @@ class ConfirmInvite(flask_restful.Resource):
         if not invite_row:
             raise InviteError(message=f"There is no invitation for the found email adress: {email}")
 
-        # Get unit info from db
-        # facility_name = None
-        # if invite_row.is_facility:
-        #     try:
-        #         facility_info = (
-        #             models.Facility.query.filter(models.Facility.id == invite_row.facility_id)
-        #             .with_entities(models.Facility.name)
-        #             .first()
-        #         )
-        #     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        #         raise DatabaseError(str(sqlerr))
-
-        #     # Raise exception if facility does not exist
-        #     if not facility_info:
-        #         raise DatabaseError(
-        #             message=f"User invite connected to a non-existent facility ID: {invite_row.facility_id}"
-        #         )
-
-        #     # Set facility name if exists
-        #     facility_name = facility_info[0]
-
         flask.current_app.logger.debug(invite_row.unit)
         # Initiate form
         form = dds_web.forms.RegistrationForm()
 
         # Prefill fields - facility readonly if filled, otherwise disabled
-        form.facility_name.render_kw = {"disabled": True}
+        form.unit_name.render_kw = {"disabled": True}
         if invite_row.unit:
-            form.facility_name.data = invite_row.unit
-            form.facility_name.render_kw = {"readonly": True}
+            form.unit_name.data = invite_row.unit
+            form.unit_name.render_kw = {"readonly": True}
         form.email.data = email
         form.username.data = email.split("@")[0]
 

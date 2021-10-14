@@ -30,10 +30,10 @@
             </ul>
 
             <!-- Facility name -->
-            {{ form.facility_name.label }}
-            {{ form.facility_name }}
+            {{ form.unit_name.label }}
+            {{ form.unit_name }}
             <ul>
-                {% for error in form.facility_name.errors %}
+                {% for error in form.unit_name.errors %}
                 <li style="color:red;">
                     {{ error }}
                 </li>
