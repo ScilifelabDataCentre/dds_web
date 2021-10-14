@@ -177,6 +177,7 @@ class DBConnector:
 
         exists = False
         deleted = False
+        error = ""
         try:
             # File names in root
             files = (
@@ -184,7 +185,7 @@ class DBConnector:
                 .filter(
                     sqlalchemy.or_(
                         models.File.subpath == func.binary(folder),
-                        models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)?$"),
+                        models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)*$"),
                     )
                 )
                 .all()
