@@ -91,7 +91,7 @@ def demo_data():
             public_id="restricted_project_id",
             title="Elite project",
             status="Ongoing",
-            description="This is a test project without user access for researchers and Admin2",
+            description="This is a test project without user access for the current research users",
             pi="PI",
             size=7357,
             bucket=f"eliteprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
@@ -117,25 +117,26 @@ def client():
             db.create_all()
             units, users, projects = demo_data()
             # Create association with user - not owner of project
-            project_1_user_1_association = ProjectUsers(owner=False)
+            project_0_user_0_association = ProjectUsers(owner=False)
             # Connect research user to association row. = (not append) due to one user per ass. row
-            project_1_user_1_association.researchuser = users[0]
+            project_0_user_0_association.researchuser = users[0]
             # Connect research user to project. append (not =) due to many users per project
-            projects[0].researchusers.append(project_1_user_1_association)
+            projects[0].researchusers.append(project_0_user_0_association)
 
             # Create association with user - is owner of project
-            project_1_user_2_association = ProjectUsers(owner=True)
+            project_0_user_1_association = ProjectUsers(owner=True)
             # Connect research user to association row. = (not append) due to one user per ass. row
-            project_1_user_2_association.researchuser = users[1]
+            project_0_user_1_association.researchuser = users[1]
             # Connect research user to project. append (not =) due to many users per project
-            projects[0].researchusers.append(project_1_user_2_association)
+            projects[0].researchusers.append(project_0_user_1_association)
 
             # Add created project
             users[2].created_projects.append(projects[0])
             users[3].created_projects.append(projects[1])
+            users[2].created_projects.append(projects[2])
 
-            units[0].projects.extend([projects[0], projects[1]])
-            units[0].users.extend([users[2], users[3]])
+            units[0].projects.extend(projects)
+            units[0].users.extend([users[2], users[3], users[4]])
 
             db.session.add(units[0])
             # db.session.add_all(users)

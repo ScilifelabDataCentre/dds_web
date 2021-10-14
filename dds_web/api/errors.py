@@ -52,15 +52,19 @@ class AccessDeniedError(exceptions.HTTPException):
     def __init__(
         self,
         project=None,
+        username=None,
         message="The user does not have the necessary permissions.",
     ):
         super().__init__(message)
+
+        if not username:
+            username = auth.current_user()
 
         action_logger.warning(
             message,
             extra={
                 **extra_info,
-                "current_user": auth.current_user(),
+                "current_user": username,
                 "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
@@ -94,11 +98,14 @@ class EmptyProjectException(exceptions.HTTPException):
 
         general_logger.warning(message)
 
+        if not username:
+            username = auth.current_user()
+
         action_logger.warning(
             message,
             extra={
                 **extra_info,
-                "current_user": auth.current_user(),
+                "current_user": username,
                 "action": actions.get(flask.request.endpoint),
                 "project": project,
             },

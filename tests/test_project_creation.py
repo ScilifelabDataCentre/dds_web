@@ -126,4 +126,3 @@ def test_create_project_sensitive(client):
         .one_or_none()
     )
     assert created_proj and created_proj.is_sensitive
-    

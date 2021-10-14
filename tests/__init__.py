@@ -1,6 +1,7 @@
 """Testing of the dds_web code with pytest."""
 
 from base64 import b64encode
+import dds_web.api.errors as ddserr
 
 # Copied from dds_cli __init__.py:
 
@@ -58,9 +59,12 @@ class UserAuth:
 
         # Get response from api
         response_json = response.json
-        token = response_json.get("token")
+        token = response_json["token"]
 
-        return {"Authorization": f"Bearer {token}"}
+        if token is not None:
+            return {"Authorization": f"Bearer {token}"}
+        else:
+            raise ddserr.JwtTokenGenerationError()
 
 
 class DDSEndpoint:
