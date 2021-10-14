@@ -403,7 +403,7 @@ class Version(db.Model):
 
     # Foreign key - One file can have many rows in invoicing
     active_file = db.Column(
-        db.Integer, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
+        db.BigInteger, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
     )
 
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
