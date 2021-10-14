@@ -232,6 +232,15 @@ class InviteError(exceptions.HTTPException):
         general_logger.warning(self.message)
 
 
+class NoSuchUserError(exceptions.HTTPException):
+    """There is no such user found in the database."""
+
+    def __init__(self, message="User not found."):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
 # ----------------------------------------------------------------------------------- #
 
 

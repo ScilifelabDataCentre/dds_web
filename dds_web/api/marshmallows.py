@@ -86,8 +86,40 @@ class ProjectRequiredSchema(marshmallow.Schema):
         return data.get("project_row")
 
 
-class InviteUserSchema(marshmallow.Schema):
-    """Schema for InviteUser endpoint"""
+class UserSchema(marshmallow.Schema):
+    """Schema for User class."""
+
+    email = marshmallow.fields.Email(required=True)
+
+    class Meta:
+        unknown = marshmallow.EXCLUDE
+
+    # @marshmallow.validates("email")
+    # def validate_email_exists(self, value):
+    #     """Checks if the specified email exists in the emails table."""
+
+    #     if not models.Email.query.filter_by(email=value).first():
+    #         raise ddserr.NoSuchUserError
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def validate_email_and_user(self, data, **kwargs):
+        """Check that the email and connected user exists in the database."""
+
+        email_row = models.Email.query.filter_by(email=data.get("email")).first()
+        if not email_row:
+            raise ddserr.NoSuchUserError
+
+        data["user"] = email_row.user_row
+
+    @marshmallow.post_load
+    def return_user(self, data, **kwargs):
+        """Return the user."""
+
+        return data.get("user")
+
+
+class AddUserSchema(marshmallow.Schema):
+    """Schema for AddUser endpoint"""
 
     email = marshmallow.fields.Email(required=True)  # Validator below
     role = marshmallow.fields.String(
@@ -102,8 +134,9 @@ class InviteUserSchema(marshmallow.Schema):
         """Check that email is not used by anyone in db."""
 
         if models.Invite.query.filter_by(email=value).first():
-            raise marshmallow.ValidationError(f"Email '{value}' already has a pending invitation.")
+            raise ddserr.InviteError(message=f"Email '{value}' already has a pending invitation.")
         elif models.Email.query.filter_by(email=value).first():
+            # TODO: Add the existing user to the project instead
             raise marshmallow.ValidationError(
                 f"The email '{value}' is already registered to an existing user."
             )

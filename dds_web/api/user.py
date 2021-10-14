@@ -25,7 +25,7 @@ import wtforms.validators
 # Own modules
 from dds_web import auth
 from dds_web.database import models
-from dds_web.api.errors import JwtTokenGenerationError, DatabaseError, InviteError
+from dds_web.api.errors import JwtTokenGenerationError, DatabaseError, InviteError, NoSuchUserError
 import dds_web.utils
 from dds_web.api import marshmallows
 
@@ -59,16 +59,24 @@ class AddUser(flask_restful.Resource):
         """Create an invite and send email."""
 
         try:
+            existing_user = marshmallows.UserSchema().load(flask.request.args)
+        except NoSuchUserError as usererr:
+            flask.current_app.logger.info(usererr)
+            return flask.jsonify(usererr.messages)
+
+        return
+
+        try:
             # Use schema to validate and check args
-            new_invite = marshmallows.InviteUserSchema().load(flask.request.args)
+            invite_or_user = marshmallows.AddUserSchema().load(flask.request.args)
 
             # Add to database
             db.session.add(new_invite)
             db.session.commit()
 
-        except marshmallow.ValidationError as valerr:
-            flask.current_app.logger.info(valerr)
-            return flask.jsonify(valerr.messages)
+        except InviteError as inverr:
+            flask.current_app.logger.info(inverr)
+            return flask.jsonify(inverr.messages)
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise errors.DatabaseError(message=str(sqlerr))
 

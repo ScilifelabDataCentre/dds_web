@@ -397,7 +397,9 @@ class Version(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # Foreign key - One project can have many files
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="SET NULL"), nullable=True
+    )
 
     # Foreign key - One file can have many rows in invoicing
     active_file = db.Column(
