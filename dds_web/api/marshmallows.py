@@ -94,13 +94,6 @@ class UserSchema(marshmallow.Schema):
     class Meta:
         unknown = marshmallow.EXCLUDE
 
-    # @marshmallow.validates("email")
-    # def validate_email_exists(self, value):
-    #     """Checks if the specified email exists in the emails table."""
-
-    #     if not models.Email.query.filter_by(email=value).first():
-    #         raise ddserr.NoSuchUserError
-
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def validate_email_and_user(self, data, **kwargs):
         """Check that the email and connected user exists in the database."""
@@ -109,7 +102,7 @@ class UserSchema(marshmallow.Schema):
         if not email_row:
             raise ddserr.NoSuchUserError
 
-        data["user"] = email_row.user_row
+        data["user"] = email_row.user
 
     @marshmallow.post_load
     def return_user(self, data, **kwargs):
@@ -118,7 +111,13 @@ class UserSchema(marshmallow.Schema):
         return data.get("user")
 
 
-class AddUserSchema(marshmallow.Schema):
+class AddUserSchema(ProjectRequiredSchema):
+    """Add existing user to project"""
+
+    # TODO
+
+
+class InviteUserSchema(marshmallow.Schema):
     """Schema for AddUser endpoint"""
 
     email = marshmallow.fields.Email(required=True)  # Validator below
@@ -136,17 +135,15 @@ class AddUserSchema(marshmallow.Schema):
         if models.Invite.query.filter_by(email=value).first():
             raise ddserr.InviteError(message=f"Email '{value}' already has a pending invitation.")
         elif models.Email.query.filter_by(email=value).first():
-            # TODO: Add the existing user to the project instead
-            raise marshmallow.ValidationError(
-                f"The email '{value}' is already registered to an existing user."
+            raise ddserr.InviteError(
+                message=f"The email '{value}' is already registered to an existing user."
             )
 
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def validate_user_invite_permissions(self, data, **kwargs):
-        """Validate current users permissions to invite specified role."""
+    @marshmallow.validates("role")
+    def validate_role(self, attempted_invite_role):
+        """Validate current users permission to invite specified role."""
 
         curr_user_role = auth.current_user().role
-        attempted_invite_role = data.get("role")
         if curr_user_role == "Unit Admin":
             if attempted_invite_role == "Super Admin":
                 raise ddserr.AccessDeniedError
@@ -155,8 +152,13 @@ class AddUserSchema(marshmallow.Schema):
                 raise ddserr.AccessDeniedError
         elif curr_user_role == "Researcher":
             # research users can only invite in certain projects if they are set as the owner
-            # TODO: Add required project field for researchers to be able to invite (if owner)
-            raise marshmallow.ValidationError("permission to invite denied")
+            # TODO: Add required project field for researchers to be able to invite (if
+            raise ddserr.AccessDeniedError(
+                message=(
+                    "Research users cannot invite at this time. "
+                    "Project owner invite config will be fixed."
+                )
+            )
 
     @marshmallow.post_load
     def make_invite(self, data, **kwargs):
@@ -166,9 +168,16 @@ class AddUserSchema(marshmallow.Schema):
             # TODO: here the unit needs to be specified
             raise marshmallow.ValidationError("currently not creating invites for superadmins")
 
-        # Create and return invite row
+        # Create invite
         new_invite = models.Invite(**{"email": data.get("email"), "role": data.get("role")})
-        auth.current_user().unit.invites.append(new_invite)
+
+        # Append invite to unit if applicable
+        if new_invite.role in ["Unit Admin", "Unit Personnel"]:
+            auth.current_user().unit.invites.append(new_invite)
+        else:
+            db.session.add(new_invite)
+
+        db.session.commit()
 
         return new_invite
 
@@ -243,7 +252,7 @@ class NewUserSchema(marshmallow.Schema):
         )
 
         # Create new email and append to user relationship
-        new_email = models.Email(email=data.get("email"), primary=True, user=new_user)
+        new_email = models.Email(email=data.get("email"), primary=True, user_id=new_user)
         new_user.emails.append(new_email)
 
         # Delete old invite

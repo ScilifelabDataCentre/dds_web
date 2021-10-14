@@ -14,6 +14,7 @@ from sqlalchemy.sql import func
 import flask
 import flask_restful
 import flask_wtf
+import flask_mail
 import itsdangerous
 import marshmallow
 from jwcrypto import jwk, jwt
@@ -23,10 +24,11 @@ import wtforms
 import wtforms.validators
 
 # Own modules
-from dds_web import auth
+from dds_web import auth, mail
 from dds_web.database import models
 from dds_web.api.errors import JwtTokenGenerationError, DatabaseError, InviteError, NoSuchUserError
 import dds_web.utils
+import dds_web.forms
 from dds_web.api import marshmallows
 
 
@@ -58,49 +60,48 @@ class AddUser(flask_restful.Resource):
     def post(self):
         """Create an invite and send email."""
 
+        args = flask.request.args
+        # Check if email is registered to a user
         try:
-            existing_user = marshmallows.UserSchema().load(flask.request.args)
+            existing_user = marshmallows.UserSchema().load(args)
         except NoSuchUserError as usererr:
-            flask.current_app.logger.info(usererr)
-            return flask.jsonify(usererr.messages)
+            flask.current_app.logger.info(str(usererr))
 
-        return
+            # Send invite if the user doesn't exist
+            try:
+                # Use schema to validate and check args, and create invite row
+                new_invite = marshmallows.InviteUserSchema().load(args)
 
-        try:
-            # Use schema to validate and check args
-            invite_or_user = marshmallows.AddUserSchema().load(flask.request.args)
+            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+                raise errors.DatabaseError(message=str(sqlerr))
 
-            # Add to database
-            db.session.add(new_invite)
-            db.session.commit()
+            # Create URL safe token for invitation link
+            s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
+            token = s.dumps(new_invite.email, salt="email-confirm")
 
-        except InviteError as inverr:
-            flask.current_app.logger.info(inverr)
-            return flask.jsonify(inverr.messages)
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise errors.DatabaseError(message=str(sqlerr))
+            # Create link for invitation email
+            link = flask.url_for("api_blueprint.confirm_invite", token=token, _external=True)
 
-        # Create URL safe token for invitation link
-        s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
-        token = s.dumps(new_invite.email, salt="email-confirm")
+            # Compose and send email
+            msg = flask_mail.Message(
+                "Confirm email", sender="localhost", recipients=[new_invite.email]
+            )
+            msg.body = f"Your link is {link}"
+            mail.send(msg)
 
-        # Create link for invitation email
-        link = flask.url_for("api_blueprint.confirm_invite", token=token, _external=True)
+            # TODO: Format response with marshal with?
+            return flask.jsonify({"email": new_invite.email, "message": "Invite successful!"})
 
-        # Compose and send email
-        msg = flask_mail.Message("Confirm email", sender="localhost", recipients=[new_invite.email])
-        msg.body = f"Your link is {link}"
-        mail.send(msg)
-
-        # TODO: Format response with marshal with?
-        return flask.jsonify({"email": new_invite.email, "message": "Invite successful!"})
+        flask.current_app.logger.debug(existing_user)
+        # If there is an existing user, add them to project.
+        return flask.jsonify({"message": "User exists, should be added to the project."})
 
 
 class ConfirmInvite(flask_restful.Resource):
     def get(self, token):
         """ """
 
-        s = itsdangerous.URLSafeTimedSerializer(app.config.get("SECRET_KEY"))
+        s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config.get("SECRET_KEY"))
 
         try:
             # Get email from token
@@ -119,32 +120,35 @@ class ConfirmInvite(flask_restful.Resource):
             raise InviteError(message=f"There is no invitation for the found email adress: {email}")
 
         # Get unit info from db
-        facility_name = None
-        if invite_row.is_facility:
-            try:
-                facility_info = (
-                    models.Facility.query.filter(models.Facility.id == invite_row.facility_id)
-                    .with_entities(models.Facility.name)
-                    .first()
-                )
-            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-                raise DatabaseError(str(sqlerr))
+        # facility_name = None
+        # if invite_row.is_facility:
+        #     try:
+        #         facility_info = (
+        #             models.Facility.query.filter(models.Facility.id == invite_row.facility_id)
+        #             .with_entities(models.Facility.name)
+        #             .first()
+        #         )
+        #     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+        #         raise DatabaseError(str(sqlerr))
 
-            # Raise exception if facility does not exist
-            if not facility_info:
-                raise DatabaseError(
-                    message=f"User invite connected to a non-existent facility ID: {invite_row.facility_id}"
-                )
+        #     # Raise exception if facility does not exist
+        #     if not facility_info:
+        #         raise DatabaseError(
+        #             message=f"User invite connected to a non-existent facility ID: {invite_row.facility_id}"
+        #         )
 
-            # Set facility name if exists
-            facility_name = facility_info[0]
+        #     # Set facility name if exists
+        #     facility_name = facility_info[0]
 
+        flask.current_app.logger.debug(invite_row.unit)
         # Initiate form
         form = dds_web.forms.RegistrationForm()
 
         # Prefill fields - facility readonly if filled, otherwise disabled
-        form.facility_name.data = facility_name
-        form.facility_name.render_kw = {"readonly": True} if facility_name else {"disabled": True}
+        form.facility_name.render_kw = {"disabled": True}
+        if invite_row.unit:
+            form.facility_name.data = invite_row.unit
+            form.facility_name.render_kw = {"readonly": True}
         form.email.data = email
         form.username.data = email.split("@")[0]
 

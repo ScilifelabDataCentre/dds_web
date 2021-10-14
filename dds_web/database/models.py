@@ -64,7 +64,7 @@ class Unit(db.Model):
     # One unit can have many projects
     projects = db.relationship("Project", backref="responsible_unit")
     # One unit can have many invites
-    invites = db.relationship("Invite", back_populates="unit")
+    invites = db.relationship("Invite", backref="unit")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -147,7 +147,7 @@ class User(db.Model):
     # One user can have many identifiers
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
     # One user can have many email addresses
-    emails = db.relationship("Email", backref="users", lazy="dynamic", cascade="all, delete-orphan")
+    emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     # One user can create many projects
     created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
 
@@ -274,7 +274,7 @@ class Email(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # Foreign key: One user can have multiple email addresses.
-    user = db.Column(db.String(50), db.ForeignKey("users.username"))
+    user_id = db.Column(db.String(50), db.ForeignKey("users.username"))
 
     email = db.Column(db.String(255), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
@@ -297,7 +297,6 @@ class Invite(db.Model):
 
     # Foreign key
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
-    unit = db.relationship("Unit", back_populates="invites")
 
     # Columns
     email = db.Column(db.String(254), unique=True, nullable=False)
