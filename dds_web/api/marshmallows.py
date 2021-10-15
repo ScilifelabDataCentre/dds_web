@@ -192,6 +192,13 @@ class InviteUserSchema(marshmallow.Schema):
         return new_invite
 
 
+class InviteSchema(marshmallow.Schema):
+
+    unit_id = marshmallow.fields.Integer(required=True)
+    email = marshmallow.fields.Email(required=True, validate=marshmallow.validate.Length(max=254))
+    role = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=20))
+
+
 class NewUserSchema(marshmallow.Schema):
     """Schema for NewUser endpoint"""
 
@@ -199,9 +206,8 @@ class NewUserSchema(marshmallow.Schema):
     username = marshmallow.fields.String(
         required=True,
         validate=marshmallow.validate.Regexp(
-            regex="^[[:alnum:]-]{6,25}$",
-            # username must only contain alphanumeric characters and hyphens and must be between 6-25 characters long
-            # \p{Pd} could be used to match any kind of dash instead of just the hyphen.
+            regex="^[a-zA-Z0-9_]{6,25}$",
+            # username must be between 6-25 characters long and contain a-z, A-Z, 0-9
         ),
     )
     password = marshmallow.fields.String(
@@ -214,14 +220,7 @@ class NewUserSchema(marshmallow.Schema):
         ),
     )
     email = marshmallow.fields.Email(required=True, validate=marshmallow.validate.Email())
-    first_name = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(max=50)
-    )
-    last_name = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(max=50)
-    )
-
-    unit_name = marshmallow.fields.String(required=False)
+    name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=255))
 
     class Meta:
         """Exclude unknown fields e.g. csrf etc that are passed with form"""
@@ -232,51 +231,57 @@ class NewUserSchema(marshmallow.Schema):
     def verify_new_email(self, value):
         """Verify that the email is not used in the system already."""
 
-        flask.current_app.logger.info("testing email")
         if email_in_db(email=value):
             raise marshmallow.ValidationError(
                 message=f"The email '{value}' is already registered to an existing user."
             )
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def verify_and_get_invite(self, data, **kwargs):
+        """Verifies that the email is in the invite table and in that case saves the invite info."""
+
+        invite = models.Invite.query.filter(
+            models.Invite.email == sqlalchemy.func.binary(data.get("email"))
+        ).one_or_none()
+        if not invite:
+            raise ddserr.InviteError
+
+        data["invite"] = invite
 
     @marshmallow.post_load
     def make_user(self, data, **kwargs):
         """Deserialize to an User object"""
 
         # Hash password
-        password = dds_web.security.auth.gen_argon2hash(password=in_data.get("password"))
+        password = dds_web.security.auth.gen_argon2hash(password=data.get("password"))
 
-        # Get facility row
-        facility = (
-            (models.Facility.query.filter_by(name=data.get("facility_name")).first())
-            if data.get("facility_name")
-            else None
-        )
+        common_user_fields = {
+            "username": data.get("username"),
+            "password": password,
+            "name": data.get("name"),
+        }
 
-        # Create new user row
-        new_user = models.User(
-            **{
-                "username": data.get("username"),
-                "password": data.get("password"),
-                "role": data.get("role") == "facility" if facility else "researcher",
-                "first_name": data.get("first_name"),
-                "last_name": data.get("last_name"),
-                "facility_id": facility.id if facility else None,
-            }
-        )
+        # Create new user
+        invite = data.get("invite")
+        if invite.role == "Researcher":
+            new_user = models.ResearchUser(**common_user_fields)
+            # Currently no project associations
+        elif invite.role in ["Unit Admin", "Unit Personnel"]:
+            new_user = models.UnitUser(**common_user_fields)
+
+            new_user.is_admin = invite.role == "Unit Admin"
+
+            invite.unit.users.append(new_user)
+        elif new_user_role == "Super Admin":
+            new_user = models.SuperAdmin(**common_user_fields)
 
         # Create new email and append to user relationship
-        new_email = models.Email(email=data.get("email"), primary=True, user_id=new_user)
+        new_email = models.Email(email=data.get("email"), primary=True)
         new_user.emails.append(new_email)
 
         # Delete old invite
-        old_email = models.Invite.query.filter(models.Invite.email == new_email.email).first()
-        db.session.delete(old_email)
+        db.session.delete(invite)
 
-        # Append user to facility users
-        if facility:
-            facility.users.append(new_user)
-
-        db.session.add(new_user)
+        # Save and return
         db.session.commit()
-
         return new_user.username

@@ -7,33 +7,11 @@
         <form method="POST" action="{{ url_for('api_blueprint.new_user') }}">
             {{ form.csrf_token }}
 
-            <!-- First name -->
-            {{ form.first_name.label }}
-            {{ form.first_name }}
+            <!-- Name name -->
+            {{ form.name.label }}
+            {{ form.name }}
             <ul>
-                {% for error in form.first_name.errors %}
-                <li style="color:red;">
-                    {{ error }}
-                </li>
-                {% endfor %}
-            </ul>
-
-            <!-- Last name -->
-            {{ form.last_name.label }}
-            {{ form.last_name }}
-            <ul>
-                {% for error in form.last_name.errors %}
-                <li style="color:red;">
-                    {{ error }}
-                </li>
-                {% endfor %}
-            </ul>
-
-            <!-- Facility name -->
-            {{ form.unit_name.label }}
-            {{ form.unit_name }}
-            <ul>
-                {% for error in form.unit_name.errors %}
+                {% for error in form.name.errors %}
                 <li style="color:red;">
                     {{ error }}
                 </li>
@@ -75,6 +53,13 @@
                 {% endfor %}
             </ul>
 
+
+            <!-- Unit -->
+            {% if form.unit_name %}
+            Unit name:
+            {{ form.unit_name }}
+            {% endif %}
+            <br>
             <!-- Submit button -->
             {{ form.submit }}
 

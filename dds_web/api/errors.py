@@ -249,6 +249,14 @@ class NoSuchUserError(Exception):
         general_logger.warning(message)
 
 
+class NoSuchUnitError(Exception):
+    """There is no such unit foound in the database."""
+
+    def __init__(self, message="Unit not found."):
+        super().__init__(message)
+        general_logger.warning(message)
+
+
 # ----------------------------------------------------------------------------------- #
 
 

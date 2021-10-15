@@ -119,15 +119,18 @@ class ConfirmInvite(flask_restful.Resource):
         if not invite_row:
             raise InviteError(message=f"There is no invitation for the found email adress: {email}")
 
-        flask.current_app.logger.debug(invite_row.unit)
         # Initiate form
         form = dds_web.forms.RegistrationForm()
 
+        # invite columns: unit_id, email, role
+        flask.current_app.logger.debug(invite_row)
+
         # Prefill fields - facility readonly if filled, otherwise disabled
         form.unit_name.render_kw = {"disabled": True}
-        if invite_row.unit:
+        if invite_row.unit:  # backref to unit
             form.unit_name.data = invite_row.unit.name
             form.unit_name.render_kw = {"readonly": True}
+
         form.email.data = email
         form.username.data = email.split("@")[0]
 
@@ -144,7 +147,7 @@ class NewUser(flask_restful.Resource):
 
         # Validate form - validators defined in form class
         if form.validate_on_submit():
-
+            flask.current_app.logger.debug(form.data)
             # Create new user row by loading form data into schema
             try:
                 new_user = marshmallows.NewUserSchema().load(form.data)
