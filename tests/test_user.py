@@ -21,4 +21,13 @@ def test_add_user_without_credentials(client):
     )
     assert invited_user is None
 
-def 
+
+def test_add_user_with_unit_admin_without_user_data(client):
+    credentials = b64encode(b"unitadmin:password").decode("utf-8")
+    response = client.post(
+        "/api/v1/user/add",
+        headers={"Authorization": f"Basic {credentials}"},
+        # data=json.dumps(new_user_data),
+        content_type="application/json",
+    )
+    assert response.status == "400 BAD REQUEST"
