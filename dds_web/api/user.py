@@ -63,7 +63,7 @@ class AddUser(flask_restful.Resource):
         args = flask.request.args
         # Check if email is registered to a user
         try:
-            existing_user = marshmallows.UserSchema().load()
+            existing_user = marshmallows.UserSchema().load(args)
         except NoSuchUserError as usererr:
             flask.current_app.logger.info(str(usererr))
 
