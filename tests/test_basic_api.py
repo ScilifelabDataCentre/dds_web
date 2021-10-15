@@ -43,7 +43,7 @@ def test_auth_incorrect_username_check_statuscode_401_incorrect_info(client):
     assert "Missing or incorrect credentials" == response_json.get("message")
 
 
-def test_auth_incorrect_username_and_password_check_statuscode_400_incorrect_info(client):
+def test_auth_incorrect_username_and_password_check_statuscode_401_incorrect_info(client):
     """Test that the auth endpoint returns
     Status code: 401/UNAUTHORIZED
     Message: Missing or incorrect credentials
@@ -59,7 +59,7 @@ def test_auth_incorrect_username_and_password_check_statuscode_400_incorrect_inf
     assert "Missing or incorrect credentials" == response_json.get("message")
 
 
-def test_auth_incorrect_password_check_statuscode_400_incorrect_info(client):
+def test_auth_incorrect_password_check_statuscode_401_incorrect_info(client):
     """Test that the auth endpoint returns
     Status code: 401/UNAUTHORIZED
     Message: Missing or incorrect credentials
