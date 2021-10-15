@@ -1,0 +1,15 @@
+from base64 import b64encode
+import json
+
+new_user_data = {"email": "first_email@mailtrap.io"}
+
+
+def test_add_user_without_credentials(client):
+    credentials = b64encode(b"").decode("utf-8")
+    response = client.post(
+        "/api/v1/user/add",
+        headers={"Authorization": f"Basic {credentials}"},
+        data=json.dumps(new_user_data),
+        content_type="application/json",
+    )
+    assert response.status == "403 FORBIDDEN"
