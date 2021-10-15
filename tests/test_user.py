@@ -27,7 +27,7 @@ def test_add_user_with_unitadmin_without_user_data(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        # data=json.dumps(new_user_data),
+        data=json.dumps({}),
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
@@ -38,7 +38,40 @@ def test_add_user_with_unitadmin_without_role(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        data=json.dumps(new_user_data),
+        data=json.dumps({"email": "first_test_email@mailtrap.io"}),
+        content_type="application/json",
+    )
+    assert response.status == "400 BAD REQUEST"
+
+
+def test_add_user_with_unitadmin_with_extraargs(client):
+    credentials = b64encode(b"unitadmin:password").decode("utf-8")
+    response = client.post(
+        "/api/v1/user/add",
+        headers={"Authorization": f"Basic {credentials}"},
+        data=json.dumps({"email": "first_test_email@mailtrap.io", "extra": "extrainfo"}),
+        content_type="application/json",
+    )
+    assert response.status == "400 BAD REQUEST"
+
+
+def test_add_user_with_unitadmin_and_invalid_role(client):
+    credentials = b64encode(b"unitadmin:password").decode("utf-8")
+    response = client.post(
+        "/api/v1/user/add",
+        headers={"Authorization": f"Basic {credentials}"},
+        data=json.dumps({"email": "first_test_email@mailtrap.io", "role": "Invalid Role"}),
+        content_type="application/json",
+    )
+    assert response.status == "400 BAD REQUEST"
+
+
+def test_add_user_with_unitadmin_and_invalid_email(client):
+    credentials = b64encode(b"unitadmin:password").decode("utf-8")
+    response = client.post(
+        "/api/v1/user/add",
+        headers={"Authorization": f"Basic {credentials}"},
+        data=json.dumps({"email": "first_test_email", "role": "Researcher"}),
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
