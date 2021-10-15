@@ -42,7 +42,7 @@ def test_add_user_with_unitadmin_without_role(client):
         data=json.dumps({"email": "first_test_email@mailtrap.io"}),
         content_type="application/json",
     )
-    assert response.status == "400 BAD REQUEST"
+    assert response.status == "500 SERVER ERROR"
 
 
 def test_add_user_with_unitadmin_with_extraargs(client):
