@@ -61,6 +61,7 @@ class AddUser(flask_restful.Resource):
         """Create an invite and send email."""
 
         args = flask.request.json
+
         # Check if email is registered to a user
         try:
             existing_user = marshmallows.UserSchema().load(args)
