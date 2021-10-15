@@ -12,7 +12,7 @@ def test_add_user_without_credentials(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        params=new_user_data,
+        data=new_user_data,
         content_type="application/json",
     )
     assert response.status == "401 UNAUTHORIZED"
@@ -40,7 +40,7 @@ def test_add_user_with_unitadmin_without_role(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        params=new_user_data,
+        data=new_user_data,
         content_type="application/json",
     )
     assert response.status == "500 SERVER ERROR"
@@ -52,7 +52,7 @@ def test_add_user_with_unitadmin_with_extraargs(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        params=new_user_data,
+        data=new_user_data,
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
@@ -65,7 +65,7 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        params=new_user_data,
+        data=new_user_data,
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
@@ -83,7 +83,7 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        params=new_user_data,
+        data=new_user_data,
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
@@ -101,7 +101,7 @@ def test_add_user_with_unitadmin(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        params=new_user_data,
+        data=new_user_data,
         content_type="application/json",
     )
     assert response.status == "200 OK"
@@ -120,7 +120,7 @@ def test_add_user_existing_email(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        params=new_user_data,
+        data=new_user_data,
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
@@ -132,7 +132,7 @@ def test_add_user_with_unitpersonnel_permission_denied(client):
     response = client.post(
         "/api/v1/user/add",
         headers={"Authorization": f"Basic {credentials}"},
-        params=new_user_data,
+        data=new_user_data,
         content_type="application/json",
     )
     assert response.status == "400 PERMISSION DENIED"
