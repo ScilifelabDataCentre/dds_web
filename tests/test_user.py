@@ -23,17 +23,6 @@ def test_add_user_without_credentials(client):
     assert invited_user is None
 
 
-# def test_add_user_with_unitadmin_without_user_data(client):
-#     credentials = b64encode(b"unitadmin:password").decode("utf-8")
-#     response = client.post(
-#         "/api/v1/user/add",
-#         headers={"Authorization": f"Basic {credentials}"},
-#         # data=json.dumps({}),
-#         content_type="application/json",
-#     )
-#     assert response.status == "400 BAD REQUEST"
-
-
 def test_add_user_with_unitadmin_without_role(client):
     new_user_data = {"email": "first_test_email@mailtrap.io"}
     credentials = b64encode(b"unitadmin:password").decode("utf-8")
@@ -43,7 +32,7 @@ def test_add_user_with_unitadmin_without_role(client):
         data=new_user_data,
         content_type="application/json",
     )
-    assert response.status == "500 SERVER ERROR"
+    assert response.status == "400 BAD REQUEST"
 
 
 def test_add_user_with_unitadmin_with_extraargs(client):
@@ -96,7 +85,7 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
 
 def test_add_user_with_unitadmin(client):
 
-    invite_infnew_user_datao = {"email": "first_test_email@mailtrap.io", "role": "Researcher"}
+    new_user_data = {"email": "first_test_email@mailtrap.io", "role": "Researcher"}
     credentials = b64encode(b"unitadmin:password").decode("utf-8")
     response = client.post(
         "/api/v1/user/add",
@@ -135,7 +124,7 @@ def test_add_user_with_unitpersonnel_permission_denied(client):
         data=new_user_data,
         content_type="application/json",
     )
-    assert response.status == "400 PERMISSION DENIED"
+    assert response.status == "400 BAD REQUEST"
 
     invited_user = (
         db.session.query(models.Invite).filter_by(email=new_user_data["email"]).one_or_none()
