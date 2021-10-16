@@ -97,7 +97,7 @@ class GetPrivate(flask_restful.Resource):
 
 
 class UserProjects(flask_restful.Resource):
-    """Gets all projects registered to a specific user."""
+    """Gets projects registered to a specific user."""
 
     @auth.login_required
     def get(self):
@@ -113,9 +113,16 @@ class UserProjects(flask_restful.Resource):
         total_size = 0
 
         usage = flask.request.args.get("usage") == "True" and current_user.role == "unit"
+        show_emails = flask.request.args.get("show_emails")
 
+        if flask.request.args.get("project"):
+            proj_public_id = flask.request.args.get("project")
+            proj_list = [marshmallows.ProjectRequiredSchema().load({"project": proj_public_id})]
         # Get info for all projects
-        for p in current_user.projects:
+        else:
+            proj_list = current_user.projects
+
+        for p in proj_list:
             project_info = {
                 "Project ID": p.public_id,
                 "Title": p.title,
@@ -123,8 +130,18 @@ class UserProjects(flask_restful.Resource):
                 "Status": p.status,
                 "Last updated": p.date_updated if p.date_updated else p.date_created,
                 "Size": dds_web.utils.format_byte_size(p.size),
+                "Users": "",
             }
-
+            proj_users = []
+            for user in p.researchusers:
+                uname = user.user_id
+                if show_emails == "True":
+                    emails = []
+                    for user_email in user.researchuser.emails:
+                        emails.append(user_email.email)
+                    uname = f"{uname} ({', '.join(emails)})"
+                proj_users.append(uname)
+            project_info["Users"] = ", ".join(proj_users)
             # Get proj size and update total size
             proj_size = sum([f.size_stored for f in p.files])
             total_size += proj_size
