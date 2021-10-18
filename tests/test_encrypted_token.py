@@ -4,7 +4,7 @@ from dds_web.api.user import encrypted_jwt_token
 from dds_web.security.auth import extract_encrypted_token_content
 
 
-def test_encrypted_data_transfer_via_token():
+def test_encrypted_data_transfer_via_token(client):
     username = "researchuser"
     sensitive_content = "sensitive_content"
     encrypted_token = encrypted_jwt_token(username, sensitive_content)
@@ -15,7 +15,7 @@ def test_encrypted_data_transfer_via_token():
     assert sensitive_content == extracted_content
 
 
-def test_encrypted_data_destined_for_another_user():
+def test_encrypted_data_destined_for_another_user(client):
     encrypted_token = encrypted_jwt_token("researchuser", "sensitive_content")
     extracted_content = extract_encrypted_token_content(encrypted_token, "projectowner")
     assert extracted_content is None
