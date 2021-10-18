@@ -36,7 +36,7 @@ def verify_project_exists(spec_proj):
 
     if not project:
         flask.current_app.logger.warning("No such project!!")
-        raise ddserr.NoSuchProjectError
+        raise ddserr.NoSuchProjectError(project=spec_proj)
 
     return project
 

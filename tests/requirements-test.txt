@@ -1,2 +1,4 @@
 pytest
 sqlalchemy-utils
+uuid
+jwcrypto
