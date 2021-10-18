@@ -107,7 +107,7 @@ class UserSchema(marshmallow.Schema):
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def validate_email_and_user(self, data, **kwargs):
         """Check that the email and connected user exists in the database."""
-
+        flask.current_app.logger.debug("Validating email and user...")
         email_row = models.Email.query.filter_by(email=data.get("email")).first()
         if not email_row:
             raise ddserr.NoSuchUserError

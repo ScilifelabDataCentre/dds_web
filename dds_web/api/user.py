@@ -61,17 +61,22 @@ class AddUser(flask_restful.Resource):
         """Create an invite and send email."""
 
         args = flask.request.json
+        flask.current_app.logger.debug(f"Args: {args}")
 
         # Check if email is registered to a user
         try:
+            flask.current_app.logger.debug("Checking user....")
             existing_user = marshmallows.UserSchema().load(args)
+            flask.current_app.logger.debug(f"User: {existing_user}")
         except NoSuchUserError as usererr:
             flask.current_app.logger.info(str(usererr))
 
             # Send invite if the user doesn't exist
             try:
+                flask.current_app.logger.debug("Creating invite...")
                 # Use schema to validate and check args, and create invite row
                 new_invite = marshmallows.InviteUserSchema().load(args)
+                flask.current_app.logger.debug(f"Invite created: {new_invite}")
 
             except sqlalchemy.exc.SQLAlchemyError as sqlerr:
                 raise errors.DatabaseError(message=str(sqlerr))
