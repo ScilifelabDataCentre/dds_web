@@ -30,6 +30,7 @@ from dds_web.api.errors import JwtTokenGenerationError, DatabaseError, InviteErr
 import dds_web.utils
 import dds_web.forms
 from dds_web.api import marshmallows
+import dds_web.api.errors as ddserr
 
 
 ####################################################################################################
@@ -65,10 +66,8 @@ class AddUser(flask_restful.Resource):
 
         # Check if email is registered to a user
         try:
-            flask.current_app.logger.debug("Checking user....")
             existing_user = marshmallows.UserSchema().load(args)
-            flask.current_app.logger.debug(f"User: {existing_user}")
-        except NoSuchUserError as usererr:
+        except ddserr.NoSuchUserError as usererr:
             flask.current_app.logger.info(str(usererr))
 
             # Send invite if the user doesn't exist

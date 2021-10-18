@@ -2,7 +2,14 @@ import os
 import uuid
 import pytest
 from sqlalchemy_utils import create_database, database_exists
-from dds_web.database.models import ResearchUser, UnitUser, SuperAdmin, Unit, Project, ProjectUsers
+from dds_web.database.models import (
+    ResearchUser,
+    UnitUser,
+    SuperAdmin,
+    Unit,
+    Project,
+    ProjectUsers,
+)
 
 from dds_web import create_app, db
 

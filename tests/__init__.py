@@ -74,7 +74,7 @@ class DDSEndpoint:
     BASE_ENDPOINT = "/api/v1"
 
     # User creation
-    USER_INVITE = BASE_ENDPOINT + "/user/invite"
+    USER_ADD = BASE_ENDPOINT + "/user/add"
 
     # Authentication - user and project
     TOKEN = BASE_ENDPOINT + "/user/token"
