@@ -97,7 +97,7 @@ class GetPrivate(flask_restful.Resource):
 
 
 class UserProjects(flask_restful.Resource):
-    """Gets projects registered to a specific user."""
+    """Gets all projects registered to a specific user."""
 
     @auth.login_required
     def get(self):
@@ -113,16 +113,8 @@ class UserProjects(flask_restful.Resource):
         total_size = 0
 
         usage = flask.request.args.get("usage") == "True" and current_user.role == "unit"
-        show_emails = flask.request.args.get("show_emails")
 
-        if flask.request.args.get("project"):
-            proj_public_id = flask.request.args.get("project")
-            proj_list = [marshmallows.ProjectRequiredSchema().load({"project": proj_public_id})]
-        # Get info for all projects
-        else:
-            proj_list = current_user.projects
-
-        for p in proj_list:
+        for p in current_user.projects:
             project_info = {
                 "Project ID": p.public_id,
                 "Title": p.title,
@@ -130,18 +122,8 @@ class UserProjects(flask_restful.Resource):
                 "Status": p.status,
                 "Last updated": p.date_updated if p.date_updated else p.date_created,
                 "Size": dds_web.utils.format_byte_size(p.size),
-                "Users": "",
             }
-            proj_users = []
-            for user in p.researchusers:
-                uname = user.user_id
-                if show_emails == "True":
-                    emails = []
-                    for user_email in user.researchuser.emails:
-                        emails.append(user_email.email)
-                    uname = f"{uname} ({', '.join(emails)})"
-                proj_users.append(uname)
-            project_info["Users"] = ", ".join(proj_users)
+
             # Get proj size and update total size
             proj_size = sum([f.size_stored for f in p.files])
             total_size += proj_size
@@ -338,3 +320,27 @@ class CreateProject(flask_restful.Resource):
             tstamp=dds_web.utils.timestamp(dts=created_time, ts_format="%y%m%d%H%M%S%f"),
             rstring=os.urandom(4).hex(),
         )
+
+
+class ProjectUsers(flask_restful.Resource):
+    """Get all users in a specific project."""
+
+    @auth.login_required
+    def get(self):
+
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+
+        # Get info on research users
+        research_users = list()
+
+        for user in project.researchusers:
+            user_info = {
+                "User Name": user.user_id,
+                "Primary email": "",
+            }
+            for user_email in user.researchuser.emails:
+                if user_email.primary:
+                    user_info["Primary email"] = user_email.email
+            research_users.append(user_info)
+
+        return flask.jsonify({"research_users": research_users})
