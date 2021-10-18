@@ -66,6 +66,8 @@ class AddUser(flask_restful.Resource):
         # Check if email is registered to a user
         try:
             existing_user = marshmallows.UserSchema().load(args)
+        except marshmallow.ValidationError as valerr:
+            raise ddserr.InviteError(message=valerr.messages)
         except ddserr.NoSuchUserError as usererr:
             flask.current_app.logger.info(str(usererr))
 
@@ -75,7 +77,9 @@ class AddUser(flask_restful.Resource):
                 new_invite = marshmallows.InviteUserSchema().load(args)
 
             except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-                raise errors.DatabaseError(message=str(sqlerr))
+                raise ddserr.DatabaseError(message=str(sqlerr))
+            except marshmallow.ValidationError as valerr:
+                raise ddserr.InviteError(message=valerr.messages)
 
             # Create URL safe token for invitation link
             s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
