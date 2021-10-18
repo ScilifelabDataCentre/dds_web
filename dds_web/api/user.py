@@ -21,29 +21,34 @@ import sqlalchemy
 from dds_web import auth
 from dds_web.database import models
 import dds_web.utils
-from dds_web.api import marshmallows
 
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
 
+ENCRYPTION_KEY_BIT_LENGTH = 256
+ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 
-def encrypted_jwt_token(username):
+
+def encrypted_jwt_token(username, sensitive_content):
     """Encrypts a signed JWT token."""
-    token = jwt.JWT(header={"alg": "A256KW", "enc": "A256CBC-HS512"}, claims=jwt_token(username))
+    token = jwt.JWT(header={"alg": "A256KW", "enc": "A256GCM"}, claims=jwt_token(username, sensitive_content))
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
     token.make_encrypted_token(key)
     return token.serialize()
 
 
-def jwt_token(username):
+def jwt_token(username, sensitive_content=None):
     """Generates a signed JWT token."""
     expiration_time = datetime.datetime.utcnow() + datetime.timedelta(hours=48)
     data = {
         "sub": username,
         "exp": expiration_time.timestamp(),
     }
+    if sensitive_content is not None:
+        data["sen_con"] = sensitive_content
+
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
     token = jwt.JWT(header={"alg": "HS256"}, claims=data, algs=["HS256"])
     token.make_signed_token(key)
@@ -60,7 +65,7 @@ class Token(flask_restful.Resource):
 
     @auth.login_required
     def get(self):
-        return flask.jsonify({"token": encrypted_jwt_token(username=auth.current_user().username)})
+        return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
 
 
 class ShowUsage(flask_restful.Resource):

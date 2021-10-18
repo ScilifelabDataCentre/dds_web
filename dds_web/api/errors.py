@@ -15,6 +15,7 @@ import http
 # Own modules
 from dds_web import actions
 from dds_web import auth
+from dds_web.api.user import ENCRYPTION_KEY_CHAR_LENGTH
 
 ####################################################################################################
 # LOGGING ################################################################################ LOGGING #
@@ -35,6 +36,18 @@ class ItemDeletionError(exceptions.HTTPException):
 
 
 ####################################################################################################
+
+
+class KeyLengthError(SystemExit):
+    """Invalid key length for encryption"""
+
+    def __init__(self, message=f"SECRET KEY MUST BE AT LEAST "
+                               f"{ENCRYPTION_KEY_CHAR_LENGTH} CHARACTERS "
+                               "LONG IN ORDER TO SATISFY THE CURRENT TOKEN "
+                               "ENCRYPTION!"):
+        super().__init__(message)
+
+        general_logger.error(message)
 
 
 class AuthenticationError(exceptions.HTTPException):
@@ -240,6 +253,7 @@ errors = {
     },
     "DatabaseError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "NoSuchProjectError": {"status": http.HTTPStatus.BAD_REQUEST},
+    "KeyLengthError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "AuthenticationError": {"status": http.HTTPStatus.UNAUTHORIZED},
     "AccessDeniedError": {"status": http.HTTPStatus.FORBIDDEN},
     "JwtTokenGenerationError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},

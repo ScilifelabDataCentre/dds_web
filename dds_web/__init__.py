@@ -5,7 +5,6 @@
 ####################################################################################################
 
 # Standard library
-from datetime import datetime, timedelta
 import pytz
 import logging
 
@@ -151,6 +150,11 @@ def create_app(testing=False, database_uri=None):
 
         # Set-up the schedulers
         dds_web.utils.scheduler_wrapper()
+
+        from dds_web.api.user import ENCRYPTION_KEY_CHAR_LENGTH
+        if len(app.config.get("SECRET_KEY")) != ENCRYPTION_KEY_CHAR_LENGTH:
+            from dds_web.api.errors import KeyLengthError
+            raise KeyLengthError
 
         return app
 

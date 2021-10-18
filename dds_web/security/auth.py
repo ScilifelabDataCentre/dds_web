@@ -56,16 +56,36 @@ def get_user_roles_common(user):
 
 @token_auth.verify_token
 def verify_token(token):
-    key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
-    decrypted_token = jwt.JWT(key=key, jwt=token)
-    jwttoken = jwt.JWT(key=key, jwt=decrypted_token.claims, algs=["HS256"])
-    data = json.loads(jwttoken.claims)
+    data = verify_token_signature(token)
     username = data.get("sub")
     if username:
         user = models.User.query.get(username)
         if user:
             return user
     return None
+
+
+def extract_encrypted_token_content(token, username):
+    """Extract the sensitive content from inside the encrypted token"""
+    signed_token = decrypt_token(token)
+    content = verify_token_signature(signed_token)
+    return content.get("sen_con") if content.get("sub") == username else None
+
+
+def decrypt_token(token):
+    """Decrypt the encrypted token and return
+    the signed token embedded inside"""
+    key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
+    decrypted_token = jwt.JWT(key=key, jwt=token)
+    return decrypted_token.claims
+
+
+def verify_token_signature(token):
+    """Verify the signature of the token and return the claims
+    such as subject/username on valid signature"""
+    key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
+    jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
+    return json.loads(jwttoken.claims)
 
 
 @basic_auth.verify_password
