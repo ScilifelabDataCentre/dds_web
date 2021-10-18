@@ -114,6 +114,7 @@ class UserProjects(flask_restful.Resource):
 
         usage = flask.request.args.get("usage") == "True" and current_user.role == "unit"
 
+        # Get info for all projects
         for p in current_user.projects:
             project_info = {
                 "Project ID": p.public_id,
