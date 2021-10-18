@@ -33,7 +33,9 @@ ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 
 def encrypted_jwt_token(username, sensitive_content):
     """Encrypts a signed JWT token."""
-    token = jwt.JWT(header={"alg": "A256KW", "enc": "A256GCM"}, claims=jwt_token(username, sensitive_content))
+    token = jwt.JWT(
+        header={"alg": "A256KW", "enc": "A256GCM"}, claims=jwt_token(username, sensitive_content)
+    )
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
     token.make_encrypted_token(key)
     return token.serialize()

@@ -41,10 +41,13 @@ class ItemDeletionError(exceptions.HTTPException):
 class KeyLengthError(SystemExit):
     """Invalid key length for encryption"""
 
-    def __init__(self, message=f"SECRET KEY MUST BE AT LEAST "
-                               f"{ENCRYPTION_KEY_CHAR_LENGTH} CHARACTERS "
-                               "LONG IN ORDER TO SATISFY THE CURRENT TOKEN "
-                               "ENCRYPTION!"):
+    def __init__(
+        self,
+        message=f"SECRET KEY MUST BE AT LEAST "
+        f"{ENCRYPTION_KEY_CHAR_LENGTH} CHARACTERS "
+        "LONG IN ORDER TO SATISFY THE CURRENT TOKEN "
+        "ENCRYPTION!",
+    ):
         super().__init__(message)
 
         general_logger.error(message)

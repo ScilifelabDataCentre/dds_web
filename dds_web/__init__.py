@@ -152,8 +152,10 @@ def create_app(testing=False, database_uri=None):
         dds_web.utils.scheduler_wrapper()
 
         from dds_web.api.user import ENCRYPTION_KEY_CHAR_LENGTH
+
         if len(app.config.get("SECRET_KEY")) != ENCRYPTION_KEY_CHAR_LENGTH:
             from dds_web.api.errors import KeyLengthError
+
             raise KeyLengthError
 
         return app
