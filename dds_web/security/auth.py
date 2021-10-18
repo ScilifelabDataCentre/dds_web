@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Installed
+import datetime
 import argon2
 import http
 import flask
@@ -57,12 +58,17 @@ def get_user_roles_common(user):
 @token_auth.verify_token
 def verify_token(token):
     data = verify_token_signature(token)
-    username = data.get("sub")
-    if username:
-        user = models.User.query.get(username)
-        if user:
-            return user
-    return None
+    expiration_time = data.get("exp")
+    # we use a hard check on top of the one from the dependency
+    # exp shouldn't be before now no matter what
+    if datetime.datetime.utcnow() <= datetime.datetime.fromtimestamp(expiration_time):
+        username = data.get("sub")
+        if username:
+            user = models.User.query.get(username)
+            if user:
+                return user
+        return None
+    raise AuthenticationError(message="Expired token")
 
 
 def extract_encrypted_token_content(token, username):
@@ -84,8 +90,13 @@ def verify_token_signature(token):
     """Verify the signature of the token and return the claims
     such as subject/username on valid signature"""
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
-    jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
-    return json.loads(jwttoken.claims)
+    try:
+        jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
+        return json.loads(jwttoken.claims)
+    except jwt.JWTExpired:
+        # jwt dependency uses a 60 seconds leeway to check exp
+        # it also prints out a stack trace for it, so we handle it here
+        raise AuthenticationError(message="Expired token")
 
 
 @basic_auth.verify_password
