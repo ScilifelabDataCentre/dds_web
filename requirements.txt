@@ -14,7 +14,7 @@ Flask-WTF==0.15.1
 immutabledict==2.2.0
 marshmallow-sqlalchemy==0.24.1
 marshmallow==3.13.0 
-pandas
+pandas # Version gives errors
 PyJWT==2.1.0
 pylint-flask==0.6
 pylint-flask-sqlalchemy==0.2.0
@@ -30,4 +30,4 @@ pyjwt==2.1.0
 requests==2.26.0 # required for oauth 
 werkzeug==2.0.2
 jwcrypto==1.0
-cython
+selenium==4.0.0
