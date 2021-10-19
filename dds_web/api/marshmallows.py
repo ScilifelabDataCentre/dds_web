@@ -63,6 +63,15 @@ def email_in_db(email):
     return False
 
 
+def username_in_db(username):
+    """Check if username is in the User table."""
+
+    if models.User.query.filter_by(username=username).first():
+        return True
+
+    return False
+
+
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
@@ -219,6 +228,18 @@ class NewUserSchema(marshmallow.Schema):
         """Exclude unknown fields e.g. csrf etc that are passed with form"""
 
         unknown = marshmallow.EXCLUDE
+
+    @marshmallow.validates("username")
+    def verify_username(self, value):
+        """Verify that the username is not used in the system."""
+
+        if username_in_db(username=value):
+            raise marshmallow.ValidationError(
+                message=(
+                    f"The username '{value}' is already taken by another user. "
+                    "Try something else."
+                )
+            )
 
     @marshmallow.validates("email")
     def verify_new_email(self, value):
