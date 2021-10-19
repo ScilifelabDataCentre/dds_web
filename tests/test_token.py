@@ -2,7 +2,10 @@ import base64
 import datetime
 
 from dds_web.api.user import encrypted_jwt_token
-from dds_web.security.auth import extract_encrypted_token_content, decrypt_and_verify_token_signature
+from dds_web.security.auth import (
+    extract_encrypted_token_content,
+    decrypt_and_verify_token_signature,
+)
 
 
 def test_encrypted_data_transfer_via_token(client):
@@ -27,10 +30,12 @@ def test_encrypted_and_signed_token(client):
     expires_in = datetime.timedelta(minutes=1)
     expiry_datetime = datetime.datetime.now() + expires_in
     additional_claim = {"iss": "DDS"}
-    encrypted_token = encrypted_jwt_token(username=username,
-                                          sensitive_content=None,
-                                          expires_in=expires_in,
-                                          additional_claims=additional_claim)
+    encrypted_token = encrypted_jwt_token(
+        username=username,
+        sensitive_content=None,
+        expires_in=expires_in,
+        additional_claims=additional_claim,
+    )
     token_content = decrypt_and_verify_token_signature(encrypted_token)
     assert username == token_content.get("sub")
     assert "DDS" == token_content.get("iss")
