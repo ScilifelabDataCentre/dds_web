@@ -321,3 +321,27 @@ class CreateProject(flask_restful.Resource):
             tstamp=dds_web.utils.timestamp(dts=created_time, ts_format="%y%m%d%H%M%S%f"),
             rstring=os.urandom(4).hex(),
         )
+
+
+class ProjectUsers(flask_restful.Resource):
+    """Get all users in a specific project."""
+
+    @auth.login_required
+    def get(self):
+
+        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+
+        # Get info on research users
+        research_users = list()
+
+        for user in project.researchusers:
+            user_info = {
+                "User Name": user.user_id,
+                "Primary email": "",
+            }
+            for user_email in user.researchuser.emails:
+                if user_email.primary:
+                    user_info["Primary email"] = user_email.email
+            research_users.append(user_info)
+
+        return flask.jsonify({"research_users": research_users})

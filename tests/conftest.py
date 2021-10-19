@@ -57,6 +57,11 @@ def demo_data():
             password=auth.gen_argon2hash(password="password"),
             name="Super Admin",
         ),
+        ResearchUser(
+            username="researchuser2",
+            password=auth.gen_argon2hash(password="password"),
+            name="Research User 2",
+        ),
     ]
 
     projects = [
@@ -100,6 +105,19 @@ def demo_data():
             privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
             privkey_nonce="847D75C4C548474FC54714AA",
         ),
+        Project(
+            public_id="second_public_project_id",
+            title="second project",
+            status="Ongoing",
+            description="This is a second test project. You will be able to upload to but NOT download ",
+            pi="PI",
+            size=7357,
+            bucket=f"secondpublicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            public_key="2E2F3F1C91ECA5D4CBEFFB59A487511319E76FBA34709C6CC49BF9DC0EC8B10B",
+            private_key="494D26A977118F7E6AB6D87548E762DEB85C537292D65618FDC18A0EFAB6B860468F17BA26F7A0BDA4F23938A5A10801",
+            privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
+            privkey_nonce="847D75C4C548474FC54714AA",
+        ),
     ]
 
     return (units, users, projects)
@@ -130,10 +148,18 @@ def client():
             # Connect research user to project. append (not =) due to many users per project
             projects[0].researchusers.append(project_0_user_1_association)
 
+            # Create association with user - is owner of project
+            project_3_user_6_association = ProjectUsers(owner=True)
+            # Connect research user to association row. = (not append) due to one user per ass. row
+            project_3_user_6_association.researchuser = users[6]
+            # Connect research user to project. append (not =) due to many users per project
+            projects[3].researchusers.append(project_3_user_6_association)
+
             # Add created project
             users[2].created_projects.append(projects[0])
             users[3].created_projects.append(projects[1])
             users[2].created_projects.append(projects[2])
+            users[3].created_projects.append(projects[3])
 
             units[0].projects.extend(projects)
             units[0].users.extend([users[2], users[3], users[4]])
