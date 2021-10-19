@@ -24,7 +24,7 @@ import wtforms
 import wtforms.validators
 
 # Own modules
-from dds_web import auth, mail
+from dds_web import auth, mail, db
 from dds_web.database import models
 from dds_web.api.errors import JwtTokenGenerationError, DatabaseError, InviteError, NoSuchUserError
 import dds_web.utils
@@ -110,13 +110,17 @@ class ConfirmInvite(flask_restful.Resource):
 
         try:
             # Get email from token
-            email = s.loads(token, salt="email-confirm", max_age=10000)
+            email = s.loads(token, salt="email-confirm", max_age=604800)
 
             # Get row from invite table
             invite_row = models.Invite.query.filter(models.Invite.email == email).first()
 
-        except (itsdangerous.exc.SignatureExpired, itsdangerous.exc.BadSignature) as signerr:
+        except itsdangerous.exc.SignatureExpired as signerr:
+            db.session.delete(invite_row)
+            db.session.commit()
             raise ddserr.InviteError(message=str(signerr))
+        except itsdangerous.exc.BadSignature as badsignerr:
+            raise ddserr.InviteError(message=str(badsignerr))
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise DatabaseError(str(sqlerr))
 

@@ -192,13 +192,6 @@ class InviteUserSchema(marshmallow.Schema):
         return new_invite
 
 
-class InviteSchema(marshmallow.Schema):
-
-    unit_id = marshmallow.fields.Integer(required=True)
-    email = marshmallow.fields.Email(required=True, validate=marshmallow.validate.Length(max=254))
-    role = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=20))
-
-
 class NewUserSchema(marshmallow.Schema):
     """Schema for NewUser endpoint"""
 
