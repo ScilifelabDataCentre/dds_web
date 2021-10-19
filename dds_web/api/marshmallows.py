@@ -229,17 +229,17 @@ class NewUserSchema(marshmallow.Schema):
 
         unknown = marshmallow.EXCLUDE
 
-    # @marshmallow.validates("username")
-    # def verify_username(self, value):
-    #     """Verify that the username is not used in the system."""
+    @marshmallow.validates("username")
+    def verify_username(self, value):
+        """Verify that the username is not used in the system."""
 
-    #     if username_in_db(username=value):
-    #         raise marshmallow.ValidationError(
-    #             message=(
-    #                 f"The username '{value}' is already taken by another user. "
-    #                 "Try something else."
-    #             )
-    #         )
+        if username_in_db(username=value):
+            raise marshmallow.ValidationError(
+                message=(
+                    f"The username '{value}' is already taken by another user. "
+                    "Try something else."
+                )
+            )
 
     @marshmallow.validates("email")
     def verify_new_email(self, value):
