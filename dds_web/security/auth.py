@@ -69,6 +69,7 @@ def verify_token(token):
 
 @basic_auth.verify_password
 def verify_password(username, password):
+    """Verify that user exists and that password is correct."""
     user = models.User.query.get(username)
     if user and verify_password_argon2id(user.password, password):
         return user

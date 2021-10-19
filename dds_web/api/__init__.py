@@ -7,6 +7,7 @@
 # Installed
 import flask
 import flask_restful
+import collections
 
 # Own modules
 from dds_web.api import user
@@ -22,10 +23,14 @@ from dds_web.api.errors import errors
 api_blueprint = flask.Blueprint("api_blueprint", __name__)
 api = flask_restful.Api(api_blueprint, errors=errors)
 
-
 ####################################################################################################
 # RESOURCES ############################################################################ RESOURCES #
 ####################################################################################################
+
+# New user ############################################################################## New user #
+api.add_resource(user.AddUser, "/user/add", endpoint="add_user")
+api.add_resource(user.ConfirmInvite, "/confirm_invite/<token>", endpoint="confirm_invite")
+api.add_resource(user.NewUser, "/user/new", endpoint="new_user")
 
 # Login/access ###################################################################### Login/access #
 api.add_resource(user.Token, "/user/token", endpoint="token")

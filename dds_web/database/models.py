@@ -63,6 +63,8 @@ class Unit(db.Model):
     users = db.relationship("UnitUser", back_populates="unit")
     # One unit can have many projects
     projects = db.relationship("Project", backref="responsible_unit")
+    # One unit can have many invites
+    invites = db.relationship("Invite", backref="unit")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -145,7 +147,7 @@ class User(db.Model):
     # One user can have many identifiers
     identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
     # One user can have many email addresses
-    emails = db.relationship("Email", backref="users", lazy="dynamic", cascade="all, delete-orphan")
+    emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     # One user can create many projects
     created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
 
@@ -272,7 +274,7 @@ class Email(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # Foreign key: One user can have multiple email addresses.
-    user = db.Column(db.String(50), db.ForeignKey("users.username"))
+    user_id = db.Column(db.String(50), db.ForeignKey("users.username"))
 
     email = db.Column(db.String(255), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
@@ -283,6 +285,29 @@ class Email(db.Model):
         return f"<Email {self.email}>"
 
 
+class Invite(db.Model):
+    """Invites for users not yet confirmed in DDS"""
+
+    # Table setup
+    __tablename__ = "invites"
+    __table_args__ = {"extend_existing": True}
+
+    # Primary Key
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    # Foreign key
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+
+    # Columns
+    email = db.Column(db.String(254), unique=True, nullable=False)
+    role = db.Column(db.String(20), unique=False, nullable=False)
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<Invite {self.email}>"
+
+
 class File(db.Model):
     """Data model for files."""
 
@@ -291,7 +316,7 @@ class File(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
 
     # Foreign keys: One project can have many files
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), index=True)
@@ -371,11 +396,13 @@ class Version(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # Foreign key - One project can have many files
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="SET NULL"), nullable=True
+    )
 
     # Foreign key - One file can have many rows in invoicing
     active_file = db.Column(
-        db.Integer, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
+        db.BigInteger, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
     )
 
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)

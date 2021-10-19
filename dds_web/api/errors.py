@@ -230,7 +230,28 @@ class KeyNotFoundError(exceptions.HTTPException):
         super().__init__(self.message)
 
 
-####################################################################################################
+class InviteError(exceptions.HTTPException):
+    """Invite related errors."""
+
+    def __init__(self, message="An error occurred during invite handling."):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class NoSuchUserError(Exception):
+    """There is no such user found in the database."""
+
+    def __init__(self, message="User not found."):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+# ----------------------------------------------------------------------------------- #
+
+
+# ----------------------------------------------------------------------------------- #
 
 
 errors = {
@@ -253,4 +274,6 @@ errors = {
     "S3InfoNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
+    "InviteError": {"status": http.HTTPStatus.BAD_REQUEST},
+    "NoSuchUserError": {"status": http.HTTPStatus.BAD_REQUEST},
 }

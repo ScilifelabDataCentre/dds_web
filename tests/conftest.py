@@ -2,7 +2,15 @@ import os
 import uuid
 import pytest
 from sqlalchemy_utils import create_database, database_exists
-from dds_web.database.models import ResearchUser, UnitUser, SuperAdmin, Unit, Project, ProjectUsers
+from dds_web.database.models import (
+    ResearchUser,
+    UnitUser,
+    SuperAdmin,
+    Unit,
+    Project,
+    ProjectUsers,
+    Invite,
+)
 
 from dds_web import create_app, db
 
@@ -120,7 +128,9 @@ def demo_data():
         ),
     ]
 
-    return (units, users, projects)
+    invites = [Invite(email="existing_invite_email@mailtrap.io", role="Researcher")]
+
+    return (units, users, projects, invites)
 
 
 @pytest.fixture
@@ -133,7 +143,7 @@ def client():
         with app.app_context():
 
             db.create_all()
-            units, users, projects = demo_data()
+            units, users, projects, invites = demo_data()
             # Create association with user - not owner of project
             project_0_user_0_association = ProjectUsers(owner=False)
             # Connect research user to association row. = (not append) due to one user per ass. row
@@ -163,6 +173,7 @@ def client():
 
             units[0].projects.extend(projects)
             units[0].users.extend([users[2], users[3], users[4]])
+            units[0].invites.append(invites[0])
 
             db.session.add(units[0])
             # db.session.add_all(users)
