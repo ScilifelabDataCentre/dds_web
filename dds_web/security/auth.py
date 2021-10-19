@@ -57,7 +57,11 @@ def get_user_roles_common(user):
 
 @token_auth.verify_token
 def verify_token(token):
-    data = verify_token_signature(token) if token.count(".") == 2 else decrypt_and_verify_token_signature(token)
+    data = (
+        verify_token_signature(token)
+        if token.count(".") == 2
+        else decrypt_and_verify_token_signature(token)
+    )
     expiration_time = data.get("exp")
     # we use a hard check on top of the one from the dependency
     # exp shouldn't be before now no matter what
