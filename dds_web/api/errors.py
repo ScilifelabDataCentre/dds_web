@@ -15,7 +15,6 @@ import http
 # Own modules
 from dds_web import actions
 from dds_web import auth
-from dds_web.api.user import ENCRYPTION_KEY_CHAR_LENGTH
 
 ####################################################################################################
 # LOGGING ################################################################################ LOGGING #
@@ -41,13 +40,11 @@ class ItemDeletionError(exceptions.HTTPException):
 class KeyLengthError(SystemExit):
     """Invalid key length for encryption"""
 
-    def __init__(
-        self,
-        message=f"SECRET KEY MUST BE AT LEAST "
-        f"{ENCRYPTION_KEY_CHAR_LENGTH} CHARACTERS "
-        "LONG IN ORDER TO SATISFY THE CURRENT TOKEN "
-        "ENCRYPTION!",
-    ):
+    def __init__(self, encryption_key_char_length):
+        message = (
+            f"SECRET KEY MUST BE AT LEAST {encryption_key_char_length} "
+            f"CHARACTERS LONG IN ORDER TO SATISFY THE CURRENT TOKEN ENCRYPTION!"
+        )
         super().__init__(message)
 
         general_logger.error(message)

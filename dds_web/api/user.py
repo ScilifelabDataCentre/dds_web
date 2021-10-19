@@ -14,15 +14,12 @@ from sqlalchemy.sql import func
 
 import flask
 import flask_restful
-import flask_wtf
 import flask_mail
 import itsdangerous
 import marshmallow
 from jwcrypto import jwk, jwt
 import pandas
 import sqlalchemy
-import wtforms
-import wtforms.validators
 
 # Own modules
 from dds_web import auth, mail, db
@@ -178,11 +175,13 @@ class ConfirmInvite(flask_restful.Resource):
         except itsdangerous.exc.BadSignature as badsignerr:
             raise ddserr.InviteError(message=str(badsignerr))
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(str(sqlerr))
+            raise ddserr.DatabaseError(str(sqlerr))
 
         # Check the invite exists
         if not invite_row:
-            raise InviteError(message=f"There is no invitation for the found email adress: {email}")
+            raise ddserr.InviteError(
+                message=f"There is no invitation for the found email adress: {email}"
+            )
 
         # Initiate form
         form = dds_web.forms.RegistrationForm()
@@ -221,7 +220,7 @@ class NewUser(flask_restful.Resource):
                 flask.current_app.logger.info(valerr)
                 raise
             except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
-                raise DatabaseError(message=str(sqlerr))
+                raise ddserr.DatabaseError(message=str(sqlerr))
 
             return f"User added: {new_user}"
 

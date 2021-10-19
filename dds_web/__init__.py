@@ -168,7 +168,7 @@ def create_app(testing=False, database_uri=None):
         if len(app.config.get("SECRET_KEY")) != ENCRYPTION_KEY_CHAR_LENGTH:
             from dds_web.api.errors import KeyLengthError
 
-            raise KeyLengthError
+            raise KeyLengthError(ENCRYPTION_KEY_CHAR_LENGTH)
 
         return app
 
