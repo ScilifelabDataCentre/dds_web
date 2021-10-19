@@ -63,6 +63,15 @@ def email_in_db(email):
     return False
 
 
+def username_in_db(username):
+    """Check if username is in the User table."""
+
+    if models.User.query.filter_by(username=username).first():
+        return True
+
+    return False
+
+
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
@@ -220,6 +229,18 @@ class NewUserSchema(marshmallow.Schema):
 
         unknown = marshmallow.EXCLUDE
 
+    @marshmallow.validates("username")
+    def verify_username(self, value):
+        """Verify that the username is not used in the system."""
+
+        if username_in_db(username=value):
+            raise marshmallow.ValidationError(
+                message=(
+                    f"The username '{value}' is already taken by another user. "
+                    "Try something else."
+                )
+            )
+
     @marshmallow.validates("email")
     def verify_new_email(self, value):
         """Verify that the email is not used in the system already."""
@@ -272,9 +293,12 @@ class NewUserSchema(marshmallow.Schema):
         new_email = models.Email(email=data.get("email"), primary=True)
         new_user.emails.append(new_email)
 
+        db.session.add(new_user)
+
         # Delete old invite
         db.session.delete(invite)
 
         # Save and return
         db.session.commit()
-        return new_user.username
+
+        return new_user

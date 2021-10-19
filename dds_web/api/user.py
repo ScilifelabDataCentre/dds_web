@@ -165,7 +165,7 @@ class NewUser(flask_restful.Resource):
                 flask.current_app.logger.info(valerr)
                 raise
             except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
-                raise DatabaseError(message=str("sqlerr"))
+                raise DatabaseError(message=str(sqlerr))
 
             return f"User added: {new_user}"
 
