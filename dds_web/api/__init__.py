@@ -50,7 +50,7 @@ api.add_resource(project.GetPublic, "/proj/public", endpoint="public_key")
 api.add_resource(project.GetPrivate, "/proj/private", endpoint="private_key")
 api.add_resource(project.UpdateProjectSize, "/proj/size", endpoint="update_size")
 api.add_resource(project.CreateProject, "/proj/create", endpoint="create_project")
-api.add_resource(project.ProjectUsers, "/proj/list_users", endpoint="list_project_users")
+api.add_resource(project.ProjectUsers, "/proj/users", endpoint="list_project_users")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.InvoiceUnit, "/invoice", endpoint="invoice")
