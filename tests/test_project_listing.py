@@ -6,6 +6,7 @@ import datetime
 import json
 import pytest
 import marshmallow
+import unittest
 
 # Own
 from dds_web import db
@@ -96,3 +97,55 @@ def test_project_public_facility_put(client):
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
     assert response_json.get("public")
+
+
+def test_list_researchusers_in_proj_by_researchuser(client):
+    """Researchuser in project should be able to list researchusers"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
+    response = client.get(tests.DDSEndpoint.LIST_PROJ_USERS, query_string=proj_query, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    response_list = response.json.get("research_users")
+    assert response_list
+    proj = db.session.query(models.Project).filter_by(public_id=proj_query["project"]).one_or_none()
+    actual_user_list = []
+    for user in proj.researchusers:
+        info = {"User Name": "", "Primary email": ""}
+        info["User Name"] = user.researchuser.username
+        for user_email in user.researchuser.emails:
+            if user_email.primary:
+                info["Primary email"] = user_email.email
+        actual_user_list.append(info)
+
+    case = unittest.TestCase()
+    case.assertCountEqual(response_list, actual_user_list)
+
+
+def test_list_researchusers_in_proj_by_unituser(client):
+    """Unituser in project in unit should be able to list researchusers"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.get(tests.DDSEndpoint.LIST_PROJ_USERS, query_string=proj_query, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    response_list = response.json.get("research_users")
+    assert response_list
+    proj = db.session.query(models.Project).filter_by(public_id=proj_query["project"]).one_or_none()
+    actual_user_list = []
+    for user in proj.researchusers:
+        info = {"User Name": "", "Primary email": ""}
+        info["User Name"] = user.researchuser.username
+        for user_email in user.researchuser.emails:
+            if user_email.primary:
+                info["Primary email"] = user_email.email
+        actual_user_list.append(info)
+
+    case = unittest.TestCase()
+    case.assertCountEqual(response_list, actual_user_list)
+
+
+def test_list_researchusers_not_in_proj_by_researchuser(client):
+    """Researchuser in not project should not be able to list researchusers"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser2"]).token(client)
+    response = client.get(tests.DDSEndpoint.LIST_PROJ_USERS, query_string=proj_query, headers=token)
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
