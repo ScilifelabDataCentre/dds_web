@@ -256,7 +256,6 @@ errors = {
     },
     "DatabaseError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "NoSuchProjectError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "KeyLengthError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "AuthenticationError": {"status": http.HTTPStatus.UNAUTHORIZED},
     "AccessDeniedError": {"status": http.HTTPStatus.FORBIDDEN},
     "JwtTokenGenerationError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},

@@ -57,11 +57,11 @@ def get_user_roles_common(user):
 
 @token_auth.verify_token
 def verify_token(token):
-    data = verify_token_signature(token)
+    data = verify_token_signature(token) if token.count(".") == 2 else decrypt_and_verify_token_signature(token)
     expiration_time = data.get("exp")
     # we use a hard check on top of the one from the dependency
     # exp shouldn't be before now no matter what
-    if datetime.datetime.utcnow() <= datetime.datetime.fromtimestamp(expiration_time):
+    if datetime.datetime.now() <= datetime.datetime.fromtimestamp(expiration_time):
         username = data.get("sub")
         if username:
             user = models.User.query.get(username)
@@ -73,9 +73,14 @@ def verify_token(token):
 
 def extract_encrypted_token_content(token, username):
     """Extract the sensitive content from inside the encrypted token"""
-    signed_token = decrypt_token(token)
-    content = verify_token_signature(signed_token)
+    content = decrypt_and_verify_token_signature(token)
     return content.get("sen_con") if content.get("sub") == username else None
+
+
+def decrypt_and_verify_token_signature(token):
+    """Wrapper function that streamlines decryption and signature verification,
+    and returns the claims"""
+    return verify_token_signature(decrypt_token(token))
 
 
 def decrypt_token(token):
