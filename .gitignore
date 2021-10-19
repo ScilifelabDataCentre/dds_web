@@ -33,3 +33,4 @@ dds_conf.yml
 safespring_invoicespec.csv
 dds_web/development/invoicing/*
 dds_variables.env
+cython_tools

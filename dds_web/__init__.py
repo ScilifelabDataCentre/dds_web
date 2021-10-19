@@ -16,6 +16,7 @@ from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
+import flask_mail
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -27,6 +28,9 @@ C_TZ = pytz.timezone("Europe/Stockholm")
 # Database - not yet init
 db = SQLAlchemy()
 
+# Email setup - not yet init
+mail = flask_mail.Mail()
+
 # Marshmallows for parsing and validating
 ma = Marshmallow()
 
@@ -37,7 +41,11 @@ token_auth = HTTPTokenAuth()
 auth = MultiAuth(basic_auth, token_auth)
 
 # Actions for logging
-actions = {"api_blueprint.auth": "User Authentication", "api_blueprint.proj_auth": "Project Access"}
+actions = {
+    "api_blueprint.auth": "User Authentication",
+    "api_blueprint.proj_auth": "Project Access",
+    "api_blueprint.register_user": "Register New User",
+}
 
 
 ####################################################################################################
@@ -121,6 +129,10 @@ def create_app(testing=False, database_uri=None):
     # Initialize database
     db.init_app(app)
 
+    # Initialize mail setup
+    mail.init_app(app)
+
+    # Initialize marshmallows
     ma.init_app(app)
 
     oauth.init_app(app)

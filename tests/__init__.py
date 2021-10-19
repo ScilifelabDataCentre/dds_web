@@ -24,6 +24,7 @@ USER_CREDENTIALS = {
     "wronguser": "scriptkiddie:password",
     "researcher": "researchuser:password",
     "researchuser": "researchuser:password",
+    "researchuser2": "researchuser2:password",
     "projectowner": "projectowner:password",
     "unituser": "unituser:password",
     "unitadmin": "unitadmin:password",
@@ -74,7 +75,9 @@ class DDSEndpoint:
     BASE_ENDPOINT = "/api/v1"
 
     # User creation
-    USER_INVITE = BASE_ENDPOINT + "/user/invite"
+    USER_ADD = BASE_ENDPOINT + "/user/add"
+    USER_CONFIRM = BASE_ENDPOINT + "/confirm_invite/"
+    USER_NEW = BASE_ENDPOINT + "/user/new"
 
     # Authentication - user and project
     TOKEN = BASE_ENDPOINT + "/user/token"
@@ -96,6 +99,7 @@ class DDSEndpoint:
     # Listing urls
     LIST_PROJ = BASE_ENDPOINT + "/proj/list"
     LIST_FILES = BASE_ENDPOINT + "/files/list"
+    LIST_PROJ_USERS = BASE_ENDPOINT + "/proj/users"
 
     # Deleting urls
     REMOVE_PROJ_CONT = BASE_ENDPOINT + "/proj/rm"

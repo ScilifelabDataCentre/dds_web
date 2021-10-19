@@ -43,3 +43,10 @@ class Config(object):
     OIDC_CLIENT_ID = ""
     OIDC_CLIENT_SECRET = ""
     OIDC_ACCESS_TOKEN_URL = ""
+
+    MAIL_SERVER = "smtp.mailtrap.io"
+    MAIL_PORT = 2525
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "mailtrap_username")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "mailtrap_password")
+    MAIL_USE_TLS = True
+    MAIL_USE_SSL = False
