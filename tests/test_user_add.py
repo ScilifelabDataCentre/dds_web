@@ -1,4 +1,3 @@
-from base64 import b64encode
 import json
 from dds_web import db
 from dds_web.database import models

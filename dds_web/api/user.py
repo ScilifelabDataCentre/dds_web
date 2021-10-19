@@ -115,8 +115,8 @@ class ConfirmInvite(flask_restful.Resource):
             # Get row from invite table
             invite_row = models.Invite.query.filter(models.Invite.email == email).first()
 
-        except itsdangerous.exc.SignatureExpired:
-            raise
+        except (itsdangerous.exc.SignatureExpired, itsdangerous.exc.BadSignature) as signerr:
+            raise ddserr.InviteError(message=str(signerr))
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise DatabaseError(str(sqlerr))
 

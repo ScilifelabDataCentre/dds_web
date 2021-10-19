@@ -75,6 +75,8 @@ class DDSEndpoint:
 
     # User creation
     USER_ADD = BASE_ENDPOINT + "/user/add"
+    USER_CONFIRM = BASE_ENDPOINT + "/confirm_invite/"
+    USER_NEW = BASE_ENDPOINT + "/user/new"
 
     # Authentication - user and project
     TOKEN = BASE_ENDPOINT + "/user/token"
