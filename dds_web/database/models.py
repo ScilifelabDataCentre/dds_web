@@ -270,7 +270,7 @@ class Email(db.Model):
     # Foreign key: One user can have multiple email addresses.
     user_id = db.Column(db.String(50), db.ForeignKey("users.username"))
 
-    email = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(254), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     def __repr__(self):
@@ -293,7 +293,7 @@ class Invite(db.Model):
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
 
     # Columns
-    email = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(254), unique=True, nullable=False)
     role = db.Column(db.String(20), unique=False, nullable=False)
 
     def __repr__(self):
