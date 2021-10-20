@@ -60,7 +60,7 @@ class Unit(db.Model):
 
     # Relationships
     # One unit can have many users
-    users = db.relationship("UnitUser", back_populates="unit")
+    users = db.relationship("UnitUser", backref="unit")
     # One unit can have many projects
     projects = db.relationship("Project", backref="responsible_unit")
     # One unit can have many invites
@@ -111,11 +111,10 @@ class Project(db.Model):
     # Relationships
     # One project can have many files
     files = db.relationship("File", backref="project")
+    # One project can have many expired files
     expired_files = db.relationship("ExpiredFile", backref="assigned_project")
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
-
-    # researchusers = db.relationship("ProjectUsers", back_populates="project")
 
     @property
     def safespring_project(self):
@@ -145,7 +144,7 @@ class User(db.Model):
     type = db.Column(db.String(20), unique=False, nullable=False)
 
     # One user can have many identifiers
-    identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
+    identifiers = db.relationship("Identifier", backref="user", cascade="all, delete-orphan")
     # One user can have many email addresses
     emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     # One user can create many projects
@@ -192,7 +191,6 @@ class UnitUser(User):
 
     # Foreign key and backref with infrastructure
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
-    unit = db.relationship("Unit", back_populates="users")
 
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -252,7 +250,6 @@ class Identifier(db.Model):
     # Foreign keys
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
     identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
-    user = db.relationship("User", back_populates="identifiers")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -261,9 +258,7 @@ class Identifier(db.Model):
 
 
 class Email(db.Model):
-    """
-    Data model for user email addresses.
-    """
+    """Data model for user email addresses."""
 
     # Table setup
     __tablename__ = "emails"
@@ -298,7 +293,7 @@ class Invite(db.Model):
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
 
     # Columns
-    email = db.Column(db.String(254), unique=True, nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
     role = db.Column(db.String(20), unique=False, nullable=False)
 
     def __repr__(self):
