@@ -42,7 +42,7 @@ class KeyLengthError(SystemExit):
 
     def __init__(self, encryption_key_char_length):
         message = (
-            f"SECRET KEY MUST BE AT LEAST {encryption_key_char_length} "
+            f"SECRET KEY MUST BE {encryption_key_char_length} "
             f"CHARACTERS LONG IN ORDER TO SATISFY THE CURRENT TOKEN ENCRYPTION!"
         )
         super().__init__(message)
