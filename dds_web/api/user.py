@@ -7,26 +7,23 @@
 # Standard library
 import datetime
 import pathlib
+import secrets
 
 # Installed
 from sqlalchemy.sql import func
 
 import flask
 import flask_restful
-import flask_wtf
 import flask_mail
 import itsdangerous
 import marshmallow
 from jwcrypto import jwk, jwt
 import pandas
 import sqlalchemy
-import wtforms
-import wtforms.validators
 
 # Own modules
 from dds_web import auth, mail, db
 from dds_web.database import models
-from dds_web.api.errors import JwtTokenGenerationError, DatabaseError, InviteError, NoSuchUserError
 import dds_web.utils
 import dds_web.forms
 from dds_web.api import marshmallows
@@ -37,18 +34,74 @@ import dds_web.api.errors as ddserr
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
 
+ENCRYPTION_KEY_BIT_LENGTH = 256
+ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 
-def jwt_token(username):
-    """Generates a JWT token."""
-    expiration_time = datetime.datetime.utcnow() + datetime.timedelta(hours=48)
-    data = {
-        "sub": username,
-        "exp": expiration_time.timestamp(),
-    }
+
+def encrypted_jwt_token(
+    username, sensitive_content, expires_in=datetime.timedelta(hours=48), additional_claims=None
+):
+    """
+    Encrypts a signed JWT token. This is to be used for any encrypted token regardless of the sensitive content.
+
+    :param str username: Username must be obtained through authentication
+    :param str or None sensitive_content: This is the content that must be protected by encryption.
+        Can be set to None for protecting the signed token.
+    :param timedelta expires_in: This is the maximum allowed age of the token. (default 2 days)
+    :param Dict or None additional_claims: Any additional token claims can be added. e.g., {"iss": "DDS"}
+    """
+    token = jwt.JWT(
+        header={"alg": "A256KW", "enc": "A256GCM"},
+        claims=__signed_jwt_token(
+            username=username,
+            sensitive_content=sensitive_content,
+            expires_in=expires_in,
+            additional_claims=additional_claims,
+        ),
+    )
+    key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
+    token.make_encrypted_token(key)
+    return token.serialize()
+
+
+def __signed_jwt_token(
+    username,
+    sensitive_content=None,
+    expires_in=datetime.timedelta(hours=48),
+    additional_claims=None,
+):
+    """
+    Generic signed JWT token. This is to be used by both signed-only and signed-encrypted tokens.
+
+    :param str username: Username must be obtained through authentication
+    :param str or None sensitive_content: This is the content that must be protected by encryption. (default None)
+    :param timedelta expires_in: This is the maximum allowed age of the token. (default 2 days)
+    :param Dict or None additional_claims: Any additional token claims can be added. e.g., {"iss": "DDS"}
+    """
+    expiration_time = datetime.datetime.now() + expires_in
+    data = {"sub": username, "exp": expiration_time.timestamp(), "nonce": secrets.token_hex(32)}
+    if additional_claims is not None:
+        data.update(additional_claims)
+    if sensitive_content is not None:
+        data["sen_con"] = sensitive_content
+
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
     token = jwt.JWT(header={"alg": "HS256"}, claims=data, algs=["HS256"])
     token.make_signed_token(key)
     return token.serialize()
+
+
+def jwt_token(username, expires_in=datetime.timedelta(hours=48), additional_claims=None):
+    """
+    Generates a signed JWT token. This is to be used for general purpose signed token.
+
+    :param str username: Username must be obtained through authentication
+    :param timedelta expires_in: This is the maximum allowed age of the token. (default 2 days)
+    :param Dict or None additional_claims: Any additional token claims can be added. e.g., {"iss": "DDS"}
+    """
+    return __signed_jwt_token(
+        username=username, expires_in=expires_in, additional_claims=additional_claims
+    )
 
 
 ####################################################################################################
@@ -122,11 +175,13 @@ class ConfirmInvite(flask_restful.Resource):
         except itsdangerous.exc.BadSignature as badsignerr:
             raise ddserr.InviteError(message=str(badsignerr))
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(str(sqlerr))
+            raise ddserr.DatabaseError(str(sqlerr))
 
         # Check the invite exists
         if not invite_row:
-            raise InviteError(message=f"There is no invitation for the found email adress: {email}")
+            raise ddserr.InviteError(
+                message=f"There is no invitation for the found email adress: {email}"
+            )
 
         # Initiate form
         form = dds_web.forms.RegistrationForm()
@@ -165,7 +220,7 @@ class NewUser(flask_restful.Resource):
                 flask.current_app.logger.info(valerr)
                 raise
             except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
-                raise DatabaseError(message=str(sqlerr))
+                raise ddserr.DatabaseError(message=str(sqlerr))
 
             return f"User added: {new_user}"
 

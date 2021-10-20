@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Installed
+import datetime
 import argon2
 import http
 import flask
@@ -56,15 +57,55 @@ def get_user_roles_common(user):
 
 @token_auth.verify_token
 def verify_token(token):
+    data = (
+        verify_token_signature(token)
+        if token.count(".") == 2
+        else decrypt_and_verify_token_signature(token)
+    )
+    expiration_time = data.get("exp")
+    # we use a hard check on top of the one from the dependency
+    # exp shouldn't be before now no matter what
+    if datetime.datetime.now() <= datetime.datetime.fromtimestamp(expiration_time):
+        username = data.get("sub")
+        if username:
+            user = models.User.query.get(username)
+            if user:
+                return user
+        return None
+    raise AuthenticationError(message="Expired token")
+
+
+def extract_encrypted_token_content(token, username):
+    """Extract the sensitive content from inside the encrypted token"""
+    content = decrypt_and_verify_token_signature(token)
+    return content.get("sen_con") if content.get("sub") == username else None
+
+
+def decrypt_and_verify_token_signature(token):
+    """Wrapper function that streamlines decryption and signature verification,
+    and returns the claims"""
+    return verify_token_signature(decrypt_token(token))
+
+
+def decrypt_token(token):
+    """Decrypt the encrypted token and return
+    the signed token embedded inside"""
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
-    jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
-    data = json.loads(jwttoken.claims)
-    username = data.get("sub")
-    if username:
-        user = models.User.query.get(username)
-        if user:
-            return user
-    return None
+    decrypted_token = jwt.JWT(key=key, jwt=token)
+    return decrypted_token.claims
+
+
+def verify_token_signature(token):
+    """Verify the signature of the token and return the claims
+    such as subject/username on valid signature"""
+    key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
+    try:
+        jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
+        return json.loads(jwttoken.claims)
+    except jwt.JWTExpired:
+        # jwt dependency uses a 60 seconds leeway to check exp
+        # it also prints out a stack trace for it, so we handle it here
+        raise AuthenticationError(message="Expired token")
 
 
 @basic_auth.verify_password

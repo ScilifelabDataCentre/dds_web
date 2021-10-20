@@ -16,7 +16,7 @@ class Config(object):
     """Base config"""
 
     SITE_NAME = "Data Delivery System"
-    SECRET_KEY = "RANDOM_HASH_HERE"
+    SECRET_KEY = "REPLACE_THE_STRING_IN_PRODUCTION"
 
     # DB related config
     SQLALCHEMY_DATABASE_URI = "mysql+pymysql://TEST_USER:TEST_PASSWORD@db/DeliverySystem"

@@ -37,6 +37,19 @@ class ItemDeletionError(exceptions.HTTPException):
 ####################################################################################################
 
 
+class KeyLengthError(SystemExit):
+    """Invalid key length for encryption"""
+
+    def __init__(self, encryption_key_char_length):
+        message = (
+            f"SECRET KEY MUST BE {encryption_key_char_length} "
+            f"CHARACTERS LONG IN ORDER TO SATISFY THE CURRENT TOKEN ENCRYPTION!"
+        )
+        super().__init__(message)
+
+        general_logger.error(message)
+
+
 class AuthenticationError(exceptions.HTTPException):
     """Base class for errors due to authentication failure."""
 
