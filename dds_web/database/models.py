@@ -29,11 +29,11 @@ class ProjectUsers(db.Model):
     user_id = db.Column(db.String(50), db.ForeignKey("researchusers.username"), primary_key=True)
 
     # Columns
-    owner = db.Column(db.Boolean, nullable=False, default=False)
+    owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
 
     # Relationships - many to many
-    project = db.relationship("Project", back_populates="researchusers")
-    researchuser = db.relationship("ResearchUser", back_populates="project_associations")
+    project = db.relationship("Project", backref="researchusers")
+    researchuser = db.relationship("ResearchUser", backref="project_associations")
 
 
 ####################################################################################################
@@ -115,7 +115,7 @@ class Project(db.Model):
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
 
-    researchusers = db.relationship("ProjectUsers", back_populates="project")
+    # researchusers = db.relationship("ProjectUsers", back_populates="project")
 
     @property
     def safespring_project(self):
@@ -167,7 +167,6 @@ class ResearchUser(User):
 
     # primary key and foreign key pointing to users
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
-    project_associations = db.relationship("ProjectUsers", back_populates="researchuser")
 
     @property
     def role(self):
