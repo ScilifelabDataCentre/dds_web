@@ -29,11 +29,11 @@ class ProjectUsers(db.Model):
     user_id = db.Column(db.String(50), db.ForeignKey("researchusers.username"), primary_key=True)
 
     # Columns
-    owner = db.Column(db.Boolean, nullable=False, default=False)
+    owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
 
     # Relationships - many to many
-    project = db.relationship("Project", back_populates="researchusers")
-    researchuser = db.relationship("ResearchUser", back_populates="project_associations")
+    project = db.relationship("Project", backref="researchusers")
+    researchuser = db.relationship("ResearchUser", backref="project_associations")
 
 
 ####################################################################################################
@@ -55,12 +55,12 @@ class Unit(db.Model):
     name = db.Column(db.String(255), unique=True, nullable=False)
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
     safespring = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
-    days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=30)
+    days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
 
     # Relationships
     # One unit can have many users
-    users = db.relationship("UnitUser", back_populates="unit")
+    users = db.relationship("UnitUser", backref="unit")
     # One unit can have many projects
     projects = db.relationship("Project", backref="responsible_unit")
     # One unit can have many invites
@@ -111,11 +111,10 @@ class Project(db.Model):
     # Relationships
     # One project can have many files
     files = db.relationship("File", backref="project")
+    # One project can have many expired files
     expired_files = db.relationship("ExpiredFile", backref="assigned_project")
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
-
-    researchusers = db.relationship("ProjectUsers", back_populates="project")
 
     @property
     def safespring_project(self):
@@ -145,7 +144,7 @@ class User(db.Model):
     type = db.Column(db.String(20), unique=False, nullable=False)
 
     # One user can have many identifiers
-    identifiers = db.relationship("Identifier", back_populates="user", cascade="all, delete-orphan")
+    identifiers = db.relationship("Identifier", backref="user", cascade="all, delete-orphan")
     # One user can have many email addresses
     emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     # One user can create many projects
@@ -167,7 +166,6 @@ class ResearchUser(User):
 
     # primary key and foreign key pointing to users
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
-    project_associations = db.relationship("ProjectUsers", back_populates="researchuser")
 
     @property
     def role(self):
@@ -193,7 +191,6 @@ class UnitUser(User):
 
     # Foreign key and backref with infrastructure
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
-    unit = db.relationship("Unit", back_populates="users")
 
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -253,7 +250,6 @@ class Identifier(db.Model):
     # Foreign keys
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
     identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
-    user = db.relationship("User", back_populates="identifiers")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -262,9 +258,7 @@ class Identifier(db.Model):
 
 
 class Email(db.Model):
-    """
-    Data model for user email addresses.
-    """
+    """Data model for user email addresses."""
 
     # Table setup
     __tablename__ = "emails"
@@ -276,7 +270,7 @@ class Email(db.Model):
     # Foreign key: One user can have multiple email addresses.
     user_id = db.Column(db.String(50), db.ForeignKey("users.username"))
 
-    email = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(254), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     def __repr__(self):
