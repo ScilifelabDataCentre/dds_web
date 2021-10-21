@@ -142,10 +142,21 @@ class AddUser(flask_restful.Resource):
             link = flask.url_for("api_blueprint.confirm_invite", token=token, _external=True)
 
             # Compose and send email
+            if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
+                sender_name = auth.current_user().unit.name
+            else:
+                sender_name = auth.current_user().name
+            subject = f"{sender_name} invites you to the SciLifeLab Data Delivery System"
+
             msg = flask_mail.Message(
-                "Confirm email", sender="localhost", recipients=[new_invite.email]
+                subject,
+                sender=flask.current_app.config["MAIL_SENDER_ADDRESS"],
+                recipients=[new_invite.email],
             )
-            msg.body = f"Your link is {link}"
+
+            msg.body = flask.render_template("mail/invite.txt", link=link, sender_name=sender_name)
+            msg.html = flask.render_template("mail/invite.html", link=link, sender_name=sender_name)
+
             mail.send(msg)
 
             # TODO: Format response with marshal with?

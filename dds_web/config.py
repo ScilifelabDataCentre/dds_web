@@ -50,3 +50,4 @@ class Config(object):
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "mailtrap_password")
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
+    MAIL_SENDER_ADDRESS = "localhost"
