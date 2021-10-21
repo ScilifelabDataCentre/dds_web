@@ -126,6 +126,19 @@ def demo_data():
             privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
             privkey_nonce="847D75C4C548474FC54714AA",
         ),
+        Project(
+            public_id="file_testing_project",
+            title="file testing project",
+            status="",
+            description="this project is used for testing to add new files.",
+            pi="file testing project PI",
+            size=0,
+            bucket="bucket",
+            public_key="public_key",
+            private_key="private_key",
+            privkey_salt="privkey_salt",
+            privkey_nonce="privkey_nonce",
+        ),
     ]
 
     invites = [Invite(email="existing_invite_email@mailtrap.io", role="Researcher")]
@@ -170,6 +183,7 @@ def client():
             users[3].created_projects.append(projects[1])
             users[2].created_projects.append(projects[2])
             users[3].created_projects.append(projects[3])
+            users[2].created_projects.append(projects[4])
 
             units[0].projects.extend(projects)
             units[0].users.extend([users[2], users[3], users[4]])

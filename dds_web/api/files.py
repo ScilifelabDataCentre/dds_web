@@ -77,7 +77,6 @@ class NewFile(flask_restful.Resource):
 
             # Add new file to db
             new_file = models.File(
-                public_id=os.urandom(16).hex(),
                 name=file_info.get("name"),
                 name_in_bucket=file_info.get("name_in_bucket"),
                 subpath=file_info.get("subpath"),

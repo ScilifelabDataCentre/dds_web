@@ -240,7 +240,6 @@ def remove_expired():
                 flask.current_app.logger.debug("File: %s - Expires: %s", file, file.expires)
 
                 new_expired = models.ExpiredFile(
-                    public_id=file.public_id,
                     name=file.name,
                     name_in_bucket=file.name_in_bucket,
                     subpath=file.subpath,
