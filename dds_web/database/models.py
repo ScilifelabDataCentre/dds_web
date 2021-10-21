@@ -315,7 +315,6 @@ class File(db.Model):
     # Foreign keys: One project can have many files
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), index=True)
 
-    public_id = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.Text, unique=False, nullable=False)
     name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
     subpath = db.Column(db.Text, unique=False, nullable=False)
@@ -340,7 +339,7 @@ class File(db.Model):
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<File {self.public_id}>"
+        return f"<File {pathlib.Path(self.name).name}>"
 
 
 class ExpiredFile(db.Model):
@@ -352,7 +351,7 @@ class ExpiredFile(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(50), unique=True, nullable=False)
+
     name = db.Column(db.Text, unique=False, nullable=False)
     name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
     subpath = db.Column(db.Text, unique=False, nullable=False)
@@ -377,7 +376,7 @@ class ExpiredFile(db.Model):
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<ExpiredFile {self.public_id}>"
+        return f"<ExpiredFile {pathlib.Path(self.name).name}: {self.expired}>"
 
 
 class Version(db.Model):
