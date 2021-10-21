@@ -69,7 +69,7 @@ def fill_db():
     project_1_user_1_association = models.ProjectUsers(owner=False)
     # Connect research user to association row. = (not append) due to one user per ass. row
     project_1_user_1_association.researchuser = researchuser_1
-    # Connect project to association row. = (not append) dye to one project per ass. row
+    # Connect project to association row. = (not append) due to one project per ass. row
     project_1_user_1_association.project = project_1
 
     # Create second research user
@@ -82,7 +82,7 @@ def fill_db():
     project_1_user_2_association = models.ProjectUsers(owner=True)
     # Connect research user to association row. = (not append) due to one user per ass. row
     project_1_user_2_association.researchuser = researchuser_2
-    # Connect project to association row. = (not append) dye to one project per ass. row
+    # Connect project to association row. = (not append) due to one project per ass. row
     project_1_user_2_association.project = project_1
 
     # Create first unit user
