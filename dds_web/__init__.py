@@ -132,6 +132,9 @@ def create_app(testing=False, database_uri=None):
     # Initialize mail setup
     mail.init_app(app)
 
+    # Avoid very extensive logging when sending emails
+    app.extensions["mail"].debug = 0
+
     # Initialize marshmallows
     ma.init_app(app)
 
