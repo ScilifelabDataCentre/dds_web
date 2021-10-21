@@ -325,6 +325,7 @@ class File(db.Model):
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(32), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
+
     time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
     expires = db.Column(
         db.DateTime(),

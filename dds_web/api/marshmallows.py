@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Standard Library
+import os
 
 # Installed
 import flask
@@ -18,6 +19,7 @@ from dds_web.api import errors as ddserr
 from dds_web import auth
 import dds_web.security.auth
 from dds_web.database import models
+from dds_web import utils
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -76,6 +78,8 @@ def username_in_db(username):
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
 
+# Project related ---------------------------------------------------------------- Project related #
+
 
 class ProjectRequiredSchema(marshmallow.Schema):
     """Schema for verifying an existing project in args and database."""
@@ -103,6 +107,9 @@ class ProjectRequiredSchema(marshmallow.Schema):
         """Return project object."""
 
         return data.get("project_row")
+
+
+# User related ---------------------------------------------------------------------- User related #
 
 
 class UserSchema(marshmallow.Schema):
@@ -302,3 +309,98 @@ class NewUserSchema(marshmallow.Schema):
         db.session.commit()
 
         return new_user
+
+
+# File related ---------------------------------------------------------------------- File related #
+
+
+def new_public_id(table):
+    """Generate new public id and make sure it doesn't exist in the current table."""
+
+    new_id = os.urandom(16).hex()
+    try:
+        if table.query.filter(table.public_id == sqlalchemy.func.binary(new_id)).one_or_none():
+            return new_public_id(table=table)
+    except sqlalchemy.exc.SQLAlchemyError:
+        raise
+
+    return new_id
+
+
+class NewFileSchema(ProjectRequiredSchema):
+    """Validates and creates a new file object."""
+
+    # Length minimum 1 required, required=True accepts empty string
+    name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
+    name_in_bucket = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(min=1)
+    )
+    subpath = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
+    size = marshmallow.fields.Integer(required=True)  # Accepts BigInt
+    size_processed = marshmallow.fields.Integer(required=True)  # Accepts BigInt
+    compressed = marshmallow.fields.Boolean(required=True)
+    public_key = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(equal=64)
+    )
+    salt = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(equal=32))
+    checksum = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(equal=64)
+    )
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def verify_file_not_exists(self, data, **kwargs):
+        """Check that the file does not match anything already in the database."""
+
+        # Generate new public file id and check that there isn't one in the database
+        data["public_id"] = new_public_id(table=models.File)
+
+        # Check that there is no such file in the database
+
+        project = data.get("project_row")
+        try:
+            file = (
+                models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name == sqlalchemy.func.binary(data.get("name")),
+                        models.File.project_id == sqlalchemy.func.binary(project.id),
+                    )
+                )
+                .with_entities(models.File.id)
+                .one_or_none()
+            )
+        except sqlalchemy.exc.SQLAlchemyError:
+            raise
+
+        if file:
+            raise FileExistsError
+
+        data["project"] = project
+
+    @marshmallow.post_load
+    def return_items(self, data, **kwargs):
+        """Create file object."""
+
+        new_file = models.File(
+            public_id=data.get("public_id"),
+            name=data.get("name"),
+            name_in_bucket=data.get("name_in_bucket"),
+            subpath=data.get("subpath"),
+            size_original=data.get("size"),
+            size_stored=data.get("size_processed"),
+            compressed=data.get("compressed"),
+            salt=data.get("salt"),
+            public_key=data.get("public_key"),
+            checksum=data.get("checksum"),
+        )
+
+        new_version = models.Version(
+            size_stored=new_file.size_stored, time_uploaded=utils.current_time()
+        )
+
+        project = data.get("project_row")
+        # Update foreign keys
+        project.file_versions.append(new_version)
+        project.files.append(new_file)
+        new_file.versions.append(new_version)
+
+        return new_file

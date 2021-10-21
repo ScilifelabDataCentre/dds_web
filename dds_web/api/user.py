@@ -29,13 +29,14 @@ import dds_web.forms
 from dds_web.api import marshmallows
 import dds_web.api.errors as ddserr
 
+# VARIABLES ############################################################################ VARIABLES #
+
+ENCRYPTION_KEY_BIT_LENGTH = 256
+ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
-
-ENCRYPTION_KEY_BIT_LENGTH = 256
-ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 
 
 def encrypted_jwt_token(
