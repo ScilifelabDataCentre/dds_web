@@ -1,1 +1,4 @@
-Your link is {{link}}
+You have been invited to join the SciLifeLab Data Delivery System,
+The invite was sent to you by {{sender_name}}. Please copy paste the following link in your browser to create your account: {{link}}
+
+The SciLifelab Data Delivery System is a single cloud-based system for all SciLifeLab units, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way.
