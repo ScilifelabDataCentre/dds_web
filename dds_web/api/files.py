@@ -263,7 +263,7 @@ class ListFiles(flask_restful.Resource):
                         "folder": False,
                     }
                     if show_size:
-                        info.update({"size": dds_web.utils.format_byte_size(x[1])})
+                        info.update({"size": dds_web.utils.add_unit_prefix(x[1],unit="B")})
                     files_folders.append(info)
             if distinct_folders:
                 for x in distinct_folders:
@@ -278,7 +278,7 @@ class ListFiles(flask_restful.Resource):
                         except DatabaseError:
                             raise
 
-                        info.update({"size": dds_web.utils.format_byte_size(folder_size)})
+                        info.update({"size": dds_web.utils.add_unit_prefix(folder_size,unit="B")})
                     files_folders.append(info)
 
         return flask.jsonify({"files_folders": files_folders})

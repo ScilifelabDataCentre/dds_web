@@ -68,17 +68,17 @@ def working_directory(path, cleanup_after=False):
         os.chdir(current_path)
 
 
-def format_byte_size(size):
-    """Take size in bytes and converts according to the size"""
-    suffixes = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
-
-    for suffix in suffixes:
-        if size >= 1000:
-            size /= 1000
-        else:
-            break
-
-    return f"{size:.2} {suffix}" if isinstance(size, float) else f"{size} {suffix}"
+def add_unit_prefix(count, unit=""):
+    """Takes a value e.g. bytes and reformats it to include a unit prefix"""
+    count = float("{:.3g}".format(count))
+    magnitude = 0
+    while abs(count) >= 1000:
+        magnitude += 1
+        count /= 1000.0
+    return "{}{}".format(
+        "{:f}".format(count).rstrip("0").rstrip("."),
+        ["", "k", "M", "G", "T", "P", "E", "Z", "Y"][magnitude] + unit,
+    )
 
 
 def page_query(q):
