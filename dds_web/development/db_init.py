@@ -106,6 +106,8 @@ def fill_db():
     unit_1 = models.Unit(
         public_id="unit_1",
         name="Unit 1",
+        external_display_name="Unit 1 external",
+        contact_email="support@example.com",
         internal_ref="someunit",
         safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
     )
