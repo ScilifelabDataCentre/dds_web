@@ -112,7 +112,11 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        usage = flask.request.args.get("usage") == "True"  # and current_user.role == "unituser"
+        usage = flask.request.args.get("usage") == "True" and current_user.role in [
+            "Super Admin",
+            "Unit Admin",
+            "Unit Personnel",
+        ]
 
         # Get info for all projects
         for p in current_user.projects:
@@ -131,8 +135,7 @@ class UserProjects(flask_restful.Resource):
             project_info["Size"] = dds_web.utils.add_unit_prefix(proj_size, unit="B")
 
             if usage:
-                # proj_gbhours, proj_cost = DBConnector().project_usage(p)
-                proj_gbhours, proj_cost = (1389, 15798)
+                proj_gbhours, proj_cost = DBConnector().project_usage(p)
                 total_gbhours_db += proj_gbhours
                 total_cost_db += proj_cost
 
@@ -148,7 +151,9 @@ class UserProjects(flask_restful.Resource):
         return_info = {
             "project_info": all_projects,
             "total_usage": {
-                "gbhours": str(round(total_gbhours_db, 2)) if total_gbhours_db > 1.0 else str(0),
+                "gbhours": f"{dds_web.utils.add_unit_prefix(total_gbhours_db)}"
+                if total_gbhours_db > 1.0
+                else str(0),
                 "cost": f"{dds_web.utils.add_unit_prefix(total_cost_db, unit=' SEK')}"
                 if total_cost_db > 1.0
                 else f"0 kr",
