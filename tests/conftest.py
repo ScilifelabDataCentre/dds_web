@@ -26,6 +26,8 @@ def demo_data():
         Unit(
             name="Unit 1",
             public_id=os.urandom(16).hex(),
+            external_display_name="Display Name",
+            contact_email="support@example.com",
             internal_ref="someunit",
             safespring="dds.example.com",
         )
