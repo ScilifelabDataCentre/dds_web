@@ -160,6 +160,7 @@ class AddUser(flask_restful.Resource):
                 recipients=[new_invite.email],
             )
 
+            # Need to attach the image to be able to use it
             msg.attach(
                 "scilifelab_logo.png",
                 "image/png",
