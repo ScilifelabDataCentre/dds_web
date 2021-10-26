@@ -35,6 +35,7 @@ class NewFile(flask_restful.Resource):
     def post(self):
         """Add new file to DB"""
 
+        flask.current_app.logger.debug(flask.request.json)
         new_file = marshmallows.NewFileSchema().load({**flask.request.json, **flask.request.args})
 
         try:

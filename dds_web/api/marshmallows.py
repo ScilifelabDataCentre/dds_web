@@ -321,19 +321,6 @@ class NewUserSchema(marshmallow.Schema):
 # File related ---------------------------------------------------------------------- File related #
 
 
-def new_public_id(table):
-    """Generate new public id and make sure it doesn't exist in the current table."""
-
-    new_id = os.urandom(16).hex()
-    try:
-        if table.query.filter(table.public_id == sqlalchemy.func.binary(new_id)).one_or_none():
-            return new_public_id(table=table)
-    except sqlalchemy.exc.SQLAlchemyError:
-        raise
-
-    return new_id
-
-
 class NewFileSchema(ProjectRequiredSchema):
     """Validates and creates a new file object."""
 
@@ -345,7 +332,7 @@ class NewFileSchema(ProjectRequiredSchema):
     subpath = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
     size = marshmallow.fields.Integer(required=True)  # Accepts BigInt
     size_processed = marshmallow.fields.Integer(required=True)  # Accepts BigInt
-    compressed = marshmallow.fields.Boolean(required=True)
+    compressed = marshmallow.fields.Boolean(required=True)  # Accepts all truthy
     public_key = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(equal=64)
     )
@@ -358,11 +345,7 @@ class NewFileSchema(ProjectRequiredSchema):
     def verify_file_not_exists(self, data, **kwargs):
         """Check that the file does not match anything already in the database."""
 
-        # Generate new public file id and check that there isn't one in the database
-        data["public_id"] = new_public_id(table=models.File)
-
         # Check that there is no such file in the database
-
         project = data.get("project_row")
         try:
             file = (
@@ -381,14 +364,11 @@ class NewFileSchema(ProjectRequiredSchema):
         if file:
             raise FileExistsError
 
-        data["project"] = project
-
     @marshmallow.post_load
     def return_items(self, data, **kwargs):
         """Create file object."""
 
         new_file = models.File(
-            public_id=data.get("public_id"),
             name=data.get("name"),
             name_in_bucket=data.get("name_in_bucket"),
             subpath=data.get("subpath"),
