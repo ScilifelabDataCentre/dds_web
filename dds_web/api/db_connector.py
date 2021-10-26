@@ -13,6 +13,7 @@ import datetime
 import flask
 import sqlalchemy
 from sqlalchemy.sql import func
+import pytz
 
 # Own modules
 from dds_web.database import models
@@ -342,23 +343,23 @@ class DBConnector:
         gbhours = 0.0
         cost = 0.0
 
-        for f in project_object.files:
-            for v in f.versions:
-                # Calculate hours of the current file
-                time_uploaded = datetime.datetime.strptime(
-                    v.time_uploaded,
-                    "%Y-%m-%d %H:%M:%S.%f%z",
-                )
-                time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
-                file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
+        tz = pytz.timezone("Europe/Stockholm")
+        for v in project_object.file_versions:
+            # Calculate hours of the current file
+            time_deleted = (
+                tz.localize(v.time_deleted) if v.time_deleted else dds_web.utils.current_time()
+            )
+            time_uploaded = tz.localize(v.time_uploaded)
 
-                # Calculate GBHours, if statement to avoid zerodivision exception
-                gbhours += ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
+            file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
 
-                # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
-                cost_gbhour = 0.09 / (30 * 24)
+            # Calculate GBHours, if statement to avoid zerodivision exception
+            gbhours += ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
 
-                # Save file cost to project info and increase total unit cost
-                cost += gbhours * cost_gbhour
+            # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
+            cost_gbhour = 0.09 / (30 * 24)
+
+            # Save file cost to project info and increase total unit cost
+            cost += gbhours * cost_gbhour
 
         return round(gbhours, 2), round(cost, 2)

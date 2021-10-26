@@ -53,6 +53,8 @@ class Unit(db.Model):
     # Columns
     public_id = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.String(255), unique=True, nullable=False)
+    external_display_name = db.Column(db.String(255), unique=False, nullable=False)
+    contact_email = db.Column(db.String(255), unique=False, nullable=True)
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
     safespring = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=90)

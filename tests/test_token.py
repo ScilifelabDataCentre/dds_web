@@ -1,4 +1,3 @@
-import base64
 import datetime
 
 from dds_web.api.user import encrypted_jwt_token
@@ -12,9 +11,6 @@ def test_encrypted_data_transfer_via_token(client):
     username = "researchuser"
     sensitive_content = "sensitive_content"
     encrypted_token = encrypted_jwt_token(username, sensitive_content)
-    decoded_encrypted_token = base64.b64decode(encrypted_token + "==")
-    assert b"sensitive_content" not in decoded_encrypted_token
-
     extracted_content = extract_encrypted_token_content(encrypted_token, username)
     assert sensitive_content == extracted_content
 

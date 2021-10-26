@@ -8,6 +8,7 @@
 import datetime
 import pathlib
 import secrets
+import os
 
 # Installed
 from sqlalchemy.sql import func
@@ -143,10 +144,51 @@ class AddUser(flask_restful.Resource):
             link = flask.url_for("api_blueprint.confirm_invite", token=token, _external=True)
 
             # Compose and send email
+            unit_name = None
+            if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
+                unit = auth.current_user().unit
+                unit_name = unit.external_display_name
+                unit_email = unit.contact_email
+                sender_name = auth.current_user().name
+                subject = f"{unit} invites you to the SciLifeLab Data Delivery System"
+            else:
+                sender_name = auth.current_user().name
+                subject = f"{sender_name} invites you to the SciLifeLab Data Delivery System"
+
             msg = flask_mail.Message(
-                "Confirm email", sender="localhost", recipients=[new_invite.email]
+                subject,
+                sender=flask.current_app.config["MAIL_SENDER_ADDRESS"],
+                recipients=[new_invite.email],
             )
-            msg.body = f"Your link is {link}"
+
+            # Need to attach the image to be able to use it
+            msg.attach(
+                "scilifelab_logo.png",
+                "image/png",
+                open(
+                    os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+                ).read(),
+                "inline",
+                headers=[
+                    ["Content-ID", "<Logo>"],
+                ],
+            )
+
+            msg.body = flask.render_template(
+                "mail/invite.txt",
+                link=link,
+                sender_name=sender_name,
+                unit_name=unit_name,
+                unit_email=unit_email,
+            )
+            msg.html = flask.render_template(
+                "mail/invite.html",
+                link=link,
+                sender_name=sender_name,
+                unit_name=unit_name,
+                unit_email=unit_email,
+            )
+
             mail.send(msg)
 
             # TODO: Format response with marshal with?
