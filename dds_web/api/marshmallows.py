@@ -81,7 +81,14 @@ def username_in_db(username):
 # Project related ---------------------------------------------------------------- Project related #
 
 
-class ProjectRequiredSchema(marshmallow.Schema):
+class EscapeSchema(marshmallow.Schema):
+    @marshmallow.pre_load
+    def escape_input(self, in_data, **kwargs):
+        """Escape input - remove invalid characters."""
+        return {field: flask.escape(value) for field, value in in_data.items()}
+
+
+class ProjectRequiredSchema(EscapeSchema):
     """Schema for verifying an existing project in args and database."""
 
     project = marshmallow.fields.String(required=True)
@@ -143,7 +150,7 @@ class AddUserSchema(ProjectRequiredSchema):
     # TODO
 
 
-class InviteUserSchema(marshmallow.Schema):
+class InviteUserSchema(EscapeSchema):
     """Schema for AddUser endpoint"""
 
     email = marshmallow.fields.Email(required=True)  # Validator below
