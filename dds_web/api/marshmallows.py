@@ -81,7 +81,7 @@ def username_in_db(username):
 # Project related ---------------------------------------------------------------- Project related #
 
 
-class ProjectRequiredSchema(EscapeSchema):
+class ProjectRequiredSchema(marshmallow.Schema):
     """Schema for verifying an existing project in args and database."""
 
     project = marshmallow.fields.String(required=True)
@@ -143,7 +143,7 @@ class AddUserSchema(ProjectRequiredSchema):
     # TODO
 
 
-class InviteUserSchema(EscapeSchema):
+class InviteUserSchema(marshmallow.Schema):
     """Schema for AddUser endpoint"""
 
     email = marshmallow.fields.Email(required=True)  # Validator below
