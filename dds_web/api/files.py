@@ -134,7 +134,7 @@ class NewFile(flask_restful.Resource):
             # Error if not found
             if not existing_file or existing_file is None:
                 return flask.make_response(
-                    f"Cannot update non-existent file '{file_info.get('name')}' in the database!",
+                    f"Cannot update non-existent file '{flask.escape(file_info.get('name'))}' in the database!",
                     500,
                 )
 
