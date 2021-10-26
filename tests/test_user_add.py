@@ -1,4 +1,5 @@
 import json
+import sqlalchemy
 from dds_web import db
 from dds_web.database import models
 import tests
@@ -10,6 +11,26 @@ first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
 first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_new_user["role"]}
 existing_invite = {"email": "existing_invite_email@mailtrap.io", "role": "Researcher"}
 new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Super Admin"}
+existing_research_user = {"email": "researchuser2@mailtrap.io", "role": "Researcher"}
+existing_research_user_to_existing_project = {
+    **existing_research_user,
+    "project": "public_project_id",
+}
+existing_research_user_to_nonexistent_proj = {
+    **existing_research_user,
+    "project": "not_a_project_id",
+}
+change_owner_existing_user = {
+    "email": "researchuser@mailtrap.io",
+    "role": "Researcher",
+    "project": "public_project_id",
+    "owner": True,
+}
+submit_with_same_ownership = {
+    **existing_research_user,
+    "project": "second_public_project_id",
+    "owner": True,
+}
 
 
 def test_add_user_with_researcher(client):
@@ -134,3 +155,114 @@ def test_add_user_with_unitpersonnel_permission_denied(client):
         db.session.query(models.Invite).filter_by(email=new_unit_admin["email"]).one_or_none()
     )
     assert invited_user is None
+
+
+def test_add_existing_user_without_project(client):
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(existing_research_user),
+        content_type="application/json",
+    )
+    assert response.status == "400 BAD REQUEST"
+
+
+def test_add_existing_user_to_existing_project(client):
+    project = (
+        db.session.query(models.Project)
+        .filter_by(public_id=existing_research_user_to_existing_project["project"])
+        .one_or_none()
+    )
+    user = (
+        db.session.query(models.Email)
+        .filter_by(email=existing_research_user_to_existing_project["email"])
+        .one_or_none()
+    )
+    project_user_before_addition = (
+        db.session.query(models.ProjectUsers)
+        .filter(
+            sqlalchemy.and_(
+                models.ProjectUsers.user_id == user.user_id,
+                models.ProjectUsers.project_id == project.id,
+            )
+        )
+        .one_or_none()
+    )
+    assert project_user_before_addition is None
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(existing_research_user_to_existing_project),
+        content_type="application/json",
+    )
+    assert response.status == "200 OK"
+
+    project_user_after_addition = (
+        db.session.query(models.ProjectUsers)
+        .filter(
+            sqlalchemy.and_(
+                models.ProjectUsers.user_id == user.user_id,
+                models.ProjectUsers.project_id == project.id,
+            )
+        )
+        .one_or_none()
+    )
+    assert project_user_after_addition
+
+
+def test_add_existing_user_to_nonexistent_proj(client):
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(existing_research_user_to_nonexistent_proj),
+        content_type="application/json",
+    )
+    assert response.status == "400 BAD REQUEST"
+
+
+def test_existing_user_change_ownership(client):
+    project = (
+        db.session.query(models.Project)
+        .filter_by(public_id=change_owner_existing_user["project"])
+        .one_or_none()
+    )
+    user = (
+        db.session.query(models.Email)
+        .filter_by(email=change_owner_existing_user["email"])
+        .one_or_none()
+    )
+    project_user = (
+        db.session.query(models.ProjectUsers)
+        .filter(
+            sqlalchemy.and_(
+                models.ProjectUsers.user_id == user.user_id,
+                models.ProjectUsers.project_id == project.id,
+            )
+        )
+        .one_or_none()
+    )
+
+    assert not project_user.owner
+
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(change_owner_existing_user),
+        content_type="application/json",
+    )
+
+    assert response.status == "200 OK"
+
+    db.session.refresh(project_user)
+
+    assert project_user.owner
+
+
+def test_existing_user_change_ownership_same_permissions(client):
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(submit_with_same_ownership),
+        content_type="application/json",
+    )
+    assert response.status == "403 FORBIDDEN"

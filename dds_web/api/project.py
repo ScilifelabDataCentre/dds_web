@@ -35,6 +35,7 @@ from dds_web.api.errors import (
 )
 from dds_web.crypt import key_gen
 from dds_web.api import marshmallows
+from dds_web.api.user import AddUser
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -306,11 +307,35 @@ class CreateProject(flask_restful.Resource):
             flask.current_app.logger.debug(
                 f"Project {public_id} created by user {cur_user.username}."
             )
+            user_addition_statuses = []
+            if "users_to_add" in p_info:
+                for user in p_info["users_to_add"]:
+                    owner = False
+                    if "owner" in user:
+                        owner = user.pop("owner")
+
+                    existing_user = AddUser.check_user_exists(user)
+                    if not existing_user:
+                        # Send invite if the user doesn't exist
+                        invite_user_result = AddUser.invite_user(user)
+                        if invite_user_result["status"] == 200:
+                            invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
+                        else:
+                            invite_msg = invite_user_result["message"]
+                        user_addition_statuses.append(invite_msg)
+                    else:
+                        # If it is an existing user, add them to project.
+                        add_user_result = AddUser.add_user_to_project(
+                            existing_user, public_id, owner
+                        )
+                        user_addition_statuses.append(add_user_result["message"])
+
             return flask.jsonify(
                 {
                     "status": 200,
                     "message": "Added new project '{}'".format(new_project.title),
                     "project_id": new_project.public_id,
+                    "user_addition_statuses": user_addition_statuses,
                 }
             )
 

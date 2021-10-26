@@ -4,6 +4,7 @@
 import http
 import datetime
 import json
+import unittest
 
 # Own
 from dds_web import db
@@ -14,6 +15,13 @@ import tests
 # CONFIG ################################################################################## CONFIG #
 
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
+proj_data_with_existing_users = {
+    **proj_data,
+    "users_to_add": [
+        {"email": "researchuser@mailtrap.io", "role": "Researcher", "owner": True},
+        {"email": "researchuser2@mailtrap.io", "role": "Researcher"},
+    ],
+}
 
 # TESTS #################################################################################### TESTS #
 
@@ -126,3 +134,31 @@ def test_create_project_sensitive(client):
         .one_or_none()
     )
     assert created_proj and created_proj.is_sensitive
+
+
+def test_create_project_with_users(client):
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(proj_data_with_existing_users),
+        content_type="application/json",
+    )
+    assert response.status == "200 OK"
+    resp_json = response.json
+    created_proj = (
+        db.session.query(models.Project).filter_by(public_id=resp_json["project_id"]).one_or_none()
+    )
+    assert created_proj
+    users = db.session.query(models.ProjectUsers).filter_by(project_id=created_proj.id).all()
+    users_dict_from_db = []
+
+    for user in users:
+        users_dict_from_db.append({"username": user.user_id, "owner": user.owner})
+
+    users_dict_from_email = []
+    for user in proj_data_with_existing_users["users_to_add"]:
+        email = db.session.query(models.Email).filter_by(email=user["email"]).one_or_none()
+        users_dict_from_email.append({"username": email.user_id, "owner": user.get("owner", False)})
+
+    case = unittest.TestCase()
+    case.assertCountEqual(users_dict_from_db, users_dict_from_email)
