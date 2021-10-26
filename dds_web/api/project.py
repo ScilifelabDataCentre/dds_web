@@ -138,15 +138,16 @@ class UserProjects(flask_restful.Resource):
                 proj_gbhours, proj_cost = DBConnector().project_usage(p)
                 total_gbhours_db += proj_gbhours
                 total_cost_db += proj_cost
-
-                project_info.update({"Usage": proj_gbhours, "Cost": proj_cost})
+                # undo calculation of GBhours and return ByteHours
+                project_info.update({"Usage": proj_gbhours * 10e9, "Cost": proj_cost})
 
             all_projects.append(project_info)
 
         return_info = {
             "project_info": all_projects,
             "total_usage": {
-                "usage": total_gbhours_db,
+                # undo calculation of GBhours and return ByteHours
+                "usage": total_gbhours_db * 10e9,
                 "cost": total_cost_db,
             },
             "total_size": total_size,
