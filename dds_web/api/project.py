@@ -139,19 +139,19 @@ class UserProjects(flask_restful.Resource):
                 total_gbhours_db += proj_gbhours
                 total_cost_db += proj_cost
 
-                project_info.update({"GBHours": proj_gbhours, "Cost": proj_cost})
+                project_info.update({"Usage": proj_gbhours, "Cost": proj_cost})
 
             all_projects.append(project_info)
 
         return_info = {
             "project_info": all_projects,
             "total_usage": {
-                "gbhours": total_gbhours_db,
+                "usage": total_gbhours_db,
                 "cost": total_cost_db,
             },
             "total_size": total_size,
         }
-        flask.current_app.logger.info(return_info)
+
         return flask.jsonify(return_info)
 
 
