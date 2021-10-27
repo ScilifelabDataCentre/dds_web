@@ -90,7 +90,7 @@ class NewFileSchema(marshmallows.ProjectRequiredSchema):
         )
 
         new_version = models.Version(
-            size_stored=new_file.size_stored, time_uploaded=utils.current_time()
+            size_stored=new_file.size_stored, time_uploaded=dds_web.utils.current_time()
         )
 
         project = data.get("project_row")
