@@ -241,61 +241,10 @@ class CreateProject(flask_restful.Resource):
     def post(self):
         """Create a new project"""
 
-        if flask.request.is_json:
-            try:
-                p_info = flask.request.json
-            except:
-                raise DDSArgumentError(message="Error: Malformed data provided")
-        else:
-            raise DDSArgumentError(message="Error: Malformed data provided")
-
-        if "title" not in p_info or "description" not in p_info:
-            raise DDSArgumentError(
-                message="Error: Title/description missing when creating a project"
-            )
-        cur_user = auth.current_user()
-        # Add check for user permissions
-
-        created_time = dds_web.utils.current_time()
+        new_project = marshmallows.CreateProjectSchema().load(flask.request.json)
 
         try:
-            # lock Unit row
-            unit_row = (
-                db.session.query(models.Unit)
-                .filter_by(id=cur_user.unit_id)
-                .with_for_update()
-                .one_or_none()
-            )
-
-            if not unit_row:
-                raise AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
-
-            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
-            public_id = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
-
-            project_info = {
-                "created_by": auth.current_user().username,
-                "public_id": public_id,
-                "title": p_info["title"],
-                "date_created": created_time,
-                "date_updated": created_time,
-                "status": "Ongoing",  # ?
-                "description": p_info["description"],
-                "pi": p_info.get("pi", ""),  # Not a foreign key, only a name
-                "size": 0,
-                "bucket": self.__create_bucket_name(public_id, created_time),
-            }
-            pkg = key_gen.ProjectKeys(project_info["public_id"])
-            project_info.update(pkg.key_dict())
-
-            if "sensitive" in p_info:
-                project_info["is_sensitive"] = p_info["sensitive"]
-
-            new_project = models.Project(**project_info)
-            unit_row.projects.append(new_project)
-            # cur_user.unit = unit_row
-            cur_user.created_projects.append(new_project)
-
+            db.session.add(new_project)
             db.session.commit()
 
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
@@ -303,48 +252,38 @@ class CreateProject(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(message="Server Error: Project was not created")
 
-        else:
-            flask.current_app.logger.debug(
-                f"Project {public_id} created by user {cur_user.username}."
-            )
-            user_addition_statuses = []
-            if "users_to_add" in p_info:
-                for user in p_info["users_to_add"]:
-                    owner = False
-                    if "owner" in user:
-                        owner = user.pop("owner")
+        # else:
+        #     flask.current_app.logger.debug(
+        #         f"Project {new_project.public_id} created by user {auth.current_user().username}."
+        #     )
+        #     user_addition_statuses = []
+        #     if "users_to_add" in p_info:
+        #         for user in p_info["users_to_add"]:
+        #             owner = user.pop("owner", False)
 
-                    existing_user = AddUser.check_user_exists(user)
-                    if not existing_user:
-                        # Send invite if the user doesn't exist
-                        invite_user_result = AddUser.invite_user(user)
-                        if invite_user_result["status"] == 200:
-                            invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
-                        else:
-                            invite_msg = invite_user_result["message"]
-                        user_addition_statuses.append(invite_msg)
-                    else:
-                        # If it is an existing user, add them to project.
-                        add_user_result = AddUser.add_user_to_project(
-                            existing_user, public_id, owner
-                        )
-                        user_addition_statuses.append(add_user_result["message"])
+        #             existing_user = AddUser.check_user_exists(user)
+        #             if not existing_user:
+        #                 # Send invite if the user doesn't exist
+        #                 invite_user_result = AddUser.invite_user(user)
+        #                 if invite_user_result["status"] == 200:
+        #                     invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
+        #                 else:
+        #                     invite_msg = invite_user_result["message"]
+        #                 user_addition_statuses.append(invite_msg)
+        #             else:
+        #                 # If it is an existing user, add them to project.
+        #                 add_user_result = AddUser.add_user_to_project(
+        #                     existing_user, public_id, owner
+        #                 )
+        #                 user_addition_statuses.append(add_user_result["message"])
 
-            return flask.jsonify(
-                {
-                    "status": 200,
-                    "message": "Added new project '{}'".format(new_project.title),
-                    "project_id": new_project.public_id,
-                    "user_addition_statuses": user_addition_statuses,
-                }
-            )
-
-    def __create_bucket_name(self, public_id, created_time):
-        """Create a bucket name for the given project"""
-        return "{pid}-{tstamp}-{rstring}".format(
-            pid=public_id.lower(),
-            tstamp=dds_web.utils.timestamp(dts=created_time, ts_format="%y%m%d%H%M%S%f"),
-            rstring=os.urandom(4).hex(),
+        return flask.jsonify(
+            {
+                "status": 200,
+                "message": "Added new project '{}'".format(new_project.title),
+                "project_id": new_project.public_id,
+                "user_addition_statuses": user_addition_statuses,
+            }
         )
 
 
