@@ -252,30 +252,36 @@ class CreateProject(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(message="Server Error: Project was not created")
 
-        # else:
-        #     flask.current_app.logger.debug(
-        #         f"Project {new_project.public_id} created by user {auth.current_user().username}."
-        #     )
-        #     user_addition_statuses = []
-        #     if "users_to_add" in p_info:
-        #         for user in p_info["users_to_add"]:
-        #             owner = user.pop("owner", False)
+        else:
+            flask.current_app.logger.debug(
+                f"Project {new_project.public_id} created by user {auth.current_user().username}."
+            )
+            user_addition_statuses = []
+            if "users_to_add" in p_info:
 
-        #             existing_user = AddUser.check_user_exists(user)
-        #             if not existing_user:
-        #                 # Send invite if the user doesn't exist
-        #                 invite_user_result = AddUser.invite_user(user)
-        #                 if invite_user_result["status"] == 200:
-        #                     invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
-        #                 else:
-        #                     invite_msg = invite_user_result["message"]
-        #                 user_addition_statuses.append(invite_msg)
-        #             else:
-        #                 # If it is an existing user, add them to project.
-        #                 add_user_result = AddUser.add_user_to_project(
-        #                     existing_user, public_id, owner
-        #                 )
-        #                 user_addition_statuses.append(add_user_result["message"])
+                flask.current_app.logger.debug(p_info["users_to_add"])
+
+                marshmallows.AddUserSchema().load(
+                    {"project": new_project.public_id, "users_to_add": p_info["users_to_add"]}
+                )
+                for user in p_info["users_to_add"]:
+                    owner = user.pop("owner", False)
+
+                    existing_user = AddUser.check_user_exists(user)
+                    if not existing_user:
+                        # Send invite if the user doesn't exist
+                        invite_user_result = AddUser.invite_user(user)
+                        if invite_user_result["status"] == 200:
+                            invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
+                        else:
+                            invite_msg = invite_user_result["message"]
+                        user_addition_statuses.append(invite_msg)
+                    else:
+                        # If it is an existing user, add them to project.
+                        add_user_result = AddUser.add_user_to_project(
+                            existing_user, public_id, owner
+                        )
+                        user_addition_statuses.append(add_user_result["message"])
 
         return flask.jsonify(
             {

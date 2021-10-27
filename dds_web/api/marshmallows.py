@@ -20,6 +20,7 @@ from dds_web.api import errors as ddserr
 from dds_web import auth
 import dds_web.security.auth
 from dds_web.database import models
+import dds_web.crypt
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -324,7 +325,7 @@ class CreateProjectSchema(marshmallow.Schema):
     pi = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(min=1, max=255)
     )
-    is_sensitive = marshmallow.fields.Boolean(required=False, default=False)
+    is_sensitive = marshmallow.fields.Boolean(required=False)
     bucket = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=255))
     date_created = MyDateTimeField(required=False)
 
@@ -362,6 +363,28 @@ class CreateProjectSchema(marshmallow.Schema):
 
         return data
 
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def validate_all_fields(self, data, **kwargs):
+        """Validate that all fields are present."""
+        if not all(
+            field in data
+            for field in [
+                "public_id",
+                "title",
+                "date_created",
+                "status",
+                "description",
+                "pi",
+                "size",
+                "bucket",
+                "public_key",
+                "private_key",
+                "privkey_salt",
+                "privkey_nonce",
+            ]
+        ):
+            raise marshmallow.ValidationError("Missing fields!")
+
     def generate_public_id(self):
         """Generate public id from unit row counter."""
         try:
@@ -377,10 +400,11 @@ class CreateProjectSchema(marshmallow.Schema):
                 raise AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
 
             unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
-            return "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
 
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise
+
+        return "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
 
     def generate_bucketname(self, public_id, created_time):
         """Create bucket name for the given project."""
