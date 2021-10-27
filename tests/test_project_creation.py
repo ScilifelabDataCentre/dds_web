@@ -115,7 +115,7 @@ def test_create_project_with_malformed_json(client):
 
 def test_create_project_sensitive(client):
     p_data = proj_data
-    p_data["sensitive"] = True
+    p_data["is_sensitive"] = True
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
