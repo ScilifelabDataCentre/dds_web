@@ -116,25 +116,15 @@ class UserSchema(marshmallow.Schema):
     class Meta:
         unknown = marshmallow.EXCLUDE
 
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def validate_email_and_user(self, data, **kwargs):
-        """Check that the email and connected user exists in the database."""
-        flask.current_app.logger.debug("Validating email and user...")
-        email_row = models.Email.query.filter_by(email=data.get("email")).first()
-        if not email_row:
-            raise ddserr.NoSuchUserError
-
-        data["user"] = email_row.user
-
     @marshmallow.post_load
     def return_user(self, data, **kwargs):
         """Return the user."""
 
-        return data.get("user")
+        email_row = models.Email.query.filter_by(email=data.get("email")).first()
+        if not email_row:
+            return None
 
-
-class AddUserSchema(ProjectRequiredSchema):
-    """Add existing user to project"""
+        return email_row.user
 
 
 class InviteUserSchema(marshmallow.Schema):
@@ -315,6 +305,9 @@ class MyDateTimeField(marshmallow.fields.DateTime):
 class CreateProjectSchema(marshmallow.Schema):
     """Schema for creating a project."""
 
+    class Meta:
+        unknown = marshmallow.EXCLUDE
+
     public_id = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(min=1, max=255)
     )
@@ -352,6 +345,11 @@ class CreateProjectSchema(marshmallow.Schema):
     @marshmallow.pre_load
     def generate_required_fields(self, data, **kwargs):
         """Generate all required fields for creating a project."""
+        if not data:
+            raise ddserr.DDSArgumentError(
+                "No project information found when attempting to create project."
+            )
+
         data["public_id"] = self.generate_public_id()
         data["date_created"] = dds_web.utils.current_time()
         data["bucket"] = self.generate_bucketname(

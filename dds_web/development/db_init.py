@@ -59,12 +59,15 @@ def fill_db():
         privkey_nonce="7758E89F838E76E5202E0D71",
     )
 
+    # Create an email
+    email_researchuser_1 = models.Email(email="researchuser1@mailtrap.io", primary=True)
     # Create first research user
     researchuser_1 = models.ResearchUser(
         username="researchuser_1",
         password=auth.gen_argon2hash(password="password"),
         name="First Research User",
     )
+    email_researchuser_1.user = researchuser_1
     # Create association with user - not owner of project
     project_1_user_1_association = models.ProjectUsers(owner=False)
     # Connect research user to association row. = (not append) due to one user per ass. row

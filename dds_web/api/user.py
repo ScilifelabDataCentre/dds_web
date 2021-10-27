@@ -154,11 +154,14 @@ class AddUser(flask_restful.Resource):
     @staticmethod
     def check_user_exists(args):
         """Check if user exists"""
+
         try:
             existing_user = marshmallows.UserSchema().load(args)
+
         except marshmallow.ValidationError as valerr:
             raise ddserr.InviteError(message=valerr.messages)
-        except ddserr.NoSuchUserError as usererr:
+
+        if not existing_user:
             flask.current_app.logger.info(str(usererr))
             return False
 
@@ -167,6 +170,7 @@ class AddUser(flask_restful.Resource):
     @staticmethod
     def invite_user(args):
         """Invite a new user"""
+
         try:
             # Use schema to validate and check args, and create invite row
 
@@ -245,7 +249,7 @@ class AddUser(flask_restful.Resource):
     def add_user_to_project(existing_user, project, owner=False):
         """Add existing user to a project"""
 
-        project = marshmallows.ProjectRequiredSchema().load({"project": project})
+        # project = marshmallows.ProjectRequiredSchema().load({"project": project})
 
         ownership_change = False
         for rusers in project.researchusers:
