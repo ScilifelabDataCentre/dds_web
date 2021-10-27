@@ -112,7 +112,11 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        usage = flask.request.args.get("usage") == "True" and current_user.role == "unit"
+        usage = flask.request.args.get("usage") == "True" and current_user.role in [
+            "Super Admin",
+            "Unit Admin",
+            "Unit Personnel",
+        ]
 
         # Get info for all projects
         for p in current_user.projects:
@@ -122,30 +126,31 @@ class UserProjects(flask_restful.Resource):
                 "PI": p.pi,
                 "Status": p.status,
                 "Last updated": p.date_updated if p.date_updated else p.date_created,
-                "Size": dds_web.utils.format_byte_size(p.size),
+                "Size": p.size,
             }
 
             # Get proj size and update total size
             proj_size = sum([f.size_stored for f in p.files])
             total_size += proj_size
-            project_info["Size"] = dds_web.utils.format_byte_size(proj_size)
+            project_info["Size"] = proj_size
 
             if usage:
                 proj_gbhours, proj_cost = DBConnector().project_usage(p)
                 total_gbhours_db += proj_gbhours
                 total_cost_db += proj_cost
-
-                project_info.update({"GBHours": str(proj_gbhours), "Cost": str(proj_cost)})
+                # undo calculation of GBhours and return ByteHours
+                project_info.update({"Usage": proj_gbhours * 10e9, "Cost": proj_cost})
 
             all_projects.append(project_info)
 
         return_info = {
             "project_info": all_projects,
             "total_usage": {
-                "gbhours": str(round(total_gbhours_db, 2)) if total_gbhours_db > 1.0 else str(0),
-                "cost": f"{round(total_cost_db, 2)} kr" if total_cost_db > 1.0 else f"0 kr",
+                # undo calculation of GBhours and return ByteHours
+                "usage": total_gbhours_db * 10e9,
+                "cost": total_cost_db,
             },
-            "total_size": dds_web.utils.format_byte_size(total_size),
+            "total_size": total_size,
         }
 
         return flask.jsonify(return_info)
