@@ -121,12 +121,8 @@ class AddUser(flask_restful.Resource):
         if "project" in args:
             project = args.pop("project")
 
-        owner = False
-        if "owner" in args:
-            owner = args.pop("owner")
-
         # Check if email is registered to a user
-        existing_user = self.check_user_exists(args)
+        existing_user = marshmallows.UserSchema().load(args)
 
         if not existing_user:
             # Send invite if the user doesn't exist
@@ -137,7 +133,9 @@ class AddUser(flask_restful.Resource):
         else:
             # If there is an existing user, add them to project.
             if project:
-                add_user_result = self.add_user_to_project(existing_user, project, owner)
+                add_user_result = self.add_user_to_project(
+                    existing_user, project, args.get("role") == "Project Owner"
+                )
                 return flask.make_response(
                     flask.jsonify(add_user_result), add_user_result["status"]
                 )
@@ -249,30 +247,25 @@ class AddUser(flask_restful.Resource):
     def add_user_to_project(existing_user, project, owner=False):
         """Add existing user to a project"""
 
-        # project = marshmallows.ProjectRequiredSchema().load({"project": project})
-
+        project = marshmallows.ProjectRequiredSchema().load({"project": project})
         ownership_change = False
-        if existing_user in project.researchusers:
-
-            # for rusers in project.researchusers:
-            #     if rusers.researchuser is existing_user:
-            flask.current_app.logger.debug(f"rusers.owner: {rusers.owner}, owner: {owner}")
-            if rusers.owner == owner:
-                return {
-                    "status": 403,
-                    "message": "User is already associated with the project in this capacity",
-                }
-            else:
-                ownership_change = True
-                rusers.owner = owner
-        flask.current_app.logger.debug(f"ownership change? {ownership_change}")
+        for rusers in project.researchusers:
+            if rusers.researchuser is existing_user:
+                if rusers.owner == owner:
+                    return {
+                        "status": 403,
+                        "message": "User is already associated with the project in this capacity",
+                    }
+                else:
+                    ownership_change = True
+                    rusers.owner = owner
 
         if not ownership_change:
             project.researchusers.append(
                 models.ProjectUsers(
                     project_id=project.id,
                     user_id=existing_user.username,
-                    owner=owner in [True, "True"],
+                    owner=owner,
                 )
             )
 
