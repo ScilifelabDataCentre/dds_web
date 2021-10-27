@@ -242,6 +242,7 @@ class AddUser(flask_restful.Resource):
                 else:
                     ownership_change = True
                     rusers.owner = owner
+                    break
 
         if not ownership_change:
             project.researchusers.append(
