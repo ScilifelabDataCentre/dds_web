@@ -242,55 +242,49 @@ class CreateProject(flask_restful.Resource):
         """Create a new project"""
 
         p_info = flask.request.json
+
         new_project = marshmallows.CreateProjectSchema().load(p_info)
 
-        try:
-            db.session.add(new_project)
-            db.session.commit()
+        if not new_project:
+            return flask.make_response("Failed to create project.", 500)
 
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise DatabaseError(message="Server Error: Project was not created")
+        flask.current_app.logger.debug(
+            f"Project {new_project.public_id} created by user {auth.current_user().username}."
+        )
+        user_addition_statuses = []
+        if "users_to_add" in p_info:
+            for user in p_info["users_to_add"]:
+                owner = user.pop("owner", False)
 
-        else:
-            flask.current_app.logger.debug(
-                f"Project {new_project.public_id} created by user {auth.current_user().username}."
-            )
-            user_addition_statuses = []
-            if "users_to_add" in p_info:
-                for user in p_info["users_to_add"]:
-                    owner = user.pop("owner", False)
-
-                    existing_user = marshmallows.UserSchema().load(user)
-                    if not existing_user:
-                        # Send invite if the user doesn't exist
-                        invite_user_result = AddUser.invite_user(
-                            {
-                                "email": user.get("email"),
-                                "role": "Project Owner" if owner else "Researcher",
-                            }
-                        )
-                        if invite_user_result["status"] == 200:
-                            invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
-                        else:
-                            invite_msg = invite_user_result["message"]
-                        user_addition_statuses.append(invite_msg)
+                existing_user = marshmallows.UserSchema().load(user)
+                if not existing_user:
+                    # Send invite if the user doesn't exist
+                    invite_user_result = AddUser.invite_user(
+                        {
+                            "email": user.get("email"),
+                            "role": "Project Owner" if owner else "Researcher",
+                        }
+                    )
+                    if invite_user_result["status"] == 200:
+                        invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
                     else:
-                        # If it is an existing user, add them to project.
-                        add_user_result = AddUser.add_user_to_project(
-                            existing_user=existing_user, project=new_project.public_id, owner=owner
-                        )
-                        user_addition_statuses.append(add_user_result["message"])
+                        invite_msg = invite_user_result["message"]
+                    user_addition_statuses.append(invite_msg)
+                else:
+                    # If it is an existing user, add them to project.
+                    add_user_result = AddUser.add_user_to_project(
+                        existing_user=existing_user, project=new_project.public_id, owner=owner
+                    )
+                    user_addition_statuses.append(add_user_result["message"])
 
-            return flask.jsonify(
-                {
-                    "status": 200,
-                    "message": "Added new project '{}'".format(new_project.title),
-                    "project_id": new_project.public_id,
-                    "user_addition_statuses": user_addition_statuses,
-                }
-            )
+        return flask.jsonify(
+            {
+                "status": 200,
+                "message": "Added new project '{}'".format(new_project.title),
+                "project_id": new_project.public_id,
+                "user_addition_statuses": user_addition_statuses,
+            }
+        )
 
 
 class ProjectUsers(flask_restful.Resource):

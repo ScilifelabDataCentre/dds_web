@@ -308,9 +308,6 @@ class CreateProjectSchema(marshmallow.Schema):
     class Meta:
         unknown = marshmallow.EXCLUDE
 
-    public_id = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(min=1, max=255)
-    )
     title = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
     description = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(min=1)
@@ -319,7 +316,6 @@ class CreateProjectSchema(marshmallow.Schema):
         required=True, validate=marshmallow.validate.Length(min=1, max=255)
     )
     is_sensitive = marshmallow.fields.Boolean(required=False)
-    bucket = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=255))
     date_created = MyDateTimeField(required=False)
 
     # Only "In Progress" allowed when creating the project
@@ -329,19 +325,6 @@ class CreateProjectSchema(marshmallow.Schema):
     # Only size 0 allowed -- doesn't contain anything yet
     size = marshmallow.fields.Integer(required=True, validate=marshmallow.validate.Equal(0))
 
-    public_key = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(equal=64)
-    )
-    private_key = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(max=255)
-    )
-    privkey_salt = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(equal=32)
-    )
-    privkey_nonce = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(equal=24)
-    )
-
     @marshmallow.pre_load
     def generate_required_fields(self, data, **kwargs):
         """Generate all required fields for creating a project."""
@@ -350,14 +333,9 @@ class CreateProjectSchema(marshmallow.Schema):
                 "No project information found when attempting to create project."
             )
 
-        data["public_id"] = self.generate_public_id()
         data["date_created"] = dds_web.utils.current_time()
-        data["bucket"] = self.generate_bucketname(
-            public_id=data["public_id"], created_time=data["date_created"]
-        )
         data["status"] = "In Progress"
         data["size"] = 0
-        data.update(**dds_web.crypt.key_gen.ProjectKeys(data["public_id"]).key_dict())
 
         return data
 
@@ -367,42 +345,15 @@ class CreateProjectSchema(marshmallow.Schema):
         if not all(
             field in data
             for field in [
-                "public_id",
                 "title",
                 "date_created",
                 "status",
                 "description",
                 "pi",
                 "size",
-                "bucket",
-                "public_key",
-                "private_key",
-                "privkey_salt",
-                "privkey_nonce",
             ]
         ):
             raise marshmallow.ValidationError("Missing fields!")
-
-    def generate_public_id(self):
-        """Generate public id from unit row counter."""
-        try:
-            # Is this needed or could we just use `unit_row = auth.current_user().unit`?
-            unit_row = (
-                db.session.query(models.Unit)
-                .filter_by(id=auth.current_user().unit_id)
-                .with_for_update()
-                .one_or_none()
-            )
-
-            if not unit_row:
-                raise AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
-
-            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
-
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise
-
-        return "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
 
     def generate_bucketname(self, public_id, created_time):
         """Create bucket name for the given project."""
@@ -416,9 +367,44 @@ class CreateProjectSchema(marshmallow.Schema):
     def create_project(self, data, **kwargs):
         """Create project row in db."""
 
-        current_user = auth.current_user()
-        new_project = models.Project(
-            **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
-        )
+        try:
+            # Lock db, get unit row and update counter
+            unit_row = (
+                db.session.query(models.Unit)
+                .filter_by(id=auth.current_user().unit_id)
+                .with_for_update()
+                .one_or_none()
+            )
+            if not unit_row:
+                raise AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
+
+            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
+            data["public_id"] = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
+
+            # Generate bucket name
+            data["bucket"] = self.generate_bucketname(
+                public_id=data["public_id"], created_time=data["date_created"]
+            )
+
+            # Generate keys
+            data.update(**dds_web.crypt.key_gen.ProjectKeys(data["public_id"]).key_dict())
+
+            # Create project
+            current_user = auth.current_user()
+            new_project = models.Project(
+                **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
+            )
+
+            # Save
+            db.session.add(new_project)
+            db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise DatabaseError(message="Server Error: Project was not created")
+        except (marshmallow.ValidationError, ddserr.DDSArgumentError, AccessDeniedError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise
 
         return new_project
