@@ -252,24 +252,30 @@ class AddUser(flask_restful.Resource):
         # project = marshmallows.ProjectRequiredSchema().load({"project": project})
 
         ownership_change = False
-        for rusers in project.researchusers:
-            if rusers.researchuser is existing_user:
-                if rusers.owner == owner:
-                    return {
-                        "status": 403,
-                        "message": "User is already associated with the project in this capacity",
-                    }
-                else:
-                    ownership_change = True
-                    rusers.owner = owner
-                    break
+        if existing_user in project.researchusers:
+
+            # for rusers in project.researchusers:
+            #     if rusers.researchuser is existing_user:
+            flask.current_app.logger.debug(f"rusers.owner: {rusers.owner}, owner: {owner}")
+            if rusers.owner == owner:
+                return {
+                    "status": 403,
+                    "message": "User is already associated with the project in this capacity",
+                }
+            else:
+                ownership_change = True
+                rusers.owner = owner
+        flask.current_app.logger.debug(f"ownership change? {ownership_change}")
 
         if not ownership_change:
             project.researchusers.append(
                 models.ProjectUsers(
-                    project_id=project.id, user_id=existing_user.username, owner=owner
+                    project_id=project.id,
+                    user_id=existing_user.username,
+                    owner=owner in [True, "True"],
                 )
             )
+
         try:
             db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:

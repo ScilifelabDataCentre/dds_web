@@ -279,7 +279,7 @@ class CreateProject(flask_restful.Resource):
                     else:
                         # If it is an existing user, add them to project.
                         add_user_result = AddUser.add_user_to_project(
-                            existing_user, new_project, owner
+                            existing_user=existing_user, project=new_project, owner=owner
                         )
                         user_addition_statuses.append(add_user_result["message"])
 
