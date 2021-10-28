@@ -118,84 +118,159 @@ class AddUser(flask_restful.Resource):
 
         args = flask.request.json
 
+        project = ""
+        if "project" in args:
+            project = args.pop("project")
+
         # Check if email is registered to a user
+        existing_user = marshmallows.UserSchema().load(args)
+
+        if not existing_user:
+            # Send invite if the user doesn't exist
+            invite_user_result = self.invite_user(args)
+            return flask.make_response(
+                flask.jsonify(invite_user_result), invite_user_result["status"]
+            )
+        else:
+            # If there is an existing user, add them to project.
+            if project:
+                add_user_result = self.add_user_to_project(
+                    existing_user, project, args.get("role") == "Project Owner"
+                )
+                flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
+                return flask.make_response(
+                    flask.jsonify(add_user_result), add_user_result["status"]
+                )
+            else:
+                return flask.make_response(
+                    flask.jsonify(
+                        {
+                            "message": "User exists! Specify a project if you want to add this user to a project."
+                        }
+                    ),
+                    ddserr.errors["DDSArgumentError"]["status"],
+                )
+
+    @staticmethod
+    def invite_user(args):
+        """Invite a new user"""
+
         try:
-            existing_user = marshmallows.UserSchema().load(args)
+            # Use schema to validate and check args, and create invite row
+            new_invite = marshmallows.InviteUserSchema().load(args)
+
+        except ddserr.InviteError as invite_err:
+            return {
+                "message": invite_err.description,
+                "status": ddserr.errors["InviteError"]["status"].value,
+            }
+
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise ddserr.DatabaseError(message=str(sqlerr))
         except marshmallow.ValidationError as valerr:
             raise ddserr.InviteError(message=valerr.messages)
-        except ddserr.NoSuchUserError as usererr:
-            flask.current_app.logger.info(str(usererr))
 
-            # Send invite if the user doesn't exist
-            try:
-                # Use schema to validate and check args, and create invite row
-                new_invite = marshmallows.InviteUserSchema().load(args)
+        # Create URL safe token for invitation link
+        s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
+        token = s.dumps(new_invite.email, salt="email-confirm")
 
-            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-                raise ddserr.DatabaseError(message=str(sqlerr))
-            except marshmallow.ValidationError as valerr:
-                raise ddserr.InviteError(message=valerr.messages)
+        # Create link for invitation email
+        link = flask.url_for("api_blueprint.confirm_invite", token=token, _external=True)
 
-            # Create URL safe token for invitation link
-            s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
-            token = s.dumps(new_invite.email, salt="email-confirm")
+        # Compose and send email
+        unit_name = None
+        if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
+            unit = auth.current_user().unit
+            unit_name = unit.external_display_name
+            unit_email = unit.contact_email
+            sender_name = auth.current_user().name
+            subject = f"{unit} invites you to the SciLifeLab Data Delivery System"
+        else:
+            sender_name = auth.current_user().name
+            subject = f"{sender_name} invites you to the SciLifeLab Data Delivery System"
 
-            # Create link for invitation email
-            link = flask.url_for("api_blueprint.confirm_invite", token=token, _external=True)
+        msg = flask_mail.Message(
+            subject,
+            sender=flask.current_app.config["MAIL_SENDER_ADDRESS"],
+            recipients=[new_invite.email],
+        )
 
-            # Compose and send email
-            unit_name = None
-            if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
-                unit = auth.current_user().unit
-                unit_name = unit.external_display_name
-                unit_email = unit.contact_email
-                sender_name = auth.current_user().name
-                subject = f"{unit} invites you to the SciLifeLab Data Delivery System"
-            else:
-                sender_name = auth.current_user().name
-                subject = f"{sender_name} invites you to the SciLifeLab Data Delivery System"
+        # Need to attach the image to be able to use it
+        msg.attach(
+            "scilifelab_logo.png",
+            "image/png",
+            open(
+                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+            ).read(),
+            "inline",
+            headers=[
+                ["Content-ID", "<Logo>"],
+            ],
+        )
 
-            msg = flask_mail.Message(
-                subject,
-                sender=flask.current_app.config["MAIL_SENDER_ADDRESS"],
-                recipients=[new_invite.email],
+        msg.body = flask.render_template(
+            "mail/invite.txt",
+            link=link,
+            sender_name=sender_name,
+            unit_name=unit_name,
+            unit_email=unit_email,
+        )
+        msg.html = flask.render_template(
+            "mail/invite.html",
+            link=link,
+            sender_name=sender_name,
+            unit_name=unit_name,
+            unit_email=unit_email,
+        )
+
+        mail.send(msg)
+
+        # TODO: Format response with marshal with?
+        return {"email": new_invite.email, "message": "Invite successful!", "status": 200}
+
+    @staticmethod
+    def add_user_to_project(existing_user, project, owner=False):
+        """Add existing user to a project"""
+
+        project = marshmallows.ProjectRequiredSchema().load({"project": project})
+        ownership_change = False
+        for rusers in project.researchusers:
+            if rusers.researchuser is existing_user:
+                if rusers.owner == owner:
+                    return {
+                        "status": 403,
+                        "message": "User is already associated with the project in this capacity",
+                    }
+
+                ownership_change = True
+                rusers.owner = owner
+                break
+
+        if not ownership_change:
+            project.researchusers.append(
+                models.ProjectUsers(
+                    project_id=project.id,
+                    user_id=existing_user.username,
+                    owner=owner,
+                )
             )
 
-            # Need to attach the image to be able to use it
-            msg.attach(
-                "scilifelab_logo.png",
-                "image/png",
-                open(
-                    os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
-                ).read(),
-                "inline",
-                headers=[
-                    ["Content-ID", "<Logo>"],
-                ],
-            )
+        try:
+            db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            message = "User was not associated with the project"
+            raise ddserr.DatabaseError(message=f"Server Error: {message}")
 
-            msg.body = flask.render_template(
-                "mail/invite.txt",
-                link=link,
-                sender_name=sender_name,
-                unit_name=unit_name,
-                unit_email=unit_email,
-            )
-            msg.html = flask.render_template(
-                "mail/invite.html",
-                link=link,
-                sender_name=sender_name,
-                unit_name=unit_name,
-                unit_email=unit_email,
-            )
+        flask.current_app.logger.debug(
+            f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
+        )
 
-            mail.send(msg)
-
-            # TODO: Format response with marshal with?
-            return flask.jsonify({"email": new_invite.email, "message": "Invite successful!"})
-
-        # If there is an existing user, add them to project.
-        return flask.jsonify({"message": "User exists, should be added to the project."})
+        return {
+            "status": 200,
+            "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
+        }
 
 
 class ConfirmInvite(flask_restful.Resource):

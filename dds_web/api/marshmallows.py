@@ -6,6 +6,7 @@
 
 # Standard Library
 import os
+from datetime import datetime
 
 # Installed
 import flask
@@ -20,6 +21,7 @@ from dds_web import auth
 import dds_web.security.auth
 from dds_web.database import models
 from dds_web import utils
+import dds_web.crypt
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -120,27 +122,15 @@ class UserSchema(marshmallow.Schema):
     class Meta:
         unknown = marshmallow.EXCLUDE
 
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def validate_email_and_user(self, data, **kwargs):
-        """Check that the email and connected user exists in the database."""
-        flask.current_app.logger.debug("Validating email and user...")
-        email_row = models.Email.query.filter_by(email=data.get("email")).first()
-        if not email_row:
-            raise ddserr.NoSuchUserError
-
-        data["user"] = email_row.user
-
     @marshmallow.post_load
     def return_user(self, data, **kwargs):
         """Return the user."""
 
-        return data.get("user")
+        email_row = models.Email.query.filter_by(email=data.get("email")).first()
+        if not email_row:
+            return None
 
-
-class AddUserSchema(ProjectRequiredSchema):
-    """Add existing user to project"""
-
-    # TODO
+        return email_row.user
 
 
 class InviteUserSchema(marshmallow.Schema):

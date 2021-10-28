@@ -10,6 +10,7 @@ from dds_web.database.models import (
     Project,
     ProjectUsers,
     Invite,
+    Email,
 )
 
 from dds_web import create_app, db
@@ -180,6 +181,15 @@ def client():
             # Connect research user to project. append (not =) due to many users per project
             projects[3].researchusers.append(project_3_user_6_association)
 
+            add_email_to_user_0 = Email(
+                user_id="researchuser", email="researchuser@mailtrap.io", primary=True
+            )
+            users[0].emails.append(add_email_to_user_0)
+
+            add_email_to_user_6 = Email(
+                user_id="researchuser2", email="researchuser2@mailtrap.io", primary=True
+            )
+            users[6].emails.append(add_email_to_user_6)
             # Add created project
             users[2].created_projects.append(projects[0])
             users[3].created_projects.append(projects[1])
