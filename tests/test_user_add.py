@@ -3,6 +3,8 @@ import sqlalchemy
 from dds_web import db
 from dds_web.database import models
 import tests
+import pytest
+import marshmallow
 
 first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
@@ -12,6 +14,7 @@ first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_ne
 existing_invite = {"email": "existing_invite_email@mailtrap.io", "role": "Researcher"}
 new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Super Admin"}
 existing_research_user = {"email": "researchuser2@mailtrap.io", "role": "Researcher"}
+existing_research_user_owner = {"email": "researchuser2@mailtrap.io", "role": "Project Owner"}
 existing_research_user_to_existing_project = {
     **existing_research_user,
     "project": "public_project_id",
@@ -22,11 +25,11 @@ existing_research_user_to_nonexistent_proj = {
 }
 change_owner_existing_user = {
     "email": "researchuser@mailtrap.io",
-    "role": "Researcher",
+    "role": "Project Owner",
     "project": "public_project_id",
 }
 submit_with_same_ownership = {
-    **existing_research_user,
+    **existing_research_user_owner,
     "project": "second_public_project_id",
 }
 
@@ -92,13 +95,14 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
 
 
 def test_add_user_with_unitadmin_and_invalid_email(client):
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
-        data=json.dumps(first_new_user_invalid_email),
-        content_type="application/json",
-    )
-    assert response.status == "400 BAD REQUEST"
+    with pytest.raises(marshmallow.ValidationError):
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+            data=json.dumps(first_new_user_invalid_email),
+            content_type="application/json",
+        )
+
     invited_user = (
         db.session.query(models.Invite)
         .filter_by(email=first_new_user_invalid_email["email"])

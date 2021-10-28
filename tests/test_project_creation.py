@@ -6,6 +6,10 @@ import datetime
 import json
 import unittest
 
+# Installed
+import pytest
+import marshmallow
+
 # Own
 from dds_web import db
 from dds_web.database import models
@@ -27,6 +31,7 @@ proj_data_with_existing_users = {
 
 
 def test_create_project_without_credentials(client):
+    """Create project without valid user credentials."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).post_headers(),
@@ -48,6 +53,7 @@ def test_create_project_without_credentials(client):
 
 
 def test_create_project_with_credentials(client):
+    """Create project with correct credentials."""
     time_before_run = datetime.datetime.now()
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -73,14 +79,16 @@ def test_create_project_with_credentials(client):
     )
 
 
-def test_create_project_without_title_description(client):
-    response = client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
-        data=json.dumps({"pi": "piName"}),
-        content_type="application/json",
-    )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+def test_create_project_no_title(client):
+    """Create project without a title specified."""
+    with pytest.raises(marshmallow.ValidationError):
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            data=json.dumps({"pi": "piName"}),
+            content_type="application/json",
+        )
+
     created_proj = (
         db.session.query(models.Project)
         .filter_by(
@@ -92,7 +100,33 @@ def test_create_project_without_title_description(client):
     assert created_proj is None
 
 
+def test_create_project_title_too_short(client):
+    """Create a project with too short title."""
+    proj_data_short_title = proj_data.copy()
+    proj_data_short_title["title"] = ""
+    with pytest.raises(marshmallow.ValidationError):
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            data=json.dumps(proj_data_short_title),
+            content_type="application/json",
+        )
+
+    created_proj = (
+        db.session.query(models.Project)
+        .filter_by(
+            created_by="unituser",
+            title=proj_data_short_title["title"],
+            pi=proj_data_short_title["pi"],
+            description=proj_data_short_title["description"],
+        )
+        .one_or_none()
+    )
+    assert not created_proj
+
+
 def test_create_project_with_malformed_json(client):
+    """Create a project with malformed project info."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
@@ -114,6 +148,7 @@ def test_create_project_with_malformed_json(client):
 
 
 def test_create_project_sensitive(client):
+    """Create a sensitive project."""
     p_data = proj_data
     p_data["is_sensitive"] = True
     response = client.post(
@@ -136,7 +171,183 @@ def test_create_project_sensitive(client):
     assert created_proj and created_proj.is_sensitive
 
 
+def test_create_project_description_too_short(client):
+    """Create a project with too short description."""
+    proj_data_short_description = proj_data.copy()
+    proj_data_short_description["description"] = ""
+    with pytest.raises(marshmallow.ValidationError):
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            data=json.dumps(proj_data_short_description),
+            content_type="application/json",
+        )
+
+    created_proj = (
+        db.session.query(models.Project)
+        .filter_by(
+            created_by="unituser",
+            title=proj_data_short_description["title"],
+            pi=proj_data_short_description["pi"],
+            description=proj_data_short_description["description"],
+        )
+        .one_or_none()
+    )
+    assert not created_proj
+
+
+def test_create_project_pi_too_short(client):
+    """Create a project with too short PI."""
+    proj_data_short_pi = proj_data.copy()
+    proj_data_short_pi["pi"] = ""
+    with pytest.raises(marshmallow.ValidationError):
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            data=json.dumps(proj_data_short_pi),
+            content_type="application/json",
+        )
+
+    created_proj = (
+        db.session.query(models.Project)
+        .filter_by(
+            created_by="unituser",
+            title=proj_data_short_pi["title"],
+            pi=proj_data_short_pi["pi"],
+            description=proj_data_short_pi["description"],
+        )
+        .one_or_none()
+    )
+    assert not created_proj
+
+
+def test_create_project_pi_too_long(client):
+    """Create a project with too long PI."""
+    proj_data_long_pi = proj_data.copy()
+    proj_data_long_pi["pi"] = "pi" * 128
+    with pytest.raises(marshmallow.ValidationError):
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            data=json.dumps(proj_data_long_pi),
+            content_type="application/json",
+        )
+
+    created_proj = (
+        db.session.query(models.Project)
+        .filter_by(
+            created_by="unituser",
+            title=proj_data_long_pi["title"],
+            pi=proj_data_long_pi["pi"],
+            description=proj_data_long_pi["description"],
+        )
+        .one_or_none()
+    )
+    assert not created_proj
+
+
+def test_create_project_wrong_status(client):
+    """Create a project with own status, should be overridden."""
+    proj_data_wrong_status = proj_data.copy()
+    proj_data_wrong_status["status"] = "Incorrect Status"
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(proj_data_wrong_status),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    created_proj = (
+        db.session.query(models.Project)
+        .filter_by(
+            created_by="unituser",
+            title=proj_data_wrong_status["title"],
+            pi=proj_data_wrong_status["pi"],
+            description=proj_data_wrong_status["description"],
+        )
+        .one_or_none()
+    )
+    assert created_proj and created_proj.status == "In Progress"
+
+
+def test_create_project_wrong_size(client):
+    """Create a project with own size, should be overridden."""
+    proj_data_wrong_size = proj_data.copy()
+    proj_data_wrong_size["size"] = 1
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(proj_data_wrong_size),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    created_proj = (
+        db.session.query(models.Project)
+        .filter_by(
+            created_by="unituser",
+            title=proj_data_wrong_size["title"],
+            pi=proj_data_wrong_size["pi"],
+            description=proj_data_wrong_size["description"],
+        )
+        .one_or_none()
+    )
+    assert created_proj and created_proj.size == 0
+
+
+def test_create_project_sensitive_not_boolean(client):
+    """Create project with incorrect is_sensitive format."""
+    proj_data_sensitive_not_boolean = proj_data.copy()
+    proj_data_sensitive_not_boolean["is_sensitive"] = "test"
+    with pytest.raises(marshmallow.ValidationError):
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            data=json.dumps(proj_data_sensitive_not_boolean),
+            content_type="application/json",
+        )
+
+    created_proj = (
+        db.session.query(models.Project)
+        .filter_by(
+            created_by="unituser",
+            title=proj_data_sensitive_not_boolean["title"],
+            pi=proj_data_sensitive_not_boolean["pi"],
+            description=proj_data_sensitive_not_boolean["description"],
+        )
+        .one_or_none()
+    )
+    assert not created_proj
+
+
+def test_create_project_date_created_overridden(client):
+    """Create project with own date_created, should be overridden."""
+    proj_data_date_created_own = proj_data.copy()
+    proj_data_date_created_own["date_created"] = "test"
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(proj_data_date_created_own),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    created_proj = (
+        db.session.query(models.Project)
+        .filter_by(
+            created_by="unituser",
+            title=proj_data_date_created_own["title"],
+            pi=proj_data_date_created_own["pi"],
+            description=proj_data_date_created_own["description"],
+        )
+        .one_or_none()
+    )
+    assert created_proj and created_proj.date_created != proj_data_date_created_own["date_created"]
+
+
 def test_create_project_with_users(client):
+    """Create project and add users to the project."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
