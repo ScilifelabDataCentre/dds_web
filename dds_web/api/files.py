@@ -11,7 +11,6 @@ import os
 import flask_restful
 import flask
 import sqlalchemy
-from sqlalchemy.sql import func
 import marshmallow
 
 # Own modules
@@ -63,7 +62,7 @@ class NewFile(flask_restful.Resource):
             # Check if file already in db
             existing_file = models.File.query.filter(
                 sqlalchemy.and_(
-                    models.File.name == func.binary(file_info.get("name")),
+                    models.File.name == sqlalchemy.func.binary(file_info.get("name")),
                     models.File.project_id == project.id,
                 )
             ).first()
@@ -78,7 +77,7 @@ class NewFile(flask_restful.Resource):
             # Get version row
             current_file_version = models.Version.query.filter(
                 sqlalchemy.and_(
-                    models.Version.active_file == func.binary(existing_file.id),
+                    models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
                     models.Version.time_deleted == None,
                 )
             ).all()
@@ -138,7 +137,7 @@ class MatchFiles(flask_restful.Resource):
         try:
             matching_files = (
                 models.File.query.filter(models.File.name.in_(flask.request.json))
-                .filter(models.File.project_id == func.binary(project.id))
+                .filter(models.File.project_id == sqlalchemy.func.binary(project.id))
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -319,7 +318,7 @@ class FileInfo(flask_restful.Resource):
         try:
             # Get all files in project
             files_in_proj = models.File.query.filter(
-                models.File.project_id == func.binary(project.id)
+                models.File.project_id == sqlalchemy.func.binary(project.id)
             )
 
             # All files matching the path -- single files
@@ -460,8 +459,8 @@ class UpdateFile(flask_restful.Resource):
             flask.current_app.logger.debug(f"File name: {file_name}")
             file = models.File.query.filter(
                 sqlalchemy.and_(
-                    models.File.project_id == func.binary(project.id),
-                    models.File.name == func.binary(file_name),
+                    models.File.project_id == sqlalchemy.func.binary(project.id),
+                    models.File.name == sqlalchemy.func.binary(file_name),
                 )
             ).first()
 
