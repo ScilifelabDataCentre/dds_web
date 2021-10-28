@@ -13,7 +13,6 @@ import json
 
 # Installed
 import botocore
-
 import flask
 
 # Own modules
