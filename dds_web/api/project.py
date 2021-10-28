@@ -37,6 +37,8 @@ from dds_web.api.errors import (
 from dds_web.crypt import key_gen
 from dds_web.api import marshmallows
 from dds_web.api.user import AddUser
+from dds_web.api.schemas import custom_fields
+
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -57,7 +59,7 @@ class CreateProjectSchema(marshmallow.Schema):
         required=True, validate=marshmallow.validate.Length(min=1, max=255)
     )
     is_sensitive = marshmallow.fields.Boolean(required=False)
-    date_created = dds_web.utils.MyDateTimeField(required=False)
+    date_created = custom_fields.MyDateTimeField(required=False)
 
     # Only "In Progress" allowed when creating the project
     status = marshmallow.fields.String(
