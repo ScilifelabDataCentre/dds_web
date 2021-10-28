@@ -22,7 +22,6 @@ from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import DatabaseError
-from dds_web.api import marshmallows
 from dds_web.api.schemas import project_schemas
 
 

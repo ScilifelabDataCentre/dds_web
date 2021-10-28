@@ -34,7 +34,6 @@ from dds_web.api.errors import (
     KeyNotFoundError,
 )
 from dds_web.crypt import key_gen
-from dds_web.api import marshmallows
 from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
