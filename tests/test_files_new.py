@@ -198,7 +198,7 @@ def test_new_file_publickey_wrong_length(client):
     assert project_1
 
     file_wrong_public_key = first_new_file.copy()
-    file_wrong_public_key["public_key"] = "test"  # 9223 petabytes (big int sql definition)
+    file_wrong_public_key["public_key"] = "test"
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.FILE_NEW,
@@ -216,7 +216,7 @@ def test_new_file_salt_wrong_length(client):
     assert project_1
 
     file_wrong_salt = first_new_file.copy()
-    file_wrong_salt["salt"] = "test"  # 9223 petabytes (big int sql definition)
+    file_wrong_salt["salt"] = "test"
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.FILE_NEW,
@@ -234,7 +234,7 @@ def test_new_file_checksum_wrong_length(client):
     assert project_1
 
     file_wrong_checksum = first_new_file.copy()
-    file_wrong_checksum["checksum"] = "test"  # 9223 petabytes (big int sql definition)
+    file_wrong_checksum["checksum"] = "test"
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.FILE_NEW,
