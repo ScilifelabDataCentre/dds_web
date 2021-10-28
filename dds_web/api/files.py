@@ -11,7 +11,6 @@ import os
 import flask_restful
 import flask
 import sqlalchemy
-import marshmallow
 
 # Own modules
 import dds_web.utils
