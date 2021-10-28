@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Standard Library
+import os
 
 # Installed
 import flask
@@ -18,6 +19,7 @@ from dds_web.api import errors as ddserr
 from dds_web import auth
 import dds_web.security.auth
 from dds_web.database import models
+from dds_web import utils
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -76,6 +78,8 @@ def username_in_db(username):
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
 
+# Project related ---------------------------------------------------------------- Project related #
+
 
 class ProjectRequiredSchema(marshmallow.Schema):
     """Schema for verifying an existing project in args and database."""
@@ -103,6 +107,9 @@ class ProjectRequiredSchema(marshmallow.Schema):
         """Return project object."""
 
         return data.get("project_row")
+
+
+# User related ---------------------------------------------------------------------- User related #
 
 
 class UserSchema(marshmallow.Schema):

@@ -12,6 +12,7 @@ import flask_restful
 import flask
 import sqlalchemy
 from sqlalchemy.sql import func
+import marshmallow
 
 # Own modules
 import dds_web.utils
@@ -22,6 +23,84 @@ from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import DatabaseError
 from dds_web.api import marshmallows
+
+
+####################################################################################################
+# SCHEMAS ################################################################################ SCHEMAS #
+####################################################################################################
+
+
+class NewFileSchema(marshmallows.ProjectRequiredSchema):
+    """Validates and creates a new file object."""
+
+    # Length minimum 1 required, required=True accepts empty string
+    name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
+    name_in_bucket = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(min=1)
+    )
+    subpath = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
+    size = marshmallow.fields.Integer(required=True)  # Accepts BigInt
+    size_processed = marshmallow.fields.Integer(required=True)  # Accepts BigInt
+    compressed = marshmallow.fields.Boolean(required=True)  # Accepts all truthy
+    public_key = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(equal=64)
+    )
+    salt = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(equal=32))
+    checksum = marshmallow.fields.String(
+        required=True, validate=marshmallow.validate.Length(equal=64)
+    )
+
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def verify_file_not_exists(self, data, **kwargs):
+        """Check that the file does not match anything already in the database."""
+
+        # Check that there is no such file in the database
+        project = data.get("project_row")
+        try:
+            file = (
+                models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name == sqlalchemy.func.binary(data.get("name")),
+                        models.File.project_id == sqlalchemy.func.binary(project.id),
+                    )
+                )
+                .with_entities(models.File.id)
+                .one_or_none()
+            )
+        except sqlalchemy.exc.SQLAlchemyError:
+            raise
+
+        if file:
+            raise FileExistsError
+
+    @marshmallow.post_load
+    def return_items(self, data, **kwargs):
+        """Create file object."""
+
+        new_file = models.File(
+            name=data.get("name"),
+            name_in_bucket=data.get("name_in_bucket"),
+            subpath=data.get("subpath"),
+            size_original=data.get("size"),
+            size_stored=data.get("size_processed"),
+            compressed=data.get("compressed"),
+            salt=data.get("salt"),
+            public_key=data.get("public_key"),
+            checksum=data.get("checksum"),
+        )
+
+        new_version = models.Version(
+            size_stored=new_file.size_stored, time_uploaded=dds_web.utils.current_time()
+        )
+
+        project = data.get("project_row")
+        # Update foreign keys
+        project.file_versions.append(new_version)
+        project.files.append(new_file)
+        new_file.versions.append(new_version)
+
+        return new_file
+
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -35,83 +114,17 @@ class NewFile(flask_restful.Resource):
     def post(self):
         """Add new file to DB"""
 
-        message = ""
-        required_info = [
-            "name",
-            "name_in_bucket",
-            "subpath",
-            "size",
-            "size_processed",
-            "compressed",
-            "salt",
-            "public_key",
-            "checksum",
-        ]
-
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
-
-        file_info = flask.request.json
-        if not all(x in file_info for x in required_info):
-            missing = [x for x in required_info if x not in file_info]
-            return flask.make_response(
-                f"Information missing ({missing}), cannot add file to database.", 500
-            )
+        flask.current_app.logger.debug(flask.request.json)
+        new_file = NewFileSchema().load({**flask.request.json, **flask.request.args})
 
         try:
-            # Check if file already in db
-            existing_file = (
-                models.File.query.filter(
-                    sqlalchemy.and_(
-                        models.File.name == func.binary(file_info.get("name")),
-                        models.File.project_id == func.binary(project.id),
-                    )
-                )
-                .with_entities(models.File.id)
-                .first()
-            )
-
-            if existing_file or existing_file is not None:
-                return flask.make_response(
-                    f"File '{file_info.get('name')}' already exists in the database!", 500
-                )
-
-            # Add new file to db
-            new_file = models.File(
-                name=file_info.get("name"),
-                name_in_bucket=file_info.get("name_in_bucket"),
-                subpath=file_info.get("subpath"),
-                size_original=file_info.get("size"),
-                size_stored=file_info.get("size_processed"),
-                compressed=file_info.get("compressed"),
-                salt=file_info.get("salt"),
-                public_key=file_info.get("public_key"),
-                checksum=file_info.get("checksum"),
-                project_id=project,
-            )
-
-            # New file version
-            new_version = models.Version(
-                size_stored=new_file.size_stored,
-                time_uploaded=dds_web.utils.current_time(),
-                active_file=new_file.id,
-                project_id=project,
-            )
-
-            # Update foreign keys
-            project.file_versions.append(new_version)
-            project.files.append(new_file)
-            new_file.versions.append(new_version)
-
-            db.session.add(new_file)
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.debug(err)
             db.session.rollback()
-            return flask.make_response(
-                f"Failed to add new file '{file_info.get('name')}' to database: {err}", 500
-            )
+            return flask.make_response(f"Failed to add new file to database.", 500)
 
-        return flask.jsonify({"message": f"File '{file_info.get('name')}' added to db."})
+        return flask.jsonify({"message": f"File '{new_file.name}' added to db."})
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def put(self):
