@@ -12,8 +12,8 @@ import sqlalchemy
 
 # Own modules
 from dds_web.database import models
-from dds_web import utils
-
+import dds_web.utils
+from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
