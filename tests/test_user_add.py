@@ -24,12 +24,10 @@ change_owner_existing_user = {
     "email": "researchuser@mailtrap.io",
     "role": "Researcher",
     "project": "public_project_id",
-    "owner": True,
 }
 submit_with_same_ownership = {
     **existing_research_user,
     "project": "second_public_project_id",
-    "owner": True,
 }
 
 

@@ -136,6 +136,7 @@ class AddUser(flask_restful.Resource):
                 add_user_result = self.add_user_to_project(
                     existing_user, project, args.get("role") == "Project Owner"
                 )
+                flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
                 return flask.make_response(
                     flask.jsonify(add_user_result), add_user_result["status"]
                 )
@@ -239,10 +240,10 @@ class AddUser(flask_restful.Resource):
                         "status": 403,
                         "message": "User is already associated with the project in this capacity",
                     }
-                else:
-                    ownership_change = True
-                    rusers.owner = owner
-                    break
+
+                ownership_change = True
+                rusers.owner = owner
+                break
 
         if not ownership_change:
             project.researchusers.append(
@@ -260,15 +261,15 @@ class AddUser(flask_restful.Resource):
             db.session.rollback()
             message = "User was not associated with the project"
             raise ddserr.DatabaseError(message=f"Server Error: {message}")
-        else:
-            flask.current_app.logger.debug(
-                f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
-            )
 
-            return {
-                "status": 200,
-                "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
-            }
+        flask.current_app.logger.debug(
+            f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
+        )
+
+        return {
+            "status": 200,
+            "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
+        }
 
 
 class ConfirmInvite(flask_restful.Resource):
