@@ -11,8 +11,6 @@ import secrets
 import os
 
 # Installed
-from sqlalchemy.sql import func
-
 import flask
 import flask_restful
 import flask_mail
@@ -294,7 +292,7 @@ class ShowUsage(flask_restful.Resource):
         # Get unit info from table (incl safespring proj name)
         try:
             unit_info = models.Unit.query.filter(
-                models.Unit.id == func.binary(current_user.unit_id)
+                models.Unit.id == sqlalchemy.func.binary(current_user.unit_id)
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.exception(err)
@@ -372,7 +370,7 @@ class InvoiceUnit(flask_restful.Resource):
         # Get unit info from table (incl safespring proj name)
         try:
             unit_info = models.Unit.query.filter(
-                models.Unit.id == func.binary(current_user.unit_id)
+                models.Unit.id == sqlalchemy.func.binary(current_user.unit_id)
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.exception(err)
