@@ -121,12 +121,8 @@ class AddUser(flask_restful.Resource):
         if "project" in args:
             project = args.pop("project")
 
-        owner = False
-        if "owner" in args:
-            owner = args.pop("owner")
-
         # Check if email is registered to a user
-        existing_user = self.check_user_exists(args)
+        existing_user = marshmallows.UserSchema().load(args)
 
         if not existing_user:
             # Send invite if the user doesn't exist
@@ -137,7 +133,10 @@ class AddUser(flask_restful.Resource):
         else:
             # If there is an existing user, add them to project.
             if project:
-                add_user_result = self.add_user_to_project(existing_user, project, owner)
+                add_user_result = self.add_user_to_project(
+                    existing_user, project, args.get("role") == "Project Owner"
+                )
+                flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
                 return flask.make_response(
                     flask.jsonify(add_user_result), add_user_result["status"]
                 )
@@ -152,24 +151,11 @@ class AddUser(flask_restful.Resource):
                 )
 
     @staticmethod
-    def check_user_exists(args):
-        """Check if user exists"""
-        try:
-            existing_user = marshmallows.UserSchema().load(args)
-        except marshmallow.ValidationError as valerr:
-            raise ddserr.InviteError(message=valerr.messages)
-        except ddserr.NoSuchUserError as usererr:
-            flask.current_app.logger.info(str(usererr))
-            return False
-
-        return existing_user
-
-    @staticmethod
     def invite_user(args):
         """Invite a new user"""
+
         try:
             # Use schema to validate and check args, and create invite row
-
             new_invite = marshmallows.InviteUserSchema().load(args)
 
         except ddserr.InviteError as invite_err:
@@ -246,7 +232,6 @@ class AddUser(flask_restful.Resource):
         """Add existing user to a project"""
 
         project = marshmallows.ProjectRequiredSchema().load({"project": project})
-
         ownership_change = False
         for rusers in project.researchusers:
             if rusers.researchuser is existing_user:
@@ -255,17 +240,20 @@ class AddUser(flask_restful.Resource):
                         "status": 403,
                         "message": "User is already associated with the project in this capacity",
                     }
-                else:
-                    ownership_change = True
-                    rusers.owner = owner
-                    break
+
+                ownership_change = True
+                rusers.owner = owner
+                break
 
         if not ownership_change:
             project.researchusers.append(
                 models.ProjectUsers(
-                    project_id=project.id, user_id=existing_user.username, owner=owner
+                    project_id=project.id,
+                    user_id=existing_user.username,
+                    owner=owner,
                 )
             )
+
         try:
             db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
@@ -273,15 +261,15 @@ class AddUser(flask_restful.Resource):
             db.session.rollback()
             message = "User was not associated with the project"
             raise ddserr.DatabaseError(message=f"Server Error: {message}")
-        else:
-            flask.current_app.logger.debug(
-                f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
-            )
 
-            return {
-                "status": 200,
-                "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
-            }
+        flask.current_app.logger.debug(
+            f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
+        )
+
+        return {
+            "status": 200,
+            "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
+        }
 
 
 class ConfirmInvite(flask_restful.Resource):
