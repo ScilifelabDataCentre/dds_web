@@ -7,7 +7,6 @@
 # Standard library
 import traceback
 import os
-import datetime
 
 # Installed
 import flask
