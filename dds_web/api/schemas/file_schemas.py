@@ -1,4 +1,4 @@
-"""Marshmallow schemas used by the DDS"""
+"""File related marshmallow schemas."""
 
 ####################################################################################################
 # IMPORTS ################################################################################ IMPORTS #
@@ -23,13 +23,14 @@ from dds_web.database import models
 from dds_web import utils
 import dds_web.crypt
 from dds_web.api import marshmallows
+from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
 
 
-class NewFileSchema(marshmallows.ProjectRequiredSchema):
+class NewFileSchema(project_schemas.ProjectRequiredSchema):
     """Validates and creates a new file object."""
 
     # Length minimum 1 required, required=True accepts empty string

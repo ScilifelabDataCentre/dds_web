@@ -29,6 +29,7 @@ import dds_web.utils
 import dds_web.forms
 from dds_web.api import marshmallows
 import dds_web.api.errors as ddserr
+from dds_web.api.schemas import project_schemas
 
 # VARIABLES ############################################################################ VARIABLES #
 
@@ -232,7 +233,7 @@ class AddUser(flask_restful.Resource):
     def add_user_to_project(existing_user, project, owner=False):
         """Add existing user to a project"""
 
-        project = marshmallows.ProjectRequiredSchema().load({"project": project})
+        project = project_schemas.ProjectRequiredSchema().load({"project": project})
         ownership_change = False
         for rusers in project.researchusers:
             if rusers.researchuser is existing_user:

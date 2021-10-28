@@ -14,6 +14,7 @@ import flask
 from dds_web import auth
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api import marshmallows
+from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -27,7 +28,7 @@ class S3Info(flask_restful.Resource):
     def get(self):
         """Get the safespring project"""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         sfsp_proj, keys, url, bucketname = ApiS3Connector(project=project).get_s3_info()
 

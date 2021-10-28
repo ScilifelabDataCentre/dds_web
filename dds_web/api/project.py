@@ -38,7 +38,7 @@ from dds_web.crypt import key_gen
 from dds_web.api import marshmallows
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import custom_fields
-
+from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -165,7 +165,7 @@ class GetPublic(flask_restful.Resource):
     def get(self):
         """Get public key from database."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         flask.current_app.logger.debug("Getting the public key.")
 
@@ -182,7 +182,7 @@ class GetPrivate(flask_restful.Resource):
     def get(self):
         """Get private key from database"""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # TODO (ina): Change handling of private key -- not secure
         flask.current_app.logger.debug("Getting the private key.")
@@ -280,7 +280,7 @@ class RemoveContents(flask_restful.Resource):
     def delete(self):
         """Removes all project contents."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Delete files
         removed = False
@@ -327,7 +327,7 @@ class UpdateProjectSize(flask_restful.Resource):
     def put(self):
         """Update the project size and updated time stamp."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         updated, error = (False, "")
         current_try, max_tries = (1, 5)
@@ -414,7 +414,7 @@ class ProjectUsers(flask_restful.Resource):
     @auth.login_required
     def get(self):
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Get info on research users
         research_users = list()

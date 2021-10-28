@@ -23,6 +23,7 @@ from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import DatabaseError
 from dds_web.api import marshmallows
 from dds_web.api.schemas import file_schemas
+from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -51,7 +52,7 @@ class NewFile(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def put(self):
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         file_info = flask.request.json
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
@@ -131,7 +132,7 @@ class MatchFiles(flask_restful.Resource):
     def get(self):
         """Matches specified files to files in db."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         try:
             matching_files = (
@@ -156,7 +157,7 @@ class ListFiles(flask_restful.Resource):
     def get(self):
         """Get a list of files within the specified folder."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         extra_args = flask.request.json
         # Check if to return file size
         show_size = extra_args.get("show_size")
@@ -226,7 +227,7 @@ class RemoveFile(flask_restful.Resource):
     def delete(self):
         """Deletes the files"""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         with DBConnector(project=project) as dbconn:
             not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
@@ -248,7 +249,7 @@ class RemoveDir(flask_restful.Resource):
     def delete(self):
         """Deletes the folders."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         not_removed_dict, not_exist_list = ({}, [])
 
@@ -306,7 +307,7 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Get files and folders requested by CLI
         paths = flask.request.json
@@ -392,7 +393,7 @@ class FileInfoAll(flask_restful.Resource):
     def get(self):
         """Get file info."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         files = {}
         try:
@@ -441,7 +442,7 @@ class UpdateFile(flask_restful.Resource):
     def put(self):
         """Update info in db."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         file_info = flask.request.json
         # Get file name from request from CLI
