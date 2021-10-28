@@ -22,7 +22,6 @@ import dds_web.security.auth
 from dds_web.database import models
 from dds_web import utils
 import dds_web.crypt
-from dds_web.api import marshmallows
 from dds_web.api.schemas import project_schemas
 
 ####################################################################################################

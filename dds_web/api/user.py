@@ -27,9 +27,9 @@ from dds_web import auth, mail, db
 from dds_web.database import models
 import dds_web.utils
 import dds_web.forms
-from dds_web.api import marshmallows
 import dds_web.api.errors as ddserr
 from dds_web.api.schemas import project_schemas
+from dds_web.api.schemas import user_schemas
 
 # VARIABLES ############################################################################ VARIABLES #
 
@@ -124,7 +124,7 @@ class AddUser(flask_restful.Resource):
             project = args.pop("project")
 
         # Check if email is registered to a user
-        existing_user = marshmallows.UserSchema().load(args)
+        existing_user = user_schemas.UserSchema().load(args)
 
         if not existing_user:
             # Send invite if the user doesn't exist
@@ -158,7 +158,7 @@ class AddUser(flask_restful.Resource):
 
         try:
             # Use schema to validate and check args, and create invite row
-            new_invite = marshmallows.InviteUserSchema().load(args)
+            new_invite = user_schemas.InviteUserSchema().load(args)
 
         except ddserr.InviteError as invite_err:
             return {
@@ -333,7 +333,7 @@ class NewUser(flask_restful.Resource):
             flask.current_app.logger.debug(form.data)
             # Create new user row by loading form data into schema
             try:
-                new_user = marshmallows.NewUserSchema().load(form.data)
+                new_user = user_schemas.NewUserSchema().load(form.data)
 
             except marshmallow.ValidationError as valerr:
                 flask.current_app.logger.info(valerr)

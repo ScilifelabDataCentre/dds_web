@@ -35,10 +35,10 @@ from dds_web.api.errors import (
     KeyNotFoundError,
 )
 from dds_web.crypt import key_gen
-from dds_web.api import marshmallows
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import custom_fields
 from dds_web.api.schemas import project_schemas
+from dds_web.api.schemas import user_schemas
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -377,7 +377,7 @@ class CreateProject(flask_restful.Resource):
             for user in p_info["users_to_add"]:
                 owner = user.pop("owner", False)
 
-                existing_user = marshmallows.UserSchema().load(user)
+                existing_user = user_schemas.UserSchema().load(user)
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
