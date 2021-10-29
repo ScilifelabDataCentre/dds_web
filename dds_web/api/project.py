@@ -373,15 +373,13 @@ class CreateProject(flask_restful.Resource):
         user_addition_statuses = []
         if "users_to_add" in p_info:
             for user in p_info["users_to_add"]:
-                owner = user.pop("owner", False)
-
                 existing_user = marshmallows.UserSchema().load(user)
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
                         {
                             "email": user.get("email"),
-                            "role": "Project Owner" if owner else "Researcher",
+                            "role": user.get("role"),
                         }
                     )
                     if invite_user_result["status"] == 200:
@@ -392,7 +390,9 @@ class CreateProject(flask_restful.Resource):
                 else:
                     # If it is an existing user, add them to project.
                     add_user_result = AddUser.add_user_to_project(
-                        existing_user=existing_user, project=new_project.public_id, owner=owner
+                        existing_user=existing_user,
+                        project=new_project.public_id,
+                        owner=user.get("role") == "Project Owner",
                     )
                     user_addition_statuses.append(add_user_result["message"])
 
