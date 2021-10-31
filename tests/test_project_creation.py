@@ -22,14 +22,14 @@ proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer proj
 proj_data_with_existing_users = {
     **proj_data,
     "users_to_add": [
-        {"email": "researchuser@mailtrap.io", "role": "Researcher", "owner": True},
+        {"email": "researchuser@mailtrap.io", "role": "Project Owner"},
         {"email": "researchuser2@mailtrap.io", "role": "Researcher"},
     ],
 }
 proj_data_with_nonexisting_users = {
     **proj_data,
     "users_to_add": [
-        {"email": "non_existing_user@mailtrap.io", "role": "Researcher", "owner": True},
+        {"email": "non_existing_user@mailtrap.io", "role": "Project Owner"},
         {"email": "non_existing_user2@mailtrap.io", "role": "Researcher"},
     ],
 }
@@ -380,7 +380,12 @@ def test_create_project_with_users(client):
     users_dict_from_email = []
     for user in proj_data_with_existing_users["users_to_add"]:
         email = db.session.query(models.Email).filter_by(email=user["email"]).one_or_none()
-        users_dict_from_email.append({"username": email.user_id, "owner": user.get("owner", False)})
+        users_dict_from_email.append(
+            {
+                "username": email.user_id,
+                "owner": True if user.get("role") == "Project Owner" else False,
+            }
+        )
 
     case = unittest.TestCase()
     case.assertCountEqual(users_dict_from_db, users_dict_from_email)
