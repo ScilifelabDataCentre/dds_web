@@ -24,9 +24,7 @@ from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import (
-    MissingProjectIDError,
     DatabaseError,
-    NoSuchProjectError,
     AccessDeniedError,
     EmptyProjectException,
     DeletionError,
@@ -35,8 +33,10 @@ from dds_web.api.errors import (
     KeyNotFoundError,
 )
 from dds_web.crypt import key_gen
-from dds_web.api import marshmallows
 from dds_web.api.user import AddUser
+from dds_web.api.schemas import custom_fields
+from dds_web.api.schemas import project_schemas
+from dds_web.api.schemas import user_schemas
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -57,7 +57,7 @@ class CreateProjectSchema(marshmallow.Schema):
         required=True, validate=marshmallow.validate.Length(min=1, max=255)
     )
     is_sensitive = marshmallow.fields.Boolean(required=False)
-    date_created = dds_web.utils.MyDateTimeField(required=False)
+    date_created = custom_fields.MyDateTimeField(required=False)
 
     # Only "In Progress" allowed when creating the project
     status = marshmallow.fields.String(
@@ -163,7 +163,7 @@ class GetPublic(flask_restful.Resource):
     def get(self):
         """Get public key from database."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         flask.current_app.logger.debug("Getting the public key.")
 
@@ -180,7 +180,7 @@ class GetPrivate(flask_restful.Resource):
     def get(self):
         """Get private key from database"""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # TODO (ina): Change handling of private key -- not secure
         flask.current_app.logger.debug("Getting the private key.")
@@ -278,7 +278,7 @@ class RemoveContents(flask_restful.Resource):
     def delete(self):
         """Removes all project contents."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Delete files
         removed = False
@@ -325,7 +325,7 @@ class UpdateProjectSize(flask_restful.Resource):
     def put(self):
         """Update the project size and updated time stamp."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         updated, error = (False, "")
         current_try, max_tries = (1, 5)
@@ -373,7 +373,7 @@ class CreateProject(flask_restful.Resource):
         user_addition_statuses = []
         if "users_to_add" in p_info:
             for user in p_info["users_to_add"]:
-                existing_user = marshmallows.UserSchema().load(user)
+                existing_user = user_schemas.UserSchema().load(user)
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
@@ -412,7 +412,7 @@ class ProjectUsers(flask_restful.Resource):
     @auth.login_required
     def get(self):
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Get info on research users
         research_users = list()

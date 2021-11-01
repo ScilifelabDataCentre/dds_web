@@ -7,13 +7,11 @@
 # Standard library
 import logging
 import traceback
-
 import pathlib
 import json
 
 # Installed
 import botocore
-
 import flask
 
 # Own modules
