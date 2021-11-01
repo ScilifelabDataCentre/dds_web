@@ -241,7 +241,7 @@ class AddUser(flask_restful.Resource):
         if role == "Project Owner":
             owner = True
 
-        project = marshmallows.ProjectRequiredSchema().load({"project": project})
+        project = project_schemas.ProjectRequiredSchema().load({"project": project})
         ownership_change = False
         for rusers in project.researchusers:
             if rusers.researchuser is existing_user:
