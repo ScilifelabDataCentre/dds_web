@@ -392,7 +392,7 @@ class CreateProject(flask_restful.Resource):
                     add_user_result = AddUser.add_user_to_project(
                         existing_user=existing_user,
                         project=new_project.public_id,
-                        owner=user.get("role") == "Project Owner",
+                        role=user.get("role"),
                     )
                     user_addition_statuses.append(add_user_result["message"])
 
