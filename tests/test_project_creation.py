@@ -413,7 +413,7 @@ def test_create_project_with_invited_users(client):
         assert "Invitation sent" in x
 
 
-def test_create_project_with_unsuitabl_(client):
+def test_create_project_with_unsuitable_roles(client):
     """Create project and add users with unsuitable roles to the project."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,

@@ -280,6 +280,3 @@ def test_add_existing_user_with_unsuitable_role(client):
         content_type="application/json",
     )
     assert response.status == "403 FORBIDDEN"
-
-
-existing_research_user
