@@ -102,7 +102,6 @@ class Project(db.Model):
     status = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)
     pi = db.Column(db.String(255), unique=False, nullable=False)
-    size = db.Column(db.BigInteger, unique=False, nullable=False)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
     public_key = db.Column(db.String(64), nullable=False)
     private_key = db.Column(db.String(255), nullable=False)
@@ -123,6 +122,18 @@ class Project(db.Model):
         """Get the safespring project name from responsible unit."""
 
         return self.responsible_unit.safespring
+
+    @property
+    def size(self):
+        """Calculate size of project."""
+
+        return sum([f.size_stored for f in self.files])
+
+    @property
+    def num_files(self):
+        """Get number of files in project."""
+
+        return len(self.files)
 
     def __repr__(self):
         """Called by print, creates representation of object"""

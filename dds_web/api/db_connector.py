@@ -55,20 +55,6 @@ class DBConnector:
         flask.current_app.logger.debug("Bucket: %s", bucket)
         return bucket
 
-    def project_size(self):
-        """Get size (number of files in) of project"""
-
-        try:
-            num_proj_files = models.File.query.filter(
-                models.File.project_id == sqlalchemy.func.binary(self.project.id)
-            ).count()
-
-            flask.current_app.logger.debug("Number of project files: %s", num_proj_files)
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
-        else:
-            return num_proj_files
-
     def items_in_subpath(self, folder="."):
         """Get all items in root folder of project"""
 
@@ -161,7 +147,6 @@ class DBConnector:
 
             # TODO (ina): put in class
             # change project size
-            self.project.size = 0
             self.project.date_updated = dds_web.utils.current_time()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -210,9 +195,7 @@ class DBConnector:
                     current_file_version.time_deleted = dds_web.utils.current_time()
 
                     # Delete file and update project size
-                    old_size = x.size_original
                     db.session.delete(x)
-                    self.project.size -= old_size
                 self.project.date_updated = dds_web.utils.current_time()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)
@@ -288,7 +271,6 @@ class DBConnector:
             exists, name_in_bucket = (True, file.name_in_bucket)
             try:
                 # TODO (ina): put in own class
-                old_size = file.size_original
 
                 # get current version
                 current_file_version = models.Version.query.filter(
@@ -300,7 +282,6 @@ class DBConnector:
                 current_file_version.time_deleted = dds_web.utils.current_time()
 
                 db.session.delete(file)
-                self.project.size -= old_size
                 self.project.date_updated = dds_web.utils.current_time()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 db.session.rollback()

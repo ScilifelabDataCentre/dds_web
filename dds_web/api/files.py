@@ -171,7 +171,7 @@ class ListFiles(flask_restful.Resource):
         with DBConnector(project=project) as dbconn:
             # Get number of files in project and return if empty or error
             try:
-                num_files = dbconn.project_size()
+                num_files = project.num_files
             except DatabaseError:
                 raise
 

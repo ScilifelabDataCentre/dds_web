@@ -93,7 +93,6 @@ class DDSEndpoint:
     FILE_UPDATE = BASE_ENDPOINT + "/file/update"
 
     # Project specific urls
-    PROJECT_SIZE = BASE_ENDPOINT + "/proj/size"
     PROJECT_CREATE = BASE_ENDPOINT + "/proj/create"
 
     # Listing urls
