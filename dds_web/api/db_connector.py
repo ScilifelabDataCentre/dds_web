@@ -146,7 +146,6 @@ class DBConnector:
             ).delete()
 
             # TODO (ina): put in class
-            # change project size
             self.project.date_updated = dds_web.utils.current_time()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:

@@ -169,12 +169,8 @@ class ListFiles(flask_restful.Resource):
 
         # Check project not empty
         with DBConnector(project=project) as dbconn:
-            # Get number of files in project and return if empty or error
-            try:
-                num_files = project.num_files
-            except DatabaseError:
-                raise
-
+            # Get number of files in project and return if empty
+            num_files = project.num_files
             if num_files == 0:
                 return flask.jsonify(
                     {
