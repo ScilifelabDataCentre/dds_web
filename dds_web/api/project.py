@@ -373,7 +373,7 @@ class CreateProject(flask_restful.Resource):
         user_addition_statuses = []
         if "users_to_add" in p_info:
             for user in p_info["users_to_add"]:
-                existing_user = marshmallows.UserSchema().load(user)
+                existing_user = user_schemas.UserSchema().load(user)
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
