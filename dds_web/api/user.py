@@ -134,9 +134,7 @@ class AddUser(flask_restful.Resource):
         else:
             # If there is an existing user, add them to project.
             if project:
-                add_user_result = self.add_user_to_project(
-                    existing_user, project, args.get("role") == "Project Owner"
-                )
+                add_user_result = self.add_user_to_project(existing_user, project, args.get("role"))
                 flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
                 return flask.make_response(
                     flask.jsonify(add_user_result), add_user_result["status"]
@@ -229,8 +227,20 @@ class AddUser(flask_restful.Resource):
         return {"email": new_invite.email, "message": "Invite successful!", "status": 200}
 
     @staticmethod
-    def add_user_to_project(existing_user, project, owner=False):
+    def add_user_to_project(existing_user, project, role):
         """Add existing user to a project"""
+
+        allowed_roles = ["Project Owner", "Researcher"]
+
+        if role not in allowed_roles or existing_user.role not in allowed_roles:
+            return {
+                "status": 403,
+                "message": "User Role should be either 'Project Owner' or 'Researcher' to be added to a project",
+            }
+
+        owner = False
+        if role == "Project Owner":
+            owner = True
 
         project = marshmallows.ProjectRequiredSchema().load({"project": project})
         ownership_change = False
