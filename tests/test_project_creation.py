@@ -22,15 +22,22 @@ proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer proj
 proj_data_with_existing_users = {
     **proj_data,
     "users_to_add": [
-        {"email": "researchuser@mailtrap.io", "role": "Researcher", "owner": True},
+        {"email": "researchuser@mailtrap.io", "role": "Project Owner"},
         {"email": "researchuser2@mailtrap.io", "role": "Researcher"},
     ],
 }
 proj_data_with_nonexisting_users = {
     **proj_data,
     "users_to_add": [
-        {"email": "non_existing_user@mailtrap.io", "role": "Researcher", "owner": True},
+        {"email": "non_existing_user@mailtrap.io", "role": "Project Owner"},
         {"email": "non_existing_user2@mailtrap.io", "role": "Researcher"},
+    ],
+}
+proj_data_with_unsuitable_user_roles = {
+    **proj_data,
+    "users_to_add": [
+        {"email": "researchuser@mailtrap.io", "role": "Unit Admin"},
+        {"email": "researchuser2@mailtrap.io", "role": "Unit Personnel"},
     ],
 }
 
@@ -380,7 +387,12 @@ def test_create_project_with_users(client):
     users_dict_from_email = []
     for user in proj_data_with_existing_users["users_to_add"]:
         email = db.session.query(models.Email).filter_by(email=user["email"]).one_or_none()
-        users_dict_from_email.append({"username": email.user_id, "owner": user.get("owner", False)})
+        users_dict_from_email.append(
+            {
+                "username": email.user_id,
+                "owner": True if user.get("role") == "Project Owner" else False,
+            }
+        )
 
     case = unittest.TestCase()
     case.assertCountEqual(users_dict_from_db, users_dict_from_email)
@@ -399,3 +411,17 @@ def test_create_project_with_invited_users(client):
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
         assert "Invitation sent" in x
+
+
+def test_create_project_with_unsuitable_roles(client):
+    """Create project and add users with unsuitable roles to the project."""
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(proj_data_with_unsuitable_user_roles),
+        content_type="application/json",
+    )
+    assert response.status == "200 OK"
+    assert response.json and response.json.get("user_addition_statuses")
+    for x in response.json.get("user_addition_statuses"):
+        assert "User Role should be either 'Project Owner' or 'Researcher'" in x
