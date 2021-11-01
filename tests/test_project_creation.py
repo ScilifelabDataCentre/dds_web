@@ -33,6 +33,13 @@ proj_data_with_nonexisting_users = {
         {"email": "non_existing_user2@mailtrap.io", "role": "Researcher"},
     ],
 }
+proj_data_with_unsuitable_user_roles = {
+    **proj_data,
+    "users_to_add": [
+        {"email": "researchuser@mailtrap.io", "role": "Unit Admin"},
+        {"email": "researchuser2@mailtrap.io", "role": "Unit Personnel"},
+    ],
+}
 
 # TESTS #################################################################################### TESTS #
 
@@ -404,3 +411,17 @@ def test_create_project_with_invited_users(client):
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
         assert "Invitation sent" in x
+
+
+def test_create_project_with_unsuitabl_(client):
+    """Create project and add users with unsuitable roles to the project."""
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(proj_data_with_unsuitable_user_roles),
+        content_type="application/json",
+    )
+    assert response.status == "200 OK"
+    assert response.json and response.json.get("user_addition_statuses")
+    for x in response.json.get("user_addition_statuses"):
+        assert "User Role should be either 'Project Owner' or 'Researcher'" in x

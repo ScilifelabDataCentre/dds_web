@@ -268,3 +268,18 @@ def test_existing_user_change_ownership_same_permissions(client):
         content_type="application/json",
     )
     assert response.status == "403 FORBIDDEN"
+
+
+def test_add_existing_user_with_unsuitable_role(client):
+    user_with_unsuitable_role = existing_research_user_to_existing_project.copy()
+    user_with_unsuitable_role["role"] = "Unit Admin"
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(user_with_unsuitable_role),
+        content_type="application/json",
+    )
+    assert response.status == "403 FORBIDDEN"
+
+
+existing_research_user
