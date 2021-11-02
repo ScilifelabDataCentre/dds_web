@@ -63,8 +63,6 @@ class CreateProjectSchema(marshmallow.Schema):
     status = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Equal("In Progress")
     )
-    # Only size 0 allowed -- doesn't contain anything yet
-    size = marshmallow.fields.Integer(required=True, validate=marshmallow.validate.Equal(0))
 
     @marshmallow.pre_load
     def generate_required_fields(self, data, **kwargs):
@@ -76,7 +74,6 @@ class CreateProjectSchema(marshmallow.Schema):
 
         data["date_created"] = dds_web.utils.current_time()
         data["status"] = "In Progress"
-        data["size"] = 0
 
         return data
 
@@ -91,7 +88,6 @@ class CreateProjectSchema(marshmallow.Schema):
                 "status",
                 "description",
                 "pi",
-                "size",
             ]
         ):
             raise marshmallow.ValidationError("Missing fields!")
@@ -245,7 +241,7 @@ class UserProjects(flask_restful.Resource):
             }
 
             # Get proj size and update total size
-            proj_size = sum([f.size_stored for f in p.files])
+            proj_size = p.size
             total_size += proj_size
             project_info["Size"] = proj_size
 
@@ -318,41 +314,6 @@ class RemoveContents(flask_restful.Resource):
                 raise
 
         return flask.jsonify({"removed": removed})
-
-
-class UpdateProjectSize(flask_restful.Resource):
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
-    def put(self):
-        """Update the project size and updated time stamp."""
-
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-
-        updated, error = (False, "")
-        current_try, max_tries = (1, 5)
-        while current_try < max_tries:
-            try:
-                tot_file_size = (
-                    models.File.query.with_entities(
-                        sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
-                    )
-                    .filter(models.File.project_id == project.id)
-                    .first()
-                )
-
-                project.size = tot_file_size.sizeSum
-                project.date_updated = dds_web.utils.current_time()
-
-                db.session.commit()
-            except sqlalchemy.exc.SQLAlchemyError as err:
-                flask.current_app.logger.exception(err)
-                db.session.rollback()
-                current_try += 1
-            else:
-                flask.current_app.logger.debug("Updated project size!")
-                updated = True
-                break
-
-        return flask.jsonify({"updated": updated, "error": error, "tries": current_try})
 
 
 class CreateProject(flask_restful.Resource):

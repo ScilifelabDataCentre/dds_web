@@ -35,7 +35,6 @@ def fill_db():
         description="This is a test project. You will be able to upload to but NOT download "
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
-        size=0,
         bucket=f"testbucket",
         public_key="669F9C66CDCB6C08165453617101FD04884D3D23367A5C088FD8DF2C5F30CA49",
         private_key="180245F63CE331516155851C08A919B79FEA62D69B3FC34033C678A64176657668D0D483E860540873C4EB5F58E2F074",
@@ -51,7 +50,6 @@ def fill_db():
         description="This is a test project. You will be able to upload to but NOT download "
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
-        size=0,
         bucket=f"secondproject-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
         public_key="669F9C66CDCB6C08165453617101FD04884D3D23367A5C088FD8DF2C5F30CA49",
         private_key="180245F63CE331516155851C08A919B79FEA62D69B3FC34033C678A64176657668D0D483E860540873C4EB5F58E2F074",
