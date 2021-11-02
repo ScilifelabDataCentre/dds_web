@@ -171,7 +171,20 @@ class DBConnector:
             if num_deleted == 0:
                 raise EmptyProjectException(project=self.project.public_id)
 
-            return True
+        try:
+            # Update all versions associated with project
+            models.Version.query.filter(
+                sqlalchemy.and_(
+                    models.Version.project_id == self.project.id,
+                    models.Version.time_deleted == None,
+                )
+            ).update({"time_deleted": dds_web.utils.current_time()})
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            raise DatabaseError(message=str(err))
+
+        return True
 
     def delete_folder(self, folder):
         """Delete all items in folder"""
