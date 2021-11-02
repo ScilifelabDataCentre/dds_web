@@ -389,12 +389,18 @@ class CreateProject(flask_restful.Resource):
                     user_addition_statuses.append(invite_msg)
                 else:
                     # If it is an existing user, add them to project.
-                    add_user_result = AddUser.add_user_to_project(
-                        existing_user=existing_user,
-                        project=new_project.public_id,
-                        role=user.get("role"),
-                    )
-                    user_addition_statuses.append(add_user_result["message"])
+                    addition_status = ""
+                    try:
+                        add_user_result = AddUser.add_user_to_project(
+                            existing_user=existing_user,
+                            project=new_project.public_id,
+                            role=user.get("role"),
+                        )
+                    except DatabaseError as err:
+                        addition_status = f"Error for {user['email']}: {err.description}"
+                    else:
+                        addition_status = add_user_result["message"]
+                    user_addition_statuses.append(addition_status)
 
         return flask.jsonify(
             {
