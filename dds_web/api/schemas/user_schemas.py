@@ -111,21 +111,38 @@ class InviteUserSchema(marshmallow.Schema):
             raise marshmallow.ValidationError("Project ID required when adding Project Owner.")
 
         # Validate user access to invite/add
-        if curr_user_role == "Unit Admin":
+        if curr_user_role == "Researcher":
+            # Check if user is project owner
+            if project:
+                try:
+                    owner_row = (
+                        db.session.query(models.ProjectUsers)
+                        .filter(
+                            sqlalchemy.and_(
+                                models.ProjectUsers.project_id == project.id,
+                                models.ProjectUsers.user_id == auth.current_user().username,
+                                models.ProjectUsers.owner == True,
+                            )
+                        )
+                        .one_or_none()
+                    )
+                except sqlalchemy.exc.SQLAlchemyError:
+                    raise
+
+                if not owner_row:
+                    raise ddserr.AccessDeniedError(
+                        "User is not a Project Owner for the specified project."
+                    )
+
+            raise ddserr.InviteError("Project ID required to attempt invite.")
+        elif curr_user_role == "Unit Admin":
             if attempted_invite_role == "Super Admin":
                 raise ddserr.AccessDeniedError
         elif curr_user_role == "Unit Personnel":
             if attempted_invite_role in ["Super Admin", "Unit Admin"]:
                 raise ddserr.AccessDeniedError
-        elif curr_user_role == "Researcher":
-            # research users can only invite in certain projects if they are set as the owner
-            # TODO: Add required project field for researchers to be able to invite (if
-            raise ddserr.AccessDeniedError(
-                message=(
-                    "Research users cannot invite at this time. "
-                    "Project owner invite config will be fixed."
-                )
-            )
+        else:
+            raise ddserr.InviteError("Invalid role found for current user.")
 
     @marshmallow.post_load
     def make_invite(self, data, **kwargs):
