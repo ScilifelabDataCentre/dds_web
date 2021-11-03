@@ -122,7 +122,7 @@ class InviteUserSchema(marshmallow.Schema):
                     db.session.query(models.ProjectUsers)
                     .filter(
                         sqlalchemy.and_(
-                            models.ProjectUsers.project_id == project.id,
+                            models.ProjectUsers.project_id == data["project_row"].id,
                             models.ProjectUsers.user_id == auth.current_user().username,
                             models.ProjectUsers.owner == True,
                         )

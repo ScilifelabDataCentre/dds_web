@@ -174,6 +174,7 @@ class AddUser(flask_restful.Resource):
 
         # Compose and send email
         unit_name = None
+        unit_email = None
         if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
             unit = auth.current_user().unit
             unit_name = unit.external_display_name

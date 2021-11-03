@@ -5,48 +5,93 @@ from dds_web.database import models
 import tests
 import pytest
 import marshmallow
+import http
 
-first_new_email = {"email": "first_test_email@mailtrap.io"}
-first_new_user = {**first_new_email, "role": "Researcher"}
-first_new_user_extra_args = {**first_new_user, "extra": "test"}
-first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
-first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_new_user["role"]}
-existing_invite = {"email": "existing_invite_email@mailtrap.io", "role": "Researcher"}
-new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Super Admin"}
-existing_research_user = {"email": "researchuser2@mailtrap.io", "role": "Researcher"}
-existing_research_user_owner = {"email": "researchuser2@mailtrap.io", "role": "Project Owner"}
-existing_research_user_to_existing_project = {
-    **existing_research_user,
-    "project": "public_project_id",
-}
-existing_research_user_to_nonexistent_proj = {
-    **existing_research_user,
-    "project": "not_a_project_id",
-}
-change_owner_existing_user = {
-    "email": "researchuser@mailtrap.io",
-    "role": "Project Owner",
-    "project": "public_project_id",
-}
-submit_with_same_ownership = {
-    **existing_research_user_owner,
-    "project": "second_public_project_id",
-}
+researchuser_no_role = {"email": "researcher_1@mailtrap.io"}
+researchuser_no_project = {**researchuser_no_role, "role": "Researcher"}
+researchuser_with_project = {**researchuser_no_project, "project": "public_project_id"}
+# first_new_user = {**first_new_email, "role": "Researcher"}
+# first_new_user_extra_args = {**first_new_user, "extra": "test"}
+# first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
+# first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_new_user["role"]}
+# existing_invite = {"email": "existing_invite_email@mailtrap.io", "role": "Researcher"}
+# new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Super Admin"}
+# existing_research_user = {"email": "researchuser2@mailtrap.io", "role": "Researcher"}
+# existing_research_user_owner = {"email": "researchuser2@mailtrap.io", "role": "Project Owner"}
+# existing_research_user_to_existing_project = {
+#     **existing_research_user,
+#     "project": "public_project_id",
+# }
+# existing_research_user_to_nonexistent_proj = {
+#     **existing_research_user,
+#     "project": "not_a_project_id",
+# }
+# change_owner_existing_user = {
+#     "email": "researchuser@mailtrap.io",
+#     "role": "Project Owner",
+#     "project": "public_project_id",
+# }
+# submit_with_same_ownership = {
+#     **existing_research_user_owner,
+#     "project": "second_public_project_id",
+# }
 
 
 def test_add_user_with_researcher(client):
     """Test adding user as a researcher -- should not be allowed."""
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).post_headers(),
-        data=json.dumps(first_new_user),
-        content_type="application/json",
-    )
-    assert response.status == "403 FORBIDDEN"
+    with pytest.raises(marshmallow.ValidationError) as err:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).post_headers(),
+            data=json.dumps(researchuser_no_role),
+            content_type="application/json",
+        )
+        assert "role" in str(err.value)
+
     invited_user = (
-        db.session.query(models.Invite).filter_by(email=first_new_user["email"]).one_or_none()
+        db.session.query(models.Invite).filter_by(email=researchuser_no_role["email"]).one_or_none()
     )
     assert invited_user is None
+
+
+def test_add_user_with_project_owner_no_project(client):
+    """Test adding user as a project owner -- should only be allowed when projects are specified."""
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).post_headers(),
+        data=json.dumps(researchuser_no_project),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.json and "Project required" in response.json.get("message")
+
+    invited_user = (
+        db.session.query(models.Invite)
+        .filter_by(email=researchuser_no_project["email"])
+        .one_or_none()
+    )
+    assert invited_user is None
+
+
+def test_add_researcher_with_project_owner(client):
+    """Test adding user as a project owner -- should work with project."""
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).post_headers(),
+        data=json.dumps(researchuser_with_project),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = (
+        db.session.query(models.Invite)
+        .filter_by(
+            email=researchuser_with_project["email"],
+            role=researchuser_with_project["role"],
+        )
+        .one_or_none()
+    )
+    assert invited_user and invited_user.project_id
 
 
 # def test_add_user_with_unituser_no_role(client):
