@@ -116,6 +116,8 @@ class Project(db.Model):
     expired_files = db.relationship("ExpiredFile", backref="assigned_project")
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
+    # One project can have many invites
+    invites = db.relationship("Invite", backref="connected_project")
 
     @property
     def safespring_project(self):
@@ -304,6 +306,7 @@ class Invite(db.Model):
 
     # Foreign key
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
     # Columns
     email = db.Column(db.String(254), unique=True, nullable=False)

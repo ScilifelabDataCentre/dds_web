@@ -126,7 +126,7 @@ class AddUser(flask_restful.Resource):
 
         if not existing_user:
             # Send invite if the user doesn't exist
-            invite_user_result = self.invite_user(args)
+            invite_user_result = self.invite_user({**args, "project": project})
             return flask.make_response(
                 flask.jsonify(invite_user_result), invite_user_result["status"]
             )
