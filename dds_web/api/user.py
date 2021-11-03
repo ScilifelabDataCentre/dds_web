@@ -117,9 +117,7 @@ class AddUser(flask_restful.Resource):
 
         args = flask.request.json
 
-        project = ""
-        if "project" in args:
-            project = args.pop("project")
+        project = args.pop("project", "")
 
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load(args)
