@@ -112,29 +112,36 @@ class InviteUserSchema(marshmallow.Schema):
 
         # Validate user access to invite/add
         if curr_user_role == "Researcher":
-            # Check if user is project owner
-            if project:
-                try:
-                    owner_row = (
-                        db.session.query(models.ProjectUsers)
-                        .filter(
-                            sqlalchemy.and_(
-                                models.ProjectUsers.project_id == project.id,
-                                models.ProjectUsers.user_id == auth.current_user().username,
-                                models.ProjectUsers.owner == True,
-                            )
+            # Project required
+            if not project:
+                raise ddserr.InviteError("Project required to attempt invite.")
+
+            # Project specified -- can check if project owner
+            try:
+                owner_row = (
+                    db.session.query(models.ProjectUsers)
+                    .filter(
+                        sqlalchemy.and_(
+                            models.ProjectUsers.project_id == project.id,
+                            models.ProjectUsers.user_id == auth.current_user().username,
+                            models.ProjectUsers.owner == True,
                         )
-                        .one_or_none()
                     )
-                except sqlalchemy.exc.SQLAlchemyError:
-                    raise
+                    .one_or_none()
+                )
+            except sqlalchemy.exc.SQLAlchemyError:
+                raise
 
-                if not owner_row:
-                    raise ddserr.AccessDeniedError(
-                        "User is not a Project Owner for the specified project."
-                    )
+            # User not project owner
+            if not owner_row:
+                raise ddserr.AccessDeniedError(
+                    "User is not a Project Owner for the specified project."
+                )
 
-            raise ddserr.InviteError("Project ID required to attempt invite.")
+            # User can only invite project owners and researchers
+            if attempted_invite_role in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+                raise ddserr.AccessDeniedError
+
         elif curr_user_role == "Unit Admin":
             if attempted_invite_role == "Super Admin":
                 raise ddserr.AccessDeniedError
