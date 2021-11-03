@@ -10,6 +10,16 @@ import http
 researchuser_no_role = {"email": "researcher_1@mailtrap.io"}
 researchuser_no_project = {**researchuser_no_role, "role": "Researcher"}
 researchuser_with_project = {**researchuser_no_project, "project": "public_project_id"}
+
+projectowner_no_project = {"email": "projectowner_1@mailtrap.io", "role": "Project Owner"}
+projectowner_with_project = {**projectowner_no_project, "project": "public_project_id"}
+
+unitpersonnel_no_project = {"email": "unitpersonnel_1@mailtrap.io", "role": "Unit Personnel"}
+unitpersonnel_with_project = {
+    **unitpersonnel_no_project,
+    "project": "public_project_id",
+}
+
 # first_new_user = {**first_new_email, "role": "Researcher"}
 # first_new_user_extra_args = {**first_new_user, "extra": "test"}
 # first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
@@ -39,14 +49,13 @@ researchuser_with_project = {**researchuser_no_project, "project": "public_proje
 
 def test_add_user_with_researcher(client):
     """Test adding user as a researcher -- should not be allowed."""
-    with pytest.raises(marshmallow.ValidationError) as err:
+    with pytest.raises(marshmallow.ValidationError) as valerr:
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).post_headers(),
             data=json.dumps(researchuser_no_role),
             content_type="application/json",
         )
-        assert "role" in str(err.value)
 
     invited_user = (
         db.session.query(models.Invite).filter_by(email=researchuser_no_role["email"]).one_or_none()
@@ -92,6 +101,82 @@ def test_add_researcher_with_project_owner(client):
         .one_or_none()
     )
     assert invited_user and invited_user.project_id
+
+
+def test_add_projectowner_with_project_owner_no_project(client):
+    """Test adding project owner as a project owner -- should fail without project."""
+    with pytest.raises(marshmallow.ValidationError) as valerr:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).post_headers(),
+            data=json.dumps(projectowner_no_project),
+            content_type="application/json",
+        )
+        assert "Project ID required" in str(valerr.value)
+
+    invited_user = (
+        db.session.query(models.Invite)
+        .filter_by(
+            email=projectowner_no_project["email"],
+        )
+        .one_or_none()
+    )
+    assert not invited_user
+
+
+def test_add_projectowner_with_project_owner_with_project(client):
+    """Test adding project owner as a project owner -- should work with project."""
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).post_headers(),
+        data=json.dumps(projectowner_with_project),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = (
+        db.session.query(models.Invite)
+        .filter_by(email=projectowner_with_project["email"], role=projectowner_with_project["role"])
+        .one_or_none()
+    )
+    assert invited_user and invited_user.project_id
+
+
+def test_add_unitpersonnel_with_project_owner_with_project(client):
+    """Test adding unit personnel as a project owner -- should fail with project."""
+    with pytest.raises(marshmallow.ValidationError) as valerr:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).post_headers(),
+            data=json.dumps(unitpersonnel_with_project),
+            content_type="application/json",
+        )
+        assert "Cannot add" in str(valerr.value)
+
+    invited_user = (
+        db.session.query(models.Invite)
+        .filter_by(email=unitpersonnel_with_project["email"])
+        .one_or_none()
+    )
+    assert not invited_user
+
+
+def test_add_unitpersonnel_with_project_owner_no_project(client):
+    """Test adding unit personnel as a project owner - should fail because cannot add to project."""
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).post_headers(),
+        data=json.dumps(unitpersonnel_no_project),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    invited_user = (
+        db.session.query(models.Invite)
+        .filter_by(email=unitpersonnel_no_project["email"])
+        .one_or_none()
+    )
+    assert not invited_user
 
 
 # def test_add_user_with_unituser_no_role(client):

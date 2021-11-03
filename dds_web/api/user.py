@@ -153,17 +153,10 @@ class AddUser(flask_restful.Resource):
         try:
             # Use schema to validate and check args, and create invite row
             new_invite = user_schemas.InviteUserSchema().load(args)
-
-        except ddserr.InviteError as invite_err:
-            return {
-                "message": invite_err.description,
-                "status": ddserr.errors["InviteError"]["status"].value,
-            }
-
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise ddserr.DatabaseError(message=str(sqlerr))
-        except marshmallow.ValidationError as valerr:
-            raise ddserr.InviteError(message=valerr.messages)
+        except (marshmallow.ValidationError, ddserr.InviteError, ddserr.AccessDeniedError) as err:
+            raise
 
         # Create URL safe token for invitation link
         s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
