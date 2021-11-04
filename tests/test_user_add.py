@@ -161,7 +161,7 @@ def test_add_unitpersonnel_with_project_owner_with_project(client):
 
 
 def test_add_unitpersonnel_with_project_owner_no_project(client):
-    """Test adding unit personnel as a project owner - should fail because cannot add to project."""
+    """Test adding unit personnel as a project owner - should fail because no permission."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).post_headers(),
@@ -179,7 +179,7 @@ def test_add_unitpersonnel_with_project_owner_no_project(client):
 
 
 def test_add_researcher_with_unitpersonnel_no_project(client):
-    """Test adding unit personnel as a project owner - should fail because cannot add to project."""
+    """Test adding researcher as a unit personnel - should work."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
@@ -197,7 +197,7 @@ def test_add_researcher_with_unitpersonnel_no_project(client):
 
 
 def test_add_projectowner_with_unitpersonnel_with_project(client):
-    """Test adding unit personnel as a project owner - should fail because cannot add to project."""
+    """Test adding project owner as a unit personnel - should work."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
@@ -215,7 +215,7 @@ def test_add_projectowner_with_unitpersonnel_with_project(client):
 
 
 def test_add_unitpersonnel_with_unitpersonnel(client):
-    """Test adding unit personnel as a project owner - should fail because cannot add to project."""
+    """Test adding unit personnel as a unit personnel - should work."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
@@ -233,7 +233,7 @@ def test_add_unitpersonnel_with_unitpersonnel(client):
 
 
 def test_add_unitadmin_with_unitpersonnel(client):
-    """Test adding unit personnel as a project owner - should fail because cannot add to project."""
+    """Test adding unit admin as a unit personnel - should fail because no permission."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
@@ -249,7 +249,7 @@ def test_add_unitadmin_with_unitpersonnel(client):
 
 
 def test_add_superadmin_with_unitpersonnel(client):
-    """Test adding unit personnel as a project owner - should fail because cannot add to project."""
+    """Test adding super admin as a unit personnel - should fail because no permission."""
 
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
@@ -268,6 +268,7 @@ def test_add_superadmin_with_unitpersonnel(client):
 
 
 def test_add_user_with_unitadmin_with_extraargs(client):
+    """Test adding a user with extra args - should fail."""
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
@@ -285,6 +286,7 @@ def test_add_user_with_unitadmin_with_extraargs(client):
 
 
 def test_add_user_with_unitadmin_and_invalid_role(client):
+    """Test adding user with invalid role - should fail."""
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
@@ -300,6 +302,7 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
 
 
 def test_add_user_with_unitadmin_and_invalid_email(client):
+    """Test adding user with invalid email - should fail."""
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
@@ -315,6 +318,7 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
 
 
 def test_add_user_existing_email(client):
+    """Test adding user with existing email."""
     invited_user = (
         db.session.query(models.Invite)
         .filter_by(email=existing_invite["email"], role=existing_invite["role"])
@@ -331,6 +335,7 @@ def test_add_user_existing_email(client):
 
 
 def test_add_existing_user_to_nonexistent_proj(client):
+    """Test adding user to a non existing project."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
@@ -341,6 +346,7 @@ def test_add_existing_user_to_nonexistent_proj(client):
 
 
 def test_existing_user_change_ownership(client):
+    """Test changing ownership of user."""
     project = (
         db.session.query(models.Project)
         .filter_by(public_id=change_owner_existing_user["project"])
@@ -379,6 +385,7 @@ def test_existing_user_change_ownership(client):
 
 
 def test_existing_user_change_ownership_same_permissions(client):
+    """Test add user with same permissions."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
