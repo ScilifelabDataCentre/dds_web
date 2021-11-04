@@ -341,6 +341,7 @@ class CreateProject(flask_restful.Resource):
                         {
                             "email": user.get("email"),
                             "role": user.get("role"),
+                            "project": new_project.public_id,
                         }
                     )
                     if invite_user_result["status"] == 200:
