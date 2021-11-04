@@ -7,12 +7,10 @@
 # Standard library
 import traceback
 import os
-import datetime
 
 # Installed
 import flask
 import sqlalchemy
-from sqlalchemy.sql import func
 import pytz
 
 # Own modules
@@ -57,20 +55,6 @@ class DBConnector:
         flask.current_app.logger.debug("Bucket: %s", bucket)
         return bucket
 
-    def project_size(self):
-        """Get size (number of files in) of project"""
-
-        try:
-            num_proj_files = models.File.query.filter(
-                models.File.project_id == func.binary(self.project.id)
-            ).count()
-
-            flask.current_app.logger.debug("Number of project files: %s", num_proj_files)
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
-        else:
-            return num_proj_files
-
     def items_in_subpath(self, folder="."):
         """Get all items in root folder of project"""
 
@@ -83,11 +67,13 @@ class DBConnector:
         # TODO (ina): fix join
         try:
             # All files in project
-            files = models.File.query.filter(models.File.project_id == func.binary(self.project.id))
+            files = models.File.query.filter(
+                models.File.project_id == sqlalchemy.func.binary(self.project.id)
+            )
 
             # File names in root
             distinct_files = (
-                files.filter(models.File.subpath == func.binary(folder))
+                files.filter(models.File.subpath == sqlalchemy.func.binary(folder))
                 .with_entities(models.File.name, models.File.size_original)
                 .all()
             )
@@ -96,7 +82,7 @@ class DBConnector:
             if folder == ".":
                 # Get distinct folders in root, subpath should not be "."
                 distinct_folders = (
-                    files.filter(models.File.subpath != func.binary(folder))
+                    files.filter(models.File.subpath != sqlalchemy.func.binary(folder))
                     .with_entities(models.File.subpath)
                     .distinct()
                     .all()
@@ -139,7 +125,7 @@ class DBConnector:
                 )
                 .filter(
                     sqlalchemy.and_(
-                        models.File.project_id == func.binary(self.project.id),
+                        models.File.project_id == sqlalchemy.func.binary(self.project.id),
                         models.File.subpath.like(f"{folder_name}%"),
                     )
                 )
@@ -160,8 +146,6 @@ class DBConnector:
             ).delete()
 
             # TODO (ina): put in class
-            # change project size
-            self.project.size = 0
             self.project.date_updated = dds_web.utils.current_time()
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -195,10 +179,12 @@ class DBConnector:
         try:
             # File names in root
             files = (
-                models.File.query.filter(models.File.project_id == func.binary(self.project.id))
+                models.File.query.filter(
+                    models.File.project_id == sqlalchemy.func.binary(self.project.id)
+                )
                 .filter(
                     sqlalchemy.or_(
-                        models.File.subpath == func.binary(folder),
+                        models.File.subpath == sqlalchemy.func.binary(folder),
                         models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)*$"),
                     )
                 )
@@ -214,16 +200,14 @@ class DBConnector:
                     # get current version
                     current_file_version = models.Version.query.filter(
                         sqlalchemy.and_(
-                            models.Version.active_file == func.binary(x.id),
+                            models.Version.active_file == sqlalchemy.func.binary(x.id),
                             models.Version.time_deleted == None,
                         )
                     ).first()
                     current_file_version.time_deleted = dds_web.utils.current_time()
 
                     # Delete file and update project size
-                    old_size = x.size_original
                     db.session.delete(x)
-                    self.project.size -= old_size
                 self.project.date_updated = dds_web.utils.current_time()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 error = str(err)
@@ -287,8 +271,8 @@ class DBConnector:
         # Get matching files in project
         try:
             file = models.File.query.filter(
-                models.File.name == func.binary(filename),
-                models.File.project_id == func.binary(self.project.id),
+                models.File.name == sqlalchemy.func.binary(filename),
+                models.File.project_id == sqlalchemy.func.binary(self.project.id),
             ).first()
 
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -299,19 +283,17 @@ class DBConnector:
             exists, name_in_bucket = (True, file.name_in_bucket)
             try:
                 # TODO (ina): put in own class
-                old_size = file.size_original
 
                 # get current version
                 current_file_version = models.Version.query.filter(
                     sqlalchemy.and_(
-                        models.Version.active_file == func.binary(file.id),
+                        models.Version.active_file == sqlalchemy.func.binary(file.id),
                         models.Version.time_deleted == None,
                     )
                 ).first()
                 current_file_version.time_deleted = dds_web.utils.current_time()
 
                 db.session.delete(file)
-                self.project.size -= old_size
                 self.project.date_updated = dds_web.utils.current_time()
             except sqlalchemy.exc.SQLAlchemyError as err:
                 db.session.rollback()
@@ -329,11 +311,11 @@ class DBConnector:
 
             current_project_unit_safespring = (
                 models.Project.query.join(
-                    models.Unit, models.Project.unit_id == func.binary(models.Unit.id)
+                    models.Unit, models.Project.unit_id == sqlalchemy.func.binary(models.Unit.id)
                 )
                 .add_columns(models.Unit.safespring)
-                .filter(models.Unit.id == func.binary(models.Project.unit_id))
-                .filter(models.Project.public_id == func.binary(self.project.public_id))
+                .filter(models.Unit.id == sqlalchemy.func.binary(models.Project.unit_id))
+                .filter(models.Project.public_id == sqlalchemy.func.binary(self.project.public_id))
             ).first()
 
             flask.current_app.logger.debug(

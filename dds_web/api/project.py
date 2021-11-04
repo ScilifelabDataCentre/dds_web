@@ -24,9 +24,7 @@ from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import (
-    MissingProjectIDError,
     DatabaseError,
-    NoSuchProjectError,
     AccessDeniedError,
     EmptyProjectException,
     DeletionError,
@@ -35,8 +33,10 @@ from dds_web.api.errors import (
     KeyNotFoundError,
 )
 from dds_web.crypt import key_gen
-from dds_web.api import marshmallows
 from dds_web.api.user import AddUser
+from dds_web.api.schemas import custom_fields
+from dds_web.api.schemas import project_schemas
+from dds_web.api.schemas import user_schemas
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -57,14 +57,12 @@ class CreateProjectSchema(marshmallow.Schema):
         required=True, validate=marshmallow.validate.Length(min=1, max=255)
     )
     is_sensitive = marshmallow.fields.Boolean(required=False)
-    date_created = dds_web.utils.MyDateTimeField(required=False)
+    date_created = custom_fields.MyDateTimeField(required=False)
 
     # Only "In Progress" allowed when creating the project
     status = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Equal("In Progress")
     )
-    # Only size 0 allowed -- doesn't contain anything yet
-    size = marshmallow.fields.Integer(required=True, validate=marshmallow.validate.Equal(0))
 
     @marshmallow.pre_load
     def generate_required_fields(self, data, **kwargs):
@@ -76,7 +74,6 @@ class CreateProjectSchema(marshmallow.Schema):
 
         data["date_created"] = dds_web.utils.current_time()
         data["status"] = "In Progress"
-        data["size"] = 0
 
         return data
 
@@ -91,7 +88,6 @@ class CreateProjectSchema(marshmallow.Schema):
                 "status",
                 "description",
                 "pi",
-                "size",
             ]
         ):
             raise marshmallow.ValidationError("Missing fields!")
@@ -163,7 +159,7 @@ class GetPublic(flask_restful.Resource):
     def get(self):
         """Get public key from database."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         flask.current_app.logger.debug("Getting the public key.")
 
@@ -180,7 +176,7 @@ class GetPrivate(flask_restful.Resource):
     def get(self):
         """Get private key from database"""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # TODO (ina): Change handling of private key -- not secure
         flask.current_app.logger.debug("Getting the private key.")
@@ -245,7 +241,7 @@ class UserProjects(flask_restful.Resource):
             }
 
             # Get proj size and update total size
-            proj_size = sum([f.size_stored for f in p.files])
+            proj_size = p.size
             total_size += proj_size
             project_info["Size"] = proj_size
 
@@ -278,7 +274,7 @@ class RemoveContents(flask_restful.Resource):
     def delete(self):
         """Removes all project contents."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Delete files
         removed = False
@@ -320,41 +316,6 @@ class RemoveContents(flask_restful.Resource):
         return flask.jsonify({"removed": removed})
 
 
-class UpdateProjectSize(flask_restful.Resource):
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
-    def put(self):
-        """Update the project size and updated time stamp."""
-
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
-
-        updated, error = (False, "")
-        current_try, max_tries = (1, 5)
-        while current_try < max_tries:
-            try:
-                tot_file_size = (
-                    models.File.query.with_entities(
-                        sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
-                    )
-                    .filter(models.File.project_id == project.id)
-                    .first()
-                )
-
-                project.size = tot_file_size.sizeSum
-                project.date_updated = dds_web.utils.current_time()
-
-                db.session.commit()
-            except sqlalchemy.exc.SQLAlchemyError as err:
-                flask.current_app.logger.exception(err)
-                db.session.rollback()
-                current_try += 1
-            else:
-                flask.current_app.logger.debug("Updated project size!")
-                updated = True
-                break
-
-        return flask.jsonify({"updated": updated, "error": error, "tries": current_try})
-
-
 class CreateProject(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def post(self):
@@ -373,7 +334,7 @@ class CreateProject(flask_restful.Resource):
         user_addition_statuses = []
         if "users_to_add" in p_info:
             for user in p_info["users_to_add"]:
-                existing_user = marshmallows.UserSchema().load(user)
+                existing_user = user_schemas.UserSchema().load(user)
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
@@ -389,12 +350,18 @@ class CreateProject(flask_restful.Resource):
                     user_addition_statuses.append(invite_msg)
                 else:
                     # If it is an existing user, add them to project.
-                    add_user_result = AddUser.add_user_to_project(
-                        existing_user=existing_user,
-                        project=new_project.public_id,
-                        role=user.get("role"),
-                    )
-                    user_addition_statuses.append(add_user_result["message"])
+                    addition_status = ""
+                    try:
+                        add_user_result = AddUser.add_user_to_project(
+                            existing_user=existing_user,
+                            project=new_project.public_id,
+                            role=user.get("role"),
+                        )
+                    except DatabaseError as err:
+                        addition_status = f"Error for {user['email']}: {err.description}"
+                    else:
+                        addition_status = add_user_result["message"]
+                    user_addition_statuses.append(addition_status)
 
         return flask.jsonify(
             {
@@ -412,7 +379,7 @@ class ProjectUsers(flask_restful.Resource):
     @auth.login_required
     def get(self):
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Get info on research users
         research_users = list()

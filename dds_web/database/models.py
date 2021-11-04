@@ -102,7 +102,6 @@ class Project(db.Model):
     status = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)
     pi = db.Column(db.String(255), unique=False, nullable=False)
-    size = db.Column(db.BigInteger, unique=False, nullable=False)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
     public_key = db.Column(db.String(64), nullable=False)
     private_key = db.Column(db.String(255), nullable=False)
@@ -117,12 +116,26 @@ class Project(db.Model):
     expired_files = db.relationship("ExpiredFile", backref="assigned_project")
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
+    # One project can have many invites
+    invites = db.relationship("Invite", backref="connected_project")
 
     @property
     def safespring_project(self):
         """Get the safespring project name from responsible unit."""
 
         return self.responsible_unit.safespring
+
+    @property
+    def size(self):
+        """Calculate size of project."""
+
+        return sum([f.size_stored for f in self.files])
+
+    @property
+    def num_files(self):
+        """Get number of files in project."""
+
+        return len(self.files)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -293,6 +306,7 @@ class Invite(db.Model):
 
     # Foreign key
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
 
     # Columns
     email = db.Column(db.String(254), unique=True, nullable=False)
@@ -361,7 +375,7 @@ class ExpiredFile(db.Model):
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)
-    salt = db.Column(db.String(50), unique=False, nullable=False)
+    salt = db.Column(db.String(32), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
     time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
     expired = db.Column(

@@ -15,7 +15,6 @@ from contextlib import contextmanager
 import flask
 import sqlalchemy
 import pytz
-import marshmallow
 
 # # imports related to scheduling
 import atexit
@@ -25,18 +24,6 @@ from apscheduler.schedulers import background
 # Own modules
 from dds_web.database import models
 from dds_web import db, C_TZ
-
-####################################################################################################
-# SCHEMA FIELDS #################################################################### SCHEMA FIELDS #
-####################################################################################################
-
-
-class MyDateTimeField(marshmallow.fields.DateTime):
-    def _deserialize(self, value, attr, data, **kwargs):
-        if isinstance(value, datetime.datetime):
-            return value
-        return super()._deserialize(value, attr, data, **kwargs)
-
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
