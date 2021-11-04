@@ -59,7 +59,7 @@ def test_add_user_with_researcher(client):
     invited_user = (
         db.session.query(models.Invite).filter_by(email=researchuser_no_role["email"]).one_or_none()
     )
-    assert invited_user is None
+    assert not invited_user
 
 
 def test_add_user_with_project_owner_no_project(client):
@@ -78,7 +78,7 @@ def test_add_user_with_project_owner_no_project(client):
         .filter_by(email=researchuser_no_project["email"])
         .one_or_none()
     )
-    assert invited_user is None
+    assert not invited_user
 
 
 def test_add_researcher_with_project_owner(client):
@@ -99,7 +99,7 @@ def test_add_researcher_with_project_owner(client):
         )
         .one_or_none()
     )
-    assert invited_user and invited_user.project_id
+    assert invited_user and invited_user.project_id and not invited_user.unit_id
 
 
 def test_add_projectowner_with_project_owner_no_project(client):
@@ -138,7 +138,7 @@ def test_add_projectowner_with_project_owner_with_project(client):
         .filter_by(email=projectowner_with_project["email"], role=projectowner_with_project["role"])
         .one_or_none()
     )
-    assert invited_user and invited_user.project_id
+    assert invited_user and invited_user.project_id and not invited_user.unit_id
 
 
 def test_add_unitpersonnel_with_project_owner_with_project(client):
@@ -193,7 +193,7 @@ def test_add_researcher_with_unitpersonnel_no_project(client):
         .filter_by(email=researchuser_no_project["email"], role=researchuser_no_project["role"])
         .one_or_none()
     )
-    assert invited_user and not invited_user.project_id
+    assert invited_user and not invited_user.project_id and not invited_user.unit_id
 
 
 def test_add_projectowner_with_unitpersonnel_with_project(client):
@@ -211,7 +211,7 @@ def test_add_projectowner_with_unitpersonnel_with_project(client):
         .filter_by(email=projectowner_with_project["email"], role=projectowner_with_project["role"])
         .one_or_none()
     )
-    assert invited_user and invited_user.project_id
+    assert invited_user and invited_user.project_id and not invited_user.unit_id
 
 
 def test_add_unitpersonnel_with_unitpersonnel(client):
@@ -229,7 +229,7 @@ def test_add_unitpersonnel_with_unitpersonnel(client):
         .filter_by(email=unitpersonnel_no_project["email"], role=unitpersonnel_no_project["role"])
         .one_or_none()
     )
-    assert invited_user and invited_user.unit_id
+    assert invited_user and invited_user.unit_id and not invited_user.project_id
 
 
 def test_add_unitadmin_with_unitpersonnel(client):
@@ -333,6 +333,14 @@ def test_add_user_existing_email(client):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
+    # Check that the invite still exists
+    invited_user = (
+        db.session.query(models.Invite)
+        .filter_by(email=existing_invite["email"], role=existing_invite["role"])
+        .one_or_none()
+    )
+    assert invited_user
+
 
 def test_add_existing_user_to_nonexistent_proj(client):
     """Test adding user to a non existing project."""
@@ -377,7 +385,7 @@ def test_existing_user_change_ownership(client):
         content_type="application/json",
     )
 
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
 
     db.session.refresh(project_user)
 
@@ -392,4 +400,4 @@ def test_existing_user_change_ownership_same_permissions(client):
         data=json.dumps(submit_with_same_ownership),
         content_type="application/json",
     )
-    assert response.status == "403 FORBIDDEN"
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
