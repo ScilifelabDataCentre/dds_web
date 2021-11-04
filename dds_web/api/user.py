@@ -11,8 +11,6 @@ import secrets
 import os
 
 # Installed
-from sqlalchemy.sql import func
-
 import flask
 import flask_restful
 import flask_mail
@@ -27,8 +25,9 @@ from dds_web import auth, mail, db
 from dds_web.database import models
 import dds_web.utils
 import dds_web.forms
-from dds_web.api import marshmallows
 import dds_web.api.errors as ddserr
+from dds_web.api.schemas import project_schemas
+from dds_web.api.schemas import user_schemas
 
 # VARIABLES ############################################################################ VARIABLES #
 
@@ -123,11 +122,11 @@ class AddUser(flask_restful.Resource):
             project = args.pop("project")
 
         # Check if email is registered to a user
-        existing_user = marshmallows.UserSchema().load(args)
+        existing_user = user_schemas.UserSchema().load(args)
 
         if not existing_user:
             # Send invite if the user doesn't exist
-            invite_user_result = self.invite_user(args)
+            invite_user_result = self.invite_user({**args, "project": project})
             return flask.make_response(
                 flask.jsonify(invite_user_result), invite_user_result["status"]
             )
@@ -155,7 +154,7 @@ class AddUser(flask_restful.Resource):
 
         try:
             # Use schema to validate and check args, and create invite row
-            new_invite = marshmallows.InviteUserSchema().load(args)
+            new_invite = user_schemas.InviteUserSchema().load(args)
 
         except ddserr.InviteError as invite_err:
             return {
@@ -242,7 +241,7 @@ class AddUser(flask_restful.Resource):
         if role == "Project Owner":
             owner = True
 
-        project = marshmallows.ProjectRequiredSchema().load({"project": project})
+        project = project_schemas.ProjectRequiredSchema().load({"project": project})
         ownership_change = False
         for rusers in project.researchusers:
             if rusers.researchuser is existing_user:
@@ -342,7 +341,7 @@ class NewUser(flask_restful.Resource):
             flask.current_app.logger.debug(form.data)
             # Create new user row by loading form data into schema
             try:
-                new_user = marshmallows.NewUserSchema().load(form.data)
+                new_user = user_schemas.NewUserSchema().load(form.data)
 
             except marshmallow.ValidationError as valerr:
                 flask.current_app.logger.info(valerr)
@@ -379,7 +378,7 @@ class ShowUsage(flask_restful.Resource):
         # Get unit info from table (incl safespring proj name)
         try:
             unit_info = models.Unit.query.filter(
-                models.Unit.id == func.binary(current_user.unit_id)
+                models.Unit.id == sqlalchemy.func.binary(current_user.unit_id)
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.exception(err)
@@ -457,7 +456,7 @@ class InvoiceUnit(flask_restful.Resource):
         # Get unit info from table (incl safespring proj name)
         try:
             unit_info = models.Unit.query.filter(
-                models.Unit.id == func.binary(current_user.unit_id)
+                models.Unit.id == sqlalchemy.func.binary(current_user.unit_id)
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.exception(err)

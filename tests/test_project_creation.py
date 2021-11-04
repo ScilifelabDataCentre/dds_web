@@ -285,31 +285,6 @@ def test_create_project_wrong_status(client):
     assert created_proj and created_proj.status == "In Progress"
 
 
-def test_create_project_wrong_size(client):
-    """Create a project with own size, should be overridden."""
-    proj_data_wrong_size = proj_data.copy()
-    proj_data_wrong_size["size"] = 1
-    response = client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
-        data=json.dumps(proj_data_wrong_size),
-        content_type="application/json",
-    )
-    assert response.status_code == http.HTTPStatus.OK
-
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data_wrong_size["title"],
-            pi=proj_data_wrong_size["pi"],
-            description=proj_data_wrong_size["description"],
-        )
-        .one_or_none()
-    )
-    assert created_proj and created_proj.size == 0
-
-
 def test_create_project_sensitive_not_boolean(client):
     """Create project with incorrect is_sensitive format."""
     proj_data_sensitive_not_boolean = proj_data.copy()

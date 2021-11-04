@@ -1,18 +1,15 @@
-"""Marshmallow schemas used by the DDS"""
+"""User related marshmallow schemas."""
 
 ####################################################################################################
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
 # Standard Library
-import os
 from datetime import datetime
 
 # Installed
-import flask
 import marshmallow
 import sqlalchemy
-import immutabledict
 
 # Own modules
 from dds_web import db
@@ -20,42 +17,11 @@ from dds_web.api import errors as ddserr
 from dds_web import auth
 import dds_web.security.auth
 from dds_web.database import models
-from dds_web import utils
-import dds_web.crypt
+from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
 ####################################################################################################
-
-
-def verify_project_exists(spec_proj):
-    """Check that project exists."""
-
-    try:
-        project = models.Project.query.filter(
-            models.Project.public_id == sqlalchemy.func.binary(spec_proj)
-        ).one_or_none()
-    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise
-
-    if not project:
-        flask.current_app.logger.warning("No such project!!")
-        raise ddserr.NoSuchProjectError(project=spec_proj)
-
-    return project
-
-
-def verify_project_access(project):
-    """Check users access to project."""
-
-    if project not in auth.current_user().projects:
-        raise ddserr.AccessDeniedError(
-            message="Project access denied.",
-            username=auth.current_user().username,
-            project=project.public_id,
-        )
-
-    return project
 
 
 def email_in_db(email):
@@ -79,39 +45,6 @@ def username_in_db(username):
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
-
-# Project related ---------------------------------------------------------------- Project related #
-
-
-class ProjectRequiredSchema(marshmallow.Schema):
-    """Schema for verifying an existing project in args and database."""
-
-    project = marshmallow.fields.String(required=True)
-
-    class Meta:
-        unknown = marshmallow.EXCLUDE  # TODO: Change to RAISE
-
-    @marshmallow.validates("project")
-    def validate_project(self, value):
-        """Validate existing project and user access to it."""
-
-        project = verify_project_exists(spec_proj=value)
-        verify_project_access(project=project)
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def get_project_object(self, data, **kwargs):
-        """Set project row in data for access by validators."""
-
-        data["project_row"] = verify_project_exists(spec_proj=data.get("project"))
-
-    @marshmallow.post_load
-    def return_items(self, data, **kwargs):
-        """Return project object."""
-
-        return data.get("project_row")
-
-
-# User related ---------------------------------------------------------------------- User related #
 
 
 class UserSchema(marshmallow.Schema):
@@ -143,6 +76,7 @@ class InviteUserSchema(marshmallow.Schema):
             choices=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner", "Researcher"],
         ),
     )
+    project = marshmallow.fields.String(required=False)
 
     @marshmallow.validates("email")
     def validate_email(self, value):
@@ -155,11 +89,28 @@ class InviteUserSchema(marshmallow.Schema):
                 message=f"The email '{value}' is already registered to an existing user."
             )
 
-    @marshmallow.validates("role")
-    def validate_role(self, attempted_invite_role):
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def validate_role(self, data, **kwargs):
         """Validate current users permission to invite specified role."""
 
         curr_user_role = auth.current_user().role
+        attempted_invite_role = data.get("role")
+
+        # Save project row if project specified
+        project = data.get("project")
+        if project:
+            if attempted_invite_role in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+                raise marshmallow.ValidationError(
+                    "Cannot add Super Admin or Unit Admin/Personnel to specific projects."
+                )
+
+            data["project_row"] = project_schemas.ProjectRequiredSchema().load({"project": project})
+
+        # Check that project is specified if trying to add Project Owner
+        if attempted_invite_role == "Project Owner" and not project:
+            raise marshmallow.ValidationError("Project ID required when adding Project Owner.")
+
+        # Validate user access to invite/add
         if curr_user_role == "Unit Admin":
             if attempted_invite_role == "Super Admin":
                 raise ddserr.AccessDeniedError
@@ -191,7 +142,11 @@ class InviteUserSchema(marshmallow.Schema):
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
             auth.current_user().unit.invites.append(new_invite)
         else:
-            db.session.add(new_invite)
+            project = data.get("project_row")
+            if project:
+                project.invites.append(new_invite)
+            else:
+                db.session.add(new_invite)
 
         db.session.commit()
 
@@ -274,9 +229,17 @@ class NewUserSchema(marshmallow.Schema):
 
         # Create new user
         invite = data.get("invite")
-        if invite.role == "Researcher":
+        if invite.role in ["Researcher", "Project Owner"]:
             new_user = models.ResearchUser(**common_user_fields)
+
+            if invite.role == "Project Owner" and not invite.project_id:
+                raise ddserr.InviteError("Project ID not specified for Project Owner.")
+
             # Currently no project associations
+            if invite.project_id:
+                new_association = models.ProjectUsers(owner=(invite.role == "Project Owner"))
+                new_association.researchuser = new_user
+                new_association.project = invite.connected_project
         elif invite.role in ["Unit Admin", "Unit Personnel"]:
             new_user = models.UnitUser(**common_user_fields)
 

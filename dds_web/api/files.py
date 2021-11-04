@@ -11,8 +11,6 @@ import os
 import flask_restful
 import flask
 import sqlalchemy
-from sqlalchemy.sql import func
-import marshmallow
 
 # Own modules
 import dds_web.utils
@@ -22,85 +20,8 @@ from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import DatabaseError
-from dds_web.api import marshmallows
-
-
-####################################################################################################
-# SCHEMAS ################################################################################ SCHEMAS #
-####################################################################################################
-
-
-class NewFileSchema(marshmallows.ProjectRequiredSchema):
-    """Validates and creates a new file object."""
-
-    # Length minimum 1 required, required=True accepts empty string
-    name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
-    name_in_bucket = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(min=1)
-    )
-    subpath = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
-    size = marshmallow.fields.Integer(required=True)  # Accepts BigInt
-    size_processed = marshmallow.fields.Integer(required=True)  # Accepts BigInt
-    compressed = marshmallow.fields.Boolean(required=True)  # Accepts all truthy
-    public_key = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(equal=64)
-    )
-    salt = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(equal=32))
-    checksum = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(equal=64)
-    )
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def verify_file_not_exists(self, data, **kwargs):
-        """Check that the file does not match anything already in the database."""
-
-        # Check that there is no such file in the database
-        project = data.get("project_row")
-        try:
-            file = (
-                models.File.query.filter(
-                    sqlalchemy.and_(
-                        models.File.name == sqlalchemy.func.binary(data.get("name")),
-                        models.File.project_id == sqlalchemy.func.binary(project.id),
-                    )
-                )
-                .with_entities(models.File.id)
-                .one_or_none()
-            )
-        except sqlalchemy.exc.SQLAlchemyError:
-            raise
-
-        if file:
-            raise FileExistsError
-
-    @marshmallow.post_load
-    def return_items(self, data, **kwargs):
-        """Create file object."""
-
-        new_file = models.File(
-            name=data.get("name"),
-            name_in_bucket=data.get("name_in_bucket"),
-            subpath=data.get("subpath"),
-            size_original=data.get("size"),
-            size_stored=data.get("size_processed"),
-            compressed=data.get("compressed"),
-            salt=data.get("salt"),
-            public_key=data.get("public_key"),
-            checksum=data.get("checksum"),
-        )
-
-        new_version = models.Version(
-            size_stored=new_file.size_stored, time_uploaded=dds_web.utils.current_time()
-        )
-
-        project = data.get("project_row")
-        # Update foreign keys
-        project.file_versions.append(new_version)
-        project.files.append(new_file)
-        new_file.versions.append(new_version)
-
-        return new_file
-
+from dds_web.api.schemas import file_schemas
+from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -115,7 +36,7 @@ class NewFile(flask_restful.Resource):
         """Add new file to DB"""
 
         flask.current_app.logger.debug(flask.request.json)
-        new_file = NewFileSchema().load({**flask.request.json, **flask.request.args})
+        new_file = file_schemas.NewFileSchema().load({**flask.request.json, **flask.request.args})
 
         try:
             db.session.commit()
@@ -129,7 +50,7 @@ class NewFile(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def put(self):
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         file_info = flask.request.json
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
@@ -139,7 +60,7 @@ class NewFile(flask_restful.Resource):
             # Check if file already in db
             existing_file = models.File.query.filter(
                 sqlalchemy.and_(
-                    models.File.name == func.binary(file_info.get("name")),
+                    models.File.name == sqlalchemy.func.binary(file_info.get("name")),
                     models.File.project_id == project.id,
                 )
             ).first()
@@ -154,7 +75,7 @@ class NewFile(flask_restful.Resource):
             # Get version row
             current_file_version = models.Version.query.filter(
                 sqlalchemy.and_(
-                    models.Version.active_file == func.binary(existing_file.id),
+                    models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
                     models.Version.time_deleted == None,
                 )
             ).all()
@@ -209,12 +130,12 @@ class MatchFiles(flask_restful.Resource):
     def get(self):
         """Matches specified files to files in db."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         try:
             matching_files = (
                 models.File.query.filter(models.File.name.in_(flask.request.json))
-                .filter(models.File.project_id == func.binary(project.id))
+                .filter(models.File.project_id == sqlalchemy.func.binary(project.id))
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -234,7 +155,7 @@ class ListFiles(flask_restful.Resource):
     def get(self):
         """Get a list of files within the specified folder."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         extra_args = flask.request.json
         # Check if to return file size
         show_size = extra_args.get("show_size")
@@ -248,12 +169,8 @@ class ListFiles(flask_restful.Resource):
 
         # Check project not empty
         with DBConnector(project=project) as dbconn:
-            # Get number of files in project and return if empty or error
-            try:
-                num_files = dbconn.project_size()
-            except DatabaseError:
-                raise
-
+            # Get number of files in project and return if empty
+            num_files = project.num_files
             if num_files == 0:
                 return flask.jsonify(
                     {
@@ -304,7 +221,7 @@ class RemoveFile(flask_restful.Resource):
     def delete(self):
         """Deletes the files"""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         with DBConnector(project=project) as dbconn:
             not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
@@ -326,7 +243,7 @@ class RemoveDir(flask_restful.Resource):
     def delete(self):
         """Deletes the folders."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         not_removed_dict, not_exist_list = ({}, [])
 
@@ -384,7 +301,7 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Get files and folders requested by CLI
         paths = flask.request.json
@@ -395,7 +312,7 @@ class FileInfo(flask_restful.Resource):
         try:
             # Get all files in project
             files_in_proj = models.File.query.filter(
-                models.File.project_id == func.binary(project.id)
+                models.File.project_id == sqlalchemy.func.binary(project.id)
             )
 
             # All files matching the path -- single files
@@ -470,7 +387,7 @@ class FileInfoAll(flask_restful.Resource):
     def get(self):
         """Get file info."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         files = {}
         try:
@@ -519,7 +436,7 @@ class UpdateFile(flask_restful.Resource):
     def put(self):
         """Update info in db."""
 
-        project = marshmallows.ProjectRequiredSchema().load(flask.request.args)
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         file_info = flask.request.json
         # Get file name from request from CLI
@@ -536,8 +453,8 @@ class UpdateFile(flask_restful.Resource):
             flask.current_app.logger.debug(f"File name: {file_name}")
             file = models.File.query.filter(
                 sqlalchemy.and_(
-                    models.File.project_id == func.binary(project.id),
-                    models.File.name == func.binary(file_name),
+                    models.File.project_id == sqlalchemy.func.binary(project.id),
+                    models.File.name == sqlalchemy.func.binary(file_name),
                 )
             ).first()
 
