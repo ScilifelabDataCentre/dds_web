@@ -11,6 +11,7 @@ import os
 # Installed
 import flask
 import sqlalchemy
+import datetime
 import pytz
 
 # Own modules
@@ -335,26 +336,26 @@ class DBConnector:
     @staticmethod
     def project_usage(project_object):
 
-        gbhours = 0.0
+        bhours = 0.0
         cost = 0.0
 
         tz = pytz.timezone("Europe/Stockholm")
         for v in project_object.file_versions:
             # Calculate hours of the current file
             time_deleted = (
-                tz.localize(v.time_deleted) if v.time_deleted else dds_web.utils.current_time()
+                tz.localize(v.time_deleted) if v.time_deleted else datetime.datetime.now(tz=tz)
             )
             time_uploaded = tz.localize(v.time_uploaded)
 
             file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
 
-            # Calculate GBHours, if statement to avoid zerodivision exception
-            gbhours += ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
+            # Calculate BHours
+            bhours += v.size_stored * file_hours
 
             # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
             cost_gbhour = 0.09 / (30 * 24)
 
             # Save file cost to project info and increase total unit cost
-            cost += gbhours * cost_gbhour
+            cost += bhours / 1e9 * cost_gbhour
 
-        return round(gbhours, 2), round(cost, 2)
+        return bhours, cost
