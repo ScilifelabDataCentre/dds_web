@@ -29,8 +29,15 @@ proj_data_with_existing_users = {
 proj_data_with_nonexisting_users = {
     **proj_data,
     "users_to_add": [
-        {"email": "non_existing_user@mailtrap.io", "role": "Project Owner"},
+        {"email": "non_existing_user@mailtrap.io", "role": "Researcher"},
         {"email": "non_existing_user2@mailtrap.io", "role": "Researcher"},
+    ],
+}
+proj_data_with_nonexisting_projectowner = {
+    **proj_data,
+    "users_to_add": [
+        {"email": "non_existing_user@mailtrap.io", "role": "Project Owner"},
+        {"email": "non_existing_user2@mailtrap.io", "role": "Project Owner"},
     ],
 }
 proj_data_with_unsuitable_user_roles = {
@@ -386,6 +393,31 @@ def test_create_project_with_invited_users(client):
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
         assert "Invitation sent" in x
+
+
+def test_create_project_with_invited_projectowner(client):
+    """Create project and invite users to the project."""
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        data=json.dumps(proj_data_with_nonexisting_projectowner),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    assert (
+        db.session.query(models.Project)
+        .filter_by(
+            title=proj_data_with_nonexisting_projectowner["title"],
+            pi=proj_data_with_nonexisting_projectowner["pi"],
+            description=proj_data_with_nonexisting_projectowner["description"],
+        )
+        .one_or_none()
+    )
+
+    for x in proj_data_with_nonexisting_projectowner["users_to_add"]:
+        assert not db.session.query(models.Invite).filter_by(email=x["email"]).one_or_none()
 
 
 def test_create_project_with_unsuitable_roles(client):

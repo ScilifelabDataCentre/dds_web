@@ -9,5 +9,5 @@ services:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./
       target: test
-    command: bash -c "pytest"
+    command: bash -c "pytest tests/test_project_creation.py"
     restart: "no"
