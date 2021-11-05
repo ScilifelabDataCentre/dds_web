@@ -189,7 +189,7 @@ class DBConnector:
                     current_file_version = models.Version.query.filter(
                         sqlalchemy.and_(
                             models.Version.active_file == sqlalchemy.func.binary(x.id),
-                            models.Version.time_deleted == None,
+                            models.Version.time_deleted.is_(None),
                         )
                     ).first()
                     current_file_version.time_deleted = dds_web.utils.current_time()
@@ -276,7 +276,7 @@ class DBConnector:
                 current_file_version = models.Version.query.filter(
                     sqlalchemy.and_(
                         models.Version.active_file == sqlalchemy.func.binary(file.id),
-                        models.Version.time_deleted == None,
+                        models.Version.time_deleted.is_(None),
                     )
                 ).first()
                 current_file_version.time_deleted = dds_web.utils.current_time()

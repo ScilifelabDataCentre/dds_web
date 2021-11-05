@@ -11,6 +11,7 @@ import os
 import flask_restful
 import flask
 import sqlalchemy
+import werkzeug
 
 # Own modules
 import dds_web.utils
@@ -43,7 +44,7 @@ class NewFile(flask_restful.Resource):
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.debug(err)
             db.session.rollback()
-            return flask.make_response(f"Failed to add new file to database.", 500)
+            return (f"Failed to add new file to database.", 500)
 
         return flask.jsonify({"message": f"File '{new_file.name}' added to db."})
 
@@ -54,7 +55,7 @@ class NewFile(flask_restful.Resource):
 
         file_info = flask.request.json
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
-            return flask.make_response("Information missing, " "cannot add file to database.", 500)
+            return ("Information missing, " "cannot add file to database.", 500)
 
         try:
             # Check if file already in db
@@ -68,7 +69,7 @@ class NewFile(flask_restful.Resource):
             # Error if not found
             if not existing_file or existing_file is None:
                 return flask.make_response(
-                    f"Cannot update non-existent file '{file_info.get('name')}' in the database!",
+                    f"Cannot update non-existent file '{werkzeug.utils.secure_filename(file_info.get('name'))}' in the database!",
                     500,
                 )
 
@@ -76,7 +77,7 @@ class NewFile(flask_restful.Resource):
             current_file_version = models.Version.query.filter(
                 sqlalchemy.and_(
                     models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
-                    models.Version.time_deleted == None,
+                    models.Version.time_deleted.is_(None),
                 )
             ).all()
             if len(current_file_version) > 1:

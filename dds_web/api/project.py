@@ -29,10 +29,8 @@ from dds_web.api.errors import (
     EmptyProjectException,
     DeletionError,
     BucketNotFoundError,
-    DDSArgumentError,
     KeyNotFoundError,
 )
-from dds_web.crypt import key_gen
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import custom_fields
 from dds_web.api.schemas import project_schemas

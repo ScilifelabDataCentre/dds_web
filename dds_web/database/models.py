@@ -9,7 +9,7 @@ import datetime
 
 
 # Own modules
-from dds_web import db, C_TZ
+from dds_web import db
 import dds_web.utils
 
 ####################################################################################################
