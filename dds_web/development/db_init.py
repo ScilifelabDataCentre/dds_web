@@ -14,6 +14,7 @@ from flask import current_app
 from dds_web import db
 from dds_web.security import auth
 from dds_web.database import models
+from dds_web.crypt import key_gen
 import dds_web.utils
 
 ####################################################################################################
@@ -36,10 +37,7 @@ def fill_db():
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
         bucket=f"testbucket",
-        public_key="669F9C66CDCB6C08165453617101FD04884D3D23367A5C088FD8DF2C5F30CA49",
-        private_key="180245F63CE331516155851C08A919B79FEA62D69B3FC34033C678A64176657668D0D483E860540873C4EB5F58E2F074",
-        privkey_salt="2AD29A881F9783021142905D6B5902C9",
-        privkey_nonce="7758E89F838E76E5202E0D71",
+        **key_gen.ProjectKeys("project_1").key_dict(),
     )
 
     # Create second project - leave out foreign key
@@ -51,10 +49,7 @@ def fill_db():
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
         bucket=f"secondproject-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-        public_key="669F9C66CDCB6C08165453617101FD04884D3D23367A5C088FD8DF2C5F30CA49",
-        private_key="180245F63CE331516155851C08A919B79FEA62D69B3FC34033C678A64176657668D0D483E860540873C4EB5F58E2F074",
-        privkey_salt="2AD29A881F9783021142905D6B5902C9",
-        privkey_nonce="7758E89F838E76E5202E0D71",
+        **key_gen.ProjectKeys("project_2").key_dict(),
     )
 
     # Create an email
