@@ -92,7 +92,6 @@ class InviteUserSchema(marshmallow.Schema):
         """Validate current users permission to invite specified role."""
 
         curr_user_role = auth.current_user().role
-
         if curr_user_role == "Unit Admin":
             if attempted_invite_role == "Super Admin":
                 raise ddserr.AccessDeniedError
