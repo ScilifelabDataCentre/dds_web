@@ -207,9 +207,9 @@ class NewUserSchema(marshmallow.Schema):
 
         # Create new user
         invite = data.get("invite")
-        if invite.role == "Reseacher":
+        if invite.role == "Researcher":
             new_user = models.ResearchUser(**common_user_fields)
-
+            # Currently no project associations
         elif invite.role in ["Unit Admin", "Unit Personnel"]:
             new_user = models.UnitUser(**common_user_fields)
 
