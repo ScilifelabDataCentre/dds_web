@@ -20,7 +20,13 @@ from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
-from dds_web.api.errors import DatabaseError
+from dds_web.api.errors import (
+    DatabaseError,
+    DDSArgumentError,
+    EmptyProjectException,
+    NoSuchFileError,
+    S3ConnectionError,
+)
 from dds_web.api.schemas import file_schemas
 from dds_web.api.schemas import project_schemas
 
@@ -44,7 +50,7 @@ class NewFile(flask_restful.Resource):
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.debug(err)
             db.session.rollback()
-            return (f"Failed to add new file to database.", 500)
+            raise DatabaseError(f"Failed to add new file to database.")
 
         return flask.jsonify({"message": f"File '{new_file.name}' added to db."})
 
@@ -55,7 +61,7 @@ class NewFile(flask_restful.Resource):
 
         file_info = flask.request.json
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
-            return ("Information missing, " "cannot add file to database.", 500)
+            raise DDSArgumentError("Information is missing, cannot add file to database.")
 
         try:
             # Check if file already in db
@@ -68,9 +74,8 @@ class NewFile(flask_restful.Resource):
 
             # Error if not found
             if not existing_file or existing_file is None:
-                return flask.make_response(
-                    f"Cannot update non-existent file '{werkzeug.utils.secure_filename(file_info.get('name'))}' in the database!",
-                    500,
+                raise NoSuchFileError(
+                    f"Cannot update non-existent file '{werkzeug.utils.secure_filename(file_info.get('name'))}' in the database!"
                 )
 
             # Get version row
@@ -119,7 +124,7 @@ class NewFile(flask_restful.Resource):
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            return flask.make_response(f"Failed updating file information: {err}", 500)
+            raise DatabaseError(f"Failed updating file information: {err}")
 
         return flask.jsonify({"message": f"File '{file_info.get('name')}' updated in db."})
 
@@ -140,7 +145,7 @@ class MatchFiles(flask_restful.Resource):
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(f"Failed to get matching files in db: {err}", 500)
+            raise DatabaseError(f"Failed to get matching files in db: {err}")
 
         # The files checked are not in the db
         if not matching_files or matching_files is None:
@@ -231,7 +236,7 @@ class RemoveFile(flask_restful.Resource):
 
             # S3 connection error
             if not any([not_removed_dict, not_exist_list]) and error != "":
-                return flask.make_response(error, 500)
+                raise S3ConnectionError(str(error))
 
         # Return deleted and not deleted files
         return flask.jsonify({"not_removed": not_removed_dict, "not_exists": not_exist_list})
@@ -357,7 +362,8 @@ class FileInfo(flask_restful.Resource):
                         files_in_folders[x] = [tuple(x) for x in list_of_files]
 
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(str(err), 500)
+            flask.current_app.logger.exception(str(err))
+            raise DatabaseError
         else:
 
             # Make dict for files with info
@@ -408,10 +414,12 @@ class FileInfoAll(flask_restful.Resource):
                 .all()
             )
         except sqlalchemy.exc.SQLAlchemyError as err:
-            return flask.make_response(str(err), 500)
+            raise DatabaseError(str(err))
         else:
             if all_files is None or not all_files:
-                return flask.make_response(f"The project {project.public_id} is empty.", 401)
+                raise EmptyProjectException(
+                    project=project.public_id, message=f"The project {project.public_id} is empty."
+                )
 
             files = {
                 x[0]: {
@@ -443,7 +451,7 @@ class UpdateFile(flask_restful.Resource):
         # Get file name from request from CLI
         file_name = file_info.get("name")
         if not file_name:
-            return flask.make_response("No file name specified. Cannot update file.", 500)
+            raise DDSArgumentError("No file name specified. Cannot update file.")
 
         # Update file info
         try:
@@ -460,13 +468,13 @@ class UpdateFile(flask_restful.Resource):
             ).first()
 
             if not file:
-                return flask.make_response(f"No such file.", 500)
+                raise NoSuchFileError()
 
             file.time_latest_download = dds_web.utils.current_time()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             flask.current_app.logger.exception(str(err))
-            return flask.make_response("Update of file info failed.", 500)
+            raise DatabaseError("Update of file info failed.")
         else:
             # flask.current_app.logger.debug("File %s updated", file_name)
             db.session.commit()

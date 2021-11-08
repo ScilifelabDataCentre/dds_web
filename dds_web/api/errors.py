@@ -261,6 +261,15 @@ class NoSuchUserError(Exception):
         general_logger.warning(message)
 
 
+class NoSuchFileError(Exception):
+    """There is no such file found in the database."""
+
+    def __init__(self, message="Specified file does not exist."):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
 # ----------------------------------------------------------------------------------- #
 
 
@@ -289,4 +298,5 @@ errors = {
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "InviteError": {"status": http.HTTPStatus.BAD_REQUEST},
     "NoSuchUserError": {"status": http.HTTPStatus.BAD_REQUEST},
+    "NoSuchFileError": {"status": http.HTTPStatus.BAD_REQUEST},
 }
