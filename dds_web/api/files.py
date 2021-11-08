@@ -362,8 +362,8 @@ class FileInfo(flask_restful.Resource):
                         files_in_folders[x] = [tuple(x) for x in list_of_files]
 
         except sqlalchemy.exc.SQLAlchemyError as err:
-            flask.current_app.logger.exception(str(err))
-            raise DatabaseError
+            raise DatabaseError(str(err))
+
         else:
 
             # Make dict for files with info

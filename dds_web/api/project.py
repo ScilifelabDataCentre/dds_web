@@ -24,6 +24,7 @@ from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import (
+    DDSArgumentError,
     DatabaseError,
     AccessDeniedError,
     EmptyProjectException,
@@ -200,7 +201,7 @@ class GetPrivate(flask_restful.Resource):
             decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
         except Exception as err:
             flask.current_app.logger.exception(err)
-            return flask.make_response(str(err), 500)
+            raise KeyNotFoundError
 
         return flask.jsonify({"private": decrypted_key.hex().upper()})
 
@@ -324,7 +325,7 @@ class CreateProject(flask_restful.Resource):
         new_project = CreateProjectSchema().load(p_info)
 
         if not new_project:
-            return flask.make_response("Failed to create project.", 500)
+            raise DDSArgumentError("Failed to create project.")
 
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."
