@@ -32,6 +32,7 @@ from dds_web.api.errors import (
     BucketNotFoundError,
     KeyNotFoundError,
 )
+from dds_web.crypt import key_gen
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import custom_fields
 from dds_web.api.schemas import project_schemas
@@ -67,7 +68,7 @@ class CreateProjectSchema(marshmallow.Schema):
     def generate_required_fields(self, data, **kwargs):
         """Generate all required fields for creating a project."""
         if not data:
-            raise ddserr.DDSArgumentError(
+            raise DDSArgumentError(
                 "No project information found when attempting to create project."
             )
 
@@ -123,7 +124,7 @@ class CreateProjectSchema(marshmallow.Schema):
             )
 
             # Generate keys
-            data.update(**dds_web.crypt.key_gen.ProjectKeys(data["public_id"]).key_dict())
+            data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
 
             # Create project
             current_user = auth.current_user()
@@ -138,7 +139,7 @@ class CreateProjectSchema(marshmallow.Schema):
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DatabaseError(message="Server Error: Project was not created")
-        except (marshmallow.ValidationError, ddserr.DDSArgumentError, AccessDeniedError) as err:
+        except (marshmallow.ValidationError, DDSArgumentError, AccessDeniedError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise

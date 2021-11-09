@@ -13,7 +13,6 @@ import os
 # Installed
 import flask
 import flask_restful
-from sqlalchemy.exc import DatabaseError
 import flask_mail
 import itsdangerous
 import marshmallow
@@ -383,7 +382,7 @@ class ShowUsage(flask_restful.Resource):
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.exception(err)
-            raise DatabaseError(f"Failed getting unit information.")
+            raise ddserr.DatabaseError(f"Failed getting unit information.")
 
         # Total number of GB hours and cost saved in the db for the specific unit
         total_gbhours_db = 0.0
