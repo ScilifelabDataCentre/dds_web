@@ -21,7 +21,7 @@ import pandas
 import sqlalchemy
 
 # Own modules
-from dds_web import auth, mail, db, basic_auth
+from dds_web import auth, mail, db, basic_auth, limiter
 from dds_web.database import models
 import dds_web.utils
 import dds_web.forms
@@ -356,6 +356,15 @@ class NewUser(flask_restful.Resource):
 
 class Token(flask_restful.Resource):
     """Generates token for the user."""
+
+    decorators = [
+        limiter.limit(
+            # flask.current_app.config.get("TOKEN_ENDPOINT_ACCESS_LIMIT"),
+            "24/day",
+            methods=["GET"],
+            error_message=ddserr.errors["TooManyRequestsError"]["message"],
+        )
+    ]
 
     @basic_auth.login_required
     def get(self):

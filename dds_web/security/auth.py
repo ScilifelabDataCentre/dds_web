@@ -57,6 +57,8 @@ def get_user_roles_common(user):
 
 @auth.verify_token
 def verify_token(token):
+    if not token:
+        raise AuthenticationError(message="Missing or incorrect credentials")
     data = (
         verify_token_signature(token)
         if token.count(".") == 2

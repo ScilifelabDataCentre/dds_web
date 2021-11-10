@@ -51,3 +51,6 @@ class Config(object):
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
     MAIL_SENDER_ADDRESS = "localhost"
+
+    TOKEN_ENDPOINT_ACCESS_LIMIT = "24/day"
+    RATELIMIT_STORAGE_URL = "memory://"  # Only for devel!
