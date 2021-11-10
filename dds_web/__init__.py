@@ -15,7 +15,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
-from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 
 ####################################################################################################
@@ -37,8 +37,7 @@ ma = Marshmallow()
 # Authentication
 oauth = auth_flask_client.OAuth()
 basic_auth = HTTPBasicAuth()
-token_auth = HTTPTokenAuth()
-auth = MultiAuth(basic_auth, token_auth)
+auth = HTTPTokenAuth()
 
 # Actions for logging
 actions = {

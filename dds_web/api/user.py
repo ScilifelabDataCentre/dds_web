@@ -21,7 +21,7 @@ import pandas
 import sqlalchemy
 
 # Own modules
-from dds_web import auth, mail, db
+from dds_web import auth, mail, db, basic_auth
 from dds_web.database import models
 import dds_web.utils
 import dds_web.forms
@@ -357,7 +357,7 @@ class NewUser(flask_restful.Resource):
 class Token(flask_restful.Resource):
     """Generates token for the user."""
 
-    @auth.login_required
+    @basic_auth.login_required
     def get(self):
         return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
 
