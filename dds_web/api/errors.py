@@ -87,8 +87,17 @@ class AccessDeniedError(exceptions.HTTPException):
 class DatabaseError(exceptions.HTTPException):
     """Baseclass for database related issues."""
 
-    def __init__(self, message="The DDS encountered an Flask-SQLAlchemy issue.", project=None):
-        super().__init__(message)
+    def __init__(
+        self,
+        message="The DDS encountered an Flask-SQLAlchemy issue.",
+        pass_message=False,
+        project=None,
+    ):
+
+        if pass_message:
+            super().__init__(message)
+        else:
+            super().__init__("The system encountered an error in the database.")
 
         general_logger.warning(message)
 
@@ -128,8 +137,11 @@ class EmptyProjectException(exceptions.HTTPException):
 class DeletionError(exceptions.HTTPException):
     """Deletion of item failed."""
 
-    def __init__(self, project, message="Deletion failed."):
-        super().__init__(message)
+    def __init__(self, project, message="Deletion failed.", pass_message=False):
+        if pass_message:
+            super().__init__(message)
+        else:
+            super().__init__("Deletion of the file failed.")
 
         general_logger.warning(message)
 
@@ -202,8 +214,12 @@ class S3InfoNotFoundError(exceptions.HTTPException):
 class JwtTokenGenerationError(exceptions.HTTPException):
     """Errors when generating the JWT token during authentication."""
 
-    def __init__(self, message):
-        super().__init__(message)
+    def __init__(self, message, pass_message=False):
+
+        if pass_message:
+            super().__init__(message)
+        else:
+            super().__init__("Unrecoverable error during the authentication process. Aborting.")
 
         general_logger.warning(message)
 
@@ -238,9 +254,15 @@ class MissingMethodError(exceptions.HTTPException):
 class KeyNotFoundError(exceptions.HTTPException):
     """Key not found in database."""
 
-    def __init__(self, project, message="No key found for current project"):
+    def __init__(self, project, message="No key found for current project", pass_message=False):
         self.message = f"{message}: {project}"
-        super().__init__(self.message)
+
+        if pass_message:
+            super().__init__(self.message)
+        else:
+            super().__init__("Unrecoverable encryption error. Aborting.")
+
+        general_logger.warning(self.message)
 
 
 class InviteError(exceptions.HTTPException):
