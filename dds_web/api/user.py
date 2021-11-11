@@ -362,6 +362,20 @@ class Token(flask_restful.Resource):
         return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
 
 
+class EncryptedToken(flask_restful.Resource):
+    """Generates encrypted token for the user."""
+
+    @auth.login_required
+    def get(self):
+        return flask.jsonify(
+            {
+                "token": encrypted_jwt_token(
+                    username=auth.current_user().username, sensitive_content=None
+                )
+            }
+        )
+
+
 class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
 
