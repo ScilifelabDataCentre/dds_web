@@ -112,6 +112,9 @@ docker-compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build
 ```
 This will create a test database in the mariadb container called `DeliverySystemTest` which will be populated before a test and emptied after a test has finished.
 
+Its possible to supply arguments to pytest via the environment variable `$DDS_PYTEST_ARGS`.
+For example to only run the `test_x` inside the file `tests/test_y.py` you would set this variable as follows: `export DDS_PYTEST_ARGS=tests/test_y.py::test_x`.
+
 ## Production
 
 When running in production, you will likely want to manually build and run the two containers.
