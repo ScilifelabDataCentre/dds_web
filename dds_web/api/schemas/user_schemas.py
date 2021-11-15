@@ -146,10 +146,9 @@ class NewUserSchema(marshmallow.Schema):
         required=True,
         validate=marshmallow.validate.And(
             marshmallow.validate.Length(min=10, max=64),
-            dds_web.utils.contains_digit,
+            dds_web.utils.contains_digit_or_specialchar,
             dds_web.utils.contains_lowercase,
             dds_web.utils.contains_uppercase,
-            dds_web.utils.contains_specialchar,
         ),
     )
     email = marshmallow.fields.Email(required=True, validate=marshmallow.validate.Email())

@@ -32,12 +32,6 @@ from dds_web import db, C_TZ
 ####################################################################################################
 
 
-def contains_digit(input):
-    """Verify that string contains at least one digit."""
-    if not re.search("[0-9]", input):
-        raise marshmallow.ValidationError("Required: at least one digit.")
-
-
 def contains_uppercase(input):
     """Verify that string contains at least one upper case letter."""
     if not re.search("[A-Z]", input):
@@ -50,10 +44,10 @@ def contains_lowercase(input):
         raise marshmallow.ValidationError("Required: at least one lower case letter.")
 
 
-def contains_specialchar(input):
-    """Verify that string contains at least one special character."""
-    if not re.search("[#?!@$%^&*-]", input):
-        raise marshmallow.ValidationError("Required: at least one special character.")
+def contains_digit_or_specialchar(input):
+    """Verify that string contains at least one special character OR digit."""
+    if not any(re.search(x, input) for x in ["[0-9]", "[#?!@$%^&*-]"]):
+        raise marshmallow.ValidationError("Required: at least one digit OR a special character.")
 
 
 def current_time(timezone="Europe/Stockholm"):

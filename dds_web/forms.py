@@ -21,10 +21,9 @@ def password_contains_valid_characters():
         """Validate that the password contains valid characters and raise ValidationError."""
         errors = []
         validators = [
-            dds_web.utils.contains_digit,
             dds_web.utils.contains_uppercase,
             dds_web.utils.contains_lowercase,
-            dds_web.utils.contains_specialchar,
+            dds_web.utils.contains_digit_or_specialchar,
         ]
         for val in validators:
             try:
