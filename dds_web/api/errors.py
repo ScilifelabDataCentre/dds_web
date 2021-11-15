@@ -94,11 +94,11 @@ class DatabaseError(exceptions.HTTPException):
         project=None,
     ):
 
-        if pass_message and message != "":
+        if pass_message and message:
             super().__init__(message)
         else:
             super().__init__("The system encountered an error in the database.")
-            if message != "":
+            if not message:
                 message = super().message
 
         general_logger.warning(message)
