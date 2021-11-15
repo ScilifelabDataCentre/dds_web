@@ -99,7 +99,7 @@ class DatabaseError(exceptions.HTTPException):
         else:
             super().__init__("The system encountered an error in the database.")
             if message != "":
-                message = super.message
+                message = super().message
 
         general_logger.warning(message)
 
