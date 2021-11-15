@@ -6,7 +6,6 @@
 
 # Standard library
 import datetime
-import re
 
 # Installed
 from sqlalchemy.ext import hybrid
