@@ -89,15 +89,17 @@ class DatabaseError(exceptions.HTTPException):
 
     def __init__(
         self,
-        message="The DDS encountered an Flask-SQLAlchemy issue.",
+        message="",
         pass_message=False,
         project=None,
     ):
 
-        if pass_message:
+        if pass_message and message != "":
             super().__init__(message)
         else:
             super().__init__("The system encountered an error in the database.")
+            if message != "":
+                message = super.message
 
         general_logger.warning(message)
 
