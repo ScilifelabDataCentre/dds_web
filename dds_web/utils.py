@@ -8,6 +8,7 @@
 import datetime
 import os
 import pathlib
+import re
 
 # Installed
 import pandas
@@ -20,6 +21,7 @@ import pytz
 import atexit
 import werkzeug
 from apscheduler.schedulers import background
+import marshmallow
 
 # Own modules
 from dds_web.database import models
@@ -28,6 +30,26 @@ from dds_web import db, C_TZ
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+def contains_uppercase(input):
+    """Verify that string contains at least one upper case letter."""
+    if not re.search("[A-Z]", input):
+        raise marshmallow.ValidationError("Required: at least one upper case letter.")
+
+
+def contains_lowercase(input):
+    """Verify that string contains at least one lower case letter."""
+    if not re.search("[a-z]", input):
+        raise marshmallow.ValidationError("Required: at least one lower case letter.")
+
+
+def contains_digit_or_specialchar(input):
+    """Verify that string contains at least one special character OR digit."""
+    if not any(re.search(x, input) for x in ["[0-9]", "[#?!@$%^&*-]"]):
+        raise marshmallow.ValidationError(
+            "Required: at least one digit OR a special character (#?!@$%^&*-)."
+        )
 
 
 def current_time(timezone="Europe/Stockholm"):

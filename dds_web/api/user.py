@@ -338,7 +338,6 @@ class NewUser(flask_restful.Resource):
 
         # Validate form - validators defined in form class
         if form.validate_on_submit():
-            flask.current_app.logger.debug(form.data)
             # Create new user row by loading form data into schema
             try:
                 new_user = user_schemas.NewUserSchema().load(form.data)
