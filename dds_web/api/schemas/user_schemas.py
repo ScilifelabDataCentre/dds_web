@@ -6,7 +6,6 @@
 
 # Standard Library
 from datetime import datetime
-import re
 
 # Installed
 import marshmallow
