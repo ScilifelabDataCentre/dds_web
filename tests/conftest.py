@@ -37,40 +37,40 @@ def demo_data():
     users = [
         ResearchUser(
             username="researchuser",
-            password=auth.gen_argon2hash(password="password"),
+            password="password",
             name="Research User",
         ),
         ResearchUser(
             username="projectowner",
-            password=auth.gen_argon2hash(password="password"),
+            password="password",
             name="Project Owner",
         ),
         UnitUser(
             username="unituser",
-            password=auth.gen_argon2hash(password="password"),
+            password="password",
             name="Unit User",
             is_admin=False,
         ),
         UnitUser(
             username="unituser2",
-            password=auth.gen_argon2hash(password="password"),
+            password="password",
             name="Unit User 2",
             is_admin=False,
         ),
         UnitUser(
             username="unitadmin",
-            password=auth.gen_argon2hash(password="password"),
+            password="password",
             name="Unit Admin",
             is_admin=True,
         ),
         SuperAdmin(
             username="superadmin",
-            password=auth.gen_argon2hash(password="password"),
+            password="password",
             name="Super Admin",
         ),
         ResearchUser(
             username="researchuser2",
-            password=auth.gen_argon2hash(password="password"),
+            password="password",
             name="Research User 2",
         ),
     ]

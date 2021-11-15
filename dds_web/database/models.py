@@ -6,7 +6,10 @@
 
 # Standard library
 import datetime
+import re
 
+# Installed
+from sqlalchemy.ext import hybrid
 
 # Own modules
 from dds_web import db, C_TZ
@@ -157,7 +160,7 @@ class User(db.Model):
     # Columns
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
 
-    password = db.Column(db.String(98), unique=False, nullable=False)
+    _password = db.Column(db.String(98), unique=False, nullable=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
 
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -171,12 +174,23 @@ class User(db.Model):
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
+    @hybrid.hybrid_property
+    def password(self):
+        return self._password
+
+    @password.setter
+    def password(self, plaintext_password):
+        """Generate the password hash and save in db."""
+        pw_hasher = argon2.PasswordHasher(hash_len=32)
+
+        self._password = pw_hasher.hash(plaintext_password)
+
     def verify_password_argon2id(self, input_password):
         """Verifies that the password specified by the user matches
         the encoded password in the database."""
 
         # Setup Argon2 hasher
-        password_hasher = argon2.PasswordHasher()
+        password_hasher = argon2.PasswordHasher(hash_len=32)
 
         # Verify the input password
         try:
@@ -188,7 +202,14 @@ class User(db.Model):
         ):
             return False
 
-        # TODO (ina): Add check_needs_rehash?
+        # Rehash password if needed
+        if password_hasher.check_needs_rehash(self.password):
+            try:
+                self._password = password_hasher.hash(input_password)
+                db.session.commit()
+            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+                db.session.rollback()
+                flask.current_app.logger.exception(sqlerr)
 
         return True
 

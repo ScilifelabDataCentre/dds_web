@@ -195,12 +195,9 @@ class NewUserSchema(marshmallow.Schema):
     def make_user(self, data, **kwargs):
         """Deserialize to an User object"""
 
-        # Hash password
-        password = dds_web.security.auth.gen_argon2hash(password=data.get("password"))
-
         common_user_fields = {
             "username": data.get("username"),
-            "password": password,
+            "password": data.get("password"),
             "name": data.get("name"),
         }
 

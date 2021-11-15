@@ -57,7 +57,7 @@ def fill_db():
     # Create first research user
     researchuser_1 = models.ResearchUser(
         username="researchuser_1",
-        password=auth.gen_argon2hash(password="password"),
+        password="password",
         name="First Research User",
     )
     email_researchuser_1.user = researchuser_1
@@ -71,7 +71,7 @@ def fill_db():
     # Create second research user
     researchuser_2 = models.ResearchUser(
         username="researchuser_2",
-        password=auth.gen_argon2hash(password="password"),
+        password="password",
         name="Second Research User",
     )
     # Create association with user - is owner of project
@@ -84,13 +84,13 @@ def fill_db():
     # Create first unit user
     unituser_1 = models.UnitUser(
         username="unituser_1",
-        password=auth.gen_argon2hash(password="password"),
+        password="password",
         name="First Unit User",
     )
     # Create second unit user
     unituser_2 = models.UnitUser(
         username="unituser_2",
-        password=auth.gen_argon2hash(password="password"),
+        password="password",
         name="Second Unit User",
     )
 
