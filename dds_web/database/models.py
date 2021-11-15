@@ -13,7 +13,6 @@ from sqlalchemy.ext import hybrid
 # Own modules
 from dds_web import db, C_TZ
 import dds_web.utils
-from dds_web.security import auth
 import argon2
 
 
