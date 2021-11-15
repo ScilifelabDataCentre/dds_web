@@ -39,6 +39,10 @@ ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 ####################################################################################################
 
 
+def rate_limit_from_config():
+    return flask.current_app.config.get("TOKEN_ENDPOINT_ACCESS_LIMIT", "10/hour")
+
+
 def encrypted_jwt_token(
     username, sensitive_content, expires_in=datetime.timedelta(hours=48), additional_claims=None
 ):
@@ -359,8 +363,7 @@ class Token(flask_restful.Resource):
 
     decorators = [
         limiter.limit(
-            # flask.current_app.config.get("TOKEN_ENDPOINT_ACCESS_LIMIT"),
-            "24/day",
+            rate_limit_from_config,
             methods=["GET"],
             error_message=ddserr.errors["TooManyRequestsError"]["message"],
         )
@@ -369,6 +372,28 @@ class Token(flask_restful.Resource):
     @basic_auth.login_required
     def get(self):
         return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
+
+
+class EncryptedToken(flask_restful.Resource):
+    """Generates encrypted token for the user."""
+
+    decorators = [
+        limiter.limit(
+            rate_limit_from_config,
+            methods=["GET"],
+            error_message=ddserr.errors["TooManyRequestsError"]["message"],
+        )
+    ]
+
+    @basic_auth.login_required
+    def get(self):
+        return flask.jsonify(
+            {
+                "token": encrypted_jwt_token(
+                    username=auth.current_user().username, sensitive_content=None
+                )
+            }
+        )
 
 
 class ShowUsage(flask_restful.Resource):

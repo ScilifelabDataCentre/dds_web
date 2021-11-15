@@ -5,9 +5,10 @@ services:
   backend:
     environment:
       - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
+      - DDS_PYTEST_ARGS=${DDS_PYTEST_ARGS}
     build:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./
       target: test
-    command: bash -c "pytest"
+    command: bash -c "pytest $DDS_PYTEST_ARGS"
     restart: "no"
