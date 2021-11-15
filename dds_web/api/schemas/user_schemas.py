@@ -6,6 +6,7 @@
 
 # Standard Library
 from datetime import datetime
+import re
 
 # Installed
 import marshmallow
@@ -17,6 +18,7 @@ from dds_web.api import errors as ddserr
 from dds_web import auth
 import dds_web.security.auth
 from dds_web.database import models
+import dds_web.utils
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -143,11 +145,12 @@ class NewUserSchema(marshmallow.Schema):
     )
     password = marshmallow.fields.String(
         required=True,
-        validate=marshmallow.validate.Regexp(
-            regex="^(?=[^a-z\n]*[a-z])(?=[^A-Z\n]*[A-Z])(?=[^\d\n]*\d)^[\S]{10,64}$",
-            # Password must contain one or more uppercase, lowercase and digit characters.
-            # It may contain special characters (not enforced), as they might be hard to type depending on keyboard layout (e.g. on smartphones)
-            # Length of the password must be between 10 and 64 characers
+        validate=marshmallow.validate.And(
+            marshmallow.validate.Length(min=10, max=64),
+            dds_web.utils.contains_digit,
+            dds_web.utils.contains_lowercase,
+            dds_web.utils.contains_uppercase,
+            dds_web.utils.contains_specialchar,
         ),
     )
     email = marshmallow.fields.Email(required=True, validate=marshmallow.validate.Email())

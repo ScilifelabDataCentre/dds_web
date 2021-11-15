@@ -10,6 +10,7 @@ import re
 
 # Installed
 from sqlalchemy.ext import hybrid
+from sqlalchemy.orm import validates
 
 # Own modules
 from dds_web import db, C_TZ
