@@ -112,7 +112,7 @@ def verify_token_signature(token):
 def verify_password(username, password):
     """Verify that user exists and that password is correct."""
     user = models.User.query.get(username)
-    if user and verify_password_argon2id(user.password, password):
+    if user and user.verify_password_argon2id(input_password=password):
         return user
     return None
 
@@ -141,25 +141,3 @@ def gen_argon2hash(
     formated_hash = pw_hasher.hash(password)
 
     return formated_hash
-
-
-def verify_password_argon2id(db_pw, input_pw):
-    """Verifies that the password specified by the user matches
-    the encoded password in the database."""
-
-    # Setup Argon2 hasher
-    password_hasher = argon2.PasswordHasher()
-
-    # Verify the input password
-    try:
-        password_hasher.verify(db_pw, input_pw)
-    except (
-        argon2.exceptions.VerifyMismatchError,
-        argon2.exceptions.VerificationError,
-        argon2.exceptions.InvalidHash,
-    ):
-        return False
-
-    # TODO (ina): Add check_needs_rehash?
-
-    return True

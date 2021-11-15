@@ -11,6 +11,9 @@ import datetime
 # Own modules
 from dds_web import db, C_TZ
 import dds_web.utils
+from dds_web.security import auth
+import argon2
+
 
 ####################################################################################################
 # MODELS ################################################################################## MODELS #
@@ -142,6 +145,9 @@ class Project(db.Model):
 
 
 # Users #################################################################################### Users #
+from sqlalchemy.orm import validates
+
+
 class User(db.Model):
     """Data model for user accounts - base user model for all user types."""
 
@@ -164,6 +170,27 @@ class User(db.Model):
     created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
+
+    def verify_password_argon2id(self, input_password):
+        """Verifies that the password specified by the user matches
+        the encoded password in the database."""
+
+        # Setup Argon2 hasher
+        password_hasher = argon2.PasswordHasher()
+
+        # Verify the input password
+        try:
+            password_hasher.verify(self.password, input_password)
+        except (
+            argon2.exceptions.VerifyMismatchError,
+            argon2.exceptions.VerificationError,
+            argon2.exceptions.InvalidHash,
+        ):
+            return False
+
+        # TODO (ina): Add check_needs_rehash?
+
+        return True
 
     def __repr__(self):
         """Called by print, creates representation of object"""
