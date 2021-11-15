@@ -10,6 +10,7 @@ import datetime
 # Installed
 from sqlalchemy.ext import hybrid
 import sqlalchemy
+import flask
 
 # Own modules
 from dds_web import db, C_TZ
