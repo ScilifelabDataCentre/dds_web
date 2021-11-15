@@ -6,16 +6,19 @@
 
 # Standard library
 import datetime
+import base64
+import os
 
 # Installed
 from sqlalchemy.ext import hybrid
 import sqlalchemy
 import flask
+import argon2
+import pyotp
 
 # Own modules
 from dds_web import db, C_TZ
 import dds_web.utils
-import argon2
 
 
 ####################################################################################################
@@ -159,9 +162,9 @@ class User(db.Model):
     __table_args__ = {"extend_existing": True}
     # Columns
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
-
-    _password = db.Column(db.String(98), unique=False, nullable=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
+    _password = db.Column(db.String(98), unique=False, nullable=False)
+    _otp_secret = db.Column(db.String(16))
 
     type = db.Column(db.String(20), unique=False, nullable=False)
 
@@ -174,6 +177,7 @@ class User(db.Model):
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
+    # Password related
     @hybrid.hybrid_property
     def password(self):
         return self._password
@@ -212,6 +216,27 @@ class User(db.Model):
                 flask.current_app.logger.exception(sqlerr)
 
         return True
+
+    # 2FA related
+    @hybrid.hybrid_property
+    def otp_secret(self):
+        return self._otp_secret
+
+    @otp_secret.setter
+    def otp_secret(self, otp_secret):
+        if not otp_secret:
+            otp_secret = base64.b32encode(os.urandom(10)).decode("utf-8")
+
+        self._otp_secret = otp_secret
+
+    def totp_uri(self):
+        return pyotp.totp.TOTP(self.otp_secret).provisioning_uri(
+            name=self.username, issuer_name="Data Delivery System"
+        )
+
+    def verify_totp(self, token):
+        totp = pyotp.TOTP(self.otp_secret)
+        return totp.verify(token)
 
     def __repr__(self):
         """Called by print, creates representation of object"""

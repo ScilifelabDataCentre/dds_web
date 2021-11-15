@@ -19,6 +19,7 @@ import marshmallow
 from jwcrypto import jwk, jwt
 import pandas
 import sqlalchemy
+import pyotp
 
 # Own modules
 from dds_web import auth, mail, db
@@ -108,8 +109,6 @@ def jwt_token(username, expires_in=datetime.timedelta(hours=48), additional_clai
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
-
-
 class AddUser(flask_restful.Resource):
     @auth.login_required
     def post(self):
@@ -351,6 +350,29 @@ class NewUser(flask_restful.Resource):
             return f"User added: {new_user}"
 
         return flask.make_response(flask.render_template("user/register.html", form=form))
+
+
+class TwoFA(flask_restful.Resource):
+    def get(self):
+        # generating random secret key for authentication
+        secret = pyotp.random_base32()
+        return flask.make_response(flask.render_template("user/login_2fa.html", secret=secret))
+
+    def post(self):
+        # getting secret key used by user
+        secret = flask.request.form.get("secret")
+        # getting OTP provided by user
+        otp = int(flask.request.form.get("otp"))
+
+        # verifying submitted OTP with PyOTP
+        if pyotp.TOTP(secret).verify(otp):
+            # inform users if OTP is valid
+            flash("The TOTP 2FA token is valid", "success")
+            return flask.make_response(flask.redirect(flask.url_for("2fa")))
+        else:
+            # inform users if OTP is invalid
+            flash("You have supplied an invalid 2FA token!", "danger")
+            return flask.make_response(flask.redirect(flask.url_for("2fa")))
 
 
 class Token(flask_restful.Resource):

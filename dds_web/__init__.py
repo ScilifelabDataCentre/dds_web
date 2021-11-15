@@ -17,6 +17,9 @@ from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 import flask_mail
+import flask_security
+import passlib
+import flask_bootstrap
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -118,7 +121,7 @@ def create_app(testing=False, database_uri=None):
         app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     # Disables error catching during request handling
     app.config["TESTING"] = testing
-
+    flask_bootstrap.Bootstrap(app)
     # Setup logging handlers
     setup_logging(app)
 
