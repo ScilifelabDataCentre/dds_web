@@ -47,7 +47,9 @@ def contains_lowercase(input):
 def contains_digit_or_specialchar(input):
     """Verify that string contains at least one special character OR digit."""
     if not any(re.search(x, input) for x in ["[0-9]", "[#?!@$%^&*-]"]):
-        raise marshmallow.ValidationError("Required: at least one digit OR a special character.")
+        raise marshmallow.ValidationError(
+            "Required: at least one digit OR a special character (#?!@$%^&*-)."
+        )
 
 
 def current_time(timezone="Europe/Stockholm"):
