@@ -63,7 +63,7 @@ def test_new_file(client):
 
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
         data=json.dumps(first_new_file),
         content_type="application/json",
@@ -81,7 +81,7 @@ def test_new_file_invalid_credentials(client):
 
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).token(client),
         query_string={"project": "file_testing_project"},
         data=json.dumps(first_new_file),
         content_type="application/json",
@@ -102,7 +102,7 @@ def test_new_file_name_too_short(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
             query_string={"project": "file_testing_project"},
             data=json.dumps(file_no_name),
             content_type="application/json",
@@ -122,7 +122,7 @@ def test_new_file_nameinbucket_too_short(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
             query_string={"project": "file_testing_project"},
             data=json.dumps(file_no_nameinbucket),
             content_type="application/json",
@@ -142,7 +142,7 @@ def test_new_file_subpath_too_short(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
             query_string={"project": "file_testing_project"},
             data=json.dumps(file_no_subpath),
             content_type="application/json",
@@ -161,7 +161,7 @@ def test_new_file_size_bigint(client):
     file_size_bigint["size"] = 9223372036854775807  # 9223 petabytes (big int sql definition)
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
         data=json.dumps(file_size_bigint),
         content_type="application/json",
@@ -182,7 +182,7 @@ def test_new_file_sizeprocessed_bigint(client):
     ] = 9223372036854775807  # 9223 petabytes (big int sql definition)
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
         data=json.dumps(file_sizeprocessed_bigint),
         content_type="application/json",
@@ -202,7 +202,7 @@ def test_new_file_publickey_wrong_length(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
             query_string={"project": "file_testing_project"},
             data=json.dumps(file_wrong_public_key),
             content_type="application/json",
@@ -220,7 +220,7 @@ def test_new_file_salt_wrong_length(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
             query_string={"project": "file_testing_project"},
             data=json.dumps(file_wrong_salt),
             content_type="application/json",
@@ -238,7 +238,7 @@ def test_new_file_checksum_wrong_length(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
             query_string={"project": "file_testing_project"},
             data=json.dumps(file_wrong_checksum),
             content_type="application/json",

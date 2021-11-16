@@ -37,7 +37,7 @@ submit_with_same_ownership = {
 def test_add_user_with_researcher(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
         data=json.dumps(first_new_user),
         content_type="application/json",
     )
@@ -51,7 +51,7 @@ def test_add_user_with_researcher(client):
 def test_add_user_with_unituser_no_role(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         data=json.dumps(first_new_email),
         content_type="application/json",
     )
@@ -65,7 +65,7 @@ def test_add_user_with_unituser_no_role(client):
 def test_add_user_with_unitadmin_with_extraargs(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         data=json.dumps(first_new_user_extra_args),
         content_type="application/json",
     )
@@ -81,7 +81,7 @@ def test_add_user_with_unitadmin_with_extraargs(client):
 def test_add_user_with_unitadmin_and_invalid_role(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         data=json.dumps(first_new_user_invalid_role),
         content_type="application/json",
     )
@@ -98,7 +98,7 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
             data=json.dumps(first_new_user_invalid_email),
             content_type="application/json",
         )
@@ -114,7 +114,7 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
 def test_add_user_with_unitadmin(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         data=json.dumps(first_new_user),
         content_type="application/json",
     )
@@ -137,7 +137,7 @@ def test_add_user_existing_email(client):
     assert invited_user
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         data=json.dumps(existing_invite),
         content_type="application/json",
     )
@@ -147,7 +147,7 @@ def test_add_user_existing_email(client):
 def test_add_user_with_unitpersonnel_permission_denied(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(new_unit_admin),
         content_type="application/json",
     )
@@ -162,7 +162,7 @@ def test_add_user_with_unitpersonnel_permission_denied(client):
 def test_add_existing_user_without_project(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(existing_research_user),
         content_type="application/json",
     )
@@ -193,7 +193,7 @@ def test_add_existing_user_to_existing_project(client):
     assert project_user_before_addition is None
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(existing_research_user_to_existing_project),
         content_type="application/json",
     )
@@ -215,7 +215,7 @@ def test_add_existing_user_to_existing_project(client):
 def test_add_existing_user_to_nonexistent_proj(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(existing_research_user_to_nonexistent_proj),
         content_type="application/json",
     )
@@ -248,7 +248,7 @@ def test_existing_user_change_ownership(client):
 
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(change_owner_existing_user),
         content_type="application/json",
     )
@@ -263,7 +263,7 @@ def test_existing_user_change_ownership(client):
 def test_existing_user_change_ownership_same_permissions(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(submit_with_same_ownership),
         content_type="application/json",
     )
@@ -275,7 +275,7 @@ def test_add_existing_user_with_unsuitable_role(client):
     user_with_unsuitable_role["role"] = "Unit Admin"
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(user_with_unsuitable_role),
         content_type="application/json",
     )

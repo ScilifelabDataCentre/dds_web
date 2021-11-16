@@ -16,7 +16,7 @@ from jwcrypto import jwk, jwt
 # Own modules
 from dds_web.api.errors import AuthenticationError, AccessDeniedError
 from dds_web.database import models
-from dds_web import basic_auth, token_auth
+from dds_web import basic_auth, auth
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -28,7 +28,7 @@ def auth_error(status):
     return auth_error_common(status)
 
 
-@token_auth.error_handler
+@auth.error_handler
 def auth_error(status):
     return auth_error_common(status)
 
@@ -45,7 +45,7 @@ def get_user_roles(user):
     return get_user_roles_common(user)
 
 
-@token_auth.get_user_roles
+@auth.get_user_roles
 def get_user_roles(user):
     return get_user_roles_common(user)
 
@@ -56,7 +56,7 @@ def get_user_roles_common(user):
     return user.role
 
 
-@token_auth.verify_token
+@auth.verify_token
 def verify_token(token):
     try:
         data = (
