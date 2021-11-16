@@ -70,3 +70,12 @@ class LoginForm(flask_wtf.FlaskForm):
     )
     password = wtforms.PasswordField("Password", validators=[wtforms.validators.InputRequired()])
     submit = wtforms.SubmitField("Login")
+
+
+class TwoFactorAuthForm(flask_wtf.FlaskForm):
+    secret = wtforms.HiddenField("secret", id="secret")
+    otp = wtforms.StringField(
+        "otp",
+        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
+    )
+    submit = wtforms.SubmitField("Authenticate User")

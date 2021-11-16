@@ -11,6 +11,7 @@ import io
 import flask
 import flask_login
 import pyqrcode
+import pyotp
 
 # Own Modules
 from dds_web import auth
@@ -30,7 +31,9 @@ def index():
     # Check if user has 2fa setup
     if flask_login.current_user.is_authenticated:
         # TODO: Check if user has 2fa set up -> if not setup, if yes go to index.
-        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
+        return flask.redirect(
+            flask.url_for("auth_blueprint.two_factor_setup"),
+        )
 
     # Go to login page if not authenticated
     return flask.redirect(flask.url_for("auth_blueprint.login"))
@@ -41,8 +44,8 @@ def login():
     """Log user in with DDS credentials."""
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
-        # flask_login.logout_user()
+        # return flask.redirect(flask.url_for("auth_blueprint.index"))
+        flask_login.logout_user()
 
     # Check if for is filled in and correctly (post)
     form = forms.LoginForm()
@@ -76,6 +79,39 @@ def login():
 def two_factor_setup():
     """Setup two factor authentication."""
 
+    # since this page contains the sensitive qrcode, make sure the browser
+    # does not cache it
+    return (
+        flask.render_template(
+            "user/two-factor-setup.html", secret=flask_login.current_user.otp_secret
+        ),
+        200,
+        {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
+@auth_blueprint.route("/twofactor/verify", methods=["POST"])
+@flask_login.login_required
+def two_factor_verify():
+    """Verify two factor authentication."""
+
+    otp = int(flask.request.form.get("otp"))
+    if pyotp.TOTP(flask_login.current_user.otp_secret).verify(otp):
+        flask.flash("The TOTP 2FA token is valid", "success")
+        return "ok"
+    else:
+        flask.flash("You have supplied an invalid 2FA token!", "danger")
+        return "fail"
+
+
+@auth_blueprint.route("/qrcode", methods=["GET"])
+@flask_login.login_required
+def qrcode():
+    """Generate qrcode"""
     # render qrcode for FreeTOTP
     url = pyqrcode.create(flask_login.current_user.totp_uri())
     stream = io.BytesIO()
