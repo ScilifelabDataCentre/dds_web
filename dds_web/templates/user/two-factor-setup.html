@@ -5,8 +5,8 @@
 <h1>Two Factor Authentication Setup</h1>
 <p>You are almost done! Please start FreeOTP on your smartphone and scan the
     following QR Code with it:</p>
-<p><img id="qrcode" src="{{ flask.url_for('web_blueprint.qrcode') }}"></p>
-<p>I'm done, take me to the <a href="{{ flask.url_for('web_blueprint.login')
+<p><img id="qrcode" src="{{ flask.url_for('auth_blueprint.qrcode') }}"></p>
+<p>I'm done, take me to the <a href="{{ flask.url_for('auth_blueprint.login')
         }}">Login</a>
     page!</p>
 {% endblock %}

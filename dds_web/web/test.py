@@ -1,28 +1,47 @@
+""""""
+
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
+
+# Standard Library
 import io
+
+# Installed
 import flask
 import flask_login
+import pyqrcode
+
+# Own Modules
 from dds_web import auth
 from dds_web import forms
 from dds_web.database import models
-import urllib.parse
-import pyqrcode
 
-web_blueprint = flask.Blueprint("web_blueprint", __name__)
-
-
-def is_safe_url(target):
-    """Check if the url is safe for redirects."""
-    ref_url = urllib.parse.urlparse(flask.request.host_url)
-    test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
-    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
+####################################################################################################
+# ENDPOINTS ############################################################################ ENDPOINTS #
+####################################################################################################
+auth_blueprint = flask.Blueprint("auth_blueprints", __name__)
 
 
-@web_blueprint.route("/login", methods=["GET", "POST"])
+@auth_blueprint.route("/", methods=["GET"])
+def index():
+    """DDS start page."""
+
+    # Check if user has 2fa setup
+    if flask_login.current_user.is_authenticated:
+        # TODO: Check if user has 2fa set up -> if not setup, if yes go to index.
+        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
+
+    # Go to login page if not authenticated
+    return flask.redirect(flask.url_for("auth_blueprint.login"))
+
+
+@auth_blueprint.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in."""
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        # return flask.redirect(flask.url_for("web_blueprint.index"))
+        # return flask.redirect(flask.url_for("auth_blueprint.index"))
         flask_login.logout_user()
 
     # Check if for is filled in (correctly)
@@ -33,7 +52,7 @@ def login():
         # Unsuccessful login
         if not user or not user.verify_password(input_password=form.password.data):
             flask.flash("Invalid username or password.")
-            return flask.redirect(flask.url_for("web_blueprint.login"))
+            return flask.redirect(flask.url_for("auth_blueprint.login"))
 
         # Correct username and password --> log user in
         flask_login.login_user(user)
@@ -44,28 +63,13 @@ def login():
         if not is_safe_url(next):
             return flask.abort(400)
 
-        return flask.redirect(next or flask.url_for("web_blueprint.index"))
+        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
 
     # Go to login form
     return flask.render_template("user/login.html", form=form)
 
 
-@web_blueprint.route("/", methods=["GET"])
-def index():
-    """ """
-
-    # Check if user has 2fa setup
-    if flask_login.current_user.is_authenticated:
-        if flask_login.current_user.otp_secret:
-            return flask.redirect(flask.url_for("web_blueprint.two_factor_setup"))
-
-    # If not - go to setup
-    # If yes - go to home page
-
-    return "test"
-
-
-@web_blueprint.route("/twofactor", methods=["GET"])
+@auth_blueprint.route("/twofactor", methods=["GET"])
 @flask_login.login_required
 def two_factor_setup():
     """Setup two factor authentication."""

@@ -4,7 +4,7 @@
     </head>
     <body>
         <h1>Login to DDS</h1>
-        <form method="POST" action="{{ url_for('web_blueprint.login') }}">
+        <form method="POST" action="{{ url_for('auth_blueprint.login') }}">
             {{ form.csrf_token }}
 
             <!-- Username -->

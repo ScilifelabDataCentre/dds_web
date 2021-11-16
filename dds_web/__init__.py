@@ -190,10 +190,10 @@ def create_app(testing=False, database_uri=None):
 
         # Register blueprints
         from dds_web.api import api_blueprint
-        from dds_web.web.test import web_blueprint
+        from dds_web.web.test import auth_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
-        app.register_blueprint(web_blueprint, url_prefix="")
+        app.register_blueprint(auth_blueprint, url_prefix="")
 
         # Set-up the schedulers
         dds_web.utils.scheduler_wrapper()
