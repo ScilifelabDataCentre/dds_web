@@ -227,6 +227,10 @@ class User(flask_login.UserMixin, db.Model):
         # Password correct
         return True
 
+    def gen_otp_secret(self):
+        """Generate random base 32 for otp secret."""
+        return pyotp.random_base32()
+
     # 2FA related
     @property
     def otp_secret(self):
@@ -234,9 +238,11 @@ class User(flask_login.UserMixin, db.Model):
         return self._otp_secret
 
     @otp_secret.setter
-    def otp_secret(self):
+    def otp_secret(self, otp_secret):
         """Set new otp secret."""
-        self._otp_secret = pyotp.random_base32()
+        if not otp_secret:
+            otp_secret = self.gen_otp_secret()
+        self._otp_secret = otp_secret
 
     def totp_uri(self):
         """Get uri for user otp_secret."""

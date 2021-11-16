@@ -175,7 +175,7 @@ class AddUser(flask_restful.Resource):
         token = s.dumps(new_invite.email, salt="email-confirm")
 
         # Create link for invitation email
-        link = flask.url_for("api_blueprint.confirm_invite", token=token, _external=True)
+        link = flask.url_for("auth_blueprint.confirm_invite", token=token, _external=True)
 
         # Compose and send email
         unit_name = None
@@ -283,77 +283,6 @@ class AddUser(flask_restful.Resource):
             "status": 200,
             "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
         }
-
-
-class ConfirmInvite(flask_restful.Resource):
-    def get(self, token):
-        """ """
-
-        s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config.get("SECRET_KEY"))
-
-        try:
-            # Get email from token
-            email = s.loads(token, salt="email-confirm", max_age=604800)
-
-            # Get row from invite table
-            invite_row = models.Invite.query.filter(models.Invite.email == email).first()
-
-        except itsdangerous.exc.SignatureExpired as signerr:
-            db.session.delete(invite_row)
-            db.session.commit()
-            raise ddserr.InviteError(message=str(signerr))
-        except itsdangerous.exc.BadSignature as badsignerr:
-            raise ddserr.InviteError(message=str(badsignerr))
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise ddserr.DatabaseError(str(sqlerr))
-
-        # Check the invite exists
-        if not invite_row:
-            raise ddserr.InviteError(
-                message=f"There is no invitation for the found email adress: {email}"
-            )
-
-        # Initiate form
-        form = dds_web.forms.RegistrationForm()
-
-        # invite columns: unit_id, email, role
-        flask.current_app.logger.debug(invite_row)
-
-        # Prefill fields - facility readonly if filled, otherwise disabled
-        form.unit_name.render_kw = {"disabled": True}
-        if invite_row.unit:  # backref to unit
-            form.unit_name.data = invite_row.unit.name
-            form.unit_name.render_kw = {"readonly": True}
-
-        form.email.data = email
-        form.username.data = email.split("@")[0]
-
-        return flask.make_response(flask.render_template("user/register.html", form=form))
-
-
-class NewUser(flask_restful.Resource):
-    """Handles the creation of a new user"""
-
-    def post(self):
-        """Create user from form"""
-
-        form = dds_web.forms.RegistrationForm()
-
-        # Validate form - validators defined in form class
-        if form.validate_on_submit():
-            # Create new user row by loading form data into schema
-            try:
-                new_user = user_schemas.NewUserSchema().load(form.data)
-
-            except marshmallow.ValidationError as valerr:
-                flask.current_app.logger.info(valerr)
-                raise
-            except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
-                raise ddserr.DatabaseError(message=str(sqlerr))
-
-            return f"User added: {new_user}. Please setup two factor authentication with the following command: `dds twofa`"
-
-        return flask.make_response(flask.render_template("user/register.html", form=form))
 
 
 class Token(flask_restful.Resource):
