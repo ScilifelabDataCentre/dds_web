@@ -94,13 +94,6 @@ class DatabaseError(exceptions.HTTPException):
         project=None,
     ):
 
-        if pass_message and message:
-            super().__init__(message)
-        else:
-            super().__init__("The system encountered an error in the database.")
-            if not message:
-                message = super().message
-
         general_logger.warning(message)
 
         action_logger.warning(
@@ -112,6 +105,11 @@ class DatabaseError(exceptions.HTTPException):
                 "project": project,
             },
         )
+
+        if pass_message and message:
+            super().__init__(message)
+        else:
+            super().__init__("The system encountered an error in the database.")
 
 
 class EmptyProjectException(exceptions.HTTPException):
@@ -140,10 +138,6 @@ class DeletionError(exceptions.HTTPException):
     """Deletion of item failed."""
 
     def __init__(self, project, message="Deletion failed.", pass_message=False):
-        if pass_message:
-            super().__init__(message)
-        else:
-            super().__init__("Deletion of the file failed.")
 
         general_logger.warning(message)
 
@@ -156,6 +150,11 @@ class DeletionError(exceptions.HTTPException):
                 "project": project,
             },
         )
+
+        if pass_message and message:
+            super().__init__(message)
+        else:
+            super().__init__("Deletion of the file failed.")
 
 
 class NoSuchProjectError(exceptions.HTTPException):
@@ -218,12 +217,12 @@ class JwtTokenGenerationError(exceptions.HTTPException):
 
     def __init__(self, message, pass_message=False):
 
-        if pass_message:
+        general_logger.warning(message)
+
+        if pass_message and message:
             super().__init__(message)
         else:
             super().__init__("Unrecoverable error during the authentication process. Aborting.")
-
-        general_logger.warning(message)
 
 
 class MissingProjectIDError(exceptions.HTTPException):
@@ -259,12 +258,12 @@ class KeyNotFoundError(exceptions.HTTPException):
     def __init__(self, project, message="No key found for current project", pass_message=False):
         self.message = f"{message}: {project}"
 
+        general_logger.warning(self.message)
+
         if pass_message:
             super().__init__(self.message)
         else:
             super().__init__("Unrecoverable encryption error. Aborting.")
-
-        general_logger.warning(self.message)
 
 
 class InviteError(exceptions.HTTPException):
