@@ -289,4 +289,8 @@ errors = {
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "InviteError": {"status": http.HTTPStatus.BAD_REQUEST},
     "NoSuchUserError": {"status": http.HTTPStatus.BAD_REQUEST},
+    "TooManyRequestsError": {
+        "message": "Too many authentication requests in one hour",
+        "status": http.HTTPStatus.TOO_MANY_REQUESTS,
+    },
 }

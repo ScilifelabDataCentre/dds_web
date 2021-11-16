@@ -1,19 +1,19 @@
 apscheduler==3.7.0
 argon2_cffi==21.1.0
-authlib==0.15.4 
+authlib==0.15.4
 boto3==1.18.31
 cryptography==3.4.7
 Flask==1.1.2
-flask-admin==1.5.8 
-Flask-Mail==0.9.1 
-flask-marshmallow==0.14.0 
+flask-admin==1.5.8
+Flask-Mail==0.9.1
+flask-marshmallow==0.14.0
 Flask-RESTful==0.3.8
-Flask-Security-Too==4.1.0 
+Flask-Security-Too==4.1.0
 Flask-SQLAlchemy==2.5.1
 Flask-WTF==0.15.1
 immutabledict==2.2.0
 marshmallow-sqlalchemy==0.24.1
-marshmallow==3.13.0 
+marshmallow==3.13.0
 pandas # Version gives errors
 PyJWT==2.1.0
 pylint-flask==0.6
@@ -22,12 +22,12 @@ PyMySQL==0.10.1
 PyNaCl==1.4.0
 pytz==2020.1
 zstandard==0.15.2
-authlib==0.15.4 
+authlib==0.15.4
 apscheduler==3.7.0
 pytest==6.2.4
 Flask-HTTPAuth==4.4.0
 pyjwt==2.1.0
-requests==2.26.0 # required for oauth 
+requests==2.26.0 # required for oauth
 werkzeug==2.0.2
 jwcrypto==1.0
 selenium==4.0.0
@@ -35,3 +35,4 @@ pyotp
 flask-bootstrap
 pyqrcode
 flask-qrcode
+Flask-Limiter==1.4

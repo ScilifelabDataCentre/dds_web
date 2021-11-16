@@ -48,7 +48,7 @@ def test_create_project_without_credentials(client):
     """Create project without valid user credentials."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
         data=json.dumps(proj_data),
         content_type="application/json",
     )
@@ -71,7 +71,7 @@ def test_create_project_with_credentials(client):
     time_before_run = datetime.datetime.now()
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(proj_data),
         content_type="application/json",
     )
@@ -98,7 +98,7 @@ def test_create_project_no_title(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
             data=json.dumps({"pi": "piName"}),
             content_type="application/json",
         )
@@ -121,7 +121,7 @@ def test_create_project_title_too_short(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
             data=json.dumps(proj_data_short_title),
             content_type="application/json",
         )
@@ -143,7 +143,7 @@ def test_create_project_with_malformed_json(client):
     """Create a project with malformed project info."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data="",
         content_type="application/json",
     )
@@ -167,7 +167,7 @@ def test_create_project_sensitive(client):
     p_data["is_sensitive"] = True
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(p_data),
         content_type="application/json",
     )
@@ -192,7 +192,7 @@ def test_create_project_description_too_short(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
             data=json.dumps(proj_data_short_description),
             content_type="application/json",
         )
@@ -217,7 +217,7 @@ def test_create_project_pi_too_short(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
             data=json.dumps(proj_data_short_pi),
             content_type="application/json",
         )
@@ -242,7 +242,7 @@ def test_create_project_pi_too_long(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
             data=json.dumps(proj_data_long_pi),
             content_type="application/json",
         )
@@ -266,7 +266,7 @@ def test_create_project_wrong_status(client):
     proj_data_wrong_status["status"] = "Incorrect Status"
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(proj_data_wrong_status),
         content_type="application/json",
     )
@@ -292,7 +292,7 @@ def test_create_project_sensitive_not_boolean(client):
     with pytest.raises(marshmallow.ValidationError):
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
             data=json.dumps(proj_data_sensitive_not_boolean),
             content_type="application/json",
         )
@@ -316,7 +316,7 @@ def test_create_project_date_created_overridden(client):
     proj_data_date_created_own["date_created"] = "test"
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(proj_data_date_created_own),
         content_type="application/json",
     )
@@ -339,7 +339,7 @@ def test_create_project_with_users(client):
     """Create project and add users to the project."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(proj_data_with_existing_users),
         content_type="application/json",
     )
@@ -378,7 +378,7 @@ def test_create_project_with_invited_users(client):
 
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(proj_data_with_nonexisting_users),
         content_type="application/json",
     )
@@ -392,7 +392,7 @@ def test_create_project_with_unsuitable_roles(client):
     """Create project and add users with unsuitable roles to the project."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).post_headers(),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         data=json.dumps(proj_data_with_unsuitable_user_roles),
         content_type="application/json",
     )

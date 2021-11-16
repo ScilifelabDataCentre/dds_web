@@ -15,13 +15,15 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
-from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_security
 import passlib
 import flask_bootstrap
 import flask_login
 import flask_qrcode
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -42,8 +44,7 @@ ma = Marshmallow()
 # Authentication
 oauth = auth_flask_client.OAuth()
 basic_auth = HTTPBasicAuth()
-token_auth = HTTPTokenAuth()
-auth = MultiAuth(basic_auth, token_auth)
+auth = HTTPTokenAuth()
 
 # Login - web routes
 login_manager = flask_login.LoginManager()
@@ -54,6 +55,9 @@ actions = {
     "api_blueprint.proj_auth": "Project Access",
     "api_blueprint.register_user": "Register New User",
 }
+
+# Limiter
+limiter = Limiter(key_func=get_remote_address)
 
 
 ####################################################################################################
@@ -130,6 +134,10 @@ def create_app(testing=False, database_uri=None):
     # Setup logging handlers
     setup_logging(app)
 
+    # Adding limiter logging
+    for handler in app.logger.handlers:
+        limiter.logger.addHandler(handler)
+
     # Set app.logger as the general logger
     app.logger = logging.getLogger("general")
     app.logger.info("Logging initiated.")
@@ -157,6 +165,10 @@ def create_app(testing=False, database_uri=None):
     flask_qrcode.QRcode(app)
 
     oauth.init_app(app)
+
+    # Initialize limiter
+    limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
+    limiter.init_app(app)
 
     # initialize OIDC
     oauth.register(
