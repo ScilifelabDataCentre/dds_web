@@ -21,7 +21,7 @@ import pandas
 import sqlalchemy
 
 # Own modules
-from dds_web import auth, mail, db
+from dds_web import auth, mail, db, basic_auth, limiter
 from dds_web.database import models
 import dds_web.utils
 import dds_web.forms
@@ -37,6 +37,10 @@ ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+def rate_limit_from_config():
+    return flask.current_app.config.get("TOKEN_ENDPOINT_ACCESS_LIMIT", "10/hour")
 
 
 def encrypted_jwt_token(
@@ -356,7 +360,15 @@ class NewUser(flask_restful.Resource):
 class Token(flask_restful.Resource):
     """Generates token for the user."""
 
-    @auth.login_required
+    decorators = [
+        limiter.limit(
+            rate_limit_from_config,
+            methods=["GET"],
+            error_message=ddserr.errors["TooManyRequestsError"]["message"],
+        )
+    ]
+
+    @basic_auth.login_required
     def get(self):
         return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
 
@@ -364,7 +376,15 @@ class Token(flask_restful.Resource):
 class EncryptedToken(flask_restful.Resource):
     """Generates encrypted token for the user."""
 
-    @auth.login_required
+    decorators = [
+        limiter.limit(
+            rate_limit_from_config,
+            methods=["GET"],
+            error_message=ddserr.errors["TooManyRequestsError"]["message"],
+        )
+    ]
+
+    @basic_auth.login_required
     def get(self):
         return flask.jsonify(
             {
