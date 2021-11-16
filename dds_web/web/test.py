@@ -20,13 +20,12 @@ from dds_web.database import models
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
-auth_blueprint = flask.Blueprint("auth_blueprints", __name__)
+auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 
 
 @auth_blueprint.route("/", methods=["GET"])
 def index():
     """DDS start page."""
-
     # Check if user has 2fa setup
     if flask_login.current_user.is_authenticated:
         # TODO: Check if user has 2fa set up -> if not setup, if yes go to index.
@@ -38,21 +37,22 @@ def index():
 
 @auth_blueprint.route("/login", methods=["GET", "POST"])
 def login():
-    """Log user in."""
+    """Log user in with DDS credentials."""
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        # return flask.redirect(flask.url_for("auth_blueprint.index"))
-        flask_login.logout_user()
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        # flask_login.logout_user()
 
-    # Check if for is filled in (correctly)
+    # Check if for is filled in and correctly (post)
     form = forms.LoginForm()
     if form.validate_on_submit():
+        # Get user from database
         user = models.User.query.get(form.username.data)
 
         # Unsuccessful login
         if not user or not user.verify_password(input_password=form.password.data):
             flask.flash("Invalid username or password.")
-            return flask.redirect(flask.url_for("auth_blueprint.login"))
+            return flask.redirect(flask.url_for("auth_blueprint.login"))  # Try login again
 
         # Correct username and password --> log user in
         flask_login.login_user(user)
@@ -63,9 +63,10 @@ def login():
         if not is_safe_url(next):
             return flask.abort(400)
 
+        # Go to home page
         return flask.redirect(next or flask.url_for("auth_blueprint.index"))
 
-    # Go to login form
+    # Go to login form (get)
     return flask.render_template("user/login.html", form=form)
 
 
