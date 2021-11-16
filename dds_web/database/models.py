@@ -163,7 +163,7 @@ class User(db.Model):
     # Columns
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
-    _password = db.Column(db.String(98), unique=False, nullable=False)
+    password_hash = db.Column(db.String(98), unique=False, nullable=False)
     _otp_secret = db.Column(db.String(16))
 
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -177,19 +177,25 @@ class User(db.Model):
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
+    def __init__(self, **kwargs):
+        """Init all set and update otp secret."""
+        super(User, self).__init__(**kwargs)
+        if self.otp_secret is None:
+            self.otp_secret = self.gen_otp_secret()
+
     # Password related
-    @hybrid.hybrid_property
+    @property
     def password(self):
-        return self._password
+        raise AttributeError("Password is not a readable attribute.")
 
     @password.setter
     def password(self, plaintext_password):
         """Generate the password hash and save in db."""
         pw_hasher = argon2.PasswordHasher(hash_len=32)
 
-        self._password = pw_hasher.hash(plaintext_password)
+        self.password_hash = pw_hasher.hash(plaintext_password)
 
-    def verify_password_argon2id(self, input_password):
+    def verify_password(self, input_password):
         """Verifies that the password specified by the user matches
         the encoded password in the database."""
 
@@ -198,7 +204,7 @@ class User(db.Model):
 
         # Verify the input password
         try:
-            password_hasher.verify(self.password, input_password)
+            password_hasher.verify(self.password_hash, input_password)
         except (
             argon2.exceptions.VerifyMismatchError,
             argon2.exceptions.VerificationError,
@@ -207,9 +213,9 @@ class User(db.Model):
             return False
 
         # Rehash password if needed
-        if password_hasher.check_needs_rehash(self.password):
+        if not password_hasher.check_needs_rehash(self.password_hash):
             try:
-                self._password = password_hasher.hash(input_password)
+                self.password = input_password
                 db.session.commit()
             except sqlalchemy.exc.SQLAlchemyError as sqlerr:
                 db.session.rollback()
@@ -217,15 +223,20 @@ class User(db.Model):
 
         return True
 
+    @staticmethod
+    def gen_otp_secret():
+        """Generate new otp secret."""
+        return base64.b32encode(os.urandom(10)).decode("utf-8")
+
     # 2FA related
-    @hybrid.hybrid_property
+    @property
     def otp_secret(self):
         return self._otp_secret
 
     @otp_secret.setter
     def otp_secret(self, otp_secret):
         if not otp_secret:
-            otp_secret = base64.b32encode(os.urandom(10)).decode("utf-8")
+            otp_secret = self.gen_otp_secret()
 
         self._otp_secret = otp_secret
 

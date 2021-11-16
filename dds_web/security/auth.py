@@ -112,6 +112,6 @@ def verify_token_signature(token):
 def verify_password(username, password):
     """Verify that user exists and that password is correct."""
     user = models.User.query.get(username)
-    if user and user.verify_password_argon2id(input_password=password):
+    if user and user.verify_password(input_password=password):
         return user
     return None
