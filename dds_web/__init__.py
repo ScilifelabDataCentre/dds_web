@@ -20,6 +20,8 @@ import flask_mail
 import flask_security
 import passlib
 import flask_bootstrap
+import flask_login
+import flask_qrcode
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -42,6 +44,9 @@ oauth = auth_flask_client.OAuth()
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth()
 auth = MultiAuth(basic_auth, token_auth)
+
+# Login - web routes
+login_manager = flask_login.LoginManager()
 
 # Actions for logging
 actions = {
@@ -141,6 +146,16 @@ def create_app(testing=False, database_uri=None):
     # Initialize marshmallows
     ma.init_app(app)
 
+    # Initialize login manager
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        # since the user_id is just the primary key of our user table, use it in the query for the user
+        return models.User.query.get(user_id)
+
+    flask_qrcode.QRcode(app)
+
     oauth.init_app(app)
 
     # initialize OIDC
@@ -163,8 +178,10 @@ def create_app(testing=False, database_uri=None):
 
         # Register blueprints
         from dds_web.api import api_blueprint
+        from dds_web.web.test import web_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+        app.register_blueprint(web_blueprint, url_prefix="")
 
         # Set-up the schedulers
         dds_web.utils.scheduler_wrapper()

@@ -15,6 +15,7 @@ import sqlalchemy
 import flask
 import argon2
 import pyotp
+import flask_login
 
 # Own modules
 from dds_web import db, C_TZ
@@ -151,10 +152,9 @@ class Project(db.Model):
 
 
 # Users #################################################################################### Users #
-from sqlalchemy.orm import validates
 
 
-class User(db.Model):
+class User(flask_login.UserMixin, db.Model):
     """Data model for user accounts - base user model for all user types."""
 
     # Table setup
@@ -164,7 +164,7 @@ class User(db.Model):
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
     password_hash = db.Column(db.String(98), unique=False, nullable=False)
-    _otp_secret = db.Column(db.String(16))
+    _otp_secret = db.Column(db.String(32))
 
     type = db.Column(db.String(20), unique=False, nullable=False)
 
@@ -182,6 +182,9 @@ class User(db.Model):
         super(User, self).__init__(**kwargs)
         if self.otp_secret is None:
             self.otp_secret = self.gen_otp_secret()
+
+    def get_id(self):
+        return self.username
 
     # Password related
     @property
@@ -226,7 +229,7 @@ class User(db.Model):
     @staticmethod
     def gen_otp_secret():
         """Generate new otp secret."""
-        return base64.b32encode(os.urandom(10)).decode("utf-8")
+        return pyotp.random_base32()
 
     # 2FA related
     @property

@@ -33,3 +33,5 @@ jwcrypto==1.0
 selenium==4.0.0
 pyotp
 flask-bootstrap
+pyqrcode
+flask-qrcode
