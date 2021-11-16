@@ -184,24 +184,23 @@ class User(flask_login.UserMixin, db.Model):
             self.otp_secret = self.gen_otp_secret()
 
     def get_id(self):
+        """Get user id - in this case username. Used by flask_login."""
         return self.username
 
     # Password related
     @property
     def password(self):
+        """Raise error if trying to access password."""
         raise AttributeError("Password is not a readable attribute.")
 
     @password.setter
     def password(self, plaintext_password):
         """Generate the password hash and save in db."""
         pw_hasher = argon2.PasswordHasher(hash_len=32)
-
         self.password_hash = pw_hasher.hash(plaintext_password)
 
     def verify_password(self, input_password):
-        """Verifies that the password specified by the user matches
-        the encoded password in the database."""
-
+        """Verifies that the specified password matches the encoded password in the database."""
         # Setup Argon2 hasher
         password_hasher = argon2.PasswordHasher(hash_len=32)
 
@@ -213,9 +212,10 @@ class User(flask_login.UserMixin, db.Model):
             argon2.exceptions.VerificationError,
             argon2.exceptions.InvalidHash,
         ):
+            # Password hasher raises exceptions if not correct
             return False
 
-        # Rehash password if needed
+        # Rehash password if needed, e.g. if parameters are not up to date
         if not password_hasher.check_needs_rehash(self.password_hash):
             try:
                 self.password = input_password
@@ -224,31 +224,28 @@ class User(flask_login.UserMixin, db.Model):
                 db.session.rollback()
                 flask.current_app.logger.exception(sqlerr)
 
+        # Password correct
         return True
-
-    @staticmethod
-    def gen_otp_secret():
-        """Generate new otp secret."""
-        return pyotp.random_base32()
 
     # 2FA related
     @property
     def otp_secret(self):
+        """Get OTP secret for user."""
         return self._otp_secret
 
     @otp_secret.setter
-    def otp_secret(self, otp_secret):
-        if not otp_secret:
-            otp_secret = self.gen_otp_secret()
-
-        self._otp_secret = otp_secret
+    def otp_secret(self):
+        """Set new otp secret."""
+        self._otp_secret = pyotp.random_base32()
 
     def totp_uri(self):
+        """Get uri for user otp_secret."""
         return pyotp.totp.TOTP(self.otp_secret).provisioning_uri(
             name=self.username, issuer_name="Data Delivery System"
         )
 
     def verify_totp(self, token):
+        """Verify the otp token."""
         totp = pyotp.TOTP(self.otp_secret)
         return totp.verify(token)
 
