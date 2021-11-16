@@ -16,6 +16,7 @@ import pyqrcode
 from dds_web import auth
 from dds_web import forms
 from dds_web.database import models
+import dds_web.utils
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -60,7 +61,7 @@ def login():
 
         next = flask.request.args.get("next")
         # is_safe_url should check if the url is safe for redirects.
-        if not is_safe_url(next):
+        if not dds_web.utils.is_safe_url(next):
             return flask.abort(400)
 
         # Go to home page
