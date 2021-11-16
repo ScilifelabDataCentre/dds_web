@@ -10,6 +10,7 @@ import argon2
 import http
 import flask
 import json
+import jwcrypto
 from jwcrypto import jwk, jwt
 
 # Own modules
@@ -57,11 +58,21 @@ def get_user_roles_common(user):
 
 @token_auth.verify_token
 def verify_token(token):
-    data = (
-        verify_token_signature(token)
-        if token.count(".") == 2
-        else decrypt_and_verify_token_signature(token)
-    )
+    try:
+        data = (
+            verify_token_signature(token)
+            if token.count(".") == 2
+            else decrypt_and_verify_token_signature(token)
+        )
+    except (ValueError, jwcrypto.common.JWException) as e:
+        # ValueError is raised when the token doesn't look right (for example no periods)
+        # jwcryopto.common.JWException is the base exception raised by jwcrypto,
+        # and is raised when the token is malformed or invalid.
+        flask.current_app.logger.exception(
+            e
+        )  # TODO log this to specific file to track failed attempts
+        raise AuthenticationError(message="Invalid token")
+
     expiration_time = data.get("exp")
     # we use a hard check on top of the one from the dependency
     # exp shouldn't be before now no matter what
@@ -112,54 +123,6 @@ def verify_token_signature(token):
 def verify_password(username, password):
     """Verify that user exists and that password is correct."""
     user = models.User.query.get(username)
-    if user and verify_password_argon2id(user.password, password):
+    if user and user.verify_password_argon2id(input_password=password):
         return user
     return None
-
-
-def gen_argon2hash(
-    password,
-    time_cost=2,
-    memory_cost=102400,
-    parallelism=8,
-    hash_len=32,
-    salt_len=16,
-    encoding="utf-8",
-    version=argon2.low_level.Type.ID,
-):
-    """Generates Argon2id password hash to store in DB."""
-
-    pw_hasher = argon2.PasswordHasher(
-        time_cost=time_cost,
-        memory_cost=memory_cost,
-        parallelism=parallelism,
-        hash_len=hash_len,
-        salt_len=salt_len,
-        encoding=encoding,
-        type=version,
-    )
-    formated_hash = pw_hasher.hash(password)
-
-    return formated_hash
-
-
-def verify_password_argon2id(db_pw, input_pw):
-    """Verifies that the password specified by the user matches
-    the encoded password in the database."""
-
-    # Setup Argon2 hasher
-    password_hasher = argon2.PasswordHasher()
-
-    # Verify the input password
-    try:
-        password_hasher.verify(db_pw, input_pw)
-    except (
-        argon2.exceptions.VerifyMismatchError,
-        argon2.exceptions.VerificationError,
-        argon2.exceptions.InvalidHash,
-    ):
-        return False
-
-    # TODO (ina): Add check_needs_rehash?
-
-    return True

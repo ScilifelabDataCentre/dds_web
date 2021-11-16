@@ -338,7 +338,6 @@ class NewUser(flask_restful.Resource):
 
         # Validate form - validators defined in form class
         if form.validate_on_submit():
-            flask.current_app.logger.debug(form.data)
             # Create new user row by loading form data into schema
             try:
                 new_user = user_schemas.NewUserSchema().load(form.data)
@@ -360,6 +359,20 @@ class Token(flask_restful.Resource):
     @auth.login_required
     def get(self):
         return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
+
+
+class EncryptedToken(flask_restful.Resource):
+    """Generates encrypted token for the user."""
+
+    @auth.login_required
+    def get(self):
+        return flask.jsonify(
+            {
+                "token": encrypted_jwt_token(
+                    username=auth.current_user().username, sensitive_content=None
+                )
+            }
+        )
 
 
 class ShowUsage(flask_restful.Resource):
