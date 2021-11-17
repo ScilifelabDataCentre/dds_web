@@ -134,7 +134,7 @@ class EmptyProjectException(exceptions.HTTPException):
 class DeletionError(exceptions.HTTPException):
     """Deletion of item failed."""
 
-    def __init__(self, project, message="Deletion failed.", pass_message=False):
+    def __init__(self, project, message, pass_message=False):
 
         general_logger.warning(message)
 
@@ -148,10 +148,7 @@ class DeletionError(exceptions.HTTPException):
             },
         )
 
-        if pass_message and message:
-            super().__init__(message)
-        else:
-            super().__init__("Deletion of the file failed.")
+        super().__init__("Deletion of the file failed." if not pass_message else message)
 
 
 class NoSuchProjectError(exceptions.HTTPException):
