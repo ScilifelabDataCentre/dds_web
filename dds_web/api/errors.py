@@ -251,10 +251,7 @@ class KeyNotFoundError(exceptions.HTTPException):
 
         general_logger.warning(self.message)
 
-        if pass_message:
-            super().__init__(self.message)
-        else:
-            super().__init__("Unrecoverable encryption error. Aborting.")
+        super().__init__("Unrecoverable key error. Aborting." if not pass_message else message)
 
 
 class InviteError(exceptions.HTTPException):
