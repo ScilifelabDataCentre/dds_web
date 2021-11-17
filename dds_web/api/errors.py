@@ -209,7 +209,7 @@ class S3InfoNotFoundError(exceptions.HTTPException):
 class JwtTokenGenerationError(exceptions.HTTPException):
     """Errors when generating the JWT token during authentication."""
 
-    def __init__(self, message, pass_message=False):
+    def __init__(self, message="Error during JWT Token generation.", pass_message=False):
 
         general_logger.warning(message)
 
