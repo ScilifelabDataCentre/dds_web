@@ -217,7 +217,8 @@ class JwtTokenGenerationError(exceptions.HTTPException):
 
         super().__init__(
             "Unrecoverable error during the authentication process. Aborting." 
-            if not pass_message else message
+            if not pass_message 
+            else message
         )
 
 
