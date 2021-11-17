@@ -213,10 +213,7 @@ class JwtTokenGenerationError(exceptions.HTTPException):
 
         general_logger.warning(message)
 
-        if pass_message and message:
-            super().__init__(message)
-        else:
-            super().__init__("Unrecoverable error during the authentication process. Aborting.")
+        super().__init__("Unrecoverable error during the authentication process. Aborting." if not pass_message else message)
 
 
 class MissingProjectIDError(exceptions.HTTPException):
