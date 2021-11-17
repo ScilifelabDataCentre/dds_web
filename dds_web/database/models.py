@@ -13,7 +13,7 @@ import sqlalchemy
 import flask
 
 # Own modules
-from dds_web import db, C_TZ
+from dds_web import db
 import dds_web.utils
 import argon2
 
