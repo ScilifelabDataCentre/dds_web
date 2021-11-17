@@ -42,9 +42,7 @@ def test_add_user_with_researcher(client):
         content_type="application/json",
     )
     assert response.status == "403 FORBIDDEN"
-    invited_user = (
-        db.session.query(models.Invite).filter_by(email=first_new_user["email"]).one_or_none()
-    )
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     assert invited_user is None
 
 
@@ -56,9 +54,7 @@ def test_add_user_with_unituser_no_role(client):
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
-    invited_user = (
-        db.session.query(models.Invite).filter_by(email=first_new_email["email"]).one_or_none()
-    )
+    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
     assert invited_user is None
 
 
@@ -70,11 +66,9 @@ def test_add_user_with_unitadmin_with_extraargs(client):
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
-    invited_user = (
-        db.session.query(models.Invite)
-        .filter_by(email=first_new_user_extra_args["email"])
-        .one_or_none()
-    )
+    invited_user = models.Invite.query.filter_by(
+        email=first_new_user_extra_args["email"]
+    ).one_or_none()
     assert invited_user is None
 
 
@@ -86,11 +80,9 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
-    invited_user = (
-        db.session.query(models.Invite)
-        .filter_by(email=first_new_user_invalid_role["email"])
-        .one_or_none()
-    )
+    invited_user = models.Invite.query.filter_by(
+        email=first_new_user_invalid_role["email"]
+    ).one_or_none()
     assert invited_user is None
 
 
@@ -103,11 +95,9 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
             content_type="application/json",
         )
 
-    invited_user = (
-        db.session.query(models.Invite)
-        .filter_by(email=first_new_user_invalid_email["email"])
-        .one_or_none()
-    )
+    invited_user = models.Invite.query.filter_by(
+        email=first_new_user_invalid_email["email"]
+    ).one_or_none()
     assert invited_user is None
 
 
@@ -120,20 +110,16 @@ def test_add_user_with_unitadmin(client):
     )
     assert response.status == "200 OK"
 
-    invited_user = (
-        db.session.query(models.Invite).filter_by(email=first_new_user["email"]).one_or_none()
-    )
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     assert invited_user
     assert invited_user.email == first_new_user["email"]
     assert invited_user.role == first_new_user["role"]
 
 
 def test_add_user_existing_email(client):
-    invited_user = (
-        db.session.query(models.Invite)
-        .filter_by(email=existing_invite["email"], role=existing_invite["role"])
-        .one_or_none()
-    )
+    invited_user = models.Invite.query.filter_by(
+        email=existing_invite["email"], role=existing_invite["role"]
+    ).one_or_none()
     assert invited_user
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
@@ -153,9 +139,7 @@ def test_add_user_with_unitpersonnel_permission_denied(client):
     )
     assert response.status == "403 FORBIDDEN"
 
-    invited_user = (
-        db.session.query(models.Invite).filter_by(email=new_unit_admin["email"]).one_or_none()
-    )
+    invited_user = models.Invite.query.filter_by(email=new_unit_admin["email"]).one_or_none()
     assert invited_user is None
 
 
@@ -170,26 +154,18 @@ def test_add_existing_user_without_project(client):
 
 
 def test_add_existing_user_to_existing_project(client):
-    project = (
-        db.session.query(models.Project)
-        .filter_by(public_id=existing_research_user_to_existing_project["project"])
-        .one_or_none()
-    )
-    user = (
-        db.session.query(models.Email)
-        .filter_by(email=existing_research_user_to_existing_project["email"])
-        .one_or_none()
-    )
-    project_user_before_addition = (
-        db.session.query(models.ProjectUsers)
-        .filter(
-            sqlalchemy.and_(
-                models.ProjectUsers.user_id == user.user_id,
-                models.ProjectUsers.project_id == project.id,
-            )
+    project = models.Project.query.filter_by(
+        public_id=existing_research_user_to_existing_project["project"]
+    ).one_or_none()
+    user = models.Email.query.filter_by(
+        email=existing_research_user_to_existing_project["email"]
+    ).one_or_none()
+    project_user_before_addition = models.ProjectUsers.query.filter(
+        sqlalchemy.and_(
+            models.ProjectUsers.user_id == user.user_id,
+            models.ProjectUsers.project_id == project.id,
         )
-        .one_or_none()
-    )
+    ).one_or_none()
     assert project_user_before_addition is None
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
@@ -199,16 +175,12 @@ def test_add_existing_user_to_existing_project(client):
     )
     assert response.status == "200 OK"
 
-    project_user_after_addition = (
-        db.session.query(models.ProjectUsers)
-        .filter(
-            sqlalchemy.and_(
-                models.ProjectUsers.user_id == user.user_id,
-                models.ProjectUsers.project_id == project.id,
-            )
+    project_user_after_addition = models.ProjectUsers.query.filter(
+        sqlalchemy.and_(
+            models.ProjectUsers.user_id == user.user_id,
+            models.ProjectUsers.project_id == project.id,
         )
-        .one_or_none()
-    )
+    ).one_or_none()
     assert project_user_after_addition
 
 
@@ -223,26 +195,16 @@ def test_add_existing_user_to_nonexistent_proj(client):
 
 
 def test_existing_user_change_ownership(client):
-    project = (
-        db.session.query(models.Project)
-        .filter_by(public_id=change_owner_existing_user["project"])
-        .one_or_none()
-    )
-    user = (
-        db.session.query(models.Email)
-        .filter_by(email=change_owner_existing_user["email"])
-        .one_or_none()
-    )
-    project_user = (
-        db.session.query(models.ProjectUsers)
-        .filter(
-            sqlalchemy.and_(
-                models.ProjectUsers.user_id == user.user_id,
-                models.ProjectUsers.project_id == project.id,
-            )
+    project = models.Project.query.filter_by(
+        public_id=change_owner_existing_user["project"]
+    ).one_or_none()
+    user = models.Email.query.filter_by(email=change_owner_existing_user["email"]).one_or_none()
+    project_user = models.ProjectUsers.query.filter(
+        sqlalchemy.and_(
+            models.ProjectUsers.user_id == user.user_id,
+            models.ProjectUsers.project_id == project.id,
         )
-        .one_or_none()
-    )
+    ).one_or_none()
 
     assert not project_user.owner
 

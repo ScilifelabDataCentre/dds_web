@@ -107,8 +107,7 @@ class CreateProjectSchema(marshmallow.Schema):
         try:
             # Lock db, get unit row and update counter
             unit_row = (
-                db.session.query(models.Unit)
-                .filter_by(id=auth.current_user().unit_id)
+                models.Unit.query.filter_by(id=auth.current_user().unit_id)
                 .with_for_update()
                 .one_or_none()
             )
