@@ -89,7 +89,7 @@ class DatabaseError(exceptions.HTTPException):
 
     def __init__(
         self,
-        message="",
+        message,
         pass_message=False,
         project=None,
     ):
@@ -106,10 +106,7 @@ class DatabaseError(exceptions.HTTPException):
             },
         )
 
-        if pass_message and message:
-            super().__init__(message)
-        else:
-            super().__init__("The system encountered an error in the database.")
+        super().__init__("The system encountered an error in the database." if not pass_message else message)
 
 
 class EmptyProjectException(exceptions.HTTPException):
