@@ -106,7 +106,9 @@ class DatabaseError(exceptions.HTTPException):
             },
         )
 
-        super().__init__("The system encountered an error in the database." if not pass_message else message)
+        super().__init__(
+            "The system encountered an error in the database." if not pass_message else message
+        )
 
 
 class EmptyProjectException(exceptions.HTTPException):
@@ -213,7 +215,10 @@ class JwtTokenGenerationError(exceptions.HTTPException):
 
         general_logger.warning(message)
 
-        super().__init__("Unrecoverable error during the authentication process. Aborting." if not pass_message else message)
+        super().__init__(
+            "Unrecoverable error during the authentication process. Aborting." 
+            if not pass_message else message
+        )
 
 
 class MissingProjectIDError(exceptions.HTTPException):
