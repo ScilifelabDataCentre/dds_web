@@ -267,7 +267,7 @@ class NoSuchUserError(Exception):
 # ----------------------------------------------------------------------------------- #
 
 
-errors = {
+error_codes = {
     "ItemDeletionError": {
         "message": "Removal of item(s) from S3 bucket failed.",
         "status": http.HTTPStatus.INTERNAL_SERVER_ERROR,

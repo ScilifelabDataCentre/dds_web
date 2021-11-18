@@ -59,11 +59,11 @@ def confirm_invite(token):
     except itsdangerous.exc.SignatureExpired as signerr:
         db.session.delete(invite_row)
         db.session.commit()
-        raise ddserr.InviteError(message=str(signerr))
+        raise ddserr.InviteError from signerr
     except itsdangerous.exc.BadSignature as badsignerr:
-        raise ddserr.InviteError(message=str(badsignerr))
+        raise ddserr.InviteError from badsignerr
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise ddserr.DatabaseError(str(sqlerr))
+        raise ddserr.DatabaseError from sqlerr
 
     # Check the invite exists
     if not invite_row:

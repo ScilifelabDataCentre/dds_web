@@ -120,9 +120,7 @@ class AddUser(flask_restful.Resource):
 
         args = flask.request.json
 
-        project = ""
-        if "project" in args:
-            project = args.pop("project")
+        project = args.pop("project", None)
 
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load(args)
@@ -148,7 +146,7 @@ class AddUser(flask_restful.Resource):
                             "message": "User exists! Specify a project if you want to add this user to a project."
                         }
                     ),
-                    ddserr.errors["DDSArgumentError"]["status"],
+                    ddserr.error_codes["DDSArgumentError"]["status"],
                 )
 
     @staticmethod
@@ -162,7 +160,7 @@ class AddUser(flask_restful.Resource):
         except ddserr.InviteError as invite_err:
             return {
                 "message": invite_err.description,
-                "status": ddserr.errors["InviteError"]["status"].value,
+                "status": ddserr.error_codes["InviteError"]["status"].value,
             }
 
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
@@ -292,7 +290,7 @@ class Token(flask_restful.Resource):
         limiter.limit(
             rate_limit_from_config,
             methods=["GET"],
-            error_message=ddserr.errors["TooManyRequestsError"]["message"],
+            error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
         )
     ]
 
@@ -308,7 +306,7 @@ class EncryptedToken(flask_restful.Resource):
         limiter.limit(
             rate_limit_from_config,
             methods=["GET"],
-            error_message=ddserr.errors["TooManyRequestsError"]["message"],
+            error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
         )
     ]
 
