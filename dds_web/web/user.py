@@ -63,11 +63,11 @@ def confirm_invite(token):
     except itsdangerous.exc.SignatureExpired as signerr:
         db.session.delete(invite_row)
         db.session.commit()
-        raise ddserr.InviteError from signerr
-    except itsdangerous.exc.BadSignature as badsignerr:
-        raise ddserr.InviteError from badsignerr
+        raise  # TODO: Do not raise api error here, should fix new error handling for web page
+    except (itsdangerous.exc.BadSignature, itsdangerous.exc.BadTimeSignature) as badsignerr:
+        raise
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise ddserr.DatabaseError from sqlerr
+        raise
 
     # Check the invite exists
     if not invite_row:

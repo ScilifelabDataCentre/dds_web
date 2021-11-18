@@ -21,7 +21,7 @@ def test_no_token(client):
 
 
 def test_invalid_token(client):
-    with pytest.raises(ddserr.InviteError):
+    with pytest.raises(itsdangerous.exc.BadSignature):
         response = client.get(
             tests.DDSEndpoint.USER_CONFIRM + "invalidtokentesting",
             content_type="application/json",
@@ -29,12 +29,12 @@ def test_invalid_token(client):
 
 
 def test_expired_token(client):
-    response = client.get(
-        tests.DDSEndpoint.USER_CONFIRM
-        + "ImZpcnN0X3Rlc3RfZW1haWxAbWFpbHRyYXAuaW8i.YW2HiQ.zT4zcM-yt_5S6NfCn2VoYDQSv_g",
-        content_type="application/json",
-    )
-    assert response.status == "400 BAD REQUEST"
+    with pytest.raises(itsdangerous.exc.BadTimeSignature):
+        response = client.get(
+            tests.DDSEndpoint.USER_CONFIRM
+            + "ImZpcnN0X3Rlc3RfZW1haWxAbWFpbHRyYXAuaW8i.YW2HiQ.zT4zcM-yt_5S6NfCn2VoYDQSv_g",
+            content_type="application/json",
+        )
 
 
 def test_valid_token(client):
