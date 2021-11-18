@@ -1,6 +1,5 @@
 import json
 import tests
-import pytest
 
 
 def test_no_form(client):
