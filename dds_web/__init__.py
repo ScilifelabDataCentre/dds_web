@@ -159,8 +159,6 @@ def create_app(testing=False, database_uri=None):
         # since the user_id is just the primary key of our user table, use it in the query for the user
         return models.User.query.get(user_id)
 
-    # flask_qrcode.QRcode(app)
-
     oauth.init_app(app)
 
     # Initialize limiter
