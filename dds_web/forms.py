@@ -72,6 +72,10 @@ class LoginForm(flask_wtf.FlaskForm):
     submit = wtforms.SubmitField("Login")
 
 
+class LogoutForm(flask_wtf.FlaskForm):
+    logout = wtforms.SubmitField("Logout")
+
+
 class TwoFactorAuthForm(flask_wtf.FlaskForm):
     secret = wtforms.HiddenField("secret", id="secret")
     otp = wtforms.StringField(

@@ -165,6 +165,7 @@ class User(flask_login.UserMixin, db.Model):
     name = db.Column(db.String(255), unique=False, nullable=True)
     password_hash = db.Column(db.String(98), unique=False, nullable=False)
     _otp_secret = db.Column(db.String(32))
+    has_2fa = db.Column(db.Boolean)
 
     type = db.Column(db.String(20), unique=False, nullable=False)
 
@@ -182,6 +183,7 @@ class User(flask_login.UserMixin, db.Model):
         super(User, self).__init__(**kwargs)
         if self.otp_secret is None:
             self.otp_secret = self.gen_otp_secret()
+        self.has_2fa = False
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""

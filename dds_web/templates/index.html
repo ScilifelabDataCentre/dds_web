@@ -1,1 +1,5 @@
-This page will have something on it later.
+This page will have something on it later. Now it just has a logout button.
+
+<form method="POST" action="{{ url_for('auth_blueprint.logout') }}">
+    {{ form.logout }}
+</form>

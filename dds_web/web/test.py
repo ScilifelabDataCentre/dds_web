@@ -38,7 +38,8 @@ def index():
     """DDS start page."""
     # Check if user has 2fa setup
     if flask_login.current_user.is_authenticated:
-        return flask.render_template("index.html")
+        form = forms.LogoutForm()
+        return flask.render_template("index.html", form=form)
 
     # Go to login page if not authenticated
     return flask.redirect(flask.url_for("auth_blueprint.login"))
@@ -104,9 +105,11 @@ def register():
             flask.current_app.logger.info(valerr)
             raise
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
-            raise ddserr.DatabaseError(message=str(sqlerr))
+            raise ddserr.DatabaseError from sqlerr
 
         # Go to two factor authentication setup
+        # TODO: Change this after email is introduced
+        flask_login.login_user(new_user)
         return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
 
     # Go to registration form
@@ -119,8 +122,9 @@ def login():
 
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        # return flask.redirect(flask.url_for("auth_blueprint.index"))
-        flask_login.logout_user()
+        if flask_login.current_user.has_2fa:
+            return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
 
     # Check if for is filled in and correctly (post)
     form = forms.LoginForm()
@@ -147,6 +151,16 @@ def login():
 
     # Go to login form (get)
     return flask.render_template("user/login.html", form=form)
+
+
+@auth_blueprint.route("/logout", methods=["POST"])
+def logout():
+    """Logout user."""
+
+    if flask_login.current_user.is_authenticated:
+        flask_login.logout_user()
+
+    return flask.redirect(flask.url_for("auth_blueprint.index"))
 
 
 @auth_blueprint.route("/twofactor", methods=["GET"])
@@ -192,6 +206,13 @@ def two_factor_verify():
     otp = int(flask.request.form.get("otp"))
     if pyotp.TOTP(flask_login.current_user.otp_secret).verify(otp):
         flask.flash("The TOTP 2FA token is valid", "success")
+
+        # User has now setup 2FA
+        flask_login.current_user.has_2fa = True
+        try:
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise ddserr.DatabaseError from sqlerr
         return flask.redirect(flask.url_for("auth_blueprint.index"))
     else:
         flask.flash("You have supplied an invalid 2FA token!", "danger")
