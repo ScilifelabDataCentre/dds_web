@@ -38,8 +38,11 @@ def index():
     """DDS start page."""
     # Check if user has 2fa setup
     if flask_login.current_user.is_authenticated:
-        form = forms.LogoutForm()
-        return flask.render_template("index.html", form=form)
+        if flask_login.current_user.has_2fa:
+            form = forms.LogoutForm()
+            return flask.render_template("index.html", form=form)
+        else: 
+            return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
 
     # Go to login page if not authenticated
     return flask.redirect(flask.url_for("auth_blueprint.login"))
@@ -168,6 +171,7 @@ def two_factor_setup():
     """Setup two factor authentication."""
     # since this page contains the sensitive qrcode, make sure the browser
     # does not cache it
+    flask_login.current_user.set_2fa_seen()
     return (
         flask.render_template(
             "user/two-factor-setup.html", secret=flask_login.current_user.otp_secret

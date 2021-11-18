@@ -246,6 +246,10 @@ class User(flask_login.UserMixin, db.Model):
             otp_secret = self.gen_otp_secret()
         self._otp_secret = otp_secret
 
+    def set_2fa_seen(self):
+        """Renew the otp secret -- one should only be setup once."""
+        self.has_2fa = True
+
     def totp_uri(self):
         """Get uri for user otp_secret."""
         return pyotp.totp.TOTP(self.otp_secret).provisioning_uri(
