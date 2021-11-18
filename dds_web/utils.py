@@ -95,7 +95,6 @@ def format_byte_size(size):
     for suffix in suffixes:
         if size >= 1000:
             size /= 1000
-            suffix += 1
         else:
             break
 
