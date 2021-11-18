@@ -51,11 +51,7 @@ auth = HTTPTokenAuth()
 login_manager = flask_login.LoginManager()
 
 # Actions for logging
-actions = {
-    "api_blueprint.auth": "User Authentication",
-    "api_blueprint.proj_auth": "Project Access",
-    "api_blueprint.register_user": "Register New User",
-}
+actions = {}
 
 # Limiter
 limiter = Limiter(key_func=get_remote_address)
