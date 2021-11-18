@@ -3,7 +3,9 @@ import tests
 import flask
 from dds_web import db
 from dds_web.database import models
+import dds_web.api.errors as ddserr
 import itsdangerous
+import pytest
 
 
 def get_email_token(email):
@@ -19,11 +21,11 @@ def test_no_token(client):
 
 
 def test_invalid_token(client):
-    response = client.get(
-        tests.DDSEndpoint.USER_CONFIRM + "invalidtokentesting",
-        content_type="application/json",
-    )
-    assert response.status == "400 BAD REQUEST"
+    with pytest.raises(ddserr.InviteError):
+        response = client.get(
+            tests.DDSEndpoint.USER_CONFIRM + "invalidtokentesting",
+            content_type="application/json",
+        )
 
 
 def test_expired_token(client):
