@@ -41,7 +41,7 @@ def index():
         if flask_login.current_user.has_2fa:
             form = forms.LogoutForm()
             return flask.render_template("index.html", form=form)
-        else: 
+        else:
             return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
 
     # Go to login page if not authenticated
