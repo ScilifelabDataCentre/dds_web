@@ -139,6 +139,7 @@ def login():
 
         # Correct username and password --> log user in
         flask_login.login_user(user)
+        flask.current_app.logger.debug(flask_login.current_user._otp_secret)
         flask.flash("Logged in successfully.")
 
         next = flask.request.args.get("next")

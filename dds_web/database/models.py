@@ -163,7 +163,7 @@ class User(flask_login.UserMixin, db.Model):
     # Columns
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
-    password_hash = db.Column(db.String(98), unique=False, nullable=False)
+    _password_hash = db.Column(db.String(98), unique=False, nullable=False)
     _otp_secret = db.Column(db.String(32))
     has_2fa = db.Column(db.Boolean)
 
@@ -199,7 +199,7 @@ class User(flask_login.UserMixin, db.Model):
     def password(self, plaintext_password):
         """Generate the password hash and save in db."""
         pw_hasher = argon2.PasswordHasher(hash_len=32)
-        self.password_hash = pw_hasher.hash(plaintext_password)
+        self._password_hash = pw_hasher.hash(plaintext_password)
 
     def verify_password(self, input_password):
         """Verifies that the specified password matches the encoded password in the database."""
@@ -208,7 +208,7 @@ class User(flask_login.UserMixin, db.Model):
 
         # Verify the input password
         try:
-            password_hasher.verify(self.password_hash, input_password)
+            password_hasher.verify(self._password_hash, input_password)
         except (
             argon2.exceptions.VerifyMismatchError,
             argon2.exceptions.VerificationError,
@@ -218,7 +218,7 @@ class User(flask_login.UserMixin, db.Model):
             return False
 
         # Rehash password if needed, e.g. if parameters are not up to date
-        if not password_hasher.check_needs_rehash(self.password_hash):
+        if not password_hasher.check_needs_rehash(self._password_hash):
             try:
                 self.password = input_password
                 db.session.commit()
