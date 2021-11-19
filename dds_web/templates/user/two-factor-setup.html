@@ -5,6 +5,7 @@
 {% block content %}
 
 <div class="container">
+    {% if secret %}
     <div class="row justify-content-center">
         <div class="col-lg-5">
             <div class="jumbotron text-center p-4">
@@ -23,38 +24,45 @@
         </div>
         <div class="col-lg-5">
             <form>
-                
+
                 <div>
                     <img id="qrcode" src="{{
                         url_for('auth_blueprint.qrcode')
                         }}"></img>
-                </div>
-                <div class="form-group">
-                    <label for="secret">Secret Token</label>
-                    <input type="text" class="form-control" id="secret"
-                        value="{{ secret }}" readonly>
-                </div>
-                <div class="text-center">
-                    <button type="button" class="btn btn-primary"
-                        onclick="copySecret()">Copy Secret</button>
-                </div>
-            </form>
-            <form method="POST" action="{{ url_for('auth_blueprint.two_factor_verify')}}">
-                <div class="form-group">
-                    <label for="otp">Generated OTP</label>
-                    <input type="hidden" name="secret" value="{{ secret }}"
-                        required>
-                    <input type="number" class="form-control" id="otp"
-                        name="otp" required>
-                </div>
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Authenticate
-                        User</button>
-                </div>
+            </div>
+            <div class="form-group">
+                <label for="secret">Secret Token</label>
+                <input type="text" class="form-control" id="secret"
+                    value="{{ secret }}" readonly>
+            </div>
+            <div class="text-center">
+                <button type="button" class="btn btn-primary"
+                    onclick="copySecret()">Copy Secret</button>
+            </div>
+        </form>
+        <form method="POST" action="{{
+            url_for('auth_blueprint.two_factor_verify')}}">
+            <div class="form-group">
+                <label for="otp">Generated OTP</label>
+                <input type="hidden" name="secret" value="{{ secret }}"
+                    required>
+                <input type="number" class="form-control" id="otp"
+                    name="otp" required>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Authenticate
+                    User</button>
+            </div>
+            {% if error %}
+            <p class=error><strong>Error:</strong> {{ error }}
+                {% endif %}
             </form>
         </div>
-        
+
     </div>
+    {% else %}
+    Hellu
+    {% endif %}
 </div>
 
 <script>
@@ -71,5 +79,6 @@
 
     alert("Successfully copied TOTP secret token!");
   }
+
 </script>
 {% endblock %}

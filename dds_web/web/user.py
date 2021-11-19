@@ -167,6 +167,7 @@ def logout():
 
 
 @auth_blueprint.route("/twofactor", methods=["GET"])
+@flask_login.login_required
 def two_factor_setup():
     """Setup two factor authentication."""
     # since this page contains the sensitive qrcode, make sure the browser
@@ -188,6 +189,7 @@ def two_factor_setup():
 
 
 @auth_blueprint.route("/qrcode", methods=["GET"])
+@flask_login.login_required
 def qrcode():
     """Generate qrcode"""
     # render qrcode for FreeTOTP
@@ -207,6 +209,7 @@ def qrcode():
 
 
 @auth_blueprint.route("/twofactor/verify", methods=["POST"])
+@flask_login.login_required
 def two_factor_verify():
     """Verify two factor authentication."""
     otp = int(flask.request.form.get("otp"))
