@@ -34,18 +34,15 @@ auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 
 
 @auth_blueprint.route("/", methods=["GET"])
+@flask_login.login_required
 def index():
     """DDS start page."""
     # Check if user has 2fa setup
-    if flask_login.current_user.is_authenticated:
-        if flask_login.current_user.has_2fa:
-            form = forms.LogoutForm()
-            return flask.render_template("index.html", form=form)
-        else:
-            return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
-
-    # Go to login page if not authenticated
-    return flask.redirect(flask.url_for("auth_blueprint.login"))
+    if flask_login.current_user.has_2fa:
+        form = forms.LogoutForm()
+        return flask.render_template("index.html", form=form)
+    else:
+        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
 
 
 @auth_blueprint.route("/confirm_invite/<token>", methods=["GET"])
