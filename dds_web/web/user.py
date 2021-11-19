@@ -214,11 +214,11 @@ def qrcode():
 def two_factor_verify():
     """Verify two factor authentication."""
     otp = int(flask.request.form.get("otp"))
-    if pyotp.TOTP(flask_login.current_user.otp_secret).verify(otp):
+    if flask_login.current_user.verify_otp(otp):
         flask.flash("The TOTP 2FA token is valid", "success")
 
         # User has now setup 2FA
-        flask_login.current_user.has_2fa = True
+        flask_login.current_user.set_2fa_seen()
         try:
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:

@@ -236,7 +236,9 @@ class User(flask_login.UserMixin, db.Model):
     # 2FA related
     @property
     def otp_secret(self):
-        """Get OTP secret for user."""
+        """Get OTP secret for user if the 2fa has not already been setup."""
+        if self.has_2fa:
+            return None
         return self._otp_secret
 
     @otp_secret.setter
@@ -251,7 +253,9 @@ class User(flask_login.UserMixin, db.Model):
         self.has_2fa = True
 
     def totp_uri(self):
-        """Get uri for user otp_secret."""
+        """Get uri for user otp_secret if the 2fa has not already been setup."""
+        if self.has_2fa:
+            return None
         return pyotp.totp.TOTP(self.otp_secret).provisioning_uri(
             name=self.username, issuer_name="Data Delivery System"
         )
