@@ -189,6 +189,9 @@ def two_factor_setup():
 @flask_login.login_required
 def qrcode():
     """Generate qrcode"""
+    if flask_login.current_user.has_2fa:
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
+
     # render qrcode for FreeTOTP
     url = pyqrcode.create(flask_login.current_user.totp_uri())
     stream = io.BytesIO()
