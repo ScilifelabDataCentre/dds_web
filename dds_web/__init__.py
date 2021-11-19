@@ -17,8 +17,6 @@ from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
-import flask_security
-import passlib
 import flask_bootstrap
 import flask_login
 
