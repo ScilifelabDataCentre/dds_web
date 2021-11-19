@@ -229,11 +229,11 @@ class User(flask_login.UserMixin, db.Model):
         # Password correct
         return True
 
+    # 2FA related
     def gen_otp_secret(self):
         """Generate random base 32 for otp secret."""
         return pyotp.random_base32()
 
-    # 2FA related
     @property
     def otp_secret(self):
         """Get OTP secret for user if the 2fa has not already been setup."""
@@ -264,6 +264,13 @@ class User(flask_login.UserMixin, db.Model):
         """Verify the otp token."""
         totp = pyotp.TOTP(self.otp_secret)
         return totp.verify(token)
+
+    # Email related
+    @property
+    def primary_email(self):
+        """Get users primary email."""
+        prims = [x.email for x in self.emails if x.primary]
+        return prims[0] if len(prims) > 0 else None
 
     def __repr__(self):
         """Called by print, creates representation of object"""

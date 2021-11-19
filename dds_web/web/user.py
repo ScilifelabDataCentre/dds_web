@@ -139,7 +139,6 @@ def login():
 
         # Correct username and password --> log user in
         flask_login.login_user(user)
-        flask.current_app.logger.debug(flask_login.current_user._otp_secret)
         flask.flash("Logged in successfully.")
 
         next = flask.request.args.get("next")
@@ -214,7 +213,7 @@ def qrcode():
 def two_factor_verify():
     """Verify two factor authentication."""
     otp = int(flask.request.form.get("otp"))
-    if flask_login.current_user.verify_otp(otp):
+    if flask_login.current_user.verify_totp(otp):
         flask.flash("The TOTP 2FA token is valid", "success")
 
         # User has now setup 2FA
