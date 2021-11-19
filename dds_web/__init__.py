@@ -49,6 +49,7 @@ auth = HTTPTokenAuth()
 
 # Login - web routes
 login_manager = flask_login.LoginManager()
+login_manager.login_view = "auth_blueprint.login"
 
 # Actions for logging
 actions = {}
