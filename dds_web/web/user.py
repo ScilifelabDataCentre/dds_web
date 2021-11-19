@@ -171,7 +171,6 @@ def two_factor_setup():
     """Setup two factor authentication."""
     # since this page contains the sensitive qrcode, make sure the browser
     # does not cache it
-    flask_login.current_user.set_2fa_seen()
     return (
         flask.render_template(
             "user/two-factor-setup.html", secret=flask_login.current_user.otp_secret
