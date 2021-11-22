@@ -310,9 +310,20 @@ class ConfirmInvite(flask_restful.Resource):
 
         # Check the invite exists
         if not invite_row:
-            raise ddserr.InviteError(
-                message=f"There is no invitation for the found email adress: {email}"
-            )
+
+            try:
+                # check if the user has already registered at the system
+                already_registered = user_schemas.email_in_db(email=email)
+
+            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+                raise ddserr.DatabaseError(str(sqlerr))
+
+            if already_registered:
+                return flask.make_response(flask.render_template("user/userexists.html"))
+            else:
+                raise ddserr.InviteError(
+                    message=f"There is no pending invitation for the e-mail address: {email}"
+                )
 
         # Initiate form
         form = dds_web.forms.RegistrationForm()
