@@ -263,7 +263,7 @@ class User(flask_login.UserMixin, db.Model):
     def verify_totp(self, token):
         """Verify the otp token."""
         totp = pyotp.TOTP(self.otp_secret)
-        return totp.verify(token)
+        return totp.verify(token, valid_window=1)
 
     # Email related
     @property
