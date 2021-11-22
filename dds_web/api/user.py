@@ -282,6 +282,7 @@ class AddUser(flask_restful.Resource):
             "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
         }
 
+
 class Token(flask_restful.Resource):
     """Generates token for the user."""
 
