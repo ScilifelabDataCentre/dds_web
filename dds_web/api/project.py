@@ -24,12 +24,12 @@ from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import (
+    DDSArgumentError,
     DatabaseError,
     AccessDeniedError,
     EmptyProjectException,
     DeletionError,
     BucketNotFoundError,
-    DDSArgumentError,
     KeyNotFoundError,
 )
 from dds_web.crypt import key_gen
@@ -68,7 +68,7 @@ class CreateProjectSchema(marshmallow.Schema):
     def generate_required_fields(self, data, **kwargs):
         """Generate all required fields for creating a project."""
         if not data:
-            raise ddserr.DDSArgumentError(
+            raise DDSArgumentError(
                 "No project information found when attempting to create project."
             )
 
@@ -107,8 +107,7 @@ class CreateProjectSchema(marshmallow.Schema):
         try:
             # Lock db, get unit row and update counter
             unit_row = (
-                db.session.query(models.Unit)
-                .filter_by(id=auth.current_user().unit_id)
+                models.Unit.query.filter_by(id=auth.current_user().unit_id)
                 .with_for_update()
                 .one_or_none()
             )
@@ -124,7 +123,7 @@ class CreateProjectSchema(marshmallow.Schema):
             )
 
             # Generate keys
-            data.update(**dds_web.crypt.key_gen.ProjectKeys(data["public_id"]).key_dict())
+            data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
 
             # Create project
             current_user = auth.current_user()
@@ -139,7 +138,7 @@ class CreateProjectSchema(marshmallow.Schema):
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DatabaseError(message="Server Error: Project was not created")
-        except (marshmallow.ValidationError, ddserr.DDSArgumentError, AccessDeniedError) as err:
+        except (marshmallow.ValidationError, DDSArgumentError, AccessDeniedError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise
@@ -202,7 +201,7 @@ class GetPrivate(flask_restful.Resource):
             decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
         except Exception as err:
             flask.current_app.logger.exception(err)
-            return flask.make_response(str(err), 500)
+            raise KeyNotFoundError
 
         return flask.jsonify({"private": decrypted_key.hex().upper()})
 
@@ -326,7 +325,7 @@ class CreateProject(flask_restful.Resource):
         new_project = CreateProjectSchema().load(p_info)
 
         if not new_project:
-            return flask.make_response("Failed to create project.", 500)
+            raise DDSArgumentError("Failed to create project.")
 
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."

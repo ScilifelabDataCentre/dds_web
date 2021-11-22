@@ -124,7 +124,7 @@ class ApiS3Connector:
             bucket = self.resource.Bucket(self.project.bucket)
             bucket.objects.all().delete()
         except botocore.client.ClientError as err:
-            raise DeletionError(message=str(err), username=None, project=self.project.get("id"))
+            raise DeletionError(message=str(err), project=self.project.get("id"))
         else:
             return True
 
