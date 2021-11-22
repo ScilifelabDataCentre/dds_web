@@ -16,7 +16,6 @@ import pandas
 from contextlib import contextmanager
 import flask
 import sqlalchemy
-import pytz
 
 # # imports related to scheduling
 import atexit

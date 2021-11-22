@@ -1,31 +1,65 @@
 {% extends 'mail/mail_base.html' %}
 {% block body %}
-<table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;">
+<table role="presentation" border="0" cellpadding="0" cellspacing="0"
+  style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace:
+  0pt; width: 100%;">
   <tr>
     <td>
-      <img src="cid:Logo" alt="Logo" border="0" style="border:0; outline:none; text-decoration:none; display:block; Margin-bottom: 15px; max-width: 400px; max-height: 87px;">
+      <img src="cid:Logo" alt="Logo" border="0"
+        style="border:0; outline:none; text-decoration:none; display:block;
+        Margin-bottom: 15px; max-width: 400px; max-height: 87px;">
     </td>
   </tr>
   <tr>
-    <td style=" font-family: arial, sans-serif; font-size: 14px; vertical-align: top;">
-      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: bold; margin: 0; Margin-bottom: 5px;">You have been invited to join the SciLifeLab Data Delivery System (DDS).</p>
-      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 10px;">The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple way.</p>
-      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">
+    <td style="font-family: arial, sans-serif; font-size: 14px; vertical-align:
+      top;">
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight:
+        bold; margin: 0; Margin-bottom: 5px;">You
+        have been invited to join the SciLifeLab Data Delivery System (DDS).</p>
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight:
+        normal; margin: 0; Margin-bottom: 10px;">
+        The DDS is a system for SciLifeLab infrastructures to deliver data to
+        researchers in a fast, secure and simple
+        way.</p>
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight:
+        normal; margin: 0; Margin-bottom: 15px;">
         {% if unit_name is none %}
         The invite was sent to you by {{sender_name}}.
         {% else %}
-        The invite was sent to you by {{sender_name}} on behalf of {{unit_name}}{% if unit_email is not none %} (<a href="mailto: {{unit_email}}">{{unit_email}}</a>){% endif %}.
+        The invite was sent to you by {{sender_name}} on behalf of
+        {{unit_name}}{% if unit_email is not none %} (<a
+          href="mailto: {{unit_email}}">{{unit_email}}</a>){% endif %}.
         {% endif %}
         Please press the 'Sign Up' button to create your account:
       </p>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box;">
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0"
+        class="btn btn-primary"
+        style="border-collapse: separate; mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt; width: 100%; box-sizing: border-box;">
         <tbody>
           <tr>
-            <td align="left" style="font-family: arial, sans-serif; font-size: 14px; vertical-align: top; padding-bottom: 15px;">
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
+            <td align="left"
+              style="font-family: arial, sans-serif; font-size: 14px;
+              vertical-align: top; padding-bottom: 15px;">
+              <table role="presentation" border="0" cellpadding="0"
+                cellspacing="0"
+                style="border-collapse: separate; mso-table-lspace: 0pt;
+                mso-table-rspace: 0pt; width: auto;">
                 <tbody>
                   <tr>
-                    <td style="font-family: arial, sans-serif; font-size: 14px; vertical-align: top; background-color: #43858B; border-radius: 5px; text-align: center;"> <a href="{{link}}" target="_blank" style="display: inline-block; color: #ffffff; background-color: #43858B; border: solid 1px #43858B; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: #43858B;">Sign Up</a> </td>
+                    <td
+                      style="font-family: arial, sans-serif; font-size: 14px;
+                      vertical-align: top; background-color: #43858B;
+                      border-radius: 5px; text-align: center;">
+                      <a href="{{link}}" target="_blank" rel="noopener
+                        noreferrer"
+                        style="display: inline-block; color: #ffffff;
+                        background-color: #43858B; border: solid 1px #43858B;
+                        border-radius: 5px; box-sizing: border-box; cursor:
+                        pointer; text-decoration: none; font-size: 14px;
+                        font-weight: bold; margin: 0; padding: 12px 25px;
+                        text-transform: capitalize; border-color: #43858B;">Sign
+                        Up</a> </td>
                   </tr>
                 </tbody>
               </table>
@@ -33,10 +67,16 @@
           </tr>
         </tbody>
       </table>
-      <p style="font-family: arial, sans-serif; font-size: 12px; font-weight: normal; margin: 0; Margin-top: 0px;">Alternatively, copy and paste the link below into your browser: </p>
-      <p style="font-family: arial, sans-serif; font-size: 12px; font-weight: normal; margin: 0; Margin-top: 0px; word-break: break-all">{{link}}</p>
-      <p style=" font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-top: 15px;">This link expires in 1 week.</p>
+      <p style="font-family: arial, sans-serif; font-size: 12px; font-weight:
+        normal; margin: 0; Margin-top: 0px;">
+        Alternatively, copy and paste the link below into your browser: </p>
+      <p
+        style="font-family: arial, sans-serif; font-size: 12px; font-weight:
+        normal; margin: 0; Margin-top: 0px; word-break: break-all">
+        {{link}}</p>
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight:
+        normal; margin: 0; Margin-top: 15px;">
+        This link expires in 1 week.</p>
     </td>
   </tr>
 </table>
-{% endblock %}

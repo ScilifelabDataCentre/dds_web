@@ -76,7 +76,7 @@ class NewFile(flask_restful.Resource):
             current_file_version = models.Version.query.filter(
                 sqlalchemy.and_(
                     models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
-                    models.Version.time_deleted == None,
+                    models.Version.time_deleted.is_(None),
                 )
             ).all()
             if len(current_file_version) > 1:

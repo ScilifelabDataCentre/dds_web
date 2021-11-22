@@ -1,23 +1,17 @@
 # IMPORTS ################################################################################ IMPORTS #
-
 # Standard library
 import http
 import datetime
 import json
 import unittest
-
 # Installed
 import pytest
 import marshmallow
-
 # Own
 from dds_web import db
 from dds_web.database import models
 import tests
-
-
 # CONFIG ################################################################################## CONFIG #
-
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
 proj_data_with_existing_users = {
     **proj_data,
@@ -40,10 +34,7 @@ proj_data_with_unsuitable_user_roles = {
         {"email": "researchuser2@mailtrap.io", "role": "Unit Personnel"},
     ],
 }
-
 # TESTS #################################################################################### TESTS #
-
-
 def test_create_project_without_credentials(client):
     """Create project without valid user credentials."""
     response = client.post(
@@ -53,16 +44,12 @@ def test_create_project_without_credentials(client):
         content_type="application/json",
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="researchuser",
-            title=proj_data["title"],
-            pi=proj_data["pi"],
-            description=proj_data["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="researchuser",
+        title=proj_data["title"],
+        pi=proj_data["pi"],
+        description=proj_data["description"],
+    ).one_or_none()
     assert created_proj is None
 
 
@@ -76,23 +63,17 @@ def test_create_project_with_credentials(client):
         content_type="application/json",
     )
     assert response.status_code == http.HTTPStatus.OK
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data["title"],
-            pi=proj_data["pi"],
-            description=proj_data["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data["title"],
+        pi=proj_data["pi"],
+        description=proj_data["description"],
+    ).one_or_none()
     assert (
         created_proj
         and created_proj.date_created > time_before_run
         and not created_proj.is_sensitive
     )
-
-
 def test_create_project_no_title(client):
     """Create project without a title specified."""
     with pytest.raises(marshmallow.ValidationError):
@@ -103,14 +84,10 @@ def test_create_project_no_title(client):
             content_type="application/json",
         )
 
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            pi=proj_data["pi"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        pi=proj_data["pi"],
+    ).one_or_none()
     assert created_proj is None
 
 
@@ -126,16 +103,12 @@ def test_create_project_title_too_short(client):
             content_type="application/json",
         )
 
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data_short_title["title"],
-            pi=proj_data_short_title["pi"],
-            description=proj_data_short_title["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data_short_title["title"],
+        pi=proj_data_short_title["pi"],
+        description=proj_data_short_title["description"],
+    ).one_or_none()
     assert not created_proj
 
 
@@ -148,16 +121,12 @@ def test_create_project_with_malformed_json(client):
         content_type="application/json",
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title="",
-            pi="",
-            description="",
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title="",
+        pi="",
+        description="",
+    ).one_or_none()
     assert created_proj is None
 
 
@@ -172,16 +141,12 @@ def test_create_project_sensitive(client):
         content_type="application/json",
     )
     assert response.status == "200 OK"
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data["title"],
-            pi=proj_data["pi"],
-            description=proj_data["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data["title"],
+        pi=proj_data["pi"],
+        description=proj_data["description"],
+    ).one_or_none()
     assert created_proj and created_proj.is_sensitive
 
 
@@ -197,16 +162,12 @@ def test_create_project_description_too_short(client):
             content_type="application/json",
         )
 
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data_short_description["title"],
-            pi=proj_data_short_description["pi"],
-            description=proj_data_short_description["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data_short_description["title"],
+        pi=proj_data_short_description["pi"],
+        description=proj_data_short_description["description"],
+    ).one_or_none()
     assert not created_proj
 
 
@@ -222,16 +183,12 @@ def test_create_project_pi_too_short(client):
             content_type="application/json",
         )
 
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data_short_pi["title"],
-            pi=proj_data_short_pi["pi"],
-            description=proj_data_short_pi["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data_short_pi["title"],
+        pi=proj_data_short_pi["pi"],
+        description=proj_data_short_pi["description"],
+    ).one_or_none()
     assert not created_proj
 
 
@@ -247,16 +204,12 @@ def test_create_project_pi_too_long(client):
             content_type="application/json",
         )
 
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data_long_pi["title"],
-            pi=proj_data_long_pi["pi"],
-            description=proj_data_long_pi["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data_long_pi["title"],
+        pi=proj_data_long_pi["pi"],
+        description=proj_data_long_pi["description"],
+    ).one_or_none()
     assert not created_proj
 
 
@@ -272,16 +225,12 @@ def test_create_project_wrong_status(client):
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data_wrong_status["title"],
-            pi=proj_data_wrong_status["pi"],
-            description=proj_data_wrong_status["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data_wrong_status["title"],
+        pi=proj_data_wrong_status["pi"],
+        description=proj_data_wrong_status["description"],
+    ).one_or_none()
     assert created_proj and created_proj.status == "In Progress"
 
 
@@ -297,16 +246,12 @@ def test_create_project_sensitive_not_boolean(client):
             content_type="application/json",
         )
 
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data_sensitive_not_boolean["title"],
-            pi=proj_data_sensitive_not_boolean["pi"],
-            description=proj_data_sensitive_not_boolean["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data_sensitive_not_boolean["title"],
+        pi=proj_data_sensitive_not_boolean["pi"],
+        description=proj_data_sensitive_not_boolean["description"],
+    ).one_or_none()
     assert not created_proj
 
 
@@ -322,16 +267,12 @@ def test_create_project_date_created_overridden(client):
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    created_proj = (
-        db.session.query(models.Project)
-        .filter_by(
-            created_by="unituser",
-            title=proj_data_date_created_own["title"],
-            pi=proj_data_date_created_own["pi"],
-            description=proj_data_date_created_own["description"],
-        )
-        .one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data_date_created_own["title"],
+        pi=proj_data_date_created_own["pi"],
+        description=proj_data_date_created_own["description"],
+    ).one_or_none()
     assert created_proj and created_proj.date_created != proj_data_date_created_own["date_created"]
 
 
@@ -349,11 +290,9 @@ def test_create_project_with_users(client):
         assert "associated with project" in x
 
     resp_json = response.json
-    created_proj = (
-        db.session.query(models.Project).filter_by(public_id=resp_json["project_id"]).one_or_none()
-    )
+    created_proj = models.Project.query.filter_by(public_id=resp_json["project_id"]).one_or_none()
     assert created_proj
-    users = db.session.query(models.ProjectUsers).filter_by(project_id=created_proj.id).all()
+    users = models.ProjectUsers.query.filter_by(project_id=created_proj.id).all()
     users_dict_from_db = []
 
     for user in users:
@@ -361,21 +300,18 @@ def test_create_project_with_users(client):
 
     users_dict_from_email = []
     for user in proj_data_with_existing_users["users_to_add"]:
-        email = db.session.query(models.Email).filter_by(email=user["email"]).one_or_none()
+        email = models.Email.query.filter_by(email=user["email"]).one_or_none()
         users_dict_from_email.append(
             {
                 "username": email.user_id,
                 "owner": True if user.get("role") == "Project Owner" else False,
             }
         )
-
     case = unittest.TestCase()
     case.assertCountEqual(users_dict_from_db, users_dict_from_email)
-
-
+    
 def test_create_project_with_invited_users(client):
     """Create project and invite users to the project."""
-
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
@@ -386,8 +322,7 @@ def test_create_project_with_invited_users(client):
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
         assert "Invitation sent" in x
-
-
+        
 def test_create_project_with_unsuitable_roles(client):
     """Create project and add users with unsuitable roles to the project."""
     response = client.post(
@@ -399,4 +334,4 @@ def test_create_project_with_unsuitable_roles(client):
     assert response.status == "200 OK"
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
-        assert "User Role should be either 'Project Owner' or 'Researcher'" in x
+    assert "User Role should be either 'Project Owner' or 'Researcher'" in x

@@ -25,22 +25,18 @@ first_new_file = {
 def file_in_db(test_dict, project):
     """Checks if the file is in the db."""
 
-    if (
-        db.session.query(models.File)
-        .filter_by(
-            name=test_dict["name"],
-            name_in_bucket=test_dict["name_in_bucket"],
-            subpath=test_dict["subpath"],
-            size_original=test_dict["size"],
-            size_stored=test_dict["size_processed"],
-            compressed=test_dict["compressed"],
-            public_key=test_dict["public_key"],
-            salt=test_dict["salt"],
-            checksum=test_dict["checksum"],
-            project_id=project,
-        )
-        .one_or_none()
-    ):
+    if models.File.query.filter_by(
+        name=test_dict["name"],
+        name_in_bucket=test_dict["name_in_bucket"],
+        subpath=test_dict["subpath"],
+        size_original=test_dict["size"],
+        size_stored=test_dict["size_processed"],
+        compressed=test_dict["compressed"],
+        public_key=test_dict["public_key"],
+        salt=test_dict["salt"],
+        checksum=test_dict["checksum"],
+        project_id=project,
+    ).one_or_none():
         return True
 
     return False
@@ -49,7 +45,7 @@ def file_in_db(test_dict, project):
 def project_row(project_id):
     """Get project row from database."""
 
-    return db.session.query(models.Project).filter_by(public_id=project_id).one_or_none()
+    return models.Project.query.filter_by(public_id=project_id).one_or_none()
 
 
 # TESTS #################################################################################### TESTS #
