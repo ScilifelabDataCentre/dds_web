@@ -282,7 +282,6 @@ class AddUser(flask_restful.Resource):
             "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
         }
 
-
 class Token(flask_restful.Resource):
     """Generates token for the user."""
 
@@ -330,8 +329,8 @@ class ShowUsage(flask_restful.Resource):
 
         # Check that user is unit account
         if current_user.role != "unit":
-            flask.make_response(
-                "Access denied - only unit accounts can get invoicing information.", 401
+            raise ddserr.AccessDeniedError(
+                "Access denied - only unit accounts can get invoicing information."
             )
 
         # Get unit info from table (incl safespring proj name)
@@ -341,7 +340,7 @@ class ShowUsage(flask_restful.Resource):
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.exception(err)
-            return flask.make_response(f"Failed getting unit information.", 500)
+            raise ddserr.DatabaseError(f"Failed getting unit information.")
 
         # Total number of GB hours and cost saved in the db for the specific unit
         total_gbhours_db = 0.0
@@ -408,8 +407,8 @@ class InvoiceUnit(flask_restful.Resource):
 
         # Check that user is unit account
         if current_user.role != "unit":
-            flask.make_response(
-                "Access denied - only unit accounts can get invoicing information.", 401
+            raise ddserr.AccessDeniedError(
+                "Access denied - only unit accounts can get invoicing information."
             )
 
         # Get unit info from table (incl safespring proj name)
@@ -419,7 +418,7 @@ class InvoiceUnit(flask_restful.Resource):
             ).first()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.exception(err)
-            return flask.make_response(f"Failed getting unit information.", 500)
+            raise ddserr.DatabaseError(f"Failed getting unit information.")
 
         # Get info from safespring invoice
         # TODO (ina): Move to another class or function - will be calling the safespring api
