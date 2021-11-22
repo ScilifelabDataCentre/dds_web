@@ -32,7 +32,6 @@ def fill_db():
     project_1 = models.Project(
         public_id="project_1",
         title="First Project",
-        status="status not implemented yet",
         description="This is a test project. You will be able to upload to but NOT download "
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
@@ -40,16 +39,26 @@ def fill_db():
         **key_gen.ProjectKeys("project_1").key_dict(),
     )
 
+    project_1.project_statuses.append(
+        models.ProjectStatuses(
+            **{"status": "In Progress", "date_created": dds_web.utils.current_time()}
+        )
+    )
     # Create second project - leave out foreign key
     project_2 = models.Project(
         public_id="project_2",
         title="Second Project",
-        status="status not implemented yet",
         description="This is a test project. You will be able to upload to but NOT download "
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
         bucket=f"secondproject-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
         **key_gen.ProjectKeys("project_2").key_dict(),
+    )
+
+    project_2.project_statuses.append(
+        models.ProjectStatuses(
+            **{"status": "In Progress", "date_created": dds_web.utils.current_time()}
+        )
     )
 
     # Create an email

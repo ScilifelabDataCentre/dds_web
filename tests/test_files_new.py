@@ -240,3 +240,32 @@ def test_new_file_checksum_wrong_length(client):
             content_type="application/json",
         )
     assert not file_in_db(test_dict=file_wrong_checksum, project=project_1.id)
+
+
+def test_new_file_wrong_status(client):
+    project_1 = project_row(project_id="file_testing_project")
+    new_status = {"new_status": "Available"}
+    assert project_1
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+
+    assert project_1.current_status == "Available"
+
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(first_new_file),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Project not in right status to upload/modify files" in response.json.get("message")

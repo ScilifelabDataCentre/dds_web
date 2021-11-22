@@ -11,7 +11,9 @@ from dds_web.database.models import (
     ProjectUsers,
     Invite,
     Email,
+    ProjectStatuses,
 )
+import dds_web.utils
 
 from dds_web import create_app, db
 
@@ -79,7 +81,6 @@ def demo_data():
         Project(
             public_id="public_project_id",
             title="test project_title",
-            status="Ongoing",
             description="This is a test project. You will be able to upload to but NOT download "
             "from this project. Create a new project to test the entire system. ",
             pi="PI",
@@ -92,7 +93,6 @@ def demo_data():
         Project(
             public_id="unused_project_id",
             title="unused project",
-            status="Ongoing",
             description="This is a test project to check for permissions.",
             pi="PI",
             bucket=f"unusedprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
@@ -104,7 +104,6 @@ def demo_data():
         Project(
             public_id="restricted_project_id",
             title="Elite project",
-            status="Ongoing",
             description="This is a test project without user access for the current research users",
             pi="PI",
             bucket=f"eliteprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
@@ -116,7 +115,6 @@ def demo_data():
         Project(
             public_id="second_public_project_id",
             title="second project",
-            status="Ongoing",
             description="This is a second test project. You will be able to upload to but NOT download ",
             pi="PI",
             bucket=f"secondpublicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
@@ -128,7 +126,6 @@ def demo_data():
         Project(
             public_id="file_testing_project",
             title="file testing project",
-            status="",
             description="this project is used for testing to add new files.",
             pi="file testing project PI",
             bucket="bucket",
@@ -155,6 +152,12 @@ def client():
 
             db.create_all()
             units, users, projects, invites = demo_data()
+            for project in projects:
+                project.project_statuses.append(
+                    ProjectStatuses(
+                        **{"status": "In Progress", "date_created": dds_web.utils.current_time()}
+                    )
+                )
             # Create association with user - not owner of project
             project_0_user_0_association = ProjectUsers(owner=False)
             # Connect research user to association row. = (not append) due to one user per ass. row
