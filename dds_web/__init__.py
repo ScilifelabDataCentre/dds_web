@@ -23,6 +23,8 @@ import flask_login
 # import flask_qrcode
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import werkzeug
+import sqlalchemy
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -150,12 +152,16 @@ def create_app(testing=False, database_uri=None):
     # Initialize marshmallows
     ma.init_app(app)
 
+    # Errors, TODO: Move somewhere else?
+    @app.errorhandler(sqlalchemy.exc.SQLAlchemyError)
+    def handle_sqlalchemyerror(e):
+        return f"SQLAlchemyError: {e}", 500  # TODO: Fix logging and a page
+
     # Initialize login manager
     login_manager.init_app(app)
 
     @login_manager.user_loader
     def load_user(user_id):
-        # since the user_id is just the primary key of our user table, use it in the query for the user
         return models.User.query.get(user_id)
 
     oauth.init_app(app)
