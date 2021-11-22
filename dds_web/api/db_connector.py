@@ -47,15 +47,6 @@ class DBConnector:
 
         return True
 
-    def get_bucket_name(self):
-        """Get bucket name from database"""
-
-        bucket = self.project.bucket
-        if not bucket:
-            raise BucketNotFoundError
-        flask.current_app.logger.debug("Bucket: %s", bucket)
-        return bucket
-
     def items_in_subpath(self, folder="."):
         """Get all items in root folder of project"""
 
@@ -305,35 +296,6 @@ class DBConnector:
                 deleted = True
 
         return exists, deleted, name_in_bucket, error
-
-    def cloud_project(self):
-        """Get safespring project"""
-
-        # Get current project
-        try:
-
-            current_project_unit_safespring = (
-                models.Project.query.join(
-                    models.Unit, models.Project.unit_id == sqlalchemy.func.binary(models.Unit.id)
-                )
-                .add_columns(models.Unit.safespring)
-                .filter(models.Unit.id == sqlalchemy.func.binary(models.Project.unit_id))
-                .filter(models.Project.public_id == sqlalchemy.func.binary(self.project.public_id))
-            ).first()
-
-            flask.current_app.logger.debug(
-                "Safespring project: %s", current_project_unit_safespring
-            )
-            if not current_project_unit_safespring:
-                raise S3ProjectNotFoundError(
-                    message="No safespring project found for responsible unit.",
-                )
-
-            sfsp_proj = current_project_unit_safespring[1]
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
-        else:
-            return sfsp_proj
 
     @staticmethod
     def project_usage(project_object):

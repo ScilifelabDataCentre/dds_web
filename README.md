@@ -75,7 +75,7 @@ In order to test uploading files through the web interface, you will need to con
 
   ```bash
   DDS_S3_CONFIG="/code/dds_web/sensitive/s3_config.json" # Tells the app where to find the s3_config.json file (NOTE: will soon not be needed)
-  DDS_SAFE_SPRING_PROJECT="PROJECT-NAME" # The s3 project name to use. Please ask one of the core developers for this value.
+  DDS_SAFESPRING_PROJECT="PROJECT-NAME" # The s3 project name to use. Please ask one of the core developers for this value.
   ```
 
 Note that uploads with the default projects shipped in the development database will probably not work.
@@ -159,7 +159,7 @@ For example:
 SITE_NAME = "My Custom Data Delivery System"
 SECRET_KEY = "some-mega-random-string"
 SQLALCHEMY_DATABASE_URI = "mysql+pymysql://TEST_USER:TEST_PASSWORD@db/DeliverySystem"
-DDS_SAFE_SPRING_PROJECT = "YOUR-PROJECT-ID"
+DDS_SAFESPRING_PROJECT = "YOUR-PROJECT-ID"
 ```
 
 ### Flask env
