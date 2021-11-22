@@ -313,7 +313,7 @@ class ConfirmInvite(flask_restful.Resource):
 
             try:
                 # check if the user has already registered at the system
-                already_registered = user_schemas.email_in_db()
+                already_registered = user_schemas.email_in_db(email=email)
 
             except sqlalchemy.exc.SQLAlchemyError as sqlerr:
                 raise ddserr.DatabaseError(str(sqlerr))
