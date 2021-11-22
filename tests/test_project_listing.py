@@ -107,7 +107,7 @@ def test_list_researchusers_in_proj_by_researchuser(client):
     assert response.status_code == http.HTTPStatus.OK
     response_list = response.json.get("research_users")
     assert response_list
-    proj = models.Project.query.filter_by(public_id=proj_query["project"]).one_or_none()
+    proj = db.session.query(models.Project).filter_by(public_id=proj_query["project"]).one_or_none()
     actual_user_list = []
     for user in proj.researchusers:
         info = {"User Name": "", "Primary email": ""}
@@ -129,7 +129,7 @@ def test_list_researchusers_in_proj_by_unituser(client):
     assert response.status_code == http.HTTPStatus.OK
     response_list = response.json.get("research_users")
     assert response_list
-    proj = models.Project.query.filter_by(public_id=proj_query["project"]).one_or_none()
+    proj = db.session.query(models.Project).filter_by(public_id=proj_query["project"]).one_or_none()
     actual_user_list = []
     for user in proj.researchusers:
         info = {"User Name": "", "Primary email": ""}

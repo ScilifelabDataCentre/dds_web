@@ -94,8 +94,6 @@ class DBConnector:
                 distinct_folders = list(first_parts)
             else:
                 # Get distinct sub folders in specific folder with regex
-                # Match /<something that is not /> x number of times
-                # TODO: Check how to make regexp less vulnerable to sql injections
                 distinct_folders = (
                     files.filter(models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)+$"))
                     .with_entities(models.File.subpath)
@@ -204,7 +202,7 @@ class DBConnector:
                     current_file_version = models.Version.query.filter(
                         sqlalchemy.and_(
                             models.Version.active_file == sqlalchemy.func.binary(x.id),
-                            models.Version.time_deleted.is_(None),
+                            models.Version.time_deleted == None,
                         )
                     ).first()
                     current_file_version.time_deleted = dds_web.utils.current_time()
@@ -291,7 +289,7 @@ class DBConnector:
                 current_file_version = models.Version.query.filter(
                     sqlalchemy.and_(
                         models.Version.active_file == sqlalchemy.func.binary(file.id),
-                        models.Version.time_deleted.is_(None),
+                        models.Version.time_deleted == None,
                     )
                 ).first()
                 current_file_version.time_deleted = dds_web.utils.current_time()

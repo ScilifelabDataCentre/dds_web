@@ -16,6 +16,7 @@ import pandas
 from contextlib import contextmanager
 import flask
 import sqlalchemy
+import pytz
 
 # # imports related to scheduling
 import atexit
@@ -60,7 +61,7 @@ def contains_digit_or_specialchar(input):
         )
 
 
-def current_time():
+def current_time(timezone="Europe/Stockholm"):
     """Return the current time for the specific time zone"""
 
     return datetime.datetime.now(tz=C_TZ)
@@ -171,6 +172,7 @@ def invoice_units():
                             flask.current_app.logger.debug(f"Period invoiced fully : {v}")
                             continue
 
+                        start, end = ("", "")
                         if not v.time_invoiced:  # not included in invoice
                             flask.current_app.logger.debug(f"Invoice = NULL : {v}")
                             start = v.time_uploaded

@@ -38,9 +38,11 @@ def test_expired_token(client):
 
 
 def test_valid_token(client):
-    invite = models.Invite.query.filter_by(
-        email="existing_invite_email@mailtrap.io", role="Researcher"
-    ).one_or_none()
+    invite = (
+        db.session.query(models.Invite)
+        .filter_by(email="existing_invite_email@mailtrap.io", role="Researcher")
+        .one_or_none()
+    )
     assert invite
 
     token = get_email_token(email=invite.email)

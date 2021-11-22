@@ -87,12 +87,8 @@ class AccessDeniedError(exceptions.HTTPException):
 class DatabaseError(exceptions.HTTPException):
     """Baseclass for database related issues."""
 
-    def __init__(
-        self,
-        message,
-        pass_message=False,
-        project=None,
-    ):
+    def __init__(self, message="The DDS encountered an Flask-SQLAlchemy issue.", project=None):
+        super().__init__(message)
 
         general_logger.warning(message)
 
@@ -104,10 +100,6 @@ class DatabaseError(exceptions.HTTPException):
                 "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
-        )
-
-        super().__init__(
-            "The system encountered an error in the database." if not pass_message else message
         )
 
 
@@ -136,7 +128,8 @@ class EmptyProjectException(exceptions.HTTPException):
 class DeletionError(exceptions.HTTPException):
     """Deletion of item failed."""
 
-    def __init__(self, project, message, pass_message=False):
+    def __init__(self, project, message="Deletion failed."):
+        super().__init__(message)
 
         general_logger.warning(message)
 
@@ -149,8 +142,6 @@ class DeletionError(exceptions.HTTPException):
                 "project": project,
             },
         )
-
-        super().__init__("Deletion of the file failed." if not pass_message else message)
 
 
 class NoSuchProjectError(exceptions.HTTPException):
@@ -211,15 +202,10 @@ class S3InfoNotFoundError(exceptions.HTTPException):
 class JwtTokenGenerationError(exceptions.HTTPException):
     """Errors when generating the JWT token during authentication."""
 
-    def __init__(self, message="Error during JWT Token generation.", pass_message=False):
+    def __init__(self, message):
+        super().__init__(message)
 
         general_logger.warning(message)
-
-        super().__init__(
-            "Unrecoverable error during the authentication process. Aborting."
-            if not pass_message
-            else message
-        )
 
 
 class MissingProjectIDError(exceptions.HTTPException):
@@ -252,12 +238,9 @@ class MissingMethodError(exceptions.HTTPException):
 class KeyNotFoundError(exceptions.HTTPException):
     """Key not found in database."""
 
-    def __init__(self, project, message="No key found for current project", pass_message=False):
+    def __init__(self, project, message="No key found for current project"):
         self.message = f"{message}: {project}"
-
-        general_logger.warning(self.message)
-
-        super().__init__("Unrecoverable key error. Aborting." if not pass_message else message)
+        super().__init__(self.message)
 
 
 class InviteError(exceptions.HTTPException):
@@ -273,15 +256,6 @@ class NoSuchUserError(Exception):
     """There is no such user found in the database."""
 
     def __init__(self, message="User not found."):
-        super().__init__(message)
-
-        general_logger.warning(message)
-
-
-class NoSuchFileError(Exception):
-    """There is no such file found in the database."""
-
-    def __init__(self, message="Specified file does not exist."):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -315,7 +289,6 @@ error_codes = {
     "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "InviteError": {"status": http.HTTPStatus.BAD_REQUEST},
     "NoSuchUserError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "NoSuchFileError": {"status": http.HTTPStatus.BAD_REQUEST},
     "TooManyRequestsError": {
         "message": "Too many authentication requests in one hour",
         "status": http.HTTPStatus.TOO_MANY_REQUESTS,

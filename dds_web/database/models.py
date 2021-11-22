@@ -18,7 +18,7 @@ import pyotp
 import flask_login
 
 # Own modules
-from dds_web import db
+from dds_web import db, C_TZ
 import dds_web.utils
 
 
