@@ -92,7 +92,6 @@ class DDSEndpoint:
     FILE_INFO = BASE_ENDPOINT + "/file/info"
     FILE_INFO_ALL = BASE_ENDPOINT + "/file/all/info"
     FILE_UPDATE = BASE_ENDPOINT + "/file/update"
-    REMOVE_FILE = BASE_ENDPOINT + "/file/rm"
 
     # Project specific urls
     PROJECT_CREATE = BASE_ENDPOINT + "/proj/create"
