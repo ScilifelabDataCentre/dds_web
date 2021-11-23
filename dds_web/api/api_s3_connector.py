@@ -126,3 +126,12 @@ class ApiS3Connector:
             removed = True
 
         return removed, error
+
+    def generate_get_url(self, bucket, key):
+
+        url = self.resource.meta.client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=36000,
+        )
+        return url

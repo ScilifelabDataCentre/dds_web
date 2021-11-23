@@ -379,11 +379,7 @@ class FileInfo(flask_restful.Resource):
                         "public_key": x[6],
                         "checksum": x[7],
                         "compressed": x[8],
-                        "url": s3.resource.meta.client.generate_presigned_url(
-                            "get_object",
-                            Params={"Bucket": project.bucket, "Key": x[1]},
-                            ExpiresIn=36000,
-                        ),
+                        "url": s3.generate_get_url(bucket=project.bucket, key=x[1]),
                     }
                     for x in files
                 }
