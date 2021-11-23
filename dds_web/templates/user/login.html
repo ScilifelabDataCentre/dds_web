@@ -1,0 +1,37 @@
+<html>
+    <head>
+        <title>Login</title>
+    </head>
+    <body>
+        <h1>Login to DDS</h1>
+        <form method="POST" action="{{ url_for('auth_blueprint.login') }}">
+            {{ form.csrf_token }}
+
+            <!-- Username -->
+            {{ form.username.label }}
+            {{ form.username }}
+            <ul>
+                {% for error in form.username.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Password -->
+            {{ form.password.label }}
+            {{ form.password }}
+            <ul>
+                {% for error in form.password.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Submit button -->
+            {{ form.submit }}
+
+        </form>
+    </body>
+</html>

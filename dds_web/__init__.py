@@ -17,8 +17,14 @@ from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
+import flask_bootstrap
+import flask_login
+
+# import flask_qrcode
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import werkzeug
+import sqlalchemy
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -41,12 +47,12 @@ oauth = auth_flask_client.OAuth()
 basic_auth = HTTPBasicAuth()
 auth = HTTPTokenAuth()
 
+# Login - web routes
+login_manager = flask_login.LoginManager()
+login_manager.login_view = "auth_blueprint.login"
+
 # Actions for logging
-actions = {
-    "api_blueprint.auth": "User Authentication",
-    "api_blueprint.proj_auth": "Project Access",
-    "api_blueprint.register_user": "Register New User",
-}
+actions = {}
 
 # Limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -122,7 +128,7 @@ def create_app(testing=False, database_uri=None):
         app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     # Disables error catching during request handling
     app.config["TESTING"] = testing
-
+    flask_bootstrap.Bootstrap(app)
     # Setup logging handlers
     setup_logging(app)
 
@@ -145,6 +151,18 @@ def create_app(testing=False, database_uri=None):
 
     # Initialize marshmallows
     ma.init_app(app)
+
+    # Errors, TODO: Move somewhere else?
+    @app.errorhandler(sqlalchemy.exc.SQLAlchemyError)
+    def handle_sqlalchemyerror(e):
+        return f"SQLAlchemyError: {e}", 500  # TODO: Fix logging and a page
+
+    # Initialize login manager
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return models.User.query.get(user_id)
 
     oauth.init_app(app)
 
@@ -172,8 +190,10 @@ def create_app(testing=False, database_uri=None):
 
         # Register blueprints
         from dds_web.api import api_blueprint
+        from dds_web.web.user import auth_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+        app.register_blueprint(auth_blueprint, url_prefix="")
 
         # Set-up the schedulers
         dds_web.utils.scheduler_wrapper()

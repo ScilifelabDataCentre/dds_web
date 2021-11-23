@@ -6,16 +6,20 @@
 
 # Standard library
 import datetime
+import base64
+import os
 
 # Installed
 from sqlalchemy.ext import hybrid
 import sqlalchemy
 import flask
+import argon2
+import pyotp
+import flask_login
 
 # Own modules
 from dds_web import db
 import dds_web.utils
-import argon2
 
 
 ####################################################################################################
@@ -148,10 +152,9 @@ class Project(db.Model):
 
 
 # Users #################################################################################### Users #
-from sqlalchemy.orm import validates
 
 
-class User(db.Model):
+class User(flask_login.UserMixin, db.Model):
     """Data model for user accounts - base user model for all user types."""
 
     # Table setup
@@ -159,9 +162,10 @@ class User(db.Model):
     __table_args__ = {"extend_existing": True}
     # Columns
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
-
-    _password = db.Column(db.String(98), unique=False, nullable=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
+    _password_hash = db.Column(db.String(98), unique=False, nullable=False)
+    _otp_secret = db.Column(db.String(32))
+    has_2fa = db.Column(db.Boolean)
 
     type = db.Column(db.String(20), unique=False, nullable=False)
 
@@ -174,44 +178,99 @@ class User(db.Model):
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
-    @hybrid.hybrid_property
+    def __init__(self, **kwargs):
+        """Init all set and update otp secret."""
+        super(User, self).__init__(**kwargs)
+        if self.otp_secret is None:
+            self.otp_secret = self.gen_otp_secret()
+        self.has_2fa = False
+
+    def get_id(self):
+        """Get user id - in this case username. Used by flask_login."""
+        return self.username
+
+    # Password related
+    @property
     def password(self):
-        return self._password
+        """Raise error if trying to access password."""
+        raise AttributeError("Password is not a readable attribute.")
 
     @password.setter
     def password(self, plaintext_password):
         """Generate the password hash and save in db."""
         pw_hasher = argon2.PasswordHasher(hash_len=32)
+        self._password_hash = pw_hasher.hash(plaintext_password)
 
-        self._password = pw_hasher.hash(plaintext_password)
-
-    def verify_password_argon2id(self, input_password):
-        """Verifies that the password specified by the user matches
-        the encoded password in the database."""
-
+    def verify_password(self, input_password):
+        """Verifies that the specified password matches the encoded password in the database."""
         # Setup Argon2 hasher
         password_hasher = argon2.PasswordHasher(hash_len=32)
 
         # Verify the input password
         try:
-            password_hasher.verify(self.password, input_password)
+            password_hasher.verify(self._password_hash, input_password)
         except (
             argon2.exceptions.VerifyMismatchError,
             argon2.exceptions.VerificationError,
             argon2.exceptions.InvalidHash,
         ):
+            # Password hasher raises exceptions if not correct
             return False
 
-        # Rehash password if needed
-        if password_hasher.check_needs_rehash(self.password):
+        # Rehash password if needed, e.g. if parameters are not up to date
+        if not password_hasher.check_needs_rehash(self._password_hash):
             try:
-                self._password = password_hasher.hash(input_password)
+                self.password = input_password
                 db.session.commit()
             except sqlalchemy.exc.SQLAlchemyError as sqlerr:
                 db.session.rollback()
                 flask.current_app.logger.exception(sqlerr)
 
+        # Password correct
         return True
+
+    # 2FA related
+    def gen_otp_secret(self):
+        """Generate random base 32 for otp secret."""
+        return pyotp.random_base32()
+
+    @property
+    def otp_secret(self):
+        """Get OTP secret for user if the 2fa has not already been setup."""
+        if self.has_2fa:
+            return None
+        return self._otp_secret
+
+    @otp_secret.setter
+    def otp_secret(self, otp_secret):
+        """Set new otp secret."""
+        if not otp_secret:
+            otp_secret = self.gen_otp_secret()
+        self._otp_secret = otp_secret
+
+    def set_2fa_seen(self):
+        """Renew the otp secret -- one should only be setup once."""
+        self.has_2fa = True
+
+    def totp_uri(self):
+        """Get uri for user otp_secret if the 2fa has not already been setup."""
+        if self.has_2fa:
+            return None
+        return pyotp.totp.TOTP(self.otp_secret).provisioning_uri(
+            name=self.username, issuer_name="Data Delivery System"
+        )
+
+    def verify_totp(self, token):
+        """Verify the otp token."""
+        totp = pyotp.TOTP(self.otp_secret)
+        return totp.verify(token, valid_window=1)
+
+    # Email related
+    @property
+    def primary_email(self):
+        """Get users primary email."""
+        prims = [x.email for x in self.emails if x.primary]
+        return prims[0] if len(prims) > 0 else None
 
     def __repr__(self):
         """Called by print, creates representation of object"""

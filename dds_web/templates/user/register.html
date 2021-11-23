@@ -4,7 +4,7 @@
     </head>
     <body>
         <h1>Create your DDS account</h1>
-        <form method="POST" action="{{ url_for('api_blueprint.new_user') }}">
+        <form method="POST" action="{{ url_for('auth_blueprint.register') }}">
             {{ form.csrf_token }}
 
             <!-- Name name -->
