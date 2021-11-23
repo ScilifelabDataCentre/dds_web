@@ -13,6 +13,7 @@ import json
 # Installed
 import botocore
 import flask
+import sqlalchemy
 
 # Own modules
 from dds_web.api.dds_decorators import (
@@ -27,6 +28,7 @@ from dds_web.api.errors import (
     S3InfoNotFoundError,
     KeyNotFoundError,
 )
+from dds_web.database import models
 
 
 ####################################################################################################
@@ -63,58 +65,27 @@ class ApiS3Connector:
     def get_s3_info(self):
         """Get information required to connect to cloud."""
 
-        safespring_project = None
-        from dds_web.api.db_connector import DBConnector
-
         try:
-            with DBConnector(project=self.project) as dbconn:
-                safespring_project = dbconn.cloud_project()
-                flask.current_app.logger.debug(f"Safespring project: {safespring_project}")
-
-                if not safespring_project:
-                    raise S3ProjectNotFoundError()
-        except (S3ProjectNotFoundError, DatabaseError):
-            raise
-
-        s3keys = {}
-        bucketname = None
-        # 1. Get keys
-        # TODO (ina): Change -- these should not be saved in file
-        # print(flask.current_app.config["DDS_S3_CONFIG"], flush=True)
-        s3_config_path = flask.current_app.config.get("DDS_S3_CONFIG")
-        if not s3_config_path:
-            raise S3InfoNotFoundError(message="API failed getting the s3 config file path.")
-
-        s3path = pathlib.Path(s3_config_path)
-
-        if not s3path.exists():
-            raise FileNotFoundError("DDS S3 config file not found.")
-
-        try:
-            with s3path.open(mode="r") as f:
-                s3keys = json.load(f).get("sfsp_keys").get(safespring_project)
-
-            # 2. Get endpoint url
-            with s3path.open(mode="r") as f:
-                endpoint_url = json.load(f).get("endpoint_url")
-
-            if None in [s3keys.get("access_key"), s3keys.get("secret_key")]:
-                raise KeyNotFoundError(
-                    "Safespring S3 access or secret key not found in s3 config file."
+            endpoint, name, accesskey, secretkey = (
+                models.Unit.query.filter_by(id=self.project.responsible_unit.id)
+                .with_entities(
+                    models.Unit.safespring_endpoint,
+                    models.Unit.safespring_name,
+                    models.Unit.safespring_access,
+                    models.Unit.safespring_secret,
                 )
+                .one_or_none()
+            )
+            bucket = self.project.bucket
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError from sqlerr
 
-        except KeyNotFoundError:
-            raise
-
-        try:
-            with DBConnector(project=self.project) as dbconn:
-                # 3. Get bucket name
-                bucketname = dbconn.get_bucket_name()
-        except (BucketNotFoundError, DatabaseError):
-            raise
-
-        flask.current_app.logger.debug(f"{s3keys}")
-        return safespring_project, s3keys, endpoint_url, bucketname
+        return (
+            name,
+            {"access_key": accesskey, "secret_key": secretkey},
+            endpoint,
+            bucket,
+        )
 
     @bucket_must_exists
     def remove_all(self, *args, **kwargs):

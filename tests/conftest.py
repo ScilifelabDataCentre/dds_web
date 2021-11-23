@@ -30,7 +30,10 @@ def demo_data():
             external_display_name="Display Name",
             contact_email="support@example.com",
             internal_ref="someunit",
-            safespring="dds.example.com",
+            safespring_endpoint="endpoint",
+            safespring_name="dds.example.com",
+            safespring_access="access",
+            safespring_secret="secret",
         )
     ]
 
