@@ -34,7 +34,7 @@ from dds_web.api.schemas import project_schemas
 def check_eligibility_for_upload(status):
     """Check if a project status is eligible for upload/modification"""
     if status != "In Progress":
-        raise DDSArgumentError("Project not in right status to upload/modify files")
+        raise DDSArgumentError("Project not in right status to upload/modify files.")
     return True
 
 
@@ -43,16 +43,21 @@ def check_eligibility_for_download(status, user_role):
     if status != "Available":
         if status == "In Progress":
             if user_role not in ["Unit Admin", "Unit Personnel"]:
-                raise DDSArgumentError("Current Project status limits file download")
+                raise DDSArgumentError("Current Project status limits file download.")
         else:
-            raise DDSArgumentError("Current Project status limits file download")
+            raise DDSArgumentError("Current Project status limits file download.")
     return True
 
 
 def check_eligibility_for_deletion(status, has_been_available):
     """Check if a project status is eligible for download"""
-    if status != "In Progress" or has_been_available:
-        raise DDSArgumentError("Project Status/Status history prevents files from being deleted")
+    if status != "In Progress":
+        raise DDSArgumentError("Project Status prevents files from being deleted.")
+    else:
+        if has_been_available:
+            raise DDSArgumentError(
+                "Existing project contents cannot be deleted since the project has been previously made available to recipients."
+            )
     return True
 
 
@@ -169,6 +174,8 @@ class MatchFiles(flask_restful.Resource):
         """Matches specified files to files in db."""
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        check_eligibility_for_upload(project.current_status)
 
         try:
             matching_files = (

@@ -10,7 +10,6 @@ import datetime
 # Installed
 from sqlalchemy.ext import hybrid
 import sqlalchemy
-from sqlalchemy.orm import column_property
 import flask
 
 # Own modules
