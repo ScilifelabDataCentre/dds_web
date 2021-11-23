@@ -366,20 +366,27 @@ class FileInfo(flask_restful.Resource):
 
         else:
 
-            # Make dict for files with info
-            files_single = {
-                x[0]: {
-                    "name_in_bucket": x[1],
-                    "subpath": x[2],
-                    "size_original": x[3],
-                    "size_stored": x[4],
-                    "key_salt": x[5],
-                    "public_key": x[6],
-                    "checksum": x[7],
-                    "compressed": x[8],
+            with ApiS3Connector(project=project) as s3:
+
+                # Make dict for files with info
+                files_single = {
+                    x[0]: {
+                        "name_in_bucket": x[1],
+                        "subpath": x[2],
+                        "size_original": x[3],
+                        "size_stored": x[4],
+                        "key_salt": x[5],
+                        "public_key": x[6],
+                        "checksum": x[7],
+                        "compressed": x[8],
+                        "url": s3.resource.meta.client.generate_presigned_url(
+                            "get_object",
+                            Params={"Bucket": project.bucket, "Key": x[1]},
+                            ExpiresIn=36000,
+                        ),
+                    }
+                    for x in files
                 }
-                for x in files
-            }
 
         try:
             return flask.jsonify({"files": files_single, "folders": files_in_folders})
