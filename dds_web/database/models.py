@@ -16,6 +16,7 @@ import flask
 import argon2
 import pyotp
 import flask_login
+import pathlib
 
 # Own modules
 from dds_web import db
