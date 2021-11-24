@@ -212,11 +212,11 @@ class ProjectStatus(flask_restful.Resource):
             ("Expired", ["Available", "Archived"]),
         ]
         result = False
-        if current_status != new_status:
-            for transition in possible_transitions:
-                if current_status == transition[0] and new_status in transition[1]:
-                    result = True
-                    break
+
+        for transition in possible_transitions:
+            if current_status == transition[0] and new_status in transition[1]:
+                result = True
+                break
         return result
 
 
