@@ -317,83 +317,61 @@ class FileInfo(flask_restful.Resource):
 
         # Get info on files and folders
         try:
+            # Get all files in project
+            files_in_proj = models.File.query.filter(
+                models.File.project_id == sqlalchemy.func.binary(project.id)
+            )
+            common_columns = [
+                "name_in_bucket",
+                "subpath",
+                "size_original",
+                "size_stored",
+                "salt",
+                "public_key",
+                "checksum",
+                "compressed",
+            ]
+            singlefileschema = model_schemas.FileSchema(
+                many=False,
+                only=common_columns,
+            )
+            # All files matching the path -- single files
+            files = files_in_proj.filter(models.File.name.in_(paths)).all()
+            files_single = {x.name: singlefileschema.dump(x) for x in files}
+
+            # Get not found paths - may be folders
+            founds_paths = set(files_single.keys())
+            new_paths = set(paths).difference(founds_paths)
+
+            # All paths which start with the subpath are within a folder
+            multifileschema = model_schemas.FileSchema(
+                many=True,
+                only=common_columns.extend(["name"]),
+            )
+            folder_contents = {
+                x: multifileschema.dump(
+                    files_in_proj.filter(models.File.subpath.like(f"{x.rstrip(os.sep)}%")).all()
+                )
+                for x in new_paths
+            }
+            flask.current_app.logger.debug(f"Files: {files_single}")
+            flask.current_app.logger.debug(f"Folder contents: {folder_contents}")
+
             with ApiS3Connector(project=project) as s3:
-                # Get all files in project
-                files_in_proj = models.File.query.filter(
-                    models.File.project_id == sqlalchemy.func.binary(project.id)
-                )
-                common_columns = [
-                    "name_in_bucket",
-                    "subpath",
-                    "size_original",
-                    "size_stored",
-                    "salt",
-                    "public_key",
-                    "checksum",
-                    "compressed",
-                ]
-                fileschema = model_schemas.FileSchema(
-                    many=False,
-                    only=common_columns,
-                )
-                # All files matching the path -- single files
-                files = files_in_proj.filter(models.File.name.in_(paths)).all()
-                files_single = {
-                    x.name: {
-                        **fileschema.dump(x),
-                        **{"url": s3.generate_get_url(bucket=project.bucket, key=x.name_in_bucket)},
-                    }
-                    for x in files
-                }
-                flask.current_app.logger.debug(f"single files: {files_single}")
 
-                founds_paths = set(files_single.keys())
-                flask.current_app.logger.debug(f"found paths: {founds_paths}")
-                new_paths = set(paths).difference(founds_paths)
-                flask.current_app.logger.debug(f"new_paths: {new_paths}")
-                # All paths which start with the subpath are within a folder
-                fileschemas = model_schemas.FileSchema(
-                    many=True,
-                    only=["name"].extend(common_columns),
-                )
+                # Check if exists in bucket
+                s3.items_in_bucket(files=files_single)
+                s3.items_in_bucket(files=folder_contents)
 
-                files_in_folders = {
-                    f: [
-                        {
-                            "name": c.name,
-                            "url": s3.generate_get_url(bucket=project.bucket, key=c.name_in_bucket),
-                            **fileschema.dump(c),
-                        }
-                        for c in files_in_proj.filter(
-                            models.File.subpath.like(f"{f.rstrip(os.sep)}%")
-                        ).all()
-                    ]
-                    for f in new_paths
-                }
-                # files_in_folders[f] = {
-                #     {
-                #         **fileschema.dump(x),
-                #         **{
-                #             "url": s3.generate_get_url(
-                #                 bucket=project.bucket, key=x.name_in_bucket
-                #             )
-                #         },
-                #     }
-                #     for x in folder_contents
-                # }
-                # files_in_folders = {
-                #     f: {
-                #         {**fileschema.dump(c), **{"url": s3.generate_get_url}}
-                #         for c in folder_contents
-                #     }
-                #     for f in new_paths
-                # }
-                flask.current_app.logger.debug(f"Files in folders: {files_in_folders}")
+                # Compute urls
+                # TODO:
+                s3.generate_get_url(key="")
+
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError from err
 
         try:
-            return flask.jsonify({"files": files_single, "folders": files_in_folders})
+            return flask.jsonify({"files": files_single, "folders": folder_contents})
         except Exception as err:
             flask.current_app.logger.exception(str(err))
 

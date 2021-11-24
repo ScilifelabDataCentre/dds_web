@@ -127,25 +127,25 @@ class ApiS3Connector:
 
         return removed, error
 
-    def generate_get_url(self, bucket, key):
+    def generate_get_url(self, key):
+        """ """
+        # url = self.resource.meta.client.generate_presigned_url(
+        #     "get_object",
+        #     Params={"Bucket": bucket, "Key": key},
+        #     ExpiresIn=36000,
+        # )
+        # return url
 
-        url = self.resource.meta.client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket, "Key": key},
-            ExpiresIn=36000,
-        )
-        return url
+    def items_in_bucket(self, files=None, folderfiles=None):
+        """Check if keys exist in bucket."""
 
-    # def items_in_bucket(self, bucket, files=None, folderfiles=None):
-    #     """Check if keys exist in bucket."""
-
-    #     flask.current_app.logger.debug()
-    #     paginator = self.resource.meta.client.get_paginator("list_objects")
-    #     pages = paginator.paginate(Bucket=bucket)
-    #     for page in pages:
-    #         keys = [x["Key"] for x in page["Contents"]]
-    #         flask.current_app.logger.debug(keys)
-    #         res1 = next((x for x in files if x[1] in keys), None)
-    #         res2 = next((x for x in folderfiles if x[1] in keys), None)
-    #         flask.current_app.logger.debug(res1)
-    #         flask.current_app.logger.debug(res2)
+        # flask.current_app.logger.debug()
+        # paginator = self.resource.meta.client.get_paginator("list_objects")
+        # pages = paginator.paginate(Bucket=bucket)
+        # for page in pages:
+        #     keys = [x["Key"] for x in page["Contents"]]
+        #     flask.current_app.logger.debug(keys)
+        #     res1 = next((x for x in files if x[1] in keys), None)
+        #     res2 = next((x for x in folderfiles if x[1] in keys), None)
+        #     flask.current_app.logger.debug(res1)
+        #     flask.current_app.logger.debug(res2)
