@@ -49,7 +49,7 @@ def check_eligibility_for_download(status, user_role):
 
 
 def check_eligibility_for_deletion(status, has_been_available):
-    """Check if a project status is eligible for download"""
+    """Check if a project status is eligible for deletion"""
     if status != "In Progress":
         raise DDSArgumentError("Project Status prevents files from being deleted.")
     else:
