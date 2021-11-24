@@ -40,9 +40,9 @@ def check_eligibility_for_upload(status):
 
 def check_eligibility_for_download(status, user_role):
     """Check if a project status makes it eligible to download"""
-    if status == "Available":
-        return True
-    if (status == "In Progress") and (user_role in ["Unit Admin", "Unit Personnel"]):
+    if status == "Available" or (
+        status == "In Progress" and user_role in ["Unit Admin", "Unit Personnel"]
+    ):
         return True
 
     raise DDSArgumentError("Current Project status limits file download.")
