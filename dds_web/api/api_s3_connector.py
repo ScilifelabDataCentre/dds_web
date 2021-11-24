@@ -129,23 +129,30 @@ class ApiS3Connector:
 
     def generate_get_url(self, key):
         """ """
-        # url = self.resource.meta.client.generate_presigned_url(
-        #     "get_object",
-        #     Params={"Bucket": bucket, "Key": key},
-        #     ExpiresIn=36000,
-        # )
-        # return url
+        url = self.resource.meta.client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self.project.bucket, "Key": key},
+            ExpiresIn=36000,
+        )
+        return url
 
-    def items_in_bucket(self, files=None, folderfiles=None):
-        """Check if keys exist in bucket."""
+    def items_not_in_bucket(self, items):
+        """Check if keys exist in bucket and return those that aren't."""
 
-        # flask.current_app.logger.debug()
-        # paginator = self.resource.meta.client.get_paginator("list_objects")
-        # pages = paginator.paginate(Bucket=bucket)
-        # for page in pages:
-        #     keys = [x["Key"] for x in page["Contents"]]
-        #     flask.current_app.logger.debug(keys)
-        #     res1 = next((x for x in files if x[1] in keys), None)
-        #     res2 = next((x for x in folderfiles if x[1] in keys), None)
-        #     flask.current_app.logger.debug(res1)
-        #     flask.current_app.logger.debug(res2)
+        # Paginator iterates 1000 items at a time through the bucket contents
+        paginator = self.resource.meta.client.get_paginator("list_objects")
+        pages = paginator.paginate(Bucket=self.project.bucket)
+
+        # Go through the pages and check if the attempted items exist
+        for page in pages:
+            keys_in_s3 = set(x["Key"] for x in page["Contents"])
+            [items.pop(x) for x in keys_in_s3.intersection(items)]
+            if not items:
+                break
+
+        if items:
+            flask.current_app.logger.warning(
+                f"The following items were not found in the bucket: {items}"
+            )
+
+        return items
