@@ -356,12 +356,39 @@ class FileInfo(flask_restful.Resource):
                     many=True,
                     only=["name"].extend(common_columns),
                 )
-                folder_contents = {
-                    x: files_in_proj.filter(models.File.subpath.like(f"{x.rstrip(os.sep)}%")).all()
-                    for x in new_paths
+
+                files_in_folders = {
+                    f: [
+                        {
+                            "name": c.name,
+                            "url": s3.generate_get_url(bucket=project.bucket, key=c.name_in_bucket),
+                            **fileschema.dump(c),
+                        }
+                        for c in files_in_proj.filter(
+                            models.File.subpath.like(f"{f.rstrip(os.sep)}%")
+                        ).all()
+                    ]
+                    for f in new_paths
                 }
-                files_in_folders = {f: {fileschemas.dump(c)} for f in new_paths}
-                flask.current_app.logger.debug(f"Files in folders: {folder_contents}")
+                # files_in_folders[f] = {
+                #     {
+                #         **fileschema.dump(x),
+                #         **{
+                #             "url": s3.generate_get_url(
+                #                 bucket=project.bucket, key=x.name_in_bucket
+                #             )
+                #         },
+                #     }
+                #     for x in folder_contents
+                # }
+                # files_in_folders = {
+                #     f: {
+                #         {**fileschema.dump(c), **{"url": s3.generate_get_url}}
+                #         for c in folder_contents
+                #     }
+                #     for f in new_paths
+                # }
+                flask.current_app.logger.debug(f"Files in folders: {files_in_folders}")
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError from err
 
