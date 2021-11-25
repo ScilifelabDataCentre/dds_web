@@ -127,29 +127,66 @@ class ApiS3Connector:
 
         return removed, error
 
-    def generate_get_url(self, key):
-        """ """
-        url = self.resource.meta.client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": self.project.bucket, "Key": key},
-            ExpiresIn=36000,
-        )
-        return url
+    def generate_get_url(self, keys):
+        """Generate presigned urls for get requests."""
+
+        if len(keys) == 1:
+            try:
+                self.resource.meta.client.head_object(Bucket=self.project.bucket, Key=key[0])
+            except botocore.exceptions.ClientError:
+                # Not found, can't get url
+                return
+
+            url = self.resource.meta.client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": self.project.bucket, "Key": key[0]},
+                ExpiresIn=36000,
+            )
+            return url
+
+        paginator = self.resource.meta.client.get_paginator("list_objects")
+        pages = paginator.paginate(Bucket=self.project.bucket)
+
+        items_to_find = ""
+        for page in pages:
+            keys_in_s3 = set(x["Key"] for x in page["Contents"])
+            # for
 
     def items_not_in_bucket(self, items):
         """Check if keys exist in bucket and return those that aren't."""
 
+        flask.current_app.logger.debug(items)
         # Paginator iterates 1000 items at a time through the bucket contents
         paginator = self.resource.meta.client.get_paginator("list_objects")
         pages = paginator.paginate(Bucket=self.project.bucket)
 
+        found_in_bucket = {}
         # Go through the pages and check if the attempted items exist
         for page in pages:
             keys_in_s3 = set(x["Key"] for x in page["Contents"])
-            [items.pop(x) for x in keys_in_s3.intersection(items)]
+            for loc, files in list(items.items()):
+                names_in_bucket = {y.name_in_bucket: {"obj": y, "loc": loc} for y in files}
+                flask.current_app.logger.debug(names_in_bucket)
+
+                for x, y in names_in_bucket.items():
+                    if x in keys_in_s3:
+                        items[loc].remove(y["obj"])
+                # [
+                #     items[loc].remove(x["obj"])
+                #     for x in {y.name_in_bucket: {"obj": y, "loc": loc} for y in files}
+                #     if x in keys_in_s3
+                # ]
+                # [
+                #     items[loc].remove(x)
+                #     for x in keys_in_s3.intersection({y.name_in_bucket for y in files})
+                # ]
+                flask.current_app.logger.debug(f"items after {loc}: {items}")
+
+            #     {x for x in files if x.name_in_bucket in keys_in_s3}
+            # [items.pop(x) for x in keys_in_s3.intersection(items)]
             if not items:
                 break
-
+        return
         if items:
             flask.current_app.logger.warning(
                 f"The following items were not found in the bucket: {items}"

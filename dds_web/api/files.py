@@ -307,11 +307,41 @@ class FileInfo(flask_restful.Resource):
     @auth.login_required
     def get(self):
         """Checks which files can be downloaded, and get their info."""
-
-        project_contents = project_schemas.ProjectContentSchema().load(
+        # Get project contents
+        (
+            project,
+            file_objs,
+            folder_contents_objs,
+            not_found,
+        ) = project_schemas.ProjectContentSchema().load(
             {**flask.request.args, **{"contents": flask.request.json}}
         )
-        flask.current_app.logger.debug(project_contents)
+        flask.current_app.logger.debug(f"Folder contents: {folder_contents_objs}")
+        # Which columns to fetch from database
+        common_columns = (
+            "name",
+            "name_in_bucket",
+            "subpath",
+            "size_original",
+            "size_stored",
+            "salt",
+            "public_key",
+            "checksum",
+            "compressed",
+        )
+
+        # Schemas
+        fileschema = file_schemas.FileSchema(
+            many=True,
+            only=common_columns,
+        )
+
+        files = fileschema.dump(file_objs)
+        flask.current_app.logger.debug(f"Files serialized: {files}")
+
+        folder_contents = {x: fileschema.dump(y) for x, y in folder_contents_objs.items()}
+        flask.current_app.logger.debug(f"Folder contents serialized: {folder_contents}")
+
         return
         # return
         # # Get files and folders requested by CLI

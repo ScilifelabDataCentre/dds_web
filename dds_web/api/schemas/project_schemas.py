@@ -18,6 +18,7 @@ from dds_web.api import errors as ddserr
 from dds_web import auth
 from dds_web.database import models
 from dds_web import ma
+from dds_web.api import api_s3_connector
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -92,11 +93,10 @@ class ProjectContentSchema(ProjectRequiredSchema):
 
     contents = marshmallow.fields.List(marshmallow.fields.String)
 
-    @marshmallow.post_load
-    def return_items(self, data, **kwargs):
-        """Return files and folders"""
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def verify_exists(self, data, **kwargs):
+        flask.current_app.logger.debug(f"Validating contents: {data.get('contents')}")
 
-        flask.current_app.logger.debug(data.get("contents"))
         contents = data.get("contents")
         project = data.get("project_row")
 
@@ -121,7 +121,28 @@ class ProjectContentSchema(ProjectRequiredSchema):
         flask.current_app.logger.debug(f"Folder contents: {folder_contents}")
 
         # Not found
-        not_found = [x for x, y in folder_contents.items() if not y]
+        not_found = {x: folder_contents.pop(x) for x, y in list(folder_contents.items()) if not y}
         flask.current_app.logger.debug(f"Not found: {not_found}")
 
-        return files, folder_contents, not_found
+        # Check if in bucket
+        with api_s3_connector.ApiS3Connector(project=project) as s3:
+            flask.current_app.logger.debug([x.name_in_bucket for x in files])
+
+            s3.items_not_in_bucket(items={**folder_contents, **{".": files}})
+        #     for x, y in folder_contents.items():
+        #         flask.current_app.logger.debug(f"key: {x}")
+        #         flask.current_app.logger.debug(f"value: {y}")
+        #         for z in y:
+        #             flask.current_app.logger.debug(f"every file: {z}")
+
+        # flask.current_app.logger.debug(
+        #     [z.name_in_bucket for z in (y for x, y in folder_contents.items())]
+        # )
+        # s3.items_not_in_bucket(items=)
+
+    @marshmallow.post_load
+    def return_items(self, data, **kwargs):
+        """Return files and folders"""
+
+        return
+        return project, files, folder_contents, not_found

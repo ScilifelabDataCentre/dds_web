@@ -10,11 +10,13 @@ from datetime import datetime
 # Installed
 import marshmallow
 import sqlalchemy
+import flask
 
 # Own modules
 from dds_web.database import models
 import dds_web.utils
 from dds_web.api.schemas import project_schemas
+from dds_web import ma
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -91,3 +93,18 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
         new_file.versions.append(new_version)
 
         return new_file
+
+
+class FileSchema(ma.SQLAlchemyAutoSchema):
+    """ """
+
+    class Meta:
+        model = models.File
+
+    @marshmallow.post_dump
+    def return_dicts(self, data, many, **kwargs):
+        """ """
+
+        flask.current_app.logger.debug(f"Input data: {data}")
+        name = data.pop("name")
+        return {name: data}
