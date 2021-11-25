@@ -46,6 +46,17 @@ class ProjectUsers(db.Model):
     researchuser = db.relationship("ResearchUser", backref="project_associations")
 
 
+class ProjectStatuses(db.Model):
+
+    # Table setup
+    __tablename__ = "projectstatuses"
+
+    # Primary keys / Foreign keys
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
+    status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
+    date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
+
+
 ####################################################################################################
 # Tables ################################################################################## Tables #
 
@@ -114,7 +125,6 @@ class Project(db.Model):
         default=dds_web.utils.current_time(),
     )
     date_updated = db.Column(db.DateTime(), nullable=True)
-    status = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)
     pi = db.Column(db.String(255), unique=False, nullable=False)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
@@ -131,6 +141,21 @@ class Project(db.Model):
     expired_files = db.relationship("ExpiredFile", backref="assigned_project")
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
+    # One project can have a history of statuses
+    project_statuses = db.relationship("ProjectStatuses", backref="project")
+
+    @property
+    def current_status(self):
+        """Return the current status of the project"""
+        return max(self.project_statuses, key=lambda x: x.date_created).status
+
+    @property
+    def has_been_available(self):
+        """Return True if the project has ever been in the status Available"""
+        result = False
+        if len([x for x in self.project_statuses if "Available" in x.status]) > 0:
+            result = True
+        return result
 
     @property
     def safespring_project(self):

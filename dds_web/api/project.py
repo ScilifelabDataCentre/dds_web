@@ -59,11 +59,6 @@ class CreateProjectSchema(marshmallow.Schema):
     is_sensitive = marshmallow.fields.Boolean(required=False)
     date_created = custom_fields.MyDateTimeField(required=False)
 
-    # Only "In Progress" allowed when creating the project
-    status = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Equal("In Progress")
-    )
-
     @marshmallow.pre_load
     def generate_required_fields(self, data, **kwargs):
         """Generate all required fields for creating a project."""
@@ -73,7 +68,6 @@ class CreateProjectSchema(marshmallow.Schema):
             )
 
         data["date_created"] = dds_web.utils.current_time()
-        data["status"] = "In Progress"
 
         return data
 
@@ -85,7 +79,6 @@ class CreateProjectSchema(marshmallow.Schema):
             for field in [
                 "title",
                 "date_created",
-                "status",
                 "description",
                 "pi",
             ]
@@ -130,7 +123,14 @@ class CreateProjectSchema(marshmallow.Schema):
             new_project = models.Project(
                 **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
             )
-
+            new_project.project_statuses.append(
+                models.ProjectStatuses(
+                    **{
+                        "status": "In Progress",
+                        "date_created": data["date_created"],
+                    }
+                )
+            )
             # Save
             db.session.add(new_project)
             db.session.commit()
@@ -149,6 +149,75 @@ class CreateProjectSchema(marshmallow.Schema):
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
+class ProjectStatus(flask_restful.Resource):
+    """Get and update Project status"""
+
+    @auth.login_required
+    def get(self):
+        """Get current project status and optionally entire status history"""
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        extra_args = flask.request.json
+        return_info = {"current_status": project.current_status}
+
+        if extra_args and extra_args.get("history") == True:
+            history = []
+            for pstatus in project.project_statuses:
+                history.append(tuple((pstatus.status, pstatus.date_created)))
+            history.sort(key=lambda x: x[1])
+            return_info.update({"history": history})
+
+        return flask.jsonify(return_info)
+
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    def post(self):
+        """Update Project Status"""
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        extra_args = flask.request.json
+        new_status = extra_args.get("new_status")
+        if new_status not in [
+            "In Progress",
+            "Deleted",
+            "Available",
+            "Expired",
+            "Archived",
+        ]:
+            raise DDSArgumentError("Invalid status")
+
+        if not self.is_transition_possible(project.current_status, new_status):
+            raise DDSArgumentError("Invalid status transition")
+
+        try:
+            add_status = models.ProjectStatuses(
+                **{
+                    "project_id": project.id,
+                    "status": new_status,
+                    "date_created": dds_web.utils.current_time(),
+                }
+            )
+
+            project.project_statuses.append(add_status)
+            db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise DatabaseError(message="Server Error: Status was not updated")
+
+        return flask.jsonify({"message": f"{project.public_id} updated to status {new_status}"})
+
+    def is_transition_possible(self, current_status, new_status):
+        """Check if the transition is valid"""
+        possible_transitions = [
+            ("In Progress", ["Available", "Deleted"]),
+            ("Available", ["In Progress", "Expired", "Archived"]),
+            ("Expired", ["Available", "Archived"]),
+        ]
+        result = False
+
+        for transition in possible_transitions:
+            if current_status == transition[0] and new_status in transition[1]:
+                result = True
+                break
+        return result
 
 
 class GetPublic(flask_restful.Resource):
@@ -234,7 +303,7 @@ class UserProjects(flask_restful.Resource):
                 "Project ID": p.public_id,
                 "Title": p.title,
                 "PI": p.pi,
-                "Status": p.status,
+                "Status": p.current_status,
                 "Last updated": p.date_updated if p.date_updated else p.date_created,
                 "Size": p.size,
             }
