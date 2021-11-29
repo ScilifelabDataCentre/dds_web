@@ -152,44 +152,45 @@ class ApiS3Connector:
             keys_in_s3 = set(x["Key"] for x in page["Contents"])
             # for
 
-    def items_not_in_bucket(self, items):
+    def bucket_items(self):
         """Check if keys exist in bucket and return those that aren't."""
 
-        flask.current_app.logger.debug(items)
+        # flask.current_app.logger.debug(items)
         # Paginator iterates 1000 items at a time through the bucket contents
         paginator = self.resource.meta.client.get_paginator("list_objects")
         pages = paginator.paginate(Bucket=self.project.bucket)
 
-        found_in_bucket = {}
-        # Go through the pages and check if the attempted items exist
+        # found_in_bucket = {}
+        # Yield 1000 items at a time
         for page in pages:
             keys_in_s3 = set(x["Key"] for x in page["Contents"])
-            for loc, files in list(items.items()):
-                names_in_bucket = {y.name_in_bucket: {"obj": y, "loc": loc} for y in files}
-                flask.current_app.logger.debug(names_in_bucket)
+            yield keys_in_s3
+            # for loc, files in list(items.items()):
+            #     names_in_bucket = {y.name_in_bucket: {"obj": y, "loc": loc} for y in files}
+            #     flask.current_app.logger.debug(names_in_bucket)
 
-                for x, y in names_in_bucket.items():
-                    if x in keys_in_s3:
-                        items[loc].remove(y["obj"])
-                # [
-                #     items[loc].remove(x["obj"])
-                #     for x in {y.name_in_bucket: {"obj": y, "loc": loc} for y in files}
-                #     if x in keys_in_s3
-                # ]
-                # [
-                #     items[loc].remove(x)
-                #     for x in keys_in_s3.intersection({y.name_in_bucket for y in files})
-                # ]
-                flask.current_app.logger.debug(f"items after {loc}: {items}")
+            #     for x, y in names_in_bucket.items():
+            #         if x in keys_in_s3:
+            #             items[loc].remove(y["obj"])
+            # [
+            #     items[loc].remove(x["obj"])
+            #     for x in {y.name_in_bucket: {"obj": y, "loc": loc} for y in files}
+            #     if x in keys_in_s3
+            # ]
+            # [
+            #     items[loc].remove(x)
+            #     for x in keys_in_s3.intersection({y.name_in_bucket for y in files})
+            # ]
+            # flask.current_app.logger.debug(f"items after {loc}: {items}")
 
             #     {x for x in files if x.name_in_bucket in keys_in_s3}
             # [items.pop(x) for x in keys_in_s3.intersection(items)]
-            if not items:
-                break
-        return
-        if items:
-            flask.current_app.logger.warning(
-                f"The following items were not found in the bucket: {items}"
-            )
+        #     if not items:
+        #         break
+        # return
+        # if items:
+        #     flask.current_app.logger.warning(
+        #         f"The following items were not found in the bucket: {items}"
+        #     )
 
-        return items
+        # return items

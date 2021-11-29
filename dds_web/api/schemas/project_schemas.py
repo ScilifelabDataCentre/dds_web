@@ -7,6 +7,7 @@
 # Standard Library
 from datetime import datetime
 import os
+import gc
 
 # Installed
 import flask
@@ -72,6 +73,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
     def validate_project(self, value):
         """Validate existing project and user access to it."""
 
+        flask.current_app.logger.debug(f"project: {value}")
         project = verify_project_exists(spec_proj=value)
         verify_project_access(project=project)
 
@@ -80,69 +82,10 @@ class ProjectRequiredSchema(marshmallow.Schema):
         """Set project row in data for access by validators."""
 
         data["project_row"] = verify_project_exists(spec_proj=data.get("project"))
+        flask.current_app.logger.debug(f"project row: {data.get('project_row')}")
 
     @marshmallow.post_load
     def return_items(self, data, **kwargs):
         """Return project object."""
 
         return data.get("project_row")
-
-
-class ProjectContentSchema(ProjectRequiredSchema):
-    """Schema for project contents."""
-
-    contents = marshmallow.fields.List(marshmallow.fields.String)
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def verify_exists(self, data, **kwargs):
-        flask.current_app.logger.debug(f"Validating contents: {data.get('contents')}")
-
-        contents = data.get("contents")
-        project = data.get("project_row")
-
-        # All contents (query only, not run)
-        all_contents_query = models.File.query.filter(
-            models.File.project_id == sqlalchemy.func.binary(project.id)
-        )
-
-        # Get all files
-        files = all_contents_query.filter(models.File.name.in_(contents)).all()
-        flask.current_app.logger.debug(f"Files: {files}")
-
-        # Get not found paths - may be folders
-        new_paths = set(contents).difference(x.name for x in files)
-        flask.current_app.logger.debug(f"New paths: {new_paths}")
-
-        # Get all folder contents
-        folder_contents = {
-            x: all_contents_query.filter(models.File.subpath.like(f"{x.rstrip(os.sep)}%")).all()
-            for x in new_paths
-        }
-        flask.current_app.logger.debug(f"Folder contents: {folder_contents}")
-
-        # Not found
-        not_found = {x: folder_contents.pop(x) for x, y in list(folder_contents.items()) if not y}
-        flask.current_app.logger.debug(f"Not found: {not_found}")
-
-        # Check if in bucket
-        with api_s3_connector.ApiS3Connector(project=project) as s3:
-            flask.current_app.logger.debug([x.name_in_bucket for x in files])
-
-            s3.items_not_in_bucket(items={**folder_contents, **{".": files}})
-        #     for x, y in folder_contents.items():
-        #         flask.current_app.logger.debug(f"key: {x}")
-        #         flask.current_app.logger.debug(f"value: {y}")
-        #         for z in y:
-        #             flask.current_app.logger.debug(f"every file: {z}")
-
-        # flask.current_app.logger.debug(
-        #     [z.name_in_bucket for z in (y for x, y in folder_contents.items())]
-        # )
-        # s3.items_not_in_bucket(items=)
-
-    @marshmallow.post_load
-    def return_items(self, data, **kwargs):
-        """Return files and folders"""
-
-        return
-        return project, files, folder_contents, not_found

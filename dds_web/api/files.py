@@ -307,15 +307,12 @@ class FileInfo(flask_restful.Resource):
     @auth.login_required
     def get(self):
         """Checks which files can be downloaded, and get their info."""
+
         # Get project contents
-        (
-            project,
-            file_objs,
-            folder_contents_objs,
-            not_found,
-        ) = project_schemas.ProjectContentSchema().load(
+        test = file_schemas.FileInfoSchema().load(
             {**flask.request.args, **{"contents": flask.request.json}}
         )
+        return
         flask.current_app.logger.debug(f"Folder contents: {folder_contents_objs}")
         # Which columns to fetch from database
         common_columns = (
