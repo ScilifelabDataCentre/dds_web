@@ -244,7 +244,7 @@ def request_reset_password():
     form = forms.RequestResetForm()
     if form.validate_on_submit():
         email = models.Email.query.filter_by(email=form.email.data).first()
-        dds_web.utils.send_reset_email(email=email)
+        dds_web.utils.send_reset_email(email_row=email)
         flask.flash("An email has been sent with instructions to reset your password.", "info")
         return flask.redirect(flask.url_for("auth_blueprint.login"))
 
