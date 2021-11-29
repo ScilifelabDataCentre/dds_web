@@ -1,43 +1,56 @@
-<html>
-    <head>
-        <title>Login</title>
-    </head>
-    <body>
-        <h1>Login to DDS</h1>
-        <form method="POST" action="{{ url_for('auth_blueprint.login') }}">
-            {{ form.csrf_token }}
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 
-            <!-- Username -->
-            {{ form.username.label }}
-            {{ form.username }}
-            <ul>
-                {% for error in form.username.errors %}
-                <li style="color:red;">
-                    {{ error }}
-                </li>
-                {% endfor %}
-            </ul>
+{% block content %}
+<title>Login</title>
+<body>
+    <h1>Login to DDS</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class=flashes>
+        {% for category, message in messages %}
+        <div class="alert alert-{{category}}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    <form method="POST" action="{{ url_for('auth_blueprint.login') }}">
+        {{ form.csrf_token }}
 
-            <!-- Password -->
-            {{ form.password.label }}
-            {{ form.password }}
-            <ul>
-                {% for error in form.password.errors %}
-                <li style="color:red;">
-                    {{ error }}
-                </li>
-                {% endfor %}
-            </ul>
+        <!-- Username -->
+        {{ form.username.label }}
+        {{ form.username }}
+        <ul>
+            {% for error in form.username.errors %}
+            <li style="color:red;">
+                {{ error }}
+            </li>
+            {% endfor %}
+        </ul>
 
-            <!-- Submit button -->
-            {{ form.submit }}
+        <!-- Password -->
+        {{ form.password.label }}
+        {{ form.password }}
+        <ul>
+            {% for error in form.password.errors %}
+            <li style="color:red;">
+                {{ error }}
+            </li>
+            {% endfor %}
+        </ul>
 
-            <small class="text-muted ml-2">
-                <a href="{{ url_for('auth_blueprint.reset_request') }}">
-                    Forgot Password?
-                </a>
-            </small>
+        <!-- Submit button -->
+        {{ form.submit }}
 
-        </form>
-    </body>
-</html>
+        <small class="text-muted ml-2">
+            <a href="{{ url_for('auth_blueprint.request_reset_password')
+                }}">
+                Forgot Password?
+            </a>
+        </small>
+
+    </form>
+
+    {% endblock %}

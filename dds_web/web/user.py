@@ -26,7 +26,7 @@ from dds_web import db
 import dds_web.api.errors as ddserr
 from dds_web.api.schemas import user_schemas
 from dds_web import mail
-from flask_mail import Message
+import flask_mail
 
 
 ####################################################################################################
@@ -233,49 +233,47 @@ def two_factor_verify():
         return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
 
 
-def send_reset_email(email):
-    token = email.user.get_reset_token()
-    message = Message(
-        "Password Reset Request", sender="noreply@mailtrap.io", recipients=[email.email]
-    )
-    message.body = f"""To reset your password, visit the following link: 
-    {flask.url_for("auth_blueprint.reset_token", token=token, _external=True)}
-    
-    If you did not make this request then simply ignore this email and no changes will be made.
-    """
-    mail.send(message)
-
-
 @auth_blueprint.route("/reset_password", methods=["GET", "POST"])
-def reset_request():
+def request_reset_password():
+    """Request to reset password."""
+    # Reset forgotten password only allowed if logged out
     if flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
+    # Validate form
     form = forms.RequestResetForm()
     if form.validate_on_submit():
         email = models.Email.query.filter_by(email=form.email.data).first()
-        send_reset_email(email=email)
+        dds_web.utils.send_reset_email(email=email)
         flask.flash("An email has been sent with instructions to reset your password.", "info")
         return flask.redirect(flask.url_for("auth_blueprint.login"))
 
-    return flask.render_template("user/reset_request.html", title="Reset Password", form=form)
+    # Show form
+    return flask.render_template("user/request_reset_password.html", form=form)
 
 
 @auth_blueprint.route("/reset_password/<token>", methods=["GET", "POST"])
-def reset_token(token):
+def reset_password(token):
+    """Perform the password reset."""
+    # Go to index page if already logged in
     if flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
-    user = models.User.verify_reset_token(token)
+    # Verify that the token is valid and contains enough info
+    user = models.User.verify_reset_token(token=token)
     if not user:
         flask.flash("That is an invalid or expired token", "warning")
-        return flask.redirect(flask.url_for("auth_blueprint.reset_request"))
+        return flask.redirect(flask.url_for("auth_blueprint.request_reset_password"))
 
+    # Get form for reseting password
     form = forms.ResetPasswordForm()
+
+    # Validate form
     if form.validate_on_submit():
         user.password = form.password.data
         db.session.commit()
         flask.flash("Your password has been updated! You are now able to log in.", "success")
         return flask.redirect(flask.url_for("auth_blueprint.login"))
 
-    return flask.render_template("user/reset_token.html", title="Reset Password", form=form)
+    # Go to form
+    return flask.render_template("user/reset_password.html", form=form)

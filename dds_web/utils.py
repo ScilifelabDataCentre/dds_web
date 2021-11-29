@@ -22,15 +22,34 @@ import atexit
 import werkzeug
 from apscheduler.schedulers import background
 import marshmallow
+import flask_mail
 
 
 # Own modules
 from dds_web.database import models
 from dds_web import db, C_TZ
+from dds_web import mail
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+def send_reset_email(email_row):
+    """Generate password reset email."""
+    # Generate token
+    token = email_row.user.get_reset_token()
+
+    # Create and send email
+    message = flask_mail.Message(
+        "Password Reset Request", sender="noreply@mailtrap.io", recipients=[email_row.email]
+    )
+    message.body = (
+        "To reset your password, visit the following link: "
+        f"{flask.url_for('auth_blueprint.reset_password', token=token, _external=True)}"
+        "If you did not make this request then simply ignore this email and no changes will be made."
+    )
+    mail.send(message)
 
 
 def is_safe_url(target):
