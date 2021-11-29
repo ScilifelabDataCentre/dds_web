@@ -121,6 +121,8 @@ class RequestResetForm(flask_wtf.FlaskForm):
 
 
 class ResetPasswordForm(flask_wtf.FlaskForm):
+    """Form for setting a new password."""
+
     password = wtforms.PasswordField(
         "Password",
         validators=[
