@@ -261,11 +261,13 @@ class User(flask_login.UserMixin, db.Model):
         return True
 
     def get_reset_token(self, expires_sec=3600):
+        """Generate token for resetting password."""
         s = Serializer(flask.current_app.config["SECRET_KEY"], expires_sec)
         return s.dumps({"user_id": self.username}).decode("utf-8")
 
     @staticmethod
     def verify_reset_token(token):
+        """Verify that the token is valid."""
         s = Serializer(flask.current_app.config["SECRET_KEY"])
         try:
             user_id = s.loads(token)["user_id"]
