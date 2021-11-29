@@ -32,6 +32,12 @@
             <!-- Submit button -->
             {{ form.submit }}
 
+            <small class="text-muted ml-2">
+                <a href="{{ url_for('auth_blueprint.reset_request') }}">
+                    Forgot Password?
+                </a>
+            </small>
+
         </form>
     </body>
 </html>

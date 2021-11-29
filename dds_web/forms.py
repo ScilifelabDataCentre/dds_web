@@ -12,6 +12,8 @@ import marshmallow
 
 # Own modules
 import dds_web.utils
+from dds_web.database import models
+
 
 # FORMS #################################################################################### FORMS #
 
@@ -42,7 +44,9 @@ class RegistrationForm(flask_wtf.FlaskForm):
 
     name = wtforms.StringField("name", validators=[wtforms.validators.InputRequired()])
     email = wtforms.StringField(
-        "email", validators=[wtforms.validators.Email()], render_kw={"readonly": True}
+        "email",
+        validators=[wtforms.validators.DataRequired(), wtforms.validators.Email()],
+        render_kw={"readonly": True},
     )
     username = wtforms.StringField(
         "username",
@@ -61,6 +65,20 @@ class RegistrationForm(flask_wtf.FlaskForm):
 
     confirm = wtforms.PasswordField("Repeat password")
     submit = wtforms.SubmitField("submit")
+
+    def validate_username(self, username):
+        user = models.User.query.filter_by(username=username.data).first()
+        if user:
+            raise wtforms.validators.ValidationError(
+                "That username is taken. Please choose a different one."
+            )
+
+    def validate_email(self, email):
+        email = models.Email.query.filter_by(email=email.data).first()
+        if email:
+            raise wtforms.validators.ValidationError(
+                "That email is taken. Please choose a different one."
+            )
 
 
 class LoginForm(flask_wtf.FlaskForm):
@@ -83,3 +101,26 @@ class TwoFactorAuthForm(flask_wtf.FlaskForm):
         validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
     )
     submit = wtforms.SubmitField("Authenticate User")
+
+
+class RequestResetForm(flask_wtf.FlaskForm):
+    email = wtforms.StringField(
+        "Email", validators=[wtforms.validators.DataRequired(), wtforms.validators.Email()]
+    )
+    submit = wtforms.SubmitField("Request Password Reset")
+
+    def validate_email(self, email):
+        email = models.Email.query.filter_by(email=email.data).first()
+        if not email:
+            raise wtforms.validators.ValidationError(
+                "There is no account with that email. You must register first."
+            )
+
+
+class ResetPasswordForm(flask_wtf.FlaskForm):
+    password = wtforms.PasswordField("Password", validators=[wtforms.validators.DataRequired()])
+    confirm_password = wtforms.PasswordField(
+        "Confirm Password",
+        validators=[wtforms.validators.DataRequired(), wtforms.validators.EqualTo("password")],
+    )
+    submit = wtforms.SubmitField("Reset Password")
