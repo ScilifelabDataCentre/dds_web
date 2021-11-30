@@ -308,113 +308,18 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
+        input_ = {**flask.request.args, **{"contents": flask.request.json, "url": True}}
+
         # Get project contents
-        test = file_schemas.FileInfoSchema().load(
-            {**flask.request.args, **{"contents": flask.request.json}}
+        found_files, found_folder_contents, not_found = file_schemas.FileInfoSchema().dump(input_)
+
+        return flask.jsonify(
+            {
+                "files": found_files,
+                "folder_contents": found_folder_contents,
+                "not_found": not_found,
+            }
         )
-        return
-        flask.current_app.logger.debug(f"Folder contents: {folder_contents_objs}")
-        # Which columns to fetch from database
-        common_columns = (
-            "name",
-            "name_in_bucket",
-            "subpath",
-            "size_original",
-            "size_stored",
-            "salt",
-            "public_key",
-            "checksum",
-            "compressed",
-        )
-
-        # Schemas
-        fileschema = file_schemas.FileSchema(
-            many=True,
-            only=common_columns,
-        )
-
-        files = fileschema.dump(file_objs)
-        flask.current_app.logger.debug(f"Files serialized: {files}")
-
-        folder_contents = {x: fileschema.dump(y) for x, y in folder_contents_objs.items()}
-        flask.current_app.logger.debug(f"Folder contents serialized: {folder_contents}")
-
-        return
-        # return
-        # # Get files and folders requested by CLI
-        # paths = flask.request.json
-
-        # files_single, files_in_folders = ({}, {})
-
-        # # Which columns to fetch from database
-        # common_columns = [
-        #     "name_in_bucket",
-        #     "subpath",
-        #     "size_original",
-        #     "size_stored",
-        #     "salt",
-        #     "public_key",
-        #     "checksum",
-        #     "compressed",
-        # ]
-
-        # # Schemas
-        # singlefileschema = model_schemas.FileSchema(
-        #     many=False,
-        #     only=common_columns,
-        # )
-        # multifileschema = model_schemas.FileSchema(
-        #     many=True,
-        #     only=common_columns.extend(["name"]),
-        # )
-
-        # Get info on files and folders
-        try:
-            # Get all files in project - just the query
-            # files_in_proj = models.File.query.filter(
-            #     models.File.project_id == sqlalchemy.func.binary(project.id)
-            # )
-
-            # All files matching the path - single files
-            # files = files_in_proj.filter(models.File.name.in_(paths)).all()
-            # files_single = {x.name: singlefileschema.dump(x) for x in files}
-
-            # flask.current_app.logger.debug(f"files: {files_single}")
-            # Get not found paths - may be folders
-            # founds_paths = set(files_single.keys())
-            # new_paths = set(paths).difference(founds_paths)
-
-            # Get all files within a specific folder
-            # folder_contents = {
-            #     x: multifileschema.dump(
-            #         files_in_proj.filter(models.File.subpath.like(f"{x.rstrip(os.sep)}%")).all()
-            #     )
-            #     for x in new_paths
-            # }
-
-            with ApiS3Connector(project=project) as s3:
-
-                items = {y.get("name_in_bucket"): x for x, y in files_single.items()}
-
-                # Check if exists in bucket
-                not_in_bucket = s3.items_not_in_bucket(items=items)
-                [files_single.pop(x) for x in not_in_bucket.values()]
-
-                # Compute urls
-                # TODO:
-                for file, info in list(files_single.items()):
-                    files_single[file].update(
-                        {"url": s3.generate_get_url(key=info["name_in_bucket"])}
-                    )
-                    flask.current_app.logger.debug(files_single)
-
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError from err
-
-        try:
-            return flask.jsonify({"files": files_single, "folders": folder_contents})
-        except Exception as err:
-            flask.current_app.logger.exception(str(err))
 
 
 class FileInfoAll(flask_restful.Resource):

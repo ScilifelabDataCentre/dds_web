@@ -73,7 +73,6 @@ class ProjectRequiredSchema(marshmallow.Schema):
     def validate_project(self, value):
         """Validate existing project and user access to it."""
 
-        flask.current_app.logger.debug(f"project: {value}")
         project = verify_project_exists(spec_proj=value)
         verify_project_access(project=project)
 
@@ -82,7 +81,6 @@ class ProjectRequiredSchema(marshmallow.Schema):
         """Set project row in data for access by validators."""
 
         data["project_row"] = verify_project_exists(spec_proj=data.get("project"))
-        flask.current_app.logger.debug(f"project row: {data.get('project_row')}")
 
     @marshmallow.post_load
     def return_items(self, data, **kwargs):
