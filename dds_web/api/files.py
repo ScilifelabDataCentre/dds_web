@@ -338,7 +338,9 @@ class FileInfoAll(flask_restful.Resource):
             {**flask.request.args, "get_all": True, "url": True}
         )
 
-        return flask.jsonify({"files": project_contents})
+        flask.current_app.logger.debug(files)
+
+        return flask.jsonify({"files": files})
 
 
 class UpdateFile(flask_restful.Resource):

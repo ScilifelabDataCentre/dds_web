@@ -176,67 +176,38 @@ class ProjectContentSchema(ProjectRequiredSchema):
 
         with api_s3_connector.ApiS3Connector(project=project_row) as s3:
 
-            flask.current_app.logger.debug(f"Length of files: {len(files)}")
-            flask.current_app.logger.debug(f"Length of folders: {len(folder_contents)}")
-            if len(files) > 1 or len(folder_contents) > 1:
-                flask.current_app.logger.debug("Longer than 1.")
-                pages = s3.bucket_items()
-                for page in pages:
-                    found_files.update(
-                        {
-                            x.name: {
-                                **fileschema.dump(x),
-                                "url": s3.generate_get_url(key=x.name_in_bucket) if url else None,
-                            }
-                            for x in files
-                            if x.name_in_bucket in page
+            pages = s3.bucket_items()
+            for page in pages:
+                found_files.update(
+                    {
+                        x.name: {
+                            **fileschema.dump(x),
+                            "url": s3.generate_get_url(key=x.name_in_bucket) if url else None,
                         }
-                    )
+                        for x in files
+                        if x.name_in_bucket in page
+                    }
+                )
 
-                    if folder_contents:
-                        for x, y in folder_contents.items():
-                            if x not in found_folder_contents:
-                                found_folder_contents[x] = {}
+                if folder_contents:
+                    for x, y in folder_contents.items():
+                        if x not in found_folder_contents:
+                            found_folder_contents[x] = {}
 
-                            found_folder_contents[x].update(
-                                {
-                                    z.name: {
-                                        **fileschema.dump(z),
-                                        "url": s3.generate_get_url(key=z.name_in_bucket)
-                                        if url
-                                        else None,
-                                    }
-                                    for z in y
-                                    if z.name_in_bucket in page
+                        found_folder_contents[x].update(
+                            {
+                                z.name: {
+                                    **fileschema.dump(z),
+                                    "url": s3.generate_get_url(key=z.name_in_bucket)
+                                    if url
+                                    else None,
                                 }
-                            )
-                            flask.current_app.logger.debug(
-                                f"Found folder contents: {found_folder_contents}"
-                            )
-            else:
-                flask.current_app.logger.debug("Less than 1.")
-                if len(files) == 1:
-                    (only_file,) = files
-                    if s3.key_in_bucket(key=only_file.name_in_bucket):
-                        found_files[only_file.name] = {
-                            **fileschema.dump(only_file),
-                            "url": s3.generate_get_url(key=only_file.name_in_bucket)
-                            if url
-                            else None,
-                        }
-
-                if len(folder_contents) == 1:
-                    only_folder = next(iter(folder_contents))
-                    if len(folder_contents[only_folder]) == 1:
-                        (only_file,) = folder_contents[only_folder]
-                        found_folder_contents[only_folder] = {
-                            only_file.name: {
-                                **fileschema.dump(only_file),
-                                "url": s3.generate_get_url(key=only_file.name_in_bucket)
-                                if url
-                                else None,
+                                for z in y
+                                if z.name_in_bucket in page
                             }
-                        }
+                        )
+                        flask.current_app.logger.debug(
+                            f"Found folder contents: {found_folder_contents}"
+                        )
 
-        [found_folder_contents.pop(x) for x, y in found_folder_contents.items() if not y]
         return found_files, found_folder_contents, not_found
