@@ -308,10 +308,15 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
-        input_ = {**flask.request.args, **{"contents": flask.request.json, "url": True}}
+        input_ = {**flask.request.args, **{"requested_items": flask.request.json, "url": True}}
 
         # Get project contents
-        found_files, found_folder_contents, not_found = file_schemas.FileInfoSchema().dump(input_)
+        found_files, found_folder_contents, not_found = project_schemas.ProjectContentSchema().dump(
+            input_
+        )
+
+        flask.current_app.logger.debug(found_files)
+        flask.current_app.logger.debug(found_folder_contents)
 
         return flask.jsonify(
             {
@@ -329,48 +334,11 @@ class FileInfoAll(flask_restful.Resource):
     def get(self):
         """Get file info."""
 
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        files, _, _ = project_schemas.ProjectContentSchema().dump(
+            {**flask.request.args, "get_all": True, "url": True}
+        )
 
-        files = {}
-        try:
-            all_files = (
-                models.File.query.filter_by(project_id=project.id)
-                .with_entities(
-                    models.File.name,
-                    models.File.name_in_bucket,
-                    models.File.subpath,
-                    models.File.size_original,
-                    models.File.size_stored,
-                    models.File.salt,
-                    models.File.public_key,
-                    models.File.checksum,
-                    models.File.compressed,
-                )
-                .all()
-            )
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(str(err))
-        else:
-            if all_files is None or not all_files:
-                raise EmptyProjectException(
-                    project=project.public_id, message=f"The project {project.public_id} is empty."
-                )
-
-            files = {
-                x[0]: {
-                    "name_in_bucket": x[1],
-                    "subpath": x[2],
-                    "size_original": x[3],
-                    "size_stored": x[4],
-                    "key_salt": x[5],
-                    "public_key": x[6],
-                    "checksum": x[7],
-                    "compressed": x[8],
-                }
-                for x in all_files
-            }
-
-        return flask.jsonify({"files": files})
+        return flask.jsonify({"files": project_contents})
 
 
 class UpdateFile(flask_restful.Resource):
@@ -383,6 +351,7 @@ class UpdateFile(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         file_info = flask.request.json
+
         # Get file name from request from CLI
         file_name = file_info.get("name")
         if not file_name:

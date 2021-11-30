@@ -148,3 +148,15 @@ class ApiS3Connector:
         for page in pages:
             keys_in_s3 = set(x["Key"] for x in page["Contents"])
             yield keys_in_s3
+
+    def key_in_bucket(self, key):
+        """Check if single key is found in bucket."""
+        try:
+            self.resource.meta.client.head_object(Bucket=self.project.bucket, Key=key)
+        except botocore.exceptions.ClientError:
+            flask.current_app.logger.warning(
+                "Sync error. File found in database but not in storage."
+            )
+            return False
+
+        return True
