@@ -52,6 +52,10 @@ class ProjectStatuses(db.Model):
     status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
     date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
 
+    # Columns
+    is_aborted = db.Column(db.Boolean, nullable=True, default=False, unique=False)
+    deadline = db.Column(db.DateTime(), nullable=True)
+
 
 ####################################################################################################
 # Tables ################################################################################## Tables #
@@ -124,6 +128,7 @@ class Project(db.Model):
     privkey_salt = db.Column(db.String(32), nullable=False)
     privkey_nonce = db.Column(db.String(24), nullable=False)
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    released = db.Column(db.DateTime(), nullable=True)
 
     # Relationships
     # One project can have many files
@@ -147,6 +152,10 @@ class Project(db.Model):
         if len([x for x in self.project_statuses if "Available" in x.status]) > 0:
             result = True
         return result
+
+    @property
+    def times_expired(self):
+        return len([x for x in self.project_statuses if "Expired" in x.status])
 
     @property
     def safespring_project(self):

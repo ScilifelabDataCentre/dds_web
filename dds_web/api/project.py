@@ -15,7 +15,7 @@ from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
 from cryptography.hazmat import backends
 import os
 import marshmallow
-
+import datetime
 
 # Own modules
 import dds_web.utils
@@ -183,20 +183,69 @@ class ProjectStatus(flask_restful.Resource):
         ]:
             raise DDSArgumentError("Invalid status")
 
+        curr_date = dds_web.utils.current_time()
+        add_aborted = {}
+        add_deadline = {}
+
         if not self.is_transition_possible(project.current_status, new_status):
             raise DDSArgumentError("Invalid status transition")
 
-        try:
-            add_status = models.ProjectStatuses(
-                **{
-                    "project_id": project.id,
-                    "status": new_status,
-                    "date_created": dds_web.utils.current_time(),
-                }
-            )
+        # Moving to Available
+        if new_status == "Available":
+            # Optional int arg deadline in days
+            deadline = extra_args.get("deadline", project.responsible_unit.days_to_expire)
+            if project.current_status == "Expired":
+                # Project can only move from Expired 2 times
+                if project.times_expired > 2:
+                    raise DDSArgumentError(
+                        "Project availability limit: Project cannot be made Available any more times"
+                    )
 
+                add_deadline["deadline"] = dds_web.utils.current_time(
+                    to_midnight=True
+                ) + datetime.timedelta(days=deadline)
+
+            if not project.has_been_available:
+                project.released = curr_date
+                add_deadline["deadline"] = dds_web.utils.current_time(
+                    to_midnight=True
+                ) + datetime.timedelta(days=deadline)
+
+        # Moving to Expired
+        if new_status == "Expired":
+            # Optional int arg deadline in days - Should there be a unit wide days in expired?
+            deadline = extra_args.get("deadline", 30)  # Temp default, should be replaced
+            add_deadline["deadline"] = dds_web.utils.current_time(
+                to_midnight=True
+            ) + datetime.timedelta(days=deadline)
+
+        # Moving to Deleted
+        if new_status == "Deleted":
+            # Can only be Deleted if never made Available
+            if project.has_been_available:
+                raise DDSArgumentError(
+                    "Project cannot be deleted if it has ever been made available, instead Abort and archive it"
+                )
+
+        # Moving to Archived
+        if new_status == "Archived":
+            is_aborted = extra_args.get("is_aborted", False)
+            add_aborted = {"is_aborted": is_aborted}
+
+        add_status = models.ProjectStatuses(
+            **{"project_id": project.id, "status": new_status, "date_created": curr_date},
+            **add_deadline,
+            **add_aborted,
+        )
+        try:
             project.project_statuses.append(add_status)
             db.session.commit()
+            if new_status in ["Deleted", "Archived"]:
+                # TODO Call function to delete files
+                print("TODO")
+                if new_status == "Deleted" or is_aborted:
+                    # TODO call function to delete everything in project row except for bucketname
+                    print("TODO")
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
