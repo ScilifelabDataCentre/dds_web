@@ -26,47 +26,67 @@ import dds_web.utils
 # MODELS ################################################################################## MODELS #
 ####################################################################################################
 
-# Association tables ########################################################## Association tables #
+####################################################################################################
+# Association objects ######################################################## Association objects #
 
 
 class ProjectUsers(db.Model):
+    """
+    Many-to-many association table between projects and research users.
+
+    Primary key(s):
+    - project_id
+    - user_id
+
+    Foreign key(s):
+    - project_id
+    - user_id
+    """
 
     # Table setup
     __tablename__ = "projectusers"
 
-    # Primary keys / Foreign keys
+    # Foreign keys & relationships
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
     )
+    project = db.relationship("Project", back_populates="researchusers")
+    # ---
     user_id = db.Column(
         db.String(50), db.ForeignKey("researchusers.username", ondelete="CASCADE"), primary_key=True
     )
-
-    # Columns
-    owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
-
-    # Relationships - many to many
-    # project = db.relationship("Project", backref="researchusers")
-    project = db.relationship("Project", back_populates="researchusers")
-    # researchuser = db.relationship("ResearchUser", backref="project_associations")
     researchuser = db.relationship("ResearchUser", back_populates="project_associations")
+    # ---
+
+    # Additional columns
+    owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
 
 
 class ProjectStatuses(db.Model):
+    """
+    One-to-many table between projects and statuses. Contains all project status history.
+
+    Primary key(s):
+    - project_id
+    - status
+
+    Foreign key(s):
+    - project_id
+    """
 
     # Table setup
     __tablename__ = "projectstatuses"
 
-    # Primary keys / Foreign keys
+    # Foreign keys & relationships
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
     )
-    status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
-
-    date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
-
-    # Relationships
     project = db.relationship("Project", back_populates="project_statuses")
+    # ---
+
+    # Additional columns
+    status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
+    date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
 
 
 ####################################################################################################
@@ -74,16 +94,19 @@ class ProjectStatuses(db.Model):
 
 
 class Unit(db.Model):
-    """Data model for unit accounts."""
+    """
+    Data model for SciLifeLab Units.
+
+    Primary key(s):
+    - id
+    """
 
     # Table setup
     __tablename__ = "units"
     __table_args__ = {"extend_existing": True}
 
-    # Primary key
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-
     # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.String(255), unique=True, nullable=False)
     external_display_name = db.Column(db.String(255), unique=False, nullable=False)
@@ -99,14 +122,8 @@ class Unit(db.Model):
     counter = db.Column(db.Integer, unique=False, nullable=True)
 
     # Relationships
-    # One unit can have many users
-    # users = db.relationship("UnitUser", backref="unit")
     users = db.relationship("UnitUser", back_populates="unit", passive_deletes=True)
-    # One unit can have many projects
-    # projects = db.relationship("Project", backref="responsible_unit")
     projects = db.relationship("Project", back_populates="responsible_unit", passive_deletes=True)
-    # One unit can have many invites
-    # invites = db.relationship("Invite", backref="unit")
     invites = db.relationship("Invite", back_populates="unit", passive_deletes=True)
 
     def __repr__(self):
@@ -115,23 +132,23 @@ class Unit(db.Model):
 
 
 class Project(db.Model):
-    """Data model for projects."""
+    """
+    Data model for projects.
+
+    Primary key(s):
+    - id
+
+    Foreign key(s):
+    - unit_id
+    - created_by
+    """
 
     # Table setup
     __tablename__ = "projects"
     __table_args__ = {"extend_existing": True}
 
-    # Primary key
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-
-    # Foreign keys
-    # One project is associated to one unit. One unit can have many projects.
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
-
-    # One project can be created by one user
-    created_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))
-
     # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(255), unique=True, nullable=False)
     title = db.Column(db.Text, unique=False, nullable=False)
     date_created = db.Column(
@@ -149,36 +166,26 @@ class Project(db.Model):
     privkey_nonce = db.Column(db.String(24), nullable=False)
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
-    # Relationships
+    # Foreign keys & relationships
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
+    responsible_unit = db.relationship("Unit", back_populates="projects")
+    # ---
+    created_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))
     creator = db.relationship("User", back_populates="created_projects")
+    # ---
 
-    # One project can have many files
-    # files = db.relationship("File", backref="project")
+    # Additional relationships
     files = db.relationship("File", back_populates="project", passive_deletes=True)
-
-    # One project can have many expired files
-    # expired_files = db.relationship("ExpiredFile", backref="assigned_project")
     expired_files = db.relationship(
         "ExpiredFile", back_populates="assigned_project", passive_deletes=True
     )
-
-    # One project can have many file versions
-    # file_versions = db.relationship("Version", backref="responsible_project")
     file_versions = db.relationship(
         "Version", back_populates="responsbile_project", passive_deletes=True
     )
-
-    # One project can have a history of statuses
-    # project_statuses = db.relationship("ProjectStatuses", backref="project")
     project_statuses = db.relationship(
         "ProjectStatuses", back_populates="project", passive_deletes=True
     )
-
-    # Project users
     researchusers = db.relationship("ProjectUsers", back_populates="project", passive_deletes=True)
-
-    # Unit
-    responsible_unit = db.relationship("Unit", back_populates="projects")
 
     @property
     def current_status(self):
@@ -221,7 +228,12 @@ class Project(db.Model):
 
 
 class User(flask_login.UserMixin, db.Model):
-    """Data model for user accounts - base user model for all user types."""
+    """
+    Data model for user accounts - base user model for all user types.
+
+    Primary key(s):
+    - username
+    """
 
     # Table setup
     __tablename__ = "users"
@@ -234,18 +246,12 @@ class User(flask_login.UserMixin, db.Model):
     _otp_secret = db.Column(db.String(32))
     has_2fa = db.Column(db.Boolean)
 
+    # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
 
-    # One user can have many identifiers
-    # identifiers = db.relationship("Identifier", backref="user", cascade="all, delete-orphan")
+    # Relationships
     identifiers = db.relationship("Identifier", back_populates="user", passive_deletes=True)
-
-    # One user can have many email addresses
-    # emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     emails = db.relationship("Email", back_populates="user", passive_deletes=True)
-
-    # One user can create many projects
-    # created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
     created_projects = db.relationship("Project", back_populates="creator", passive_deletes=True)
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
@@ -351,12 +357,20 @@ class User(flask_login.UserMixin, db.Model):
 
 
 class ResearchUser(User):
-    """Data model for research user accounts."""
+    """
+    Data model for research user accounts.
+
+    Primary key(s):
+    - username
+
+    Foreign key(s):
+    - username
+    """
 
     __tablename__ = "researchusers"
     __mapper_args__ = {"polymorphic_identity": "researchuser"}
 
-    # primary key and foreign key pointing to users
+    # Foreign keys
     username = db.Column(
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
     )
@@ -380,23 +394,30 @@ class ResearchUser(User):
 
 
 class UnitUser(User):
-    """Data model for unit user accounts"""
+    """
+    Data model for unit user accounts.
+
+    Primary key(s):
+    - username
+
+    Foreign key(s):
+    - username
+    - unit_id
+    """
 
     __tablename__ = "unitusers"
     __mapper_args__ = {"polymorphic_identity": "unituser"}
 
-    # Primary key and foreign key pointing to users
+    # Foreign keys & relationships
     username = db.Column(
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
     )
-
-    # Foreign key and backref with infrastructure
+    # ---
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
-
-    is_admin = db.Column(db.Boolean, nullable=False, default=False)
-
-    # Relationships
     unit = db.relationship("Unit", back_populates="users")
+
+    # Additional columns
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     @property
     def role(self):
@@ -415,12 +436,20 @@ class UnitUser(User):
 
 
 class SuperAdmin(User):
-    """Data model for super admin user accounts (Data Centre)."""
+    """
+    Data model for super admin user accounts (Data Centre).
+
+    Primary key(s):
+    - username
+
+    Foreign key(s):
+    - username
+    """
 
     __tablename__ = "superadmins"
     __mapper_args__ = {"polymorphic_identity": "superadmin"}
 
-    # Foreign key and backref with infrastructure
+    # Foreign keys & relationships
     username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
 
     @property
@@ -444,21 +473,28 @@ class Identifier(db.Model):
     Data model for user identifiers for login.
 
     Elixir identifiers consists of 58 characters (40 hex + "@elixir-europe.org").
+
+    Primary key(s):
+    - username
+    - identifier
+
+    Foreign key(s):
+    - username
     """
 
     # Table setup
     __tablename__ = "identifiers"
     __table_args__ = {"extend_existing": True}
 
-    # Columns
-    # Foreign keys
+    # Foreign keys & relationships
     username = db.Column(
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
     )
-    identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
-
-    # Relationships
     user = db.relationship("User", back_populates="identifiers")
+    # ---
+
+    # Additional columns
+    identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -467,25 +503,33 @@ class Identifier(db.Model):
 
 
 class Email(db.Model):
-    """Data model for user email addresses."""
+    """
+    Data model for user email addresses.
+
+    Primary key:
+    - id
+
+    Foreign key(s):
+    - user_id
+    """
 
     # Table setup
     __tablename__ = "emails"
     __table_args__ = {"extend_existing": True}
 
-    # Columns
+    # Primary keys
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    # Foreign key: One user can have multiple email addresses.
+    # Foreign keys & relationships
     user_id = db.Column(
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), nullable=False
     )
+    user = db.relationship("User", back_populates="emails")
+    # ---
 
+    # Additional columns
     email = db.Column(db.String(254), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
-
-    # Relationships
-    user = db.relationship("User", back_populates="emails")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -494,7 +538,15 @@ class Email(db.Model):
 
 
 class Invite(db.Model):
-    """Invites for users not yet confirmed in DDS"""
+    """
+    Invites for users not yet confirmed in DDS.
+
+    Primary key:
+    - id
+
+    Foreign key(s):
+    - unit_id
+    """
 
     # Table setup
     __tablename__ = "invites"
@@ -503,15 +555,14 @@ class Invite(db.Model):
     # Primary Key
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    # Foreign key
+    # Foreign keys & relationships
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"))
+    unit = db.relationship("Unit", back_populates="invites")
+    # ---
 
-    # Columns
+    # Additional columns
     email = db.Column(db.String(254), unique=True, nullable=False)
     role = db.Column(db.String(20), unique=False, nullable=False)
-
-    # Relationships
-    unit = db.relationship("Unit", back_populates="invites")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -520,7 +571,15 @@ class Invite(db.Model):
 
 
 class File(db.Model):
-    """Data model for files."""
+    """
+    Data model for files.
+
+    Primary key:
+    - id
+
+    Foreign key(s):
+    - project_id
+    """
 
     # Table setup
     __tablename__ = "files"
@@ -529,9 +588,12 @@ class File(db.Model):
     # Columns
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
 
-    # Foreign keys: One project can have many files
+    # Foreign keys & relationships
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    project = db.relationship("Project", back_populates="files")
+    # ---
 
+    # Additional columns
     name = db.Column(db.Text, unique=False, nullable=False)
     name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
     subpath = db.Column(db.Text, unique=False, nullable=False)
@@ -541,7 +603,6 @@ class File(db.Model):
     public_key = db.Column(db.String(64), unique=False, nullable=False)
     salt = db.Column(db.String(32), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
-
     time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
     expires = db.Column(
         db.DateTime(),
@@ -550,9 +611,7 @@ class File(db.Model):
         default=dds_web.utils.current_time() + datetime.timedelta(days=30),
     )
 
-    # Relationships
-    project = db.relationship("Project", back_populates="files")
-    # versions = db.relationship("Version", backref="file")
+    # Additional relationships
     versions = db.relationship("Version", back_populates="file", passive_deletes=True)
 
     def __repr__(self):
@@ -562,7 +621,15 @@ class File(db.Model):
 
 
 class ExpiredFile(db.Model):
-    """Data model for expired files. Moved here when in system for more than a month."""
+    """
+    Data model for expired files. Moved here when in system for more than X days.
+
+    Primary key:
+    - id
+
+    Foreign key(s):
+    - project_id
+    """
 
     # Table setup
     __tablename__ = "expired_files"
@@ -570,7 +637,6 @@ class ExpiredFile(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-
     name = db.Column(db.Text, unique=False, nullable=False)
     name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
     subpath = db.Column(db.Text, unique=False, nullable=False)
@@ -588,12 +654,10 @@ class ExpiredFile(db.Model):
         default=dds_web.utils.current_time(),
     )
 
-    # Foreign keys
-    # One project can have many files
+    # Foreign keys & relationships
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"))
-
-    # Relationships
     assigned_project = db.relationship("Project", back_populates="expired_files")
+    # ---
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -602,7 +666,16 @@ class ExpiredFile(db.Model):
 
 
 class Version(db.Model):
-    """Data model for keeping track of all active and non active files. Used for invoicing."""
+    """
+    Data model for keeping track of all active and non active files. Used for invoicing.
+
+    Primary key:
+    - id
+
+    Foreign key(s):
+    - project_id
+    - active_file
+    """
 
     # Table setup
     __tablename__ = "versions"
@@ -611,26 +684,25 @@ class Version(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    # Foreign key - One project can have many files
+    # Foreign keys & relationships
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), nullable=True
     )
-
-    # Foreign key - One file can have many rows in invoicing
+    responsbile_project = db.relationship("Project", back_populates="file_versions")
+    # ---
     active_file = db.Column(
         db.BigInteger, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
     )
+    file = db.relationship("File", back_populates="versions")
+    # ---
 
+    # Additional columns
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     time_uploaded = db.Column(
         db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time()
     )
     time_deleted = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
     time_invoiced = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
-
-    # Relationships
-    responsbile_project = db.relationship("Project", back_populates="file_versions")
-    file = db.relationship("File", back_populates="versions")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
