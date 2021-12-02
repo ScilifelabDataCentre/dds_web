@@ -30,7 +30,6 @@ import wtforms
 from dds_web.database import models
 from dds_web import db, C_TZ
 from dds_web import mail
-from dds_web.api.schemas import user_schemas
 
 
 ####################################################################################################
@@ -119,6 +118,8 @@ def username_not_taken():
             raise wtforms.validators.ValidationError(
                 "That username is taken. Please choose a different one."
             )
+
+    return _username_not_taken
 
 
 def email_not_taken():

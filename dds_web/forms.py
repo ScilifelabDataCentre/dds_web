@@ -11,9 +11,8 @@ import wtforms
 import marshmallow
 
 # Own modules
-import dds_web.utils
+from dds_web import utils
 from dds_web.database import models
-from dds_web.api.schemas import user_schemas
 
 # FORMS #################################################################################### FORMS #
 
@@ -27,7 +26,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
         validators=[
             wtforms.validators.DataRequired(),
             wtforms.validators.Email(),
-            dds_web.utils.email_not_taken(),
+            utils.email_not_taken(),
         ],
         render_kw={"readonly": True},
     )
@@ -36,8 +35,8 @@ class RegistrationForm(flask_wtf.FlaskForm):
         validators=[
             wtforms.validators.InputRequired(),
             wtforms.validators.Length(min=8, max=20),
-            dds_web.utils.username_contains_valid_characters(),
-            dds_web.utils.username_not_taken(),
+            utils.username_contains_valid_characters(),
+            utils.username_not_taken(),
         ],
     )
     password = wtforms.PasswordField(
@@ -46,7 +45,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
             wtforms.validators.DataRequired(),
             wtforms.validators.EqualTo("confirm", message="Passwords must match!"),
             wtforms.validators.Length(min=10, max=64),
-            dds_web.utils.password_contains_valid_characters(),
+            utils.password_contains_valid_characters(),
         ],
     )
     unit_name = wtforms.StringField("unit name")
@@ -103,7 +102,7 @@ class ResetPasswordForm(flask_wtf.FlaskForm):
             wtforms.validators.DataRequired(),
             wtforms.validators.EqualTo("confirm_password", message="Passwords must match!"),
             wtforms.validators.Length(min=10, max=64),
-            dds_web.utils.password_contains_valid_characters(),
+            utils.password_contains_valid_characters(),
         ],
     )
     confirm_password = wtforms.PasswordField(

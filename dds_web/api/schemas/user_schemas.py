@@ -17,7 +17,7 @@ from dds_web.api import errors as ddserr
 from dds_web import auth
 import dds_web.security.auth
 from dds_web.database import models
-import dds_web.utils
+from dds_web import utils
 
 
 ####################################################################################################
@@ -61,7 +61,7 @@ class InviteUserSchema(marshmallow.Schema):
 
         if models.Invite.query.filter_by(email=value).first():
             raise ddserr.InviteError(message=f"Email '{value}' already has a pending invitation.")
-        elif dds_web.utils.email_in_db(email=value):
+        elif utils.email_in_db(email=value):
             raise ddserr.InviteError(
                 message=f"The email '{value}' is already registered to an existing user."
             )
@@ -118,9 +118,9 @@ class NewUserSchema(marshmallow.Schema):
         required=True,
         validate=marshmallow.validate.And(
             marshmallow.validate.Length(min=10, max=64),
-            dds_web.utils.contains_digit_or_specialchar,
-            dds_web.utils.contains_lowercase,
-            dds_web.utils.contains_uppercase,
+            utils.contains_digit_or_specialchar,
+            utils.contains_lowercase,
+            utils.contains_uppercase,
         ),
     )
     email = marshmallow.fields.Email(required=True, validate=marshmallow.validate.Email())
@@ -135,7 +135,7 @@ class NewUserSchema(marshmallow.Schema):
     def verify_username(self, value):
         """Verify that the username is not used in the system."""
 
-        if dds_web.utils.username_in_db(username=value):
+        if utils.username_in_db(username=value):
             raise marshmallow.ValidationError(
                 message=(
                     f"The username '{value}' is already taken by another user. "
@@ -147,7 +147,7 @@ class NewUserSchema(marshmallow.Schema):
     def verify_new_email(self, value):
         """Verify that the email is not used in the system already."""
 
-        if dds_web.utils.email_in_db(email=value):
+        if utils.email_in_db(email=value):
             raise marshmallow.ValidationError(
                 message=f"The email '{value}' is already registered to an existing user."
             )
