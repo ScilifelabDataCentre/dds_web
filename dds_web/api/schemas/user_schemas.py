@@ -113,13 +113,7 @@ class NewUserSchema(marshmallow.Schema):
     """Schema for NewUser endpoint"""
 
     # TODO: Look through and match to db
-    username = marshmallow.fields.String(
-        required=True,
-        validate=marshmallow.validate.Regexp(
-            regex="^[a-zA-Z0-9_]{6,25}$",
-            # username must be between 6-25 characters long and contain a-z, A-Z, 0-9
-        ),
-    )
+    username = marshmallow.fields.String(required=True)
     password = marshmallow.fields.String(
         required=True,
         validate=marshmallow.validate.And(

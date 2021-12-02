@@ -36,6 +36,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
         validators=[
             wtforms.validators.InputRequired(),
             wtforms.validators.Length(min=8, max=20),
+            dds_web.utils.username_contains_valid_characters(),
             dds_web.utils.username_not_taken(),
         ],
     )

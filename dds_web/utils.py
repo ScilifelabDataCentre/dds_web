@@ -60,7 +60,34 @@ def contains_digit_or_specialchar(input):
         )
 
 
+def string_contains_only(input, pattern):
+    """Check if string only contains specific characters."""
+    if re.search(pattern, input):
+        return True
+
+    return False
+
+
+def valid_chars_in_username(input):
+    """Check if the username contains only valid characters."""
+    pattern = re.compile("^[a-zA-Z0-9_]+$")
+    return string_contains_only(input=input, pattern=pattern)
+
+
 # wtforms ################################################################################ wtforms #
+
+
+def username_contains_valid_characters():
+    def _username_contains_valid_characters(form, field):
+        """Validate that the username contains valid characters."""
+
+        if not valid_chars_in_username(input=field.data):
+            raise wtforms.validators.ValidationError(
+                "The username contains invalid characters. "
+                "Usernames can only contain letters, digits and underscores (_)."
+            )
+
+    return _username_contains_valid_characters
 
 
 def password_contains_valid_characters():
