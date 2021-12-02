@@ -176,7 +176,9 @@ def send_reset_email(email_row):
 
     # Create and send email
     message = flask_mail.Message(
-        "Password Reset Request", sender="noreply@mailtrap.io", recipients=[email_row.email]
+        "Password Reset Request",
+        sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
+        recipients=[email_row.email],
     )
     message.body = (
         "To reset your password, visit the following link: "
