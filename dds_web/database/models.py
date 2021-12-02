@@ -116,7 +116,9 @@ class Project(db.Model):
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
 
     # One project can be created by one user
-    created_by = db.Column(db.String(50), db.ForeignKey("users.username"), nullable=False)
+    created_by = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"), nullable=True
+    )
 
     # Columns
     public_id = db.Column(db.String(255), unique=True, nullable=False)
@@ -137,6 +139,8 @@ class Project(db.Model):
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     # Relationships
+    creator = db.relationship("User", back_populates="created_projects")
+
     # One project can have many files
     files = db.relationship("File", backref="project")
     # One project can have many expired files
@@ -212,8 +216,10 @@ class User(flask_login.UserMixin, db.Model):
     emails = db.relationship(
         "Email", back_populates="user", cascade="all, delete", passive_deletes=True
     )
+
     # One user can create many projects
-    created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
+    # created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
+    created_projects = db.relationship("Project", back_populates="creator")
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
@@ -348,7 +354,9 @@ class UnitUser(User):
     __mapper_args__ = {"polymorphic_identity": "unituser"}
 
     # Primary key and foreign key pointing to users
-    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+    username = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
+    )
 
     # Foreign key and backref with infrastructure
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
