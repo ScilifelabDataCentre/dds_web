@@ -100,11 +100,14 @@ class Unit(db.Model):
 
     # Relationships
     # One unit can have many users
-    users = db.relationship("UnitUser", backref="unit")
+    # users = db.relationship("UnitUser", backref="unit")
+    users = db.relationship("UnitUser", back_populates="unit")
     # One unit can have many projects
-    projects = db.relationship("Project", backref="responsible_unit")
+    # projects = db.relationship("Project", backref="responsible_unit")
+    projects = db.relationship("Project", back_populates="responsible_unit")
     # One unit can have many invites
-    invites = db.relationship("Invite", backref="unit")
+    # invites = db.relationship("Invite", backref="unit")
+    invites = db.relationship("Invite", back_populates="unit")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -123,7 +126,7 @@ class Project(db.Model):
 
     # Foreign keys
     # One project is associated to one unit. One unit can have many projects.
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
 
     # One project can be created by one user
     created_by = db.Column(
@@ -164,6 +167,9 @@ class Project(db.Model):
 
     # Project users
     researchusers = db.relationship("ProjectUsers", back_populates="project")
+
+    # Unit
+    responsible_unit = db.relationship("Unit", back_populates="projects")
 
     @property
     def current_status(self):
@@ -377,9 +383,12 @@ class UnitUser(User):
     )
 
     # Foreign key and backref with infrastructure
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
 
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Relationships
+    unit = db.relationship("Unit", back_populates="users")
 
     @property
     def role(self):
@@ -487,11 +496,14 @@ class Invite(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # Foreign key
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"))
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"))
 
     # Columns
     email = db.Column(db.String(254), unique=True, nullable=False)
     role = db.Column(db.String(20), unique=False, nullable=False)
+
+    # Relationships
+    unit = db.relationship("Unit", back_populates="invites")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
