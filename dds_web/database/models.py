@@ -36,7 +36,9 @@ class ProjectUsers(db.Model):
 
     # Primary keys / Foreign keys
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey("researchusers.username"), primary_key=True)
+    user_id = db.Column(
+        db.String(50), db.ForeignKey("researchusers.username", ondelete="CASCADE"), primary_key=True
+    )
 
     # Columns
     owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
@@ -202,7 +204,10 @@ class User(flask_login.UserMixin, db.Model):
     # One user can have many identifiers
     identifiers = db.relationship("Identifier", backref="user", cascade="all, delete-orphan")
     # One user can have many email addresses
-    emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    # emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    emails = db.relationship(
+        "Email", back_populates="user", cascade="all, delete", passive_deletes=True
+    )
     # One user can create many projects
     created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
 
@@ -315,7 +320,9 @@ class ResearchUser(User):
     __mapper_args__ = {"polymorphic_identity": "researchuser"}
 
     # primary key and foreign key pointing to users
-    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+    username = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
+    )
 
     @property
     def role(self):
@@ -418,10 +425,15 @@ class Email(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     # Foreign key: One user can have multiple email addresses.
-    user_id = db.Column(db.String(50), db.ForeignKey("users.username"))
+    user_id = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), nullable=False
+    )
 
     email = db.Column(db.String(254), unique=True, nullable=False)
     primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+
+    # Relationships
+    user = db.relationship("User", back_populates="emails")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
