@@ -67,6 +67,7 @@ class LogoutForm(flask_wtf.FlaskForm):
     logout = wtforms.SubmitField("Logout")
 
 
+# TODO: Remove TwoFactorAuthForm and connected endpoints.
 class TwoFactorAuthForm(flask_wtf.FlaskForm):
     secret = wtforms.HiddenField("secret", id="secret")
     otp = wtforms.StringField(
