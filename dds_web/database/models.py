@@ -35,7 +35,9 @@ class ProjectUsers(db.Model):
     __tablename__ = "projectusers"
 
     # Primary keys / Foreign keys
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
     user_id = db.Column(
         db.String(50), db.ForeignKey("researchusers.username", ondelete="CASCADE"), primary_key=True
     )
@@ -44,8 +46,10 @@ class ProjectUsers(db.Model):
     owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
 
     # Relationships - many to many
-    project = db.relationship("Project", backref="researchusers")
-    researchuser = db.relationship("ResearchUser", backref="project_associations")
+    # project = db.relationship("Project", backref="researchusers")
+    project = db.relationship("Project", back_populates="researchusers")
+    # researchuser = db.relationship("ResearchUser", backref="project_associations")
+    researchuser = db.relationship("ResearchUser", back_populates="project_associations")
 
 
 class ProjectStatuses(db.Model):
@@ -54,9 +58,15 @@ class ProjectStatuses(db.Model):
     __tablename__ = "projectstatuses"
 
     # Primary keys / Foreign keys
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
     status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
+
     date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
+
+    # Relationships
+    project = db.relationship("Project", back_populates="project_statuses")
 
 
 ####################################################################################################
@@ -147,8 +157,13 @@ class Project(db.Model):
     expired_files = db.relationship("ExpiredFile", backref="assigned_project")
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
+
     # One project can have a history of statuses
-    project_statuses = db.relationship("ProjectStatuses", backref="project")
+    # project_statuses = db.relationship("ProjectStatuses", backref="project")
+    project_statuses = db.relationship("ProjectStatuses", back_populates="project")
+
+    # Project users
+    researchusers = db.relationship("ProjectUsers", back_populates="project")
 
     @property
     def current_status(self):
@@ -333,6 +348,9 @@ class ResearchUser(User):
     username = db.Column(
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
     )
+
+    # Relationships
+    project_associations = db.relationship("ProjectUsers", back_populates="researchuser")
 
     @property
     def role(self):
