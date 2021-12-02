@@ -13,7 +13,7 @@ import marshmallow
 # Own modules
 import dds_web.utils
 from dds_web.database import models
-
+from dds_web.api.schemas import user_schemas
 
 # FORMS #################################################################################### FORMS #
 
@@ -67,6 +67,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
     submit = wtforms.SubmitField("submit")
 
     def validate_username(self, username):
+        if 
         user = models.User.query.filter_by(username=username.data).first()
         if user:
             raise wtforms.validators.ValidationError(
