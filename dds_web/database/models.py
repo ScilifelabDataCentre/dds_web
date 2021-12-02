@@ -161,7 +161,8 @@ class Project(db.Model):
     expired_files = db.relationship("ExpiredFile", back_populates="assigned_project")
 
     # One project can have many file versions
-    file_versions = db.relationship("Version", backref="responsible_project")
+    # file_versions = db.relationship("Version", backref="responsible_project")
+    file_versions = db.relationship("Version", back_populates="responsbile_project")
 
     # One project can have a history of statuses
     # project_statuses = db.relationship("ProjectStatuses", backref="project")
@@ -219,6 +220,7 @@ class User(flask_login.UserMixin, db.Model):
     # Table setup
     __tablename__ = "users"
     __table_args__ = {"extend_existing": True}
+
     # Columns
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
@@ -230,15 +232,11 @@ class User(flask_login.UserMixin, db.Model):
 
     # One user can have many identifiers
     # identifiers = db.relationship("Identifier", backref="user", cascade="all, delete-orphan")
-    identifiers = db.relationship(
-        "Identifier", back_populates="user", cascade="all, delete", passive_deletes=True
-    )
+    identifiers = db.relationship("Identifier", back_populates="user")
 
     # One user can have many email addresses
     # emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
-    emails = db.relationship(
-        "Email", back_populates="user", cascade="all, delete", passive_deletes=True
-    )
+    emails = db.relationship("Email", back_populates="user")
 
     # One user can create many projects
     # created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
@@ -606,7 +604,7 @@ class Version(db.Model):
 
     # Foreign key - One project can have many files
     project_id = db.Column(
-        db.Integer, db.ForeignKey("projects.id", ondelete="SET NULL"), nullable=True
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), nullable=True
     )
 
     # Foreign key - One file can have many rows in invoicing
@@ -620,6 +618,9 @@ class Version(db.Model):
     )
     time_deleted = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
     time_invoiced = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
+
+    # Relationships
+    responsbile_project = db.relationship("Project", back_populates="file_versions")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
