@@ -134,6 +134,18 @@ def email_not_taken():
     return _email_not_taken
 
 
+def email_taken():
+    def _email_taken(form, field):
+        """Validate that the email exists."""
+
+        if not email_in_db(email=field.data):
+            raise wtforms.validators.ValidationError(
+                "There is no account with that email. To get an account, you need an invitation."
+            )
+
+    return _email_taken
+
+
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################

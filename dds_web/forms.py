@@ -50,7 +50,13 @@ class RegistrationForm(flask_wtf.FlaskForm):
     )
     unit_name = wtforms.StringField("unit name")
 
-    confirm = wtforms.PasswordField("Repeat password")
+    confirm = wtforms.PasswordField(
+        "Repeat Password",
+        validators=[
+            wtforms.validators.DataRequired(),
+            wtforms.validators.EqualTo("password", message="The passwords don't match."),
+        ],
+    )
     submit = wtforms.SubmitField("submit")
 
 
@@ -81,17 +87,14 @@ class RequestResetForm(flask_wtf.FlaskForm):
     """Form for attempting password reset."""
 
     email = wtforms.StringField(
-        "Email", validators=[wtforms.validators.DataRequired(), wtforms.validators.Email()]
+        "Email",
+        validators=[
+            wtforms.validators.DataRequired(),
+            wtforms.validators.Email(),
+            utils.email_taken(),
+        ],
     )
     submit = wtforms.SubmitField("Request Password Reset")
-
-    def validate_email(self, email):
-        """Verify that email adress exists in database."""
-        email = models.Email.query.filter_by(email=email.data).first()
-        if not email:
-            raise wtforms.validators.ValidationError(
-                "There is no account with that email. To get an account, you need an invitation."
-            )
 
 
 class ResetPasswordForm(flask_wtf.FlaskForm):
@@ -101,13 +104,13 @@ class ResetPasswordForm(flask_wtf.FlaskForm):
         "Password",
         validators=[
             wtforms.validators.DataRequired(),
-            wtforms.validators.EqualTo("confirm_password", message="Passwords must match!"),
+            wtforms.validators.EqualTo("confirm", message="Passwords must match!"),
             wtforms.validators.Length(min=10, max=64),
             utils.password_contains_valid_characters(),
         ],
     )
     confirm_password = wtforms.PasswordField(
-        "Confirm Password",
+        "Repeat Password",
         validators=[
             wtforms.validators.DataRequired(),
             wtforms.validators.EqualTo("password", message="The passwords don't match."),
