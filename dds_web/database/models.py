@@ -202,7 +202,11 @@ class User(flask_login.UserMixin, db.Model):
     type = db.Column(db.String(20), unique=False, nullable=False)
 
     # One user can have many identifiers
-    identifiers = db.relationship("Identifier", backref="user", cascade="all, delete-orphan")
+    # identifiers = db.relationship("Identifier", backref="user", cascade="all, delete-orphan")
+    identifiers = db.relationship(
+        "Identifier", back_populates="user", cascade="all, delete", passive_deletes=True
+    )
+
     # One user can have many email addresses
     # emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     emails = db.relationship(
@@ -405,8 +409,13 @@ class Identifier(db.Model):
 
     # Columns
     # Foreign keys
-    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+    username = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
+    )
     identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
+
+    # Relationships
+    user = db.relationship("User", back_populates="identifiers")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
