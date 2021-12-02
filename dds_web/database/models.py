@@ -101,13 +101,13 @@ class Unit(db.Model):
     # Relationships
     # One unit can have many users
     # users = db.relationship("UnitUser", backref="unit")
-    users = db.relationship("UnitUser", back_populates="unit")
+    users = db.relationship("UnitUser", back_populates="unit", passive_deletes=True)
     # One unit can have many projects
     # projects = db.relationship("Project", backref="responsible_unit")
-    projects = db.relationship("Project", back_populates="responsible_unit")
+    projects = db.relationship("Project", back_populates="responsible_unit", passive_deletes=True)
     # One unit can have many invites
     # invites = db.relationship("Invite", backref="unit")
-    invites = db.relationship("Invite", back_populates="unit")
+    invites = db.relationship("Invite", back_populates="unit", passive_deletes=True)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -154,22 +154,28 @@ class Project(db.Model):
 
     # One project can have many files
     # files = db.relationship("File", backref="project")
-    files = db.relationship("File", back_populates="project")
+    files = db.relationship("File", back_populates="project", passive_deletes=True)
 
     # One project can have many expired files
     # expired_files = db.relationship("ExpiredFile", backref="assigned_project")
-    expired_files = db.relationship("ExpiredFile", back_populates="assigned_project")
+    expired_files = db.relationship(
+        "ExpiredFile", back_populates="assigned_project", passive_deletes=True
+    )
 
     # One project can have many file versions
     # file_versions = db.relationship("Version", backref="responsible_project")
-    file_versions = db.relationship("Version", back_populates="responsbile_project")
+    file_versions = db.relationship(
+        "Version", back_populates="responsbile_project", passive_deletes=True
+    )
 
     # One project can have a history of statuses
     # project_statuses = db.relationship("ProjectStatuses", backref="project")
-    project_statuses = db.relationship("ProjectStatuses", back_populates="project")
+    project_statuses = db.relationship(
+        "ProjectStatuses", back_populates="project", passive_deletes=True
+    )
 
     # Project users
-    researchusers = db.relationship("ProjectUsers", back_populates="project")
+    researchusers = db.relationship("ProjectUsers", back_populates="project", passive_deletes=True)
 
     # Unit
     responsible_unit = db.relationship("Unit", back_populates="projects")
@@ -232,15 +238,15 @@ class User(flask_login.UserMixin, db.Model):
 
     # One user can have many identifiers
     # identifiers = db.relationship("Identifier", backref="user", cascade="all, delete-orphan")
-    identifiers = db.relationship("Identifier", back_populates="user")
+    identifiers = db.relationship("Identifier", back_populates="user", passive_deletes=True)
 
     # One user can have many email addresses
     # emails = db.relationship("Email", backref="user", lazy="dynamic", cascade="all, delete-orphan")
-    emails = db.relationship("Email", back_populates="user")
+    emails = db.relationship("Email", back_populates="user", passive_deletes=True)
 
     # One user can create many projects
     # created_projects = db.relationship("Project", backref="user", cascade="all, delete-orphan")
-    created_projects = db.relationship("Project", back_populates="creator")
+    created_projects = db.relationship("Project", back_populates="creator", passive_deletes=True)
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
@@ -356,7 +362,9 @@ class ResearchUser(User):
     )
 
     # Relationships
-    project_associations = db.relationship("ProjectUsers", back_populates="researchuser")
+    project_associations = db.relationship(
+        "ProjectUsers", back_populates="researchuser", passive_deletes=True
+    )
 
     @property
     def role(self):
@@ -544,7 +552,8 @@ class File(db.Model):
 
     # Relationships
     project = db.relationship("Project", back_populates="files")
-    versions = db.relationship("Version", backref="file")
+    # versions = db.relationship("Version", backref="file")
+    versions = db.relationship("Version", back_populates="file", passive_deletes=True)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -621,6 +630,7 @@ class Version(db.Model):
 
     # Relationships
     responsbile_project = db.relationship("Project", back_populates="file_versions")
+    file = db.relationship("File", back_populates="versions")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
