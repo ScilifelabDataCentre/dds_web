@@ -59,18 +59,40 @@ def contains_digit_or_specialchar(input):
         )
 
 
-def string_contains_only(input, pattern):
-    """Check if string only contains specific characters."""
-    if re.search(pattern, input):
-        return True
-
-    return False
-
-
 def valid_chars_in_username(input):
     """Check if the username contains only valid characters."""
     pattern = re.compile("^[a-zA-Z0-9_]+$")
     return string_contains_only(input=input, pattern=pattern)
+
+
+def email_not_taken(input):
+    """Validator - verify that email is not taken.
+
+    If used by marshmallow Schema, this validator should never raise an error since the email
+    field should not be changable and if it is the form validator should catch it.
+    """
+    if email_in_db(email=input):
+        raise marshmallow.validate.ValidationError("The email is already taken by another user.")
+
+
+def email_taken(input):
+    """Validator - verify that email is taken."""
+    if not email_in_db(email=input):
+        raise marshmallow.validate.ValidationError(
+            "There is no account with that email. To get an account, you need an invitation."
+        )
+
+
+def username_not_taken(input):
+    """Validate that username is not taken.
+
+    If used by marshmallow Schema, this validator should never raise an error since
+    the form validator should catch it.
+    """
+    if username_in_db(username=input):
+        raise marshmallow.validate.ValidationError(
+            "That username is taken. Please choose a different one."
+        )
 
 
 # wtforms ################################################################################ wtforms #
@@ -79,7 +101,6 @@ def valid_chars_in_username(input):
 def username_contains_valid_characters():
     def _username_contains_valid_characters(form, field):
         """Validate that the username contains valid characters."""
-
         if not valid_chars_in_username(input=field.data):
             raise wtforms.validators.ValidationError(
                 "The username contains invalid characters. "
@@ -110,56 +131,50 @@ def password_contains_valid_characters():
     return _password_contains_valid_characters
 
 
-def username_not_taken():
+def username_not_taken_wtforms():
     def _username_not_taken(form, field):
         """Validate that the username is not taken already."""
-
-        if username_in_db(username=field.data):
-            raise wtforms.validators.ValidationError(
-                "That username is taken. Please choose a different one."
-            )
+        try:
+            username_not_taken(input=field.data)
+        except marshmallow.validate.ValidationError as valerr:
+            raise wtforms.validators.ValidationError()
 
     return _username_not_taken
 
 
-def email_not_taken():
+def email_not_taken_wtforms():
     def _email_not_taken(form, field):
         """Validate that the email is not taken already."""
-
-        if email_in_db(email=field.data):
-            raise wtforms.validators.ValidationError("The email is already taken by another user.")
+        try:
+            email_not_taken(input=field.data)
+        except marshmallow.validate.ValidationError as valerr:
+            raise wtforms.validators.ValidationError from valerr
 
     return _email_not_taken
 
 
-def email_taken():
+def email_taken_wtforms():
     def _email_taken(form, field):
         """Validate that the email exists."""
-
-        if not email_in_db(email=field.data):
-            raise wtforms.validators.ValidationError(
-                "There is no account with that email. To get an account, you need an invitation."
-            )
+        try:
+            email_taken(input=field.data)
+        except marshmallow.validate.ValidationError as valerr:
+            raise wtforms.validators.ValidationError from valerr
 
     return _email_taken
-
-
-# marshmallow ######################################################################## marshmallow #
-
-
-def marshmallow_email_not_taken(input):
-    """Validator for marshmallow schemas - verify that email is not taken.
-
-    This validator should never raise an error since the email field should not be changable
-    and if it is the form validator should catch it.
-    """
-    if email_in_db(email=input):
-        raise marshmallow.validate.ValidationError("The email is already taken by another user.")
 
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+def string_contains_only(input, pattern):
+    """Check if string only contains specific characters."""
+    if re.search(pattern, input):
+        return True
+
+    return False
 
 
 def email_in_db(email):

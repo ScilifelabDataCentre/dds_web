@@ -26,7 +26,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
         validators=[
             wtforms.validators.DataRequired(),
             wtforms.validators.Email(),
-            utils.email_not_taken(),
+            utils.email_not_taken_wtforms(),
         ],
         render_kw={"readonly": True},
     )
@@ -91,7 +91,7 @@ class RequestResetForm(flask_wtf.FlaskForm):
         validators=[
             wtforms.validators.DataRequired(),
             wtforms.validators.Email(),
-            utils.email_taken(),
+            utils.email_taken_wtforms(),
         ],
     )
     submit = wtforms.SubmitField("Request Password Reset")

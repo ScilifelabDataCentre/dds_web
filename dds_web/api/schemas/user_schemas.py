@@ -123,7 +123,10 @@ class NewUserSchema(marshmallow.Schema):
             utils.contains_uppercase,
         ),
     )
-    email = marshmallow.fields.Email(required=True, validate=marshmallow.validate.Email())
+    email = marshmallow.fields.Email(
+        required=True,
+        validate=marshmallow.validate.And(marshmallow.validate.Email(), utils.email_not_taken),
+    )
     name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=255))
 
     class Meta:
