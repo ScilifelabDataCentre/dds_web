@@ -127,9 +127,7 @@ def email_not_taken():
         """Validate that the email is not taken already."""
 
         if email_in_db(email=field.data):
-            raise wtforms.validators.ValidationError(
-                "That email is taken. Please choose a different one."
-            )
+            raise wtforms.validators.ValidationError("The email is already taken by another user.")
 
     return _email_not_taken
 
@@ -144,6 +142,19 @@ def email_taken():
             )
 
     return _email_taken
+
+
+# marshmallow ######################################################################## marshmallow #
+
+
+def marshmallow_email_not_taken(input):
+    """Validator for marshmallow schemas - verify that email is not taken.
+
+    This validator should never raise an error since the email field should not be changable
+    and if it is the form validator should catch it.
+    """
+    if email_in_db(email=input):
+        raise marshmallow.validate.ValidationError("The email is already taken by another user.")
 
 
 ####################################################################################################
