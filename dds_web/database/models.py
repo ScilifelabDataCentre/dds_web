@@ -129,9 +129,7 @@ class Project(db.Model):
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
 
     # One project can be created by one user
-    created_by = db.Column(
-        db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"), nullable=True
-    )
+    created_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))
 
     # Columns
     public_id = db.Column(db.String(255), unique=True, nullable=False)
@@ -155,9 +153,13 @@ class Project(db.Model):
     creator = db.relationship("User", back_populates="created_projects")
 
     # One project can have many files
-    files = db.relationship("File", backref="project")
+    # files = db.relationship("File", backref="project")
+    files = db.relationship("File", back_populates="project")
+
     # One project can have many expired files
-    expired_files = db.relationship("ExpiredFile", backref="assigned_project")
+    # expired_files = db.relationship("ExpiredFile", backref="assigned_project")
+    expired_files = db.relationship("ExpiredFile", back_populates="assigned_project")
+
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
 
@@ -522,7 +524,7 @@ class File(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
 
     # Foreign keys: One project can have many files
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), index=True)
 
     name = db.Column(db.Text, unique=False, nullable=False)
     name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
@@ -543,6 +545,7 @@ class File(db.Model):
     )
 
     # Relationships
+    project = db.relationship("Project", back_populates="files")
     versions = db.relationship("Version", backref="file")
 
     def __repr__(self):
@@ -580,7 +583,10 @@ class ExpiredFile(db.Model):
 
     # Foreign keys
     # One project can have many files
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"))
+
+    # Relationships
+    assigned_project = db.relationship("Project", back_populates="expired_files")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
