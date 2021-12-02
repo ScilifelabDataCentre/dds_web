@@ -59,12 +59,6 @@ def contains_digit_or_specialchar(input):
         )
 
 
-def valid_chars_in_username(input):
-    """Check if the username contains only valid characters."""
-    pattern = re.compile("^[a-zA-Z0-9_]+$")
-    return string_contains_only(input=input, pattern=pattern)
-
-
 def email_not_taken(input):
     """Validator - verify that email is not taken.
 
@@ -137,7 +131,7 @@ def username_not_taken_wtforms():
         try:
             username_not_taken(input=field.data)
         except marshmallow.validate.ValidationError as valerr:
-            raise wtforms.validators.ValidationError()
+            raise wtforms.validators.ValidationError(valerr)
 
     return _username_not_taken
 
@@ -148,7 +142,7 @@ def email_not_taken_wtforms():
         try:
             email_not_taken(input=field.data)
         except marshmallow.validate.ValidationError as valerr:
-            raise wtforms.validators.ValidationError from valerr
+            raise wtforms.validators.ValidationError(valerr)
 
     return _email_not_taken
 
@@ -159,7 +153,7 @@ def email_taken_wtforms():
         try:
             email_taken(input=field.data)
         except marshmallow.validate.ValidationError as valerr:
-            raise wtforms.validators.ValidationError from valerr
+            raise wtforms.validators.ValidationError(valerr)
 
     return _email_taken
 
@@ -167,6 +161,12 @@ def email_taken_wtforms():
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+def valid_chars_in_username(input):
+    """Check if the username contains only valid characters."""
+    pattern = re.compile("^[a-zA-Z0-9_]+$")
+    return string_contains_only(input=input, pattern=pattern)
 
 
 def string_contains_only(input, pattern):
