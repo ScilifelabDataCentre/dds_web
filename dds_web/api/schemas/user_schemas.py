@@ -19,28 +19,6 @@ import dds_web.security.auth
 from dds_web.database import models
 import dds_web.utils
 
-####################################################################################################
-# VALIDATORS ########################################################################## VALIDATORS #
-####################################################################################################
-
-
-def email_in_db(email):
-    """Check if the email is in the Email table."""
-
-    if models.Email.query.filter_by(email=email).first():
-        return True
-
-    return False
-
-
-def username_in_db(username):
-    """Check if username is in the User table."""
-
-    if models.User.query.filter_by(username=username).first():
-        return True
-
-    return False
-
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -83,7 +61,7 @@ class InviteUserSchema(marshmallow.Schema):
 
         if models.Invite.query.filter_by(email=value).first():
             raise ddserr.InviteError(message=f"Email '{value}' already has a pending invitation.")
-        elif email_in_db(email=value):
+        elif dds_web.utils.email_in_db(email=value):
             raise ddserr.InviteError(
                 message=f"The email '{value}' is already registered to an existing user."
             )
@@ -163,7 +141,7 @@ class NewUserSchema(marshmallow.Schema):
     def verify_username(self, value):
         """Verify that the username is not used in the system."""
 
-        if username_in_db(username=value):
+        if dds_web.utils.username_in_db(username=value):
             raise marshmallow.ValidationError(
                 message=(
                     f"The username '{value}' is already taken by another user. "
@@ -175,7 +153,7 @@ class NewUserSchema(marshmallow.Schema):
     def verify_new_email(self, value):
         """Verify that the email is not used in the system already."""
 
-        if email_in_db(email=value):
+        if dds_web.utils.email_in_db(email=value):
             raise marshmallow.ValidationError(
                 message=f"The email '{value}' is already registered to an existing user."
             )

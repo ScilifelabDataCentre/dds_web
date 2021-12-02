@@ -23,16 +23,110 @@ import werkzeug
 from apscheduler.schedulers import background
 import marshmallow
 import flask_mail
+import wtforms
 
 
 # Own modules
 from dds_web.database import models
 from dds_web import db, C_TZ
 from dds_web import mail
+from dds_web.api.schemas import user_schemas
+
+
+####################################################################################################
+# VALIDATORS ########################################################################## VALIDATORS #
+####################################################################################################
+
+# General ################################################################################ General #
+
+
+def contains_uppercase(input):
+    """Verify that string contains at least one upper case letter."""
+    if not re.search("[A-Z]", input):
+        raise marshmallow.ValidationError("Required: at least one upper case letter.")
+
+
+def contains_lowercase(input):
+    """Verify that string contains at least one lower case letter."""
+    if not re.search("[a-z]", input):
+        raise marshmallow.ValidationError("Required: at least one lower case letter.")
+
+
+def contains_digit_or_specialchar(input):
+    """Verify that string contains at least one special character OR digit."""
+    if not any(re.search(x, input) for x in ["[0-9]", "[#?!@$%^&*-]"]):
+        raise marshmallow.ValidationError(
+            "Required: at least one digit OR a special character (#?!@$%^&*-)."
+        )
+
+
+# wtforms ################################################################################ wtforms #
+
+
+def password_contains_valid_characters():
+    def _password_contains_valid_characters(form, field):
+        """Validate that the password contains valid characters and raise ValidationError."""
+        errors = []
+        validators = [
+            contains_uppercase,
+            contains_lowercase,
+            contains_digit_or_specialchar,
+        ]
+        for val in validators:
+            try:
+                val(input=field.data)
+            except marshmallow.ValidationError as valerr:
+                errors.append(str(valerr).strip("."))
+
+        if errors:
+            raise wtforms.validators.ValidationError(", ".join(errors))
+
+    return _password_contains_valid_characters
+
+
+def username_not_taken():
+    def _username_not_taken(form, field):
+        """Validate that the username is not taken already."""
+
+        if username_in_db(username=field.data):
+            raise wtforms.validators.ValidationError(
+                "That username is taken. Please choose a different one."
+            )
+
+
+def email_not_taken():
+    def _email_not_taken(form, field):
+        """Validate that the email is not taken already."""
+
+        if email_in_db(email=field.data):
+            raise wtforms.validators.ValidationError(
+                "That email is taken. Please choose a different one."
+            )
+
+    return _email_not_taken
+
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+def email_in_db(email):
+    """Check if the email is in the Email table."""
+
+    if models.Email.query.filter_by(email=email).first():
+        return True
+
+    return False
+
+
+def username_in_db(username):
+    """Check if username is in the User table."""
+
+    if models.User.query.filter_by(username=username).first():
+        return True
+
+    return False
 
 
 def send_reset_email(email_row):
@@ -57,26 +151,6 @@ def is_safe_url(target):
     ref_url = urllib.parse.urlparse(flask.request.host_url)
     test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
     return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
-
-
-def contains_uppercase(input):
-    """Verify that string contains at least one upper case letter."""
-    if not re.search("[A-Z]", input):
-        raise marshmallow.ValidationError("Required: at least one upper case letter.")
-
-
-def contains_lowercase(input):
-    """Verify that string contains at least one lower case letter."""
-    if not re.search("[a-z]", input):
-        raise marshmallow.ValidationError("Required: at least one lower case letter.")
-
-
-def contains_digit_or_specialchar(input):
-    """Verify that string contains at least one special character OR digit."""
-    if not any(re.search(x, input) for x in ["[0-9]", "[#?!@$%^&*-]"]):
-        raise marshmallow.ValidationError(
-            "Required: at least one digit OR a special character (#?!@$%^&*-)."
-        )
 
 
 def current_time():

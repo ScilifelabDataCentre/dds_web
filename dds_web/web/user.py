@@ -70,7 +70,7 @@ def confirm_invite(token):
 
     # Check the invite exists
     if not invite_row:
-        if user_schemas.email_in_db(email=email):
+        if dds_web.utils.email_in_db(email=email):
             return flask.make_response(flask.render_template("user/userexists.html"))
         else:
             raise ddserr.InviteError(

@@ -18,39 +18,26 @@ from dds_web.api.schemas import user_schemas
 # FORMS #################################################################################### FORMS #
 
 
-def password_contains_valid_characters():
-    def _password_contains_valid_characters(form, field):
-        """Validate that the password contains valid characters and raise ValidationError."""
-        errors = []
-        validators = [
-            dds_web.utils.contains_uppercase,
-            dds_web.utils.contains_lowercase,
-            dds_web.utils.contains_digit_or_specialchar,
-        ]
-        for val in validators:
-            try:
-                val(input=field.data)
-            except marshmallow.ValidationError as valerr:
-                errors.append(str(valerr).strip("."))
-
-        if errors:
-            raise wtforms.validators.ValidationError(", ".join(errors))
-
-    return _password_contains_valid_characters
-
-
 class RegistrationForm(flask_wtf.FlaskForm):
     """User registration form."""
 
     name = wtforms.StringField("name", validators=[wtforms.validators.InputRequired()])
     email = wtforms.StringField(
         "email",
-        validators=[wtforms.validators.DataRequired(), wtforms.validators.Email()],
+        validators=[
+            wtforms.validators.DataRequired(),
+            wtforms.validators.Email(),
+            dds_web.utils.email_not_taken(),
+        ],
         render_kw={"readonly": True},
     )
     username = wtforms.StringField(
         "username",
-        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=8, max=20)],
+        validators=[
+            wtforms.validators.InputRequired(),
+            wtforms.validators.Length(min=8, max=20),
+            dds_web.utils.username_not_taken(),
+        ],
     )
     password = wtforms.PasswordField(
         "password",
@@ -58,28 +45,13 @@ class RegistrationForm(flask_wtf.FlaskForm):
             wtforms.validators.DataRequired(),
             wtforms.validators.EqualTo("confirm", message="Passwords must match!"),
             wtforms.validators.Length(min=10, max=64),
-            password_contains_valid_characters(),
+            dds_web.utils.password_contains_valid_characters(),
         ],
     )
     unit_name = wtforms.StringField("unit name")
 
     confirm = wtforms.PasswordField("Repeat password")
     submit = wtforms.SubmitField("submit")
-
-    def validate_username(self, username):
-        if 
-        user = models.User.query.filter_by(username=username.data).first()
-        if user:
-            raise wtforms.validators.ValidationError(
-                "That username is taken. Please choose a different one."
-            )
-
-    def validate_email(self, email):
-        email = models.Email.query.filter_by(email=email.data).first()
-        if email:
-            raise wtforms.validators.ValidationError(
-                "That email is taken. Please choose a different one."
-            )
 
 
 class LoginForm(flask_wtf.FlaskForm):
@@ -130,7 +102,7 @@ class ResetPasswordForm(flask_wtf.FlaskForm):
             wtforms.validators.DataRequired(),
             wtforms.validators.EqualTo("confirm_password", message="Passwords must match!"),
             wtforms.validators.Length(min=10, max=64),
-            password_contains_valid_characters(),
+            dds_web.utils.password_contains_valid_characters(),
         ],
     )
     confirm_password = wtforms.PasswordField(
