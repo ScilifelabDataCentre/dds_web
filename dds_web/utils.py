@@ -179,7 +179,6 @@ def string_contains_only(input, pattern):
 
 def email_in_db(email):
     """Check if the email is in the Email table."""
-
     if models.Email.query.filter_by(email=email).first():
         return True
 
@@ -188,7 +187,6 @@ def email_in_db(email):
 
 def username_in_db(username):
     """Check if username is in the User table."""
-
     if models.User.query.filter_by(username=username).first():
         return True
 
