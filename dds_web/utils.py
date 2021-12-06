@@ -219,10 +219,14 @@ def is_safe_url(target):
     return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
 
-def current_time():
+def current_time(to_midnight=False):
     """Return the current time for the specific time zone"""
 
-    return datetime.datetime.now(tz=C_TZ)
+    curr_time = datetime.datetime.now(tz=C_TZ)
+    if to_midnight:
+        curr_time = curr_time.replace(hour=23, minute=59, second=59)
+
+    return curr_time
 
 
 def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):

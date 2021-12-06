@@ -57,6 +57,10 @@ class ProjectStatuses(db.Model):
     status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
     date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
 
+    # Columns
+    is_aborted = db.Column(db.Boolean, nullable=True, default=False, unique=False)
+    deadline = db.Column(db.DateTime(), nullable=True)
+
 
 ####################################################################################################
 # Tables ################################################################################## Tables #
@@ -84,8 +88,9 @@ class Unit(db.Model):
     safespring_name = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     safespring_access = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     safespring_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
-    days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=90)
+    days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
+    days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
 
     # Relationships
     # One unit can have many users
@@ -134,6 +139,7 @@ class Project(db.Model):
     privkey_salt = db.Column(db.String(32), nullable=False)
     privkey_nonce = db.Column(db.String(24), nullable=False)
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    released = db.Column(db.DateTime(), nullable=True)
 
     # Relationships
     # One project can have many files
@@ -157,6 +163,18 @@ class Project(db.Model):
         if len([x for x in self.project_statuses if "Available" in x.status]) > 0:
             result = True
         return result
+
+    @property
+    def times_expired(self):
+        return len([x for x in self.project_statuses if "Expired" in x.status])
+
+    @property
+    def current_deadline(self):
+        """Return deadline for statuses that have a deadline"""
+        deadline = None
+        if self.current_status in ["Available", "Expired"]:
+            deadline = max(self.project_statuses, key=lambda x: x.date_created).deadline
+        return deadline
 
     @property
     def safespring_project(self):
