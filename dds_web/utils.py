@@ -22,22 +22,21 @@ import atexit
 import werkzeug
 from apscheduler.schedulers import background
 import marshmallow
+import flask_mail
+import wtforms
 
 
 # Own modules
 from dds_web.database import models
 from dds_web import db, C_TZ
+from dds_web import mail
+
 
 ####################################################################################################
-# FUNCTIONS ############################################################################ FUNCTIONS #
+# VALIDATORS ########################################################################## VALIDATORS #
 ####################################################################################################
 
-
-def is_safe_url(target):
-    """Check if the url is safe for redirects."""
-    ref_url = urllib.parse.urlparse(flask.request.host_url)
-    test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
-    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
+# General ################################################################################ General #
 
 
 def contains_uppercase(input):
@@ -58,6 +57,165 @@ def contains_digit_or_specialchar(input):
         raise marshmallow.ValidationError(
             "Required: at least one digit OR a special character (#?!@$%^&*-)."
         )
+
+def email_not_taken(input):
+    """Validator - verify that email is not taken.
+
+    If used by marshmallow Schema, this validator should never raise an error since the email
+    field should not be changable and if it is the form validator should catch it.
+    """
+    if email_in_db(email=input):
+        raise marshmallow.validate.ValidationError("The email is already taken by another user.")
+
+
+def email_taken(input):
+    """Validator - verify that email is taken."""
+    if not email_in_db(email=input):
+        raise marshmallow.validate.ValidationError(
+            "There is no account with that email. To get an account, you need an invitation."
+        )
+
+
+def username_not_taken(input):
+    """Validate that username is not taken.
+
+    If used by marshmallow Schema, this validator should never raise an error since
+    the form validator should catch it.
+    """
+    if username_in_db(username=input):
+        raise marshmallow.validate.ValidationError(
+            "That username is taken. Please choose a different one."
+        )
+
+
+# wtforms ################################################################################ wtforms #
+
+
+def username_contains_valid_characters():
+    def _username_contains_valid_characters(form, field):
+        """Validate that the username contains valid characters."""
+        if not valid_chars_in_username(input=field.data):
+            raise wtforms.validators.ValidationError(
+                "The username contains invalid characters. "
+                "Usernames can only contain letters, digits and underscores (_)."
+            )
+
+    return _username_contains_valid_characters
+
+
+def password_contains_valid_characters():
+    def _password_contains_valid_characters(form, field):
+        """Validate that the password contains valid characters and raise ValidationError."""
+        errors = []
+        validators = [
+            contains_uppercase,
+            contains_lowercase,
+            contains_digit_or_specialchar,
+        ]
+        for val in validators:
+            try:
+                val(input=field.data)
+            except marshmallow.ValidationError as valerr:
+                errors.append(str(valerr).strip("."))
+
+        if errors:
+            raise wtforms.validators.ValidationError(", ".join(errors))
+
+    return _password_contains_valid_characters
+
+
+def username_not_taken_wtforms():
+    def _username_not_taken(form, field):
+        """Validate that the username is not taken already."""
+        try:
+            username_not_taken(input=field.data)
+        except marshmallow.validate.ValidationError as valerr:
+            raise wtforms.validators.ValidationError(valerr)
+
+    return _username_not_taken
+
+
+def email_not_taken_wtforms():
+    def _email_not_taken(form, field):
+        """Validate that the email is not taken already."""
+        try:
+            email_not_taken(input=field.data)
+        except marshmallow.validate.ValidationError as valerr:
+            raise wtforms.validators.ValidationError(valerr)
+
+    return _email_not_taken
+
+
+def email_taken_wtforms():
+    def _email_taken(form, field):
+        """Validate that the email exists."""
+        try:
+            email_taken(input=field.data)
+        except marshmallow.validate.ValidationError as valerr:
+            raise wtforms.validators.ValidationError(valerr)
+
+    return _email_taken
+
+
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
+
+
+def valid_chars_in_username(input):
+    """Check if the username contains only valid characters."""
+    pattern = re.compile("^[a-zA-Z0-9_]+$")
+    return string_contains_only(input=input, pattern=pattern)
+
+
+def string_contains_only(input, pattern):
+    """Check if string only contains specific characters."""
+    if re.search(pattern, input):
+        return True
+
+    return False
+
+
+def email_in_db(email):
+    """Check if the email is in the Email table."""
+    if models.Email.query.filter_by(email=email).first():
+        return True
+
+    return False
+
+
+def username_in_db(username):
+    """Check if username is in the User table."""
+    if models.User.query.filter_by(username=username).first():
+        return True
+
+    return False
+
+
+def send_reset_email(email_row):
+    """Generate password reset email."""
+    # Generate token
+    token = email_row.user.get_reset_token()
+
+    # Create and send email
+    message = flask_mail.Message(
+        "Password Reset Request",
+        sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
+        recipients=[email_row.email],
+    )
+    message.body = (
+        "To reset your password, visit the following link: "
+        f"{flask.url_for('auth_blueprint.reset_password', token=token, _external=True)}"
+        "If you did not make this request then simply ignore this email and no changes will be made."
+    )
+    mail.send(message)
+
+
+def is_safe_url(target):
+    """Check if the url is safe for redirects."""
+    ref_url = urllib.parse.urlparse(flask.request.host_url)
+    test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
+    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
 
 def current_time(to_midnight=False):
