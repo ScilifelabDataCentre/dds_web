@@ -9,6 +9,7 @@ import datetime
 import os
 import pathlib
 import re
+import urllib.parse
 
 # Installed
 import pandas
@@ -22,6 +23,7 @@ import werkzeug
 from apscheduler.schedulers import background
 import marshmallow
 
+
 # Own modules
 from dds_web.database import models
 from dds_web import db, C_TZ
@@ -29,6 +31,13 @@ from dds_web import db, C_TZ
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+def is_safe_url(target):
+    """Check if the url is safe for redirects."""
+    ref_url = urllib.parse.urlparse(flask.request.host_url)
+    test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
+    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
 
 def contains_uppercase(input):

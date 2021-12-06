@@ -61,3 +61,25 @@ class RegistrationForm(flask_wtf.FlaskForm):
 
     confirm = wtforms.PasswordField("Repeat password")
     submit = wtforms.SubmitField("submit")
+
+
+class LoginForm(flask_wtf.FlaskForm):
+    username = wtforms.StringField(
+        "Username",
+        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(1, 64)],
+    )
+    password = wtforms.PasswordField("Password", validators=[wtforms.validators.InputRequired()])
+    submit = wtforms.SubmitField("Login")
+
+
+class LogoutForm(flask_wtf.FlaskForm):
+    logout = wtforms.SubmitField("Logout")
+
+
+class TwoFactorAuthForm(flask_wtf.FlaskForm):
+    secret = wtforms.HiddenField("secret", id="secret")
+    otp = wtforms.StringField(
+        "otp",
+        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
+    )
+    submit = wtforms.SubmitField("Authenticate User")

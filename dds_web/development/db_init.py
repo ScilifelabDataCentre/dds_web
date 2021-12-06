@@ -114,7 +114,10 @@ def fill_db():
         external_display_name="Unit 1 external",
         contact_email="support@example.com",
         internal_ref="someunit",
-        safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
+        safespring_endpoint=current_app.config.get("SAFESPRING_URL"),
+        safespring_name=current_app.config.get("DDS_SAFESPRING_PROJECT"),
+        safespring_access=current_app.config.get("DDS_SAFESPRING_ACCESS"),
+        safespring_secret=current_app.config.get("DDS_SAFESPRING_SECRET"),
     )
     # Connect project to unit. append (not =) due to many projects per unit
     unit_1.projects.extend([project_1, project_2])
