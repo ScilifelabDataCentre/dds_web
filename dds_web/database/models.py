@@ -78,8 +78,9 @@ class Unit(db.Model):
     contact_email = db.Column(db.String(255), unique=False, nullable=True)
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
     safespring = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
-    days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=90)
+    days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
+    days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
 
     # Relationships
     # One unit can have many users

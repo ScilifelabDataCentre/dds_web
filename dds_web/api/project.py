@@ -193,7 +193,7 @@ class ProjectStatus(flask_restful.Resource):
         # Moving to Available
         if new_status == "Available":
             # Optional int arg deadline in days
-            deadline = extra_args.get("deadline", project.responsible_unit.days_to_expire)
+            deadline = extra_args.get("deadline", project.responsible_unit.days_in_available)
             if project.current_status == "Expired":
                 # Project can only move from Expired 2 times
                 if project.times_expired > 2:
@@ -213,8 +213,7 @@ class ProjectStatus(flask_restful.Resource):
 
         # Moving to Expired
         if new_status == "Expired":
-            # Optional int arg deadline in days - Should there be a unit wide days in expired?
-            deadline = extra_args.get("deadline", 30)  # Temp default, should be replaced
+            deadline = extra_args.get("deadline", project.responsible_unit.days_in_expired)
             add_deadline["deadline"] = dds_web.utils.current_time(
                 to_midnight=True
             ) + datetime.timedelta(days=deadline)
