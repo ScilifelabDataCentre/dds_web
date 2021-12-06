@@ -104,7 +104,7 @@ class ResetPasswordForm(flask_wtf.FlaskForm):
         "Password",
         validators=[
             wtforms.validators.DataRequired(),
-            wtforms.validators.EqualTo("confirm", message="Passwords must match!"),
+            wtforms.validators.EqualTo("confirm_password", message="Passwords must match!"),
             wtforms.validators.Length(min=10, max=64),
             utils.password_contains_valid_characters(),
         ],
