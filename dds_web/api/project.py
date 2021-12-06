@@ -242,10 +242,10 @@ class ProjectStatus(flask_restful.Resource):
             db.session.commit()
             if new_status in ["Deleted", "Archived"]:
                 # TODO Call function to delete files
-                print("TODO")
+                print("TODO", flush=True)
                 if new_status == "Deleted" or is_aborted:
                     # TODO call function to delete everything in project row except for bucketname
-                    print("TODO")
+                    print("TODO", flush=True)
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
