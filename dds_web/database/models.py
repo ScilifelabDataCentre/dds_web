@@ -168,6 +168,14 @@ class Project(db.Model):
         return len([x for x in self.project_statuses if "Expired" in x.status])
 
     @property
+    def current_deadline(self):
+        """Return deadline for statuses that have a deadline"""
+        deadline = None
+        if self.current_status in ["Available", "Expired"]:
+            deadline = max(self.project_statuses, key=lambda x: x.date_created).deadline
+        return deadline
+
+    @property
     def safespring_project(self):
         """Get the safespring project name from responsible unit."""
 
