@@ -58,6 +58,7 @@ def contains_digit_or_specialchar(input):
             "Required: at least one digit OR a special character (#?!@$%^&*-)."
         )
 
+
 def email_not_taken(input):
     """Validator - verify that email is not taken.
 
