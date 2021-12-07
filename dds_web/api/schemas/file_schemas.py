@@ -10,7 +10,6 @@ from datetime import datetime
 # Installed
 import marshmallow
 import sqlalchemy
-import flask
 
 # Own modules
 from dds_web.database import models
