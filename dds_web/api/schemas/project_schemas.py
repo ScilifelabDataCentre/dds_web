@@ -107,28 +107,24 @@ class ProjectContentSchema(ProjectRequiredSchema):
 
         # Get all files
         files = all_contents_query.filter(models.File.name.in_(contents)).all()
-        flask.current_app.logger.debug(f"Files: {files}")
 
         # Get not found paths - may be folders
         new_paths = set(contents).difference(x.name for x in files)
-        flask.current_app.logger.debug(f"Not found yet: {new_paths}")
 
         # Get all folder contents
         folder_contents = {
             x: all_contents_query.filter(models.File.subpath.like(f"{x.rstrip(os.sep)}%")).all()
             for x in new_paths
         }
-        flask.current_app.logger.debug(f"Folder contents: {folder_contents}")
 
         # Not found
         not_found = {x: folder_contents.pop(x) for x, y in list(folder_contents.items()) if not y}
-        flask.current_app.logger.debug(f"Not found: {not_found}")
 
         return files, folder_contents, not_found
 
     @marshmallow.post_dump
     def return_items(self, data, **kwargs):
-        """ """
+        """Return project contents as serialized."""
 
         # Fields
         requested_items = data.get("requested_items")
@@ -145,9 +141,6 @@ class ProjectContentSchema(ProjectRequiredSchema):
         if requested_items:
             files, folder_contents, not_found = self.find_contents(
                 project=project_row, contents=requested_items
-            )
-            flask.current_app.logger.debug(
-                f"\n\nFiles: {files}\n\nFolders: {folder_contents}\n\nNot found: {not_found}\n\n"
             )
         elif get_all:
             files = project_row.files
@@ -174,9 +167,13 @@ class ProjectContentSchema(ProjectRequiredSchema):
             ),
         )
 
+        # Connect to s3
         with api_s3_connector.ApiS3Connector(project=project_row) as s3:
 
+            # Get bucket items
             pages = s3.bucket_items()
+
+            # Get the info and signed urls for all files found in the bucket
             for page in pages:
                 found_files.update(
                     {
@@ -190,6 +187,7 @@ class ProjectContentSchema(ProjectRequiredSchema):
                 )
 
                 if folder_contents:
+                    # Get all info and signed urls for all folder contents found in the bucket
                     for x, y in folder_contents.items():
                         if x not in found_folder_contents:
                             found_folder_contents[x] = {}
@@ -205,9 +203,6 @@ class ProjectContentSchema(ProjectRequiredSchema):
                                 for z in y
                                 if z.name_in_bucket in page
                             }
-                        )
-                        flask.current_app.logger.debug(
-                            f"Found folder contents: {found_folder_contents}"
                         )
 
         return found_files, found_folder_contents, not_found

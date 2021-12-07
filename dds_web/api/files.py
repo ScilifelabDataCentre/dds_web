@@ -315,9 +315,6 @@ class FileInfo(flask_restful.Resource):
             input_
         )
 
-        flask.current_app.logger.debug(found_files)
-        flask.current_app.logger.debug(found_folder_contents)
-
         return flask.jsonify(
             {
                 "files": found_files,
@@ -337,8 +334,6 @@ class FileInfoAll(flask_restful.Resource):
         files, _, _ = project_schemas.ProjectContentSchema().dump(
             {**flask.request.args, "get_all": True, "url": True}
         )
-
-        flask.current_app.logger.debug(files)
 
         return flask.jsonify({"files": files})
 
