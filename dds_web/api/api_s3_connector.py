@@ -133,7 +133,7 @@ class ApiS3Connector:
         url = self.resource.meta.client.generate_presigned_url(
             "get_object",
             Params={"Bucket": self.project.bucket, "Key": key},
-            ExpiresIn=36000,
+            ExpiresIn=3 * 24 * 60 * 60,
         )
         return url
 
