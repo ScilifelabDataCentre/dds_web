@@ -16,9 +16,6 @@ import flask
 from dds_web.database import models
 import dds_web.utils
 from dds_web.api.schemas import project_schemas
-from dds_web import ma
-from dds_web.api import api_s3_connector
-from dds_web.api.schemas import sqlalchemyautoschemas
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
