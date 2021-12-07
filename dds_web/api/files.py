@@ -29,7 +29,6 @@ from dds_web.api.errors import (
 )
 from dds_web.api.schemas import file_schemas
 from dds_web.api.schemas import project_schemas
-from dds_web.database import model_schemas
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
