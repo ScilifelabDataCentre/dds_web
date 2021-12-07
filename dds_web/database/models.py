@@ -17,6 +17,7 @@ import argon2
 import pyotp
 import flask_login
 import pathlib
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 # Own modules
 from dds_web import db
@@ -47,6 +48,21 @@ class ProjectUsers(db.Model):
     researchuser = db.relationship("ResearchUser", backref="project_associations")
 
 
+class ProjectStatuses(db.Model):
+
+    # Table setup
+    __tablename__ = "projectstatuses"
+
+    # Primary keys / Foreign keys
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), primary_key=True)
+    status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
+    date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
+
+    # Columns
+    is_aborted = db.Column(db.Boolean, nullable=True, default=False, unique=False)
+    deadline = db.Column(db.DateTime(), nullable=True)
+
+
 ####################################################################################################
 # Tables ################################################################################## Tables #
 
@@ -73,8 +89,9 @@ class Unit(db.Model):
     safespring_name = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     safespring_access = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     safespring_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
-    days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=90)
+    days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
+    days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
 
     # Relationships
     # One unit can have many users
@@ -115,7 +132,6 @@ class Project(db.Model):
         default=dds_web.utils.current_time(),
     )
     date_updated = db.Column(db.DateTime(), nullable=True)
-    status = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)
     pi = db.Column(db.String(255), unique=False, nullable=False)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
@@ -124,6 +140,7 @@ class Project(db.Model):
     privkey_salt = db.Column(db.String(32), nullable=False)
     privkey_nonce = db.Column(db.String(24), nullable=False)
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    released = db.Column(db.DateTime(), nullable=True)
 
     # Relationships
     # One project can have many files
@@ -132,6 +149,33 @@ class Project(db.Model):
     expired_files = db.relationship("ExpiredFile", backref="assigned_project")
     # One project can have many file versions
     file_versions = db.relationship("Version", backref="responsible_project")
+    # One project can have a history of statuses
+    project_statuses = db.relationship("ProjectStatuses", backref="project")
+
+    @property
+    def current_status(self):
+        """Return the current status of the project"""
+        return max(self.project_statuses, key=lambda x: x.date_created).status
+
+    @property
+    def has_been_available(self):
+        """Return True if the project has ever been in the status Available"""
+        result = False
+        if len([x for x in self.project_statuses if "Available" in x.status]) > 0:
+            result = True
+        return result
+
+    @property
+    def times_expired(self):
+        return len([x for x in self.project_statuses if "Expired" in x.status])
+
+    @property
+    def current_deadline(self):
+        """Return deadline for statuses that have a deadline"""
+        deadline = None
+        if self.current_status in ["Available", "Expired"]:
+            deadline = max(self.project_statuses, key=lambda x: x.date_created).deadline
+        return deadline
 
     @property
     def safespring_project(self):
@@ -234,6 +278,22 @@ class User(flask_login.UserMixin, db.Model):
 
         # Password correct
         return True
+
+    def get_reset_token(self, expires_sec=3600):
+        """Generate token for resetting password."""
+        s = Serializer(flask.current_app.config["SECRET_KEY"], expires_sec)
+        return s.dumps({"user_id": self.username}).decode("utf-8")
+
+    @staticmethod
+    def verify_reset_token(token):
+        """Verify that the token is valid."""
+        s = Serializer(flask.current_app.config["SECRET_KEY"])
+        try:
+            user_id = s.loads(token)["user_id"]
+        except:
+            return None
+
+        return User.query.get(user_id)
 
     # 2FA related
     def gen_otp_secret(self):
