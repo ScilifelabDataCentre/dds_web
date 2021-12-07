@@ -95,6 +95,7 @@ class DDSEndpoint:
 
     # Project specific urls
     PROJECT_CREATE = BASE_ENDPOINT + "/proj/create"
+    PROJECT_STATUS = BASE_ENDPOINT + "/proj/status"
 
     # Listing urls
     LIST_PROJ = BASE_ENDPOINT + "/proj/list"

@@ -242,7 +242,7 @@ def test_create_project_wrong_status(client):
         pi=proj_data_wrong_status["pi"],
         description=proj_data_wrong_status["description"],
     ).one_or_none()
-    assert created_proj and created_proj.status == "In Progress"
+    assert created_proj and created_proj.current_status == "In Progress"
 
 
 def test_create_project_sensitive_not_boolean(client):

@@ -30,6 +30,36 @@ from dds_web.api.errors import (
 from dds_web.api.schemas import file_schemas
 from dds_web.api.schemas import project_schemas
 
+
+def check_eligibility_for_upload(status):
+    """Check if a project status is eligible for upload/modification"""
+    if status != "In Progress":
+        raise DDSArgumentError("Project not in right status to upload/modify files.")
+    return True
+
+
+def check_eligibility_for_download(status, user_role):
+    """Check if a project status makes it eligible to download"""
+    if status == "Available" or (
+        status == "In Progress" and user_role in ["Unit Admin", "Unit Personnel"]
+    ):
+        return True
+
+    raise DDSArgumentError("Current Project status limits file download.")
+
+
+def check_eligibility_for_deletion(status, has_been_available):
+    """Check if a project status is eligible for deletion"""
+    if status not in ["In Progress"]:
+        raise DDSArgumentError("Project Status prevents files from being deleted.")
+
+    if has_been_available:
+        raise DDSArgumentError(
+            "Existing project contents cannot be deleted since the project has been previously made available to recipients."
+        )
+    return True
+
+
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
@@ -43,6 +73,10 @@ class NewFile(flask_restful.Resource):
         """Add new file to DB"""
 
         flask.current_app.logger.debug(flask.request.json)
+
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        check_eligibility_for_upload(project.current_status)
+
         new_file = file_schemas.NewFileSchema().load({**flask.request.json, **flask.request.args})
 
         try:
@@ -58,6 +92,8 @@ class NewFile(flask_restful.Resource):
     def put(self):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        check_eligibility_for_upload(current_status)
 
         file_info = flask.request.json
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
@@ -137,6 +173,8 @@ class MatchFiles(flask_restful.Resource):
         """Matches specified files to files in db."""
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        check_eligibility_for_upload(project.current_status)
 
         try:
             matching_files = (
@@ -229,6 +267,8 @@ class RemoveFile(flask_restful.Resource):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
+        check_eligibility_for_deletion(project.current_status, project.has_been_available)
+
         with DBConnector(project=project) as dbconn:
             not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
                 files=flask.request.json
@@ -250,6 +290,8 @@ class RemoveDir(flask_restful.Resource):
         """Deletes the folders."""
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        check_eligibility_for_deletion(project.current_status, project.has_been_available)
 
         not_removed_dict, not_exist_list = ({}, [])
 
