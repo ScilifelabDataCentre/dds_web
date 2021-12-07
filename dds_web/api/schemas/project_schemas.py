@@ -7,19 +7,16 @@
 # Standard Library
 from datetime import datetime
 import os
-import gc
 
 # Installed
 import flask
 import marshmallow
 import sqlalchemy
-import botocore
 
 # Own modules
 from dds_web.api import errors as ddserr
 from dds_web import auth
 from dds_web.database import models
-from dds_web import ma
 from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
 
