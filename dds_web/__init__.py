@@ -180,6 +180,7 @@ def create_app(testing=False, database_uri=None):
     )
 
     app.cli.add_command(fill_db_wrapper)
+    app.cli.add_command(fill_big_db_wrapper)
 
     with app.app_context():  # Everything in here has access to sessions
         db.create_all()  # TODO: remove this when we have migrations
@@ -217,4 +218,18 @@ def fill_db_wrapper():
     from dds_web.development.db_init import fill_db
 
     fill_db()
+    flask.current_app.logger.info("DB filled")
+
+
+@click.command("init-dev-db-big")
+@flask.cli.with_appcontext
+def fill_big_db_wrapper():
+    flask.current_app.logger.info("Initializing big development db")
+    assert flask.current_app.config["USE_LOCAL_DB"]
+    db.create_all()
+
+    import dds_web.development.factories
+
+    dds_web.development.factories.create_all()
+
     flask.current_app.logger.info("DB filled")
