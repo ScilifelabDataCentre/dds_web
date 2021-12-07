@@ -169,7 +169,7 @@ class ProjectContentSchema(ProjectRequiredSchema):
 
         # Connect to s3
         with api_s3_connector.ApiS3Connector(project=project_row) as s3:
-
+            # TODO: Optimisation: Add check for if only searching for one file (head_bucket)
             # Get bucket items
             pages = s3.bucket_items()
 
