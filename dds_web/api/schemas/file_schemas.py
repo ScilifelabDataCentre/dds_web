@@ -6,7 +6,6 @@
 
 # Standard Library
 from datetime import datetime
-import os
 
 # Installed
 import marshmallow
@@ -96,79 +95,3 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
         new_file.versions.append(new_version)
 
         return new_file
-
-
-class FileInfoSchema(project_schemas.ProjectRequiredSchema):
-    """Schema for project contents."""
-
-    contents = marshmallow.fields.List(marshmallow.fields.String)
-    url = marshmallow.fields.Boolean(required=False, default=False)
-
-    @marshmallow.post_dump
-    def return_items(self, data, **kwargs):
-        contents = data.get("contents")
-        project_row = project_schemas.verify_project_exists(spec_proj=data.get("project"))
-
-        # Tools for getting file information
-        url = data.get("url")  # Get url for file?
-        fileschema = sqlalchemyautoschemas.FileSchema(
-            many=False,
-            only=(
-                "name_in_bucket",
-                "subpath",
-                "size_original",
-                "size_stored",
-                "salt",
-                "public_key",
-                "checksum",
-                "compressed",
-            ),
-        )
-
-        # Found items
-        found_files = {}
-        found_folder_contents = {}
-
-        # Check if in bucket
-        with api_s3_connector.ApiS3Connector(project=project_row) as s3:
-
-            # If single file, check head bucket
-            # TODO
-
-            # If more files then paginate
-            pages = s3.bucket_items()
-
-            # Iterate through pages and search for files
-            for page in pages:
-                flask.current_app.logger.debug(f"Page contents: {page}")
-                found_files.update(
-                    {
-                        x.name: {
-                            **fileschema.dump(x),
-                            "url": s3.generate_get_url(key=x.name_in_bucket) if url else None,
-                        }
-                        for x in files
-                        if x.name_in_bucket in page
-                    }
-                )
-                flask.current_app.logger.debug(f"found files: {found_files}")
-
-                for x, y in folder_contents.items():
-                    if x not in found_folder_contents:
-                        found_folder_contents[x] = {}
-
-                    found_folder_contents[x].update(
-                        {
-                            z.name: {
-                                **fileschema.dump(z),
-                                "url": s3.generate_get_url(key=z.name_in_bucket) if url else None,
-                            }
-                            for z in y
-                            if z.name_in_bucket in page
-                        }
-                    )
-                    flask.current_app.logger.debug(
-                        f"Found folder contents: {found_folder_contents}"
-                    )
-
-        return found_files, found_folder_contents, not_found
