@@ -25,7 +25,6 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import werkzeug
 import sqlalchemy
-import flask_sqlalchemy
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
