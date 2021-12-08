@@ -163,7 +163,7 @@ class ProjectStatus(flask_restful.Resource):
             history = []
             for pstatus in project.project_statuses:
                 history.append(tuple((pstatus.status, pstatus.date_created)))
-            history.sort(key=lambda x: x[1])
+            history.sort(key=lambda x: x[1], reverse=True)
             return_info.update({"history": history})
 
         return flask.jsonify(return_info)
@@ -194,6 +194,9 @@ class ProjectStatus(flask_restful.Resource):
         if new_status == "Available":
             # Optional int arg deadline in days
             deadline = extra_args.get("deadline", project.responsible_unit.days_in_available)
+            add_deadline["deadline"] = dds_web.utils.current_time(
+                to_midnight=True
+            ) + datetime.timedelta(days=deadline)
             if project.current_status == "Expired":
                 # Project can only move from Expired 2 times
                 if project.times_expired > 2:
@@ -201,15 +204,8 @@ class ProjectStatus(flask_restful.Resource):
                         "Project availability limit: Project cannot be made Available any more times"
                     )
 
-                add_deadline["deadline"] = dds_web.utils.current_time(
-                    to_midnight=True
-                ) + datetime.timedelta(days=deadline)
-
             if not project.has_been_available:
                 project.released = curr_date
-                add_deadline["deadline"] = dds_web.utils.current_time(
-                    to_midnight=True
-                ) + datetime.timedelta(days=deadline)
 
         # Moving to Expired
         if new_status == "Expired":
@@ -223,7 +219,7 @@ class ProjectStatus(flask_restful.Resource):
             # Can only be Deleted if never made Available
             if project.has_been_available:
                 raise DDSArgumentError(
-                    "Project cannot be deleted if it has ever been made available, instead Abort and archive it"
+                    "Project cannot be deleted if it has ever been made available, instead Abort it from Available"
                 )
 
         # Moving to Archived
