@@ -203,9 +203,12 @@ class ProjectStatus(flask_restful.Resource):
                     raise DDSArgumentError(
                         "Project availability limit: Project cannot be made Available any more times"
                     )
-
-            if not project.has_been_available:
-                project.released = curr_date
+            else:  # current status is in progress
+                if project.has_been_available:
+                    # No change in deadline if made available before
+                    add_deadline["deadline"] = project.current_deadline
+                else:
+                    project.released = curr_date
 
         # Moving to Expired
         if new_status == "Expired":

@@ -174,6 +174,13 @@ class Project(db.Model):
         deadline = None
         if self.current_status in ["Available", "Expired"]:
             deadline = max(self.project_statuses, key=lambda x: x.date_created).deadline
+        elif self.current_status in ["In Progress"]:
+            if self.has_been_available:
+                list_available = list(
+                    filter(lambda x: x.status == "Available", self.project_statuses)
+                )
+                latest_available = max(list_available, key=lambda x: x.date_created)
+                deadline = latest_available.deadline
         return deadline
 
     @property
