@@ -413,7 +413,7 @@ class UnitUser(User):
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
     )
     # ---
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="RESTRICT"), nullable=False)
     unit = db.relationship("Unit", back_populates="users")
 
     # Additional columns
