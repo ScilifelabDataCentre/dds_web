@@ -183,9 +183,6 @@ class Project(db.Model):
 
     # Additional relationships
     files = db.relationship("File", back_populates="project", passive_deletes=True)
-    expired_files = db.relationship(
-        "ExpiredFile", back_populates="assigned_project", passive_deletes=True
-    )
     file_versions = db.relationship(
         "Version", back_populates="responsbile_project", passive_deletes=True
     )
@@ -660,51 +657,6 @@ class File(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<File {pathlib.Path(self.name).name}>"
-
-
-class ExpiredFile(db.Model):
-    """
-    Data model for expired files. Moved here when in system for more than X days.
-
-    Primary key:
-    - id
-
-    Foreign key(s):
-    - project_id
-    """
-
-    # Table setup
-    __tablename__ = "expired_files"
-    __table_args__ = {"extend_existing": True}
-
-    # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.Text, unique=False, nullable=False)
-    name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
-    subpath = db.Column(db.Text, unique=False, nullable=False)
-    size_original = db.Column(db.BigInteger, unique=False, nullable=False)
-    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
-    compressed = db.Column(db.Boolean, nullable=False)
-    public_key = db.Column(db.String(64), unique=False, nullable=False)
-    salt = db.Column(db.String(32), unique=False, nullable=False)
-    checksum = db.Column(db.String(64), unique=False, nullable=False)
-    time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
-    expired = db.Column(
-        db.DateTime(),
-        unique=False,
-        nullable=False,
-        default=dds_web.utils.current_time(),
-    )
-
-    # Foreign keys & relationships
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"))
-    assigned_project = db.relationship("Project", back_populates="expired_files")
-    # ---
-
-    def __repr__(self):
-        """Called by print, creates representation of object"""
-
-        return f"<ExpiredFile {pathlib.Path(self.name).name}: {self.expired}>"
 
 
 class Version(db.Model):
