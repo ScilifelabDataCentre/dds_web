@@ -16,6 +16,7 @@ import flask
 import argon2
 import pyotp
 import flask_login
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 # Own modules
 from dds_web import db
@@ -88,6 +89,10 @@ class ProjectStatuses(db.Model):
     status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
     date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
 
+    # Columns
+    is_aborted = db.Column(db.Boolean, nullable=True, default=False, unique=False)
+    deadline = db.Column(db.DateTime(), nullable=True)
+
 
 ####################################################################################################
 # Tables ################################################################################## Tables #
@@ -118,8 +123,9 @@ class Unit(db.Model):
     safespring_name = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     safespring_access = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     safespring_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
-    days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=90)
+    days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
+    days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
 
     # Relationships
     users = db.relationship("UnitUser", back_populates="unit", passive_deletes=True)
@@ -165,6 +171,7 @@ class Project(db.Model):
     privkey_salt = db.Column(db.String(32), nullable=False)
     privkey_nonce = db.Column(db.String(24), nullable=False)
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    released = db.Column(db.DateTime(), nullable=True)
 
     # Foreign keys & relationships
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
@@ -199,6 +206,25 @@ class Project(db.Model):
         if len([x for x in self.project_statuses if "Available" in x.status]) > 0:
             result = True
         return result
+
+    @property
+    def times_expired(self):
+        return len([x for x in self.project_statuses if "Expired" in x.status])
+
+    @property
+    def current_deadline(self):
+        """Return deadline for statuses that have a deadline"""
+        deadline = None
+        if self.current_status in ["Available", "Expired"]:
+            deadline = max(self.project_statuses, key=lambda x: x.date_created).deadline
+        elif self.current_status in ["In Progress"]:
+            if self.has_been_available:
+                list_available = list(
+                    filter(lambda x: x.status == "Available", self.project_statuses)
+                )
+                latest_available = max(list_available, key=lambda x: x.date_created)
+                deadline = latest_available.deadline
+        return deadline
 
     @property
     def safespring_project(self):
@@ -307,6 +333,22 @@ class User(flask_login.UserMixin, db.Model):
         # Password correct
         return True
 
+    def get_reset_token(self, expires_sec=3600):
+        """Generate token for resetting password."""
+        s = Serializer(flask.current_app.config["SECRET_KEY"], expires_sec)
+        return s.dumps({"user_id": self.username}).decode("utf-8")
+
+    @staticmethod
+    def verify_reset_token(token):
+        """Verify that the token is valid."""
+        s = Serializer(flask.current_app.config["SECRET_KEY"])
+        try:
+            user_id = s.loads(token)["user_id"]
+        except:
+            return None
+
+        return User.query.get(user_id)
+
     # 2FA related
     def gen_otp_secret(self):
         """Generate random base 32 for otp secret."""
@@ -413,7 +455,7 @@ class UnitUser(User):
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
     )
     # ---
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="RESTRICT"), nullable=False)
     unit = db.relationship("Unit", back_populates="users")
 
     # Additional columns

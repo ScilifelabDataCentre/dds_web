@@ -25,6 +25,8 @@ import dds_web.utils
 from dds_web import db
 import dds_web.api.errors as ddserr
 from dds_web.api.schemas import user_schemas
+from dds_web import mail
+import flask_mail
 
 
 ####################################################################################################
@@ -68,7 +70,7 @@ def confirm_invite(token):
 
     # Check the invite exists
     if not invite_row:
-        if user_schemas.email_in_db(email=email):
+        if dds_web.utils.email_in_db(email=email):
             return flask.make_response(flask.render_template("user/userexists.html"))
         else:
             raise ddserr.InviteError(
@@ -229,3 +231,49 @@ def two_factor_verify():
     else:
         flask.flash("You have supplied an invalid 2FA token!", "danger")
         return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
+
+
+@auth_blueprint.route("/reset_password", methods=["GET", "POST"])
+def request_reset_password():
+    """Request to reset password."""
+    # Reset forgotten password only allowed if logged out
+    if flask_login.current_user.is_authenticated:
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
+
+    # Validate form
+    form = forms.RequestResetForm()
+    if form.validate_on_submit():
+        email = models.Email.query.filter_by(email=form.email.data).first()
+        dds_web.utils.send_reset_email(email_row=email)
+        flask.flash("An email has been sent with instructions to reset your password.", "info")
+        return flask.redirect(flask.url_for("auth_blueprint.login"))
+
+    # Show form
+    return flask.render_template("user/request_reset_password.html", form=form)
+
+
+@auth_blueprint.route("/reset_password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    """Perform the password reset."""
+    # Go to index page if already logged in
+    if flask_login.current_user.is_authenticated:
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
+
+    # Verify that the token is valid and contains enough info
+    user = models.User.verify_reset_token(token=token)
+    if not user:
+        flask.flash("That is an invalid or expired token", "warning")
+        return flask.redirect(flask.url_for("auth_blueprint.request_reset_password"))
+
+    # Get form for reseting password
+    form = forms.ResetPasswordForm()
+
+    # Validate form
+    if form.validate_on_submit():
+        user.password = form.password.data
+        db.session.commit()
+        flask.flash("Your password has been updated! You are now able to log in.", "success")
+        return flask.redirect(flask.url_for("auth_blueprint.login"))
+
+    # Go to form
+    return flask.render_template("user/reset_password.html", form=form)
