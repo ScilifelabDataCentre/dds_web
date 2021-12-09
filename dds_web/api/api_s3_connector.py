@@ -130,6 +130,8 @@ class ApiS3Connector:
     def generate_get_url(self, key):
         """Generate presigned urls for get requests."""
 
+        # This does not perform any requests, the signing is "local"
+        # and it doesn't check if the item exists before creating the link
         url = self.resource.meta.client.generate_presigned_url(
             "get_object",
             Params={"Bucket": self.project.bucket, "Key": key},
