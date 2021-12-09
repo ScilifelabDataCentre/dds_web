@@ -183,9 +183,7 @@ class Project(db.Model):
 
     # Additional relationships
     files = db.relationship("File", back_populates="project", passive_deletes=True)
-    file_versions = db.relationship(
-        "Version", back_populates="responsbile_project", passive_deletes=True
-    )
+    file_versions = db.relationship("Version", back_populates="project", passive_deletes=True)
     project_statuses = db.relationship(
         "ProjectStatuses", back_populates="project", passive_deletes=True
     )
@@ -682,7 +680,7 @@ class Version(db.Model):
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), nullable=True
     )
-    responsbile_project = db.relationship("Project", back_populates="file_versions")
+    project = db.relationship("Project", back_populates="file_versions")
     # ---
     active_file = db.Column(
         db.BigInteger, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
