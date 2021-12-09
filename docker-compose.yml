@@ -37,7 +37,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    restart: "on-failure"
+    restart: on-failure
     ports:
       - 127.0.0.1:5000:5000
     volumes:
