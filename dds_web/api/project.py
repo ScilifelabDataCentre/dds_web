@@ -163,7 +163,7 @@ class ProjectStatus(flask_restful.Resource):
             history = []
             for pstatus in project.project_statuses:
                 history.append(tuple((pstatus.status, pstatus.date_created)))
-            history.sort(key=lambda x: x[1])
+            history.sort(key=lambda x: x[1], reverse=True)
             return_info.update({"history": history})
 
         return flask.jsonify(return_info)
@@ -184,8 +184,8 @@ class ProjectStatus(flask_restful.Resource):
             raise DDSArgumentError("Invalid status")
 
         curr_date = dds_web.utils.current_time()
-        add_aborted = {}
-        add_deadline = {}
+        is_aborted = False
+        add_deadline = None
 
         if not self.is_transition_possible(project.current_status, new_status):
             raise DDSArgumentError("Invalid status transition")
@@ -194,47 +194,45 @@ class ProjectStatus(flask_restful.Resource):
         if new_status == "Available":
             # Optional int arg deadline in days
             deadline = extra_args.get("deadline", project.responsible_unit.days_in_available)
+            add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
+                days=deadline
+            )
             if project.current_status == "Expired":
                 # Project can only move from Expired 2 times
                 if project.times_expired > 2:
                     raise DDSArgumentError(
                         "Project availability limit: Project cannot be made Available any more times"
                     )
-
-                add_deadline["deadline"] = dds_web.utils.current_time(
-                    to_midnight=True
-                ) + datetime.timedelta(days=deadline)
-
-            if not project.has_been_available:
-                project.released = curr_date
-                add_deadline["deadline"] = dds_web.utils.current_time(
-                    to_midnight=True
-                ) + datetime.timedelta(days=deadline)
+            else:  # current status is in progress
+                if project.has_been_available:
+                    # No change in deadline if made available before
+                    add_deadline = project.current_deadline
+                else:
+                    project.released = curr_date
 
         # Moving to Expired
         if new_status == "Expired":
             deadline = extra_args.get("deadline", project.responsible_unit.days_in_expired)
-            add_deadline["deadline"] = dds_web.utils.current_time(
-                to_midnight=True
-            ) + datetime.timedelta(days=deadline)
+            add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
+                days=deadline
+            )
 
         # Moving to Deleted
         if new_status == "Deleted":
             # Can only be Deleted if never made Available
             if project.has_been_available:
                 raise DDSArgumentError(
-                    "Project cannot be deleted if it has ever been made available, instead Abort and archive it"
+                    "Project cannot be deleted if it has ever been made available, instead Abort it from Available"
                 )
 
         # Moving to Archived
         if new_status == "Archived":
             is_aborted = extra_args.get("is_aborted", False)
-            add_aborted = {"is_aborted": is_aborted}
 
         add_status = models.ProjectStatuses(
             **{"project_id": project.id, "status": new_status, "date_created": curr_date},
-            **add_deadline,
-            **add_aborted,
+            deadline=add_deadline,
+            is_aborted=is_aborted,
         )
         try:
             project.project_statuses.append(add_status)
