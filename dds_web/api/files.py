@@ -93,7 +93,7 @@ class NewFile(flask_restful.Resource):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        check_eligibility_for_upload(current_status)
+        check_eligibility_for_upload(project.current_status)
 
         file_info = flask.request.json
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
