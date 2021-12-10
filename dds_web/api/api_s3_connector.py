@@ -138,15 +138,3 @@ class ApiS3Connector:
             ExpiresIn=3 * 24 * 60 * 60,
         )
         return url
-
-    def bucket_items(self):
-        """Check if keys exist in bucket and return those that aren't."""
-
-        # Paginator iterates 1000 items at a time through the bucket contents
-        paginator = self.resource.meta.client.get_paginator("list_objects")
-        pages = paginator.paginate(Bucket=self.project.bucket)
-
-        # Yield 1000 items at a time
-        for page in pages:
-            keys_in_s3 = set(x["Key"] for x in page["Contents"])
-            yield keys_in_s3

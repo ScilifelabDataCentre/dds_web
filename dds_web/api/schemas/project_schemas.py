@@ -166,40 +166,31 @@ class ProjectContentSchema(ProjectRequiredSchema):
 
         # Connect to s3
         with api_s3_connector.ApiS3Connector(project=project_row) as s3:
-            # TODO: Optimisation: Add check for if only searching for one file (head_bucket)
-            # Get bucket items
-            pages = s3.bucket_items()
-
-            # Get the info and signed urls for all files found in the bucket
-            for page in pages:
-                found_files.update(
-                    {
-                        x.name: {
-                            **fileschema.dump(x),
-                            "url": s3.generate_get_url(key=x.name_in_bucket) if url else None,
-                        }
-                        for x in files
-                        if x.name_in_bucket in page
+            # Get the info and signed urls for all files
+            found_files.update(
+                {
+                    x.name: {
+                        **fileschema.dump(x),
+                        "url": s3.generate_get_url(key=x.name_in_bucket) if url else None,
                     }
-                )
+                    for x in files
+                }
+            )
 
-                if folder_contents:
-                    # Get all info and signed urls for all folder contents found in the bucket
-                    for x, y in folder_contents.items():
-                        if x not in found_folder_contents:
-                            found_folder_contents[x] = {}
+            if folder_contents:
+                # Get all info and signed urls for all folder contents found in the bucket
+                for x, y in folder_contents.items():
+                    if x not in found_folder_contents:
+                        found_folder_contents[x] = {}
 
-                        found_folder_contents[x].update(
-                            {
-                                z.name: {
-                                    **fileschema.dump(z),
-                                    "url": s3.generate_get_url(key=z.name_in_bucket)
-                                    if url
-                                    else None,
-                                }
-                                for z in y
-                                if z.name_in_bucket in page
+                    found_folder_contents[x].update(
+                        {
+                            z.name: {
+                                **fileschema.dump(z),
+                                "url": s3.generate_get_url(key=z.name_in_bucket) if url else None,
                             }
-                        )
+                            for z in y
+                        }
+                    )
 
         return found_files, found_folder_contents, not_found
