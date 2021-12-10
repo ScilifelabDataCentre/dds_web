@@ -16,6 +16,7 @@ from cryptography.hazmat import backends
 import os
 import marshmallow
 import datetime
+import botocore
 
 # Own modules
 import dds_web.utils
@@ -31,6 +32,7 @@ from dds_web.api.errors import (
     DeletionError,
     BucketNotFoundError,
     KeyNotFoundError,
+    S3ConnectionError,
 )
 from dds_web.crypt import key_gen
 from dds_web.api.user import AddUser
@@ -443,6 +445,15 @@ class CreateProject(flask_restful.Resource):
 
         if not new_project:
             raise DDSArgumentError("Failed to create project.")
+
+        # TODO: Change -- the bucket should be created before the row is added to the database
+        # This is a quick fix so that things do not break
+        try:
+            with ApiS3Connector(project=new_project) as s3:
+                s3.resource.create_bucket(Bucket=new_project.bucket)
+        except botocore.exceptions.ClientError as err:
+            # For now just keeping the project row
+            raise S3ConnectionError(str(err))
 
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."
