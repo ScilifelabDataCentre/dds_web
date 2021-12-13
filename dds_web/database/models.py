@@ -322,7 +322,7 @@ class User(flask_login.UserMixin, db.Model):
             return False
 
         # Rehash password if needed, e.g. if parameters are not up to date
-        if not password_hasher.check_needs_rehash(self._password_hash):
+        if password_hasher.check_needs_rehash(self._password_hash):
             try:
                 self.password = input_password
                 db.session.commit()
