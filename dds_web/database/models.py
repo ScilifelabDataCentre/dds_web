@@ -16,6 +16,7 @@ import flask
 import argon2
 import pyotp
 import flask_login
+import pathlib
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 # Own modules
