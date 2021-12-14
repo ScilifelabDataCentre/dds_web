@@ -39,12 +39,7 @@ auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 @flask_login.login_required
 def index():
     """DDS start page."""
-    # Check if user has 2fa setup
-    if flask_login.current_user.has_2fa:
-        form = forms.LogoutForm()
-        return flask.render_template("index.html", form=form)
-    else:
-        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
+    return flask.render_template("index.html", form=form)
 
 
 @auth_blueprint.route("/confirm_invite/<token>", methods=["GET"])
@@ -114,8 +109,7 @@ def register():
 
         # Go to two factor authentication setup
         # TODO: Change this after email is introduced
-        flask_login.login_user(new_user)
-        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     # Go to registration form
     return flask.render_template("user/register.html", form=form)
@@ -127,9 +121,7 @@ def login():
 
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        if flask_login.current_user.has_2fa:
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
-        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     # Check if for is filled in and correctly (post)
     form = forms.LoginForm()
@@ -166,71 +158,6 @@ def logout():
         flask_login.logout_user()
 
     return flask.redirect(flask.url_for("auth_blueprint.index"))
-
-
-@auth_blueprint.route("/twofactor", methods=["GET"])
-@flask_login.login_required
-def two_factor_setup():
-    """Setup two factor authentication."""
-    # since this page contains the sensitive qrcode, make sure the browser
-    # does not cache it
-    if flask_login.current_user.has_2fa:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
-
-    return (
-        flask.render_template(
-            "user/two-factor-setup.html", secret=flask_login.current_user.otp_secret
-        ),
-        200,
-        {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
-        },
-    )
-
-
-@auth_blueprint.route("/qrcode", methods=["GET"])
-@flask_login.login_required
-def qrcode():
-    """Generate qrcode"""
-    if flask_login.current_user.has_2fa:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
-
-    # render qrcode for FreeTOTP
-    url = pyqrcode.create(flask_login.current_user.totp_uri())
-    stream = io.BytesIO()
-    url.svg(stream, scale=5)
-    return (
-        stream.getvalue(),
-        200,
-        {
-            "Content-Type": "image/svg+xml",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
-        },
-    )
-
-
-@auth_blueprint.route("/twofactor/verify", methods=["POST"])
-@flask_login.login_required
-def two_factor_verify():
-    """Verify two factor authentication."""
-    otp = int(flask.request.form.get("otp"))
-    if flask_login.current_user.verify_totp(otp):
-        flask.flash("The TOTP 2FA token is valid", "success")
-
-        # User has now setup 2FA
-        flask_login.current_user.set_2fa_seen()
-        try:
-            db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise ddserr.DatabaseError from sqlerr
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
-    else:
-        flask.flash("You have supplied an invalid 2FA token!", "danger")
-        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
 
 
 @auth_blueprint.route("/reset_password", methods=["GET", "POST"])
