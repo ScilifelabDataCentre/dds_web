@@ -156,26 +156,27 @@ class Project(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(255), unique=True, nullable=False)
-    title = db.Column(db.Text, unique=False, nullable=False)
+    public_id = db.Column(db.String(255), unique=True, nullable=True)
+    title = db.Column(db.Text, unique=False, nullable=True)
     date_created = db.Column(
         db.DateTime(),
-        nullable=False,
+        nullable=True,
         default=dds_web.utils.current_time(),
     )
     date_updated = db.Column(db.DateTime(), nullable=True)
     description = db.Column(db.Text)
-    pi = db.Column(db.String(255), unique=False, nullable=False)
+    pi = db.Column(db.String(255), unique=False, nullable=True)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
-    public_key = db.Column(db.String(64), nullable=False)
-    private_key = db.Column(db.String(255), nullable=False)
-    privkey_salt = db.Column(db.String(32), nullable=False)
-    privkey_nonce = db.Column(db.String(24), nullable=False)
-    is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    public_key = db.Column(db.String(64), nullable=True)
+    private_key = db.Column(db.String(255), nullable=True)
+    privkey_salt = db.Column(db.String(32), nullable=True)
+    privkey_nonce = db.Column(db.String(24), nullable=True)
+    is_sensitive = db.Column(db.Boolean, unique=False, nullable=True, default=False)
     released = db.Column(db.DateTime(), nullable=True)
+    is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, index=True)
 
     # Foreign keys & relationships
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=True)
     responsible_unit = db.relationship("Unit", back_populates="projects")
     # ---
     created_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))

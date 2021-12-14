@@ -65,6 +65,7 @@ class ProjectStatus(flask_restful.Resource):
     def post(self):
         """Update Project Status"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        public_id = project.public_id
         extra_args = flask.request.json
         new_status = extra_args.get("new_status")
         if new_status not in [
@@ -117,31 +118,38 @@ class ProjectStatus(flask_restful.Resource):
                 raise DDSArgumentError(
                     "Project cannot be deleted if it has ever been made available, instead Abort it from Available"
                 )
+            project.is_active = False
 
         # Moving to Archived
         if new_status == "Archived":
             is_aborted = extra_args.get("is_aborted", False)
+            project.is_active = False
 
         add_status = models.ProjectStatuses(
             **{"project_id": project.id, "status": new_status, "date_created": curr_date},
             deadline=add_deadline,
             is_aborted=is_aborted,
         )
+        delete_message = ""
         try:
             project.project_statuses.append(add_status)
-            db.session.commit()
-            if new_status in ["Deleted", "Archived"]:
-                # TODO Call function to delete files
-                print("TODO", flush=True)
+            if not project.is_active:
+                # Deletes files (also commits session in the function - should it be decoupled?)
+                removed = RemoveContents().delete_project_contents(project)
+                delete_message = f"\nAll files in {public_id} deleted"
                 if new_status == "Deleted" or is_aborted:
-                    # TODO call function to delete everything in project row except for bucketname
-                    print("TODO", flush=True)
+                    # Delete metadata from project row
+                    project = self.delete_project_info(project)
+                    delete_message += " and project info cleared"
+            db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DatabaseError(message="Server Error: Status was not updated")
 
-        return flask.jsonify({"message": f"{project.public_id} updated to status {new_status}"})
+        return flask.jsonify(
+            {"message": f"{public_id} updated to status {new_status}" + delete_message}
+        )
 
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""
@@ -157,6 +165,26 @@ class ProjectStatus(flask_restful.Resource):
                 result = True
                 break
         return result
+
+    def delete_project_info(self, proj):
+        """Delete certain metadata from proj on deletion/abort"""
+        proj.public_id = None
+        proj.title = None
+        proj.date_created = None
+        proj.date_updated = None
+        proj.description = None
+        proj.pi = None
+        proj.public_key = None
+        proj.private_key = None
+        proj.privkey_salt = None
+        proj.privkey_nonce = None
+        proj.is_sensitive = None
+        proj.unit_id = None
+        proj.created_by = None
+        # Delete User associations
+        for user in proj.researchusers:
+            db.session.delete(user)
+        return proj
 
 
 class GetPublic(flask_restful.Resource):
@@ -284,6 +312,13 @@ class RemoveContents(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Delete files
+        removed = delete_project_contents(project)
+
+        return flask.jsonify({"removed": removed})
+
+    @staticmethod
+    def delete_project_contents(project):
+        """Remove project contents"""
         removed = False
         with DBConnector(project=project) as dbconn:
             try:
@@ -320,7 +355,7 @@ class RemoveContents(flask_restful.Resource):
             except (DeletionError, BucketNotFoundError):
                 raise
 
-        return flask.jsonify({"removed": removed})
+            return removed
 
 
 class CreateProject(flask_restful.Resource):
