@@ -62,7 +62,7 @@ def test_create_project_without_credentials(client):
     assert created_proj is None
 
 
-def test_create_project_with_credentials(client):
+def test_create_project_with_credentials(client, boto3_session):
     """Create project with correct credentials."""
     time_before_run = datetime.datetime.now()
     response = client.post(
@@ -141,7 +141,7 @@ def test_create_project_with_malformed_json(client):
     assert created_proj is None
 
 
-def test_create_project_sensitive(client):
+def test_create_project_sensitive(client, boto3_session):
     """Create a sensitive project."""
     p_data = proj_data
     p_data["is_sensitive"] = True
@@ -224,7 +224,7 @@ def test_create_project_pi_too_long(client):
     assert not created_proj
 
 
-def test_create_project_wrong_status(client):
+def test_create_project_wrong_status(client, boto3_session):
     """Create a project with own status, should be overridden."""
     proj_data_wrong_status = proj_data.copy()
     proj_data_wrong_status["status"] = "Incorrect Status"
@@ -266,7 +266,7 @@ def test_create_project_sensitive_not_boolean(client):
     assert not created_proj
 
 
-def test_create_project_date_created_overridden(client):
+def test_create_project_date_created_overridden(client, boto3_session):
     """Create project with own date_created, should be overridden."""
     proj_data_date_created_own = proj_data.copy()
     proj_data_date_created_own["date_created"] = "test"
@@ -287,7 +287,7 @@ def test_create_project_date_created_overridden(client):
     assert created_proj and created_proj.date_created != proj_data_date_created_own["date_created"]
 
 
-def test_create_project_with_users(client):
+def test_create_project_with_users(client, boto3_session):
     """Create project and add users to the project."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -323,7 +323,7 @@ def test_create_project_with_users(client):
     case.assertCountEqual(users_dict_from_db, users_dict_from_email)
 
 
-def test_create_project_with_invited_users(client):
+def test_create_project_with_invited_users(client, boto3_session):
     """Create project and invite users to the project."""
 
     response = client.post(
@@ -338,7 +338,7 @@ def test_create_project_with_invited_users(client):
         assert "Invitation sent" in x
 
 
-def test_create_project_with_unsuitable_roles(client):
+def test_create_project_with_unsuitable_roles(client, boto3_session):
     """Create project and add users with unsuitable roles to the project."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,

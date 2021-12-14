@@ -1,7 +1,16 @@
+# Standard Library
 import os
 import uuid
+from contextlib import contextmanager
+import unittest.mock
+
+# Installed
 import pytest
 from sqlalchemy_utils import create_database, database_exists
+import boto3
+
+# Own
+import dds_web.utils
 from dds_web.database.models import (
     ResearchUser,
     UnitUser,
@@ -13,10 +22,8 @@ from dds_web.database.models import (
     Email,
     ProjectStatuses,
 )
-import dds_web.utils
-
 from dds_web import create_app, db
-from contextlib import contextmanager
+
 
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI = "mysql+pymysql://root:{}@db/DeliverySystemTest".format(mysql_root_password)
@@ -251,3 +258,10 @@ def module_client():
                 for table in reversed(db.metadata.sorted_tables):
                     db.session.execute(table.delete())
                 db.session.commit()
+
+
+@pytest.fixture()
+def boto3_session():
+    """Create a mock boto3 session since no access permissions are in place for testing"""
+    with unittest.mock.patch.object(boto3.session.Session, "resource") as mock_session:
+        yield mock_session
