@@ -265,8 +265,6 @@ class User(flask_login.UserMixin, db.Model):
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
     _password_hash = db.Column(db.String(98), unique=False, nullable=False)
-    _otp_secret = db.Column(db.String(32))
-    has_2fa = db.Column(db.Boolean)
 
     # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -277,13 +275,6 @@ class User(flask_login.UserMixin, db.Model):
     created_projects = db.relationship("Project", back_populates="creator", passive_deletes=True)
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
-
-    def __init__(self, **kwargs):
-        """Init all set and update otp secret."""
-        super(User, self).__init__(**kwargs)
-        if self.otp_secret is None:
-            self.otp_secret = self.gen_otp_secret()
-        self.has_2fa = False
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
@@ -344,42 +335,6 @@ class User(flask_login.UserMixin, db.Model):
             return None
 
         return User.query.get(user_id)
-
-    # 2FA related
-    def gen_otp_secret(self):
-        """Generate random base 32 for otp secret."""
-        return pyotp.random_base32()
-
-    @property
-    def otp_secret(self):
-        """Get OTP secret for user if the 2fa has not already been setup."""
-        if self.has_2fa:
-            return None
-        return self._otp_secret
-
-    @otp_secret.setter
-    def otp_secret(self, otp_secret):
-        """Set new otp secret."""
-        if not otp_secret:
-            otp_secret = self.gen_otp_secret()
-        self._otp_secret = otp_secret
-
-    def set_2fa_seen(self):
-        """Renew the otp secret -- one should only be setup once."""
-        self.has_2fa = True
-
-    def totp_uri(self):
-        """Get uri for user otp_secret if the 2fa has not already been setup."""
-        if self.has_2fa:
-            return None
-        return pyotp.totp.TOTP(self.otp_secret).provisioning_uri(
-            name=self.username, issuer_name="Data Delivery System"
-        )
-
-    def verify_totp(self, token):
-        """Verify the otp token."""
-        totp = pyotp.TOTP(self.otp_secret)
-        return totp.verify(token, valid_window=1)
 
     # Email related
     @property
