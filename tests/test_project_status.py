@@ -6,6 +6,10 @@ import json
 import pytest
 import datetime
 import time
+import unittest.mock
+
+# Installed
+import boto3
 
 # Own
 import tests
@@ -19,17 +23,18 @@ proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer proj
 @pytest.fixture(scope="module")
 def test_project(module_client):
     """Create a shared test project"""
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        data=json.dumps(proj_data),
-        content_type="application/json",
-    )
+    with unittest.mock.patch.object(boto3.session.Session, "resource") as mock_session:
+        response = module_client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+            data=json.dumps(proj_data),
+            content_type="application/json",
+        )
 
     return response.json.get("project_id")
 
 
-def test_set_project_to_deleted_from_in_progress(module_client):
+def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     """Create project and set status to deleted"""
 
     new_status = {"new_status": "Deleted"}
@@ -57,7 +62,7 @@ def test_set_project_to_deleted_from_in_progress(module_client):
     assert project.current_status == "Deleted"
 
 
-def test_aborted_project(module_client):
+def test_aborted_project(module_client, boto3_session):
     """Create a project and try to abort it"""
 
     response = module_client.post(
