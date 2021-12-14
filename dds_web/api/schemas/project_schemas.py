@@ -20,7 +20,8 @@ from dds_web.database import models
 from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
-from dds_web import utils
+import dds_web.utils
+from dds_web.crypt import key_gen
 
 
 ####################################################################################################

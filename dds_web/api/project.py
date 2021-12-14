@@ -34,7 +34,6 @@ from dds_web.api.errors import (
     KeyNotFoundError,
     S3ConnectionError,
 )
-from dds_web.crypt import key_gen
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas
 from dds_web.api.schemas import user_schemas
