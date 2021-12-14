@@ -34,118 +34,9 @@ from dds_web.api.errors import (
     KeyNotFoundError,
     S3ConnectionError,
 )
-from dds_web.crypt import key_gen
 from dds_web.api.user import AddUser
-from dds_web.api.schemas import custom_fields
 from dds_web.api.schemas import project_schemas
 from dds_web.api.schemas import user_schemas
-
-####################################################################################################
-# SCHEMAS ################################################################################ SCHEMAS #
-####################################################################################################
-
-
-class CreateProjectSchema(marshmallow.Schema):
-    """Schema for creating a project."""
-
-    class Meta:
-        unknown = marshmallow.EXCLUDE
-
-    title = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
-    description = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(min=1)
-    )
-    pi = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(min=1, max=255)
-    )
-    is_sensitive = marshmallow.fields.Boolean(required=False)
-    date_created = custom_fields.MyDateTimeField(required=False)
-
-    @marshmallow.pre_load
-    def generate_required_fields(self, data, **kwargs):
-        """Generate all required fields for creating a project."""
-        if not data:
-            raise DDSArgumentError(
-                "No project information found when attempting to create project."
-            )
-
-        data["date_created"] = dds_web.utils.current_time()
-
-        return data
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def validate_all_fields(self, data, **kwargs):
-        """Validate that all fields are present."""
-        if not all(
-            field in data
-            for field in [
-                "title",
-                "date_created",
-                "description",
-                "pi",
-            ]
-        ):
-            raise marshmallow.ValidationError("Missing fields!")
-
-    def generate_bucketname(self, public_id, created_time):
-        """Create bucket name for the given project."""
-        return "{pid}-{tstamp}-{rstring}".format(
-            pid=public_id.lower(),
-            tstamp=dds_web.utils.timestamp(dts=created_time, ts_format="%y%m%d%H%M%S%f"),
-            rstring=os.urandom(4).hex(),
-        )
-
-    @marshmallow.post_load
-    def create_project(self, data, **kwargs):
-        """Create project row in db."""
-
-        try:
-            # Lock db, get unit row and update counter
-            unit_row = (
-                models.Unit.query.filter_by(id=auth.current_user().unit_id)
-                .with_for_update()
-                .one_or_none()
-            )
-            if not unit_row:
-                raise AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
-
-            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
-            data["public_id"] = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
-
-            # Generate bucket name
-            data["bucket"] = self.generate_bucketname(
-                public_id=data["public_id"], created_time=data["date_created"]
-            )
-
-            # Generate keys
-            data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
-
-            # Create project
-            current_user = auth.current_user()
-            new_project = models.Project(
-                **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
-            )
-            new_project.project_statuses.append(
-                models.ProjectStatuses(
-                    **{
-                        "status": "In Progress",
-                        "date_created": data["date_created"],
-                    }
-                )
-            )
-            # Save
-            db.session.add(new_project)
-            db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise DatabaseError(message="Server Error: Project was not created")
-        except (marshmallow.ValidationError, DDSArgumentError, AccessDeniedError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise
-
-        return new_project
 
 
 ####################################################################################################
@@ -439,7 +330,7 @@ class CreateProject(flask_restful.Resource):
 
         p_info = flask.request.json
 
-        new_project = CreateProjectSchema().load(p_info)
+        new_project = project_schemas.CreateProjectSchema().load(p_info)
 
         if not new_project:
             raise DDSArgumentError("Failed to create project.")
