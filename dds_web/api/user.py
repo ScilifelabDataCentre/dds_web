@@ -40,10 +40,6 @@ ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 ####################################################################################################
 
 
-def rate_limit_from_config():
-    return flask.current_app.config.get("TOKEN_ENDPOINT_ACCESS_LIMIT", "10/hour")
-
-
 def encrypted_jwt_token(
     username, sensitive_content, expires_in=datetime.timedelta(hours=48), additional_claims=None
 ):
@@ -288,7 +284,7 @@ class Token(flask_restful.Resource):
 
     decorators = [
         limiter.limit(
-            rate_limit_from_config,
+            dds_web.utils.rate_limit_from_config,
             methods=["GET"],
             error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
         )
@@ -304,7 +300,7 @@ class EncryptedToken(flask_restful.Resource):
 
     decorators = [
         limiter.limit(
-            rate_limit_from_config,
+            dds_web.utils.rate_limit_from_config,
             methods=["GET"],
             error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
         )
