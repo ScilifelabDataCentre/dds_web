@@ -287,12 +287,6 @@ def change_password():
     # Validate form
     form = forms.ChangePasswordForm()
     if form.validate_on_submit():
-        # Verify user Password
-        # Should this be in the WTForms?
-        if not flask_login.current_user.verify_password(form.current_password.data):
-            flask.flash("Entered current password is incorrect!", "danger")
-            return flask.redirect(flask.url_for("auth_blueprint.change_password"))
-
         # Change password
         flask_login.current_user.password = form.new_password.data
         db.session.commit()

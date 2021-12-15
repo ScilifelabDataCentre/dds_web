@@ -7,6 +7,7 @@ import re
 
 # Installed
 import flask_wtf
+import flask_login
 import wtforms
 import marshmallow
 
@@ -123,7 +124,8 @@ class ChangePasswordForm(flask_wtf.FlaskForm):
     """Form for setting a new password using the old password."""
 
     current_password = wtforms.PasswordField(
-        "Current Password", validators=[wtforms.validators.DataRequired()]
+        "Current Password",
+        validators=[wtforms.validators.DataRequired()],
     )
     new_password = wtforms.PasswordField(
         "New Password",
@@ -141,4 +143,9 @@ class ChangePasswordForm(flask_wtf.FlaskForm):
             wtforms.validators.EqualTo("new_password", message="The passwords don't match."),
         ],
     )
+
+    def validate_current_password(form, field):
+        if not flask_login.current_user.verify_password(form.current_password.data):
+            raise wtforms.ValidationError("Entered current password is incorrect!")
+
     submit = wtforms.SubmitField("Change Password")
