@@ -142,7 +142,13 @@ class ProjectStatus(flask_restful.Resource):
                     project = self.delete_project_info(project)
                     delete_message += " and project info cleared"
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+        except (
+            sqlalchemy.exc.SQLAlchemyError,
+            TypeError,
+            DatabaseError,
+            DeletionError,
+            BucketNotFoundError,
+        ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DatabaseError(message="Server Error: Status was not updated")
@@ -314,54 +320,30 @@ class RemoveContents(flask_restful.Resource):
         # Delete files
         if not project.files:
             raise EmptyProjectException("The are no project contents to delete.")
+        try:
+            delete_project_contents(project)
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+        except DatabaseError as err:
+            raise DeletionError(
+                message=f"No project contents deleted: {err}",
+                project=project.public_id,
+            )
+        except (DeletionError, BucketNotFoundError):
+            raise
 
-        removed = delete_project_contents(project)
-
-        return flask.jsonify({"removed": removed})
+        return flask.jsonify({"removed": True})
 
     @staticmethod
     def delete_project_contents(project):
         """Remove project contents"""
-        removed = False
-        with DBConnector(project=project) as dbconn:
-            try:
-                removed = dbconn.delete_all()
-            except DatabaseError as err:
-                raise DeletionError(
-                    message=f"No project contents deleted: {err}",
-                    project=project.public_id,
-                )
+        DBConnector(project=project).delete_all()
 
-            # Return error if contents not deleted from db
-            if not removed:
-                raise DeletionError(
-                    message="No project contents deleted.",
-                    username=current_user.username,
-                    project=project.public_id,
-                )
-
-            # Delete from bucket
-            try:
-                with ApiS3Connector(project=project) as s3conn:
-                    removed = s3conn.remove_all()
-
-                    # Return error if contents not deleted from s3 bucket
-                    if not removed:
-                        db.session.rollback()
-                        raise DeletionError(
-                            message="Deleting project contents failed.",
-                            username=current_user.username,
-                            project=project.public_id,
-                        )
-
-                    # Commit changes to db
-                    db.session.commit()
-            except sqlalchemy.exc.SQLAlchemyError as err:
-                raise DatabaseError(message=str(err))
-            except (DeletionError, BucketNotFoundError):
-                raise
-
-            return removed
+        # Delete from bucket
+        with ApiS3Connector(project=project) as s3conn:
+            s3conn.remove_all()
+            # Commit changes to db
+            db.session.commit()
 
 
 class CreateProject(flask_restful.Resource):
