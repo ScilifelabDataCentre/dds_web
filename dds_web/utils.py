@@ -247,6 +247,10 @@ def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"
     return t_s
 
 
+def rate_limit_from_config():
+    return flask.current_app.config.get("TOKEN_ENDPOINT_ACCESS_LIMIT", "10/hour")
+
+
 @contextmanager
 def working_directory(path, cleanup_after=False):
     """Contexter for changing working directory"""
