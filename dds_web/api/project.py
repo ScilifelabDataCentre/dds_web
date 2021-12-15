@@ -341,9 +341,12 @@ class RemoveContents(flask_restful.Resource):
 
         # Delete from bucket
         with ApiS3Connector(project=project) as s3conn:
-            s3conn.remove_all()
-            # Commit changes to db
-            db.session.commit()
+            removed = s3conn.remove_all()
+            if not removed:
+                db.session.rollback()
+            else:
+                # Commit changes to db
+                db.session.commit()
 
 
 class CreateProject(flask_restful.Resource):
