@@ -47,6 +47,7 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.OK
 
     project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
@@ -55,8 +56,6 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
         data=json.dumps(new_status),
         content_type="application/json",
     )
-
-    project = project_row(project_id=project_id)
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Deleted"
@@ -339,7 +338,7 @@ def test_invalid_transitions_from_expired(module_client, test_project):
     assert "Invalid status transition" in response.json["message"]
 
 
-def test_set_project_to_archived(module_client, test_project):
+def test_set_project_to_archived(module_client, test_project, boto3_session):
     """Archive an expired project"""
 
     new_status = {"new_status": "Archived"}

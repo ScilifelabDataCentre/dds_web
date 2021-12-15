@@ -312,6 +312,9 @@ class RemoveContents(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Delete files
+        if not project.files:
+            raise EmptyProjectException("The are no project contents to delete.")
+
         removed = delete_project_contents(project)
 
         return flask.jsonify({"removed": removed})
@@ -323,8 +326,11 @@ class RemoveContents(flask_restful.Resource):
         with DBConnector(project=project) as dbconn:
             try:
                 removed = dbconn.delete_all()
-            except (DatabaseError, EmptyProjectException):
-                raise
+            except DatabaseError as err:
+                raise DeletionError(
+                    message=f"No project contents deleted: {err}",
+                    project=project.public_id,
+                )
 
             # Return error if contents not deleted from db
             if not removed:

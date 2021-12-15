@@ -150,7 +150,7 @@ class DeletionError(exceptions.HTTPException):
             },
         )
 
-        super().__init__("Deletion of the file failed." if not pass_message else message)
+        super().__init__("Deletion failed." if not pass_message else message)
 
 
 class NoSuchProjectError(exceptions.HTTPException):

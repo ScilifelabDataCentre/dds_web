@@ -144,10 +144,7 @@ class DBConnector:
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            raise DatabaseError(message=str(err))
-        else:
-            if num_deleted == 0:
-                raise EmptyProjectException(project=self.project.public_id)
+            raise
 
         try:
             # Update all versions associated with project
@@ -160,7 +157,7 @@ class DBConnector:
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            raise DatabaseError(message=str(err))
+            raise
 
         return True
 
