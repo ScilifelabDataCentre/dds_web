@@ -2,9 +2,10 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block content %}
-This page will have something on it later. Now it just has a logout button.
+This page will have something on it later.
 <form method="POST" action="{{ url_for('auth_blueprint.logout') }}">
     {{ form.csrf_token }}
     {{ form.logout }}
 </form>
+<a href="/change_password">Change Password</a>
 {% endblock %}
