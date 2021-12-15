@@ -108,8 +108,7 @@ def register():
             raise ddserr.DatabaseError from sqlerr
 
         # Go to two factor authentication setup
-        # TODO: Change this after email is introduced
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("auth_blueprint.setup_2fa"))
 
     # Go to registration form
     return flask.render_template("user/register.html", form=form)
@@ -204,3 +203,21 @@ def reset_password(token):
 
     # Go to form
     return flask.render_template("user/reset_password.html", form=form)
+
+
+@auth_blueprint.route("/twofa", methods=["GET"])
+@flask_login.login_required
+def setup_2fa():
+    """Send and validate two factor authentication."""
+
+    # TODO
+    # 1. Get secret from user table
+    flask.current_app.logger.debug("user hotp secret: {auth.current_user}")
+
+    # 2. Generate HOTP and save counter
+    # 3. Generate email
+    # 4. Redirect to 2fa form
+    # 5. Validate
+    # 6. Redirect
+
+    return

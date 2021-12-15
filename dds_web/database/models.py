@@ -265,6 +265,8 @@ class User(flask_login.UserMixin, db.Model):
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
     _password_hash = db.Column(db.String(98), unique=False, nullable=False)
+    hotp_secret = db.Column(db.LargeBinary(20), unique=False, nullable=False)
+    counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
 
     # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -275,6 +277,12 @@ class User(flask_login.UserMixin, db.Model):
     created_projects = db.relationship("Project", back_populates="creator", passive_deletes=True)
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
+
+    def __init__(self, **kwargs):
+        """Init all set and update hotp_secet."""
+        super(User, self).__init__(**kwargs)
+        if not self.hotp_secret:
+            self.hotp_secret = os.urandom(20)
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
