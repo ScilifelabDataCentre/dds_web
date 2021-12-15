@@ -22,7 +22,7 @@ from dds_web import auth
 from dds_web import forms
 from dds_web.database import models
 import dds_web.utils
-from dds_web import db
+from dds_web import db, limiter
 import dds_web.api.errors as ddserr
 from dds_web.api.schemas import user_schemas
 from dds_web import mail
@@ -48,6 +48,10 @@ def index():
 
 
 @auth_blueprint.route("/confirm_invite/<token>", methods=["GET"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+)
 def confirm_invite(token):
     """Confirm invitation."""
     s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config.get("SECRET_KEY"))
@@ -96,6 +100,10 @@ def confirm_invite(token):
 
 
 @auth_blueprint.route("/register", methods=["POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+)
 def register():
     """Handles the creation of a new user"""
     form = dds_web.forms.RegistrationForm()
@@ -122,6 +130,11 @@ def register():
 
 
 @auth_blueprint.route("/login", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["POST"],
+    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+)
 def login():
     """Log user in with DDS credentials."""
 
@@ -159,6 +172,7 @@ def login():
 
 
 @auth_blueprint.route("/logout", methods=["POST"])
+@flask_login.login_required
 def logout():
     """Logout user."""
 
@@ -234,6 +248,11 @@ def two_factor_verify():
 
 
 @auth_blueprint.route("/reset_password", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["POST"],
+    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+)
 def request_reset_password():
     """Request to reset password."""
     # Reset forgotten password only allowed if logged out
@@ -253,6 +272,10 @@ def request_reset_password():
 
 
 @auth_blueprint.route("/reset_password/<token>", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+)
 def reset_password(token):
     """Perform the password reset."""
     # Go to index page if already logged in
