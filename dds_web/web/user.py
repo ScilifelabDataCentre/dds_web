@@ -235,7 +235,7 @@ def two_factor_verify():
 
 @auth_blueprint.route("/reset_password", methods=["GET", "POST"])
 def request_reset_password():
-    """Request to reset password."""
+    """Request to reset password when password is lost."""
     # Reset forgotten password only allowed if logged out
     if flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for("auth_blueprint.index"))
@@ -254,7 +254,7 @@ def request_reset_password():
 
 @auth_blueprint.route("/reset_password/<token>", methods=["GET", "POST"])
 def reset_password(token):
-    """Perform the password reset."""
+    """Perform the password reset when password is lost."""
     # Go to index page if already logged in
     if flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for("auth_blueprint.index"))
@@ -277,3 +277,29 @@ def reset_password(token):
 
     # Go to form
     return flask.render_template("user/reset_password.html", form=form)
+
+
+@auth_blueprint.route("/change_password", methods=["GET", "POST"])
+@flask_login.login_required
+def change_password():
+    """Change password by entering the old password."""
+
+    # Validate form
+    form = forms.ChangePasswordForm()
+    if form.validate_on_submit():
+        # Verify user Password
+        # Should this be in the WTForms?
+        if not flask_login.current_user.verify_password(form.current_password.data):
+            flask.flash("Entered current password is incorrect!", "danger")
+            return flask.redirect(flask.url_for("auth_blueprint.change_password"))
+
+        # Change password
+        flask_login.current_user.password = form.new_password.data
+        db.session.commit()
+
+        flask_login.logout_user()
+        flask.flash("You have successfully changed your password.", "success")
+        return flask.redirect(flask.url_for("auth_blueprint.login"))
+
+    # Show form
+    return flask.render_template("user/change_password.html", form=form)
