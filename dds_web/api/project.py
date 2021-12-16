@@ -139,7 +139,7 @@ class ProjectStatus(flask_restful.Resource):
         try:
             project.project_statuses.append(add_status)
             if not project.is_active:
-                # Deletes files (also commits session in the function - should it be decoupled?)
+                # Deletes files (also commits session in the function - possibly refactor later)
                 removed = RemoveContents().delete_project_contents(project)
                 delete_message = f"\nAll files in {public_id} deleted"
                 if new_status == "Deleted" or is_aborted:
@@ -326,7 +326,7 @@ class RemoveContents(flask_restful.Resource):
         if not project.files:
             raise EmptyProjectException("The are no project contents to delete.")
         try:
-            delete_project_contents(project)
+            self.delete_project_contents(project)
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError(message=str(err))
         except DatabaseError as err:
