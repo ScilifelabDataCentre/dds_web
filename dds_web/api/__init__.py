@@ -30,6 +30,9 @@ api = flask_restful.Api(api_blueprint, errors=error_codes)
 # New user ############################################################################## New user #
 api.add_resource(user.AddUser, "/user/add", endpoint="add_user")
 
+# User Management ################################################################ User Management #
+api.add_resource(user.RemoveUserAssociation, "/user/rm_from_project", endpoint="rm_from_project")
+
 # Login/access ###################################################################### Login/access #
 api.add_resource(user.Token, "/user/token", endpoint="token")
 api.add_resource(user.EncryptedToken, "/user/encrypted_token", endpoint="encrypted_token")
