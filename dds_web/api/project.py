@@ -116,13 +116,18 @@ class ProjectStatus(flask_restful.Resource):
             # Can only be Deleted if never made Available
             if project.has_been_available:
                 raise DDSArgumentError(
-                    "Project cannot be deleted if it has ever been made available, instead Abort it from Available"
+                    "Project cannot be deleted if it has ever been made available, abort it instead"
                 )
             project.is_active = False
 
         # Moving to Archived
         if new_status == "Archived":
             is_aborted = extra_args.get("is_aborted", False)
+            if project.current_status == "In Progress":
+                if not (project.has_been_available and is_aborted):
+                    raise DDSArgumentError(
+                        "Project cannot be archived from this status but can be aborted if it has ever been made available"
+                    )
             project.is_active = False
 
         add_status = models.ProjectStatuses(
@@ -160,7 +165,7 @@ class ProjectStatus(flask_restful.Resource):
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""
         possible_transitions = [
-            ("In Progress", ["Available", "Deleted"]),
+            ("In Progress", ["Available", "Deleted", "Archived"]),
             ("Available", ["In Progress", "Expired", "Archived"]),
             ("Expired", ["Available", "Archived"]),
         ]

@@ -144,7 +144,10 @@ def test_aborted_project(module_client, boto3_session):
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "In Progress"
-    assert "Invalid status transition" in response.json["message"]
+    assert (
+        "Project cannot be archived from this status but can be aborted if it has ever been made available"
+        in response.json["message"]
+    )
 
     new_status["new_status"] = "Available"
     response = module_client.post(
@@ -162,6 +165,81 @@ def test_aborted_project(module_client, boto3_session):
         if field in fields_set_to_null:
             assert value
     assert len(project.researchusers) > 0
+
+    time.sleep(1)
+    new_status["new_status"] = "Archived"
+    new_status["is_aborted"] = True
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Archived"
+    assert max(project.project_statuses, key=lambda x: x.date_created).is_aborted
+    assert not file_in_db(test_dict=first_new_file, project=project.id)
+
+    for field, value in vars(project).items():
+        if field in fields_set_to_null:
+            assert not value
+    assert len(project.researchusers) == 0
+
+
+def test_abort_from_in_progress_once_made_available(module_client, boto3_session):
+    """Creat project and abort in from In Progress after it has been made available"""
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        data=json.dumps(proj_data),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_id = response.json.get("project_id")
+
+    # add a file
+    response = module_client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps(first_new_file),
+        content_type="application/json",
+    )
+
+    project = project_row(project_id=project_id)
+
+    assert file_in_db(test_dict=first_new_file, project=project.id)
+
+    new_status = {"new_status": "Available"}
+    time.sleep(1)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Available"
+
+    new_status["new_status"] = "In Progress"
+    time.sleep(1)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "In Progress"
 
     time.sleep(1)
     new_status["new_status"] = "Archived"
@@ -217,7 +295,10 @@ def test_check_invalid_transitions_from_in_progress(module_client, test_project)
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "In Progress"
-    assert "Invalid status transition" in response.json["message"]
+    assert (
+        "Project cannot be archived from this status but can be aborted if it has ever been made available"
+        in response.json["message"]
+    )
 
 
 def test_set_project_to_available_valid_transition(module_client, test_project):
