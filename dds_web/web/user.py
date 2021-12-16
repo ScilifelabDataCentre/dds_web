@@ -39,6 +39,7 @@ auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 @flask_login.login_required
 def index():
     """DDS start page."""
+    form = forms.LogoutForm()
     return flask.render_template("index.html", form=form)
 
 
@@ -143,7 +144,7 @@ def login():
             return flask.abort(400)
 
         # Go to home page
-        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
+        return flask.redirect(next or flask.url_for("auth_blueprint.auth_2fa"))
 
     # Go to login form (get)
     return flask.render_template("user/login.html", form=form)
@@ -205,19 +206,42 @@ def reset_password(token):
     return flask.render_template("user/reset_password.html", form=form)
 
 
-@auth_blueprint.route("/twofa", methods=["GET"])
+@auth_blueprint.route("/2fa", methods=["GET", "POST"])
 @flask_login.login_required
-def setup_2fa():
+def auth_2fa():
     """Send and validate two factor authentication."""
 
     # TODO
-    # 1. Get secret from user table
-    flask.current_app.logger.debug("user hotp secret: {auth.current_user}")
+    from cryptography.hazmat.primitives.twofactor.hotp import HOTP
+    from cryptography.hazmat.primitives.hashes import SHA512
 
-    # 2. Generate HOTP and save counter
-    # 3. Generate email
-    # 4. Redirect to 2fa form
-    # 5. Validate
-    # 6. Redirect
+    if flask.request.method == "GET":
+        hotp = HOTP(flask_login.current_user.hotp_secret, 8, SHA512())
 
-    return
+        # 1. Get secret from user table
+        flask.current_app.logger.debug(f"user hotp secret: {flask_login.current_user.hotp_secret}")
+
+        # 2. Generate HOTP and save counter
+        counter = 0
+        hotp_value = hotp.generate(counter=counter)
+        flask.current_app.logger.debug(f"hotp value: {hotp_value}")
+
+        # 3. Generate email
+        # flask_login.current_user.primary_email
+        message = flask_mail.Message(
+            "One-Time Code",
+            sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
+            recipients=[flask_login.current_user.primary_email],
+        )
+        message.body = f"One time code for DDS authentication: {hotp_value}"
+        mail.send(message)
+
+        # 4. Redirect to 2fa form
+        # 5. Validate
+        # hotp.verify(hotp_value, 4)
+
+        # 6. Redirect
+        form = forms.TwoFactorAuthForm()
+        return flask.render_template("user/2fa.html", form=form)
+    elif flask.request.method == "POST":
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
