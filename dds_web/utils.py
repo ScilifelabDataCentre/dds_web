@@ -193,6 +193,19 @@ def username_in_db(username):
     return False
 
 
+def email_return_user(email):
+    """Helper function to return the User for a given email"""
+    user = models.User.query.join(models.Email).filter(models.Email.email == email).one_or_none()
+    return user
+
+
+def delrequest_exists(email):
+    """Check if there is already a deletion request for that email."""
+    if models.DeletionRequest.query.filter_by(email=email).first():
+        return True
+    return False
+
+
 def send_reset_email(email_row):
     """Generate password reset email."""
     # Generate token

@@ -274,8 +274,11 @@ class User(flask_login.UserMixin, db.Model):
 
     # Relationships
     identifiers = db.relationship("Identifier", back_populates="user", passive_deletes=True)
-    emails = db.relationship("Email", back_populates="user", passive_deletes=True)
+    emails = db.relationship("Email", back_populates="user", passive_deletes=True, cascade="all")
     created_projects = db.relationship("Project", back_populates="creator", passive_deletes=True)
+    # Delete requests if User is deleted:
+    # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.
+    deletion_request = db.relationship("DeletionRequest", back_populates="requester")
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
@@ -607,6 +610,26 @@ class Invite(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<Invite {self.email}>"
+
+
+class DeletionRequest(db.Model):
+    """Table to collect self-deletion requests by users"""
+
+    # Table setup
+    __tablename__ = "deletions"
+    __table_args__ = {"extend_existing": True}
+
+    # Primary Key
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    requester_id = db.Column(db.String(50), db.ForeignKey("users.username"))
+    requester = db.relationship("User", back_populates="deletion_request")
+    email = db.Column(db.String(254), unique=True, nullable=False)
+    issued = db.Column(db.DateTime(), unique=False, nullable=False)
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<DeletionRequest {self.email}>"
 
 
 class File(db.Model):
