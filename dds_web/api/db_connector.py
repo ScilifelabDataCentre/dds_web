@@ -295,6 +295,17 @@ class DBConnector:
         return exists, deleted, name_in_bucket, error
 
     @staticmethod
+    def delete_user(user):
+
+        try:
+            parent_user = models.User.query.get(user.username)
+            db.session.delete(parent_user)
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            raise DatabaseError(message=str(err))
+
+    @staticmethod
     def project_usage(project_object):
 
         bhours = 0.0

@@ -193,6 +193,13 @@ def username_in_db(username):
     return False
 
 
+def delrequest_exists(email):
+    """Check if there is already a deletion request for that email."""
+    if models.DeletionRequest.query.filter_by(email=email).first():
+        return True
+    return False
+
+
 def send_reset_email(email_row):
     """Generate password reset email."""
     # Generate token

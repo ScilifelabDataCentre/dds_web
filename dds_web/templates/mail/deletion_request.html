@@ -1,0 +1,66 @@
+{% extends 'mail/mail_base.html' %}
+{% block body %}
+<table role="presentation" border="0" cellpadding="0" cellspacing="0"
+  style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;">
+  <tr>
+    <td>
+      <img src="cid:Logo" alt="Logo" border="0"
+        style="border:0; outline:none; text-decoration:none; display:block; Margin-bottom: 15px; max-width: 400px; max-height: 87px;">
+    </td>
+  </tr>
+  <tr>
+    <td style=" font-family: arial, sans-serif; font-size: 14px; vertical-align: top;">
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: bold; margin: 0; Margin-bottom: 5px;">You
+        have requested the deletion of your user account {{sender_name}} from the SciLifeLab Data Delivery System (DDS).
+      </p>
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 10px;">
+        We appreciate you using our services and hope that the received data as well as the collaboration as a whole has
+        met your expectations. 
+
+        {% if projectnames is not none %}
+        Currently, you are affiliated with those projects:
+        {{projectnames}}
+        {% endif %}
+        
+        Since your account in the SciLifeLab Data Delivery System (DDS) is not tied to specific
+        projects or platforms, you may also consider to keep it for prospective deliveries.</p>
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">
+        Nonetheless, a reregistration is also possible at any time should you ever need to receive data from us again.
+        To confirm the deletion of your account {{sender_name}}, please 'Confirm delete' button to create your account:
+      </p>
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary"
+        style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box;">
+        <tbody>
+          <tr>
+            <td align="left"
+              style="font-family: arial, sans-serif; font-size: 14px; vertical-align: top; padding-bottom: 15px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0"
+                style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
+                <tbody>
+                  <tr>
+                    <td
+                      style="font-family: arial, sans-serif; font-size: 14px; vertical-align: top; background-color: #43858B; border-radius: 5px; text-align: center;">
+                      <a href="{{link}}" target="_blank" rel="noopener noreferrer"
+                        style="display: inline-block; color: #ffffff; background-color: #43858B; border: solid 1px #43858B; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: #43858B;">Confirm
+                        deletion
+                      </a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-family: arial, sans-serif; font-size: 12px; font-weight: normal; margin: 0; Margin-top: 0px;">
+        Alternatively, please copy and paste the link below into your browser: </p>
+      <p
+        style="font-family: arial, sans-serif; font-size: 12px; font-weight: normal; margin: 0; Margin-top: 0px; word-break: break-all">
+        {{link}}</p>
+      <p style=" font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-top: 15px;">
+        If you would like to keep your account, you do not have to take any further action - the deletion request will
+        automatically expire after one week.</p>
+    </td>
+  </tr>
+</table>
+{% endblock %}

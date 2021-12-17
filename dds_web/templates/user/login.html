@@ -3,6 +3,7 @@
 
 {% block content %}
 <title>Login</title>
+
 <body>
     <h1>Login to DDS</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -16,7 +17,7 @@
     </div>
     {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('auth_blueprint.login') }}">
+    <form method="POST" action="{{ url_for('auth_blueprint.login', next=next) }}">
         {{ form.csrf_token }}
 
         <!-- Username -->

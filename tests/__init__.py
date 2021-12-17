@@ -1,6 +1,8 @@
 """Testing of the dds_web code with pytest."""
 
 from base64 import b64encode
+from urllib.parse import quote_plus
+import json
 import dds_web.api.errors as ddserr
 
 # Copied from dds_cli __init__.py:
@@ -29,6 +31,9 @@ USER_CREDENTIALS = {
     "unituser": "unituser:password",
     "unitadmin": "unitadmin:password",
     "superadmin": "superadmin:password",
+    "delete_me_researcher": "delete_me_researcher:password",
+    "delete_me_unituser": "delete_me_unituser:password",
+    "delete_me_unitadmin": "delete_me_unitadmin:password",
 }
 
 ###############################################################################
@@ -67,6 +72,26 @@ class UserAuth:
         else:
             raise ddserr.JwtTokenGenerationError()
 
+    def login_web(self, client):
+        return client.post(
+            "/login",
+            data=dict(
+                username=self.as_tuple()[0],
+                password=self.as_tuple()[1],
+            ),
+            follow_redirects=True,
+        )
+
+    def login_web_next(self, client, next):
+        return client.post(
+            "/login?next=" + quote_plus(next),
+            data=dict(
+                username=self.as_tuple()[0],
+                password=self.as_tuple()[1],
+            ),
+            follow_redirects=True,
+        )
+
 
 class DDSEndpoint:
     """Defines all DDS urls."""
@@ -78,6 +103,11 @@ class DDSEndpoint:
     USER_ADD = BASE_ENDPOINT + "/user/add"
     USER_CONFIRM = "/confirm_invite/"
     USER_NEW = "/register"
+
+    # User deletion
+    USER_DELETE = BASE_ENDPOINT + "/user/delete"
+    USER_DELETE_SELF = BASE_ENDPOINT + "/user/delete_self"
+    USER_CONFIRM_DELETE = "/confirm_deletion/"
 
     # Authentication - user and project
     TOKEN = BASE_ENDPOINT + "/user/token"
