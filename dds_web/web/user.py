@@ -17,7 +17,6 @@ import pyotp
 import itsdangerous
 import sqlalchemy
 import marshmallow
-import logging
 
 
 # Own Modules

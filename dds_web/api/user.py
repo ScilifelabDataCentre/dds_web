@@ -329,8 +329,6 @@ class DeleteUserSelf(flask_restful.Resource):
         subject = f"Confirm deletion of your user account {username} in the SciLifeLab Data Delivery System"
         projectnames = "; ".join(proj_ids)
 
-        flask.current_app.logger.debug(f"Self-Deletion link for {username}: " + link)
-
         msg = flask_mail.Message(
             subject,
             sender=flask.current_app.config["MAIL_SENDER_ADDRESS"],
