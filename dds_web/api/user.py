@@ -178,7 +178,7 @@ class AddUser(flask_restful.Resource):
             unit_name = unit.external_display_name
             unit_email = unit.contact_email
             sender_name = auth.current_user().name
-            subject = f"{unit} invites you to the SciLifeLab Data Delivery System"
+            subject = f"{unit_name} invites you to the SciLifeLab Data Delivery System"
         else:
             sender_name = auth.current_user().name
             subject = f"{sender_name} invites you to the SciLifeLab Data Delivery System"

@@ -94,7 +94,12 @@ def confirm_invite(token):
         form.unit_name.render_kw = {"readonly": True}
 
     form.email.data = email
-    form.username.data = email.split("@")[0]
+    suggested_username = email.split("@")[0]
+
+    if dds_web.utils.valid_chars_in_username(
+        suggested_username
+    ) and not dds_web.utils.username_in_db(suggested_username):
+        form.username.data = suggested_username
 
     return flask.render_template("user/register.html", form=form)
 
