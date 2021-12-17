@@ -416,7 +416,8 @@ class DeleteUser(flask_restful.Resource):
                 }
             )
         )
- 
+
+
 class RemoveUserAssociation(flask_restful.Resource):
     @auth.login_required
     def post(self):
