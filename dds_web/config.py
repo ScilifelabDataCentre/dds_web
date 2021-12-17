@@ -35,6 +35,7 @@ class Config(object):
     LOCAL_TEMP_CACHE = "/dds_web/local_temp_cache"
     DDS_S3_CONFIG = "/code/dds_web/sensitive/s3_config.json"
     SAFESPRING_URL = os.environ.get("DDS_SAFESPRING_URL", "https://example.endpoint.net")
+    DDS_SAFESPRING_PROJECT = os.environ.get("DDS_SAFESPRING_PROJECT", "project-name.example.se")
     DDS_SAFESPRING_ACCESS = os.environ.get("DDS_SAFESPRING_ACCESS", "SAFESPRINGACCESSKEY")
     DDS_SAFESPRING_SECRET = os.environ.get("DDS_SAFESPRING_SECRET", "SAFESPRINGSECRETKEY")
 
