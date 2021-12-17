@@ -189,7 +189,7 @@ class Project(db.Model):
     files = db.relationship("File", back_populates="project")
     file_versions = db.relationship("Version", back_populates="project")
     project_statuses = db.relationship(
-        "ProjectStatuses", back_populates="project", passive_deletes=True
+        "ProjectStatuses", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
     researchusers = db.relationship("ProjectUsers", back_populates="project", passive_deletes=True)
 
