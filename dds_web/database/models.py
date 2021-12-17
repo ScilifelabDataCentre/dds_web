@@ -187,7 +187,7 @@ class Project(db.Model):
 
     # Additional relationships
     files = db.relationship("File", back_populates="project")
-    file_versions = db.relationship("Version", back_populates="project", passive_deletes=True)
+    file_versions = db.relationship("Version", back_populates="project")
     project_statuses = db.relationship(
         "ProjectStatuses", back_populates="project", passive_deletes=True
     )
@@ -707,7 +707,7 @@ class Version(db.Model):
 
     # Foreign keys & relationships
     project_id = db.Column(
-        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), nullable=True
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), nullable=True
     )
     project = db.relationship("Project", back_populates="file_versions")
     # ---
