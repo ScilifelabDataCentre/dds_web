@@ -129,8 +129,8 @@ class Unit(db.Model):
     days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
 
     # Relationships
-    users = db.relationship("UnitUser", back_populates="unit", passive_deletes=True)
-    projects = db.relationship("Project", back_populates="responsible_unit", passive_deletes=True)
+    users = db.relationship("UnitUser", back_populates="unit")
+    projects = db.relationship("Project", back_populates="responsible_unit")
     invites = db.relationship("Invite", back_populates="unit", passive_deletes=True)
 
     def __repr__(self):
