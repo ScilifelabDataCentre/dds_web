@@ -186,7 +186,7 @@ class Project(db.Model):
     # ---
 
     # Additional relationships
-    files = db.relationship("File", back_populates="project", passive_deletes=True)
+    files = db.relationship("File", back_populates="project")
     file_versions = db.relationship("Version", back_populates="project", passive_deletes=True)
     project_statuses = db.relationship(
         "ProjectStatuses", back_populates="project", passive_deletes=True
@@ -653,7 +653,9 @@ class File(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
 
     # Foreign keys & relationships
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), index=True
+    )
     project = db.relationship("Project", back_populates="files")
     # ---
 
