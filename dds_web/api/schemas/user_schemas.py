@@ -10,7 +10,6 @@ from datetime import datetime
 # Installed
 import marshmallow
 import sqlalchemy
-from sqlalchemy.sql.functions import current_user
 
 # Own modules
 from dds_web import db
@@ -37,6 +36,7 @@ class UserSchema(marshmallow.Schema):
     @marshmallow.post_load
     def return_user(self, data, **kwargs):
         """Return the user."""
+
         email_row = models.Email.query.filter_by(email=data.get("email")).first()
         if not email_row:
             return None
