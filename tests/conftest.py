@@ -44,7 +44,18 @@ def demo_data():
             safespring_name="dds.example.com",
             safespring_access="access",
             safespring_secret="secret",
-        )
+        ),
+        Unit(
+            name="The league of the extinct gentlemen",
+            public_id=os.urandom(16).hex(),
+            external_display_name="Retraction guaranteed",
+            contact_email="tloteg@mailtrap.io",
+            internal_ref="Unit to test user deletion",
+            safespring_endpoint="endpoint",
+            safespring_name="dds.example.com",
+            safespring_access="access",
+            safespring_secret="secret",
+        ),
     ]
 
     users = [
@@ -85,6 +96,26 @@ def demo_data():
             username="researchuser2",
             password="password",
             name="Research User 2",
+        ),
+        ResearchUser(
+            username="delete_me_researcher",
+            password="password",
+            name="Research User to test deletions",
+            has_2fa=True,
+        ),
+        UnitUser(
+            username="delete_me_unituser",
+            password="password",
+            name="Unit User to test deletions",
+            is_admin=False,
+            has_2fa=True,
+        ),
+        UnitUser(
+            username="delete_me_unitadmin",
+            password="password",
+            name="Unit Admin to test deletions",
+            is_admin=True,
+            has_2fa=True,
         ),
     ]
 
@@ -190,6 +221,25 @@ def add_data_to_db():
         user_id="researchuser2", email="researchuser2@mailtrap.io", primary=True
     )
     users[6].emails.append(add_email_to_user_6)
+
+    users[2].emails.append(Email(user_id="unituser1", email="unituser1@mailtrap.io", primary=True))
+    users[3].emails.append(Email(user_id="unituser2", email="unituser2@mailtrap.io", primary=True))
+    users[4].emails.append(Email(user_id="unitadmin", email="unitadmin@mailtrap.io", primary=True))
+    users[5].emails.append(
+        Email(user_id="superadmin", email="superadmin@mailtrap.io", primary=True)
+    )
+    users[7].emails.append(
+        Email(
+            user_id="delete_me_researcher", email="delete_me_researcher@mailtrap.io", primary=True
+        )
+    )
+    users[8].emails.append(
+        Email(user_id="delete_me_unituser", email="delete_me_unituser@mailtrap.io", primary=True)
+    )
+    users[9].emails.append(
+        Email(user_id="delete_me_unitadmin", email="delete_me_unitadmin@mailtrap.io", primary=True)
+    )
+
     # Add created project
     users[2].created_projects.append(projects[0])
     users[3].created_projects.append(projects[1])
@@ -201,7 +251,9 @@ def add_data_to_db():
     units[0].users.extend([users[2], users[3], users[4]])
     units[0].invites.append(invites[0])
 
-    return units[0]
+    units[1].users.extend([users[8], users[9]])
+
+    return units, users
 
 
 @pytest.fixture(scope="function")
@@ -215,11 +267,10 @@ def client():
 
             db.create_all()
 
-            unit = add_data_to_db()
+            units, users = add_data_to_db()
+            db.session.add_all(units)
+            db.session.add_all(users)
 
-            db.session.add(unit)
-            # db.session.add_all(users)
-            # db.session.add_all(projects)
             db.session.commit()
 
             try:
@@ -243,11 +294,10 @@ def module_client():
 
             db.create_all()
 
-            unit = add_data_to_db()
+            units, users = add_data_to_db()
+            db.session.add_all(units)
+            db.session.add_all(users)
 
-            db.session.add(unit)
-            # db.session.add_all(users)
-            # db.session.add_all(projects)
             db.session.commit()
 
             try:
