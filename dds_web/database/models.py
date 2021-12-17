@@ -191,7 +191,9 @@ class Project(db.Model):
     project_statuses = db.relationship(
         "ProjectStatuses", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
-    researchusers = db.relationship("ProjectUsers", back_populates="project", passive_deletes=True)
+    researchusers = db.relationship(
+        "ProjectUsers", back_populates="project", passive_deletes=True, cascade="all, delete"
+    )
 
     @property
     def current_status(self):
