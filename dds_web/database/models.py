@@ -131,7 +131,9 @@ class Unit(db.Model):
     # Relationships
     users = db.relationship("UnitUser", back_populates="unit")
     projects = db.relationship("Project", back_populates="responsible_unit")
-    invites = db.relationship("Invite", back_populates="unit", passive_deletes=True)
+    invites = db.relationship(
+        "Invite", back_populates="unit", passive_deletes=True, cascade="all, delete"
+    )
 
     def __repr__(self):
         """Called by print, creates representation of object"""
