@@ -429,7 +429,7 @@ class ResearchUser(User):
 
     # Relationships
     project_associations = db.relationship(
-        "ProjectUsers", back_populates="researchuser", passive_deletes=True
+        "ProjectUsers", back_populates="researchuser", passive_deletes=True, cascade="all, delete"
     )
 
     @property
@@ -686,7 +686,7 @@ class File(db.Model):
     )
 
     # Additional relationships
-    versions = db.relationship("Version", back_populates="file", passive_deletes=True)
+    versions = db.relationship("Version", back_populates="file")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
