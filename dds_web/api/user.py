@@ -286,7 +286,7 @@ class DeleteUserSelf(flask_restful.Resource):
     """
 
     @auth.login_required
-    def post(self):
+    def delete(self):
         current_user = auth.current_user()
 
         email_str = current_user.primary_email
@@ -382,7 +382,7 @@ class DeleteUser(flask_restful.Resource):
     Unit admins can delete unitusers. Super admins can delete any user."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
-    def post(self):
+    def delete(self):
 
         user = user_schemas.UserSchema().load(flask.request.json)
         if user is None:
