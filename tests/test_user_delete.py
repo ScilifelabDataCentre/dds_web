@@ -1,20 +1,19 @@
 # Standard libraries
-import flask
 import http
+
+# Installed
+import flask
 import itsdangerous
 import json
 import pytest
-import tests
 
 # own modules
-from dds_web import utils
+from dds_web import db
 from dds_web.database import models
-import dds_web.api.errors as ddserr
 
-# User deletion endpoints
-# USER_DELETE = BASE_ENDPOINT + "/user/delete"
-# USER_DELETE_SELF = BASE_ENDPOINT + "/user/delete_self"
-# USER_CONFIRM_DELETE = "/confirm_deletion/"
+import dds_web.utils
+import dds_web.api.errors as ddserr
+import tests
 
 
 #################################### UTILITY FUNCTIONS ##################################
@@ -25,6 +24,19 @@ def get_deletion_token(email):
     s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
     token = s.dumps(email, salt="email-delete")
     return token
+
+
+def create_delete_request(email_str):
+    user = dds_web.utils.email_return_user(email_str)
+    new_delrequest = models.DeletionRequest(
+        **{
+            "requester": user,
+            "email": email_str,
+            "issued": dds_web.utils.current_time(),
+        }
+    )
+    db.session.add(new_delrequest)
+    db.session.commit()
 
 
 ############################## INITIATE SELF-DELETION TESTS #############################
@@ -70,16 +82,64 @@ def test_del_route_no_token(client):
 
 def test_del_route_invalid_token(client):
     """Use invalid signature"""
+    client = tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).fake_web_login(client)
+
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + "invalidtoken", content_type="application/json"
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
 
 def test_del_route_expired_token(client):
     """Use expired token"""
-    # "InJlc2VhcmNodXNlcjFAbWFpbHRyYXAuaW8i.YbIcrg.BmxUW6fKsnC3ujO5z1E_5CYiit4"
+    token = "InJlc2VhcmNodXNlcjFAbWFpbHRyYXAuaW8i.YbIcrg.BmxUW6fKsnC3ujO5z1E_5CYiit4"
+    client = tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).fake_web_login(client)
+
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + token, content_type="application/json"
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+
+def test_del_route_valid_token_wrong_user(client):
+    """Confirm self deletion but using the wrong login."""
+    email_to_delete = "delete_me_researcher@mailtrap.io"
+    create_delete_request(email_to_delete)
+    token = get_deletion_token(email_to_delete)
+
+    # Use wrong login here
+    client = tests.UserAuth(tests.USER_CREDENTIALS["researchuser2"]).fake_web_login(client)
+
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + token, content_type="application/json"
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    exists = dds_web.utils.email_return_user(email_to_delete)
+    assert exists is not None
 
 
 def test_del_route_valid_token(client):
     """Successfully request self deletion."""
-    tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).login_web(client)
+    email_to_delete = "delete_me_researcher@mailtrap.io"
+    create_delete_request(email_to_delete)
+    token = get_deletion_token(email_to_delete)
+
+    client = tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).fake_web_login(client)
+
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + token, content_type="application/json"
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+
+    exists = dds_web.utils.email_return_user(email_to_delete)
+    assert exists is None
+
+    # Check for email existence as well
 
 
 ################################ FOREIGN DELETION TESTS #################################
@@ -100,7 +160,7 @@ def test_del_request_others_unprivileged(client):
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     # verify that user was not deleted
-    exists = utils.email_return_user(email_to_delete)
+    exists = dds_web.utils.email_return_user(email_to_delete)
     assert exists is not None
     assert type(exists).__name__ == "UnitUser"
     assert exists.primary_email == email_to_delete
@@ -121,7 +181,7 @@ def test_del_request_others_researcher(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     # verify that user was not deleted
-    exists = utils.email_return_user(email_to_delete)
+    exists = dds_web.utils.email_return_user(email_to_delete)
     assert exists is not None
     assert type(exists).__name__ == "ResearchUser"
     assert exists.primary_email == email_to_delete
@@ -143,7 +203,7 @@ def test_del_request_others_researcher(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     # verify that user was not deleted
-    exists = utils.email_return_user(email_to_delete)
+    exists = dds_web.utils.email_return_user(email_to_delete)
     assert exists is not None
     assert type(exists).__name__ == "UnitUser"
     assert exists.primary_email == email_to_delete
@@ -164,7 +224,7 @@ def test_del_request_others_self(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     # verify that user was not deleted
-    exists = utils.email_return_user(email_to_delete)
+    exists = dds_web.utils.email_return_user(email_to_delete)
     assert exists is not None
     assert type(exists).__name__ == "UnitUser"
     assert exists.primary_email == email_to_delete
@@ -184,7 +244,7 @@ def test_del_request_others_success(client):
     assert response.status_code == http.HTTPStatus.OK
 
     # Make sure that user was deleted
-    exists = utils.email_return_user(email_to_delete)
+    exists = dds_web.utils.email_return_user(email_to_delete)
     assert exists is None
 
 
@@ -202,5 +262,5 @@ def test_del_request_others_superaction(client):
     assert response.status_code == http.HTTPStatus.OK
 
     # Make sure that user was deleted
-    exists = utils.email_return_user(email_to_delete)
+    exists = dds_web.utils.email_return_user(email_to_delete)
     assert exists is None
