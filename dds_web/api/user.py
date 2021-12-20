@@ -179,7 +179,7 @@ class AddUser(flask_restful.Resource):
             unit_name = unit.external_display_name
             unit_email = unit.contact_email
             sender_name = auth.current_user().name
-            subject = f"{unit} invites you to the SciLifeLab Data Delivery System"
+            subject = f"{unit_name} invites you to the SciLifeLab Data Delivery System"
         else:
             sender_name = auth.current_user().name
             subject = f"{sender_name} invites you to the SciLifeLab Data Delivery System"
@@ -328,8 +328,6 @@ class DeleteUserSelf(flask_restful.Resource):
         link = flask.url_for("auth_blueprint.confirm_self_deletion", token=token, _external=True)
         subject = f"Confirm deletion of your user account {username} in the SciLifeLab Data Delivery System"
         projectnames = "; ".join(proj_ids)
-
-        flask.current_app.logger.debug(f"Self-Deletion link for {username}: " + link)
 
         msg = flask_mail.Message(
             subject,

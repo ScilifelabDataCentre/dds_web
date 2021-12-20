@@ -26,8 +26,14 @@ def get_deletion_token(email):
     return token
 
 
+def user_from_email(email):
+    """Helper function to return the User for a given email"""
+    user = models.User.query.join(models.Email).filter(models.Email.email == email).one_or_none()
+    return user
+
+
 def create_delete_request(email_str):
-    user = dds_web.utils.email_return_user(email_str)
+    user = user_from_email(email_str)
     new_delrequest = models.DeletionRequest(
         **{
             "requester": user,
@@ -118,7 +124,7 @@ def test_del_route_valid_token_wrong_user(client):
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
-    exists = dds_web.utils.email_return_user(email_to_delete)
+    exists = user_from_email(email_to_delete)
     assert exists is not None
 
 
@@ -136,7 +142,7 @@ def test_del_route_valid_token(client):
 
     assert response.status_code == http.HTTPStatus.OK
 
-    exists = dds_web.utils.email_return_user(email_to_delete)
+    exists = user_from_email(email_to_delete)
     assert exists is None
 
     # Check for email existence as well
@@ -160,7 +166,7 @@ def test_del_request_others_unprivileged(client):
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     # verify that user was not deleted
-    exists = dds_web.utils.email_return_user(email_to_delete)
+    exists = user_from_email(email_to_delete)
     assert exists is not None
     assert type(exists).__name__ == "UnitUser"
     assert exists.primary_email == email_to_delete
@@ -181,7 +187,7 @@ def test_del_request_others_researcher(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     # verify that user was not deleted
-    exists = dds_web.utils.email_return_user(email_to_delete)
+    exists = user_from_email(email_to_delete)
     assert exists is not None
     assert type(exists).__name__ == "ResearchUser"
     assert exists.primary_email == email_to_delete
@@ -203,7 +209,7 @@ def test_del_request_others_researcher(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     # verify that user was not deleted
-    exists = dds_web.utils.email_return_user(email_to_delete)
+    exists = user_from_email(email_to_delete)
     assert exists is not None
     assert type(exists).__name__ == "UnitUser"
     assert exists.primary_email == email_to_delete
@@ -224,7 +230,7 @@ def test_del_request_others_self(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     # verify that user was not deleted
-    exists = dds_web.utils.email_return_user(email_to_delete)
+    exists = user_from_email(email_to_delete)
     assert exists is not None
     assert type(exists).__name__ == "UnitUser"
     assert exists.primary_email == email_to_delete
@@ -244,8 +250,9 @@ def test_del_request_others_success(client):
     assert response.status_code == http.HTTPStatus.OK
 
     # Make sure that user was deleted
-    exists = dds_web.utils.email_return_user(email_to_delete)
+    exists = user_from_email(email_to_delete)
     assert exists is None
+    assert dds_web.utils.email_in_db(email_to_delete) is False
 
 
 def test_del_request_others_superaction(client):
@@ -262,5 +269,6 @@ def test_del_request_others_superaction(client):
     assert response.status_code == http.HTTPStatus.OK
 
     # Make sure that user was deleted
-    exists = dds_web.utils.email_return_user(email_to_delete)
+    exists = user_from_email(email_to_delete)
     assert exists is None
+    assert dds_web.utils.email_in_db(email_to_delete) is False
