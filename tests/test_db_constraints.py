@@ -58,6 +58,7 @@ def test_delete_unit_row__with_users(client):
         db.session.delete(project)
     db.session.commit()
 
+    # With this removed, the exception does not occur
     # print(unit.users)
 
     db.session.delete(unit)
@@ -84,6 +85,7 @@ def test_delete_unit_row__with_users2(client):
         db.session.delete(project)
     db.session.commit()
 
+    # This seems to make the exception raise as it should below
     print(unit.users)
 
     db.session.delete(unit)
