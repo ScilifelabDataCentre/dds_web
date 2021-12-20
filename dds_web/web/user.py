@@ -10,6 +10,7 @@ import json
 
 # Installed
 import flask
+import werkzeug
 from dds_web.api.db_connector import DBConnector
 import flask_login
 import pyqrcode
@@ -29,13 +30,35 @@ from dds_web import db, limiter
 import dds_web.api.errors as ddserr
 from dds_web.api.schemas import user_schemas
 from dds_web import mail
-import flask_mail
+
+
+auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
+
+####################################################################################################
+# ERROR HANDLING ################################################################## ERROR HANDLING #
+####################################################################################################
+
+
+class UserDeletionErrorWeb(werkzeug.exceptions.BadRequest):
+    def __init__(self, message):
+        super().__init__()
+        self.message = message
+
+
+@auth_blueprint.errorhandler(werkzeug.exceptions.HTTPException)
+def bad_request(error):
+    """Handle user deletion errors."""
+    try:
+        message = error.message
+    except AttributeError:
+        message = ""
+    flask.current_app.logger.error(f"{error.code}: {message}")
+    return flask.make_response(flask.render_template("error.html", message=message), error.code)
 
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
-auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 
 
 @auth_blueprint.route("/", methods=["GET"])
@@ -343,7 +366,7 @@ def confirm_self_deletion(token):
             flask.current_app.logger.warning(
                 f"{msg} email: {email}: user: {flask_login.current_user}"
             )
-            raise ddserr.UserDeletionError(message=msg)
+            raise UserDeletionErrorWeb(message=msg)
 
         # Get row from deletion requests table
         deletion_request_row = models.DeletionRequest.query.filter(
@@ -355,11 +378,11 @@ def confirm_self_deletion(token):
             models.DeletionRequest.query.filter(models.DeletionRequest.email == email).all()
         )
         db.session.commit()
-        raise ddserr.UserDeletionError(
+        raise UserDeletionErrorWeb(
             message=f"Deletion request for {email} has expired. Please login to the DDS and request deletion anew."
         )
     except (itsdangerous.exc.BadSignature, itsdangerous.exc.BadTimeSignature):
-        raise ddserr.UserDeletionError(
+        raise UserDeletionErrorWeb(
             message=f"Confirmation link is invalid. No action has been performed."
         )
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
@@ -376,7 +399,7 @@ def confirm_self_deletion(token):
             db.session.commit()
 
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise ddserr.UserDeletionError(
+            raise UserDeletionErrorWeb(
                 message=f"User deletion request for {user.username} / {user.primary_email.email} failed due to database error: {sqlerr}",
                 alt_message=f"Deletion request for user {user.username} registered with {user.primary_email.email} failed for technical reasons. Please contact the unit for technical support!",
             )
