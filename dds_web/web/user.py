@@ -38,12 +38,6 @@ auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 ####################################################################################################
 
 
-class UserDeletionErrorWeb(werkzeug.exceptions.BadRequest):
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
-
-
 @auth_blueprint.errorhandler(werkzeug.exceptions.HTTPException)
 def bad_request(error):
     """Handle user deletion errors."""
@@ -370,7 +364,7 @@ def confirm_self_deletion(token):
             flask.current_app.logger.warning(
                 f"{msg} email: {email}: user: {flask_login.current_user}"
             )
-            raise UserDeletionErrorWeb(message=msg)
+            raise ddserr.UserDeletionError(message=msg)
 
         # Get row from deletion requests table
         deletion_request_row = models.DeletionRequest.query.filter(
@@ -382,11 +376,11 @@ def confirm_self_deletion(token):
             models.DeletionRequest.query.filter(models.DeletionRequest.email == email).all()
         )
         db.session.commit()
-        raise UserDeletionErrorWeb(
+        raise ddserr.UserDeletionError(
             message=f"Deletion request for {email} has expired. Please login to the DDS and request deletion anew."
         )
     except (itsdangerous.exc.BadSignature, itsdangerous.exc.BadTimeSignature):
-        raise UserDeletionErrorWeb(
+        raise ddserr.UserDeletionError(
             message=f"Confirmation link is invalid. No action has been performed."
         )
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
@@ -403,7 +397,7 @@ def confirm_self_deletion(token):
             db.session.commit()
 
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise UserDeletionErrorWeb(
+            raise ddserr.UserDeletionError(
                 message=f"User deletion request for {user.username} / {user.primary_email.email} failed due to database error: {sqlerr}",
                 alt_message=f"Deletion request for user {user.username} registered with {user.primary_email.email} failed for technical reasons. Please contact the unit for technical support!",
             )
