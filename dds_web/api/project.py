@@ -15,7 +15,8 @@ from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
 from cryptography.hazmat import backends
 import os
 import marshmallow
-
+import datetime
+import botocore
 
 # Own modules
 import dds_web.utils
@@ -31,119 +32,11 @@ from dds_web.api.errors import (
     DeletionError,
     BucketNotFoundError,
     KeyNotFoundError,
+    S3ConnectionError,
 )
-from dds_web.crypt import key_gen
 from dds_web.api.user import AddUser
-from dds_web.api.schemas import custom_fields
 from dds_web.api.schemas import project_schemas
 from dds_web.api.schemas import user_schemas
-
-####################################################################################################
-# SCHEMAS ################################################################################ SCHEMAS #
-####################################################################################################
-
-
-class CreateProjectSchema(marshmallow.Schema):
-    """Schema for creating a project."""
-
-    class Meta:
-        unknown = marshmallow.EXCLUDE
-
-    title = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
-    description = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(min=1)
-    )
-    pi = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(min=1, max=255)
-    )
-    is_sensitive = marshmallow.fields.Boolean(required=False)
-    date_created = custom_fields.MyDateTimeField(required=False)
-
-    @marshmallow.pre_load
-    def generate_required_fields(self, data, **kwargs):
-        """Generate all required fields for creating a project."""
-        if not data:
-            raise DDSArgumentError(
-                "No project information found when attempting to create project."
-            )
-
-        data["date_created"] = dds_web.utils.current_time()
-
-        return data
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def validate_all_fields(self, data, **kwargs):
-        """Validate that all fields are present."""
-        if not all(
-            field in data
-            for field in [
-                "title",
-                "date_created",
-                "description",
-                "pi",
-            ]
-        ):
-            raise marshmallow.ValidationError("Missing fields!")
-
-    def generate_bucketname(self, public_id, created_time):
-        """Create bucket name for the given project."""
-        return "{pid}-{tstamp}-{rstring}".format(
-            pid=public_id.lower(),
-            tstamp=dds_web.utils.timestamp(dts=created_time, ts_format="%y%m%d%H%M%S%f"),
-            rstring=os.urandom(4).hex(),
-        )
-
-    @marshmallow.post_load
-    def create_project(self, data, **kwargs):
-        """Create project row in db."""
-
-        try:
-            # Lock db, get unit row and update counter
-            unit_row = (
-                models.Unit.query.filter_by(id=auth.current_user().unit_id)
-                .with_for_update()
-                .one_or_none()
-            )
-            if not unit_row:
-                raise AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
-
-            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
-            data["public_id"] = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
-
-            # Generate bucket name
-            data["bucket"] = self.generate_bucketname(
-                public_id=data["public_id"], created_time=data["date_created"]
-            )
-
-            # Generate keys
-            data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
-
-            # Create project
-            current_user = auth.current_user()
-            new_project = models.Project(
-                **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
-            )
-            new_project.project_statuses.append(
-                models.ProjectStatuses(
-                    **{
-                        "status": "In Progress",
-                        "date_created": data["date_created"],
-                    }
-                )
-            )
-            # Save
-            db.session.add(new_project)
-            db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise DatabaseError(message="Server Error: Project was not created")
-        except (marshmallow.ValidationError, DDSArgumentError, AccessDeniedError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise
-
-        return new_project
 
 
 ####################################################################################################
@@ -163,7 +56,7 @@ class ProjectStatus(flask_restful.Resource):
             history = []
             for pstatus in project.project_statuses:
                 history.append(tuple((pstatus.status, pstatus.date_created)))
-            history.sort(key=lambda x: x[1])
+            history.sort(key=lambda x: x[1], reverse=True)
             return_info.update({"history": history})
 
         return flask.jsonify(return_info)
@@ -172,6 +65,7 @@ class ProjectStatus(flask_restful.Resource):
     def post(self):
         """Update Project Status"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        public_id = project.public_id
         extra_args = flask.request.json
         new_status = extra_args.get("new_status")
         if new_status not in [
@@ -183,31 +77,95 @@ class ProjectStatus(flask_restful.Resource):
         ]:
             raise DDSArgumentError("Invalid status")
 
+        curr_date = dds_web.utils.current_time()
+        is_aborted = False
+        add_deadline = None
+
         if not self.is_transition_possible(project.current_status, new_status):
             raise DDSArgumentError("Invalid status transition")
 
-        try:
-            add_status = models.ProjectStatuses(
-                **{
-                    "project_id": project.id,
-                    "status": new_status,
-                    "date_created": dds_web.utils.current_time(),
-                }
+        # Moving to Available
+        if new_status == "Available":
+            # Optional int arg deadline in days
+            deadline = extra_args.get("deadline", project.responsible_unit.days_in_available)
+            add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
+                days=deadline
+            )
+            if project.current_status == "Expired":
+                # Project can only move from Expired 2 times
+                if project.times_expired > 2:
+                    raise DDSArgumentError(
+                        "Project availability limit: Project cannot be made Available any more times"
+                    )
+            else:  # current status is in progress
+                if project.has_been_available:
+                    # No change in deadline if made available before
+                    add_deadline = project.current_deadline
+                else:
+                    project.released = curr_date
+
+        # Moving to Expired
+        if new_status == "Expired":
+            deadline = extra_args.get("deadline", project.responsible_unit.days_in_expired)
+            add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
+                days=deadline
             )
 
+        # Moving to Deleted
+        if new_status == "Deleted":
+            # Can only be Deleted if never made Available
+            if project.has_been_available:
+                raise DDSArgumentError(
+                    "Project cannot be deleted if it has ever been made available, abort it instead"
+                )
+            project.is_active = False
+
+        # Moving to Archived
+        if new_status == "Archived":
+            is_aborted = extra_args.get("is_aborted", False)
+            if project.current_status == "In Progress":
+                if not (project.has_been_available and is_aborted):
+                    raise DDSArgumentError(
+                        "Project cannot be archived from this status but can be aborted if it has ever been made available"
+                    )
+            project.is_active = False
+
+        add_status = models.ProjectStatuses(
+            **{"project_id": project.id, "status": new_status, "date_created": curr_date},
+            deadline=add_deadline,
+            is_aborted=is_aborted,
+        )
+        delete_message = ""
+        try:
             project.project_statuses.append(add_status)
+            if not project.is_active:
+                # Deletes files (also commits session in the function - possibly refactor later)
+                removed = RemoveContents().delete_project_contents(project)
+                delete_message = f"\nAll files in {public_id} deleted"
+                if new_status == "Deleted" or is_aborted:
+                    # Delete metadata from project row
+                    project = self.delete_project_info(project)
+                    delete_message += " and project info cleared"
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+        except (
+            sqlalchemy.exc.SQLAlchemyError,
+            TypeError,
+            DatabaseError,
+            DeletionError,
+            BucketNotFoundError,
+        ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DatabaseError(message="Server Error: Status was not updated")
 
-        return flask.jsonify({"message": f"{project.public_id} updated to status {new_status}"})
+        return flask.jsonify(
+            {"message": f"{public_id} updated to status {new_status}" + delete_message}
+        )
 
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""
         possible_transitions = [
-            ("In Progress", ["Available", "Deleted"]),
+            ("In Progress", ["Available", "Deleted", "Archived"]),
             ("Available", ["In Progress", "Expired", "Archived"]),
             ("Expired", ["Available", "Archived"]),
         ]
@@ -218,6 +176,26 @@ class ProjectStatus(flask_restful.Resource):
                 result = True
                 break
         return result
+
+    def delete_project_info(self, proj):
+        """Delete certain metadata from proj on deletion/abort"""
+        proj.public_id = None
+        proj.title = None
+        proj.date_created = None
+        proj.date_updated = None
+        proj.description = None
+        proj.pi = None
+        proj.public_key = None
+        proj.private_key = None
+        proj.privkey_salt = None
+        proj.privkey_nonce = None
+        proj.is_sensitive = None
+        proj.unit_id = None
+        proj.created_by = None
+        # Delete User associations
+        for user in proj.researchusers:
+            db.session.delete(user)
+        return proj
 
 
 class GetPublic(flask_restful.Resource):
@@ -345,43 +323,35 @@ class RemoveContents(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Delete files
-        removed = False
-        with DBConnector(project=project) as dbconn:
-            try:
-                removed = dbconn.delete_all()
-            except (DatabaseError, EmptyProjectException):
-                raise
+        if not project.files:
+            raise EmptyProjectException("The are no project contents to delete.")
+        try:
+            self.delete_project_contents(project)
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+        except DatabaseError as err:
+            raise DeletionError(
+                message=f"No project contents deleted: {err}",
+                project=project.public_id,
+            )
+        except (DeletionError, BucketNotFoundError):
+            raise
 
-            # Return error if contents not deleted from db
+        return flask.jsonify({"removed": True})
+
+    @staticmethod
+    def delete_project_contents(project):
+        """Remove project contents"""
+        DBConnector(project=project).delete_all()
+
+        # Delete from bucket
+        with ApiS3Connector(project=project) as s3conn:
+            removed = s3conn.remove_all()
             if not removed:
-                raise DeletionError(
-                    message="No project contents deleted.",
-                    username=current_user.username,
-                    project=project.public_id,
-                )
-
-            # Delete from bucket
-            try:
-                with ApiS3Connector(project=project) as s3conn:
-                    removed = s3conn.remove_all()
-
-                    # Return error if contents not deleted from s3 bucket
-                    if not removed:
-                        db.session.rollback()
-                        raise DeletionError(
-                            message="Deleting project contents failed.",
-                            username=current_user.username,
-                            project=project.public_id,
-                        )
-
-                    # Commit changes to db
-                    db.session.commit()
-            except sqlalchemy.exc.SQLAlchemyError as err:
-                raise DatabaseError(message=str(err))
-            except (DeletionError, BucketNotFoundError):
-                raise
-
-        return flask.jsonify({"removed": removed})
+                db.session.rollback()
+            else:
+                # Commit changes to db
+                db.session.commit()
 
 
 class CreateProject(flask_restful.Resource):
@@ -391,10 +361,19 @@ class CreateProject(flask_restful.Resource):
 
         p_info = flask.request.json
 
-        new_project = CreateProjectSchema().load(p_info)
+        new_project = project_schemas.CreateProjectSchema().load(p_info)
 
         if not new_project:
             raise DDSArgumentError("Failed to create project.")
+
+        # TODO: Change -- the bucket should be created before the row is added to the database
+        # This is a quick fix so that things do not break
+        try:
+            with ApiS3Connector(project=new_project) as s3:
+                s3.resource.create_bucket(Bucket=new_project.bucket)
+        except botocore.exceptions.ClientError as err:
+            # For now just keeping the project row
+            raise S3ConnectionError(str(err))
 
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."

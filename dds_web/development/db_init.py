@@ -77,12 +77,14 @@ def fill_db():
     # Connect project to association row. = (not append) due to one project per ass. row
     project_1_user_1_association.project = project_1
 
+    email_researchuser_2 = models.Email(email="researchuser2@mailtrap.io", primary=True)
     # Create second research user
     researchuser_2 = models.ResearchUser(
         username="researchuser_2",
         password="password",
         name="Second Research User",
     )
+    email_researchuser_2.user = researchuser_2
     # Create association with user - is owner of project
     project_1_user_2_association = models.ProjectUsers(owner=True)
     # Connect research user to association row. = (not append) due to one user per ass. row
@@ -102,6 +104,14 @@ def fill_db():
         password="password",
         name="Second Unit User",
     )
+
+    # create a few e-mail addresses
+    email_unituser_1 = models.Email(email="unituser1@mailtrap.io", primary=True)
+    email_unituser_1b = models.Email(email="unituser1@somewhereelse.se", primary=False)
+    email_unituser_2 = models.Email(email="unituser2@mailtrap.io", primary=True)
+    email_unituser_1.user = unituser_1
+    email_unituser_1b.user = unituser_1
+    email_unituser_2.user = unituser_2
 
     # Add created project
     unituser_1.created_projects.append(project_1)

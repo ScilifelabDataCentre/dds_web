@@ -28,11 +28,12 @@ services:
       context: ./
       target: base
     working_dir: /code
-    command: bash -c "flask init-dev-db && flask run -h 0.0.0.0 -p 5000"
+    command: bash -c "flask init-dev-db $$INIT_DEV_DB && flask run -h 0.0.0.0 -p 5000"
     environment:
       - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
       - FLASK_ENV=development
       - FLASK_APP=dds_web
+      - INIT_DEV_DB=${DDS_INIT_DEV_DB}
     depends_on:
       db:
         condition: service_healthy

@@ -1,0 +1,12 @@
+{% extends 'user/userbase.html' %}
+{% block body %}
+{% if initial %}
+<h1>Account deletion completed</h1>
+{% else %}
+<h1>Your account is already deleted!</h1>
+{% endif %}
+<p>You have successfully deleted your account <strong>{{username}}</strong> at the <span>SciLifeLab Data Delivery
+        System</span>. Thank you for using our services. Feel free to sign up again, should you ever need to receive
+    data from us in the future!</p>
+<h3>Lykka till!</h3>
+{% endblock %}

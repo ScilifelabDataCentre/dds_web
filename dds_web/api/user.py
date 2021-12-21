@@ -27,6 +27,7 @@ from dds_web.database import models
 import dds_web.utils
 import dds_web.forms
 import dds_web.api.errors as ddserr
+from dds_web.api.db_connector import DBConnector
 from dds_web.api.schemas import project_schemas
 from dds_web.api.schemas import user_schemas
 
@@ -38,10 +39,6 @@ ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
-
-
-def rate_limit_from_config():
-    return flask.current_app.config.get("TOKEN_ENDPOINT_ACCESS_LIMIT", "10/hour")
 
 
 def encrypted_jwt_token(
@@ -182,7 +179,7 @@ class AddUser(flask_restful.Resource):
             unit_name = unit.external_display_name
             unit_email = unit.contact_email
             sender_name = auth.current_user().name
-            subject = f"{unit} invites you to the SciLifeLab Data Delivery System"
+            subject = f"{unit_name} invites you to the SciLifeLab Data Delivery System"
         else:
             sender_name = auth.current_user().name
             subject = f"{sender_name} invites you to the SciLifeLab Data Delivery System"
@@ -283,12 +280,150 @@ class AddUser(flask_restful.Resource):
         }
 
 
+class DeleteUserSelf(flask_restful.Resource):
+    """Endpoint to initiate user self removal from the system
+    Every user can self-delete the own account with an e-mail confirmation.
+    """
+
+    @auth.login_required
+    def delete(self):
+        current_user = auth.current_user()
+
+        email_str = current_user.primary_email
+
+        username = current_user.username
+
+        proj_ids = [proj.public_id for proj in current_user.projects]
+
+        # Create URL safe token for invitation link
+        s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
+        token = s.dumps(email_str, salt="email-delete")
+
+        # Create deletion request in database unless it already exists
+        try:
+            if not dds_web.utils.delrequest_exists(email_str):
+                new_delrequest = models.DeletionRequest(
+                    **{
+                        "requester": current_user,
+                        "email": email_str,
+                        "issued": dds_web.utils.current_time(),
+                    }
+                )
+                db.session.add(new_delrequest)
+                db.session.commit()
+            else:
+                return {
+                    "message": f"The confirmation link has already been sent to your address {email_str}!",
+                    "status": 200,
+                }
+
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            db.session.rollback()
+            raise ddserr.DatabaseError(
+                message=f"Creation of self-deletion request failed due to database error: {sqlerr}",
+                pass_message=False,
+            )
+
+        # Create link for deletion request email
+        link = flask.url_for("auth_blueprint.confirm_self_deletion", token=token, _external=True)
+        subject = f"Confirm deletion of your user account {username} in the SciLifeLab Data Delivery System"
+        projectnames = "; ".join(proj_ids)
+
+        msg = flask_mail.Message(
+            subject,
+            sender=flask.current_app.config["MAIL_SENDER_ADDRESS"],
+            recipients=[email_str],
+        )
+
+        # Need to attach the image to be able to use it
+        msg.attach(
+            "scilifelab_logo.png",
+            "image/png",
+            open(
+                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+            ).read(),
+            "inline",
+            headers=[
+                ["Content-ID", "<Logo>"],
+            ],
+        )
+
+        msg.body = flask.render_template(
+            "mail/deletion_request.txt",
+            link=link,
+            sender_name=current_user.name,
+            projects=projectnames,
+        )
+        msg.html = flask.render_template(
+            "mail/deletion_request.html",
+            link=link,
+            sender_name=current_user.name,
+            projects=projectnames,
+        )
+
+        mail.send(msg)
+
+        flask.current_app.logger.info(
+            f"The user account {username} / {email_str} ({current_user.role}) has requested self-deletion."
+        )
+
+        return flask.make_response(
+            flask.jsonify(
+                {
+                    "message": f"Requested account deletion initiated. An e-mail with a confirmation link has been sent to your address {email_str}!",
+                }
+            )
+        )
+
+
+class DeleteUser(flask_restful.Resource):
+    """Endpoint to remove users from the system
+
+    Unit admins can delete unitusers. Super admins can delete any user."""
+
+    @auth.login_required(role=["Super Admin", "Unit Admin"])
+    def delete(self):
+
+        user = user_schemas.UserSchema().load(flask.request.json)
+        if user is None:
+            raise ddserr.UserDeletionError(
+                message=f"This e-mail address is not associated with a user in the DDS, make sure it is not misspelled."
+            )
+
+        user_email_str = user.primary_email
+        current_user = auth.current_user()
+
+        if current_user.role == "Unit Admin":
+            if user.role not in ["Unit Admin", "Unit Personnel"] or current_user.unit != user.unit:
+                raise ddserr.UserDeletionError(
+                    message=f"You are not allowed to delete this user. As a unit admin, you're only allowed to delete users in your unit."
+                )
+
+        if current_user == user:
+            raise ddserr.UserDeletionError(
+                message=f"To delete your own account, use the '--self' flag instead!"
+            )
+
+        DBConnector().delete_user(user)
+
+        msg = f"The user account {user.username} ({user_email_str}, {user.role})  has been terminated successfully been by {current_user.name} ({current_user.role})."
+        flask.current_app.logger.info(msg)
+
+        return flask.make_response(
+            flask.jsonify(
+                {
+                    "message": f"You successfully deleted the account {user.username} ({user_email_str}, {user.role})!"
+                }
+            )
+        )
+
+
 class Token(flask_restful.Resource):
     """Generates token for the user."""
 
     decorators = [
         limiter.limit(
-            rate_limit_from_config,
+            dds_web.utils.rate_limit_from_config,
             methods=["GET"],
             error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
         )
@@ -304,7 +439,7 @@ class EncryptedToken(flask_restful.Resource):
 
     decorators = [
         limiter.limit(
-            rate_limit_from_config,
+            dds_web.utils.rate_limit_from_config,
             methods=["GET"],
             error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
         )

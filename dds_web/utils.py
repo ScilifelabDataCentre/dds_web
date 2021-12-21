@@ -22,22 +22,21 @@ import atexit
 import werkzeug
 from apscheduler.schedulers import background
 import marshmallow
+import flask_mail
+import wtforms
 
 
 # Own modules
 from dds_web.database import models
 from dds_web import db, C_TZ
+from dds_web import mail
+
 
 ####################################################################################################
-# FUNCTIONS ############################################################################ FUNCTIONS #
+# VALIDATORS ########################################################################## VALIDATORS #
 ####################################################################################################
 
-
-def is_safe_url(target):
-    """Check if the url is safe for redirects."""
-    ref_url = urllib.parse.urlparse(flask.request.host_url)
-    test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
-    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
+# General ################################################################################ General #
 
 
 def contains_uppercase(input):
@@ -60,10 +59,181 @@ def contains_digit_or_specialchar(input):
         )
 
 
-def current_time():
+def email_not_taken(input):
+    """Validator - verify that email is not taken.
+
+    If used by marshmallow Schema, this validator should never raise an error since the email
+    field should not be changable and if it is the form validator should catch it.
+    """
+    if email_in_db(email=input):
+        raise marshmallow.validate.ValidationError("The email is already taken by another user.")
+
+
+def email_taken(input):
+    """Validator - verify that email is taken."""
+    if not email_in_db(email=input):
+        raise marshmallow.validate.ValidationError(
+            "There is no account with that email. To get an account, you need an invitation."
+        )
+
+
+def username_not_taken(input):
+    """Validate that username is not taken.
+
+    If used by marshmallow Schema, this validator should never raise an error since
+    the form validator should catch it.
+    """
+    if username_in_db(username=input):
+        raise marshmallow.validate.ValidationError(
+            "That username is taken. Please choose a different one."
+        )
+
+
+# wtforms ################################################################################ wtforms #
+
+
+def username_contains_valid_characters():
+    def _username_contains_valid_characters(form, field):
+        """Validate that the username contains valid characters."""
+        if not valid_chars_in_username(input=field.data):
+            raise wtforms.validators.ValidationError(
+                "The username contains invalid characters. "
+                "Usernames can only contain letters, digits and underscores (_)."
+            )
+
+    return _username_contains_valid_characters
+
+
+def password_contains_valid_characters():
+    def _password_contains_valid_characters(form, field):
+        """Validate that the password contains valid characters and raise ValidationError."""
+        errors = []
+        validators = [
+            contains_uppercase,
+            contains_lowercase,
+            contains_digit_or_specialchar,
+        ]
+        for val in validators:
+            try:
+                val(input=field.data)
+            except marshmallow.ValidationError as valerr:
+                errors.append(str(valerr).strip("."))
+
+        if errors:
+            raise wtforms.validators.ValidationError(", ".join(errors))
+
+    return _password_contains_valid_characters
+
+
+def username_not_taken_wtforms():
+    def _username_not_taken(form, field):
+        """Validate that the username is not taken already."""
+        try:
+            username_not_taken(input=field.data)
+        except marshmallow.validate.ValidationError as valerr:
+            raise wtforms.validators.ValidationError(valerr)
+
+    return _username_not_taken
+
+
+def email_not_taken_wtforms():
+    def _email_not_taken(form, field):
+        """Validate that the email is not taken already."""
+        try:
+            email_not_taken(input=field.data)
+        except marshmallow.validate.ValidationError as valerr:
+            raise wtforms.validators.ValidationError(valerr)
+
+    return _email_not_taken
+
+
+def email_taken_wtforms():
+    def _email_taken(form, field):
+        """Validate that the email exists."""
+        try:
+            email_taken(input=field.data)
+        except marshmallow.validate.ValidationError as valerr:
+            raise wtforms.validators.ValidationError(valerr)
+
+    return _email_taken
+
+
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
+
+
+def valid_chars_in_username(input):
+    """Check if the username contains only valid characters."""
+    pattern = re.compile("^[a-zA-Z0-9_]+$")
+    return string_contains_only(input=input, pattern=pattern)
+
+
+def string_contains_only(input, pattern):
+    """Check if string only contains specific characters."""
+    if re.search(pattern, input):
+        return True
+
+    return False
+
+
+def email_in_db(email):
+    """Check if the email is in the Email table."""
+    if models.Email.query.filter_by(email=email).first():
+        return True
+
+    return False
+
+
+def username_in_db(username):
+    """Check if username is in the User table."""
+    if models.User.query.filter_by(username=username).first():
+        return True
+
+    return False
+
+
+def delrequest_exists(email):
+    """Check if there is already a deletion request for that email."""
+    if models.DeletionRequest.query.filter_by(email=email).first():
+        return True
+    return False
+
+
+def send_reset_email(email_row):
+    """Generate password reset email."""
+    # Generate token
+    token = email_row.user.get_reset_token()
+
+    # Create and send email
+    message = flask_mail.Message(
+        "Password Reset Request",
+        sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
+        recipients=[email_row.email],
+    )
+    message.body = (
+        "To reset your password, visit the following link: "
+        f"{flask.url_for('auth_blueprint.reset_password', token=token, _external=True)}"
+        "If you did not make this request then simply ignore this email and no changes will be made."
+    )
+    mail.send(message)
+
+
+def is_safe_url(target):
+    """Check if the url is safe for redirects."""
+    ref_url = urllib.parse.urlparse(flask.request.host_url)
+    test_url = urllib.parse.urlparse(urllib.parse.urljoin(flask.request.host_url, target))
+    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
+
+
+def current_time(to_midnight=False):
     """Return the current time for the specific time zone"""
 
-    return datetime.datetime.now(tz=C_TZ)
+    curr_time = datetime.datetime.now(tz=C_TZ)
+    if to_midnight:
+        curr_time = curr_time.replace(hour=23, minute=59, second=59)
+
+    return curr_time
 
 
 def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
@@ -82,6 +252,10 @@ def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"
     now = datetime.datetime.now(tz=C_TZ) if dts is None else dts
     t_s = str(now.strftime(ts_format))
     return t_s
+
+
+def rate_limit_from_config():
+    return flask.current_app.config.get("TOKEN_ENDPOINT_ACCESS_LIMIT", "10/hour")
 
 
 @contextmanager
@@ -120,185 +294,6 @@ def page_query(q):
         offset += 1000
         if not r:
             break
-
-
-def invoice_units():
-    """Get invoicing specification from Safespring, calculate and save GBHours and cost for each
-    unit and project."""
-
-    flask.current_app.logger.debug("Calculating invoicing info...")
-
-    # Create invoice specification
-    # TODO (ina): Change to Safespring API call
-    parent_dir = pathlib.Path("").parent
-
-    # From safespring
-    old_file = parent_dir / pathlib.Path("development/invoicing/safespring_invoicespec.csv")
-
-    current_time = current_time()
-    to_file = old_file
-    # to_file = parent_dir / pathlib.Path(f"development/invoicing/{current_time}.csv") # TODO (ina): uncomment later
-
-    # shutil.copy(old_file, to_file)    # TODO (ina): uncomment later
-
-    # Get data
-    csv_contents = pandas.read_csv(to_file, sep=";", header=1)
-
-    with flask.current_app.app_context():
-        try:
-            all_units = models.Unit.query.all()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            flask.current_app.logger.warning(
-                f"Failed getting unit information from database. Cannot generate invoicing information: {err}"
-            )
-        else:
-            for f in all_units:
-                # Get safespring project name
-                safespring_project_row = csv_contents.loc[csv_contents["project"] == f.safespring]
-
-                # Total number of GB hours and cost saved in the db for the specific unit
-                total_gbhours_db = 0.0
-
-                usage = {}
-                for p in f.projects:
-                    usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0}
-
-                    # All project file versions
-                    for v in p.file_versions:
-
-                        # Move on to next if full period already invoiced
-                        if v.time_deleted and v.time_invoiced and v.time_deleted == v.time_invoiced:
-                            flask.current_app.logger.debug(f"Period invoiced fully : {v}")
-                            continue
-
-                        if not v.time_invoiced:  # not included in invoice
-                            flask.current_app.logger.debug(f"Invoice = NULL : {v}")
-                            start = v.time_uploaded
-                            end = v.time_deleted if v.time_deleted else current_time()
-                        else:  # included in invoice
-                            start = v.time_invoiced
-                            end = (
-                                v.time_deleted
-                                if v.time_deleted and v.time_deleted > v.time_invoiced
-                                else current_time()
-                            )
-
-                        # Calculate hours of the current file
-                        period_start = datetime.datetime.strptime(
-                            start,
-                            "%Y-%m-%d %H:%M:%S.%f%z",
-                        )
-                        period_end = datetime.datetime.strptime(
-                            end,
-                            "%Y-%m-%d %H:%M:%S.%f%z",
-                        )
-                        file_hours = (period_end - period_start).seconds / (60 * 60)
-                        # Calculate GBHours, if statement to avoid zerodivision exception
-                        gb_hours = ((v.size_stored / 1e9) / file_hours) if file_hours else 0.0
-
-                        # Save file version gbhours to project info and increase total unit sum
-                        usage[p.public_id]["gbhours"] += gb_hours
-                        total_gbhours_db += gb_hours
-
-                        v.time_invoiced = end
-                        db.session.commit()
-
-                for proj, vals in usage.items():
-                    gbhour_perc = (
-                        (vals["gbhours"] / total_gbhours_db)
-                        if 0.0 not in [vals["gbhours"], total_gbhours_db]
-                        else 0.0
-                    )
-
-                    usage[proj]["cost"] = safespring_project_row.subtotal.values[0] * gbhour_perc
-
-                # Maybe uncomment later - saves calculated info to json file
-                # new_file = parent_dir / pathlib.Path(
-                #     f"development/invoicing/{f.id}_{current_time}.json"
-                # )
-                # with new_file.open(mode="w") as file:
-                #     json.dump(usage, file)
-
-
-def remove_invoiced():
-    """Clean up in the Version table. Those rows which have an active file will not be deleted,
-    neither will the rows which have hours not included in previous invoices."""
-
-    flask.current_app.logger.debug("Removing deleted and invoiced versions...")
-
-    with flask.current_app.app_context():
-        try:
-            # Get all rows in version table
-            # TODO (ina, senthil): change to better method for when huge number of rows
-            all_versions = models.Version.query.all()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            # TODO (ina, senthil): Something else should happen here
-            flask.current_app.logger.warning(
-                f"Failed getting verions from database. Cannot remove invoiced rows: {err}"
-            )
-        else:
-            for v in all_versions:
-                # Delete those rows which corresponding file has been deleted and which
-                # have been fully invoiced - no more costs for the version after deletion,
-                # if the file was deleted more than 30 days ago
-                if v.time_deleted and v.time_invoiced and v.time_deleted == v.time_invoiced:
-                    deleted = datetime.datetime.strptime(
-                        v.time_deleted,
-                        "%Y-%m-%d %H:%M:%S.%f%z",
-                    )
-                    now = current_time()
-                    diff = now - deleted
-                    if diff.seconds > 60:  # TODO (ina): Change to correct interval -- 30 days?
-                        flask.current_app.logger.debug(f"Deleting: {v}")
-                        db.session.delete(v)
-                        db.session.commit()
-
-
-def remove_expired():
-    """Clean up in File table -- those which have been stored in the system for too long are moved to the DeletedFile table."""
-
-    flask.current_app.logger.debug("Cleaning up File table...")
-
-    # TODO (ina, senthil): Delete from bucket, change this to check everyday, get files which have expired by getting current time, and days_to_expire from unit info - unique times to expire the files for each unit.
-    with flask.current_app.app_context():
-        try:
-            # Get all rows in version table
-            for file in page_query(models.File.query.filter(models.File.expires <= current_time())):
-
-                flask.current_app.logger.debug("File: %s - Expires: %s", file, file.expires)
-
-                new_expired = models.ExpiredFile(
-                    name=file.name,
-                    name_in_bucket=file.name_in_bucket,
-                    subpath=file.subpath,
-                    size_original=file.size_original,
-                    size_stored=file.size_stored,
-                    compressed=file.compressed,
-                    public_key=file.public_key,
-                    salt=file.salt,
-                    checksum=file.checksum,
-                    time_latest_download=file.time_latest_download,
-                    project_id=file.project_id,
-                )
-
-                db.session.add(new_expired)
-
-                db.session.delete(file)
-                db.session.commit()
-
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            # TODO (ina, senthil): Something else should happen here
-            flask.current_app.logger.warning(f"test: {err}")
-
-
-def permanent_delete():
-    """Permanently delete the files in expired files table."""
-
-    # TODO (ina, senthil): Check which rows have been stored in the ExpiredFile table for more than a month, delete them from S3 bucket and table.
-
-    flask.current_app.logger.debug(
-        "Permanently deleting the expired files (not implemented atm, just scheduled function)"
-    )
 
 
 ####################################################################################################
@@ -340,67 +335,6 @@ def scheduler_wrapper():
     for job in joblist:
         id = getattr(job, "id")
         jobid.append(id)
-
-    # Schedule invoicing calculations every 30 days
-    # TODO (ina): Change to correct interval - 30 days
-    if not "calc_costs" in jobid:
-        flask.current_app.logger.info("Added job: calc_costs")
-        scheduler.add_job(
-            invoice_units,
-            "cron",
-            id="calc_costs",
-            replace_existing=False,
-            coalesce=True,  # when several run times are due, none the less run the rob only once
-            month="1-12",
-            day="1-31",
-            hour="0",
-        )
-
-    # Schedule delete of rows in version table after a specific amount of time
-    # Currently: First of every month
-    if not "remove_versions" in jobid:
-        flask.current_app.logger.info("Added job: remove_versions")
-        scheduler.add_job(
-            remove_invoiced,
-            "cron",
-            id="remove_versions",
-            replace_existing=False,
-            coalesce=True,  # when several run times are due, none the less run the rob only once
-            month="1-12",
-            day="1",
-            hour="1",
-        )
-
-    # Schedule move of rows in files table after a specific amount of time
-    # to DeletedFiles (does not exist yet) table
-    # Currently: First of every month
-    if not "remove_expired" in jobid:
-        flask.current_app.logger.info("Added job: remove_expired")
-        scheduler.add_job(
-            remove_expired,
-            "cron",
-            id="remove_expired",
-            replace_existing=False,
-            coalesce=True,
-            month="1-12",
-            day="1",
-            hour="2",
-        )
-
-    # Schedule delete rows in expiredfiles table after a specific amount of time
-    # TODO (ina): Change interval - 1 day?
-    if not "permanent_delete" in jobid:
-        flask.current_app.logger.info("Added job: permanent_delete")
-        scheduler.add_job(
-            permanent_delete,
-            "cron",
-            id="permanent_delete",
-            replace_existing=False,
-            coalesce=True,
-            month="1-12",
-            day="1-31",
-            hour="3",
-        )
 
     # Shut down the scheduler when exiting the app
     atexit.register(lambda: scheduler.shutdown())

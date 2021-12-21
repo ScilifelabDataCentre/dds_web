@@ -144,10 +144,7 @@ class DBConnector:
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            raise DatabaseError(message=str(err))
-        else:
-            if num_deleted == 0:
-                raise EmptyProjectException(project=self.project.public_id)
+            raise
 
         try:
             # Update all versions associated with project
@@ -160,7 +157,7 @@ class DBConnector:
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            raise DatabaseError(message=str(err))
+            raise
 
         return True
 
@@ -296,6 +293,17 @@ class DBConnector:
                 deleted = True
 
         return exists, deleted, name_in_bucket, error
+
+    @staticmethod
+    def delete_user(user):
+
+        try:
+            parent_user = models.User.query.get(user.username)
+            db.session.delete(parent_user)
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            raise DatabaseError(message=str(err))
 
     @staticmethod
     def project_usage(project_object):

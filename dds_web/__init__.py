@@ -209,12 +209,19 @@ def create_app(testing=False, database_uri=None):
 
 
 @click.command("init-dev-db")
+@click.argument("dev_db_size", type=click.Choice(["small", "big"]))
 @flask.cli.with_appcontext
-def fill_db_wrapper():
+def fill_db_wrapper(dev_db_size):
     flask.current_app.logger.info("Initializing development db")
     assert flask.current_app.config["USE_LOCAL_DB"]
     db.create_all()
-    from dds_web.development.db_init import fill_db
+    if dev_db_size == "small":
+        from dds_web.development.db_init import fill_db
 
-    fill_db()
+        fill_db()
+    elif dev_db_size == "big":
+        import dds_web.development.factories
+
+        dds_web.development.factories.create_all()
+
     flask.current_app.logger.info("DB filled")

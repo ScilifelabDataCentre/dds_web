@@ -16,6 +16,8 @@ import flask
 import argon2
 import pyotp
 import flask_login
+import pathlib
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 # Own modules
 from dds_web import db
@@ -88,6 +90,10 @@ class ProjectStatuses(db.Model):
     status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
     date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
 
+    # Columns
+    is_aborted = db.Column(db.Boolean, nullable=True, default=False, unique=False)
+    deadline = db.Column(db.DateTime(), nullable=True)
+
 
 ####################################################################################################
 # Tables ################################################################################## Tables #
@@ -118,13 +124,16 @@ class Unit(db.Model):
     safespring_name = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     safespring_access = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     safespring_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
-    days_to_expire = db.Column(db.Integer, unique=False, nullable=False, default=90)
+    days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
+    days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
 
     # Relationships
-    users = db.relationship("UnitUser", back_populates="unit", passive_deletes=True)
-    projects = db.relationship("Project", back_populates="responsible_unit", passive_deletes=True)
-    invites = db.relationship("Invite", back_populates="unit", passive_deletes=True)
+    users = db.relationship("UnitUser", back_populates="unit")
+    projects = db.relationship("Project", back_populates="responsible_unit")
+    invites = db.relationship(
+        "Invite", back_populates="unit", passive_deletes=True, cascade="all, delete"
+    )
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -149,25 +158,27 @@ class Project(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(255), unique=True, nullable=False)
-    title = db.Column(db.Text, unique=False, nullable=False)
+    public_id = db.Column(db.String(255), unique=True, nullable=True)
+    title = db.Column(db.Text, unique=False, nullable=True)
     date_created = db.Column(
         db.DateTime(),
-        nullable=False,
+        nullable=True,
         default=dds_web.utils.current_time(),
     )
     date_updated = db.Column(db.DateTime(), nullable=True)
     description = db.Column(db.Text)
-    pi = db.Column(db.String(255), unique=False, nullable=False)
+    pi = db.Column(db.String(255), unique=False, nullable=True)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
-    public_key = db.Column(db.String(64), nullable=False)
-    private_key = db.Column(db.String(255), nullable=False)
-    privkey_salt = db.Column(db.String(32), nullable=False)
-    privkey_nonce = db.Column(db.String(24), nullable=False)
-    is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    public_key = db.Column(db.String(64), nullable=True)
+    private_key = db.Column(db.String(255), nullable=True)
+    privkey_salt = db.Column(db.String(32), nullable=True)
+    privkey_nonce = db.Column(db.String(24), nullable=True)
+    is_sensitive = db.Column(db.Boolean, unique=False, nullable=True, default=False)
+    released = db.Column(db.DateTime(), nullable=True)
+    is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, index=True)
 
     # Foreign keys & relationships
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="RESTRICT"), nullable=True)
     responsible_unit = db.relationship("Unit", back_populates="projects")
     # ---
     created_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))
@@ -175,17 +186,14 @@ class Project(db.Model):
     # ---
 
     # Additional relationships
-    files = db.relationship("File", back_populates="project", passive_deletes=True)
-    expired_files = db.relationship(
-        "ExpiredFile", back_populates="assigned_project", passive_deletes=True
-    )
-    file_versions = db.relationship(
-        "Version", back_populates="responsbile_project", passive_deletes=True
-    )
+    files = db.relationship("File", back_populates="project")
+    file_versions = db.relationship("Version", back_populates="project")
     project_statuses = db.relationship(
-        "ProjectStatuses", back_populates="project", passive_deletes=True
+        "ProjectStatuses", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
-    researchusers = db.relationship("ProjectUsers", back_populates="project", passive_deletes=True)
+    researchusers = db.relationship(
+        "ProjectUsers", back_populates="project", passive_deletes=True, cascade="all, delete"
+    )
 
     @property
     def current_status(self):
@@ -199,6 +207,25 @@ class Project(db.Model):
         if len([x for x in self.project_statuses if "Available" in x.status]) > 0:
             result = True
         return result
+
+    @property
+    def times_expired(self):
+        return len([x for x in self.project_statuses if "Expired" in x.status])
+
+    @property
+    def current_deadline(self):
+        """Return deadline for statuses that have a deadline"""
+        deadline = None
+        if self.current_status in ["Available", "Expired"]:
+            deadline = max(self.project_statuses, key=lambda x: x.date_created).deadline
+        elif self.current_status in ["In Progress"]:
+            if self.has_been_available:
+                list_available = list(
+                    filter(lambda x: x.status == "Available", self.project_statuses)
+                )
+                latest_available = max(list_available, key=lambda x: x.date_created)
+                deadline = latest_available.deadline
+        return deadline
 
     @property
     def safespring_project(self):
@@ -250,9 +277,18 @@ class User(flask_login.UserMixin, db.Model):
     type = db.Column(db.String(20), unique=False, nullable=False)
 
     # Relationships
-    identifiers = db.relationship("Identifier", back_populates="user", passive_deletes=True)
-    emails = db.relationship("Email", back_populates="user", passive_deletes=True)
+    identifiers = db.relationship(
+        "Identifier", back_populates="user", passive_deletes=True, cascade="all, delete"
+    )
+    emails = db.relationship(
+        "Email", back_populates="user", passive_deletes=True, cascade="all, delete"
+    )
     created_projects = db.relationship("Project", back_populates="creator", passive_deletes=True)
+    # Delete requests if User is deleted:
+    # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.
+    deletion_request = db.relationship(
+        "DeletionRequest", back_populates="requester", cascade="all, delete"
+    )
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
@@ -296,7 +332,7 @@ class User(flask_login.UserMixin, db.Model):
             return False
 
         # Rehash password if needed, e.g. if parameters are not up to date
-        if not password_hasher.check_needs_rehash(self._password_hash):
+        if password_hasher.check_needs_rehash(self._password_hash):
             try:
                 self.password = input_password
                 db.session.commit()
@@ -306,6 +342,22 @@ class User(flask_login.UserMixin, db.Model):
 
         # Password correct
         return True
+
+    def get_reset_token(self, expires_sec=3600):
+        """Generate token for resetting password."""
+        s = Serializer(flask.current_app.config["SECRET_KEY"], expires_sec)
+        return s.dumps({"user_id": self.username}).decode("utf-8")
+
+    @staticmethod
+    def verify_reset_token(token):
+        """Verify that the token is valid."""
+        s = Serializer(flask.current_app.config["SECRET_KEY"])
+        try:
+            user_id = s.loads(token)["user_id"]
+        except:
+            return None
+
+        return User.query.get(user_id)
 
     # 2FA related
     def gen_otp_secret(self):
@@ -377,7 +429,7 @@ class ResearchUser(User):
 
     # Relationships
     project_associations = db.relationship(
-        "ProjectUsers", back_populates="researchuser", passive_deletes=True
+        "ProjectUsers", back_populates="researchuser", passive_deletes=True, cascade="all, delete"
     )
 
     @property
@@ -413,7 +465,7 @@ class UnitUser(User):
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
     )
     # ---
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="RESTRICT"), nullable=False)
     unit = db.relationship("Unit", back_populates="users")
 
     # Additional columns
@@ -570,6 +622,26 @@ class Invite(db.Model):
         return f"<Invite {self.email}>"
 
 
+class DeletionRequest(db.Model):
+    """Table to collect self-deletion requests by users"""
+
+    # Table setup
+    __tablename__ = "deletions"
+    __table_args__ = {"extend_existing": True}
+
+    # Primary Key
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    requester_id = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"))
+    requester = db.relationship("User", back_populates="deletion_request")
+    email = db.Column(db.String(254), unique=True, nullable=False)
+    issued = db.Column(db.DateTime(), unique=False, nullable=False)
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<DeletionRequest {self.email}>"
+
+
 class File(db.Model):
     """
     Data model for files.
@@ -589,7 +661,9 @@ class File(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
 
     # Foreign keys & relationships
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), index=True
+    )
     project = db.relationship("Project", back_populates="files")
     # ---
 
@@ -612,57 +686,12 @@ class File(db.Model):
     )
 
     # Additional relationships
-    versions = db.relationship("Version", back_populates="file", passive_deletes=True)
+    versions = db.relationship("Version", back_populates="file")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
 
         return f"<File {pathlib.Path(self.name).name}>"
-
-
-class ExpiredFile(db.Model):
-    """
-    Data model for expired files. Moved here when in system for more than X days.
-
-    Primary key:
-    - id
-
-    Foreign key(s):
-    - project_id
-    """
-
-    # Table setup
-    __tablename__ = "expired_files"
-    __table_args__ = {"extend_existing": True}
-
-    # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.Text, unique=False, nullable=False)
-    name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
-    subpath = db.Column(db.Text, unique=False, nullable=False)
-    size_original = db.Column(db.BigInteger, unique=False, nullable=False)
-    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
-    compressed = db.Column(db.Boolean, nullable=False)
-    public_key = db.Column(db.String(64), unique=False, nullable=False)
-    salt = db.Column(db.String(32), unique=False, nullable=False)
-    checksum = db.Column(db.String(64), unique=False, nullable=False)
-    time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
-    expired = db.Column(
-        db.DateTime(),
-        unique=False,
-        nullable=False,
-        default=dds_web.utils.current_time(),
-    )
-
-    # Foreign keys & relationships
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"))
-    assigned_project = db.relationship("Project", back_populates="expired_files")
-    # ---
-
-    def __repr__(self):
-        """Called by print, creates representation of object"""
-
-        return f"<ExpiredFile {pathlib.Path(self.name).name}: {self.expired}>"
 
 
 class Version(db.Model):
@@ -686,9 +715,9 @@ class Version(db.Model):
 
     # Foreign keys & relationships
     project_id = db.Column(
-        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), nullable=True
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), nullable=True
     )
-    responsbile_project = db.relationship("Project", back_populates="file_versions")
+    project = db.relationship("Project", back_populates="file_versions")
     # ---
     active_file = db.Column(
         db.BigInteger, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True

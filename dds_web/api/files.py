@@ -50,13 +50,13 @@ def check_eligibility_for_download(status, user_role):
 
 def check_eligibility_for_deletion(status, has_been_available):
     """Check if a project status is eligible for deletion"""
-    if status != "In Progress":
+    if status not in ["In Progress"]:
         raise DDSArgumentError("Project Status prevents files from being deleted.")
-    else:
-        if has_been_available:
-            raise DDSArgumentError(
-                "Existing project contents cannot be deleted since the project has been previously made available to recipients."
-            )
+
+    if has_been_available:
+        raise DDSArgumentError(
+            "Existing project contents cannot be deleted since the project has been previously made available to recipients."
+        )
     return True
 
 
@@ -93,7 +93,7 @@ class NewFile(flask_restful.Resource):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        check_eligibility_for_upload(current_status)
+        check_eligibility_for_upload(project.current_status)
 
         file_info = flask.request.json
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
@@ -349,87 +349,20 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        input_ = {**flask.request.args, **{"requested_items": flask.request.json, "url": True}}
 
-        user_role = auth.current_user().role
-        check_eligibility_for_download(project.current_status, user_role)
+        # Get project contents
+        found_files, found_folder_contents, not_found = project_schemas.ProjectContentSchema().dump(
+            input_
+        )
 
-        # Get files and folders requested by CLI
-        paths = flask.request.json
-
-        files_single, files_in_folders = ({}, {})
-
-        # Get info on files and folders
-        try:
-            # Get all files in project
-            files_in_proj = models.File.query.filter(
-                models.File.project_id == sqlalchemy.func.binary(project.id)
-            )
-
-            # All files matching the path -- single files
-            files = (
-                files_in_proj.filter(models.File.name.in_(paths))
-                .with_entities(
-                    models.File.name,
-                    models.File.name_in_bucket,
-                    models.File.subpath,
-                    models.File.size_original,
-                    models.File.size_stored,
-                    models.File.salt,
-                    models.File.public_key,
-                    models.File.checksum,
-                    models.File.compressed,
-                )
-                .all()
-            )
-
-            # All paths which start with the subpath are within a folder
-            for x in paths:
-                # Only try to match those not already saved in files
-                if x not in [f[0] for f in files]:
-                    list_of_files = (
-                        files_in_proj.filter(models.File.subpath.like(f"{x.rstrip(os.sep)}%"))
-                        .with_entities(
-                            models.File.name,
-                            models.File.name_in_bucket,
-                            models.File.subpath,
-                            models.File.size_original,
-                            models.File.size_stored,
-                            models.File.salt,
-                            models.File.public_key,
-                            models.File.checksum,
-                            models.File.compressed,
-                        )
-                        .all()
-                    )
-
-                    if list_of_files:
-                        files_in_folders[x] = [tuple(x) for x in list_of_files]
-
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(str(err))
-
-        else:
-
-            # Make dict for files with info
-            files_single = {
-                x[0]: {
-                    "name_in_bucket": x[1],
-                    "subpath": x[2],
-                    "size_original": x[3],
-                    "size_stored": x[4],
-                    "key_salt": x[5],
-                    "public_key": x[6],
-                    "checksum": x[7],
-                    "compressed": x[8],
-                }
-                for x in files
+        return flask.jsonify(
+            {
+                "files": found_files,
+                "folder_contents": found_folder_contents,
+                "not_found": not_found,
             }
-
-        try:
-            return flask.jsonify({"files": files_single, "folders": files_in_folders})
-        except Exception as err:
-            flask.current_app.logger.exception(str(err))
+        )
 
 
 class FileInfoAll(flask_restful.Resource):
@@ -439,49 +372,9 @@ class FileInfoAll(flask_restful.Resource):
     def get(self):
         """Get file info."""
 
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-
-        user_role = auth.current_user().role
-        check_eligibility_for_download(project.current_status, user_role)
-
-        files = {}
-        try:
-            all_files = (
-                models.File.query.filter_by(project_id=project.id)
-                .with_entities(
-                    models.File.name,
-                    models.File.name_in_bucket,
-                    models.File.subpath,
-                    models.File.size_original,
-                    models.File.size_stored,
-                    models.File.salt,
-                    models.File.public_key,
-                    models.File.checksum,
-                    models.File.compressed,
-                )
-                .all()
-            )
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(str(err))
-        else:
-            if all_files is None or not all_files:
-                raise EmptyProjectException(
-                    project=project.public_id, message=f"The project {project.public_id} is empty."
-                )
-
-            files = {
-                x[0]: {
-                    "name_in_bucket": x[1],
-                    "subpath": x[2],
-                    "size_original": x[3],
-                    "size_stored": x[4],
-                    "key_salt": x[5],
-                    "public_key": x[6],
-                    "checksum": x[7],
-                    "compressed": x[8],
-                }
-                for x in all_files
-            }
+        files, _, _ = project_schemas.ProjectContentSchema().dump(
+            {**flask.request.args, "get_all": True, "url": True}
+        )
 
         return flask.jsonify({"files": files})
 
@@ -496,6 +389,7 @@ class UpdateFile(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         file_info = flask.request.json
+
         # Get file name from request from CLI
         file_name = file_info.get("name")
         if not file_name:
