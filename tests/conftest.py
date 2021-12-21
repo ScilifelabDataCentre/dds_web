@@ -308,7 +308,7 @@ def add_data_to_db():
 
     units[1].users.extend([users[8], users[9]])
 
-    return units, users, projects
+    return units, users
 
 
 @pytest.fixture(scope="function")
@@ -322,9 +322,8 @@ def client():
 
             db.create_all()
 
-            units, users, projects = add_data_to_db()
+            units, users = add_data_to_db()
             db.session.add_all(units)
-            db.session.add_all(projects)
             db.session.add_all(users)
 
             db.session.commit()
