@@ -113,6 +113,11 @@ def __setup_project(client):
     assert project.responsible_unit.users != []
     assert project.researchusers != []
 
+    statuses = models.ProjectStatuses.query.filter_by(project_id=project.id).all()
+    assert statuses != []
+    project_users = models.ProjectUsers.query.filter_by(project_id=project.id).all()
+    assert project_users != []
+
     return project
 
 
@@ -147,9 +152,13 @@ def test_delete_project_with_files(client):
         db.session.commit()
 
 
-def test_delet_project(client):
+def test_delete_project(client):
     """ """
     project = __setup_project(client)
+
+    project_id = project.id
+    nr_users = models.User.query.count()
+    nr_units = models.Unit.query.count()
 
     for version in project.file_versions:
         db.session.delete(version)
@@ -164,3 +173,12 @@ def test_delet_project(client):
 
     exists = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     assert exists is None
+
+    # Make sure no users or units have been deleted
+    assert nr_users == models.User.query.count()
+    assert nr_units == models.Unit.query.count()
+
+    statuses = models.ProjectStatuses.query.filter_by(project_id=project_id).all()
+    assert statuses == []
+    project_users = models.ProjectUsers.query.filter_by(project_id=project_id).all()
+    assert project_users == []
