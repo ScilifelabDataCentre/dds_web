@@ -444,7 +444,6 @@ class RemoveUserAssociation(flask_restful.Resource):
                     message = (
                         f"User with email {user_email} no longer associated with {project_id}."
                     )
-                    status = 200
                 except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
                     flask.current_app.logger.exception(err)
                     db.session.rollback()
@@ -452,19 +451,15 @@ class RemoveUserAssociation(flask_restful.Resource):
                     raise ddserr.DatabaseError(message=f"Server Error: {message}")
             else:
                 message = "User already not associated with this project"
-                status = 200
-
+            status = 200
             flask.current_app.logger.debug(
                 f"User {existing_user.username} no longer associated with project {project.public_id}."
             )
         else:
-            message = f"Error: {user_email} does not exist in the db."
+            message = f"{user_email} already not associated with this project"
             status = ddserr.error_codes["NoSuchUserError"]["status"].value
 
-        return flask.make_response(
-            flask.jsonify({"message": message}),
-            status,
-        )
+        return {"message": message}, status
 
 
 class Token(flask_restful.Resource):

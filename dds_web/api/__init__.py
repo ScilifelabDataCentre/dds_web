@@ -57,7 +57,7 @@ api.add_resource(project.ProjectStatus, "/proj/status", endpoint="project_status
 api.add_resource(user.AddUser, "/user/add", endpoint="add_user")
 api.add_resource(user.DeleteUser, "/user/delete", endpoint="delete_user")
 api.add_resource(user.DeleteUserSelf, "/user/delete_self", endpoint="delete_user_self")
-api.add_resource(user.RemoveUserAssociation, "/user/revoke/access", endpoint="revoke_from_project")
+api.add_resource(user.RemoveUserAssociation, "/user/access/revoke", endpoint="revoke_from_project")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.InvoiceUnit, "/invoice", endpoint="invoice")

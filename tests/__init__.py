@@ -114,7 +114,7 @@ class DDSEndpoint:
     ENCRYPTED_TOKEN = BASE_ENDPOINT + "/user/encrypted_token"
 
     # Remove user from project
-    REMOVE_USER_FROM_PROJ = BASE_ENDPOINT + "/user/rm_from_project"
+    REMOVE_USER_FROM_PROJ = BASE_ENDPOINT + "/user/access/revoke"
 
     # S3Connector keys
     S3KEYS = BASE_ENDPOINT + "/s3/proj"

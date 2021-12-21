@@ -84,4 +84,22 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert f"Error: {email} does not exist in the db." in response.json["message"]
+    assert f"{email} already not associated with this project" in response.json["message"]
+
+
+def test_remove_existing_user_from_nonexistent_proj(client, boto3_session):
+    """Try to an existing user from a nonexistent project"""
+
+    project_id = "nonexistent001"
+    email = proj_data_with_existing_users["users_to_add"][0]["email"]
+    rem_user = {"email": email, "project": project_id}
+
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        data=json.dumps(rem_user),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The specified project does not exist" in response.json["message"]
