@@ -3,6 +3,7 @@ import os
 import uuid
 from contextlib import contextmanager
 import unittest.mock
+import datetime
 
 # Installed
 import pytest
@@ -21,6 +22,8 @@ from dds_web.database.models import (
     Invite,
     Email,
     ProjectStatuses,
+    File,
+    Version,
 )
 from dds_web import create_app, db
 
@@ -178,19 +181,71 @@ def demo_data():
         ),
     ]
 
+    files_and_versions = [
+        (
+            File(
+                name="filename1",
+                name_in_bucket="name_in_bucket_1",
+                subpath="filename1/subpath",
+                size_original=15000,
+                size_stored=10000,
+                compressed=True,
+                salt="A" * 32,
+                public_key="B" * 64,
+                checksum="C" * 64,
+            ),
+            [
+                Version(
+                    size_stored=10000,
+                    time_uploaded=dds_web.utils.current_time(),
+                ),
+                Version(
+                    size_stored=30000,
+                    time_uploaded=dds_web.utils.current_time() - datetime.timedelta(days=1),
+                ),
+            ],
+        ),
+        (
+            File(
+                name="filename2",
+                name_in_bucket="name_in_bucket_2",
+                subpath="filename2/subpath",
+                size_original=15000,
+                size_stored=10000,
+                compressed=True,
+                salt="D" * 32,
+                public_key="E" * 64,
+                checksum="F" * 64,
+            ),
+            [
+                Version(
+                    size_stored=10000,
+                    time_uploaded=dds_web.utils.current_time(),
+                ),
+            ],
+        ),
+    ]
+
     invites = [Invite(email="existing_invite_email@mailtrap.io", role="Researcher")]
 
-    return (units, users, projects, invites)
+    return (units, users, projects, invites, files_and_versions)
 
 
 def add_data_to_db():
-    units, users, projects, invites = demo_data()
+    units, users, projects, invites, files_and_versions = demo_data()
     for project in projects:
         project.project_statuses.append(
             ProjectStatuses(
                 **{"status": "In Progress", "date_created": dds_web.utils.current_time()}
             )
         )
+    # Create association with files for project 0:
+    for file, versions in files_and_versions:
+        projects[0].files.append(file)
+        for version in versions:
+            file.versions.append(version)
+            projects[0].file_versions.append(version)
+
     # Create association with user - not owner of project
     project_0_user_0_association = ProjectUsers(owner=False)
     # Connect research user to association row. = (not append) due to one user per ass. row
@@ -253,7 +308,7 @@ def add_data_to_db():
 
     units[1].users.extend([users[8], users[9]])
 
-    return units, users
+    return units, users, projects
 
 
 @pytest.fixture(scope="function")
@@ -267,8 +322,9 @@ def client():
 
             db.create_all()
 
-            units, users = add_data_to_db()
+            units, users, projects = add_data_to_db()
             db.session.add_all(units)
+            db.session.add_all(projects)
             db.session.add_all(users)
 
             db.session.commit()

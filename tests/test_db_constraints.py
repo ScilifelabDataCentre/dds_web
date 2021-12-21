@@ -3,6 +3,7 @@
 # Standard library
 
 # Installed
+from typing import no_type_check
 import pytest
 import sqlalchemy
 
@@ -99,18 +100,19 @@ def test_delete_unit_row(client):
 
 
 # Project #################################################################################### Project #
-@pytest.fixture()
-def project_with_files(client):
+def __setup_project(client):
     """
     Project with files and versions
     """
     project = models.Project.query.filter_by(public_id="public_project_id").first()
 
-    project.files = [
-        models.File(name="file1", project_id=project.id),
-    ]
+    # Make sure the project is well connected:
     assert project.files != []
-    assert project.versions != []
+    assert project.file_versions != []
+    assert project.responsible_unit is not None
+    assert project.responsible_unit.users != []
+    assert project.researchusers != []
+
     return project
 
 
@@ -125,7 +127,40 @@ def test_delete_project_with_files_and_versions(client):
     ProjectStatus rows deleted
     ProjectUser rows deleted
     """
-    projects = models.Project.query.all()
-    print([project.files for project in projects])
+    project = __setup_project(client)
 
-    assert False
+    with pytest.raises(sqlalchemy.exc.IntegrityError):
+        db.session.delete(project)
+        db.session.commit()
+
+
+def test_delete_project_with_files(client):
+    """ """
+    project = __setup_project(client)
+
+    for version in project.file_versions:
+        db.session.delete(version)
+    db.session.commit()
+
+    with pytest.raises(sqlalchemy.exc.IntegrityError):
+        db.session.delete(project)
+        db.session.commit()
+
+
+def test_delet_project(client):
+    """ """
+    project = __setup_project(client)
+
+    for version in project.file_versions:
+        db.session.delete(version)
+    db.session.commit()
+
+    for file in project.files:
+        db.session.delete(file)
+    db.session.commit()
+
+    db.session.delete(project)
+    db.session.commit()
+
+    exists = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    assert exists is None
