@@ -37,7 +37,6 @@ def test_delete_unit_row__with_project_and_users(client):
 
     Error
         Need to delete Project and UnitUser (due to inheritance issues) rows first
-        Invite rows deleted
     """
     unit, _, _ = __setup_unit(client)
 
@@ -125,12 +124,8 @@ def test_delete_project_with_files_and_versions(client):
     """
     Project row deleted
 
-    Unit row kept
-    User row kept
     Error
         Need to delete File rows and Version rows first
-    ProjectStatus rows deleted
-    ProjectUser rows deleted
     """
     project = __setup_project(client)
 
@@ -140,7 +135,12 @@ def test_delete_project_with_files_and_versions(client):
 
 
 def test_delete_project_with_files(client):
-    """ """
+    """
+    Project row deleted
+
+    Error
+        Need to delete File rows and Version rows first
+    """
     project = __setup_project(client)
 
     for version in project.file_versions:
@@ -153,7 +153,15 @@ def test_delete_project_with_files(client):
 
 
 def test_delete_project(client):
-    """ """
+    """
+
+    Project row deleted
+
+    Unit row kept
+    User row kept
+    ProjectStatus rows deleted
+    ProjectUser rows deleted
+    """
     project = __setup_project(client)
 
     project_id = project.id
