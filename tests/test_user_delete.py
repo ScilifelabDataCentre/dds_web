@@ -38,7 +38,7 @@ def user_from_email(email):
 
 def test_del_self_nouser(client):
     """Request self deletion without user"""
-    response = client.post(
+    response = client.delete(
         tests.DDSEndpoint.USER_DELETE_SELF,
         headers=None,
         data=None,
@@ -49,7 +49,7 @@ def test_del_self_nouser(client):
 
 def test_del_self(client):
     """Request self deletion."""
-    response = client.post(
+    response = client.delete(
         tests.DDSEndpoint.USER_DELETE_SELF,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).token(client),
         data=None,
@@ -97,7 +97,7 @@ def test_del_request_others_unprivileged(client):
     email_to_delete = "delete_me_unitadmin@mailtrap.io"
 
     # with pytest.raises(ddserr.AccessDeniedError):
-    response = client.post(
+    response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unituser"]).token(client),
         data=json.dumps({"email": email_to_delete}),
@@ -118,7 +118,7 @@ def test_del_request_others_researcher(client):
     email_to_delete = "researchuser@mailtrap.io"
 
     with pytest.raises(ddserr.UserDeletionError):
-        response = client.post(
+        response = client.delete(
             tests.DDSEndpoint.USER_DELETE,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
             data=json.dumps({"email": email_to_delete}),
@@ -139,7 +139,7 @@ def test_del_request_others_researcher(client):
     email_to_delete = "unituser1@mailtrap.io"
 
     # with pytest.raises(ddserr.UserDeletionError):
-    response = client.post(
+    response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
         data=json.dumps({"email": email_to_delete}),
@@ -161,7 +161,7 @@ def test_del_request_others_self(client):
     email_to_delete = "delete_me_unitadmin@mailtrap.io"
 
     # with pytest.raises(ddserr.UserDeletionError):
-    response = client.post(
+    response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
         data=json.dumps({"email": email_to_delete}),
@@ -181,7 +181,7 @@ def test_del_request_others_success(client):
 
     email_to_delete = "delete_me_unituser@mailtrap.io"
 
-    response = client.post(
+    response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
         data=json.dumps({"email": email_to_delete}),
@@ -200,7 +200,7 @@ def test_del_request_others_superaction(client):
 
     email_to_delete = "delete_me_unitadmin@mailtrap.io"
 
-    response = client.post(
+    response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
         data=json.dumps({"email": email_to_delete}),
