@@ -96,3 +96,36 @@ def test_delete_unit_row(client):
     # Make sure invites have been deleted
     invites = models.Invite.query.filter_by(unit_id=unit_id).all()
     assert invites == []
+
+
+# Project #################################################################################### Project #
+@pytest.fixture()
+def project_with_files(client):
+    """
+    Project with files and versions
+    """
+    project = models.Project.query.filter_by(public_id="public_project_id").first()
+
+    project.files = [
+        models.File(name="file1", project_id=project.id),
+    ]
+    assert project.files != []
+    assert project.versions != []
+    return project
+
+
+def test_delete_project_with_files_and_versions(client):
+    """
+    Project row deleted
+
+    Unit row kept
+    User row kept
+    Error
+        Need to delete File rows and Version rows first
+    ProjectStatus rows deleted
+    ProjectUser rows deleted
+    """
+    projects = models.Project.query.all()
+    print([project.files for project in projects])
+
+    assert False
