@@ -71,9 +71,6 @@ def test_delete_unit_row__with_users(client):
     for project in projects:
         db.session.delete(project)
 
-    # Removing this print statement causes the test to fail on Johannes computer. I don't know why.
-    print(unit.users)
-
     db.session.delete(unit)
     with pytest.raises(sqlalchemy.exc.IntegrityError):
         db.session.commit()
@@ -177,8 +174,6 @@ def test_delete_project_with_versions(client):
     for file in project.files:
         db.session.delete(file)
     db.session.commit()
-
-    version_ids = [version.id for version in project.file_versions]
 
     with pytest.raises(sqlalchemy.exc.IntegrityError):
         db.session.delete(project)
@@ -524,7 +519,7 @@ def test_delete_file(client):
 
     exists = models.Project.query.filter_by(id=project_id).one_or_none()
     assert exists is not None
-    print(file.id)
+
     for version_id in version_ids:
         exists = models.Version.query.get(version_id)
         assert exists is not None
