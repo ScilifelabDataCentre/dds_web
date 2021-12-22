@@ -361,3 +361,33 @@ def test_delete_identifier(client):
 
     exists = models.User.query.filter_by(username=username).one_or_none()
     assert exists is not None
+
+
+# Email #################################################################################### Email #
+
+
+def __setup_email(username):
+    """ """
+    email = models.Email.query.filter_by(user_id=username).first()
+
+    assert email.user is not None
+    return email
+
+
+def test_delete_email(client):
+    """
+    Email row deleted
+
+        User row kept
+    """
+    username = "researchuser"
+    email = __setup_email(username)
+
+    db.session.delete(email)
+    db.session.commit()
+
+    exists = models.Email.query.filter_by(user_id=username).one_or_none()
+    assert exists is None
+
+    exists = models.User.query.filter_by(username=username).one_or_none()
+    assert exists is not None
