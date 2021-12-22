@@ -25,20 +25,22 @@ def __setup_unit():
     projects = unit.projects
     assert projects != []
 
+    # Need empty projects to test the correct constraint
+    for project in projects:
+        __delete_files_and_versions(project)
+
     unit_users = unit.users
     assert unit_users != []
 
     return unit, projects, unit_users
 
 
-def __delete_project(project):
+def __delete_files_and_versions(project):
     for version in project.file_versions:
         db.session.delete(version)
 
     for file in project.files:
         db.session.delete(file)
-
-    db.session.delete(project)
 
     db.session.commit()
 
@@ -67,7 +69,7 @@ def test_delete_unit_row__with_users(client):
     unit, projects, _ = __setup_unit()
 
     for project in projects:
-        __delete_project(project)
+        db.session.delete(project)
 
     # Removing this print statement causes the test to fail on Johannes computer. I don't know why.
     print(unit.users)
@@ -92,7 +94,7 @@ def test_delete_unit_row(client):
     assert invites != []
 
     for project in projects:
-        __delete_project(project)
+        db.session.delete(project)
 
     for user in unit_users:
         db.session.delete(user)
