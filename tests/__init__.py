@@ -4,6 +4,9 @@ from base64 import b64encode
 from urllib.parse import quote_plus
 import json
 import dds_web.api.errors as ddserr
+import dds_web.database
+import flask
+import flask_login
 
 # Copied from dds_cli __init__.py:
 
@@ -72,25 +75,24 @@ class UserAuth:
         else:
             raise ddserr.JwtTokenGenerationError()
 
-    def login_web(self, client):
-        return client.post(
-            "/login",
-            data=dict(
-                username=self.as_tuple()[0],
-                password=self.as_tuple()[1],
-            ),
-            follow_redirects=True,
-        )
+    @property
+    def username(self):
+        return self.as_tuple()[0]
 
-    def login_web_next(self, client, next):
-        return client.post(
-            "/login?next=" + quote_plus(next),
-            data=dict(
-                username=self.as_tuple()[0],
-                password=self.as_tuple()[1],
-            ),
-            follow_redirects=True,
-        )
+    def fake_web_login(self, client):
+        from flask import session
+
+        user = dds_web.database.models.User.query.filter_by(username=self.username).first()
+
+        def set_session_cookie(client):
+            app = flask.current_app
+            val = app.session_interface.get_signing_serializer(app).dumps(dict(session))
+            client.set_cookie("localhost", app.session_cookie_name, val)
+
+        flask_login.login_user(user)
+        set_session_cookie(client)
+
+        return client
 
 
 class DDSEndpoint:
@@ -112,6 +114,9 @@ class DDSEndpoint:
     # Authentication - user and project
     TOKEN = BASE_ENDPOINT + "/user/token"
     ENCRYPTED_TOKEN = BASE_ENDPOINT + "/user/encrypted_token"
+
+    # Remove user from project
+    REMOVE_USER_FROM_PROJ = BASE_ENDPOINT + "/user/access/revoke"
 
     # S3Connector keys
     S3KEYS = BASE_ENDPOINT + "/s3/proj"
