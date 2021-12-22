@@ -688,12 +688,6 @@ class File(db.Model):
     salt = db.Column(db.String(32), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
     time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
-    expires = db.Column(
-        db.DateTime(),
-        unique=False,
-        nullable=False,
-        default=dds_web.utils.current_time() + datetime.timedelta(days=30),
-    )
 
     # Additional relationships
     versions = db.relationship("Version", back_populates="file")
