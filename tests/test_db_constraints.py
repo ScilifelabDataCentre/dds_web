@@ -19,7 +19,7 @@ from dds_web.database import models
 # Unit ###################################################################################### Unit #
 
 
-def __setup_unit(client):
+def __setup_unit():
     unit = models.Unit.query.filter_by(name="Unit 1").first()
 
     projects = unit.projects
@@ -38,7 +38,7 @@ def test_delete_unit_row__with_project_and_users(client):
     Error
         Need to delete Project and UnitUser (due to inheritance issues) rows first
     """
-    unit, _, _ = __setup_unit(client)
+    unit, _, _ = __setup_unit()
 
     db.session.delete(unit)
     with pytest.raises(sqlalchemy.exc.IntegrityError):
@@ -52,7 +52,7 @@ def test_delete_unit_row__with_users(client):
     Error
         Need to delete UnitUsers (due to inheritance issues) rows first
     """
-    unit, projects, _ = __setup_unit(client)
+    unit, projects, _ = __setup_unit()
 
     for project in projects:
         db.session.delete(project)
@@ -73,7 +73,7 @@ def test_delete_unit_row(client):
     Invite rows should be deleted
     """
 
-    unit, projects, unit_users = __setup_unit(client)
+    unit, projects, unit_users = __setup_unit()
 
     unit_id = unit.id
     # Make sure unit has some invites
@@ -99,7 +99,7 @@ def test_delete_unit_row(client):
 
 
 # Project #################################################################################### Project #
-def __setup_project(client):
+def __setup_project():
     """
     Project with files and versions
     """
@@ -127,7 +127,7 @@ def test_delete_project_with_files_and_versions(client):
     Error
         Need to delete File rows and Version rows first
     """
-    project = __setup_project(client)
+    project = __setup_project()
 
     with pytest.raises(sqlalchemy.exc.IntegrityError):
         db.session.delete(project)
@@ -141,7 +141,7 @@ def test_delete_project_with_files(client):
     Error
         Need to delete File rows and Version rows first
     """
-    project = __setup_project(client)
+    project = __setup_project()
 
     for version in project.file_versions:
         db.session.delete(version)
@@ -162,7 +162,7 @@ def test_delete_project(client):
     ProjectStatus rows deleted
     ProjectUser rows deleted
     """
-    project = __setup_project(client)
+    project = __setup_project()
 
     project_id = project.id
     nr_users = models.User.query.count()
@@ -190,3 +190,57 @@ def test_delete_project(client):
     assert statuses == []
     project_users = models.ProjectUsers.query.filter_by(project_id=project_id).all()
     assert project_users == []
+
+
+# User ########################################################################################## User #
+
+
+def __setup_user(username):
+    """ """
+    user = models.User.query.filter_by(username=username).first()
+
+    assert user.identifiers != []
+    assert user.emails != []
+    assert user.projects != []
+    assert user.deletion_request is not None
+
+    return user
+
+
+def test_delete_user__researcher(client):
+    """
+    User row deleted
+
+        Identifier rows deleted
+        Email rows deleted
+        Project rows kept
+        DeletionRequest deleted
+    """
+    username = "researchuser"
+    email_str = "researchuser@mailtrap.io"
+    user = __setup_user(username)
+
+    project_ids = [project.id for project in user.projects]
+    nr_projects = len(project_ids)
+
+    db.session.delete(user)
+    db.session.commit()
+
+    exists = models.User.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
+    # Make sure identifiers are deleted
+    exists = models.Identifier.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
+    # Make sure emails are deleted
+    exists = models.Email.query.filter_by(email=email_str).one_or_none()
+    assert exists is None
+
+    # Make sure projects are kept
+    project_ids_after = models.Project.query.filter(models.Project.id.in_(project_ids)).all()
+    assert len(project_ids_after) == nr_projects
+
+    # Make sure deletion request is deleted
+    exists = models.DeletionRequest.query.filter_by(requester_id=username).one_or_none()
+    assert exists is None

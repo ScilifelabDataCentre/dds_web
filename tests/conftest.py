@@ -24,6 +24,8 @@ from dds_web.database.models import (
     ProjectStatuses,
     File,
     Version,
+    Identifier,
+    DeletionRequest,
 )
 from dds_web import create_app, db
 
@@ -271,6 +273,14 @@ def add_data_to_db():
         user_id="researchuser", email="researchuser@mailtrap.io", primary=True
     )
     users[0].emails.append(add_email_to_user_0)
+    users[0].identifiers.append(Identifier(username="researchuser", identifier="A" * 58))
+    users[0].deletion_request.append(
+        DeletionRequest(
+            requester_id="researchuser",
+            email="researchuser@mailtrap.io",
+            issued=dds_web.utils.current_time(),
+        )
+    )
 
     add_email_to_user_6 = Email(
         user_id="researchuser2", email="researchuser2@mailtrap.io", primary=True
@@ -278,11 +288,22 @@ def add_data_to_db():
     users[6].emails.append(add_email_to_user_6)
 
     users[2].emails.append(Email(user_id="unituser1", email="unituser1@mailtrap.io", primary=True))
+    users[2].identifiers.append(Identifier(username="unituser1", identifier="B" * 58))
+    users[2].deletion_request.append(
+        DeletionRequest(
+            requester_id="unituser1",
+            email="unituser1@mailtrap.io",
+            issued=dds_web.utils.current_time(),
+        )
+    )
+
     users[3].emails.append(Email(user_id="unituser2", email="unituser2@mailtrap.io", primary=True))
     users[4].emails.append(Email(user_id="unitadmin", email="unitadmin@mailtrap.io", primary=True))
     users[5].emails.append(
         Email(user_id="superadmin", email="superadmin@mailtrap.io", primary=True)
     )
+    users[5].identifiers.append(Identifier(username="superadmin", identifier="C" * 58))
+
     users[7].emails.append(
         Email(
             user_id="delete_me_researcher", email="delete_me_researcher@mailtrap.io", primary=True
