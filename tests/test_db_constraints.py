@@ -477,7 +477,7 @@ def test_delete_file(client):
         Project row kept
         File versions kept
     """
-    filename = "filename2"
+    filename = "filename1"
     file = __setup_file(filename)
 
     project_id = file.project.id
@@ -495,3 +495,44 @@ def test_delete_file(client):
     for version_id in version_ids:
         exists = models.Version.query.get(version_id)
         assert exists is not None
+
+
+# Version ################################################################################ Version #
+
+
+def __setup_version(file_id):
+    versions = models.Version.query.filter_by(active_file=file_id).all()
+
+    assert len(versions) == 1
+    version = versions[0]
+    assert version is not None
+    assert version.file is not None
+    assert version.project is not None
+    return version
+
+
+def test_delete_version(client):
+    """
+    Version row deleted
+
+        File row kept
+        Project row kept
+    """
+    filename = "filename2"
+    file = models.File.query.filter_by(name=filename).first()
+    file_id = file.id
+    version = __setup_version(file_id)
+
+    project_id = version.project.id
+
+    db.session.delete(version)
+    db.session.commit()
+
+    exists = models.Version.query.filter_by(active_file=file_id).first()
+    assert exists is None
+
+    exists = models.File.query.filter_by(id=file_id).one_or_none()
+    assert exists is not None
+
+    exists = models.Project.query.filter_by(id=project_id).one_or_none()
+    assert exists is not None
