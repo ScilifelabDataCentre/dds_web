@@ -189,7 +189,7 @@ def test_aborted_project(module_client, boto3_session):
 
 
 def test_abort_from_in_progress_once_made_available(module_client, boto3_session):
-    """Creat project and abort in from In Progress after it has been made available"""
+    """Create project and abort it from In Progress after it has been made available"""
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),

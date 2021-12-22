@@ -418,6 +418,50 @@ class DeleteUser(flask_restful.Resource):
         )
 
 
+class RemoveUserAssociation(flask_restful.Resource):
+    @auth.login_required
+    def post(self):
+        """Remove a user from a project"""
+
+        args = flask.request.json
+
+        project_id = args.pop("project")
+        user_email = args.pop("email")
+
+        # Check if email is registered to a user
+        existing_user = user_schemas.UserSchema().load({"email": user_email})
+        project = project_schemas.ProjectRequiredSchema().load({"project": project_id})
+
+        if existing_user:
+            user_in_project = False
+            for user_association in project.researchusers:
+                if user_association.user_id == existing_user.username:
+                    user_in_project = True
+                    db.session.delete(user_association)
+            if user_in_project:
+                try:
+                    db.session.commit()
+                    message = (
+                        f"User with email {user_email} no longer associated with {project_id}."
+                    )
+                except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
+                    flask.current_app.logger.exception(err)
+                    db.session.rollback()
+                    message = "Removing user association with the project has not succeeded"
+                    raise ddserr.DatabaseError(message=f"Server Error: {message}")
+            else:
+                message = "User already not associated with this project"
+            status = 200
+            flask.current_app.logger.debug(
+                f"User {existing_user.username} no longer associated with project {project.public_id}."
+            )
+        else:
+            message = f"{user_email} already not associated with this project"
+            status = ddserr.error_codes["NoSuchUserError"]["status"].value
+
+        return {"message": message}, status
+
+
 class Token(flask_restful.Resource):
     """Generates token for the user."""
 
