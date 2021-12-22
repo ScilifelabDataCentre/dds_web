@@ -233,6 +233,7 @@ def add_data_to_db():
             user_id="delete_me_researcher", email="delete_me_researcher@mailtrap.io", primary=True
         )
     )
+    users[7].has_2fa = True
     users[8].emails.append(
         Email(user_id="delete_me_unituser", email="delete_me_unituser@mailtrap.io", primary=True)
     )
@@ -262,8 +263,8 @@ def client():
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
     app = create_app(testing=True, database_uri=DATABASE_URI)
-    with app.test_client() as client:
-        with app.app_context():
+    with app.test_request_context():
+        with app.test_client() as client:
 
             db.create_all()
 
@@ -289,8 +290,8 @@ def module_client():
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
     app = create_app(testing=True, database_uri=DATABASE_URI)
-    with app.test_client() as client:
-        with app.app_context():
+    with app.test_request_context():
+        with app.test_client() as client:
 
             db.create_all()
 

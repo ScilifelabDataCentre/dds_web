@@ -272,6 +272,8 @@ class InviteError(exceptions.HTTPException):
 class UserDeletionError(exceptions.HTTPException):
     """Errors regarding deleting user accounts."""
 
+    code = http.HTTPStatus.BAD_REQUEST
+
     def __init__(self, message="User deletion failed.", alt_message=None):
         general_logger.warning(message)
 

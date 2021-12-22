@@ -10,6 +10,7 @@ import json
 
 # Installed
 import flask
+import werkzeug
 from dds_web.api.db_connector import DBConnector
 import flask_login
 import pyqrcode
@@ -28,13 +29,29 @@ from dds_web import db, limiter
 import dds_web.api.errors as ddserr
 from dds_web.api.schemas import user_schemas
 from dds_web import mail
-import flask_mail
+
+
+auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
+
+####################################################################################################
+# ERROR HANDLING ################################################################## ERROR HANDLING #
+####################################################################################################
+
+
+@auth_blueprint.errorhandler(werkzeug.exceptions.HTTPException)
+def bad_request(error):
+    """Handle user deletion errors."""
+    try:
+        message = error.message
+    except AttributeError:
+        message = ""
+    flask.current_app.logger.error(f"{error.code}: {message}")
+    return flask.make_response(flask.render_template("error.html", message=message), error.code)
 
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
-auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 
 
 @auth_blueprint.route("/", methods=["GET"])
