@@ -456,3 +456,42 @@ def test_delete_deletion_request(client):
 
     exists = models.User.query.filter_by(username=username).one_or_none()
     assert exists is not None
+
+
+# File ###################################################################################### File #
+
+
+def __setup_file(filename):
+    file = models.File.query.filter_by(name=filename).first()
+
+    assert file is not None
+    assert file.project is not None
+    assert file.versions != []
+    return file
+
+
+def test_delete_file(client):
+    """
+    File row deleted
+
+        Project row kept
+        File versions kept
+    """
+    filename = "filename2"
+    file = __setup_file(filename)
+
+    project_id = file.project.id
+    version_ids = [version.id for version in file.versions]
+
+    db.session.delete(file)
+    db.session.commit()
+
+    exists = models.File.query.filter_by(name=filename).one_or_none()
+    assert exists is None
+
+    exists = models.Project.query.filter_by(id=project_id).one_or_none()
+    assert exists is not None
+    print(file.id)
+    for version_id in version_ids:
+        exists = models.Version.query.get(version_id)
+        assert exists is not None
