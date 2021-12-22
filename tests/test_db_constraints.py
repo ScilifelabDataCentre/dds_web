@@ -196,7 +196,6 @@ def test_delete_project(client):
 
 
 def __setup_user(username):
-    """ """
     user = models.User.query.filter_by(username=username).first()
 
     assert user.identifiers != []
@@ -337,7 +336,6 @@ def test_delete_user__superadmin(client):
 
 
 def __setup_identifier(username):
-    """ """
     identifier = models.Identifier.query.filter_by(username=username).first()
 
     assert identifier.user is not None
@@ -367,7 +365,6 @@ def test_delete_identifier(client):
 
 
 def __setup_email(username):
-    """ """
     email = models.Email.query.filter_by(user_id=username).first()
 
     assert email.user is not None
@@ -390,4 +387,43 @@ def test_delete_email(client):
     assert exists is None
 
     exists = models.User.query.filter_by(username=username).one_or_none()
+    assert exists is not None
+
+
+# Invite ################################################################################## Invite #
+
+
+def __setup_invite(unit_name, invite_email):
+    unit = models.Unit.query.filter_by(name=unit_name).first()
+    invite = models.Invite(email=invite_email, role="Researcher")
+
+    unit.invites.append(invite)
+
+    db.session.add(invite)
+    db.session.commit()
+
+    invite = models.Invite.query.filter_by(email=invite_email).first()
+    assert invite is not None
+    assert invite.unit is not None
+
+    return invite
+
+
+def test_delete_invite(client):
+    """
+    Invite row deleted
+
+        Unit row kept
+    """
+    unit_name = "Unit 1"
+    invite_email = "invite_email@example.com"
+    invite = __setup_invite(unit_name, invite_email)
+
+    db.session.delete(invite)
+    db.session.commit()
+
+    exists = models.Invite.query.filter_by(email=invite_email).first()
+    assert exists is None
+
+    exists = models.Unit.query.filter_by(name=unit_name).first()
     assert exists is not None
