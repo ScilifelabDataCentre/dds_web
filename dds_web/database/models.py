@@ -257,7 +257,8 @@ class Project(db.Model):
 def add_before_project_update(mapper, connection, target):
     """Listen for the 'before_update' event on Project and update certain of its fields"""
     target.date_updated = dds_web.utils.current_time()
-    target.last_updated_by = auth.current_user().username
+    if auth.current_user():
+        target.last_updated_by = auth.current_user().username
 
 
 # Users #################################################################################### Users #
