@@ -163,6 +163,26 @@ def test_delete_project_with_files(client):
         db.session.commit()
 
 
+def test_delete_project_with_versions(client):
+    """
+    Project row deleted
+
+    Error
+        Need to delete File rows and Version rows first
+    """
+    project = __setup_project()
+
+    for file in project.files:
+        db.session.delete(file)
+    db.session.commit()
+
+    version_ids = [version.id for version in project.file_versions]
+
+    with pytest.raises(sqlalchemy.exc.IntegrityError):
+        db.session.delete(project)
+        db.session.commit()
+
+
 def test_delete_project(client):
     """
 
