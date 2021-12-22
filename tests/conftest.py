@@ -333,58 +333,56 @@ def add_data_to_db():
     return units, users
 
 
-@pytest.fixture(scope="function")
-def client():
+@pytest.fixture(scope="session")
+def db_session():
     # Create database specific for tests
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
+
     app = create_app(testing=True, database_uri=DATABASE_URI)
     with app.test_request_context():
         with app.test_client() as client:
 
             db.create_all()
 
-            units, users = add_data_to_db()
-            db.session.add_all(units)
-            db.session.add_all(users)
+            yield client
 
-            db.session.commit()
 
-            try:
-                yield client
-            finally:
-                db.session.rollback()
-                # Removes all data from the database
-                for table in reversed(db.metadata.sorted_tables):
-                    db.session.execute(table.delete())
-                db.session.commit()
+@pytest.fixture(scope="function")
+def client(db_session):
+
+    units, users = add_data_to_db()
+    db.session.add_all(units)
+    db.session.add_all(users)
+
+    db.session.commit()
+
+    try:
+        yield db_session
+    finally:
+        db.session.rollback()
+        # Removes all data from the database
+        for table in reversed(db.metadata.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
 
 
 @pytest.fixture(scope="module")
-def module_client():
-    # Create database specific for tests
-    if not database_exists(DATABASE_URI):
-        create_database(DATABASE_URI)
-    app = create_app(testing=True, database_uri=DATABASE_URI)
-    with app.test_request_context():
-        with app.test_client() as client:
+def module_client(db_session):
+    units, users = add_data_to_db()
+    db.session.add_all(units)
+    db.session.add_all(users)
 
-            db.create_all()
+    db.session.commit()
 
-            units, users = add_data_to_db()
-            db.session.add_all(units)
-            db.session.add_all(users)
-
-            db.session.commit()
-
-            try:
-                yield client
-            finally:
-                db.session.rollback()
-                # Removes all data from the database
-                for table in reversed(db.metadata.sorted_tables):
-                    db.session.execute(table.delete())
-                db.session.commit()
+    try:
+        yield db_session
+    finally:
+        db.session.rollback()
+        # Removes all data from the database
+        for table in reversed(db.metadata.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
 
 
 @pytest.fixture()
