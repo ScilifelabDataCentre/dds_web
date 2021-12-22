@@ -31,6 +31,18 @@ def __setup_unit():
     return unit, projects, unit_users
 
 
+def __delete_project(project):
+    for version in project.file_versions:
+        db.session.delete(version)
+
+    for file in project.files:
+        db.session.delete(file)
+
+    db.session.delete(project)
+
+    db.session.commit()
+
+
 def test_delete_unit_row__with_project_and_users(client):
     """
     Unit row deleted when project and users are not deleted.
@@ -55,8 +67,7 @@ def test_delete_unit_row__with_users(client):
     unit, projects, _ = __setup_unit()
 
     for project in projects:
-        db.session.delete(project)
-    db.session.commit()
+        __delete_project(project)
 
     # Removing this print statement causes the test to fail on Johannes computer. I don't know why.
     print(unit.users)
@@ -81,7 +92,7 @@ def test_delete_unit_row(client):
     assert invites != []
 
     for project in projects:
-        db.session.delete(project)
+        __delete_project(project)
 
     for user in unit_users:
         db.session.delete(user)
