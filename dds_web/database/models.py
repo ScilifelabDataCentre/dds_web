@@ -286,8 +286,12 @@ class User(flask_login.UserMixin, db.Model):
     type = db.Column(db.String(20), unique=False, nullable=False)
 
     # Relationships
-    identifiers = db.relationship("Identifier", back_populates="user", passive_deletes=True, cascade="all, delete")
-    emails = db.relationship("Email", back_populates="user", passive_deletes=True, cascade="all, delete")
+    identifiers = db.relationship(
+        "Identifier", back_populates="user", passive_deletes=True, cascade="all, delete"
+    )
+    emails = db.relationship(
+        "Email", back_populates="user", passive_deletes=True, cascade="all, delete"
+    )
 
     # Delete requests if User is deleted:
     # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.
