@@ -427,3 +427,32 @@ def test_delete_invite(client):
 
     exists = models.Unit.query.filter_by(name=unit_name).first()
     assert exists is not None
+
+
+# DeletionRequest ################################################################ DeletionRequest #
+
+
+def __setup_deletion_request(username):
+    deletion_request = models.DeletionRequest.query.filter_by(requester_id=username).first()
+    assert deletion_request is not None
+    assert deletion_request.requester is not None
+    return deletion_request
+
+
+def test_delete_deletion_request(client):
+    """
+    DeletionRequest row deleted
+
+        User row kept
+    """
+    username = "researchuser"
+    deletion_request = __setup_deletion_request(username)
+
+    db.session.delete(deletion_request)
+    db.session.commit()
+
+    exists = models.DeletionRequest.query.filter_by(requester_id=username).one_or_none()
+    assert exists is None
+
+    exists = models.User.query.filter_by(username=username).one_or_none()
+    assert exists is not None
