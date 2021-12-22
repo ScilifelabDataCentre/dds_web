@@ -229,6 +229,93 @@ def test_delete_user__researcher(client):
     exists = models.User.query.filter_by(username=username).one_or_none()
     assert exists is None
 
+    exists = models.ResearchUser.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
+    # Make sure identifiers are deleted
+    exists = models.Identifier.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
+    # Make sure emails are deleted
+    exists = models.Email.query.filter_by(email=email_str).one_or_none()
+    assert exists is None
+
+    # Make sure projects are kept
+    project_ids_after = models.Project.query.filter(models.Project.id.in_(project_ids)).all()
+    assert len(project_ids_after) == nr_projects
+
+    # Make sure deletion request is deleted
+    exists = models.DeletionRequest.query.filter_by(requester_id=username).one_or_none()
+    assert exists is None
+
+
+def test_delete_user__unituser(client):
+    """
+    User row deleted
+
+        Identifier rows deleted
+        Email rows deleted
+        Project rows kept
+        DeletionRequest deleted
+    """
+    username = "unituser"
+    email_str = "unituser1@mailtrap.io"
+    user = __setup_user(username)
+
+    project_ids = [project.id for project in user.projects]
+    nr_projects = len(project_ids)
+
+    db.session.delete(user)
+    db.session.commit()
+
+    exists = models.User.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
+    exists = models.UnitUser.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
+    # Make sure identifiers are deleted
+    exists = models.Identifier.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
+    # Make sure emails are deleted
+    exists = models.Email.query.filter_by(email=email_str).one_or_none()
+    assert exists is None
+
+    # Make sure projects are kept
+    project_ids_after = models.Project.query.filter(models.Project.id.in_(project_ids)).all()
+    assert len(project_ids_after) == nr_projects
+
+    # Make sure deletion request is deleted
+    exists = models.DeletionRequest.query.filter_by(requester_id=username).one_or_none()
+    assert exists is None
+
+
+def test_delete_user__superadmin(client):
+    """
+    User row deleted
+
+        Identifier rows deleted
+        Email rows deleted
+        Project rows kept
+        DeletionRequest deleted
+    """
+    username = "superadmin"
+    email_str = "superadmin@mailtrap.io"
+    user = __setup_user(username)
+
+    project_ids = [project.id for project in user.projects]
+    nr_projects = len(project_ids)
+
+    db.session.delete(user)
+    db.session.commit()
+
+    exists = models.User.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
+    exists = models.SuperAdmin.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
     # Make sure identifiers are deleted
     exists = models.Identifier.query.filter_by(username=username).one_or_none()
     assert exists is None

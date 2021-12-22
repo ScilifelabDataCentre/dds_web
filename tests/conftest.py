@@ -287,11 +287,11 @@ def add_data_to_db():
     )
     users[6].emails.append(add_email_to_user_6)
 
-    users[2].emails.append(Email(user_id="unituser1", email="unituser1@mailtrap.io", primary=True))
-    users[2].identifiers.append(Identifier(username="unituser1", identifier="B" * 58))
+    users[2].emails.append(Email(user_id="unituser", email="unituser1@mailtrap.io", primary=True))
+    users[2].identifiers.append(Identifier(username="unituser", identifier="B" * 58))
     users[2].deletion_request.append(
         DeletionRequest(
-            requester_id="unituser1",
+            requester_id="unituser",
             email="unituser1@mailtrap.io",
             issued=dds_web.utils.current_time(),
         )
