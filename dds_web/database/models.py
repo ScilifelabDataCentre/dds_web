@@ -20,7 +20,7 @@ import pathlib
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 # Own modules
-from dds_web import db
+from dds_web import db, auth
 import dds_web.utils
 
 
@@ -180,7 +180,9 @@ class Project(db.Model):
     responsible_unit = db.relationship("Unit", back_populates="projects")
     # ---
     created_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))
-    creator = db.relationship("User", back_populates="created_projects")
+    creator = db.relationship("User", backref="created_projects", foreign_keys=[created_by])
+    last_updated_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))
+    updator = db.relationship("User", backref="updated_projects", foreign_keys=[last_updated_by])
     # ---
 
     # Additional relationships
@@ -247,6 +249,13 @@ class Project(db.Model):
         return f"<Project {self.public_id}>"
 
 
+@sqlalchemy.event.listens_for(Project, "before_update")
+def add_before_project_update(mapper, connection, target):
+    """Listen for the 'before_update' event on Project and update certain of its fields"""
+    target.date_updated = dds_web.utils.current_time()
+    target.last_updated_by = auth.current_user().username
+
+
 # Users #################################################################################### Users #
 
 
@@ -275,7 +284,6 @@ class User(flask_login.UserMixin, db.Model):
     # Relationships
     identifiers = db.relationship("Identifier", back_populates="user", passive_deletes=True)
     emails = db.relationship("Email", back_populates="user", passive_deletes=True, cascade="all")
-    created_projects = db.relationship("Project", back_populates="creator", passive_deletes=True)
     # Delete requests if User is deleted:
     # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.
     deletion_request = db.relationship("DeletionRequest", back_populates="requester")
