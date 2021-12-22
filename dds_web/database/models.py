@@ -662,7 +662,7 @@ class File(db.Model):
 
     # Foreign keys & relationships
     project_id = db.Column(
-        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), index=True
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), index=True, nullable=False
     )
     project = db.relationship("Project", back_populates="files")
     # ---
@@ -715,7 +715,7 @@ class Version(db.Model):
 
     # Foreign keys & relationships
     project_id = db.Column(
-        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), nullable=True
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), nullable=False
     )
     project = db.relationship("Project", back_populates="file_versions")
     # ---
