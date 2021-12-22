@@ -129,9 +129,11 @@ class Unit(db.Model):
     days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
 
     # Relationships
-    users = db.relationship("UnitUser", back_populates="unit", passive_deletes=True)
-    projects = db.relationship("Project", back_populates="responsible_unit", passive_deletes=True)
-    invites = db.relationship("Invite", back_populates="unit", passive_deletes=True)
+    users = db.relationship("UnitUser", back_populates="unit")
+    projects = db.relationship("Project", back_populates="responsible_unit")
+    invites = db.relationship(
+        "Invite", back_populates="unit", passive_deletes=True, cascade="all, delete"
+    )
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -176,7 +178,7 @@ class Project(db.Model):
     is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, index=True)
 
     # Foreign keys & relationships
-    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=True)
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="RESTRICT"), nullable=True)
     responsible_unit = db.relationship("Unit", back_populates="projects")
     # ---
     created_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))
@@ -186,12 +188,14 @@ class Project(db.Model):
     # ---
 
     # Additional relationships
-    files = db.relationship("File", back_populates="project", passive_deletes=True)
-    file_versions = db.relationship("Version", back_populates="project", passive_deletes=True)
+    files = db.relationship("File", back_populates="project")
+    file_versions = db.relationship("Version", back_populates="project")
     project_statuses = db.relationship(
-        "ProjectStatuses", back_populates="project", passive_deletes=True
+        "ProjectStatuses", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
-    researchusers = db.relationship("ProjectUsers", back_populates="project", passive_deletes=True)
+    researchusers = db.relationship(
+        "ProjectUsers", back_populates="project", passive_deletes=True, cascade="all, delete"
+    )
 
     @property
     def current_status(self):
@@ -252,8 +256,9 @@ class Project(db.Model):
 @sqlalchemy.event.listens_for(Project, "before_update")
 def add_before_project_update(mapper, connection, target):
     """Listen for the 'before_update' event on Project and update certain of its fields"""
-    target.date_updated = dds_web.utils.current_time()
-    target.last_updated_by = auth.current_user().username
+    if auth.current_user():
+        target.date_updated = dds_web.utils.current_time()
+        target.last_updated_by = auth.current_user().username
 
 
 # Users #################################################################################### Users #
@@ -282,11 +287,18 @@ class User(flask_login.UserMixin, db.Model):
     type = db.Column(db.String(20), unique=False, nullable=False)
 
     # Relationships
-    identifiers = db.relationship("Identifier", back_populates="user", passive_deletes=True)
-    emails = db.relationship("Email", back_populates="user", passive_deletes=True, cascade="all")
+    identifiers = db.relationship(
+        "Identifier", back_populates="user", passive_deletes=True, cascade="all, delete"
+    )
+    emails = db.relationship(
+        "Email", back_populates="user", passive_deletes=True, cascade="all, delete"
+    )
+
     # Delete requests if User is deleted:
     # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.
-    deletion_request = db.relationship("DeletionRequest", back_populates="requester")
+    deletion_request = db.relationship(
+        "DeletionRequest", back_populates="requester", cascade="all, delete"
+    )
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
@@ -427,7 +439,7 @@ class ResearchUser(User):
 
     # Relationships
     project_associations = db.relationship(
-        "ProjectUsers", back_populates="researchuser", passive_deletes=True
+        "ProjectUsers", back_populates="researchuser", passive_deletes=True, cascade="all, delete"
     )
 
     @property
@@ -629,7 +641,7 @@ class DeletionRequest(db.Model):
 
     # Primary Key
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    requester_id = db.Column(db.String(50), db.ForeignKey("users.username"))
+    requester_id = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"))
     requester = db.relationship("User", back_populates="deletion_request")
     email = db.Column(db.String(254), unique=True, nullable=False)
     issued = db.Column(db.DateTime(), unique=False, nullable=False)
@@ -659,7 +671,9 @@ class File(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
 
     # Foreign keys & relationships
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
     project = db.relationship("Project", back_populates="files")
     # ---
 
@@ -682,7 +696,7 @@ class File(db.Model):
     )
 
     # Additional relationships
-    versions = db.relationship("Version", back_populates="file", passive_deletes=True)
+    versions = db.relationship("Version", back_populates="file")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -711,7 +725,7 @@ class Version(db.Model):
 
     # Foreign keys & relationships
     project_id = db.Column(
-        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), nullable=True
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), nullable=False
     )
     project = db.relationship("Project", back_populates="file_versions")
     # ---
