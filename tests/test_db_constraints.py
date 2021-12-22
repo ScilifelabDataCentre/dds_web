@@ -331,3 +331,33 @@ def test_delete_user__superadmin(client):
     # Make sure deletion request is deleted
     exists = models.DeletionRequest.query.filter_by(requester_id=username).one_or_none()
     assert exists is None
+
+
+# Identifier ########################################################################## Identifier #
+
+
+def __setup_identifier(username):
+    """ """
+    identifier = models.Identifier.query.filter_by(username=username).first()
+
+    assert identifier.user is not None
+    return identifier
+
+
+def test_delete_identifier(client):
+    """
+    Identifier row deleted
+
+        User row kept
+    """
+    username = "researchuser"
+    identifier = __setup_identifier(username)
+
+    db.session.delete(identifier)
+    db.session.commit()
+
+    exists = models.Identifier.query.filter_by(username=username).one_or_none()
+    assert exists is None
+
+    exists = models.User.query.filter_by(username=username).one_or_none()
+    assert exists is not None
