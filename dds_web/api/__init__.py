@@ -54,6 +54,7 @@ api.add_resource(project.ProjectUsers, "/proj/users", endpoint="list_project_use
 api.add_resource(project.ProjectStatus, "/proj/status", endpoint="project_status")
 
 # User management ################################################################ User management #
+api.add_resource(user.RetrieveUserInfo, "/user/info", endpoint="user_info")
 api.add_resource(user.AddUser, "/user/add", endpoint="add_user")
 api.add_resource(user.DeleteUser, "/user/delete", endpoint="delete_user")
 api.add_resource(user.DeleteUserSelf, "/user/delete_self", endpoint="delete_user_self")
