@@ -65,6 +65,7 @@ class ProjectStatus(flask_restful.Resource):
     def post(self):
         """Update Project Status"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        public_id = project.public_id
         extra_args = flask.request.json
         new_status = extra_args.get("new_status")
         if new_status not in [
@@ -115,38 +116,56 @@ class ProjectStatus(flask_restful.Resource):
             # Can only be Deleted if never made Available
             if project.has_been_available:
                 raise DDSArgumentError(
-                    "Project cannot be deleted if it has ever been made available, instead Abort it from Available"
+                    "Project cannot be deleted if it has ever been made available, abort it instead"
                 )
+            project.is_active = False
 
         # Moving to Archived
         if new_status == "Archived":
             is_aborted = extra_args.get("is_aborted", False)
+            if project.current_status == "In Progress":
+                if not (project.has_been_available and is_aborted):
+                    raise DDSArgumentError(
+                        "Project cannot be archived from this status but can be aborted if it has ever been made available"
+                    )
+            project.is_active = False
 
         add_status = models.ProjectStatuses(
             **{"project_id": project.id, "status": new_status, "date_created": curr_date},
             deadline=add_deadline,
             is_aborted=is_aborted,
         )
+        delete_message = ""
         try:
             project.project_statuses.append(add_status)
-            db.session.commit()
-            if new_status in ["Deleted", "Archived"]:
-                # TODO Call function to delete files
-                print("TODO", flush=True)
+            if not project.is_active:
+                # Deletes files (also commits session in the function - possibly refactor later)
+                removed = RemoveContents().delete_project_contents(project)
+                delete_message = f"\nAll files in {public_id} deleted"
                 if new_status == "Deleted" or is_aborted:
-                    # TODO call function to delete everything in project row except for bucketname
-                    print("TODO", flush=True)
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+                    # Delete metadata from project row
+                    project = self.delete_project_info(project)
+                    delete_message += " and project info cleared"
+            db.session.commit()
+        except (
+            sqlalchemy.exc.SQLAlchemyError,
+            TypeError,
+            DatabaseError,
+            DeletionError,
+            BucketNotFoundError,
+        ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DatabaseError(message="Server Error: Status was not updated")
 
-        return flask.jsonify({"message": f"{project.public_id} updated to status {new_status}"})
+        return flask.jsonify(
+            {"message": f"{public_id} updated to status {new_status}" + delete_message}
+        )
 
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""
         possible_transitions = [
-            ("In Progress", ["Available", "Deleted"]),
+            ("In Progress", ["Available", "Deleted", "Archived"]),
             ("Available", ["In Progress", "Expired", "Archived"]),
             ("Expired", ["Available", "Archived"]),
         ]
@@ -157,6 +176,26 @@ class ProjectStatus(flask_restful.Resource):
                 result = True
                 break
         return result
+
+    def delete_project_info(self, proj):
+        """Delete certain metadata from proj on deletion/abort"""
+        proj.public_id = None
+        proj.title = None
+        proj.date_created = None
+        proj.date_updated = None
+        proj.description = None
+        proj.pi = None
+        proj.public_key = None
+        proj.private_key = None
+        proj.privkey_salt = None
+        proj.privkey_nonce = None
+        proj.is_sensitive = None
+        proj.unit_id = None
+        proj.created_by = None
+        # Delete User associations
+        for user in proj.researchusers:
+            db.session.delete(user)
+        return proj
 
 
 class GetPublic(flask_restful.Resource):
@@ -284,43 +323,35 @@ class RemoveContents(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Delete files
-        removed = False
-        with DBConnector(project=project) as dbconn:
-            try:
-                removed = dbconn.delete_all()
-            except (DatabaseError, EmptyProjectException):
-                raise
+        if not project.files:
+            raise EmptyProjectException("The are no project contents to delete.")
+        try:
+            self.delete_project_contents(project)
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+        except DatabaseError as err:
+            raise DeletionError(
+                message=f"No project contents deleted: {err}",
+                project=project.public_id,
+            )
+        except (DeletionError, BucketNotFoundError):
+            raise
 
-            # Return error if contents not deleted from db
+        return flask.jsonify({"removed": True})
+
+    @staticmethod
+    def delete_project_contents(project):
+        """Remove project contents"""
+        DBConnector(project=project).delete_all()
+
+        # Delete from bucket
+        with ApiS3Connector(project=project) as s3conn:
+            removed = s3conn.remove_all()
             if not removed:
-                raise DeletionError(
-                    message="No project contents deleted.",
-                    username=current_user.username,
-                    project=project.public_id,
-                )
-
-            # Delete from bucket
-            try:
-                with ApiS3Connector(project=project) as s3conn:
-                    removed = s3conn.remove_all()
-
-                    # Return error if contents not deleted from s3 bucket
-                    if not removed:
-                        db.session.rollback()
-                        raise DeletionError(
-                            message="Deleting project contents failed.",
-                            username=current_user.username,
-                            project=project.public_id,
-                        )
-
-                    # Commit changes to db
-                    db.session.commit()
-            except sqlalchemy.exc.SQLAlchemyError as err:
-                raise DatabaseError(message=str(err))
-            except (DeletionError, BucketNotFoundError):
-                raise
-
-        return flask.jsonify({"removed": removed})
+                db.session.rollback()
+            else:
+                # Commit changes to db
+                db.session.commit()
 
 
 class CreateProject(flask_restful.Resource):

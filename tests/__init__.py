@@ -1,7 +1,12 @@
 """Testing of the dds_web code with pytest."""
 
 from base64 import b64encode
+from urllib.parse import quote_plus
+import json
 import dds_web.api.errors as ddserr
+import dds_web.database
+import flask
+import flask_login
 
 # Copied from dds_cli __init__.py:
 
@@ -29,6 +34,9 @@ USER_CREDENTIALS = {
     "unituser": "unituser:password",
     "unitadmin": "unitadmin:password",
     "superadmin": "superadmin:password",
+    "delete_me_researcher": "delete_me_researcher:password",
+    "delete_me_unituser": "delete_me_unituser:password",
+    "delete_me_unitadmin": "delete_me_unitadmin:password",
 }
 
 ###############################################################################
@@ -67,6 +75,25 @@ class UserAuth:
         else:
             raise ddserr.JwtTokenGenerationError()
 
+    @property
+    def username(self):
+        return self.as_tuple()[0]
+
+    def fake_web_login(self, client):
+        from flask import session
+
+        user = dds_web.database.models.User.query.filter_by(username=self.username).first()
+
+        def set_session_cookie(client):
+            app = flask.current_app
+            val = app.session_interface.get_signing_serializer(app).dumps(dict(session))
+            client.set_cookie("localhost", app.session_cookie_name, val)
+
+        flask_login.login_user(user)
+        set_session_cookie(client)
+
+        return client
+
 
 class DDSEndpoint:
     """Defines all DDS urls."""
@@ -79,9 +106,20 @@ class DDSEndpoint:
     USER_CONFIRM = "/confirm_invite/"
     USER_NEW = "/register"
 
+    # User INFO
+    USER_INFO = BASE_ENDPOINT + "/user/info"
+
+    # User deletion
+    USER_DELETE = BASE_ENDPOINT + "/user/delete"
+    USER_DELETE_SELF = BASE_ENDPOINT + "/user/delete_self"
+    USER_CONFIRM_DELETE = "/confirm_deletion/"
+
     # Authentication - user and project
     TOKEN = BASE_ENDPOINT + "/user/token"
     ENCRYPTED_TOKEN = BASE_ENDPOINT + "/user/encrypted_token"
+
+    # Remove user from project
+    REMOVE_USER_FROM_PROJ = BASE_ENDPOINT + "/user/access/revoke"
 
     # S3Connector keys
     S3KEYS = BASE_ENDPOINT + "/s3/proj"

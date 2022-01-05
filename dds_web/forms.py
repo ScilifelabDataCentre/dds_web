@@ -7,6 +7,7 @@ import re
 
 # Installed
 import flask_wtf
+import flask_login
 import wtforms
 import marshmallow
 
@@ -83,7 +84,7 @@ class TwoFactorAuthForm(flask_wtf.FlaskForm):
 
 
 class RequestResetForm(flask_wtf.FlaskForm):
-    """Form for attempting password reset."""
+    """Form for attempting password reset when old password is lost."""
 
     email = wtforms.StringField(
         "Email",
@@ -97,7 +98,7 @@ class RequestResetForm(flask_wtf.FlaskForm):
 
 
 class ResetPasswordForm(flask_wtf.FlaskForm):
-    """Form for setting a new password."""
+    """Form for setting a new password when old password is lost."""
 
     password = wtforms.PasswordField(
         "Password",
@@ -116,3 +117,34 @@ class ResetPasswordForm(flask_wtf.FlaskForm):
         ],
     )
     submit = wtforms.SubmitField("Reset Password")
+
+
+class ChangePasswordForm(flask_wtf.FlaskForm):
+    """Form for setting a new password using the old password."""
+
+    current_password = wtforms.PasswordField(
+        "Current Password",
+        validators=[wtforms.validators.DataRequired()],
+    )
+    new_password = wtforms.PasswordField(
+        "New Password",
+        validators=[
+            wtforms.validators.DataRequired(),
+            wtforms.validators.EqualTo("confirm_new_password", message="Passwords must match!"),
+            wtforms.validators.Length(min=10, max=64),
+            utils.password_contains_valid_characters(),
+        ],
+    )
+    confirm_new_password = wtforms.PasswordField(
+        "Repeat New Password",
+        validators=[
+            wtforms.validators.DataRequired(),
+            wtforms.validators.EqualTo("new_password", message="The passwords don't match."),
+        ],
+    )
+
+    def validate_current_password(form, field):
+        if not flask_login.current_user.verify_password(form.current_password.data):
+            raise wtforms.ValidationError("Entered current password is incorrect!")
+
+    submit = wtforms.SubmitField("Change Password")

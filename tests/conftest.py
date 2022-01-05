@@ -3,6 +3,7 @@ import os
 import uuid
 from contextlib import contextmanager
 import unittest.mock
+import datetime
 
 # Installed
 import pytest
@@ -21,6 +22,10 @@ from dds_web.database.models import (
     Invite,
     Email,
     ProjectStatuses,
+    File,
+    Version,
+    Identifier,
+    DeletionRequest,
 )
 from dds_web import create_app, db
 
@@ -44,7 +49,18 @@ def demo_data():
             safespring_name="dds.example.com",
             safespring_access="access",
             safespring_secret="secret",
-        )
+        ),
+        Unit(
+            name="The league of the extinct gentlemen",
+            public_id=os.urandom(16).hex(),
+            external_display_name="Retraction guaranteed",
+            contact_email="tloteg@mailtrap.io",
+            internal_ref="Unit to test user deletion",
+            safespring_endpoint="endpoint",
+            safespring_name="dds.example.com",
+            safespring_access="access",
+            safespring_secret="secret",
+        ),
     ]
 
     users = [
@@ -85,6 +101,26 @@ def demo_data():
             username="researchuser2",
             password="password",
             name="Research User 2",
+        ),
+        ResearchUser(
+            username="delete_me_researcher",
+            password="password",
+            name="Research User to test deletions",
+            has_2fa=True,
+        ),
+        UnitUser(
+            username="delete_me_unituser",
+            password="password",
+            name="Unit User to test deletions",
+            is_admin=False,
+            has_2fa=True,
+        ),
+        UnitUser(
+            username="delete_me_unitadmin",
+            password="password",
+            name="Unit Admin to test deletions",
+            is_admin=True,
+            has_2fa=True,
         ),
     ]
 
@@ -147,19 +183,71 @@ def demo_data():
         ),
     ]
 
+    files_and_versions = [
+        (
+            File(
+                name="filename1",
+                name_in_bucket="name_in_bucket_1",
+                subpath="filename1/subpath",
+                size_original=15000,
+                size_stored=10000,
+                compressed=True,
+                salt="A" * 32,
+                public_key="B" * 64,
+                checksum="C" * 64,
+            ),
+            [
+                Version(
+                    size_stored=10000,
+                    time_uploaded=dds_web.utils.current_time(),
+                ),
+                Version(
+                    size_stored=30000,
+                    time_uploaded=dds_web.utils.current_time() - datetime.timedelta(days=1),
+                ),
+            ],
+        ),
+        (
+            File(
+                name="filename2",
+                name_in_bucket="name_in_bucket_2",
+                subpath="filename2/subpath",
+                size_original=15000,
+                size_stored=10000,
+                compressed=True,
+                salt="D" * 32,
+                public_key="E" * 64,
+                checksum="F" * 64,
+            ),
+            [
+                Version(
+                    size_stored=10000,
+                    time_uploaded=dds_web.utils.current_time(),
+                ),
+            ],
+        ),
+    ]
+
     invites = [Invite(email="existing_invite_email@mailtrap.io", role="Researcher")]
 
-    return (units, users, projects, invites)
+    return (units, users, projects, invites, files_and_versions)
 
 
 def add_data_to_db():
-    units, users, projects, invites = demo_data()
+    units, users, projects, invites, files_and_versions = demo_data()
     for project in projects:
         project.project_statuses.append(
             ProjectStatuses(
                 **{"status": "In Progress", "date_created": dds_web.utils.current_time()}
             )
         )
+    # Create association with files for project 0:
+    for file, versions in files_and_versions:
+        projects[0].files.append(file)
+        for version in versions:
+            file.versions.append(version)
+            projects[0].file_versions.append(version)
+
     # Create association with user - not owner of project
     project_0_user_0_association = ProjectUsers(owner=False)
     # Connect research user to association row. = (not append) due to one user per ass. row
@@ -185,11 +273,50 @@ def add_data_to_db():
         user_id="researchuser", email="researchuser@mailtrap.io", primary=True
     )
     users[0].emails.append(add_email_to_user_0)
+    users[0].identifiers.append(Identifier(username="researchuser", identifier="A" * 58))
+    users[0].deletion_request.append(
+        DeletionRequest(
+            requester_id="researchuser",
+            email="researchuser@mailtrap.io",
+            issued=dds_web.utils.current_time(),
+        )
+    )
 
     add_email_to_user_6 = Email(
         user_id="researchuser2", email="researchuser2@mailtrap.io", primary=True
     )
     users[6].emails.append(add_email_to_user_6)
+
+    users[2].emails.append(Email(user_id="unituser", email="unituser1@mailtrap.io", primary=True))
+    users[2].identifiers.append(Identifier(username="unituser", identifier="B" * 58))
+    users[2].deletion_request.append(
+        DeletionRequest(
+            requester_id="unituser",
+            email="unituser1@mailtrap.io",
+            issued=dds_web.utils.current_time(),
+        )
+    )
+
+    users[3].emails.append(Email(user_id="unituser2", email="unituser2@mailtrap.io", primary=True))
+    users[4].emails.append(Email(user_id="unitadmin", email="unitadmin@mailtrap.io", primary=True))
+    users[5].emails.append(
+        Email(user_id="superadmin", email="superadmin@mailtrap.io", primary=True)
+    )
+    users[5].identifiers.append(Identifier(username="superadmin", identifier="C" * 58))
+
+    users[7].emails.append(
+        Email(
+            user_id="delete_me_researcher", email="delete_me_researcher@mailtrap.io", primary=True
+        )
+    )
+    users[7].has_2fa = True
+    users[8].emails.append(
+        Email(user_id="delete_me_unituser", email="delete_me_unituser@mailtrap.io", primary=True)
+    )
+    users[9].emails.append(
+        Email(user_id="delete_me_unitadmin", email="delete_me_unitadmin@mailtrap.io", primary=True)
+    )
+
     # Add created project
     users[2].created_projects.append(projects[0])
     users[3].created_projects.append(projects[1])
@@ -201,7 +328,9 @@ def add_data_to_db():
     units[0].users.extend([users[2], users[3], users[4]])
     units[0].invites.append(invites[0])
 
-    return units[0]
+    units[1].users.extend([users[8], users[9]])
+
+    return units, users
 
 
 @pytest.fixture(scope="function")
@@ -210,16 +339,15 @@ def client():
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
     app = create_app(testing=True, database_uri=DATABASE_URI)
-    with app.test_client() as client:
-        with app.app_context():
+    with app.test_request_context():
+        with app.test_client() as client:
 
             db.create_all()
 
-            unit = add_data_to_db()
+            units, users = add_data_to_db()
+            db.session.add_all(units)
+            db.session.add_all(users)
 
-            db.session.add(unit)
-            # db.session.add_all(users)
-            # db.session.add_all(projects)
             db.session.commit()
 
             try:
@@ -238,16 +366,15 @@ def module_client():
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
     app = create_app(testing=True, database_uri=DATABASE_URI)
-    with app.test_client() as client:
-        with app.app_context():
+    with app.test_request_context():
+        with app.test_client() as client:
 
             db.create_all()
 
-            unit = add_data_to_db()
+            units, users = add_data_to_db()
+            db.session.add_all(units)
+            db.session.add_all(users)
 
-            db.session.add(unit)
-            # db.session.add_all(users)
-            # db.session.add_all(projects)
             db.session.commit()
 
             try:

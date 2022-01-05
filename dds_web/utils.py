@@ -193,6 +193,13 @@ def username_in_db(username):
     return False
 
 
+def delrequest_exists(email):
+    """Check if there is already a deletion request for that email."""
+    if models.DeletionRequest.query.filter_by(email=email).first():
+        return True
+    return False
+
+
 def send_reset_email(email_row):
     """Generate password reset email."""
     # Generate token
@@ -245,6 +252,10 @@ def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"
     now = datetime.datetime.now(tz=C_TZ) if dts is None else dts
     t_s = str(now.strftime(ts_format))
     return t_s
+
+
+def rate_limit_from_config():
+    return flask.current_app.config.get("TOKEN_ENDPOINT_ACCESS_LIMIT", "10/hour")
 
 
 @contextmanager

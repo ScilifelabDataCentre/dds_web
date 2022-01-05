@@ -1,0 +1,10 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+<h1>Error</h1>
+<p>
+    An error occurred when processing your request.
+    {{message}}
+</p>
+<p><a href="{{ url_for('auth_blueprint.index') }}">Back to first page</a></p>
+{% endblock %}

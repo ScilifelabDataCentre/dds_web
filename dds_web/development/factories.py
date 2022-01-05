@@ -207,7 +207,6 @@ class FilesFactory(factory.alchemy.SQLAlchemyModelFactory):
     salt = factory.Faker("pystr", min_chars=32, max_chars=32)
     checksum = factory.Faker("pystr", min_chars=64, max_chars=64)
     time_latest_download = factory.Faker("date_time")
-    expires = factory.Faker("date_time")
 
     # versions
 
