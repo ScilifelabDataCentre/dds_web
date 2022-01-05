@@ -13,12 +13,14 @@ import flask
 import werkzeug
 from dds_web.api.db_connector import DBConnector
 import flask_login
+import flask_mail
 import pyqrcode
 import pyotp
 import itsdangerous
 import sqlalchemy
 import marshmallow
-
+from cryptography.hazmat.primitives.twofactor.hotp import HOTP
+from cryptography.hazmat.primitives.hashes import SHA512
 
 # Own Modules
 from dds_web import auth
@@ -96,11 +98,9 @@ def confirm_invite(token):
                 message=f"There is no pending invitation for the email adress: {email}"
             )
 
-    # Initiate form
+    # Initiate form if the invite exists
     form = forms.RegistrationForm()
-
     # invite columns: unit_id, email, role
-    flask.current_app.logger.debug(invite_row)
 
     # Prefill fields - facility readonly if filled, otherwise disabled
     form.unit_name.render_kw = {"disabled": True}
@@ -141,10 +141,38 @@ def register():
             raise ddserr.DatabaseError from sqlerr
 
         # Go to two factor authentication setup
-        return flask.redirect(flask.url_for("auth_blueprint.setup_2fa"))
+        return flask.redirect(flask.url_for("auth_blueprint.auth_2fa"))
 
     # Go to registration form
     return flask.render_template("user/register.html", form=form)
+
+
+@auth_blueprint.route("/2fa/gen", methods=["GET", "POST"])
+@flask_login.login_required
+def auth_2fa():
+    """Send and validate two factor authentication."""
+    if flask.request.method == "GET":  # when registered / logged in
+        # 1. Get secret from user table and generate hotp object
+        hotp = HOTP(flask_login.current_user.hotp_secret, 8, SHA512())
+
+        # 2. Generate HOTP and save counter
+        counter = 0
+        hotp_value = hotp.generate(counter=counter)
+
+        # 3. Generate email
+        message = flask_mail.Message(
+            "One-Time Code",
+            sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
+            recipients=[flask_login.current_user.primary_email],
+        )
+        message.body = f"One time code for DDS authentication: {hotp_value}"
+        mail.send(message)
+
+        # 4. Redirect to 2fa form
+        form = forms.TwoFactorAuthForm()
+        return flask.render_template("user/2fa.html", form=form)
+    elif flask.request.method == "POST":  # when submitting
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
 
 @auth_blueprint.route("/login", methods=["GET", "POST"])
@@ -253,47 +281,6 @@ def reset_password(token):
 
     # Go to form
     return flask.render_template("user/reset_password.html", form=form)
-
-
-@auth_blueprint.route("/2fa", methods=["GET", "POST"])
-@flask_login.login_required
-def auth_2fa():
-    """Send and validate two factor authentication."""
-
-    # TODO
-    from cryptography.hazmat.primitives.twofactor.hotp import HOTP
-    from cryptography.hazmat.primitives.hashes import SHA512
-
-    if flask.request.method == "GET":
-        hotp = HOTP(flask_login.current_user.hotp_secret, 8, SHA512())
-
-        # 1. Get secret from user table
-        flask.current_app.logger.debug(f"user hotp secret: {flask_login.current_user.hotp_secret}")
-
-        # 2. Generate HOTP and save counter
-        counter = 0
-        hotp_value = hotp.generate(counter=counter)
-        flask.current_app.logger.debug(f"hotp value: {hotp_value}")
-
-        # 3. Generate email
-        # flask_login.current_user.primary_email
-        message = flask_mail.Message(
-            "One-Time Code",
-            sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
-            recipients=[flask_login.current_user.primary_email],
-        )
-        message.body = f"One time code for DDS authentication: {hotp_value}"
-        mail.send(message)
-
-        # 4. Redirect to 2fa form
-        # 5. Validate
-        # hotp.verify(hotp_value, 4)
-
-        # 6. Redirect
-        form = forms.TwoFactorAuthForm()
-        return flask.render_template("user/2fa.html", form=form)
-    elif flask.request.method == "POST":
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
 
 @auth_blueprint.route("/change_password", methods=["GET", "POST"])
