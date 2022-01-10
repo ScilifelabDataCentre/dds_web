@@ -280,6 +280,23 @@ class AddUser(flask_restful.Resource):
         }
 
 
+class RetrieveUserInfo(flask_restful.Resource):
+    @auth.login_required
+    def get(self):
+        """Return own info when queried"""
+        curr_user = auth.current_user()
+        info = {}
+        info["email_primary"] = curr_user.primary_email
+        info["emails_all"] = [x.email for x in curr_user.emails]
+        info["role"] = curr_user.role
+        info["username"] = curr_user.username
+        info["name"] = curr_user.name
+        if "Unit" in curr_user.role and curr_user.is_admin:
+            info["is_admin"] = curr_user.is_admin
+
+        return {"info": info}
+
+
 class DeleteUserSelf(flask_restful.Resource):
     """Endpoint to initiate user self removal from the system
     Every user can self-delete the own account with an e-mail confirmation.

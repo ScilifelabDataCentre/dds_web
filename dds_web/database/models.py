@@ -256,8 +256,9 @@ class Project(db.Model):
 @sqlalchemy.event.listens_for(Project, "before_update")
 def add_before_project_update(mapper, connection, target):
     """Listen for the 'before_update' event on Project and update certain of its fields"""
-    target.date_updated = dds_web.utils.current_time()
-    target.last_updated_by = auth.current_user().username
+    if auth.current_user():
+        target.date_updated = dds_web.utils.current_time()
+        target.last_updated_by = auth.current_user().username
 
 
 # Users #################################################################################### Users #
@@ -687,12 +688,6 @@ class File(db.Model):
     salt = db.Column(db.String(32), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
     time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
-    expires = db.Column(
-        db.DateTime(),
-        unique=False,
-        nullable=False,
-        default=dds_web.utils.current_time() + datetime.timedelta(days=30),
-    )
 
     # Additional relationships
     versions = db.relationship("Version", back_populates="file")

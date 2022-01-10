@@ -106,6 +106,9 @@ class DDSEndpoint:
     USER_CONFIRM = "/confirm_invite/"
     USER_NEW = "/register"
 
+    # User INFO
+    USER_INFO = BASE_ENDPOINT + "/user/info"
+
     # User deletion
     USER_DELETE = BASE_ENDPOINT + "/user/delete"
     USER_DELETE_SELF = BASE_ENDPOINT + "/user/delete_self"
