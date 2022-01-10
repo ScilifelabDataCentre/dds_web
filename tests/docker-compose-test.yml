@@ -12,5 +12,3 @@ services:
       target: test
     command: bash -c "pytest --color=yes $DDS_PYTEST_ARGS"
     restart: "no"
-    stdin_open: true
-    tty: true
