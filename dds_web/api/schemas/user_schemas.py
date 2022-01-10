@@ -188,7 +188,7 @@ class NewUserSchema(marshmallow.Schema):
             new_user.is_admin = invite.role == "Unit Admin"
 
             invite.unit.users.append(new_user)
-        elif new_user_role == "Super Admin":
+        elif invite.role == "Super Admin":
             new_user = models.SuperAdmin(**common_user_fields)
 
         # Create new email and append to user relationship
