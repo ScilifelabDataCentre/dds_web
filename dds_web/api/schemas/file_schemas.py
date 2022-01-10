@@ -4,9 +4,6 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
-# Standard Library
-from datetime import datetime
-
 # Installed
 import marshmallow
 import sqlalchemy
