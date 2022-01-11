@@ -318,12 +318,11 @@ class DeleteUserSelf(flask_restful.Resource):
 
     @auth.login_required
     def delete(self):
+        """Handle request to delete own account."""
+        # Get user info
         current_user = auth.current_user()
-
         email_str = current_user.primary_email
-
         username = current_user.username
-
         proj_ids = [proj.public_id for proj in current_user.projects]
 
         # Create URL safe token for invitation link
@@ -344,8 +343,10 @@ class DeleteUserSelf(flask_restful.Resource):
                 db.session.commit()
             else:
                 return {
-                    "message": f"The confirmation link has already been sent to your address {email_str}!",
-                    "status": 200,
+                    "message": (
+                        "The confirmation link has "
+                        f"already been sent to your address {email_str}!"
+                    )
                 }
 
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
@@ -394,17 +395,17 @@ class DeleteUserSelf(flask_restful.Resource):
 
         mail.send(msg)
 
+        # TODO: Change logging
         flask.current_app.logger.info(
             f"The user account {username} / {email_str} ({current_user.role}) has requested self-deletion."
         )
 
-        return flask.make_response(
-            flask.jsonify(
-                {
-                    "message": f"Requested account deletion initiated. An e-mail with a confirmation link has been sent to your address {email_str}!",
-                }
+        return {
+            "message": (
+                "Requested account deletion initiated. "
+                f"An e-mail with a confirmation link has been sent to your address {email_str}!"
             )
-        )
+        }
 
 
 class DeleteUser(flask_restful.Resource):
