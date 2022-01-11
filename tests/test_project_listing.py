@@ -2,7 +2,6 @@
 
 # Standard library
 import http
-import datetime
 import json
 import pytest
 import marshmallow

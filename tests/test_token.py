@@ -24,7 +24,7 @@ def test_encrypted_data_destined_for_another_user(client):
 def test_encrypted_and_signed_token(client):
     username = "researchuser"
     expires_in = datetime.timedelta(minutes=1)
-    expiry_datetime = datetime.datetime.now() + expires_in
+    expiry_datetime = datetime.datetime.utcnow() + expires_in
     additional_claim = {"iss": "DDS"}
     encrypted_token = encrypted_jwt_token(
         username=username,

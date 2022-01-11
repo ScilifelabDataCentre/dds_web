@@ -17,6 +17,7 @@ from jwcrypto import jwk, jwt
 from dds_web.api.errors import AuthenticationError, AccessDeniedError
 from dds_web.database import models
 from dds_web import basic_auth, auth
+import dds_web.utils
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -76,7 +77,7 @@ def verify_token(token):
     expiration_time = data.get("exp")
     # we use a hard check on top of the one from the dependency
     # exp shouldn't be before now no matter what
-    if datetime.datetime.now() <= datetime.datetime.fromtimestamp(expiration_time):
+    if dds_web.utils.current_time() <= datetime.datetime.fromtimestamp(expiration_time):
         username = data.get("sub")
         if username:
             user = models.User.query.get(username)

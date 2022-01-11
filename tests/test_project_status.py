@@ -322,7 +322,7 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
     assert project.current_status == "Available"
 
     db_deadline = max(project.project_statuses, key=lambda x: x.date_created).deadline
-    calc_deadline = datetime.datetime.now().replace(
+    calc_deadline = datetime.datetime.utcnow().replace(
         hour=23, minute=59, second=59, microsecond=0
     ) + datetime.timedelta(days=new_status["deadline"])
 
@@ -370,7 +370,7 @@ def test_set_project_to_expired_from_available(module_client, test_project):
     assert project.current_status == "Expired"
 
     db_deadline = max(project.project_statuses, key=lambda x: x.date_created).deadline
-    calc_deadline = datetime.datetime.now().replace(
+    calc_deadline = datetime.datetime.utcnow().replace(
         hour=23, minute=59, second=59, microsecond=0
     ) + datetime.timedelta(days=new_status["deadline"])
 

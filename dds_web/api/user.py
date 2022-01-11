@@ -81,7 +81,7 @@ def __signed_jwt_token(
     :param timedelta expires_in: This is the maximum allowed age of the token. (default 2 days)
     :param Dict or None additional_claims: Any additional token claims can be added. e.g., {"iss": "DDS"}
     """
-    expiration_time = datetime.datetime.now() + expires_in
+    expiration_time = dds_web.utils.current_time() + expires_in
     data = {"sub": username, "exp": expiration_time.timestamp(), "nonce": secrets.token_hex(32)}
     if additional_claims is not None:
         data.update(additional_claims)
@@ -553,10 +553,7 @@ class ShowUsage(flask_restful.Resource):
             for f in p.files:
                 for v in f.versions:
                     # Calculate hours of the current file
-                    time_uploaded = datetime.datetime.strptime(
-                        v.time_uploaded,
-                        "%Y-%m-%d %H:%M:%S.%f%z",
-                    )
+                    time_uploaded = v.time_uploaded
                     time_deleted = (
                         v.time_deleted if v.time_deleted else dds_web.utils.current_time()
                     )

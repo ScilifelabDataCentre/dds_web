@@ -33,7 +33,7 @@ class DDSRotatingFileHandler(logging.handlers.RotatingFileHandler):
         reaches <maxBytes> --> Current logging always to <filename>.log.
         """
 
-        self.today_ = datetime.datetime.now() if not hasattr(self, "today_") else self.today_
+        self.today_ = datetime.datetime.utcnow() if not hasattr(self, "today_") else self.today_
         self.basedir_ = pathlib.Path(basedir)  # Log directory
         self.basename = pathlib.Path(filename)  # Base for all filenames
         self.active_file_name = self.basedir_ / self.basename.with_suffix(".log")  # Active file
@@ -57,7 +57,7 @@ class DDSRotatingFileHandler(logging.handlers.RotatingFileHandler):
             self.stream.seek(0, 2)
             if self.stream.tell() + len(msg) >= self.maxBytes:
                 # Create time stamp and rename the current log file to contain rollover timestamp
-                new_today = datetime.datetime.now()
+                new_today = datetime.datetime.utcnow()
                 replacement_name = pathlib.Path(
                     str(self.basename)
                     + "_"
