@@ -114,9 +114,8 @@ class AddUser(flask_restful.Resource):
     @auth.login_required
     def post(self):
         """Create an invite and send email."""
-
+        # Get user input
         args = flask.request.json
-
         project = args.pop("project", None)
 
         # Check if email is registered to a user
@@ -149,11 +148,9 @@ class AddUser(flask_restful.Resource):
     @staticmethod
     def invite_user(args):
         """Invite a new user"""
-
         try:
             # Use schema to validate and check args, and create invite row
             new_invite = user_schemas.InviteUserSchema().load(args)
-
         except ddserr.InviteError as invite_err:
             return {
                 "message": invite_err.description,
@@ -226,14 +223,16 @@ class AddUser(flask_restful.Resource):
     @staticmethod
     def add_user_to_project(existing_user, project, role):
         """Add existing user to a project"""
-
+        # Check if current user has permission to add requested type of user to a project
         allowed_roles = ["Project Owner", "Researcher"]
-
         if role not in allowed_roles or existing_user.role not in allowed_roles:
-            return {
-                "status": 403,
-                "message": "User Role should be either 'Project Owner' or 'Researcher' to be added to a project",
-            }
+            raise ddserr.AccessDeniedError(
+                message=(
+                    "User Role should be either 'Project Owner' or "
+                    "'Researcher' to be added to a project"
+                ),
+                project=project,
+            )
 
         owner = False
         if role == "Project Owner":
