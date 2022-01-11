@@ -234,19 +234,22 @@ class AddUser(flask_restful.Resource):
                 project=project,
             )
 
+        # Check if user should be set to Project Owner or not
         owner = False
         if role == "Project Owner":
             owner = True
 
+        # Check the current users project access
         project = project_schemas.ProjectRequiredSchema().load({"project": project})
+
+        # Check if to change role in project
         ownership_change = False
         for rusers in project.researchusers:
             if rusers.researchuser is existing_user:
                 if rusers.owner == owner:
-                    return {
-                        "status": 403,
-                        "message": "User is already associated with the project in this capacity",
-                    }
+                    raise ddserr.PermissionDeniedError(
+                        message="User is already associated with the project in this capacity"
+                    )
 
                 ownership_change = True
                 rusers.owner = owner

@@ -301,6 +301,17 @@ class NoSuchFileError(Exception):
         general_logger.warning(message)
 
 
+class PermissionDeniedError(exceptions.HTTPException):
+    """ """
+
+    code = http.HTTPStatus.FORBIDDEN
+
+    def __init__(self, message="You do not have permission for this action.", alt_message=None):
+        general_logger.warning(message)
+
+        super().__init__(alt_message if alt_message else message)
+
+
 # ----------------------------------------------------------------------------------- #
 
 
