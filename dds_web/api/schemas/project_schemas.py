@@ -114,7 +114,6 @@ class CreateProjectSchema(marshmallow.Schema):
     @marshmallow.post_load
     def create_project(self, data, **kwargs):
         """Create project row in db."""
-
         try:
             # Lock db, get unit row and update counter
             unit_row = (
@@ -127,6 +126,7 @@ class CreateProjectSchema(marshmallow.Schema):
                     message=f"Error: Your user is not associated to a unit."
                 )
 
+            # Create public id
             unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
             data["public_id"] = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
 
@@ -136,7 +136,8 @@ class CreateProjectSchema(marshmallow.Schema):
             )
 
             # Generate keys
-            data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
+            if data.get("is_sensitive"):
+                data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
 
             # Create project
             current_user = auth.current_user()

@@ -358,11 +358,11 @@ class CreateProject(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def post(self):
         """Create a new project"""
+        # Get project info from request
+        project_info = flask.request.json
 
-        p_info = flask.request.json
-
-        new_project = project_schemas.CreateProjectSchema().load(p_info)
-
+        # Create new project with user specified info
+        new_project = project_schemas.CreateProjectSchema().load(project_info)
         if not new_project:
             raise DDSArgumentError("Failed to create project.")
 
@@ -375,12 +375,14 @@ class CreateProject(flask_restful.Resource):
             # For now just keeping the project row
             raise S3ConnectionError(str(err))
 
+        # TODO: Change logging
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."
         )
+
         user_addition_statuses = []
-        if "users_to_add" in p_info:
-            for user in p_info["users_to_add"]:
+        if "users_to_add" in project_info:
+            for user in project_info["users_to_add"]:
                 existing_user = user_schemas.UserSchema().load(user)
                 if not existing_user:
                     # Send invite if the user doesn't exist
