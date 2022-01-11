@@ -242,6 +242,11 @@ class AddUser(flask_restful.Resource):
         # Check the current users project access
         project = project_schemas.ProjectRequiredSchema().load({"project": project})
 
+        # TODO: Perform key decryption and encryption if project is sensitive
+        # and add the info to the new ProjectKeys table
+        if project.is_sensitive:
+            pass
+
         # Check if to change role in project
         ownership_change = False
         if existing_user in project.researchusers:
