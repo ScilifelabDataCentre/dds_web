@@ -135,7 +135,7 @@ class CreateProjectSchema(marshmallow.Schema):
                 public_id=data["public_id"], created_time=data["date_created"]
             )
 
-            # Generate keys
+            # Generate keys if project is sensitive
             if data.get("is_sensitive"):
                 data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
 

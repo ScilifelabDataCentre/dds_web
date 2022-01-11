@@ -37,6 +37,7 @@ def fill_db():
         pi="PI Name",
         bucket=f"testbucket",
         **key_gen.ProjectKeys("project_1").key_dict(),
+        is_sensitive=True,
     )
 
     project_1.project_statuses.append(
@@ -53,6 +54,7 @@ def fill_db():
         pi="PI Name",
         bucket=f"secondproject-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
         **key_gen.ProjectKeys("project_2").key_dict(),
+        is_sensitive=True,
     )
 
     project_2.project_statuses.append(
