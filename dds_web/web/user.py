@@ -361,6 +361,7 @@ def confirm_self_deletion(token):
         # Check that the email is registered on the current user:
         if email not in [email.email for email in flask_login.current_user.emails]:
             msg = f"The email for user to be deleted is not registered on your account."
+            # TODO: Change logging
             flask.current_app.logger.warning(
                 f"{msg} email: {email}: user: {flask_login.current_user}"
             )
@@ -377,7 +378,10 @@ def confirm_self_deletion(token):
         )
         db.session.commit()
         raise ddserr.UserDeletionError(
-            message=f"Deletion request for {email} has expired. Please login to the DDS and request deletion anew."
+            message=(
+                f"Deletion request for {email} has expired. "
+                "Please login to the DDS and request deletion anew."
+            )
         )
     except (itsdangerous.exc.BadSignature, itsdangerous.exc.BadTimeSignature):
         raise ddserr.UserDeletionError(
@@ -392,14 +396,24 @@ def confirm_self_deletion(token):
             user = user_schemas.UserSchema().load({"email": email})
             DBConnector.delete_user(user)
 
+            # TODO: Make sure the ProjectKeys are deleted too -- should be handled by the
+            # foreign key constraints
+
             # remove the deletion request from the database
             db.session.delete(deletion_request_row)
             db.session.commit()
 
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise ddserr.UserDeletionError(
-                message=f"User deletion request for {user.username} / {user.primary_email.email} failed due to database error: {sqlerr}",
-                alt_message=f"Deletion request for user {user.username} registered with {user.primary_email.email} failed for technical reasons. Please contact the unit for technical support!",
+                message=(
+                    f"User deletion request for {user.username} / {user.primary_email.email} "
+                    f"failed due to database error: {sqlerr}"
+                ),
+                alt_message=(
+                    f"Deletion request for user {user.username} "
+                    f"registered with {user.primary_email.email} failed for technical reasons. "
+                    "Please contact the unit for technical support!"
+                ),
             )
 
         return flask.make_response(

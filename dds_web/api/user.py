@@ -331,6 +331,9 @@ class DeleteUserSelf(flask_restful.Resource):
 
         # Create deletion request in database unless it already exists
         try:
+            # TODO: Make sure someone is connected to the project.
+            # Otherwise there won't be a project private key to decrypt / encrypt
+
             if not dds_web.utils.delrequest_exists(email_str):
                 new_delrequest = models.DeletionRequest(
                     **{
