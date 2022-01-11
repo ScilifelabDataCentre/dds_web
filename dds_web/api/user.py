@@ -244,17 +244,19 @@ class AddUser(flask_restful.Resource):
 
         # Check if to change role in project
         ownership_change = False
-        for rusers in project.researchusers:
-            if rusers.researchuser is existing_user:
-                if rusers.owner == owner:
-                    raise ddserr.PermissionDeniedError(
-                        message="User is already associated with the project in this capacity"
-                    )
+        if existing_user in project.researchusers:
+            for rusers in project.researchusers:
+                if rusers.researchuser is existing_user:
+                    if rusers.owner == owner:
+                        raise ddserr.PermissionDeniedError(
+                            message="User is already associated with the project in this capacity"
+                        )
 
-                ownership_change = True
-                rusers.owner = owner
-                break
+                    ownership_change = True
+                    rusers.owner = owner
+                    break
 
+        # Add user to project
         if not ownership_change:
             project.researchusers.append(
                 models.ProjectUsers(
@@ -264,21 +266,26 @@ class AddUser(flask_restful.Resource):
                 )
             )
 
+        # Save changes
         try:
             db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
+            # TODO: remove logging here? handle the logging in the error?
             flask.current_app.logger.exception(err)
             db.session.rollback()
             message = "User was not associated with the project"
             raise ddserr.DatabaseError(message=f"Server Error: {message}")
 
+        # TODO: Change logging
         flask.current_app.logger.debug(
             f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
         )
 
         return {
-            "status": 200,
-            "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
+            "message": (
+                f"User {existing_user.username} associated with "
+                f"project {project.public_id} as Owner={owner}."
+            )
         }
 
 
