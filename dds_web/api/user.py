@@ -28,8 +28,7 @@ import dds_web.utils
 import dds_web.forms
 import dds_web.api.errors as ddserr
 from dds_web.api.db_connector import DBConnector
-from dds_web.api.schemas import project_schemas
-from dds_web.api.schemas import user_schemas
+from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 
 # VARIABLES ############################################################################ VARIABLES #
 
@@ -508,6 +507,12 @@ class EncryptedToken(flask_restful.Resource):
 
     @basic_auth.login_required
     def get(self):
+        args = flask.request.json
+        if args is None:
+            args = {}
+
+        data = token_schemas.TokenSchema().load(args)
+
         return flask.jsonify(
             {
                 "token": encrypted_jwt_token(
