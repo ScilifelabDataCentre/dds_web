@@ -286,6 +286,8 @@ class UserDeletionError(exceptions.HTTPException):
 class NoSuchUserError(Exception):
     """There is no such user found in the database."""
 
+    code = http.HTTPStatus.BAD_REQUEST
+
     def __init__(self, message="User not found."):
         super().__init__(message)
 
