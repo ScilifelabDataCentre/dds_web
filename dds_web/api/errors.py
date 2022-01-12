@@ -6,6 +6,7 @@
 
 # Standard library
 import logging
+import structlog
 
 # Installed
 from werkzeug import exceptions
@@ -20,8 +21,8 @@ from dds_web import auth
 # LOGGING ################################################################################ LOGGING #
 ####################################################################################################
 
-general_logger = logging.getLogger("general")
-action_logger = logging.getLogger("actions")
+general_logger = structlog.getLogger("general")
+action_logger = structlog.getLogger("actions")
 
 extra_info = {"result": "DENIED"}
 
