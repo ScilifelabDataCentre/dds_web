@@ -10,9 +10,18 @@ import functools
 # Installed
 import boto3
 import botocore
+import flask
+import flask_login
+import structlog
 
 # Own modules
+from dds_web import auth
 from dds_web.api.errors import BucketNotFoundError
+
+
+# initiate logging
+action_logger = structlog.getLogger("actions")
+
 
 ####################################################################################################
 # DECORATORS ########################################################################## DECORATORS #
@@ -72,3 +81,34 @@ def bucket_must_exists(func):
         return func(self, *args, **kwargs)
 
     return check_bucket_exists
+
+
+def logging_bind_request(func):
+    """Binds some request parameters to the thread-local context of structlog"""
+
+    @functools.wraps(func)
+    def wrapper_logging_bind_request(*args, **kwargs):
+
+        if auth.current_user():
+            current_user = auth.current_user().username
+        elif flask_login.current_user.is_authenticated:
+            current_user = flask_login.current_user().username
+        else:
+            current_user = flask.request.access_route[0]  # log IP instead of username
+
+        with structlog.threadlocal.bound_threadlocal(
+            resource=flask.request.path or "not applicable",
+            request_args=flask.request.get_json() or "{}",
+            user=current_user,
+        ):
+
+            value = func(*args, **kwargs)
+
+            if hasattr(value, "status"):
+                structlog.threadlocal.bind_threadlocal(response=value.status)
+
+            action_logger.info(flask.request.endpoint + "." + func.__name__)
+
+        return value
+
+    return wrapper_logging_bind_request

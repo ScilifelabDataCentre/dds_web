@@ -68,13 +68,8 @@ def setup_logging(app):
             "version": 1,
             "disable_existing_loggers": False,
             "formatters": {
+                "default": {"format": "%(message)s"},
                 "general": {"format": "[%(asctime)s] %(module)s [%(levelname)s] %(message)s"},
-                "actions": {
-                    "format": (
-                        "[%(asctime)s] [%(levelname)s] <%(module)s> :: [%(result)s | "
-                        "Attempted : %(action)s | Project : %(project)s | User : %(current_user)s]"
-                    )
-                },
             },
             "handlers": {
                 "general": {
@@ -89,7 +84,7 @@ def setup_logging(app):
                     "class": "dds_web.dds_rotating_file_handler.DDSRotatingFileHandler",
                     "filename": "actions",
                     "basedir": app.config.get("LOGS_DIR"),
-                    "formatter": "actions",
+                    "formatter": "default",
                 },
                 "console": {
                     "level": logging.DEBUG,
@@ -103,14 +98,21 @@ def setup_logging(app):
                     "level": logging.DEBUG,
                     "propagate": False,
                 },
-                "actions": {"handlers": ["actions"], "level": logging.INFO, "propagate": False},
+                "actions": {
+                    "handlers": ["actions", "console"],
+                    "level": logging.INFO,
+                    "propagate": False,
+                },
             },
         }
     )
 
     structlog.configure(
         processors=[
-            # If log level is too low, abort pipeline and throw away log entry.
+            # Merge the bindings from Thread-Local Context, a sort of global context storage.
+            structlog.threadlocal.merge_threadlocal,
+            # Mimics the level configuration of the standard logging lib.
+            # e.g. logger.debug() event will be dropped if logging level is set to INFO or higher.
             structlog.stdlib.filter_by_level,
             # Add the name of the logger to event dict.
             structlog.stdlib.add_logger_name,
@@ -118,7 +120,7 @@ def setup_logging(app):
             structlog.stdlib.add_log_level,
             # Perform %-style formatting.
             structlog.stdlib.PositionalArgumentsFormatter(),
-            # Add a timestamp in ISO 8601 format.
+            # Add a timestamp to the event dict in ISO 8601 format.
             structlog.processors.TimeStamper(fmt="iso"),
             # If the "stack_info" key in the event dict is true, remove it and
             # render the current stack trace in the "stack" key.
@@ -133,7 +135,7 @@ def setup_logging(app):
             structlog.processors.JSONRenderer(),
         ],
         # `wrapper_class` is the bound logger that you get back from
-        # get_logger(). This one imitates the API of `logging.Logger`.
+        # get_logger(). This one imitates `logging.Logger`.
         wrapper_class=structlog.stdlib.BoundLogger,
         # `logger_factory` is used to create wrapped loggers that are used for
         # OUTPUT. This one returns a `logging.Logger`. The final value (a JSON
@@ -171,7 +173,7 @@ def create_app(testing=False, database_uri=None):
         limiter.logger.addHandler(handler)
 
     # Set app.logger as the general logger
-    app.logger = structlog.getLogger("general")
+    app.logger = logging.getLogger("general")
     app.logger.info("Logging initiated.")
 
     # Initialize database

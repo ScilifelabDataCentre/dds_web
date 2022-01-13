@@ -6,12 +6,13 @@
 
 # Standard library
 import logging
-import structlog
 
 # Installed
 from werkzeug import exceptions
 import flask
+import flask_login
 import http
+import structlog
 
 # Own modules
 from dds_web import actions
@@ -21,10 +22,37 @@ from dds_web import auth
 # LOGGING ################################################################################ LOGGING #
 ####################################################################################################
 
-general_logger = structlog.getLogger("general")
+general_logger = logging.getLogger("general")
 action_logger = structlog.getLogger("actions")
 
 extra_info = {"result": "DENIED"}
+
+
+class LoggedHTTPException(exceptions.HTTPException):
+    """Base class to enable standard action logging on HTTP Exceptions"""
+
+    def __init__(self, message=None):
+
+        if auth.current_user():
+            current_user = auth.current_user().username
+        elif flask_login.current_user.is_authenticated:
+            current_user = flask_login.current_user().username
+        else:
+            current_user = flask.request.access_route[0]  # log IP instead of username
+
+        with structlog.threadlocal.bound_threadlocal(
+            resource=flask.request.path or "not applicable",  # or rather flask.request.endpoint?
+            request_args=flask.request.get_json() or "{}",
+            user=current_user,
+        ):
+            if error_codes[self.__class__.__name__]:
+                code = error_codes[self.__class__.__name__]
+                code = code["status"]
+                structlog.threadlocal.bind_threadlocal(response=f"{code.value} {code.phrase}")
+
+            action_logger.warning("exception." + self.__class__.__name__)
+            super().__init__(message)
+
 
 ####################################################################################################
 # EXCEPTIONS ########################################################################## EXCEPTIONS #
@@ -51,7 +79,7 @@ class KeyLengthError(SystemExit):
         general_logger.error(message)
 
 
-class AuthenticationError(exceptions.HTTPException):
+class AuthenticationError(LoggedHTTPException):
     """Base class for errors due to authentication failure."""
 
     def __init__(self, message="Missing or incorrect credentials"):
@@ -60,7 +88,7 @@ class AuthenticationError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class AccessDeniedError(exceptions.HTTPException):
+class AccessDeniedError(LoggedHTTPException):
     """Errors due to incorrect project permissions."""
 
     def __init__(
@@ -78,14 +106,12 @@ class AccessDeniedError(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": username,
-                "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
         )
 
 
-class DatabaseError(exceptions.HTTPException):
+class DatabaseError(LoggedHTTPException):
     """Baseclass for database related issues."""
 
     def __init__(
@@ -97,12 +123,10 @@ class DatabaseError(exceptions.HTTPException):
 
         general_logger.warning(message)
 
-        action_logger.warning(
+        action_logger.error(
             message,
             extra={
                 **extra_info,
-                "current_user": auth.current_user(),
-                "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
         )
@@ -112,7 +136,7 @@ class DatabaseError(exceptions.HTTPException):
         )
 
 
-class EmptyProjectException(exceptions.HTTPException):
+class EmptyProjectException(LoggedHTTPException):
     """Something is attempted on an empty project."""
 
     def __init__(self, project, username=None, message="The project is empty."):
@@ -127,14 +151,12 @@ class EmptyProjectException(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": username,
-                "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
         )
 
 
-class DeletionError(exceptions.HTTPException):
+class DeletionError(LoggedHTTPException):
     """Deletion of item failed."""
 
     def __init__(self, project, message, pass_message=False):
@@ -145,8 +167,6 @@ class DeletionError(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": auth.current_user(),
-                "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
         )
@@ -154,7 +174,7 @@ class DeletionError(exceptions.HTTPException):
         super().__init__("Deletion failed." if not pass_message else message)
 
 
-class NoSuchProjectError(exceptions.HTTPException):
+class NoSuchProjectError(LoggedHTTPException):
     """The project does not exist in the database"""
 
     def __init__(self, project, message="The specified project does not exist."):
@@ -166,14 +186,12 @@ class NoSuchProjectError(exceptions.HTTPException):
             message,
             extra={
                 **extra_info,
-                "current_user": auth.current_user(),
-                "action": actions.get(flask.request.endpoint),
                 "project": project,
             },
         )
 
 
-class BucketNotFoundError(exceptions.HTTPException):
+class BucketNotFoundError(LoggedHTTPException):
     """No bucket name found in the database."""
 
     def __init__(self, message="No bucket found for the specified project."):
@@ -182,7 +200,7 @@ class BucketNotFoundError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class S3ProjectNotFoundError(exceptions.HTTPException):
+class S3ProjectNotFoundError(LoggedHTTPException):
     """No Safespring project found in database or connection failed."""
 
     def __init__(self, message="Safespring S3 project not found."):
@@ -191,7 +209,7 @@ class S3ProjectNotFoundError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class S3ConnectionError(exceptions.HTTPException):
+class S3ConnectionError(LoggedHTTPException):
     """Error when attempting to connect or perform action with S3 connection."""
 
     def __init__(self, message):
@@ -200,7 +218,7 @@ class S3ConnectionError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class S3InfoNotFoundError(exceptions.HTTPException):
+class S3InfoNotFoundError(LoggedHTTPException):
     """S3 info could not be found."""
 
     def __init__(self, message):
@@ -209,7 +227,7 @@ class S3InfoNotFoundError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class JwtTokenGenerationError(exceptions.HTTPException):
+class JwtTokenGenerationError(LoggedHTTPException):
     """Errors when generating the JWT token during authentication."""
 
     def __init__(self, message="Error during JWT Token generation.", pass_message=False):
@@ -223,7 +241,7 @@ class JwtTokenGenerationError(exceptions.HTTPException):
         )
 
 
-class MissingProjectIDError(exceptions.HTTPException):
+class MissingProjectIDError(LoggedHTTPException):
     """Errors due to missing project ID in request."""
 
     def __init__(self, message="Attempting to validate users project access without project ID"):
@@ -232,7 +250,7 @@ class MissingProjectIDError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class DDSArgumentError(exceptions.HTTPException):
+class DDSArgumentError(LoggedHTTPException):
     """Base class for errors occurring due to missing request arguments."""
 
     def __init__(self, message):
@@ -241,7 +259,7 @@ class DDSArgumentError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class MissingMethodError(exceptions.HTTPException):
+class MissingMethodError(LoggedHTTPException):
     """Raised when none of the following are found in a request: put, get, ls, rm."""
 
     def __init__(self, message="No method found in request."):
@@ -250,7 +268,7 @@ class MissingMethodError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class KeyNotFoundError(exceptions.HTTPException):
+class KeyNotFoundError(LoggedHTTPException):
     """Key not found in database."""
 
     def __init__(self, project, message="No key found for current project", pass_message=False):
@@ -261,7 +279,7 @@ class KeyNotFoundError(exceptions.HTTPException):
         super().__init__("Unrecoverable key error. Aborting." if not pass_message else message)
 
 
-class InviteError(exceptions.HTTPException):
+class InviteError(LoggedHTTPException):
     """Invite related errors."""
 
     def __init__(self, message="An error occurred during invite handling."):
@@ -270,7 +288,7 @@ class InviteError(exceptions.HTTPException):
         general_logger.warning(message)
 
 
-class UserDeletionError(exceptions.HTTPException):
+class UserDeletionError(LoggedHTTPException):
     """Errors regarding deleting user accounts."""
 
     code = http.HTTPStatus.BAD_REQUEST
