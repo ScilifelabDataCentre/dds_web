@@ -498,7 +498,7 @@ class RemoveUserAssociation(flask_restful.Resource):
             db.session.rollback()
             raise ddserr.DatabaseError(
                 message=(
-                    "Server Error: Removing user association " "with the project has not succeeded."
+                    "Server Error: Removing user association with the project has not succeeded."
                 )
             )
 
