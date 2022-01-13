@@ -207,12 +207,17 @@ class GetPublic(flask_restful.Resource):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
+        # TODO: Change logging
         flask.current_app.logger.debug("Getting the public key.")
 
-        if not project.public_key:
-            raise KeyNotFoundError(project=project.public_id)
+        public_key = None
+        if project.is_sensitive:
+            if not project.public_key:
+                raise KeyNotFoundError(project=project.public_id)
 
-        return flask.jsonify({"public": project.public_key})
+            public_key = project.public_key
+
+        return flask.jsonify({"sensitive": project.is_sensitive, "public": public_key})
 
 
 class GetPrivate(flask_restful.Resource):
