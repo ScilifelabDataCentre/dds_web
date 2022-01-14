@@ -218,10 +218,33 @@ class AddUser(flask_restful.Resource):
             unit_email=unit_email,
         )
 
-        mail.send(msg)
+        AddUser.send_email_with_retry(msg)
+
+        # Append invite to unit if applicable
+        if new_invite.role in ["Unit Admin", "Unit Personnel"]:
+            auth.current_user().unit.invites.append(new_invite)
+        else:
+            db.session.add(new_invite)
+
+        db.session.commit()
 
         # TODO: Format response with marshal with?
         return {"email": new_invite.email, "message": "Invite successful!", "status": 200}
+
+    @staticmethod
+    def send_email_with_retry(msg, times_retried=0):
+        """Send email with retry on exception"""
+
+        try:
+            mail.send(msg)
+        except Exception as err:
+            print("here")
+            # Wait a little bit
+            time.sleep(10)
+            # Retry twice
+            if times_retried < 2:
+                retry = times_retried + 1
+                AddUser.send_email_with_retry(msg, retry)
 
     @staticmethod
     def add_user_to_project(existing_user, project, role):
