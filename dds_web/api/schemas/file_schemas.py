@@ -31,12 +31,19 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
     size_processed = marshmallow.fields.Integer(required=True)  # Accepts BigInt
     compressed = marshmallow.fields.Boolean(required=True)  # Accepts all truthy
     public_key = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(equal=64)
+        required=False, allow_none=True  # validate=marshmallow.validate.Length(equal=64)
     )
-    salt = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(equal=32))
+    salt = marshmallow.fields.String(
+        required=False,
+        allow_none=True
+        # validate=marshmallow.validate.Length(equal=32),
+    )
     checksum = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(equal=64)
     )
+
+    # TODO: Add check for public key if project is sensitive
+    # NOTE: Change order of adding file data to before upload?
 
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def verify_file_not_exists(self, data, **kwargs):
