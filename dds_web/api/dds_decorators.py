@@ -107,7 +107,7 @@ def logging_bind_request(func):
             if hasattr(value, "status"):
                 structlog.threadlocal.bind_threadlocal(response=value.status)
 
-            action_logger.info(flask.request.endpoint + "." + func.__name__)
+            action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
 
         return value
 

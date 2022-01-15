@@ -535,9 +535,6 @@ class Token(flask_restful.Resource):
     @basic_auth.login_required
     @logging_bind_request
     def get(self):
-        # Bind the userID to the context to be used with the action logger
-        structlog.threadlocal.clear_threadlocal()
-        structlog.threadlocal.bind_threadlocal(user=auth.current_user().username)
         action_logger.info(self.__class__)
         return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
 

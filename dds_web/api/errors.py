@@ -12,6 +12,7 @@ from werkzeug import exceptions
 import flask
 import flask_login
 import http
+import json
 import structlog
 
 # Own modules
@@ -31,7 +32,7 @@ extra_info = {"result": "DENIED"}
 class LoggedHTTPException(exceptions.HTTPException):
     """Base class to enable standard action logging on HTTP Exceptions"""
 
-    def __init__(self, message=None):
+    def __init__(self, message=None, **kwargs):
 
         if auth.current_user():
             current_user = auth.current_user().username
@@ -50,7 +51,10 @@ class LoggedHTTPException(exceptions.HTTPException):
                 code = code["status"]
                 structlog.threadlocal.bind_threadlocal(response=f"{code.value} {code.phrase}")
 
-            action_logger.warning("exception." + self.__class__.__name__)
+            if kwargs:
+                structlog.threadlocal.bind_threadlocal(extra=json.dumps(kwargs))
+
+            action_logger.warning(f"exception.{self.__class__.__name__}")
             super().__init__(message)
 
 
@@ -97,18 +101,13 @@ class AccessDeniedError(LoggedHTTPException):
         username=None,
         message="The user does not have the necessary permissions.",
     ):
+        if username:
+            structlog.threadlocal.bind_threadlocal(user=username)
+        if project:
+            structlog.threadlocal.bind_threadlocal(project=project)
+
+        general_logger.warning(message)
         super().__init__(message)
-
-        if not username:
-            username = auth.current_user()
-
-        action_logger.warning(
-            message,
-            extra={
-                **extra_info,
-                "project": project,
-            },
-        )
 
 
 class DatabaseError(LoggedHTTPException):
@@ -121,15 +120,10 @@ class DatabaseError(LoggedHTTPException):
         project=None,
     ):
 
-        general_logger.warning(message)
+        general_logger.error(message)
 
-        action_logger.error(
-            message,
-            extra={
-                **extra_info,
-                "project": project,
-            },
-        )
+        if project:
+            structlog.threadlocal.bind_threadlocal(project=project)
 
         super().__init__(
             "The system encountered an error in the database." if not pass_message else message
@@ -140,20 +134,15 @@ class EmptyProjectException(LoggedHTTPException):
     """Something is attempted on an empty project."""
 
     def __init__(self, project, username=None, message="The project is empty."):
-        super().__init__(message)
-
-        general_logger.warning(message)
 
         if not username:
             username = auth.current_user()
+        structlog.threadlocal.bind_threadlocal(user=username)
+        if project:
+            structlog.threadlocal.bind_threadlocal(project=project)
 
-        action_logger.warning(
-            message,
-            extra={
-                **extra_info,
-                "project": project,
-            },
-        )
+        general_logger.warning(message)
+        super().__init__(message)
 
 
 class DeletionError(LoggedHTTPException):
@@ -161,16 +150,10 @@ class DeletionError(LoggedHTTPException):
 
     def __init__(self, project, message, pass_message=False):
 
+        if project:
+            structlog.threadlocal.bind_threadlocal(project=project)
+
         general_logger.warning(message)
-
-        action_logger.warning(
-            message,
-            extra={
-                **extra_info,
-                "project": project,
-            },
-        )
-
         super().__init__("Deletion failed." if not pass_message else message)
 
 
@@ -178,17 +161,12 @@ class NoSuchProjectError(LoggedHTTPException):
     """The project does not exist in the database"""
 
     def __init__(self, project, message="The specified project does not exist."):
-        super().__init__(message)
+
+        if project:
+            structlog.threadlocal.bind_threadlocal(project=project)
 
         general_logger.warning(message)
-
-        action_logger.warning(
-            message,
-            extra={
-                **extra_info,
-                "project": project,
-            },
-        )
+        super().__init__(message)
 
 
 class BucketNotFoundError(LoggedHTTPException):
@@ -294,12 +272,9 @@ class UserDeletionError(LoggedHTTPException):
     code = http.HTTPStatus.BAD_REQUEST
 
     def __init__(self, message="User deletion failed.", alt_message=None):
-        general_logger.warning(message)
 
-        if alt_message:
-            super().__init__(alt_message)
-        else:
-            super().__init__(message)
+        general_logger.warning(message)
+        super().__init__(alt_message or message)
 
 
 class NoSuchUserError(Exception):
