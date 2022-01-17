@@ -37,9 +37,16 @@ class TokenSchema(marshmallow.Schema):
         """Verify HOTP is correct."""
 
         # This can be easily extended to require at least one MFA method
-
         if "HOTP" not in data:
             raise marshmallow.ValidationError("MFA method not supplied")
 
         user = auth.current_user()
-        user.verify_HOTP(value)
+        if "HOTP" in data:
+            value = data.get("HOTP")
+            if user.verify_HOTP(value.encode()):
+                data["mfa_verified"] = True
+                data["mfa_method"] = "HOTP"
+            else:
+                raise marshmallow.ValidationError("Invalid MFA code")
+
+        return data
