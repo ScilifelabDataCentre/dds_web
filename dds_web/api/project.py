@@ -27,7 +27,8 @@ from dds_web.api.errors import (
     DeletionError,
     BucketNotFoundError,
     KeyNotFoundError,
-    S3ConnectionError, AccessDeniedError,
+    S3ConnectionError,
+    AccessDeniedError,
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas
@@ -184,8 +185,9 @@ class GetPrivate(flask_restful.Resource):
         # TODO (ina): Change handling of private key -- not secure
         flask.current_app.logger.debug("Getting the private key.")
 
-        project_key = models.ProjectKeys.query.filter_by(project_id=project.id,
-                                                         user_id=auth.current_user().username).first()
+        project_key = models.ProjectKeys.query.filter_by(
+            project_id=project.id, user_id=auth.current_user().username
+        ).first()
         decrypted_key = obtain_project_private_key(auth.current_user(), project_key)
 
         return flask.jsonify({"private": decrypted_key.hex().upper()})
@@ -348,7 +350,8 @@ class CreateProject(flask_restful.Resource):
                     addition_status = ""
                     try:
                         add_user_result = AddUser.add_user_to_project(
-                            auth.current_user(), password,
+                            auth.current_user(),
+                            password,
                             existing_user=existing_user,
                             project=new_project.public_id,
                             role=user.get("role"),

@@ -13,13 +13,15 @@ def derive_key(user, password):
         exception = Exception("Access to project data is not properly setup for the user!")
         flask.current_app.logger.exception(exception)
         raise exception
-    derived_key = argon2.low_level.hash_secret_raw(secret=password.encode(),
-                                                   salt=user.kd_salt,
-                                                   time_cost=2,
-                                                   memory_cost=1048576,  # 4194304,
-                                                   parallelism=8,
-                                                   hash_len=32,
-                                                   type=argon2.Type.ID)
+    derived_key = argon2.low_level.hash_secret_raw(
+        secret=password.encode(),
+        salt=user.kd_salt,
+        time_cost=2,
+        memory_cost=1048576,  # 4194304,
+        parallelism=8,
+        hash_len=32,
+        type=argon2.Type.ID,
+    )
     if len(derived_key) != 32:
         exception = Exception("Derived key is not 256 bits long!")
         flask.current_app.logger.exception(exception)
@@ -60,7 +62,9 @@ class ProjectKeys:
 
     def _generate_keypair(self):
         """Generates salted, encrypted private and public key"""
-        project_key_gen = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
+        project_key_gen = (
+            cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
+        )
         # generate private key bytes
         private_key_bytes = project_key_gen.private_bytes(
             encoding=cryptography.hazmat.primitives.serialization.Encoding.Raw,
@@ -71,7 +75,7 @@ class ProjectKeys:
         # Generate public key bytes
         self._public_key_bytes = project_key_gen.public_key().public_bytes(
             encoding=cryptography.hazmat.primitives.serialization.Encoding.Raw,
-            format=cryptography.hazmat.primitives.serialization.PublicFormat.Raw
+            format=cryptography.hazmat.primitives.serialization.PublicFormat.Raw,
         )
 
         # encrypt private_key_bytes

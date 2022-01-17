@@ -90,7 +90,9 @@ def verify_token(token):
                     if password is not None:
                         dds_web.cache.set(username, password)
                     else:
-                        raise AuthenticationError(message="This request requires an encrypted token!")
+                        raise AuthenticationError(
+                            message="This request requires an encrypted token!"
+                        )
                 return user
         return None
     raise AuthenticationError(message="Expired token")

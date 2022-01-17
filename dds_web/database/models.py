@@ -34,9 +34,13 @@ import dds_web.utils
 
 class ProjectKeys(db.Model):
     __tablename__ = "projectkeys"
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
     project = db.relationship("Project", back_populates="project_keys")
-    user_id = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True)
+    user_id = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
+    )
     user = db.relationship("User", back_populates="project_keys")
     key = db.Column(db.LargeBinary(32), nullable=False, unique=True)
     nonce = db.Column(db.LargeBinary(12), nullable=False, unique=True)

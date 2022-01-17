@@ -134,7 +134,9 @@ class AddUser(flask_restful.Resource):
         else:
             # If there is an existing user, add them to project.
             if project:
-                add_user_result = self.add_user_to_project(auth.current_user(), existing_user, project, args.get("role"))
+                add_user_result = self.add_user_to_project(
+                    auth.current_user(), existing_user, project, args.get("role")
+                )
                 flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
                 return flask.make_response(
                     flask.jsonify(add_user_result), add_user_result["status"]
@@ -265,8 +267,9 @@ class AddUser(flask_restful.Resource):
                 )
             )
 
-        project_key = models.ProjectKeys.query.filter_by(project_id=project.id,
-                                                         user_id=current_user.username).first()
+        project_key = models.ProjectKeys.query.filter_by(
+            project_id=project.id, user_id=current_user.username
+        ).first()
         project_private_key = obtain_project_private_key(current_user, project_key)
 
         aad = b"project key for user " + existing_user.username.encode()
@@ -275,10 +278,12 @@ class AddUser(flask_restful.Resource):
         nonce = os.urandom(12)
 
         existing_user.temporary_key = key
-        table("projectkeys").insert().values(project_id=project.id,
-                                             user_id=existing_user.username,
-                                             key=aesgcm.encrypt(nonce, project_private_key, aad),
-                                             nonce=nonce)
+        table("projectkeys").insert().values(
+            project_id=project.id,
+            user_id=existing_user.username,
+            key=aesgcm.encrypt(nonce, project_private_key, aad),
+            nonce=nonce,
+        )
 
         try:
             db.session.commit()
@@ -329,8 +334,10 @@ class EncryptedToken(flask_restful.Resource):
     def get(self):
         return flask.jsonify(
             {
-                "token": encrypted_jwt_token(username=auth.current_user().username,
-                                             sensitive_content=flask.request.authorization.get("password"))
+                "token": encrypted_jwt_token(
+                    username=auth.current_user().username,
+                    sensitive_content=flask.request.authorization.get("password"),
+                )
             }
         )
 
