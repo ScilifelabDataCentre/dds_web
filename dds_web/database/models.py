@@ -18,6 +18,8 @@ import pyotp
 import flask_login
 import pathlib
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from cryptography.hazmat.primitives import twofactor
+from cryptography.hazmat.primitives import hashes
 
 # Own modules
 from dds_web import db, auth
@@ -367,6 +369,32 @@ class User(flask_login.UserMixin, db.Model):
             return None
 
         return User.query.get(user_id)
+
+    # 2FA related
+    def generate_HOTP_token(self):
+        """Generate a one time password, e.g. to be sent by email.
+
+        Counter is incremented only on a successful verification,
+        so the same token will be generated for every request to this
+        method until that happens.
+        """
+        hotp = twofactor.hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        return hotp.generate(self.counter)
+
+    def verify_HOTP(self, token):
+        """Verify the HOTP token.
+
+        If the token is valid, the counter is incremented."""
+        hotp = twofactor.hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        try:
+            hotp.verify(token, self.counter)
+        except twofactor.InvalidToken:
+            return False
+
+        self.counter += 1
+        db.session.commit()
+
+        return True
 
     # Email related
     @property
