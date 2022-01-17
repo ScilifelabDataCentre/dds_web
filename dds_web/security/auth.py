@@ -87,7 +87,7 @@ def verify_token(token):
             if user:
                 if flask.request.path.endswith(SENSITIVE_ENDPOINTS):
                     password = data.get("sen_con")
-                    if password is not None:
+                    if password:
                         dds_web.cache.set(username, password)
                     else:
                         raise AuthenticationError(

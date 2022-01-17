@@ -193,7 +193,7 @@ class NewUserSchema(marshmallow.Schema):
         # Create new email and append to user relationship
         new_email = models.Email(email=data.get("email"), primary=True)
         new_user.emails.append(new_email)
-        new_user.kd_salt = os.urandom(32)  # renew with new password
+        new_user.kd_salt = os.urandom(32)
 
         db.session.add(new_user)
 

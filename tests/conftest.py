@@ -1,7 +1,6 @@
 # Standard Library
 import os
 import uuid
-from contextlib import contextmanager
 import unittest.mock
 
 # Installed

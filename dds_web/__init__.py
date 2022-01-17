@@ -21,10 +21,8 @@ import flask_bootstrap
 import flask_login
 import flask_caching
 
-# import flask_qrcode
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import werkzeug
 import sqlalchemy
 
 ####################################################################################################

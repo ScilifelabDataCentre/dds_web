@@ -157,7 +157,7 @@ class CreateProjectSchema(marshmallow.Schema):
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Project was not created")
+            raise ddserr.DatabaseError(message="Server Error: Project was not created")
         except (
             marshmallow.ValidationError,
             ddserr.DDSArgumentError,

@@ -6,6 +6,7 @@
 
 # Standard library
 import datetime
+import gc
 import pathlib
 import secrets
 import os
@@ -20,11 +21,9 @@ from jwcrypto import jwk, jwt
 import pandas
 import sqlalchemy
 import cryptography
-import gc
-
-# Own modules
 from sqlalchemy import table
 
+# Own modules
 from dds_web import auth, mail, db, basic_auth, limiter
 from dds_web.database import models
 import dds_web.utils
@@ -296,6 +295,10 @@ class AddUser(flask_restful.Resource):
         flask.current_app.logger.debug(
             f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
         )
+
+        del project_private_key
+        del key
+        gc.collect()
 
         return {
             "status": 200,

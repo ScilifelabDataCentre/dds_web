@@ -12,7 +12,6 @@ import flask
 import sqlalchemy
 import datetime
 import botocore
-import gc
 
 # Own modules
 import dds_web.utils
@@ -28,7 +27,6 @@ from dds_web.api.errors import (
     BucketNotFoundError,
     KeyNotFoundError,
     S3ConnectionError,
-    AccessDeniedError,
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas
@@ -182,7 +180,6 @@ class GetPrivate(flask_restful.Resource):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        # TODO (ina): Change handling of private key -- not secure
         flask.current_app.logger.debug("Getting the private key.")
 
         project_key = models.ProjectKeys.query.filter_by(
@@ -274,7 +271,6 @@ class RemoveContents(flask_restful.Resource):
             if not removed:
                 raise DeletionError(
                     message="No project contents deleted.",
-                    username=current_user.username,
                     project=project.public_id,
                 )
 
@@ -288,7 +284,6 @@ class RemoveContents(flask_restful.Resource):
                         db.session.rollback()
                         raise DeletionError(
                             message="Deleting project contents failed.",
-                            username=current_user.username,
                             project=project.public_id,
                         )
 
@@ -306,8 +301,6 @@ class CreateProject(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def post(self):
         """Create a new project"""
-
-        password = "password"
 
         p_info = flask.request.json
 
@@ -350,8 +343,7 @@ class CreateProject(flask_restful.Resource):
                     addition_status = ""
                     try:
                         add_user_result = AddUser.add_user_to_project(
-                            auth.current_user(),
-                            password,
+                            current_user=auth.current_user(),
                             existing_user=existing_user,
                             project=new_project.public_id,
                             role=user.get("role"),

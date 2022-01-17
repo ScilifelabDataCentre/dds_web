@@ -31,8 +31,6 @@ def derive_key(user, password):
 
 def obtain_project_private_key(user, project_key):
     password = dds_web.cache.get(user.username)
-    if password is None:
-        raise Exception("Sensitive content is missing in token!")
     key_encryption_key = derive_key(user, password)
     try:
         aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(key_encryption_key)
