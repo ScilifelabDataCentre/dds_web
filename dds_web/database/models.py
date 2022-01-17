@@ -388,7 +388,7 @@ class User(flask_login.UserMixin, db.Model):
         )
 
         hotp = twofactor.hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
-        return hotp.generate(self.counter)
+        return hotp.generate(self.hotp_counter)
 
     def verify_HOTP(self, token):
         """Verify the HOTP token.
@@ -401,7 +401,7 @@ class User(flask_login.UserMixin, db.Model):
             raise AuthenticationError("Email 2-factor token has expired.")
 
         try:
-            hotp.verify(token, self.counter)
+            hotp.verify(token, self.hotp_counter)
         except twofactor.InvalidToken:
             raise AuthenticationError("Invalid 2-factor token.")
 
