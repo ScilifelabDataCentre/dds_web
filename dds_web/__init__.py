@@ -19,6 +19,7 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_bootstrap
 import flask_login
+import flask_caching
 
 # import flask_qrcode
 from flask_limiter import Limiter
@@ -56,6 +57,9 @@ actions = {}
 
 # Limiter
 limiter = Limiter(key_func=get_remote_address)
+
+# Caching
+cache = flask_caching.Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_THRESHOLD": 1000})
 
 
 ####################################################################################################
@@ -142,6 +146,8 @@ def create_app(testing=False, database_uri=None):
 
     # Initialize database
     db.init_app(app)
+
+    cache.init_app(app)
 
     # Initialize mail setup
     mail.init_app(app)

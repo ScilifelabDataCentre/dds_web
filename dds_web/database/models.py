@@ -32,6 +32,16 @@ import dds_web.utils
 # Association objects ######################################################## Association objects #
 
 
+class ProjectKeys(db.Model):
+    __tablename__ = "projectkeys"
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
+    project = db.relationship("Project", back_populates="project_keys")
+    user_id = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True)
+    user = db.relationship("User", back_populates="project_keys")
+    key = db.Column(db.LargeBinary(32), nullable=False, unique=True)
+    nonce = db.Column(db.LargeBinary(12), nullable=False, unique=True)
+
+
 class ProjectUsers(db.Model):
     """
     Many-to-many association table between projects and research users.
@@ -168,9 +178,6 @@ class Project(db.Model):
     pi = db.Column(db.String(255), unique=False, nullable=False)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
     public_key = db.Column(db.String(64), nullable=False)
-    private_key = db.Column(db.String(255), nullable=False)
-    privkey_salt = db.Column(db.String(32), nullable=False)
-    privkey_nonce = db.Column(db.String(24), nullable=False)
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=False, default=False)
     released = db.Column(db.DateTime(), nullable=True)
 
@@ -189,6 +196,7 @@ class Project(db.Model):
         "ProjectStatuses", back_populates="project", passive_deletes=True
     )
     researchusers = db.relationship("ProjectUsers", back_populates="project", passive_deletes=True)
+    project_keys = db.relationship("ProjectKeys", back_populates="project", passive_deletes=True)
 
     @property
     def current_status(self):
@@ -267,6 +275,8 @@ class User(flask_login.UserMixin, db.Model):
     _password_hash = db.Column(db.String(98), unique=False, nullable=False)
     _otp_secret = db.Column(db.String(32))
     has_2fa = db.Column(db.Boolean)
+    kd_salt = db.Column(db.LargeBinary(32), default=None)
+    temporary_key = db.Column(db.LargeBinary(32), default=None)
 
     # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -275,6 +285,7 @@ class User(flask_login.UserMixin, db.Model):
     identifiers = db.relationship("Identifier", back_populates="user", passive_deletes=True)
     emails = db.relationship("Email", back_populates="user", passive_deletes=True)
     created_projects = db.relationship("Project", back_populates="creator", passive_deletes=True)
+    project_keys = db.relationship("ProjectKeys", back_populates="user", passive_deletes=True)
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 

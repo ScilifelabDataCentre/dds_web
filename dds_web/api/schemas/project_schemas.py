@@ -5,7 +5,6 @@
 ####################################################################################################
 
 # Standard Library
-from datetime import datetime
 import os
 
 # Installed
@@ -21,7 +20,7 @@ from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
 import dds_web.utils
-from dds_web.crypt import key_gen
+from dds_web.security import project_keys
 
 
 ####################################################################################################
@@ -137,7 +136,7 @@ class CreateProjectSchema(marshmallow.Schema):
             )
 
             # Generate keys
-            data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
+            data.update(**project_keys.ProjectKeys(data["public_id"]).key_dict())
 
             # Create project
             current_user = auth.current_user()

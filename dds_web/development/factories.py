@@ -1,12 +1,11 @@
 import factory
-import os
 import itertools
 import random
 import flask
 
 import dds_web.database.models as models
 from dds_web import db
-from dds_web.crypt import key_gen
+from dds_web.security import project_keys
 
 STATUSES_PER_PROJECT = 5
 FILES_PER_PROJECT = 100
@@ -127,17 +126,8 @@ class ProjectFactory(factory.alchemy.SQLAlchemyModelFactory):
     pi = factory.Faker("name")
     bucket = factory.Faker("uuid4")
 
-    privkey_salt = factory.LazyAttribute(
-        lambda o: key_gen.ProjectKeys("Nonsense").key_dict()["privkey_salt"]
-    )
-    privkey_nonce = factory.LazyAttribute(
-        lambda o: key_gen.ProjectKeys("Nonsense").key_dict()["privkey_nonce"]
-    )
     public_key = factory.LazyAttribute(
-        lambda o: key_gen.ProjectKeys("Nonsense").key_dict()["public_key"]
-    )
-    private_key = factory.LazyAttribute(
-        lambda o: key_gen.ProjectKeys("Nonsense").key_dict()["private_key"]
+        lambda o: project_keys.ProjectKeys("Nonsense").key_dict()["public_key"]
     )
 
     @factory.post_generation

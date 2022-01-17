@@ -10,13 +10,9 @@
 import flask_restful
 import flask
 import sqlalchemy
-from cryptography.hazmat.primitives.kdf import scrypt
-from nacl.bindings import crypto_aead_chacha20poly1305_ietf_decrypt as decrypt
-from cryptography.hazmat import backends
-import os
-import marshmallow
 import datetime
 import botocore
+import gc
 
 # Own modules
 import dds_web.utils
@@ -27,16 +23,16 @@ from dds_web.api.db_connector import DBConnector
 from dds_web.api.errors import (
     DDSArgumentError,
     DatabaseError,
-    AccessDeniedError,
     EmptyProjectException,
     DeletionError,
     BucketNotFoundError,
     KeyNotFoundError,
-    S3ConnectionError,
+    S3ConnectionError, AccessDeniedError,
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas
 from dds_web.api.schemas import user_schemas
+from dds_web.security.project_keys import obtain_project_private_key
 
 
 ####################################################################################################
@@ -188,28 +184,9 @@ class GetPrivate(flask_restful.Resource):
         # TODO (ina): Change handling of private key -- not secure
         flask.current_app.logger.debug("Getting the private key.")
 
-        app_secret = flask.current_app.config.get("SECRET_KEY")
-        passphrase = app_secret.encode("utf-8")
-
-        enc_key = bytes.fromhex(project.private_key)
-        nonce = bytes.fromhex(project.privkey_nonce)
-        salt = bytes.fromhex(project.privkey_salt)
-
-        kdf = scrypt.Scrypt(
-            salt=salt,
-            length=32,
-            n=2 ** 14,
-            r=8,
-            p=1,
-            backend=backends.default_backend(),
-        )
-
-        key_enc_key = kdf.derive(passphrase)
-        try:
-            decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
-        except Exception as err:
-            flask.current_app.logger.exception(err)
-            raise KeyNotFoundError
+        project_key = models.ProjectKeys.query.filter_by(project_id=project.id,
+                                                         user_id=auth.current_user().username).first()
+        decrypted_key = obtain_project_private_key(auth.current_user(), project_key)
 
         return flask.jsonify({"private": decrypted_key.hex().upper()})
 
@@ -328,6 +305,8 @@ class CreateProject(flask_restful.Resource):
     def post(self):
         """Create a new project"""
 
+        password = "password"
+
         p_info = flask.request.json
 
         new_project = project_schemas.CreateProjectSchema().load(p_info)
@@ -369,6 +348,7 @@ class CreateProject(flask_restful.Resource):
                     addition_status = ""
                     try:
                         add_user_result = AddUser.add_user_to_project(
+                            auth.current_user(), password,
                             existing_user=existing_user,
                             project=new_project.public_id,
                             role=user.get("role"),

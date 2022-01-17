@@ -19,9 +19,12 @@ import marshmallow
 from jwcrypto import jwk, jwt
 import pandas
 import sqlalchemy
-import pyotp
+import cryptography
+import gc
 
 # Own modules
+from sqlalchemy import table
+
 from dds_web import auth, mail, db, basic_auth, limiter
 from dds_web.database import models
 import dds_web.utils
@@ -29,6 +32,7 @@ import dds_web.forms
 import dds_web.api.errors as ddserr
 from dds_web.api.schemas import project_schemas
 from dds_web.api.schemas import user_schemas
+from dds_web.security.project_keys import obtain_project_private_key
 
 # VARIABLES ############################################################################ VARIABLES #
 
@@ -130,7 +134,7 @@ class AddUser(flask_restful.Resource):
         else:
             # If there is an existing user, add them to project.
             if project:
-                add_user_result = self.add_user_to_project(existing_user, project, args.get("role"))
+                add_user_result = self.add_user_to_project(auth.current_user(), existing_user, project, args.get("role"))
                 flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
                 return flask.make_response(
                     flask.jsonify(add_user_result), add_user_result["status"]
@@ -223,7 +227,7 @@ class AddUser(flask_restful.Resource):
         return {"email": new_invite.email, "message": "Invite successful!", "status": 200}
 
     @staticmethod
-    def add_user_to_project(existing_user, project, role):
+    def add_user_to_project(current_user, existing_user, project, role):
         """Add existing user to a project"""
 
         allowed_roles = ["Project Owner", "Researcher"]
@@ -260,6 +264,21 @@ class AddUser(flask_restful.Resource):
                     owner=owner,
                 )
             )
+
+        project_key = models.ProjectKeys.query.filter_by(project_id=project.id,
+                                                         user_id=current_user.username).first()
+        project_private_key = obtain_project_private_key(current_user, project_key)
+
+        aad = b"project key for user " + existing_user.username.encode()
+        key = cryptography.hazmat.primitives.ciphers.aead.AESGCM.generate_key(bit_length=256)
+        aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(key)
+        nonce = os.urandom(12)
+
+        existing_user.temporary_key = key
+        table("projectkeys").insert().values(project_id=project.id,
+                                             user_id=existing_user.username,
+                                             key=aesgcm.encrypt(nonce, project_private_key, aad),
+                                             nonce=nonce)
 
         try:
             db.session.commit()
@@ -310,9 +329,8 @@ class EncryptedToken(flask_restful.Resource):
     def get(self):
         return flask.jsonify(
             {
-                "token": encrypted_jwt_token(
-                    username=auth.current_user().username, sensitive_content=None
-                )
+                "token": encrypted_jwt_token(username=auth.current_user().username,
+                                             sensitive_content=flask.request.authorization.get("password"))
             }
         )
 

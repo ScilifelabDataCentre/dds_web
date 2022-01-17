@@ -6,7 +6,6 @@
 
 # Installed
 import datetime
-import argon2
 import http
 import flask
 import json
@@ -14,9 +13,14 @@ import jwcrypto
 from jwcrypto import jwk, jwt
 
 # Own modules
+import dds_web
 from dds_web.api.errors import AuthenticationError, AccessDeniedError
 from dds_web.database import models
 from dds_web import basic_auth, auth
+
+# VARIABLES ############################################################################ VARIABLES #
+
+SENSITIVE_ENDPOINTS = ("/proj/private", "/user/add")
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -81,6 +85,12 @@ def verify_token(token):
         if username:
             user = models.User.query.get(username)
             if user:
+                if flask.request.path.endswith(SENSITIVE_ENDPOINTS):
+                    password = data.get("sen_con")
+                    if password is not None:
+                        dds_web.cache.set(username, password)
+                    else:
+                        raise AuthenticationError(message="This request requires an encrypted token!")
                 return user
         return None
     raise AuthenticationError(message="Expired token")
