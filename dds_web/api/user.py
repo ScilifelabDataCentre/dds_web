@@ -9,6 +9,7 @@ import datetime
 import pathlib
 import secrets
 import os
+import smtplib.SMTPException
 
 # Installed
 import flask
@@ -237,7 +238,7 @@ class AddUser(flask_restful.Resource):
 
         try:
             mail.send(msg)
-        except Exception as err:
+        except smtplib.SMTPException as err:
             # Wait a little bit
             time.sleep(10)
             # Retry twice
