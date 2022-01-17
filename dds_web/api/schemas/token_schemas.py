@@ -43,10 +43,9 @@ class TokenSchema(marshmallow.Schema):
         user = auth.current_user()
         if "HOTP" in data:
             value = data.get("HOTP")
-            if user.verify_HOTP(value.encode()):
-                data["mfa_verified"] = True
-                data["mfa_method"] = "HOTP"
-            else:
-                raise marshmallow.ValidationError("Invalid MFA code")
+            # Raises authenticationerror if invalid
+            user.verify_HOTP(value.encode())
+            data["mfa_verified"] = True
+            data["mfa_method"] = "HOTP"
 
         return data
