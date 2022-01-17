@@ -135,7 +135,7 @@ def register():
             new_user = user_schemas.NewUserSchema().load(form.data)
 
         except marshmallow.ValidationError as valerr:
-            flask.current_app.logger.info(valerr)
+            flask.current_app.logger.warning(valerr)
             raise
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
             raise ddserr.DatabaseError from sqlerr

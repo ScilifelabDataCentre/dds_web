@@ -28,7 +28,7 @@ import wtforms
 
 # Own modules
 from dds_web.database import models
-from dds_web import db, C_TZ
+from dds_web import db
 from dds_web import mail
 
 
@@ -227,9 +227,9 @@ def is_safe_url(target):
 
 
 def current_time(to_midnight=False):
-    """Return the current time for the specific time zone"""
+    """Return the current time for UTC"""
 
-    curr_time = datetime.datetime.now(tz=C_TZ)
+    curr_time = datetime.datetime.utcnow()
     if to_midnight:
         curr_time = curr_time.replace(hour=23, minute=59, second=59)
 
@@ -249,7 +249,7 @@ def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"
         datetime_stamp = datetime.datetime.strptime(datetime_string, ts_format)
         return str(datetime_stamp.date())
 
-    now = datetime.datetime.now(tz=C_TZ) if dts is None else dts
+    now = current_time() if dts is None else dts
     t_s = str(now.strftime(ts_format))
     return t_s
 

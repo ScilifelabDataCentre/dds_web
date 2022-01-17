@@ -11,8 +11,6 @@ import os
 # Installed
 import flask
 import sqlalchemy
-import datetime
-import pytz
 
 # Own modules
 from dds_web.database import models
@@ -311,13 +309,10 @@ class DBConnector:
         bhours = 0.0
         cost = 0.0
 
-        tz = pytz.timezone("Europe/Stockholm")
         for v in project_object.file_versions:
             # Calculate hours of the current file
-            time_deleted = (
-                tz.localize(v.time_deleted) if v.time_deleted else datetime.datetime.now(tz=tz)
-            )
-            time_uploaded = tz.localize(v.time_uploaded)
+            time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
+            time_uploaded = v.time_uploaded
 
             file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
 

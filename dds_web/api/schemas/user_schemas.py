@@ -4,9 +4,6 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
-# Standard Library
-from datetime import datetime
-
 # Installed
 import marshmallow
 import sqlalchemy
@@ -98,14 +95,6 @@ class InviteUserSchema(marshmallow.Schema):
         # Create invite
         new_invite = models.Invite(**{"email": data.get("email"), "role": data.get("role")})
 
-        # Append invite to unit if applicable
-        if new_invite.role in ["Unit Admin", "Unit Personnel"]:
-            auth.current_user().unit.invites.append(new_invite)
-        else:
-            db.session.add(new_invite)
-
-        db.session.commit()
-
         return new_invite
 
 
@@ -113,7 +102,14 @@ class NewUserSchema(marshmallow.Schema):
     """Schema for NewUser endpoint"""
 
     # TODO: Look through and match to db
-    username = marshmallow.fields.String(required=True)
+    username = marshmallow.fields.String(
+        required=True,
+        validate=marshmallow.validate.And(
+            marshmallow.validate.Length(min=8, max=20),
+            utils.valid_chars_in_username,
+            # Validation for "username not taken" below
+        ),
+    )
     password = marshmallow.fields.String(
         required=True,
         validate=marshmallow.validate.And(
@@ -188,7 +184,7 @@ class NewUserSchema(marshmallow.Schema):
             new_user.is_admin = invite.role == "Unit Admin"
 
             invite.unit.users.append(new_user)
-        elif new_user_role == "Super Admin":
+        elif invite.role == "Super Admin":
             new_user = models.SuperAdmin(**common_user_fields)
 
         # Create new email and append to user relationship

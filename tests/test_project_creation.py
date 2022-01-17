@@ -5,6 +5,7 @@ import http
 import datetime
 import json
 import unittest
+import time
 
 # Installed
 import pytest
@@ -64,7 +65,8 @@ def test_create_project_without_credentials(client):
 
 def test_create_project_with_credentials(client, boto3_session):
     """Create project with correct credentials."""
-    time_before_run = datetime.datetime.now()
+    time_before_run = datetime.datetime.utcnow()
+    time.sleep(1)
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),

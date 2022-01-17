@@ -52,6 +52,9 @@ class ProjectStatus(flask_restful.Resource):
         extra_args = flask.request.json
         return_info = {"current_status": project.current_status}
 
+        if project.current_deadline:
+            return_info["current_deadline"] = project.current_deadline
+
         if extra_args and extra_args.get("history") == True:
             history = []
             for pstatus in project.project_statuses:
