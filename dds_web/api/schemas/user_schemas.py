@@ -206,23 +206,3 @@ class NewUserSchema(marshmallow.Schema):
         db.session.commit()
 
         return new_user
-
-
-class PasswordRequiredSchema(marshmallow.Schema):
-
-    password = marshmallow.fields.String(required=True)
-
-    @marshmallow.validates("password")
-    def validate_password(self, password):
-
-        project = verify_project_exists(spec_proj=value)
-        verify_project_access(project=project)
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def get_password_object(self, data, **kwargs):
-
-        data["project_row"] = verify_project_exists(spec_proj=data.get("password"))
-
-    @marshmallow.post_load
-    def return_items(self, data, **kwargs):
-        return data.get("project_row")
