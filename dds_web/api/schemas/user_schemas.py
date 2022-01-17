@@ -95,14 +95,6 @@ class InviteUserSchema(marshmallow.Schema):
         # Create invite
         new_invite = models.Invite(**{"email": data.get("email"), "role": data.get("role")})
 
-        # Append invite to unit if applicable
-        if new_invite.role in ["Unit Admin", "Unit Personnel"]:
-            auth.current_user().unit.invites.append(new_invite)
-        else:
-            db.session.add(new_invite)
-
-        db.session.commit()
-
         return new_invite
 
 
