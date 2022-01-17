@@ -9,7 +9,7 @@ import datetime
 import pathlib
 import secrets
 import os
-import smtplib.SMTPException
+import smtplib
 
 # Installed
 import flask
