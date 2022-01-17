@@ -238,7 +238,6 @@ class AddUser(flask_restful.Resource):
         try:
             mail.send(msg)
         except Exception as err:
-            print("here")
             # Wait a little bit
             time.sleep(10)
             # Retry twice
