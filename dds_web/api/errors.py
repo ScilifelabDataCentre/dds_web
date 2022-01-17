@@ -38,8 +38,12 @@ class LoggedHTTPException(exceptions.HTTPException):
             current_user = auth.current_user().username
         elif flask_login.current_user.is_authenticated:
             current_user = flask_login.current_user().username
-        else:
+        elif flask.request.remote_addr:
+            current_user = flask.request.remote_addr  # log IP instead of username
+        elif flask.request.access_route:
             current_user = flask.request.access_route[0]  # log IP instead of username
+        else:
+            current_user = "anonymous"
 
         with structlog.threadlocal.bound_threadlocal(
             resource=flask.request.path or "not applicable",  # or rather flask.request.endpoint?
