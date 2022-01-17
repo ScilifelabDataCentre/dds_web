@@ -14,7 +14,7 @@ import jwcrypto
 from jwcrypto import jwk, jwt
 
 # Own modules
-from dds_web.api.errors import AuthenticationError, AccessDeniedError
+from dds_web.errors import AuthenticationError, AccessDeniedError
 from dds_web.database import models
 from dds_web import basic_auth, auth
 

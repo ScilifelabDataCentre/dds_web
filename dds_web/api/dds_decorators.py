@@ -12,7 +12,7 @@ import boto3
 import botocore
 
 # Own modules
-from dds_web.api.errors import BucketNotFoundError
+from dds_web.errors import BucketNotFoundError
 
 ####################################################################################################
 # DECORATORS ########################################################################## DECORATORS #

@@ -3,7 +3,7 @@ import tests
 import flask
 from dds_web import db
 from dds_web.database import models
-import dds_web.api.errors as ddserr
+import dds_web.errors as ddserr
 import itsdangerous
 import pytest
 

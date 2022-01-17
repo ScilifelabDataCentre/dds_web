@@ -14,7 +14,7 @@ from dds_web.api import user
 from dds_web.api import project
 from dds_web.api import s3
 from dds_web.api import files
-from dds_web.api.errors import error_codes
+from dds_web.errors import error_codes
 
 ####################################################################################################
 # BLUEPRINTS ########################################################################## BLUEPRINTS #

@@ -20,7 +20,7 @@ from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
-from dds_web.api.errors import (
+from dds_web.errors import (
     DatabaseError,
     DDSArgumentError,
     EmptyProjectException,

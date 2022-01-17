@@ -23,7 +23,7 @@ from cryptography.hazmat.primitives import hashes
 
 # Own modules
 from dds_web import db, auth
-from dds_web.api.errors import AuthenticationError
+from dds_web.errors import AuthenticationError
 import dds_web.utils
 
 

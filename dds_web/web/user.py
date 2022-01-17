@@ -28,7 +28,7 @@ from dds_web import forms
 from dds_web.database import models
 import dds_web.utils
 from dds_web import db, limiter
-import dds_web.api.errors as ddserr
+import dds_web.errors as ddserr
 from dds_web.api.schemas import user_schemas
 from dds_web import mail
 
