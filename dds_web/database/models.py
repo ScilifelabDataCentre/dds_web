@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives import hashes
 
 # Own modules
 from dds_web import db, auth
+from dds_web.api.errors import AuthenticationError
 import dds_web.utils
 
 
@@ -283,7 +284,8 @@ class User(flask_login.UserMixin, db.Model):
     name = db.Column(db.String(255), unique=False, nullable=True)
     _password_hash = db.Column(db.String(98), unique=False, nullable=False)
     hotp_secret = db.Column(db.LargeBinary(20), unique=False, nullable=False)
-    counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
+    hotp_counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
+    hotp_requested_time = db.Column(db.DateTime, unique=False, nullable=True)
 
     # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -374,27 +376,38 @@ class User(flask_login.UserMixin, db.Model):
     def generate_HOTP_token(self):
         """Generate a one time password, e.g. to be sent by email.
 
-        Counter is incremented only on a successful verification,
-        so the same token will be generated for every request to this
-        method until that happens.
+        Counter is incremented before generating token which invalidates any previous token.
+        The time when it was issued is recored to put an expiration time on the token.
+
         """
+        self.hotp_counter += 1
+        self.hotp_requested_time = dds_web.utils.current_time()
+        db.session.commit()
+        flask.current_app.logger.info(
+            f"Incremented counter to: {self.hotp_counter} and saved time: {self.hotp_requested_time}"
+        )
+
         hotp = twofactor.hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         return hotp.generate(self.counter)
 
     def verify_HOTP(self, token):
         """Verify the HOTP token.
 
-        If the token is valid, the counter is incremented."""
+        raises AuthenticationError if token is invalid or has expired (older than 1 hour).
+        If the token is valid, the counter is incremented, to prohibit re-use.
+        """
         hotp = twofactor.hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        if self.hotp_requested_time - dds_web.utils.current_time() > timedelta(hours=1):
+            raise AuthenticationError("Email 2-factor token has expired.")
+
         try:
             hotp.verify(token, self.counter)
         except twofactor.InvalidToken:
-            return False
+            raise AuthenticationError("Invalid 2-factor token.")
 
-        self.counter += 1
+        # Token verified, increment counter to prohibit re-use
+        self.hotp_counter += 1
         db.session.commit()
-
-        return True
 
     # Email related
     @property
