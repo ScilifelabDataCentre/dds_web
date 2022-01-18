@@ -140,39 +140,46 @@ def register():
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
             raise ddserr.DatabaseError from sqlerr
 
-        # Go to two factor authentication setup
-        return flask.redirect(flask.url_for("auth_blueprint.auth_2fa"))
-
     # Go to registration form
     return flask.render_template("user/register.html", form=form)
 
 
-@auth_blueprint.route("/2fa/gen", methods=["GET", "POST"])
-@flask_login.login_required
-def auth_2fa():
-    """Send and validate two factor authentication."""
-    if flask.request.method == "GET":  # when registered / logged in
-        # 1. Get secret from user table and generate hotp object
-        hotp = HOTP(flask_login.current_user.hotp_secret, 8, SHA512())
+@auth_blueprint.route("/request_2fa", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["POST"],
+    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+)
+def request_2fa():
+    """Request a HOTP token to be sent to your email"""
+    if flask.request.method == "GET":
+        form = forms.Request2FAForm()
+        return flask.render_template("user/request2fa.html", form=form)
+    elif flask.request.method == "POST":
+        form = forms.Request2FAForm()
+        if form.validate_on_submit():
+            # Get user from database
+            user = models.User.query.get(form.username.data)
 
-        # 2. Generate HOTP and save counter
-        counter = 0
-        hotp_value = hotp.generate(counter=counter)
+            # incorrect credentials
+            if not user or not user.verify_password(input_password=form.password.data):
+                flask.flash("Invalid username or password.")
+                return flask.redirect(
+                    flask.url_for("auth_blueprint.request_2fa", next=next)
+                )  # Try again
 
-        # 3. Generate email
-        message = flask_mail.Message(
-            "One-Time Code",
-            sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
-            recipients=[flask_login.current_user.primary_email],
-        )
-        message.body = f"One time code for DDS authentication: {hotp_value}"
-        mail.send(message)
+            # Generate HOTP token
+            hotp_value = user.generate_HOTP_token()
+            message = flask_mail.Message(
+                "One-Time Code",
+                sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
+                recipients=[user.primary_email],
+            )
+            message.body = f"One time code for DDS authentication: {hotp_value}"
+            mail.send(message)
 
-        # 4. Redirect to 2fa form
-        form = forms.TwoFactorAuthForm()
-        return flask.render_template("user/2fa.html", form=form)
-    elif flask.request.method == "POST":  # when submitting
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+            flask.flash("One-Time Code sent to your email.")
+            return flask.redirect(flask.url_for("auth_blueprint.login"))
 
 
 @auth_blueprint.route("/login", methods=["GET", "POST"])
@@ -206,12 +213,20 @@ def login():
                 flask.url_for("auth_blueprint.login", next=next)
             )  # Try login again
 
-        # Correct username and password --> log user in
+        hotp_value = form.hotp.data
+        # Raises authenticationerror if invalid
+        try:
+            user.verify_HOTP(hotp_value.encode())
+        except ddserr.AuthenticationError:
+            flask.flash("Invalid one-time code.")
+            return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+
+        # Correct username, password and hotp code --> log user in
         flask_login.login_user(user)
         flask.flash("Logged in successfully.")
 
         # Go to home page
-        return flask.redirect(next or flask.url_for("auth_blueprint.auth_2fa"))
+        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
 
     # Go to login form (get)
     return flask.render_template("user/login.html", form=form, next=next)

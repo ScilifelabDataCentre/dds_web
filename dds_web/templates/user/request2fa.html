@@ -2,10 +2,10 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block content %}
-<title>Login</title>
+<title>2FA</title>
 
 <body>
-    <h1>Login to DDS</h1>
+    <h1>Request one-time code</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class=flashes>
@@ -17,7 +17,7 @@
     </div>
     {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('auth_blueprint.login', next=next) }}">
+    <form method="POST" action="{{ url_for('auth_blueprint.request_2fa', next=next) }}">
         {{ form.csrf_token }}
 
         <!-- Username -->
@@ -36,17 +36,6 @@
         {{ form.password }}
         <ul>
             {% for error in form.password.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
-
-        <!-- Token -->
-        {{ form.hotp.label }}
-        {{ form.hotp }}
-        <ul>
-            {% for error in form.hotp.errors %}
             <li style="color:red;">
                 {{ error }}
             </li>
