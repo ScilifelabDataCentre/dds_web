@@ -17,6 +17,14 @@
     </div>
     {% endif %}
     {% endwith %}
+    <p>Please authenticate yourself to trigger the sending of an authentication one-time code.
+    </p>
+    <p>
+        Note that requesting a new authentication code will cancel the previously sent codes.
+    </p>
+    <p>
+        The one-time codes are valid for a short time (1 hour) after the request was made.
+    </p>
     <form method="POST" action="{{ url_for('auth_blueprint.request_2fa', next=next) }}">
         {{ form.csrf_token }}
 

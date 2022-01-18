@@ -529,8 +529,8 @@ class EncryptedToken(flask_restful.Resource):
         )
 
 
-class Mail2fa(flask_restful.Resource):
-    """Trigger creation and sending of a OTP via email"""
+class RequestMail2fa(flask_restful.Resource):
+    """Trigger creation and sending of an authentication One-Time code via email"""
 
     decorators = [
         limiter.limit(
@@ -544,14 +544,9 @@ class Mail2fa(flask_restful.Resource):
     def get(self):
         hotp_value = auth.current_user().generate_HOTP_token()
 
-        # 3. Generate email
-        message = flask_mail.Message(
-            "One-Time Code",
-            sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
-            recipients=[auth.current_user().primary_email],
-        )
-        message.body = f"One time code for DDS authentication: {hotp_value}"
-        mail.send(message)
+        msg = dds_web.utils.create_one_time_password_email(auth.current_user(), hotp_value)
+
+        mail.send(msg)
 
 
 class ShowUsage(flask_restful.Resource):

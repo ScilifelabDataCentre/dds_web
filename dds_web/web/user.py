@@ -7,6 +7,7 @@
 # Standard Library
 import io
 import json
+import os
 
 # Installed
 import flask
@@ -151,7 +152,7 @@ def register():
     error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
 )
 def request_2fa():
-    """Request a HOTP token to be sent to your email"""
+    """Request a HOTP (authentication one-time token) to be sent to your email"""
     if flask.request.method == "GET":
         form = forms.Request2FAForm()
         return flask.render_template("user/request2fa.html", form=form)
@@ -170,16 +171,15 @@ def request_2fa():
 
             # Generate HOTP token
             hotp_value = user.generate_HOTP_token()
-            message = flask_mail.Message(
-                "One-Time Code",
-                sender=flask.current_app.config.get("MAIL_SENDER", "dds@noreply.se"),
-                recipients=[user.primary_email],
-            )
-            message.body = f"One time code for DDS authentication: {hotp_value}"
-            mail.send(message)
+
+            msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
+
+            mail.send(msg)
 
             flask.flash("One-Time Code sent to your email.")
             return flask.redirect(flask.url_for("auth_blueprint.login"))
+        else:
+            return flask.render_template("user/request2fa.html", form=form)
 
 
 @auth_blueprint.route("/login", methods=["GET", "POST"])

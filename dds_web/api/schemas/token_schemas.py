@@ -19,8 +19,9 @@ from dds_web import auth
 
 
 class TokenSchema(marshmallow.Schema):
-    """Schema for token authentication used when acquiring a token."""
+    """Schema for token authentication used when acquiring an encrypted JWT."""
 
+    # Authentication One-Time code
     HOTP = marshmallow.fields.String(
         required=False,
         validate=marshmallow.validate.And(
@@ -34,7 +35,7 @@ class TokenSchema(marshmallow.Schema):
 
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def validate_mfa(self, data, **kwargs):
-        """Verify HOTP is correct."""
+        """Verify HOTP (authentication One-Time code) is correct."""
 
         # This can be easily extended to require at least one MFA method
         if "HOTP" not in data:
