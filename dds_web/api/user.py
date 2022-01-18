@@ -501,22 +501,6 @@ class RemoveUserAssociation(flask_restful.Resource):
         return {"message": message}, status
 
 
-class Token(flask_restful.Resource):
-    """Generates token for the user."""
-
-    decorators = [
-        limiter.limit(
-            dds_web.utils.rate_limit_from_config,
-            methods=["GET"],
-            error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
-        )
-    ]
-
-    @basic_auth.login_required
-    def get(self):
-        return flask.jsonify({"token": jwt_token(username=auth.current_user().username)})
-
-
 class EncryptedToken(flask_restful.Resource):
     """Generates encrypted token for the user."""
 

@@ -28,7 +28,6 @@ api = flask_restful.Api(api_blueprint, errors=error_codes)
 ####################################################################################################
 
 # Login/access ###################################################################### Login/access #
-api.add_resource(user.Token, "/user/token", endpoint="token")
 api.add_resource(user.EncryptedToken, "/user/encrypted_token", endpoint="encrypted_token")
 api.add_resource(user.Mail2fa, "/user/mail2fa", endpoint="mail2fa")
 
