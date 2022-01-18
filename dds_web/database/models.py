@@ -377,7 +377,7 @@ class User(flask_login.UserMixin, db.Model):
         """Generate a one time password, e.g. to be sent by email.
 
         Counter is incremented before generating token which invalidates any previous token.
-        The time when it was issued is recored to put an expiration time on the token.
+        The time when it was issued is recorded to put an expiration time on the token.
 
         """
         self.hotp_counter += 1
