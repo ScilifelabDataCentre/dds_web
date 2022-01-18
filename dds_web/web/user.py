@@ -5,28 +5,28 @@
 ####################################################################################################
 
 # Standard Library
+import gc
 import io
+import os
 
 # Installed
+import cryptography
 import flask
 import flask_login
 import pyqrcode
-import pyotp
 import itsdangerous
 import sqlalchemy
 import marshmallow
 
 
 # Own Modules
-from dds_web import auth
 from dds_web import forms
 from dds_web.database import models
 import dds_web.utils
 from dds_web import db, limiter
 import dds_web.api.errors as ddserr
 from dds_web.api.schemas import user_schemas
-from dds_web import mail
-import flask_mail
+from dds_web.security.project_keys import derive_key
 
 
 ####################################################################################################
@@ -294,6 +294,7 @@ def reset_password(token):
     # Validate form
     if form.validate_on_submit():
         user.password = form.password.data
+        user.kd_salt = os.urandom(32)
         db.session.commit()
         flask.flash("Your password has been updated! You are now able to log in.", "success")
         return flask.redirect(flask.url_for("auth_blueprint.login"))
@@ -310,8 +311,29 @@ def change_password():
     # Validate form
     form = forms.ChangePasswordForm()
     if form.validate_on_submit():
+        old_key_encryption_key = derive_key(flask_login.current_user, form.current_password.data)
+        old_aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(old_key_encryption_key)
+        # new salt is needed!
+        new_key_encryption_key = derive_key(flask_login.current_user, form.new_password.data)
+        new_aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(new_key_encryption_key)
+        aad = b"project key for user " + flask_login.current_user.username.encode()
+        keys_of_projects = models.ProjectKeys.query.filter_by(
+            user_id=flask_login.current_user.username
+        ).all()
+        for project_key in keys_of_projects:
+            project_private_key = old_aesgcm.decrypt(project_key.nonce, project_key.key, aad)
+            project_key.nonce = os.urandom(12)
+            project_key.key = new_aesgcm.encrypt(project_key.nonce, project_private_key, aad)
+        del project_private_key
+        del old_aesgcm
+        del old_key_encryption_key
+        del new_aesgcm
+        del new_key_encryption_key
+        gc.collect()
+
         # Change password
         flask_login.current_user.password = form.new_password.data
+        flask_login.current_user.kd_salt = os.urandom(32)
         db.session.commit()
 
         flask_login.logout_user()
