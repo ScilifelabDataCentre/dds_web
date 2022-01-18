@@ -90,11 +90,12 @@ def test_del_route_invalid_token(client):
     """Use invalid signature"""
     client = tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).fake_web_login(client)
 
-    response = client.get(
-        tests.DDSEndpoint.USER_CONFIRM_DELETE + "invalidtoken", content_type="application/json"
-    )
+    with pytest.raises(itsdangerous.exc.BadSignature, match="No b'.' found in value"):
+        response = client.get(
+            tests.DDSEndpoint.USER_CONFIRM_DELETE + "invalidtoken", content_type="application/json"
+        )
 
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
 
 def test_del_route_expired_token(client):
@@ -102,11 +103,12 @@ def test_del_route_expired_token(client):
     token = "InJlc2VhcmNodXNlcjFAbWFpbHRyYXAuaW8i.YbIcrg.BmxUW6fKsnC3ujO5z1E_5CYiit4"
     client = tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).fake_web_login(client)
 
-    response = client.get(
-        tests.DDSEndpoint.USER_CONFIRM_DELETE + token, content_type="application/json"
-    )
+    with pytest.raises(itsdangerous.exc.BadTimeSignature):
+        response = client.get(
+            tests.DDSEndpoint.USER_CONFIRM_DELETE + token, content_type="application/json"
+        )
 
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
 
 def test_del_route_valid_token_wrong_user(client):
@@ -205,7 +207,6 @@ def test_del_request_others_researcher(client):
         data=json.dumps({"email": email_to_delete}),
         content_type="application/json",
     )
-    print(response.data)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     # verify that user was not deleted
