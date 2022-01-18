@@ -397,7 +397,8 @@ class User(flask_login.UserMixin, db.Model):
         If the token is valid, the counter is incremented, to prohibit re-use.
         """
         hotp = twofactor.hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
-        if self.hotp_requested_time - dds_web.utils.current_time() > timedelta(hours=1):
+        timediff = dds_web.utils.current_time() - self.hotp_requested_time
+        if timediff > datetime.timedelta(hours=1):
             raise AuthenticationError("Email 2-factor token has expired.")
 
         try:
