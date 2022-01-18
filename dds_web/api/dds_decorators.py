@@ -92,7 +92,7 @@ def logging_bind_request(func):
         if auth.current_user():
             current_user = auth.current_user().username
         elif flask_login.current_user.is_authenticated:
-            current_user = flask_login.current_user().username
+            current_user = flask_login.current_user.username
         elif flask.request.remote_addr:
             current_user = flask.request.remote_addr  # log IP instead of username
         elif flask.request.access_route:
@@ -102,7 +102,7 @@ def logging_bind_request(func):
 
         with structlog.threadlocal.bound_threadlocal(
             resource=flask.request.path or "not applicable",
-            request_args=flask.request.get_json() or "{}",
+            request_args=flask.request.json if flask.request.data else None,
             user=current_user,
         ):
 
@@ -113,6 +113,6 @@ def logging_bind_request(func):
 
             action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
 
-        return value
+            return value
 
     return wrapper_logging_bind_request

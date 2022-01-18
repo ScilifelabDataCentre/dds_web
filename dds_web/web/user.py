@@ -354,9 +354,10 @@ def confirm_self_deletion(token):
     """Confirm user deletion."""
     s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config.get("SECRET_KEY"))
 
+    # Get email from token
+    email = s.loads(token, salt="email-delete", max_age=604800)
+
     try:
-        # Get email from token
-        email = s.loads(token, salt="email-delete", max_age=604800)
 
         # Check that the email is registered on the current user:
         if email not in [email.email for email in flask_login.current_user.emails]:
