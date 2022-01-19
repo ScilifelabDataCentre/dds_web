@@ -11,12 +11,11 @@ import functools
 import boto3
 import botocore
 import flask
-import flask_login
 import structlog
 
 # Own modules
-from dds_web import auth
 from dds_web.api.errors import BucketNotFoundError
+from dds_web.utils import get_username_or_request_ip, remove_sensitive_args
 
 
 # initiate logging
@@ -89,23 +88,14 @@ def logging_bind_request(func):
     @functools.wraps(func)
     def wrapper_logging_bind_request(*args, **kwargs):
 
-        if auth.current_user():
-            current_user = auth.current_user().username
-        elif flask_login.current_user.is_authenticated:
-            current_user = flask_login.current_user.username
-        elif flask.request.remote_addr:
-            current_user = flask.request.remote_addr  # log IP instead of username
-        elif flask.request.access_route:
-            current_user = flask.request.access_route[0]  # log IP instead of username
-        else:
-            current_user = "anonymous"
-
         with structlog.threadlocal.bound_threadlocal(
             resource=flask.request.path or "not applicable",
-            request_args=flask.request.json if flask.request.data else None,
-            user=current_user,
+            request_args=remove_sensitive_args(flask.request.values)
+            if flask.request.values
+            else "{}",
+            request_json=remove_sensitive_args(flask.request.json) if flask.request.data else "{}",
+            user=get_username_or_request_ip(),
         ):
-
             value = func(*args, **kwargs)
 
             if hasattr(value, "status"):
@@ -113,6 +103,8 @@ def logging_bind_request(func):
 
             action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
 
+            # make sure the threadlocal state is pruned after the log was written.
+            structlog.threadlocal.clear_threadlocal()
             return value
 
     return wrapper_logging_bind_request

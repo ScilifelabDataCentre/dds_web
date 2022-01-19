@@ -42,6 +42,17 @@ class Config(object):
     # Devel settings
     TEMPLATES_AUTO_RELOAD = True
 
+    # Request parameters dropped from the logfile
+    SENSITIVE_REQUEST_ARGS = [
+        "checksum",
+        "compressed",
+        "public_key",
+        "size",
+        "size_processed",
+        "salt",
+        "token",
+    ]
+
     # OIDC
     OIDC_CLIENT_ID = ""
     OIDC_CLIENT_SECRET = ""

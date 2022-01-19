@@ -10,14 +10,15 @@ import logging
 # Installed
 from werkzeug import exceptions
 import flask
+import dds_web
 import flask_login
 import http
 import json
 import structlog
 
 # Own modules
-from dds_web import actions
-from dds_web import auth
+from dds_web import actions, auth
+from dds_web.utils import get_username_or_request_ip, remove_sensitive_args
 
 ####################################################################################################
 # LOGGING ################################################################################ LOGGING #
@@ -34,21 +35,13 @@ class LoggedHTTPException(exceptions.HTTPException):
 
     def __init__(self, message=None, **kwargs):
 
-        if auth.current_user():
-            current_user = auth.current_user().username
-        elif flask_login.current_user.is_authenticated:
-            current_user = flask_login.current_user.username
-        elif flask.request.remote_addr:
-            current_user = flask.request.remote_addr  # log IP instead of username
-        elif flask.request.access_route:
-            current_user = flask.request.access_route[0]  # log IP instead of username
-        else:
-            current_user = "anonymous"
-
         with structlog.threadlocal.bound_threadlocal(
             resource=flask.request.path or "not applicable",  # or rather flask.request.endpoint?
-            request_args=flask.request.json if flask.request.data else None,
-            user=current_user,
+            request_args=remove_sensitive_args(flask.request.values)
+            if flask.request.values
+            else "{}",
+            request_json=remove_sensitive_args(flask.request.json) if flask.request.data else "{}",
+            user=get_username_or_request_ip(),
         ):
             if error_codes[self.__class__.__name__]:
                 code = error_codes[self.__class__.__name__]
@@ -59,6 +52,10 @@ class LoggedHTTPException(exceptions.HTTPException):
                 structlog.threadlocal.bind_threadlocal(extra=json.dumps(kwargs))
 
             action_logger.warning(f"exception.{self.__class__.__name__}")
+
+            # make sure the threadlocal state is pruned after the log was written.
+            structlog.threadlocal.clear_threadlocal()
+
             super().__init__(message)
 
 

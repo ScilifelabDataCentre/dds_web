@@ -6,11 +6,10 @@
 
 # Standard library
 import logging
-import structlog
 
 # Installed
-import flask
 import click
+import flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
@@ -23,8 +22,10 @@ import flask_login
 # import flask_qrcode
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import werkzeug
 import sqlalchemy
+import structlog
+import werkzeug
+
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
