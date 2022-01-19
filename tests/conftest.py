@@ -11,7 +11,6 @@ from sqlalchemy_utils import create_database, database_exists
 import boto3
 
 # Own
-import dds_web.utils
 from dds_web.database.models import (
     ResearchUser,
     UnitUser,
@@ -27,6 +26,7 @@ from dds_web.database.models import (
     Identifier,
     DeletionRequest,
 )
+import dds_web.utils
 from dds_web import create_app, db
 
 
