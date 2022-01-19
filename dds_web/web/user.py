@@ -313,7 +313,11 @@ def change_password():
     if form.validate_on_submit():
         old_key_encryption_key = derive_key(flask_login.current_user, form.current_password.data)
         old_aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(old_key_encryption_key)
-        # new salt is needed!
+
+        # Change password
+        flask_login.current_user.password = form.new_password.data
+        flask_login.current_user.kd_salt = os.urandom(32)
+
         new_key_encryption_key = derive_key(flask_login.current_user, form.new_password.data)
         new_aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(new_key_encryption_key)
         aad = b"project key for user " + flask_login.current_user.username.encode()
@@ -325,15 +329,12 @@ def change_password():
             project_key.nonce = os.urandom(12)
             project_key.key = new_aesgcm.encrypt(project_key.nonce, project_private_key, aad)
         del project_private_key
-        del old_aesgcm
-        del old_key_encryption_key
         del new_aesgcm
         del new_key_encryption_key
+        del old_aesgcm
+        del old_key_encryption_key
         gc.collect()
 
-        # Change password
-        flask_login.current_user.password = form.new_password.data
-        flask_login.current_user.kd_salt = os.urandom(32)
         db.session.commit()
 
         flask_login.logout_user()
