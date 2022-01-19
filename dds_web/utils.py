@@ -222,7 +222,7 @@ def remove_sensitive_args(loggedargs):
     for key in flask.current_app.config["SENSITIVE_REQUEST_ARGS"]:
         _ = loggedrequestdata.pop(key, "skip")
 
-    return json.dumps(loggedrequestdata)
+    return json.dumps(loggedrequestdata, sort_keys=True, default=str)
 
 
 def delrequest_exists(email):
