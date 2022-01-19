@@ -480,8 +480,8 @@ class RemoveUserAssociation(flask_restful.Resource):
             if user_association.user_id == existing_user.username:
                 user_in_project = True
                 db.session.delete(user_association)
-                # TODO: Remove row in new table ProjectKeys -- user should no longer have access
-                # to the Project Private Key
+                # TODO: Remove row in new table ProjectKeys (if sensitive) --
+                # user should no longer have access to the Project Private Key
 
         # Cancel if user has no access to project
         if not user_in_project:
