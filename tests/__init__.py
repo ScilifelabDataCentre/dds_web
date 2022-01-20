@@ -27,6 +27,7 @@ USER_CREDENTIALS = {
     "nouser": ":password",
     "nopassword": "username:",
     "wronguser": "scriptkiddie:password",
+    "wrongpassword": "researchuser:wrongpassword",
     "researcher": "researchuser:password",
     "researchuser": "researchuser:password",
     "researchuser2": "researchuser2:password",
@@ -62,10 +63,16 @@ class UserAuth:
     def post_headers(self):
         return {"Authorization": f"Basic {self.basic()}"}
 
+    def fetch_hotp(self):
+        user = dds_web.database.models.User.query.filter_by(username=self.username).first()
+        return user.generate_HOTP_token()
+
     def token(self, client):
 
-        response = client.get(DDSEndpoint.TOKEN, auth=(self.as_tuple()))
-
+        hotp_token = self.fetch_hotp()
+        response = client.get(
+            DDSEndpoint.ENCRYPTED_TOKEN, auth=(self.as_tuple()), json={"HOTP": hotp_token.decode()}
+        )
         # Get response from api
         response_json = response.json
         token = response_json["token"]
@@ -115,8 +122,8 @@ class DDSEndpoint:
     USER_CONFIRM_DELETE = "/confirm_deletion/"
 
     # Authentication - user and project
-    TOKEN = BASE_ENDPOINT + "/user/token"
     ENCRYPTED_TOKEN = BASE_ENDPOINT + "/user/encrypted_token"
+    REQUEST_EMAIL_2FA = BASE_ENDPOINT + "/user/request_mail2fa"
 
     # Remove user from project
     REMOVE_USER_FROM_PROJ = BASE_ENDPOINT + "/user/access/revoke"
