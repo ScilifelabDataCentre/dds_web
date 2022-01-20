@@ -646,3 +646,52 @@ class InvoiceUnit(flask_restful.Resource):
         flask.current_app.logger.debug(safespring_project_row)
 
         return flask.jsonify({"test": "ok"})
+
+
+class PublicKey(flask_restful.Resource):
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    def post(self):
+
+        if not flask.request.json:
+            raise ddserr.DDSArgumentError("Missing public key.")
+
+        public_key = flask.request.json.get("public")
+        if not public_key:
+            raise ddserr.DDSArgumentError("Missing public key.")
+
+        auth.current_user().public_key = public_key
+        try:
+            db.session.commit()
+        except Exception as err:
+            flask.current_app.logger.error(err)
+            raise ddserr.DatabaseError(err)
+
+        return {"message": "Public key updated."}
+
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    def put(self):
+
+        if not flask.request.json:
+            raise ddserr.DDSArgumentError("Can't replace public key without a new one.")
+
+        public_key = flask.request.json.get("public")
+        if not public_key:
+            raise ddserr.DDSArgumentError("Missing public key in args.")
+
+        auth.current_user().public_key = public_key
+        # 1. Query: filter rows corresponding to user and every project for unit
+        # 2. Remove all of the rows or set to null?
+        # 3. Send request to unit admin or someone else to add them to the project again
+
+        try:
+            db.session.commit()
+        except Exception as err:
+            flask.current_app.logger.error(err)
+            raise ddserr.DatabaseError(err)
+
+        return {
+            "message": (
+                "Public key updated, no project access at this time. "
+                "Request has been send to unit administrator."
+            )
+        }

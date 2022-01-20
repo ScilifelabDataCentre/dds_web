@@ -477,9 +477,10 @@ class UnitUser(User):
     # ---
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="RESTRICT"), nullable=False)
     unit = db.relationship("Unit", back_populates="users")
-
+    
     # Additional columns
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    public_key = db.Column(db.String(100), nullable=True)
 
     @property
     def role(self):
