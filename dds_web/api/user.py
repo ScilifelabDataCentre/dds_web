@@ -649,9 +649,12 @@ class InvoiceUnit(flask_restful.Resource):
 
 
 class PublicKey(flask_restful.Resource):
+    """Handle the user public key."""
+
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     def post(self):
-
+        """Add new public key to the user."""
+        # Check that all args are ok
         if not flask.request.json:
             raise ddserr.DDSArgumentError("Missing public key.")
 
@@ -659,6 +662,11 @@ class PublicKey(flask_restful.Resource):
         if not public_key:
             raise ddserr.DDSArgumentError("Missing public key.")
 
+        # They should use reset if it's already setup but want to add a new public key
+        if auth.current_user().public_key:
+            raise ddserr.AccessDeniedError("There's already a public key pair setup.")
+
+        # Set new public key
         auth.current_user().public_key = public_key
         try:
             db.session.commit()
@@ -670,7 +678,8 @@ class PublicKey(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     def put(self):
-
+        """Update user public key."""
+        # Verify correct args
         if not flask.request.json:
             raise ddserr.DDSArgumentError("Can't replace public key without a new one.")
 
@@ -678,6 +687,7 @@ class PublicKey(flask_restful.Resource):
         if not public_key:
             raise ddserr.DDSArgumentError("Missing public key in args.")
 
+        # Set new public key
         auth.current_user().public_key = public_key
         # 1. Query: filter rows corresponding to user and every project for unit
         # 2. Remove all of the rows or set to null?
@@ -698,9 +708,16 @@ class PublicKey(flask_restful.Resource):
 
 
 class ProjectAccess(flask_restful.Resource):
+    """Manage unit user project access."""
+
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     def get(self):
+        """Get keys required for renewed access to unit projects.
 
+        Get public key for user getting renewed access
+        and project private keys belonging to current user.
+        """
+        # Check that args ok
         if not flask.request.json:
             raise ddserr.DDSArgumentError("Can't get user public key without user email.")
 
@@ -722,7 +739,8 @@ class ProjectAccess(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     def post(self, email):
-
+        """Add encrypted project private keys to user getting renewed access to unit projects."""
+        # Check args ok
         if not flask.request.json:
             raise ddserr.DDSArgumentError("No keys found in request data.")
 
@@ -735,18 +753,22 @@ class ProjectAccess(flask_restful.Resource):
         email = flask.request.json.get("email")
         if not email:
             raise ddserr.DDSArgumentError("Email for user required to update project access.")
-        
+
         public_key = flask.request.json.get("public")
         if not public_key:
-            raise ddserr.DDSArgumentError("Public key required to verify users possession of corresponding key.")
-        
+            raise ddserr.DDSArgumentError(
+                "Public key required to verify users possession of corresponding key."
+            )
+
         user = user_schemas.UserSchema().load({"email": email})
         if not user:
             raise ddserr.NoSuchUserError("Could not find a user with the specified email.")
-        
+
         if user.public_key != public_key:
-            raise ddserr.AccessDeniedError("This public key does not belong to this user. Will not replace the project private keys.")
-        
-        # 1. Add rows to ProjectKeys table / update the users specific rows 
+            raise ddserr.AccessDeniedError(
+                "This public key does not belong to this user. Will not replace the project private keys."
+            )
+
+        # 1. Add rows to ProjectKeys table / update the users specific rows
         # 2. commit
         # 3. Return message of success
