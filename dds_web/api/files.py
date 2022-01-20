@@ -74,8 +74,6 @@ class NewFile(flask_restful.Resource):
     def post(self):
         """Add new file to DB"""
 
-        flask.current_app.logger.debug(flask.request.json)
-
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         check_eligibility_for_upload(project.current_status)
 
@@ -199,6 +197,7 @@ class ListFiles(flask_restful.Resource):
     """Lists files within a project"""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get a list of files within the specified folder."""
 

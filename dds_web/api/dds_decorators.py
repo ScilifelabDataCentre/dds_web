@@ -87,13 +87,9 @@ def logging_bind_request(func):
 
     @functools.wraps(func)
     def wrapper_logging_bind_request(*args, **kwargs):
-
         with structlog.threadlocal.bound_threadlocal(
             resource=flask.request.path or "not applicable",
-            request_args=remove_sensitive_args(flask.request.values)
-            if flask.request.values
-            else "{}",
-            request_json=remove_sensitive_args(flask.request.json) if flask.request.data else "{}",
+            project=flask.request.args.get("project"),
             user=get_username_or_request_ip(),
         ):
             value = func(*args, **kwargs)

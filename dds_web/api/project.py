@@ -278,7 +278,7 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        usage = flask.request.args.get("usage") == "True" and current_user.role in [
+        usage = flask.request.json.get("usage") == "True" and current_user.role in [
             "Super Admin",
             "Unit Admin",
             "Unit Personnel",
@@ -369,7 +369,6 @@ class CreateProject(flask_restful.Resource):
     @logging_bind_request
     def post(self):
         """Create a new project"""
-
         p_info = flask.request.json
 
         new_project = project_schemas.CreateProjectSchema().load(p_info)
