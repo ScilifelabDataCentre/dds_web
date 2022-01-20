@@ -278,13 +278,12 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        args = flask.request.json
-        if args:
-            usage = flask.request.json.get("usage") == "True" and current_user.role in [
-                "Super Admin",
-                "Unit Admin",
-                "Unit Personnel",
-            ]
+        usage_arg = flask.request.json.get("usage") if flask.request.json else None
+        usage = usage_arg == "True" and current_user.role in [
+            "Super Admin",
+            "Unit Admin",
+            "Unit Personnel",
+        ]
 
         # Get info for all projects
         for p in current_user.projects:

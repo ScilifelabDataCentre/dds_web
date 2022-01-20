@@ -154,9 +154,10 @@ def test_add_existing_user_without_project(client):
 
 
 def test_add_existing_user_to_existing_project(client):
-    project = models.Project.query.filter_by(
-        public_id=existing_research_user_to_existing_project["project"]
-    ).one_or_none()
+    user_copy = existing_research_user_to_existing_project.copy()
+    project_id = user_copy.pop("project")
+
+    project = models.Project.query.filter_by(public_id=project_id).one_or_none()
     user = models.Email.query.filter_by(
         email=existing_research_user_to_existing_project["email"]
     ).one_or_none()
@@ -167,10 +168,12 @@ def test_add_existing_user_to_existing_project(client):
         )
     ).one_or_none()
     assert project_user_before_addition is None
+
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(existing_research_user_to_existing_project),
+        query_string={"project": project_id},
+        data=json.dumps(user_copy),
         content_type="application/json",
     )
     assert response.status == "200 OK"
@@ -185,10 +188,13 @@ def test_add_existing_user_to_existing_project(client):
 
 
 def test_add_existing_user_to_nonexistent_proj(client):
+    user_copy = existing_research_user_to_nonexistent_proj.copy()
+    project = user_copy.pop("project")
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(existing_research_user_to_nonexistent_proj),
+        query_string={"project": project},
+        data=json.dumps(user_copy),
         content_type="application/json",
     )
     assert response.status == "400 BAD REQUEST"
@@ -208,10 +214,13 @@ def test_existing_user_change_ownership(client):
 
     assert not project_user.owner
 
+    user_new_owner_status = change_owner_existing_user.copy()
+    project = user_new_owner_status.pop("project")
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(change_owner_existing_user),
+        query_string={"project": project},
+        data=json.dumps(user_new_owner_status),
         content_type="application/json",
     )
 
@@ -223,10 +232,13 @@ def test_existing_user_change_ownership(client):
 
 
 def test_existing_user_change_ownership_same_permissions(client):
+    user_same_ownership = submit_with_same_ownership.copy()
+    project = user_same_ownership.pop("project")
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(submit_with_same_ownership),
+        query_string={"project": project},
+        data=json.dumps(user_same_ownership),
         content_type="application/json",
     )
     assert response.status == "403 FORBIDDEN"
@@ -235,9 +247,11 @@ def test_existing_user_change_ownership_same_permissions(client):
 def test_add_existing_user_with_unsuitable_role(client):
     user_with_unsuitable_role = existing_research_user_to_existing_project.copy()
     user_with_unsuitable_role["role"] = "Unit Admin"
+    project = user_with_unsuitable_role.pop("project")
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
         data=json.dumps(user_with_unsuitable_role),
         content_type="application/json",
     )
