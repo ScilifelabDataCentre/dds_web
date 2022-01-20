@@ -94,19 +94,6 @@ def __signed_jwt_token(
     return token.serialize()
 
 
-def jwt_token(username, expires_in=datetime.timedelta(hours=48), additional_claims=None):
-    """
-    Generates a signed JWT token. This is to be used for general purpose signed token.
-
-    :param str username: Username must be obtained through authentication
-    :param timedelta expires_in: This is the maximum allowed age of the token. (default 2 days)
-    :param Dict or None additional_claims: Any additional token claims can be added. e.g., {"iss": "DDS"}
-    """
-    return __signed_jwt_token(
-        username=username, expires_in=expires_in, additional_claims=additional_claims
-    )
-
-
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
@@ -547,6 +534,12 @@ class RequestMail2fa(flask_restful.Resource):
         msg = dds_web.utils.create_one_time_password_email(auth.current_user(), hotp_value)
 
         mail.send(msg)
+
+        return flask.jsonify(
+            {
+                "message": f"A one-time password has been sent to your email address {auth.current_user().primary_email}."
+            }
+        )
 
 
 class ShowUsage(flask_restful.Resource):
