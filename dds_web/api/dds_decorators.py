@@ -104,4 +104,3 @@ def logging_bind_request(func):
             return value
 
     return wrapper_logging_bind_request
-
