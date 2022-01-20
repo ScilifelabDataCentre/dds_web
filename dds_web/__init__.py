@@ -100,7 +100,7 @@ def setup_logging(app):
                     "propagate": False,
                 },
                 "actions": {
-                    "handlers": ["actions", "console"],
+                    "handlers": ["actions"],
                     "level": logging.INFO,
                     "propagate": False,
                 },

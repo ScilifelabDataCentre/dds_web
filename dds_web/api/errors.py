@@ -18,7 +18,7 @@ import structlog
 
 # Own modules
 from dds_web import actions, auth
-from dds_web.utils import get_username_or_request_ip, remove_sensitive_args
+from dds_web.utils import get_username_or_request_ip
 
 ####################################################################################################
 # LOGGING ################################################################################ LOGGING #

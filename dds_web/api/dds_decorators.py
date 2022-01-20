@@ -15,7 +15,7 @@ import structlog
 
 # Own modules
 from dds_web.api.errors import BucketNotFoundError
-from dds_web.utils import get_username_or_request_ip, remove_sensitive_args
+from dds_web.utils import get_username_or_request_ip
 
 
 # initiate logging
@@ -104,3 +104,4 @@ def logging_bind_request(func):
             return value
 
     return wrapper_logging_bind_request
+

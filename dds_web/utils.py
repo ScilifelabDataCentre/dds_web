@@ -216,21 +216,6 @@ def get_username_or_request_ip():
     return current_user
 
 
-def remove_sensitive_args(loggedargs):
-    """Removes unwanted keys (sensitive, irrelevant) from logged JSON requests."""
-
-    if isinstance(loggedargs, dict):
-        # create shallow copy to not delete elements from the original request
-        loggedrequestdata = loggedargs.copy()
-    else:
-        loggedrequestdata = json.load(loggedargs)
-
-    for key in flask.current_app.config["SENSITIVE_REQUEST_ARGS"]:
-        _ = loggedrequestdata.pop(key, "skip")
-
-    return json.dumps(loggedrequestdata, sort_keys=True, default=str)
-
-
 def delrequest_exists(email):
     """Check if there is already a deletion request for that email."""
     if models.DeletionRequest.query.filter_by(email=email).first():
