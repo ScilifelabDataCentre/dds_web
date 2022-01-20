@@ -170,6 +170,7 @@ class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def get(self):
         """Matches specified files to files in db."""
 
@@ -350,6 +351,7 @@ class FileInfo(flask_restful.Resource):
     """Get file info on files to download."""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
@@ -373,6 +375,7 @@ class FileInfoAll(flask_restful.Resource):
     """Get info on all project files."""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get file info."""
 
