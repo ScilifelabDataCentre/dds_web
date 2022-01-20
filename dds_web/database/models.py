@@ -399,12 +399,12 @@ class User(flask_login.UserMixin, db.Model):
         hotp = twofactor.hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         timediff = dds_web.utils.current_time() - self.hotp_requested_time
         if timediff > datetime.timedelta(hours=1):
-            raise AuthenticationError("Email 2-factor token has expired.")
+            raise AuthenticationError("One-time authentication code has expired.")
 
         try:
             hotp.verify(token, self.hotp_counter)
         except twofactor.InvalidToken:
-            raise AuthenticationError("Invalid 2-factor token.")
+            raise AuthenticationError("Invalid one-time authentication code.")
 
         # Token verified, increment counter to prohibit re-use
         self.hotp_counter += 1
