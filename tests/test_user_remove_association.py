@@ -21,10 +21,11 @@ def test_remove_user_from_project(client, boto3_session):
 
     project_id = response.json.get("project_id")
     email = proj_data_with_existing_users["users_to_add"][0]["email"]
-    rem_user = {"email": email, "project": project_id}
+    rem_user = {"email": email}
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project_id},
         data=json.dumps(rem_user),
         content_type="application/json",
     )
@@ -51,10 +52,11 @@ def test_remove_not_associated_user_from_project(client, boto3_session):
     project_id = response.json.get("project_id")
 
     email = proj_data_with_existing_users["users_to_add"][1]["email"]
-    rem_user = {"email": email, "project": project_id}
+    rem_user = {"email": email}
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project_id},
         data=json.dumps(rem_user),
         content_type="application/json",
     )
@@ -75,10 +77,11 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
 
     project_id = response.json.get("project_id")
     email = "nonexistent@testmail.com"
-    rem_user = {"email": email, "project": project_id}
+    rem_user = {"email": email}
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project_id},
         data=json.dumps(rem_user),
         content_type="application/json",
     )
@@ -92,11 +95,12 @@ def test_remove_existing_user_from_nonexistent_proj(client, boto3_session):
 
     project_id = "nonexistent001"
     email = proj_data_with_existing_users["users_to_add"][0]["email"]
-    rem_user = {"email": email, "project": project_id}
+    rem_user = {"email": email}
 
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project_id},
         data=json.dumps(rem_user),
         content_type="application/json",
     )

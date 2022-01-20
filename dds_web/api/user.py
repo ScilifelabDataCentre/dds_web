@@ -123,10 +123,8 @@ class AddUser(flask_restful.Resource):
     def post(self):
         """Create an invite and send email."""
 
+        project = flask.request.args.get("project", None)
         args = flask.request.json
-
-        project = args.pop("project", None)
-
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load(args)
 
@@ -482,9 +480,9 @@ class RemoveUserAssociation(flask_restful.Resource):
     def post(self):
         """Remove a user from a project"""
 
-        args = flask.request.json
+        project_id = flask.request.args.get("project")
 
-        project_id = args.pop("project")
+        args = flask.request.json
         user_email = args.pop("email")
 
         # Check if email is registered to a user

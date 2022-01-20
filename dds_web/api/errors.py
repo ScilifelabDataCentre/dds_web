@@ -34,13 +34,10 @@ class LoggedHTTPException(exceptions.HTTPException):
     """Base class to enable standard action logging on HTTP Exceptions"""
 
     def __init__(self, message=None, **kwargs):
-
         with structlog.threadlocal.bound_threadlocal(
-            resource=flask.request.path or "not applicable",  # or rather flask.request.endpoint?
-            request_args=remove_sensitive_args(flask.request.values)
-            if flask.request.values
-            else "{}",
-            request_json=remove_sensitive_args(flask.request.json) if flask.request.data else "{}",
+            message=message,
+            resource=flask.request.path or "not applicable",
+            project=flask.request.args.get("project"),
             user=get_username_or_request_ip(),
         ):
             if error_codes[self.__class__.__name__]:
