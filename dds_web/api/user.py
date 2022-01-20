@@ -695,3 +695,58 @@ class PublicKey(flask_restful.Resource):
                 "Request has been send to unit administrator."
             )
         }
+
+
+class ProjectAccess(flask_restful.Resource):
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    def get(self):
+
+        if not flask.request.json:
+            raise ddserr.DDSArgumentError("Can't get user public key without user email.")
+
+        email = flask.request.json.get("email")
+        if not email:
+            raise ddserr.DDSArgumentError("Missing email. Can't get public key for user.")
+
+        user = user_schemas.UserSchema().load({"email": email})
+        if not user:
+            # I know we're not having this particular exception, this is an example
+            raise ddserr.NoSuchUserError("Didn't find a user with the email specified.")
+
+        public_key = user.public_key
+
+        # Get all projectkey rows for current user
+        # return the project private keys together with the public key above
+
+        return {"public": public_key, "project_private": []}
+
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    def post(self, email):
+
+        if not flask.request.json:
+            raise ddserr.DDSArgumentError("No keys found in request data.")
+
+        keys = flask.request.json.get("keys")
+        if not keys:
+            raise ddserr.DDSArgumentError(
+                "Key argument empty. Cannot update users access to projects."
+            )
+
+        email = flask.request.json.get("email")
+        if not email:
+            raise ddserr.DDSArgumentError("Email for user required to update project access.")
+        
+        public_key = flask.request.json.get("public")
+        if not public_key:
+            raise ddserr.DDSArgumentError("Public key required to verify users possession of corresponding key.")
+        
+        user = user_schemas.UserSchema().load({"email": email})
+        if not user:
+            raise ddserr.NoSuchUserError("Could not find a user with the specified email.")
+        
+        if user.public_key != public_key:
+            raise ddserr.AccessDeniedError("This public key does not belong to this user. Will not replace the project private keys.")
+        
+        # 1. Add rows to ProjectKeys table / update the users specific rows 
+        # 2. commit
+        # 3. Return message of success
