@@ -60,6 +60,7 @@ api.add_resource(user.DeleteUser, "/user/delete", endpoint="delete_user")
 api.add_resource(user.DeleteUserSelf, "/user/delete_self", endpoint="delete_user_self")
 api.add_resource(user.RemoveUserAssociation, "/user/access/revoke", endpoint="revoke_from_project")
 api.add_resource(user.PublicKey, "/user/public", endpoint="user_public_key")
+api.add_resource(user.ProjectAccess, "/user/access", endpoint="user_public_key")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.InvoiceUnit, "/invoice", endpoint="invoice")
