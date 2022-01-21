@@ -7,6 +7,7 @@
 # Standard Library
 import io
 import json
+import re
 
 # Installed
 import flask
@@ -172,6 +173,10 @@ def login():
     # is_safe_url should check if the url is safe for redirects.
     if not dds_web.utils.is_safe_url(next):
         return flask.abort(400)
+
+    # Display greeting message, if applicable
+    if re.search("confirm_deletion", next):
+        flask.flash("Please log in to confirm your account deletion.", "warning")
 
     # Check if for is filled in and correctly (post)
     form = forms.LoginForm()
