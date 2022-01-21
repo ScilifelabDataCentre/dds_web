@@ -354,10 +354,13 @@ def confirm_self_deletion(token):
     """Confirm user deletion."""
     s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config.get("SECRET_KEY"))
 
-    # Get email from token
-    email = s.loads(token, salt="email-delete", max_age=604800)
+    # make sure email is defined even if it can't be retrieved from token
+    email = flask_login.current_user.primary_email
 
     try:
+
+        # Get email from token, overwrite the one from login if applicable
+        email = s.loads(token, salt="email-delete", max_age=604800)
 
         # Check that the email is registered on the current user:
         if email not in [email.email for email in flask_login.current_user.emails]:
@@ -373,12 +376,13 @@ def confirm_self_deletion(token):
         ).first()
 
     except itsdangerous.exc.SignatureExpired:
+
         db.session.delete(
             models.DeletionRequest.query.filter(models.DeletionRequest.email == email).all()
         )
         db.session.commit()
         raise ddserr.UserDeletionError(
-            message=f"Deletion request for {email} has expired. Please login to the DDS and request deletion anew."
+            message=f"Deletion request for has expired. Please login to the DDS and request deletion anew."
         )
     except (itsdangerous.exc.BadSignature, itsdangerous.exc.BadTimeSignature):
         raise ddserr.UserDeletionError(
