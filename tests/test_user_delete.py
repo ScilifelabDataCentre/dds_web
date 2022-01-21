@@ -106,8 +106,7 @@ def test_del_route_expired_token(client):
         tests.DDSEndpoint.USER_CONFIRM_DELETE + token, content_type="application/json"
     )
 
-    # ToDo: Should actually return a Bad Request. Probably deleting a non existent deletion request in the database causes problems
-    assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
 
 def test_del_route_valid_token_wrong_user(client):
