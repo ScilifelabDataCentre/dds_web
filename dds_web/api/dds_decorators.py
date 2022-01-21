@@ -10,9 +10,17 @@ import functools
 # Installed
 import boto3
 import botocore
+import flask
+import structlog
 
 # Own modules
 from dds_web.api.errors import BucketNotFoundError
+from dds_web.utils import get_username_or_request_ip
+
+
+# initiate logging
+action_logger = structlog.getLogger("actions")
+
 
 ####################################################################################################
 # DECORATORS ########################################################################## DECORATORS #
@@ -72,3 +80,27 @@ def bucket_must_exists(func):
         return func(self, *args, **kwargs)
 
     return check_bucket_exists
+
+
+def logging_bind_request(func):
+    """Binds some request parameters to the thread-local context of structlog"""
+
+    @functools.wraps(func)
+    def wrapper_logging_bind_request(*args, **kwargs):
+        with structlog.threadlocal.bound_threadlocal(
+            resource=flask.request.path or "not applicable",
+            project=flask.request.args.get("project"),
+            user=get_username_or_request_ip(),
+        ):
+            value = func(*args, **kwargs)
+
+            if hasattr(value, "status"):
+                structlog.threadlocal.bind_threadlocal(response=value.status)
+
+            action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
+
+            # make sure the threadlocal state is pruned after the log was written.
+            structlog.threadlocal.clear_threadlocal()
+            return value
+
+    return wrapper_logging_bind_request

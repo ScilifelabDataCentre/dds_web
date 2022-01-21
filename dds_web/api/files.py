@@ -20,6 +20,7 @@ from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
+from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.errors import (
     DatabaseError,
     DDSArgumentError,
@@ -69,10 +70,9 @@ class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def post(self):
         """Add new file to DB"""
-
-        flask.current_app.logger.debug(flask.request.json)
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         check_eligibility_for_upload(project.current_status)
@@ -89,6 +89,7 @@ class NewFile(flask_restful.Resource):
         return flask.jsonify({"message": f"File '{new_file.name}' added to db."})
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def put(self):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -169,6 +170,7 @@ class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def get(self):
         """Matches specified files to files in db."""
 
@@ -196,6 +198,7 @@ class ListFiles(flask_restful.Resource):
     """Lists files within a project"""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get a list of files within the specified folder."""
 
@@ -262,6 +265,7 @@ class RemoveFile(flask_restful.Resource):
     """Removes files from the database and s3 with boto3."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def delete(self):
         """Deletes the files"""
 
@@ -286,6 +290,7 @@ class RemoveDir(flask_restful.Resource):
     """Removes one or more full directories from the database and s3."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def delete(self):
         """Deletes the folders."""
 
@@ -346,6 +351,7 @@ class FileInfo(flask_restful.Resource):
     """Get file info on files to download."""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
@@ -369,6 +375,7 @@ class FileInfoAll(flask_restful.Resource):
     """Get info on all project files."""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get file info."""
 
@@ -383,6 +390,7 @@ class UpdateFile(flask_restful.Resource):
     """Update file info after download"""
 
     @auth.login_required
+    @logging_bind_request
     def put(self):
         """Update info in db."""
 

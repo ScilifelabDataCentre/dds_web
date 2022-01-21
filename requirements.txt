@@ -35,3 +35,4 @@ Flask-Bootstrap4==4.0.2
 PyQRCode==1.2.1
 Flask-Limiter==1.4
 factory_boy>=3.2.1
+structlog>=21.5.0

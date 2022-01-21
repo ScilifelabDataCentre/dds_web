@@ -40,7 +40,6 @@ def test_list_proj_access_granted_ls(client):
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
     list_of_projects = response_json.get("project_info")
-    print(list_of_projects)
     assert "public_project_id" == list_of_projects[0].get("Project ID")
 
 

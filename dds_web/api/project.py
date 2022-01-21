@@ -24,6 +24,7 @@ from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
+from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.errors import (
     DDSArgumentError,
     DatabaseError,
@@ -46,6 +47,7 @@ class ProjectStatus(flask_restful.Resource):
     """Get and update Project status"""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get current project status and optionally entire status history"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -65,6 +67,7 @@ class ProjectStatus(flask_restful.Resource):
         return flask.jsonify(return_info)
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def post(self):
         """Update Project Status"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -205,6 +208,7 @@ class GetPublic(flask_restful.Resource):
     """Gets the public key beloning to the current project."""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get public key from database."""
 
@@ -222,6 +226,7 @@ class GetPrivate(flask_restful.Resource):
     """Gets the private key belonging to the current project."""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get private key from database"""
 
@@ -260,6 +265,7 @@ class UserProjects(flask_restful.Resource):
     """Gets all projects registered to a specific user."""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get info regarding all projects which user is involved in."""
         current_user = auth.current_user()
@@ -272,7 +278,8 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        usage = flask.request.args.get("usage") == "True" and current_user.role in [
+        usage_arg = flask.request.json.get("usage") if flask.request.json else None
+        usage = usage_arg == "True" and current_user.role in [
             "Super Admin",
             "Unit Admin",
             "Unit Personnel",
@@ -320,6 +327,7 @@ class RemoveContents(flask_restful.Resource):
     """Removes all project contents."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def delete(self):
         """Removes all project contents."""
 
@@ -359,9 +367,9 @@ class RemoveContents(flask_restful.Resource):
 
 class CreateProject(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def post(self):
         """Create a new project"""
-
         p_info = flask.request.json
 
         new_project = project_schemas.CreateProjectSchema().load(p_info)
@@ -427,6 +435,7 @@ class ProjectUsers(flask_restful.Resource):
     """Get all users in a specific project."""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
