@@ -376,7 +376,7 @@ def confirm_self_deletion(token):
 
         email = DBConnector.remove_user_self_deletion_request(flask_login.current_user)
         raise ddserr.UserDeletionError(
-            message=f"Deletion request for has expired. Please login to the DDS and request deletion anew."
+            message=f"Deletion request for {email} has expired. Please login to the DDS and request deletion anew."
         )
     except (itsdangerous.exc.BadSignature, itsdangerous.exc.BadTimeSignature):
         raise ddserr.UserDeletionError(
