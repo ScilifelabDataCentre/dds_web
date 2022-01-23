@@ -6,7 +6,6 @@
 
 # Standard library
 import datetime
-import gc
 import pathlib
 import secrets
 import os
@@ -20,8 +19,6 @@ import marshmallow
 from jwcrypto import jwk, jwt
 import pandas
 import sqlalchemy
-import cryptography
-from sqlalchemy import table
 
 # Own modules
 from dds_web import auth, mail, db, basic_auth, limiter
@@ -31,7 +28,7 @@ import dds_web.forms
 import dds_web.api.errors as ddserr
 from dds_web.api.schemas import project_schemas
 from dds_web.api.schemas import user_schemas
-from dds_web.security.project_keys import obtain_project_private_key
+from dds_web.security.project_keys import manage_project_key_among_users
 
 # VARIABLES ############################################################################ VARIABLES #
 
@@ -269,22 +266,17 @@ class AddUser(flask_restful.Resource):
         project_key = models.ProjectKeys.query.filter_by(
             project_id=project.id, user_id=current_user.username
         ).first()
-        project_private_key = obtain_project_private_key(current_user, project_key)
-
-        aad = b"project key for user " + existing_user.username.encode()
-        key = cryptography.hazmat.primitives.ciphers.aead.AESGCM.generate_key(bit_length=256)
-        aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(key)
-        nonce = os.urandom(12)
-
-        existing_user.temporary_key = key
-        table("projectkeys").insert().values(
+        project_key_for_existing_user = manage_project_key_among_users(
+            existing_user, current_user, project_key
+        )
+        new_project_key = models.ProjectKeys(
             project_id=project.id,
             user_id=existing_user.username,
-            key=aesgcm.encrypt(nonce, project_private_key, aad),
-            nonce=nonce,
+            key=project_key_for_existing_user["encrypted_key"],
+            nonce=project_key_for_existing_user["nonce"],
         )
-
         try:
+            db.session.add(new_project_key)
             db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
             flask.current_app.logger.exception(err)
@@ -295,10 +287,6 @@ class AddUser(flask_restful.Resource):
         flask.current_app.logger.debug(
             f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
         )
-
-        del project_private_key
-        del key
-        gc.collect()
 
         return {
             "status": 200,

@@ -20,7 +20,7 @@ from dds_web import basic_auth, auth
 
 # VARIABLES ############################################################################ VARIABLES #
 
-SENSITIVE_ENDPOINTS = ("/proj/private", "/user/add")
+SENSITIVE_ENDPOINTS = ("/proj/create", "/proj/private", "/user/add")
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #

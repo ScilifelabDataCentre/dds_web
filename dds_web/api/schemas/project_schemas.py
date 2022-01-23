@@ -20,7 +20,6 @@ from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
 import dds_web.utils
-from dds_web.security import project_keys
 
 
 ####################################################################################################
@@ -135,9 +134,6 @@ class CreateProjectSchema(marshmallow.Schema):
                 public_id=data["public_id"], created_time=data["date_created"]
             )
 
-            # Generate keys
-            data.update(**project_keys.ProjectKeys(data["public_id"]).key_dict())
-
             # Create project
             current_user = auth.current_user()
             new_project = models.Project(
@@ -151,8 +147,18 @@ class CreateProjectSchema(marshmallow.Schema):
                     }
                 )
             )
+
+            # Generate keys
+            new_project_key = models.ProjectKeys(
+                project_id=new_project.id,
+                user_id=current_user.username,
+                key=aesgcm.encrypt(nonce, project_private_key, aad),
+                nonce=nonce,
+            )
+
             # Save
             db.session.add(new_project)
+            db.session.add(new_project_key)
             db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
             flask.current_app.logger.exception(err)

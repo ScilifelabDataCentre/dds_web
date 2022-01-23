@@ -1,4 +1,6 @@
 """ Code for generating project related keys """
+import os
+
 import argon2
 import cryptography
 import flask
@@ -29,6 +31,10 @@ def derive_key(user, password):
     return derived_key
 
 
+def manage_project_key_among_users(existing_user, current_user, project_key):
+    return encrypt_project_key(existing_user, obtain_project_private_key(current_user, project_key))
+
+
 def obtain_project_private_key(user, project_key):
     password = dds_web.cache.get(user.username)
     key_encryption_key = derive_key(user, password)
@@ -45,41 +51,50 @@ def obtain_project_private_key(user, project_key):
         raise KeyNotFoundError
 
 
-class ProjectKeys:
-    """Class with methods to generate keys"""
+def encrypt_project_key(user, user_key, project_private_key):
+    aad = b"project key for user " + user.username.encode()
+    aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(user_key)
+    nonce = os.urandom(12)
+    return {"nonce": nonce, "encrypted_key": aesgcm.encrypt(nonce, project_private_key, aad)}
 
-    def __init__(self, project_id):
-        """Needs a project id"""
-        self.project_id = project_id
-        self._generate_keypair()
 
-    def key_dict(self):
-        return dict(
-            public_key=self._public_key_bytes.hex().upper(),
+def encrypt_project_key_with_temp_key(user, project_private_key):
+    if user.temporary_key is None:
+        user.temporary_key = cryptography.hazmat.primitives.ciphers.aead.AESGCM.generate_key(
+            bit_length=256
         )
+    return encrypt_project_key(user, user.temporary_key, project_private_key)
 
-    def _generate_keypair(self):
-        """Generates salted, encrypted private and public key"""
-        project_key_gen = (
-            cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
-        )
-        # generate private key bytes
-        private_key_bytes = project_key_gen.private_bytes(
-            encoding=cryptography.hazmat.primitives.serialization.Encoding.Raw,
-            format=cryptography.hazmat.primitives.serialization.PrivateFormat.Raw,
-            encryption_algorithm=cryptography.hazmat.primitives.serialization.NoEncryption(),
-        )
 
-        # Generate public key bytes
-        self._public_key_bytes = project_key_gen.public_key().public_bytes(
-            encoding=cryptography.hazmat.primitives.serialization.Encoding.Raw,
-            format=cryptography.hazmat.primitives.serialization.PublicFormat.Raw,
-        )
+def encrypt_project_key_with_password(user, project_private_key):
+    password = dds_web.cache.get(user.username)
+    user_key = derive_key(user, password)
+    dds_web.cache.delete(user.username)
+    encrypted_project_key = encrypt_project_key(user, user_key, project_private_key)
+    del password
+    del user_key
+    gc.collect()
+    return encrypted_project_key
 
-        # encrypt private_key_bytes
 
-        # persist encrypted private_key_bytes
+def generate_project_key_pair(user):
+    private_key = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
 
-        # destroy private_key_bytes
+    private_key_bytes = private_key.private_bytes(
+        encoding=cryptography.hazmat.primitives.serialization.Encoding.Raw,
+        format=cryptography.hazmat.primitives.serialization.PrivateFormat.Raw,
+        encryption_algorithm=cryptography.hazmat.primitives.serialization.NoEncryption(),
+    )
 
-        # destroy project_key_gen
+    public_key_bytes = private_key.public_key().public_bytes(
+        encoding=cryptography.hazmat.primitives.serialization.Encoding.Raw,
+        format=cryptography.hazmat.primitives.serialization.PublicFormat.Raw,
+    )
+
+    encrypted_private_key = encrypt_project_key_with_password(user, private_key_bytes)
+
+    del private_key_bytes
+    del private_key
+    gc.collect()
+
+    return {"public_key": public_key_bytes, "encrypted_private_key": encrypted_private_key}
