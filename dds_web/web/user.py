@@ -7,6 +7,7 @@
 # Standard Library
 import io
 import json
+import re
 
 # Installed
 import flask
@@ -27,6 +28,7 @@ from dds_web.database import models
 import dds_web.utils
 from dds_web import db, limiter
 import dds_web.api.errors as ddserr
+from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
 from dds_web import mail
 
@@ -71,6 +73,7 @@ def index():
     dds_web.utils.rate_limit_from_config,
     error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
 )
+@logging_bind_request
 def confirm_invite(token):
     """Confirm invitation."""
     s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config.get("SECRET_KEY"))
@@ -170,8 +173,12 @@ def login():
 
     next = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
-    if not dds_web.utils.is_safe_url(next):
+    if next and not dds_web.utils.is_safe_url(next):
         return flask.abort(400)
+
+    # Display greeting message, if applicable
+    if next and re.search("confirm_deletion", next):
+        flask.flash("Please log in to confirm your account deletion.", "warning")
 
     # Check if for is filled in and correctly (post)
     form = forms.LoginForm()
@@ -199,6 +206,7 @@ def login():
 
 @auth_blueprint.route("/logout", methods=["POST"])
 @flask_login.login_required
+@logging_bind_request
 def logout():
     """Logout user."""
 
@@ -279,6 +287,7 @@ def two_factor_verify():
     methods=["POST"],
     error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
 )
+@logging_bind_request
 def request_reset_password():
     """Request to reset password when password is lost."""
     # Reset forgotten password only allowed if logged out
@@ -350,6 +359,7 @@ def change_password():
 
 @auth_blueprint.route("/confirm_deletion/<token>", methods=["GET"])
 @flask_login.login_required
+@logging_bind_request
 def confirm_self_deletion(token):
     """Confirm user deletion."""
     s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config.get("SECRET_KEY"))
