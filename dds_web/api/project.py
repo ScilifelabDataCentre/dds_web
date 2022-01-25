@@ -362,7 +362,6 @@ class CreateProject(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     def post(self):
         """Create a new project"""
-        raise DDSArgumentError("Teeesting")
         # Get project info from request
         project_info = flask.request.json
 
