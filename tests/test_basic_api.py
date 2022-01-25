@@ -185,7 +185,10 @@ def test_auth_with_token(client):
     )
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
-    assert response_json.get("public")
+    print(response_json.get("public"))
+    assert not response_json.get("sensitive") and not response_json.get(
+        "public"
+    )  # Because not sensitive
 
 
 # ENCRYPTED TOKEN ################################################################ ENCRYPTED TOKEN #
@@ -250,4 +253,4 @@ def test_auth_with_encrypted_token(client):
     )
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
-    assert response_json.get("public")
+    assert not response_json.get("sensitive") and not response_json.get("public")

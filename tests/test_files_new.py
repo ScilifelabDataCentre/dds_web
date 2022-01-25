@@ -187,43 +187,6 @@ def test_new_file_sizeprocessed_bigint(client):
     assert file_in_db(test_dict=file_sizeprocessed_bigint, project=project_1.id)
 
 
-def test_new_file_publickey_wrong_length(client):
-    """Test adding a file with an incorrect public key length."""
-
-    project_1 = project_row(project_id="file_testing_project")
-    assert project_1
-
-    file_wrong_public_key = first_new_file.copy()
-    file_wrong_public_key["public_key"] = "test"
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": "file_testing_project"},
-            data=json.dumps(file_wrong_public_key),
-            content_type="application/json",
-        )
-    assert not file_in_db(test_dict=file_wrong_public_key, project=project_1.id)
-
-
-def test_new_file_salt_wrong_length(client):
-
-    project_1 = project_row(project_id="file_testing_project")
-    assert project_1
-
-    file_wrong_salt = first_new_file.copy()
-    file_wrong_salt["salt"] = "test"
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": "file_testing_project"},
-            data=json.dumps(file_wrong_salt),
-            content_type="application/json",
-        )
-    assert not file_in_db(test_dict=file_wrong_salt, project=project_1.id)
-
-
 def test_new_file_checksum_wrong_length(client):
 
     project_1 = project_row(project_id="file_testing_project")

@@ -30,14 +30,8 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
     size = marshmallow.fields.Integer(required=True)  # Accepts BigInt
     size_processed = marshmallow.fields.Integer(required=True)  # Accepts BigInt
     compressed = marshmallow.fields.Boolean(required=True)  # Accepts all truthy
-    public_key = marshmallow.fields.String(
-        required=False, allow_none=True  # validate=marshmallow.validate.Length(equal=64)
-    )
-    salt = marshmallow.fields.String(
-        required=False,
-        allow_none=True
-        # validate=marshmallow.validate.Length(equal=32),
-    )
+    public_key = marshmallow.fields.String(required=False, allow_none=True)
+    salt = marshmallow.fields.String(required=False, allow_none=True)
     checksum = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(equal=64)
     )
