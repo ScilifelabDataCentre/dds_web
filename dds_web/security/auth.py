@@ -12,6 +12,7 @@ import flask
 import json
 import jwcrypto
 from jwcrypto import jwk, jwt
+import structlog
 
 # Own modules
 from dds_web.api.errors import AuthenticationError, AccessDeniedError
@@ -19,6 +20,7 @@ from dds_web.database import models
 from dds_web import basic_auth, auth
 import dds_web.utils
 
+action_logger = structlog.getLogger("actions")
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
@@ -81,9 +83,7 @@ def verify_token(token):
         username = data.get("sub")
         if username:
             user = models.User.query.get(username)
-            if user:
-                return user
-        return None
+        return user or None
     raise AuthenticationError(message="Expired token")
 
 
