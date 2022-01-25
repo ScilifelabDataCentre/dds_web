@@ -164,18 +164,17 @@ class ProjectStatus(flask_restful.Resource):
 
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""
-        possible_transitions = [
-            ("In Progress", ["Available", "Deleted", "Archived"]),
-            ("Available", ["In Progress", "Expired", "Archived"]),
-            ("Expired", ["Available", "Archived"]),
-        ]
-        result = False
+        status_transitions = {
+            "In Progress": ["Available", "Delete", "Archived"],
+            "Available": ["In Progress", "Expired", "Archived"],
+            "Expired": ["Available", "Archived"],
+        }
 
-        for transition in possible_transitions:
-            if current_status == transition[0] and new_status in transition[1]:
-                result = True
-                break
-        return result
+        possible_transitions = status_transitions.get(current_status)
+        if possible_transitions and new_status in possible_transitions:
+            return True
+
+        return False
 
     def delete_project_info(self, proj):
         """Delete certain metadata from proj on deletion/abort"""
