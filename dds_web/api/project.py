@@ -34,6 +34,7 @@ from dds_web.api.errors import (
     BucketNotFoundError,
     KeyNotFoundError,
     S3ConnectionError,
+    PermissionDeniedError,
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas
@@ -89,6 +90,7 @@ class ProjectStatus(flask_restful.Resource):
 
         try:
             if new_status == "In Progress":
+                print("in progress", flush=True)
                 new_status_row = self.retract(
                     project=project,
                     current_time=curr_date,
@@ -217,10 +219,10 @@ class ProjectStatus(flask_restful.Resource):
             project_id=project.id, status="Archived", date_created=current_time, is_aborted=abort
         )
         _ = RemoveContents().delete_project_contents(project)
-        additoinal_message = f"\nAll files in {project.public_id} deleted"
-        if aborted:
+        additional_message = f"\nAll files in {project.public_id} deleted"
+        if abort:
             ProjectStatus().delete_project_info(project=project)
-            additoinal_message += " and project info cleared"
+            additional_message += " and project info cleared"
         return new_status_row, additional_message
 
     @staticmethod
@@ -442,7 +444,7 @@ class CreateProject(flask_restful.Resource):
     def post(self):
         """Create a new project"""
         # Get project info from request
-        project_info = flask.request.args
+        project_info = flask.request.json
 
         # Create new project with user specified info
         new_project = project_schemas.CreateProjectSchema().load(project_info)
@@ -469,16 +471,17 @@ class CreateProject(flask_restful.Resource):
                 existing_user = user_schemas.UserSchema().load(user)
                 if not existing_user:
                     # Send invite if the user doesn't exist
-                    invite_user_result = AddUser.invite_user(
-                        {
-                            "email": user.get("email"),
-                            "role": user.get("role"),
-                        }
-                    )
-                    if invite_user_result["status"] == 200:
-                        invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
+                    try:
+                        invite_user_result = AddUser.invite_user(
+                            {
+                                "email": user.get("email"),
+                                "role": user.get("role"),
+                            }
+                        )
+                    except (AccessDeniedError, PermissionDeniedError, DatabaseError) as usererr:
+                        invite_msg = str(usererr)
                     else:
-                        invite_msg = invite_user_result["message"]
+                        invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
                     user_addition_statuses.append(invite_msg)
                 else:
                     # If it is an existing user, add them to project.
@@ -489,7 +492,7 @@ class CreateProject(flask_restful.Resource):
                             project=new_project.public_id,
                             role=user.get("role"),
                         )
-                    except DatabaseError as err:
+                    except (AccessDeniedError, DatabaseError, PermissionDeniedError) as err:
                         addition_status = f"Error for {user['email']}: {err.description}"
                     else:
                         addition_status = add_user_result["message"]

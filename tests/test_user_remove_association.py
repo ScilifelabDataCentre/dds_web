@@ -6,6 +6,7 @@ import copy
 # Own
 import tests
 from tests.test_project_creation import proj_data_with_existing_users
+from dds_web.api.errors import NoSuchUserError
 
 
 def test_remove_user_from_project(client, boto3_session):
@@ -78,16 +79,17 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
     project_id = response.json.get("project_id")
     email = "nonexistent@testmail.com"
     rem_user = {"email": email}
-    response = client.post(
-        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        query_string={"project": project_id},
-        data=json.dumps(rem_user),
-        content_type="application/json",
-    )
+    with pytest.raises(NoSuchUserError) as err:
+        response = client.post(
+            tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+            query_string={"project": project_id},
+            data=json.dumps(rem_user),
+            content_type="application/json",
+        )
 
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert f"{email} already not associated with this project" in response.json["message"]
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert f"{email} already not associated with this project" in response.json["message"]
 
 
 def test_remove_existing_user_from_nonexistent_proj(client, boto3_session):

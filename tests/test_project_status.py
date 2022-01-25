@@ -29,10 +29,6 @@ fields_set_to_null = [
     "date_created",
     "description",
     "pi",
-    "public_key",
-    "private_key",
-    "privkey_salt",
-    "privkey_nonce",
     "unit_id",
     "created_by",
     # "is_active",
@@ -163,6 +159,8 @@ def test_aborted_project(module_client, boto3_session):
 
     for field, value in vars(project).items():
         if field in fields_set_to_null:
+            print(field)
+            print(value)
             assert value
     assert len(project.researchusers) > 0
 

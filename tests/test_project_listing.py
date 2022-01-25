@@ -84,7 +84,7 @@ def test_project_public_researcher_get(client):
     response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, query_string=proj_query, headers=token)
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
-    assert response_json.get("public")
+    assert not response_json.get("sensitive") and not response_json.get("public")
 
 
 def test_project_public_facility_put(client):
@@ -94,7 +94,7 @@ def test_project_public_facility_put(client):
     response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, query_string=proj_query, headers=token)
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
-    assert response_json.get("public")
+    assert not response_json.get("sensitive") and not response_json.get("public")
 
 
 def test_list_researchusers_in_proj_by_researchuser(client):
