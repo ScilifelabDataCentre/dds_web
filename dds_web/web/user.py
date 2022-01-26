@@ -58,6 +58,7 @@ def bad_request(error):
 @flask_login.login_required
 def index():
     """DDS start page."""
+
     # Check if user has 2fa setup
     if flask_login.current_user.has_2fa:
         form = forms.LogoutForm()
@@ -401,6 +402,8 @@ def confirm_self_deletion(token):
                 message=f"User deletion request for {user.username} / {user.primary_email.email} failed due to database error: {sqlerr}",
                 alt_message=f"Deletion request for user {user.username} registered with {user.primary_email.email} failed for technical reasons. Please contact the unit for technical support!",
             )
+
+        flask.session.clear()
 
         return flask.make_response(
             flask.render_template("user/userdeleted.html", username=user.username, initial=True)
