@@ -6,6 +6,7 @@
 
 # Standard library
 import os
+import datetime
 
 ####################################################################################################
 # CLASSES ################################################################################ CLASSES #
@@ -39,6 +40,9 @@ class Config(object):
     DDS_SAFESPRING_ACCESS = os.environ.get("DDS_SAFESPRING_ACCESS", "SAFESPRINGACCESSKEY")
     DDS_SAFESPRING_SECRET = os.environ.get("DDS_SAFESPRING_SECRET", "SAFESPRINGSECRETKEY")
 
+    # Use short-lived session cookies:
+    PERMANENT_SESSION_LIFETIME = datetime.timedelta(hours=1)
+
     # Devel settings
     TEMPLATES_AUTO_RELOAD = True
 
@@ -56,4 +60,6 @@ class Config(object):
     MAIL_SENDER_ADDRESS = "localhost"
 
     TOKEN_ENDPOINT_ACCESS_LIMIT = "10/hour"
-    RATELIMIT_STORAGE_URL = "memory://"  # Use in devel only! Use Redis or memcached in prod
+    RATELIMIT_STORAGE_URL = os.environ.get(
+        "RATELIMIT_STORAGE_URL", "memory://"
+    )  # Use in devel only! Use Redis or memcached in prod

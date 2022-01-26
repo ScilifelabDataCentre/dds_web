@@ -378,6 +378,8 @@ def confirm_self_deletion(token):
                 alt_message=f"Deletion request for user {user.username} registered with {user.primary_email.email} failed for technical reasons. Please contact the unit for technical support!",
             )
 
+        flask.session.clear()
+
         return flask.make_response(
             flask.render_template("user/userdeleted.html", username=user.username, initial=True)
         )
