@@ -6,6 +6,7 @@
 
 # Standard library
 import datetime
+import logging
 import pathlib
 import secrets
 import os
@@ -19,8 +20,9 @@ import itsdangerous
 import marshmallow
 from jwcrypto import jwk, jwt
 import pandas
-import sqlalchemy
 import pyotp
+import structlog
+import sqlalchemy
 
 # Own modules
 from dds_web import auth, mail, db, basic_auth, limiter
@@ -30,11 +32,15 @@ import dds_web.forms
 import dds_web.errors as ddserr
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
+from dds_web.api.dds_decorators import logging_bind_request
 
 # VARIABLES ############################################################################ VARIABLES #
 
 ENCRYPTION_KEY_BIT_LENGTH = 256
 ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
+
+# initiate bound logger
+action_logger = structlog.getLogger("actions")
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -99,13 +105,12 @@ def __signed_jwt_token(
 ####################################################################################################
 class AddUser(flask_restful.Resource):
     @auth.login_required
+    @logging_bind_request
     def post(self):
         """Create an invite and send email."""
 
+        project = flask.request.args.get("project", None)
         args = flask.request.json
-
-        project = args.pop("project", None)
-
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load(args)
 
@@ -134,6 +139,7 @@ class AddUser(flask_restful.Resource):
                 )
 
     @staticmethod
+    @logging_bind_request
     def invite_user(args):
         """Invite a new user"""
 
@@ -233,6 +239,7 @@ class AddUser(flask_restful.Resource):
                 AddUser.send_email_with_retry(msg, retry)
 
     @staticmethod
+    @logging_bind_request
     def add_user_to_project(existing_user, project, role):
         """Add existing user to a project"""
 
@@ -291,6 +298,7 @@ class AddUser(flask_restful.Resource):
 
 class RetrieveUserInfo(flask_restful.Resource):
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Return own info when queried"""
         curr_user = auth.current_user()
@@ -302,7 +310,6 @@ class RetrieveUserInfo(flask_restful.Resource):
         info["name"] = curr_user.name
         if "Unit" in curr_user.role and curr_user.is_admin:
             info["is_admin"] = curr_user.is_admin
-
         return {"info": info}
 
 
@@ -312,7 +319,9 @@ class DeleteUserSelf(flask_restful.Resource):
     """
 
     @auth.login_required
+    @logging_bind_request
     def delete(self):
+
         current_user = auth.current_user()
 
         email_str = current_user.primary_email
@@ -408,6 +417,7 @@ class DeleteUser(flask_restful.Resource):
     Unit admins can delete unitusers. Super admins can delete any user."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
+    @logging_bind_request
     def delete(self):
 
         user = user_schemas.UserSchema().load(flask.request.json)
@@ -435,6 +445,12 @@ class DeleteUser(flask_restful.Resource):
         msg = f"The user account {user.username} ({user_email_str}, {user.role})  has been terminated successfully been by {current_user.name} ({current_user.role})."
         flask.current_app.logger.info(msg)
 
+        with structlog.threadlocal.bound_threadlocal(
+            who={"user": user.username, "role": user.role},
+            by_whom={"user": current_user.username, "role": current_user.role},
+        ):
+            action_logger.info(self.__class__)
+
         return flask.make_response(
             flask.jsonify(
                 {
@@ -446,12 +462,13 @@ class DeleteUser(flask_restful.Resource):
 
 class RemoveUserAssociation(flask_restful.Resource):
     @auth.login_required
+    @logging_bind_request
     def post(self):
         """Remove a user from a project"""
 
-        args = flask.request.json
+        project_id = flask.request.args.get("project")
 
-        project_id = args.pop("project")
+        args = flask.request.json
         user_email = args.pop("email")
 
         # Check if email is registered to a user
@@ -500,6 +517,7 @@ class EncryptedToken(flask_restful.Resource):
     ]
 
     @basic_auth.login_required
+    @logging_bind_request
     def get(self):
         args = flask.request.json
         if args is None:
@@ -528,6 +546,7 @@ class RequestMail2fa(flask_restful.Resource):
     ]
 
     @basic_auth.login_required
+    @logging_bind_request
     def get(self):
         hotp_value = auth.current_user().generate_HOTP_token()
 
@@ -546,6 +565,7 @@ class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def get(self):
         current_user = auth.current_user()
 
@@ -621,6 +641,7 @@ class InvoiceUnit(flask_restful.Resource):
     """Calculate the actual cost from the Safespring invoicing specification."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
     def get(self):
         current_user = auth.current_user()
 

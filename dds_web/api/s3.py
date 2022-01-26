@@ -13,9 +13,8 @@ import flask
 # Own modules
 from dds_web import auth
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.errors import (
-    S3ProjectNotFoundError,
-)
+from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.errors import S3ProjectNotFoundError
 from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
@@ -27,6 +26,7 @@ class S3Info(flask_restful.Resource):
     """Gets the projects S3 keys"""
 
     @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get the safespring project"""
 

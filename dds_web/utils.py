@@ -6,6 +6,7 @@
 
 # Standard library
 import datetime
+import json
 import os
 import pathlib
 import re
@@ -16,6 +17,7 @@ import pandas
 from contextlib import contextmanager
 import flask
 import flask_mail
+import flask_login
 import sqlalchemy
 
 # # imports related to scheduling
@@ -29,9 +31,7 @@ import wtforms
 
 # Own modules
 from dds_web.database import models
-from dds_web import db
-from dds_web import mail
-
+from dds_web import auth, db, mail
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -192,6 +192,29 @@ def username_in_db(username):
         return True
 
     return False
+
+
+def get_username_or_request_ip():
+    """Util function for action logger: Try to identify the requester"""
+
+    if auth.current_user():
+        current_user = auth.current_user().username
+    elif flask_login.current_user.is_authenticated:
+        current_user = flask_login.current_user.username
+    else:
+        username = (
+            flask.request.authorization.get("username") if flask.request.authorization else "---"
+        )
+        if flask.request.remote_addr:
+            current_user = f"{username} ({flask.request.remote_addr})"  # log IP instead of username
+        elif flask.request.access_route:
+            current_user = (
+                f"{username} ({flask.request.access_route[0]})"  # log IP instead of username
+            )
+        else:
+            current_user = f"{username} (anonymous)"
+
+    return current_user
 
 
 def delrequest_exists(email):

@@ -205,7 +205,6 @@ def test_del_request_others_researcher(client):
         data=json.dumps({"email": email_to_delete}),
         content_type="application/json",
     )
-    print(response.data)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     # verify that user was not deleted

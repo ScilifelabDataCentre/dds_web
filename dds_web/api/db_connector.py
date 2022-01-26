@@ -21,6 +21,7 @@ from dds_web.errors import (
     BucketNotFoundError,
     EmptyProjectException,
     S3ProjectNotFoundError,
+    UserDeletionError,
 )
 import dds_web.utils
 
@@ -302,6 +303,25 @@ class DBConnector:
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             raise DatabaseError(message=str(err))
+
+    @staticmethod
+    def remove_user_self_deletion_request(user):
+
+        try:
+            request_row = models.DeletionRequest.query.filter(
+                models.DeletionRequest.requester_id == user.username
+            ).one_or_none()
+            if not request_row:
+                raise UserDeletionError("There is no deletion request from this user.")
+
+            email = request_row.email
+            db.session.delete(request_row)
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            raise DatabaseError(message=str(err))
+
+        return email
 
     @staticmethod
     def project_usage(project_object):
