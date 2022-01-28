@@ -18,7 +18,6 @@ import structlog
 
 # Own modules
 from dds_web import actions, auth
-from dds_web.utils import get_username_or_request_ip
 
 ####################################################################################################
 # LOGGING ################################################################################ LOGGING #
@@ -34,6 +33,9 @@ class LoggedHTTPException(exceptions.HTTPException):
     """Base class to enable standard action logging on HTTP Exceptions"""
 
     def __init__(self, message=None, **kwargs):
+        # Put import here to avoid circular imports: errors -> utils -> models -> errors
+        from dds_web.utils import get_username_or_request_ip
+
         with structlog.threadlocal.bound_threadlocal(
             message=message,
             resource=flask.request.path or "not applicable",
