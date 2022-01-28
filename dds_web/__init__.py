@@ -240,7 +240,8 @@ def create_app(testing=False, database_uri=None):
         # Set-up the schedulers
         dds_web.utils.scheduler_wrapper()
 
-        from dds_web.api.user import ENCRYPTION_KEY_CHAR_LENGTH
+        ENCRYPTION_KEY_BIT_LENGTH = 256
+        ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 
         if len(app.config.get("SECRET_KEY")) != ENCRYPTION_KEY_CHAR_LENGTH:
             from dds_web.errors import KeyLengthError
