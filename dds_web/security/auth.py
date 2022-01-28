@@ -83,7 +83,9 @@ def verify_token(token):
         username = data.get("sub")
         if username:
             user = models.User.query.get(username)
-        return user or None
+        if user and user.is_active:
+            return user
+        return None
     raise AuthenticationError(message="Expired token")
 
 
@@ -124,6 +126,6 @@ def verify_token_signature(token):
 def verify_password(username, password):
     """Verify that user exists and that password is correct."""
     user = models.User.query.get(username)
-    if user and user.verify_password(input_password=password):
+    if user and user.is_active and user.verify_password(input_password=password):
         return user
     return None

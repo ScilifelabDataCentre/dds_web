@@ -282,6 +282,7 @@ class User(flask_login.UserMixin, db.Model):
     _password_hash = db.Column(db.String(98), unique=False, nullable=False)
     _otp_secret = db.Column(db.String(32))
     has_2fa = db.Column(db.Boolean)
+    active = db.Column(db.Boolean)
 
     # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -411,6 +412,10 @@ class User(flask_login.UserMixin, db.Model):
         """Get users primary email."""
         prims = [x.email for x in self.emails if x.primary]
         return prims[0] if len(prims) > 0 else None
+
+    @property
+    def is_active(self):
+        return self.active
 
     def __repr__(self):
         """Called by print, creates representation of object"""
