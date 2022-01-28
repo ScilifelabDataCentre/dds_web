@@ -166,6 +166,10 @@ def create_app(testing=False, database_uri=None):
         app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     # Disables error catching during request handling
     app.config["TESTING"] = testing
+    if testing:
+        # Simplifies testing as we don't test the session protection anyway
+        login_manager.session_protection = "basic"
+
     flask_bootstrap.Bootstrap(app)
     # Setup logging handlers
     setup_logging(app)
