@@ -14,11 +14,13 @@ from sqlalchemy.ext import hybrid
 import sqlalchemy
 import flask
 import argon2
-import pyotp
 import flask_login
 import pathlib
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from cryptography.hazmat.primitives import twofactor
+from cryptography.hazmat.primitives.twofactor import (
+    hotp as twofactor_hotp,
+    InvalidToken as twofactor_InvalidToken,
+)
 from cryptography.hazmat.primitives import hashes
 
 # Own modules
@@ -387,7 +389,7 @@ class User(flask_login.UserMixin, db.Model):
             f"Incremented counter to: {self.hotp_counter} and saved time: {self.hotp_requested_time}"
         )
 
-        hotp = twofactor.hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         return hotp.generate(self.hotp_counter)
 
     def verify_HOTP(self, token):
@@ -396,14 +398,14 @@ class User(flask_login.UserMixin, db.Model):
         raises AuthenticationError if token is invalid or has expired (older than 1 hour).
         If the token is valid, the counter is incremented, to prohibit re-use.
         """
-        hotp = twofactor.hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         timediff = dds_web.utils.current_time() - self.hotp_requested_time
         if timediff > datetime.timedelta(hours=1):
             raise AuthenticationError("One-time authentication code has expired.")
 
         try:
             hotp.verify(token, self.hotp_counter)
-        except twofactor.InvalidToken:
+        except twofactor_InvalidToken:
             raise AuthenticationError("Invalid one-time authentication code.")
 
         # Token verified, increment counter to prohibit re-use

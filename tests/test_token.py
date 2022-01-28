@@ -1,6 +1,6 @@
 import datetime
 
-from dds_web.api.user import encrypted_jwt_token
+from dds_web.security.tokens import encrypted_jwt_token
 from dds_web.security.auth import (
     extract_encrypted_token_content,
     decrypt_and_verify_token_signature,

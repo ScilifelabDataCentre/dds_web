@@ -30,7 +30,6 @@ requests==2.26.0 # required for oauth
 werkzeug==2.0.2
 jwcrypto==1.0
 selenium==4.0.0
-pyotp==2.6.0
 Flask-Bootstrap4==4.0.2
 PyQRCode==1.2.1
 Flask-Limiter==1.4
