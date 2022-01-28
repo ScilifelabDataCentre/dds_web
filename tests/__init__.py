@@ -121,6 +121,9 @@ class DDSEndpoint:
     # Remove user from project
     REMOVE_USER_FROM_PROJ = BASE_ENDPOINT + "/user/access/revoke"
 
+    # User activation
+    USER_ACTIVATION = BASE_ENDPOINT + "/user/activation"
+
     # S3Connector keys
     S3KEYS = BASE_ENDPOINT + "/s3/proj"
 
