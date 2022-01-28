@@ -42,22 +42,6 @@
             {% endfor %}
         </ul>
 
-        <!-- Token -->
-        {{ form.hotp.label }}
-        {{ form.hotp }}
-        <ul>
-            {% for error in form.hotp.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-            <small class="text-muted ml-2">
-                <a href="{{ url_for('auth_blueprint.request_2fa')
-                }}">
-                    Request a new one-time code for authorization
-                </a>
-            </small>
-        </ul>
 
         <!-- Submit button -->
         {{ form.submit }}

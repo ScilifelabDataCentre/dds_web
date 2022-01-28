@@ -5,9 +5,7 @@
 ####################################################################################################
 
 # Standard Library
-import io
-import json
-import os
+import datetime
 import re
 
 # Installed
@@ -15,14 +13,9 @@ import flask
 import werkzeug
 from dds_web.api.db_connector import DBConnector
 import flask_login
-import flask_mail
-import pyqrcode
-import pyotp
 import itsdangerous
 import sqlalchemy
 import marshmallow
-from cryptography.hazmat.primitives.twofactor.hotp import HOTP
-from cryptography.hazmat.primitives.hashes import SHA512
 
 # Own Modules
 from dds_web import auth
@@ -34,6 +27,7 @@ import dds_web.errors as ddserr
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
 from dds_web import mail
+import dds_web.security
 
 
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
@@ -148,41 +142,79 @@ def register():
     return flask.render_template("user/register.html", form=form)
 
 
-@auth_blueprint.route("/request_2fa", methods=["GET", "POST"])
+@auth_blueprint.route("/cancel_2fa", methods=["POST"])
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
     methods=["POST"],
     error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
 )
-def request_2fa():
-    """Request a HOTP (authentication one-time token) to be sent to your email"""
-    if flask.request.method == "GET":
-        form = forms.Request2FAForm()
-        return flask.render_template("user/request2fa.html", form=form)
-    elif flask.request.method == "POST":
-        form = forms.Request2FAForm()
-        if form.validate_on_submit():
-            # Get user from database
-            user = models.User.query.get(form.username.data)
+def cancel_2fa():
+    form = forms.Cancel2FAForm()
+    # Only checks the csrf I assume (doesn't hurt to validate)
+    if form.validate_on_submit():
+        # Reset 2fa cookie
+        redirect_to_login = flask.redirect(flask.url_for("auth_blueprint.login"))
+        redirect_to_login.set_cookie("2fa_initiated_token", "", expires=0)
+        return redirect_to_login
 
-            # incorrect credentials
-            if not user or not user.verify_password(input_password=form.password.data):
-                flask.flash("Invalid username or password.")
-                return flask.redirect(
-                    flask.url_for("auth_blueprint.request_2fa", next=next)
-                )  # Try again
+    return flask.redirect(flask.url_for("auth_blueprint.login"))
 
-            # Generate HOTP token
-            hotp_value = user.generate_HOTP_token()
 
-            msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
+@auth_blueprint.route("/confirm_2fa", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["GET", "POST"],
+    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+)
+def confirm_2fa():
+    """Finalize login by validating the authentication one-time token"""
 
-            mail.send(msg)
+    # Redirect to index if user is already authenticated
+    if flask_login.current_user.is_authenticated:
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
-            flask.flash("One-Time Code sent to your email.")
-            return flask.redirect(flask.url_for("auth_blueprint.login"))
-        else:
-            return flask.render_template("user/request2fa.html", form=form)
+    form = forms.Confirm2FACodeForm()
+
+    cancel_form = forms.Cancel2FAForm()
+
+    next = flask.request.args.get("next")
+    # is_safe_url should check if the url is safe for redirects.
+    if next and not dds_web.utils.is_safe_url(next):
+        return flask.abort(400)
+
+    if form.validate_on_submit():
+        try:
+            token = flask.request.cookies["2fa_initiated_token"]
+            user = dds_web.security.auth.verify_token(token)
+        except (KeyError, ddserr.AuthenticationError):
+            flask.flash("You have to first supply valid credentials", "danger")
+            return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+
+        hotp_value = form.hotp.data
+
+        # Raises authenticationerror if invalid
+        try:
+            user.verify_HOTP(hotp_value.encode())
+        except ddserr.AuthenticationError:
+            flask.flash("Invalid one-time code.")
+            return flask.redirect(
+                flask.url_for(
+                    "auth_blueprint.confirm_2fa", form=form, cancel_form=cancel_form, next=next
+                )
+            )
+
+        # Correct username, password and hotp code --> log user in
+        flask_login.login_user(user)
+        # Remove token from cookies and make it expired
+        flask.flash("Logged in successfully.")
+        redirect_to_index = flask.redirect(next or flask.url_for("auth_blueprint.index"))
+        redirect_to_index.set_cookie("2fa_initiated_token", "", expires=0)
+        return redirect_to_index
+
+    else:
+        return flask.render_template(
+            "user/confirm2fa.html", form=form, cancel_form=cancel_form, next=next
+        )
 
 
 @auth_blueprint.route("/login", methods=["GET", "POST"])
@@ -192,16 +224,16 @@ def request_2fa():
     error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
 )
 def login():
-    """Log user in with DDS credentials."""
-
-    # Redirect to index if user is already authenticated
-    if flask_login.current_user.is_authenticated:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+    """Initiate a login by validating username password and sending a authentication one-time code"""
 
     next = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
     if next and not dds_web.utils.is_safe_url(next):
         return flask.abort(400)
+
+    # Redirect to next or index if user is already authenticated
+    if flask_login.current_user.is_authenticated:
+        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
 
     # Display greeting message, if applicable
     if next and re.search("confirm_deletion", next):
@@ -220,20 +252,22 @@ def login():
                 flask.url_for("auth_blueprint.login", next=next)
             )  # Try login again
 
-        hotp_value = form.hotp.data
-        # Raises authenticationerror if invalid
-        try:
-            user.verify_HOTP(hotp_value.encode())
-        except ddserr.AuthenticationError:
-            flask.flash("Invalid one-time code.")
-            return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+        # Correct credentials still needs 2fa
 
-        # Correct username, password and hotp code --> log user in
-        flask_login.login_user(user)
-        flask.flash("Logged in successfully.")
+        # Send 2fa token to user's email
+        hotp_value = user.generate_HOTP_token()
+        msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
+        mail.send(msg)
+        flask.flash("One-Time Code has been sent to your primary email.")
 
-        # Go to home page
-        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
+        # Generate signed token that indicates that the user has authenticated
+        token_2fa_initiated = dds_web.security.tokens.jwt_token(
+            user.username, expires_in=datetime.timedelta(hours=1)
+        )
+
+        redirect_to_confirm = flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next))
+        redirect_to_confirm.set_cookie("2fa_initiated_token", token_2fa_initiated)
+        return redirect_to_confirm
 
     # Go to login form (get)
     return flask.render_template("user/login.html", form=form, next=next)
