@@ -190,6 +190,7 @@ class NewUserSchema(marshmallow.Schema):
         # Create new email and append to user relationship
         new_email = models.Email(email=data.get("email"), primary=True)
         new_user.emails.append(new_email)
+        new_user.active = True
 
         db.session.add(new_user)
 

@@ -330,6 +330,9 @@ def add_data_to_db():
 
     units[1].users.extend([users[8], users[9]])
 
+    for user in users:
+        user.active = True
+
     return units, users
 
 
