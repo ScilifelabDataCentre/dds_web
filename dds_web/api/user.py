@@ -435,6 +435,10 @@ class UserActivation(flask_restful.Resource):
     def post(self):
         user = user_schemas.UserSchema().load(flask.request.json)
         action = flask.request.json.get("action")
+        if action is None or action == "":
+            raise ddserr.DDSArgumentError(
+                message=f"Please provide an action 'deactivate' or 'reactivate' for this request."
+            )
         if user is None:
             raise ddserr.NoSuchUserError(
                 message=f"This e-mail address is not associated with a user in the DDS, make sure it is not misspelled."
