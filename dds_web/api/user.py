@@ -456,7 +456,9 @@ class UserActivation(flask_restful.Resource):
             action == "deactivate" and not user.is_active
         ):
             raise ddserr.DDSArgumentError(message=f"User is already in desired state!")
+        import pdb
 
+        pdb.set_trace()
         if action == "reactivate":
             activate = True
         else:
