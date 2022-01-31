@@ -400,7 +400,7 @@ class User(flask_login.UserMixin, db.Model):
         """
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         timediff = dds_web.utils.current_time() - self.hotp_requested_time
-        if timediff > datetime.timedelta(hours=1):
+        if timediff > datetime.timedelta(minutes=15):
             raise AuthenticationError("One-time authentication code has expired.")
 
         try:

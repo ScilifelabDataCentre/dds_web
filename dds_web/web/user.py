@@ -262,7 +262,7 @@ def login():
 
         # Generate signed token that indicates that the user has authenticated
         token_2fa_initiated = dds_web.security.tokens.jwt_token(
-            user.username, expires_in=datetime.timedelta(hours=1)
+            user.username, expires_in=datetime.timedelta(minutes=15)
         )
 
         redirect_to_confirm = flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next))
