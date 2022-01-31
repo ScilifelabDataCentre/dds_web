@@ -245,7 +245,7 @@ class GetPrivate(flask_restful.Resource):
         kdf = scrypt.Scrypt(
             salt=salt,
             length=32,
-            n=2 ** 14,
+            n=2**14,
             r=8,
             p=1,
             backend=backends.default_backend(),
