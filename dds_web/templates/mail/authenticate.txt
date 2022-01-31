@@ -1,4 +1,4 @@
 Here is the requested authentication code for SciLifeLab Data Delivery System (DDS)
 Please, copy and paste the code below where you attempt to authenticate:
 
-{{token}}
+{{one_time_value}}

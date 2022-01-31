@@ -336,8 +336,12 @@ def create_one_time_password_email(user, hotp_value):
             ["Content-ID", "<Logo>"],
         ],
     )
-    msg.body = flask.render_template("mail/authenticate.txt", token=hotp_value.decode("utf-8"))
-    msg.html = flask.render_template("mail/authenticate.html", token=hotp_value.decode("utf-8"))
+    msg.body = flask.render_template(
+        "mail/authenticate.txt", one_time_value=hotp_value.decode("utf-8")
+    )
+    msg.html = flask.render_template(
+        "mail/authenticate.html", one_time_value=hotp_value.decode("utf-8")
+    )
 
     return msg
 
