@@ -279,7 +279,7 @@ class UserProjects(flask_restful.Resource):
         total_size = 0
 
         usage_arg = flask.request.json.get("usage") if flask.request.json else None
-        usage = usage_arg == "True" and current_user.role in [
+        usage = bool(usage_arg) and current_user.role in [
             "Super Admin",
             "Unit Admin",
             "Unit Personnel",

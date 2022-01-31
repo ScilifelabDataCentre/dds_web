@@ -11,6 +11,7 @@ import pathlib
 import secrets
 import os
 import smtplib
+import time
 
 # Installed
 import flask
@@ -116,7 +117,6 @@ class AddUser(flask_restful.Resource):
 
         msg = flask_mail.Message(
             subject,
-            sender=flask.current_app.config["MAIL_SENDER_ADDRESS"],
             recipients=[new_invite.email],
         )
 
@@ -303,7 +303,6 @@ class DeleteUserSelf(flask_restful.Resource):
 
         msg = flask_mail.Message(
             subject,
-            sender=flask.current_app.config["MAIL_SENDER_ADDRESS"],
             recipients=[email_str],
         )
 
