@@ -32,7 +32,7 @@ import dds_web.errors as ddserr
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 from dds_web.api.dds_decorators import logging_bind_request
-from dds_web.security.tokens import encrypted_jwt_token
+from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
 
 # initiate bound logger
 action_logger = structlog.getLogger("actions")
@@ -455,46 +455,32 @@ class EncryptedToken(flask_restful.Resource):
     @basic_auth.login_required
     @logging_bind_request
     def get(self):
+        return flask.jsonify(
+            {
+                "message": "Please take this token to /user/second_factor to authenticate with MFA!",
+                "token": encrypted_jwt_token(
+                    username=auth.current_user().username, sensitive_content=None
+                ),
+            }
+        )
+
+
+class SecondFactor(flask_restful.Resource):
+    """Take in and verify an authentication one-time code entered by an authenticated user with basic credentials"""
+
+    @auth.login_required
+    def get(self):
         args = flask.request.json
         if args is None:
             args = {}
 
-        data = token_schemas.TokenSchema().load(args)
+        token_schemas.TokenSchema().load(args)
 
-        return flask.jsonify(
-            {
-                "token": encrypted_jwt_token(
-                    username=auth.current_user().username, sensitive_content=None
-                )
-            }
+        token_claims = dds_web.security.auth.decrypt_and_verify_token_signature(
+            flask.request.headers["Authorization"].split()[1]
         )
 
-
-class RequestMail2fa(flask_restful.Resource):
-    """Trigger creation and sending of an authentication One-Time code via email"""
-
-    decorators = [
-        limiter.limit(
-            dds_web.utils.rate_limit_from_config,
-            methods=["GET"],
-            error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
-        )
-    ]
-
-    @basic_auth.login_required
-    @logging_bind_request
-    def get(self):
-        hotp_value = auth.current_user().generate_HOTP_token()
-
-        msg = dds_web.utils.create_one_time_password_email(auth.current_user(), hotp_value)
-
-        mail.send(msg)
-
-        return flask.jsonify(
-            {
-                "message": f"A one-time password has been sent to your email address {auth.current_user().primary_email}."
-            }
-        )
+        return flask.jsonify({"token": update_token_with_mfa(token_claims)})
 
 
 class ShowUsage(flask_restful.Resource):
