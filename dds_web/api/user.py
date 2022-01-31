@@ -433,7 +433,6 @@ class UserActivation(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
     def post(self):
-
         user = user_schemas.UserSchema().load(flask.request.json)
         action = flask.request.json.get("action")
         if user is None:
@@ -457,6 +456,7 @@ class UserActivation(flask_restful.Resource):
         ):
             raise ddserr.DDSArgumentError(message=f"User is already in desired state!")
 
+        # TODO: Check if user has lost access to any projects and if so, grant access again.
         try:
             user.active = action == "reactivate"
             db.session.commit()
