@@ -102,13 +102,7 @@ def handle_multi_factor_authentication(user, mfa_auth_time_string):
         if flask.request.path.endswith("/user/second_factor"):
             return user
 
-        if not user.hotp_issue_time or (
-            user.hotp_issue_time
-            and (
-                dds_web.utils.current_time() - user.hotp_issue_time > datetime.timedelta(minutes=15)
-            )
-        ):
-            send_hotp_email(user)
+        send_hotp_email(user)
         raise AuthenticationError(
             message="Two-factor authentication is required! Please check your primary e-mail!"
         )
@@ -116,9 +110,13 @@ def handle_multi_factor_authentication(user, mfa_auth_time_string):
 
 
 def send_hotp_email(user):
-    hotp_value = user.generate_HOTP_token()
-    msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
-    mail.send(msg)
+    if not user.hotp_issue_time or (
+        user.hotp_issue_time
+        and (dds_web.utils.current_time() - user.hotp_issue_time > datetime.timedelta(minutes=15))
+    ):
+        hotp_value = user.generate_HOTP_token()
+        msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
+        mail.send(msg)
 
 
 def extract_encrypted_token_content(token, username):
@@ -159,5 +157,6 @@ def verify_password(username, password):
     """Verify that user exists and that password is correct."""
     user = models.User.query.get(username)
     if user and user.verify_password(input_password=password):
+        send_hotp_email(user)
         return user
     return None
