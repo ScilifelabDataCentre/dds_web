@@ -37,7 +37,7 @@ class S3Info(flask_restful.Resource):
         sfsp_proj, keys, url, bucketname = ApiS3Connector(project=project).get_s3_info()
 
         if any(x is None for x in [url, keys, bucketname]):
-            raise S3ProjectNotFoundError(f"No s3 info returned! {message}")
+            raise S3ProjectNotFoundError("No s3 info returned!")
 
         return flask.jsonify(
             {
