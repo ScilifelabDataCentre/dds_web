@@ -53,7 +53,7 @@ class Config(object):
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "mailtrap_password")
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
-    MAIL_SENDER_ADDRESS = "localhost"
+    MAIL_DEFAULT_SENDER = "dds@noreply.se"
 
     TOKEN_ENDPOINT_ACCESS_LIMIT = "10/hour"
     RATELIMIT_STORAGE_URL = "memory://"  # Use in devel only! Use Redis or memcached in prod
