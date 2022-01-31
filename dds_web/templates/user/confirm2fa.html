@@ -17,8 +17,8 @@
     </div>
     {% endif %}
     {% endwith %}
-    <p>Please finish the login by entering the one-time authentication code that was sent to you.
-        The one-time codes are valid for a short time (15 minutes) after they have been requested.
+    <p>Please complete the login by entering the one-time authentication code that was sent to you.
+        The one-time codes are valid for a short time (15 minutes) after they have been issued.
     </p>
     <form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}">
         {{ form.csrf_token }}
