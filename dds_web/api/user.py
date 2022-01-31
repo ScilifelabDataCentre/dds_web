@@ -456,16 +456,9 @@ class UserActivation(flask_restful.Resource):
             action == "deactivate" and not user.is_active
         ):
             raise ddserr.DDSArgumentError(message=f"User is already in desired state!")
-        import pdb
-
-        pdb.set_trace()
-        if action == "reactivate":
-            activate = True
-        else:
-            activate = False
 
         try:
-            user.active = activate
+            user.active = action == "reactivate"
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
