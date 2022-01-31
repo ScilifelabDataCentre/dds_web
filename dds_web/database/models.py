@@ -287,7 +287,7 @@ class User(flask_login.UserMixin, db.Model):
     _password_hash = db.Column(db.String(98), unique=False, nullable=False)
     hotp_secret = db.Column(db.LargeBinary(20), unique=False, nullable=False)
     hotp_counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
-    hotp_requested_time = db.Column(db.DateTime, unique=False, nullable=True)
+    hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
 
     # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -383,10 +383,10 @@ class User(flask_login.UserMixin, db.Model):
 
         """
         self.hotp_counter += 1
-        self.hotp_requested_time = dds_web.utils.current_time()
+        self.hotp_issue_time = dds_web.utils.current_time()
         db.session.commit()
         flask.current_app.logger.info(
-            f"Incremented counter to: {self.hotp_counter} and saved time: {self.hotp_requested_time}"
+            f"Incremented counter to: {self.hotp_counter} and saved time: {self.hotp_issue_time}"
         )
 
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
@@ -399,7 +399,7 @@ class User(flask_login.UserMixin, db.Model):
         If the token is valid, the counter is incremented, to prohibit re-use.
         """
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
-        timediff = dds_web.utils.current_time() - self.hotp_requested_time
+        timediff = dds_web.utils.current_time() - self.hotp_issue_time
         if timediff > datetime.timedelta(minutes=15):
             raise AuthenticationError("One-time authentication code has expired.")
 
