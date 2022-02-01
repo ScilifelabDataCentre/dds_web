@@ -19,7 +19,7 @@ from dds_web.errors import AuthenticationError, AccessDeniedError
 from dds_web.database import models
 from dds_web import basic_auth, auth
 import dds_web.utils
-from dds_web.dds_web import mail
+from dds_web import mail
 
 action_logger = structlog.getLogger("actions")
 
