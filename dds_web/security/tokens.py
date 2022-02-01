@@ -42,6 +42,18 @@ def encrypted_jwt_token(
     return token.serialize()
 
 
+def update_token_with_mfa(token_claims):
+    expires_in = (
+        datetime.datetime.fromtimestamp(token_claims.get("exp")) - dds_web.utils.current_time()
+    )
+    return encrypted_jwt_token(
+        username=token_claims.get("sub"),
+        sensitive_content=None,
+        expires_in=expires_in,
+        additional_claims={"mfa_auth_time": dds_web.utils.current_time().timestamp()},
+    )
+
+
 def __signed_jwt_token(
     username,
     sensitive_content=None,

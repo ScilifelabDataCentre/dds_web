@@ -136,7 +136,7 @@ def test_auth_expired_hotp_statuscode_401_unauthorized(client):
     user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
     hotp_token = user_auth.fetch_hotp()
     user = dds_web.database.models.User.query.filter_by(username=user_auth.username).first()
-    user.hotp_requested_time = datetime.datetime.now() - datetime.timedelta(hours=1, seconds=1)
+    user.hotp_issue_time = datetime.datetime.now() - datetime.timedelta(hours=1, seconds=1)
     db.session.commit()
 
     response = client.get(

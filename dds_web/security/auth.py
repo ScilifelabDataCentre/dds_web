@@ -19,8 +19,14 @@ from dds_web.errors import AuthenticationError, AccessDeniedError
 from dds_web.database import models
 from dds_web import basic_auth, auth
 import dds_web.utils
+from dds_web.dds_web import mail
 
 action_logger = structlog.getLogger("actions")
+
+# VARIABLES ############################################################################ VARIABLES #
+
+MFA_EXPIRES_IN = datetime.timedelta(hours=48)
+
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
@@ -81,10 +87,36 @@ def verify_token(token):
     # exp shouldn't be before now no matter what
     if dds_web.utils.current_time() <= datetime.datetime.fromtimestamp(expiration_time):
         username = data.get("sub")
-        if username:
-            user = models.User.query.get(username)
-        return user or None
+        user = models.User.query.get(username) if username else None
+        return handle_multi_factor_authentication(user, data.get("mfa_auth_time"))
     raise AuthenticationError(message="Expired token")
+
+
+def handle_multi_factor_authentication(user, mfa_auth_time_string):
+    if user:
+        if mfa_auth_time_string:
+            mfa_auth_time = datetime.datetime.fromtimestamp(mfa_auth_time_string)
+            if mfa_auth_time >= dds_web.utils.current_time() - MFA_EXPIRES_IN:
+                return user
+
+        if flask.request.path.endswith("/user/second_factor"):
+            return user
+
+        send_hotp_email(user)
+        raise AuthenticationError(
+            message="Two-factor authentication is required! Please check your primary e-mail!"
+        )
+    return None
+
+
+def send_hotp_email(user):
+    if not user.hotp_issue_time or (
+        user.hotp_issue_time
+        and (dds_web.utils.current_time() - user.hotp_issue_time > datetime.timedelta(minutes=15))
+    ):
+        hotp_value = user.generate_HOTP_token()
+        msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
+        mail.send(msg)
 
 
 def extract_encrypted_token_content(token, username):
@@ -125,5 +157,6 @@ def verify_password(username, password):
     """Verify that user exists and that password is correct."""
     user = models.User.query.get(username)
     if user and user.verify_password(input_password=password):
+        send_hotp_email(user)
         return user
     return None
