@@ -385,9 +385,6 @@ class User(flask_login.UserMixin, db.Model):
         self.hotp_counter += 1
         self.hotp_issue_time = dds_web.utils.current_time()
         db.session.commit()
-        flask.current_app.logger.info(
-            f"Incremented counter to: {self.hotp_counter} and saved time: {self.hotp_issue_time}"
-        )
 
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         return hotp.generate(self.hotp_counter)
