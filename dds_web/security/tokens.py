@@ -8,6 +8,7 @@ import secrets
 
 # Installed
 import flask
+import isodate
 from jwcrypto import jwk, jwt
 
 # Own modules
@@ -29,7 +30,12 @@ def encrypted_jwt_token(
     :param Dict or None additional_claims: Any additional token claims can be added. e.g., {"iss": "DDS"}
     """
     token = jwt.JWT(
-        header={"alg": "A256KW", "enc": "A256GCM"},
+        header={
+            "alg": "A256KW",
+            "enc": "A256GCM",
+            "lft": isodate.duration_isoformat(expires_in),
+            "usr": username,
+        },
         claims=__signed_jwt_token(
             username=username,
             sensitive_content=sensitive_content,
@@ -76,7 +82,11 @@ def __signed_jwt_token(
         data["sen_con"] = sensitive_content
 
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
-    token = jwt.JWT(header={"alg": "HS256"}, claims=data, algs=["HS256"])
+    token = jwt.JWT(
+        header={"alg": "HS256", "lft": isodate.duration_isoformat(expires_in), "usr": username},
+        claims=data,
+        algs=["HS256"],
+    )
     token.make_signed_token(key)
     return token.serialize()
 
