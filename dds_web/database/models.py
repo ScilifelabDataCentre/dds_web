@@ -376,7 +376,7 @@ class User(flask_login.UserMixin, db.Model):
 
     # 2FA related
     def generate_HOTP_token(self):
-        """Generate a one time password, e.g. to be sent by email.
+        """Generate a one-time authentication code, e.g. to be sent by email.
 
         Counter is incremented before generating token which invalidates any previous token.
         The time when it was issued is recorded to put an expiration time on the token.
