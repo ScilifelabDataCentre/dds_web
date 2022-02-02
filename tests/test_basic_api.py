@@ -17,52 +17,7 @@ from dds_web.security.auth import decrypt_and_verify_token_signature
 
 # TESTS #################################################################################### TESTS #
 
-
-def test_auth_request_2fa_incorrect_username(client):
-    """
-    Test that the 2fa endpoint called with incorrect username returns 401/UNAUTHORIZED
-    """
-    response = client.get(
-        tests.DDSEndpoint.REQUEST_EMAIL_2FA,
-        auth=tests.UserAuth(tests.USER_CREDENTIALS["wronguser"]).as_tuple(),
-    )
-
-    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
-    response_json = response.json
-    assert response_json.get("message")
-    assert "Missing or incorrect credentials" == response_json.get("message")
-
-
-def test_auth_request_2fa_incorrect_password(client):
-    """
-    Test that the 2fa endpoint called with incorrect password returns 401/UNAUTHORIZED
-    """
-    response = client.get(
-        tests.DDSEndpoint.REQUEST_EMAIL_2FA,
-        auth=tests.UserAuth(tests.USER_CREDENTIALS["wrongpassword"]).as_tuple(),
-    )
-
-    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
-    response_json = response.json
-    assert response_json.get("message")
-    assert "Missing or incorrect credentials" == response_json.get("message")
-
-
-def test_auth_request_2fa_correct_credentials(client):
-    """
-    Test that the 2fa endpoint called with correct credentials returns 200/OK
-    """
-    response = client.get(
-        tests.DDSEndpoint.REQUEST_EMAIL_2FA,
-        auth=tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).as_tuple(),
-    )
-
-    assert response.status_code == http.HTTPStatus.OK
-    response_json = response.json
-    assert response_json.get("message")
-    assert response_json.get("message").startswith("A one-time password has been sent")
-
-
+# Partial Token #################################################################### Partial Token #
 def test_auth_check_statuscode_401_missing_info(client):
     """
     Test that the token endpoint called without parameters returns 401/UNAUTHORIZED
@@ -105,24 +60,46 @@ def test_auth_no_password_check_statuscode_401_incorrect_info(client):
 def test_auth_incorrect_username_check_statuscode_401_incorrect_info(client):
     """Test that the token endpoint called with incorrect username returns 401/UNAUTHORIZED"""
 
-    response = client.get(
-        tests.DDSEndpoint.ENCRYPTED_TOKEN,
-    )
+    response = client.get(tests.DDSEndpoint.ENCRYPTED_TOKEN, auth=("", "password"))
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
     assert "Missing or incorrect credentials" == response_json.get("message")
 
 
-def test_auth_incorrect_hotp_counter_statuscode_401_unauthorized(client):
-    """Test that the token endpoint with wrong hotp counter returns 401/UNAUTHORIZED"""
+# Second Factor #################################################################### Second Factor #
 
-    hotp_token_old = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).fetch_hotp()
-    hotp_token_new = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).fetch_hotp()
+
+def test_auth_second_factor_incorrect_token(client):
+    """
+    Test that the two_factor endpoint called with incorrect partial token returns 401/UNAUTHORIZED
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    hotp_token = user_auth.fetch_hotp()
 
     response = client.get(
-        tests.DDSEndpoint.ENCRYPTED_TOKEN,
-        auth=tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).as_tuple(),
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers={"Authorization": f"Bearer made.up.token.long.version"},
+        json={"HOTP": hotp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Invalid token" == response_json.get("message")
+
+
+def test_auth_second_factor_incorrect_hotp_counter_statuscode_401_unauthorized(client):
+    """Test that the second_factor endpoint with wrong hotp counter returns 401/UNAUTHORIZED"""
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    hotp_token_old = user_auth.fetch_hotp()
+    hotp_token_new = user_auth.fetch_hotp()
+
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
         json={"HOTP": hotp_token_old.decode()},
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
@@ -131,17 +108,17 @@ def test_auth_incorrect_hotp_counter_statuscode_401_unauthorized(client):
     assert "Invalid one-time authentication code." == response_json.get("message")
 
 
-def test_auth_expired_hotp_statuscode_401_unauthorized(client):
-    """Test that the token endpoint with wrong expired hotp returns 401/UNAUTHORIZED"""
+def test_auth_second_factor_expired_hotp_statuscode_401_unauthorized(client):
+    """Test that the second_factor endpoint with expired hotp returns 401/UNAUTHORIZED"""
     user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
     hotp_token = user_auth.fetch_hotp()
     user = dds_web.database.models.User.query.filter_by(username=user_auth.username).first()
-    user.hotp_issue_time = datetime.datetime.now() - datetime.timedelta(hours=1, seconds=1)
+    user.hotp_issue_time = datetime.datetime.now() - datetime.timedelta(minutes=15, seconds=1)
     db.session.commit()
 
     response = client.get(
-        tests.DDSEndpoint.ENCRYPTED_TOKEN,
-        auth=tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).as_tuple(),
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
         json={"HOTP": hotp_token.decode()},
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
@@ -150,12 +127,13 @@ def test_auth_expired_hotp_statuscode_401_unauthorized(client):
     assert "One-time authentication code has expired." == response_json.get("message")
 
 
-def test_auth_correctauth_check_statuscode_200_correct_info(client):
-    """Test that the token endpoint called with everything correct returns 200/OK"""
-    hotp_token = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).fetch_hotp()
+def test_auth_second_factor_correctauth_check_statuscode_200_correct_info(client):
+    """Test that the second_factor endpoint called with everything correct returns 200/OK"""
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    hotp_token = user_auth.fetch_hotp()
     response = client.get(
-        tests.DDSEndpoint.ENCRYPTED_TOKEN,
-        auth=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).as_tuple(),
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
         json={"HOTP": hotp_token.decode()},
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -166,26 +144,37 @@ def test_auth_correctauth_check_statuscode_200_correct_info(client):
     assert claims["sub"] == "researchuser"
 
 
-def test_auth_correctauth_reused_hotp_401_unauthorized(client):
+def test_auth_second_factor_correctauth_reused_hotp_401_unauthorized(client):
     """Test that the token endpoint called with an already used hotp returns 401/UNAUTHORIZED"""
-    hotp_token = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).fetch_hotp()
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    hotp_token = user_auth.fetch_hotp()
     response = client.get(
-        tests.DDSEndpoint.ENCRYPTED_TOKEN,
-        auth=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).as_tuple(),
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
         json={"HOTP": hotp_token.decode()},
     )
     assert response.status_code == http.HTTPStatus.OK
 
     # Reuse the same hotp token
     response = client.get(
-        tests.DDSEndpoint.ENCRYPTED_TOKEN,
-        auth=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).as_tuple(),
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
         json={"HOTP": hotp_token.decode()},
     )
+
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
     assert "Invalid one-time authentication code." == response_json.get("message")
+
+
+# Token Authentication ###################################################### Token Authentication #
+def test_auth_token_mfa_missing(client):
+    pass
+
+
+def test_auth_token_mfa_inside_token_expired(client):
+    pass
 
 
 def test_auth_incorrect_token_without_periods(client):
@@ -210,7 +199,7 @@ def test_auth_incorrect_token_with_periods(client):
     response = client.get(
         tests.DDSEndpoint.PROJ_PUBLIC,
         query_string={"project": "public_project_id"},
-        headers={"Authorization": "Bearer made.up.token"},
+        headers={"Authorization": "Bearer made.up.token.long.version"},
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
