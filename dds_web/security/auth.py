@@ -65,8 +65,18 @@ def get_user_roles_common(user):
     return user.role
 
 
-@auth.verify_token
-def verify_token(token):
+def verify_general_token(token):
+    """Verifies the format, signature and expiration time of an encrypted and signed JWT token.
+    Raises ValueError if token is invalid, could raise other exceptions from dependencies.
+
+    If user given by the "sub" claim is found in the database it returns
+    (user, claims)
+
+    Where claims is a dictionary of the token claims.
+
+    If the user is not found in the database, it returns
+    (None, claims)
+    """
     try:
         data = (
             verify_token_signature(token)
@@ -77,19 +87,25 @@ def verify_token(token):
         # ValueError is raised when the token doesn't look right (for example no periods)
         # jwcryopto.common.JWException is the base exception raised by jwcrypto,
         # and is raised when the token is malformed or invalid.
-        flask.current_app.logger.exception(
-            e
-        )  # TODO log this to specific file to track failed attempts
+        flask.current_app.logger.exception(e)
         raise AuthenticationError(message="Invalid token")
 
     expiration_time = data.get("exp")
     # we use a hard check on top of the one from the dependency
     # exp shouldn't be before now no matter what
-    if dds_web.utils.current_time() <= datetime.datetime.fromtimestamp(expiration_time):
+    if expiration_time and (
+        dds_web.utils.current_time() <= datetime.datetime.fromtimestamp(expiration_time)
+    ):
         username = data.get("sub")
         user = models.User.query.get(username) if username else None
-        return handle_multi_factor_authentication(user, data.get("mfa_auth_time"))
+        return user, data
     raise AuthenticationError(message="Expired token")
+
+
+@auth.verify_token
+def verify_token(token):
+    user, data = verify_general_token(token)
+    return handle_multi_factor_authentication(user, data.get("mfa_auth_time"))
 
 
 def handle_multi_factor_authentication(user, mfa_auth_time_string):
