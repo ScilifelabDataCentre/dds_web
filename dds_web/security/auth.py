@@ -117,6 +117,8 @@ def send_hotp_email(user):
         hotp_value = user.generate_HOTP_token()
         msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
         mail.send(msg)
+        return True
+    return False
 
 
 def extract_encrypted_token_content(token, username):

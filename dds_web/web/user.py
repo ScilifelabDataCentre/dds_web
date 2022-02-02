@@ -250,10 +250,8 @@ def login():
         # Correct credentials still needs 2fa
 
         # Send 2fa token to user's email
-        hotp_value = user.generate_HOTP_token()
-        msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
-        mail.send(msg)
-        flask.flash("One-Time Code has been sent to your primary email.")
+        if dds_web.security.auth.send_hotp_email(user):
+            flask.flash("One-Time Code has been sent to your primary email.")
 
         # Generate signed token that indicates that the user has authenticated
         token_2fa_initiated = dds_web.security.tokens.jwt_token(
