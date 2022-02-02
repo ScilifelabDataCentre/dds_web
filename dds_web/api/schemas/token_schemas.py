@@ -46,7 +46,3 @@ class TokenSchema(marshmallow.Schema):
             value = data.get("HOTP")
             # Raises authenticationerror if invalid
             user.verify_HOTP(value.encode())
-            data["mfa_verified"] = True
-            data["mfa_method"] = "HOTP"
-
-        return data
