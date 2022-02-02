@@ -180,9 +180,15 @@ def confirm_2fa():
     if form.validate_on_submit():
         try:
             token = flask.request.cookies["2fa_initiated_token"]
-            user = dds_web.security.auth.verify_token(token)
-        except (KeyError, ddserr.AuthenticationError):
-            flask.flash("You have to first supply valid credentials", "danger")
+            user = dds_web.security.auth.verify_token_no_data(token)
+        except ddserr.AuthenticationError as e:
+            flask.flash(f"Error: Second factor could not be validated due to: {e}", "danger")
+            return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+        except Exception as e:
+            flask.current_app.logger.exception(e)
+            flask.flash(
+                "Error: Second factor could not be validated due to an unknown error", "danger"
+            )
             return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
         hotp_value = form.hotp.data
@@ -250,10 +256,8 @@ def login():
         # Correct credentials still needs 2fa
 
         # Send 2fa token to user's email
-        hotp_value = user.generate_HOTP_token()
-        msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
-        mail.send(msg)
-        flask.flash("One-Time Code has been sent to your primary email.")
+        if dds_web.security.auth.send_hotp_email(user):
+            flask.flash("One-Time Code has been sent to your primary email.")
 
         # Generate signed token that indicates that the user has authenticated
         token_2fa_initiated = dds_web.security.tokens.jwt_token(

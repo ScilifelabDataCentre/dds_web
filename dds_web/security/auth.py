@@ -4,6 +4,9 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
+# built in libraries
+import gc
+
 # Installed
 import datetime
 import argon2
@@ -65,8 +68,31 @@ def get_user_roles_common(user):
     return user.role
 
 
+def verify_token_no_data(token):
+    user, claims = __verify_general_token(token)
+    del claims
+    gc.collect()
+    return user
+
+
 @auth.verify_token
 def verify_token(token):
+    user, data = __verify_general_token(token)
+    return handle_multi_factor_authentication(user, data.get("mfa_auth_time"))
+
+
+def __verify_general_token(token):
+    """Verifies the format, signature and expiration time of an encrypted and signed JWT token.
+    Raises ValueError if token is invalid, could raise other exceptions from dependencies.
+
+    If user given by the "sub" claim is found in the database it returns
+    (user, claims)
+
+    Where claims is a dictionary of the token claims.
+
+    If the user is not found in the database, it returns
+    (None, claims)
+    """
     try:
         data = (
             verify_token_signature(token)
@@ -77,18 +103,18 @@ def verify_token(token):
         # ValueError is raised when the token doesn't look right (for example no periods)
         # jwcryopto.common.JWException is the base exception raised by jwcrypto,
         # and is raised when the token is malformed or invalid.
-        flask.current_app.logger.exception(
-            e
-        )  # TODO log this to specific file to track failed attempts
+        flask.current_app.logger.exception(e)
         raise AuthenticationError(message="Invalid token")
 
     expiration_time = data.get("exp")
     # we use a hard check on top of the one from the dependency
     # exp shouldn't be before now no matter what
-    if dds_web.utils.current_time() <= datetime.datetime.fromtimestamp(expiration_time):
+    if expiration_time and (
+        dds_web.utils.current_time() <= datetime.datetime.fromtimestamp(expiration_time)
+    ):
         username = data.get("sub")
         user = models.User.query.get(username) if username else None
-        return handle_multi_factor_authentication(user, data.get("mfa_auth_time"))
+        return user, data
     raise AuthenticationError(message="Expired token")
 
 
@@ -99,10 +125,11 @@ def handle_multi_factor_authentication(user, mfa_auth_time_string):
             if mfa_auth_time >= dds_web.utils.current_time() - MFA_EXPIRES_IN:
                 return user
 
+        send_hotp_email(user)
+
         if flask.request.path.endswith("/user/second_factor"):
             return user
 
-        send_hotp_email(user)
         raise AuthenticationError(
             message="Two-factor authentication is required! Please check your primary e-mail!"
         )
@@ -117,6 +144,8 @@ def send_hotp_email(user):
         hotp_value = user.generate_HOTP_token()
         msg = dds_web.utils.create_one_time_password_email(user, hotp_value)
         mail.send(msg)
+        return True
+    return False
 
 
 def extract_encrypted_token_content(token, username):
