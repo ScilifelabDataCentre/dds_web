@@ -149,15 +149,10 @@ def register():
     error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
 )
 def cancel_2fa():
-    form = forms.Cancel2FAForm()
-    # Only checks the csrf I assume (doesn't hurt to validate)
-    if form.validate_on_submit():
-        # Reset 2fa cookie
-        redirect_to_login = flask.redirect(flask.url_for("auth_blueprint.login"))
-        redirect_to_login.set_cookie("2fa_initiated_token", "", expires=0)
-        return redirect_to_login
-
-    return flask.redirect(flask.url_for("auth_blueprint.login"))
+    # Reset 2fa cookie
+    redirect_to_login = flask.redirect(flask.url_for("auth_blueprint.login"))
+    redirect_to_login.set_cookie("2fa_initiated_token", "", expires=0)
+    return redirect_to_login
 
 
 @auth_blueprint.route("/confirm_2fa", methods=["GET", "POST"])
