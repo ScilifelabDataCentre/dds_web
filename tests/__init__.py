@@ -67,16 +67,30 @@ class UserAuth:
         user = dds_web.database.models.User.query.filter_by(username=self.username).first()
         return user.generate_HOTP_token()
 
-    def token(self, client):
+    def partial_token(self, client):
+        """Return a partial token that can be used to get a full token."""
+        response = client.get(DDSEndpoint.ENCRYPTED_TOKEN, auth=(self.as_tuple()))
 
-        hotp_token = self.fetch_hotp()
-        response = client.get(
-            DDSEndpoint.ENCRYPTED_TOKEN, auth=(self.as_tuple()), json={"HOTP": hotp_token.decode()}
-        )
         # Get response from api
         response_json = response.json
         token = response_json["token"]
 
+        if token is not None:
+            return {"Authorization": f"Bearer {token}"}
+
+    def token(self, client):
+        temp_token = self.partial_token(client)
+
+        hotp_token = self.fetch_hotp()
+
+        response = client.get(
+            DDSEndpoint.SECOND_FACTOR,
+            headers=temp_token,
+            json={"HOTP": hotp_token.decode()},
+        )
+
+        response_json = response.json
+        token = response_json["token"]
         if token is not None:
             return {"Authorization": f"Bearer {token}"}
         else:
@@ -123,7 +137,7 @@ class DDSEndpoint:
 
     # Authentication - user and project
     ENCRYPTED_TOKEN = BASE_ENDPOINT + "/user/encrypted_token"
-    REQUEST_EMAIL_2FA = BASE_ENDPOINT + "/user/request_mail2fa"
+    SECOND_FACTOR = BASE_ENDPOINT + "/user/second_factor"
 
     # Remove user from project
     REMOVE_USER_FROM_PROJ = BASE_ENDPOINT + "/user/access/revoke"
