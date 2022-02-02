@@ -115,10 +115,11 @@ def handle_multi_factor_authentication(user, mfa_auth_time_string):
             if mfa_auth_time >= dds_web.utils.current_time() - MFA_EXPIRES_IN:
                 return user
 
+        send_hotp_email(user)
+
         if flask.request.path.endswith("/user/second_factor"):
             return user
 
-        send_hotp_email(user)
         raise AuthenticationError(
             message="Two-factor authentication is required! Please check your primary e-mail!"
         )
