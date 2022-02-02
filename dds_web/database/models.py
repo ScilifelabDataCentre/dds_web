@@ -396,6 +396,8 @@ class User(flask_login.UserMixin, db.Model):
         If the token is valid, the counter is incremented, to prohibit re-use.
         """
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        if self.hotp_issue_time is None:
+            raise AuthenticationError("No one-time authentication code currently issued.")
         timediff = dds_web.utils.current_time() - self.hotp_issue_time
         if timediff > datetime.timedelta(minutes=15):
             raise AuthenticationError("One-time authentication code has expired.")
@@ -407,6 +409,8 @@ class User(flask_login.UserMixin, db.Model):
 
         # Token verified, increment counter to prohibit re-use
         self.hotp_counter += 1
+        # Reset the hotp_issue_time to allow a new code to be issued
+        self.hotp_issue_time = None
         db.session.commit()
 
     # Email related
