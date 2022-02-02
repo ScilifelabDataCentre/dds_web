@@ -65,7 +65,17 @@ def get_user_roles_common(user):
     return user.role
 
 
-def verify_general_token(token):
+def verify_token_no_data(token):
+    return __verify_general_token(token)[0]
+
+
+@auth.verify_token
+def verify_token(token):
+    user, data = __verify_general_token(token)
+    return handle_multi_factor_authentication(user, data.get("mfa_auth_time"))
+
+
+def __verify_general_token(token):
     """Verifies the format, signature and expiration time of an encrypted and signed JWT token.
     Raises ValueError if token is invalid, could raise other exceptions from dependencies.
 
@@ -100,12 +110,6 @@ def verify_general_token(token):
         user = models.User.query.get(username) if username else None
         return user, data
     raise AuthenticationError(message="Expired token")
-
-
-@auth.verify_token
-def verify_token(token):
-    user, data = verify_general_token(token)
-    return handle_multi_factor_authentication(user, data.get("mfa_auth_time"))
 
 
 def handle_multi_factor_authentication(user, mfa_auth_time_string):
