@@ -4,6 +4,9 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
+# built in libraries
+import gc
+
 # Installed
 import datetime
 import argon2
@@ -66,7 +69,10 @@ def get_user_roles_common(user):
 
 
 def verify_token_no_data(token):
-    return __verify_general_token(token)[0]
+    user, claims = __verify_general_token(token)
+    del claims
+    gc.collect()
+    return user
 
 
 @auth.verify_token
