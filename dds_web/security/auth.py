@@ -113,8 +113,13 @@ def __verify_general_token(token):
         dds_web.utils.current_time() <= datetime.datetime.fromtimestamp(expiration_time)
     ):
         username = data.get("sub")
-        user = models.User.query.get(username) if username else None
-        return user, data
+        if username:
+            user = models.User.query.get(username)
+        if user and user.is_active:
+            return user, data
+
+        return None, data
+
     raise AuthenticationError(message="Expired token")
 
 
@@ -185,7 +190,8 @@ def verify_token_signature(token):
 def verify_password(username, password):
     """Verify that user exists and that password is correct."""
     user = models.User.query.get(username)
-    if user and user.verify_password(input_password=password):
+
+    if user and user.is_active and user.verify_password(input_password=password):
         send_hotp_email(user)
         return user
     return None

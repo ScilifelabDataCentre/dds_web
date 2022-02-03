@@ -277,7 +277,7 @@ class UserDeletionError(LoggedHTTPException):
         super().__init__(alt_message or message)
 
 
-class NoSuchUserError(Exception):
+class NoSuchUserError(LoggedHTTPException):
     """There is no such user found in the database."""
 
     def __init__(self, message="User not found."):

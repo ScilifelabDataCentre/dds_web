@@ -41,7 +41,7 @@ def test_get_info_unit_user(client):
     assert user_info["is_admin"]
 
 
-def test_get_info_unit_user(client):
+def test_get_info_research_user(client):
     """Get info for a research user"""
 
     response = client.get(

@@ -288,6 +288,7 @@ class User(flask_login.UserMixin, db.Model):
     hotp_secret = db.Column(db.LargeBinary(20), unique=False, nullable=False)
     hotp_counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
     hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
+    active = db.Column(db.Boolean)
 
     # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -419,6 +420,10 @@ class User(flask_login.UserMixin, db.Model):
         """Get users primary email."""
         prims = [x.email for x in self.emails if x.primary]
         return prims[0] if len(prims) > 0 else None
+
+    @property
+    def is_active(self):
+        return self.active
 
     def __repr__(self):
         """Called by print, creates representation of object"""

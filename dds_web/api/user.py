@@ -347,6 +347,66 @@ class DeleteUserSelf(flask_restful.Resource):
         )
 
 
+class UserActivation(flask_restful.Resource):
+    """Endpoint to reactivate/deactivate users in the system
+
+    Unit admins can reactivate/deactivate unitusers. Super admins can reactivate/deactivate any user."""
+
+    @auth.login_required(role=["Super Admin", "Unit Admin"])
+    @logging_bind_request
+    def post(self):
+        user = user_schemas.UserSchema().load(flask.request.json)
+        action = flask.request.json.get("action")
+        if action is None or action == "":
+            raise ddserr.DDSArgumentError(
+                message=f"Please provide an action 'deactivate' or 'reactivate' for this request."
+            )
+        if user is None:
+            raise ddserr.NoSuchUserError(
+                message=f"This e-mail address is not associated with a user in the DDS, make sure it is not misspelled."
+            )
+        user_email_str = user.primary_email
+        current_user = auth.current_user()
+
+        if current_user.role == "Unit Admin":
+            if user.role not in ["Unit Admin", "Unit Personnel"] or current_user.unit != user.unit:
+                raise ddserr.AccessDeniedError(
+                    message=f"You are not allowed to {action} this user. As a unit admin, you're only allowed to {action} users in your unit."
+                )
+
+        if current_user == user:
+            raise ddserr.AccessDeniedError(message=f"You cannot {action} your own account!")
+
+        if (action == "reactivate" and user.is_active) or (
+            action == "deactivate" and not user.is_active
+        ):
+            raise ddserr.DDSArgumentError(message=f"User is already in desired state!")
+
+        # TODO: Check if user has lost access to any projects and if so, grant access again.
+        try:
+            user.active = action == "reactivate"
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            raise DatabaseError(message=str(err))
+        msg = f"The user account {user.username} ({user_email_str}, {user.role})  has been {action}d successfully been by {current_user.name} ({current_user.role})."
+        flask.current_app.logger.info(msg)
+
+        with structlog.threadlocal.bound_threadlocal(
+            who={"user": user.username, "role": user.role},
+            by_whom={"user": current_user.username, "role": current_user.role},
+        ):
+            action_logger.info(self.__class__)
+
+        return flask.make_response(
+            flask.jsonify(
+                {
+                    "message": f"You successfully {action}d the account {user.username} ({user_email_str}, {user.role})!"
+                }
+            )
+        )
+
+
 class DeleteUser(flask_restful.Resource):
     """Endpoint to remove users from the system
 
