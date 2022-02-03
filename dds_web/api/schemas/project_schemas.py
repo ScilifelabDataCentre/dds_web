@@ -164,7 +164,7 @@ class CreateProjectSchema(marshmallow.Schema):
 
             # Add new project keys to table.
             new_project_key = models.ProjectKeys(
-                key=aesgcm.encrypt(nonce, project_private_key, aad),
+                key=aesgcm.encrypt(nonce=nonce, data=project_private_key, associated_data=aad),
                 nonce=nonce,
             )
 
