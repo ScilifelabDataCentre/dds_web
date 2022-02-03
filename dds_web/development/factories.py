@@ -126,8 +126,10 @@ class ProjectFactory(factory.alchemy.SQLAlchemyModelFactory):
     pi = factory.Faker("name")
     bucket = factory.Faker("uuid4")
 
+    unit_user = factory.SubFactory(UnitUserFactory)
+
     public_key = factory.LazyAttribute(
-        lambda o: project_keys.ProjectKeys("Nonsense").key_dict()["public_key"]
+        lambda unit_user: project_keys.generate_project_key_pair(unit_user)["public_key"]
     )
 
     @factory.post_generation

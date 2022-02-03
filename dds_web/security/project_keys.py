@@ -19,7 +19,7 @@ def derive_key(user, password):
         secret=password.encode(),
         salt=user.kd_salt,
         time_cost=2,
-        memory_cost=1048576,  # 4194304,
+        memory_cost=4194304,
         parallelism=8,
         hash_len=32,
         type=argon2.Type.ID,
@@ -97,4 +97,7 @@ def generate_project_key_pair(user):
     del private_key
     gc.collect()
 
-    return {"public_key": public_key_bytes, "encrypted_private_key": encrypted_private_key}
+    return {
+        "public_key": public_key_bytes.hex().upper(),
+        "encrypted_private_key": encrypted_private_key,
+    }
