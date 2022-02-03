@@ -62,5 +62,4 @@ api.add_resource(user.RemoveUserAssociation, "/user/access/revoke", endpoint="re
 api.add_resource(user.UserActivation, "/user/activation", endpoint="user_activation")
 
 # Invoicing ############################################################################ Invoicing #
-api.add_resource(user.InvoiceUnit, "/invoice", endpoint="invoice")
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")

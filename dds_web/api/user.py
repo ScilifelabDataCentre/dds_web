@@ -19,7 +19,6 @@ import flask_restful
 import flask_mail
 import itsdangerous
 import marshmallow
-import pandas
 import structlog
 import sqlalchemy
 
@@ -617,37 +616,3 @@ class ShowUsage(flask_restful.Resource):
                 "project_usage": usage,
             }
         )
-
-
-class InvoiceUnit(flask_restful.Resource):
-    """Calculate the actual cost from the Safespring invoicing specification."""
-
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
-    @logging_bind_request
-    def get(self):
-        current_user = auth.current_user()
-
-        # Check that user is unit account
-        if current_user.role != "unit":
-            raise ddserr.AccessDeniedError(
-                "Access denied - only unit accounts can get invoicing information."
-            )
-
-        # Get unit info from table (incl safespring proj name)
-        try:
-            unit_info = models.Unit.query.filter(
-                models.Unit.id == sqlalchemy.func.binary(current_user.unit_id)
-            ).first()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            flask.current_app.logger.exception(err)
-            raise ddserr.DatabaseError(f"Failed getting unit information.")
-
-        # Get info from safespring invoice
-        # TODO (ina): Move to another class or function - will be calling the safespring api
-        csv_path = pathlib.Path("").parent / pathlib.Path("development/safespring_invoicespec.csv")
-        csv_contents = pandas.read_csv(csv_path, sep=";", header=1)
-        safespring_project_row = csv_contents.loc[csv_contents["project"] == unit_info.safespring]
-
-        flask.current_app.logger.debug(safespring_project_row)
-
-        return flask.jsonify({"test": "ok"})
