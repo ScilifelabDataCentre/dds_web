@@ -155,10 +155,11 @@ class CreateProjectSchema(marshmallow.Schema):
             )
             # Generate keys
             # NOTE: TEMPORARY:
+            # key=b"temp" * 8 is only a temporary KEK until we have the actual KEK
             aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(key=b"temp" * 8)
-            nonce = os.urandom(16)
+            nonce = os.urandom(12)
             project_private_key = bytes.fromhex(new_project.private_key)
-            aad = b""
+            aad = None
             # ----
 
             # Add new project keys to table.
