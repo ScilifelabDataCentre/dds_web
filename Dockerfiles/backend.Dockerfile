@@ -6,7 +6,7 @@
 FROM python:latest as base
 
 # Install some necessary systems packages
-RUN apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev
+RUN apt-get update && apt-get upgrade
 
 # Copy the content to a code folder in container
 COPY ./requirements.txt /code/requirements.txt
