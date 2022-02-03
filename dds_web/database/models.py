@@ -14,13 +14,18 @@ from sqlalchemy.ext import hybrid
 import sqlalchemy
 import flask
 import argon2
-import pyotp
 import flask_login
 import pathlib
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from cryptography.hazmat.primitives.twofactor import (
+    hotp as twofactor_hotp,
+    InvalidToken as twofactor_InvalidToken,
+)
+from cryptography.hazmat.primitives import hashes
 
 # Own modules
 from dds_web import db, auth
+from dds_web.errors import AuthenticationError
 import dds_web.utils
 
 
@@ -280,8 +285,9 @@ class User(flask_login.UserMixin, db.Model):
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
     _password_hash = db.Column(db.String(98), unique=False, nullable=False)
-    _otp_secret = db.Column(db.String(32))
-    has_2fa = db.Column(db.Boolean)
+    hotp_secret = db.Column(db.LargeBinary(20), unique=False, nullable=False)
+    hotp_counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
+    hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
     active = db.Column(db.Boolean)
 
     # Inheritance related, set automatically
@@ -304,11 +310,10 @@ class User(flask_login.UserMixin, db.Model):
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
     def __init__(self, **kwargs):
-        """Init all set and update otp secret."""
+        """Init all set and update hotp_secet."""
         super(User, self).__init__(**kwargs)
-        if self.otp_secret is None:
-            self.otp_secret = self.gen_otp_secret()
-        self.has_2fa = False
+        if not self.hotp_secret:
+            self.hotp_secret = os.urandom(20)
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
@@ -371,40 +376,43 @@ class User(flask_login.UserMixin, db.Model):
         return User.query.get(user_id)
 
     # 2FA related
-    def gen_otp_secret(self):
-        """Generate random base 32 for otp secret."""
-        return pyotp.random_base32()
+    def generate_HOTP_token(self):
+        """Generate a one-time authentication code, e.g. to be sent by email.
 
-    @property
-    def otp_secret(self):
-        """Get OTP secret for user if the 2fa has not already been setup."""
-        if self.has_2fa:
-            return None
-        return self._otp_secret
+        Counter is incremented before generating token which invalidates any previous token.
+        The time when it was issued is recorded to put an expiration time on the token.
 
-    @otp_secret.setter
-    def otp_secret(self, otp_secret):
-        """Set new otp secret."""
-        if not otp_secret:
-            otp_secret = self.gen_otp_secret()
-        self._otp_secret = otp_secret
+        """
+        self.hotp_counter += 1
+        self.hotp_issue_time = dds_web.utils.current_time()
+        db.session.commit()
 
-    def set_2fa_seen(self):
-        """Renew the otp secret -- one should only be setup once."""
-        self.has_2fa = True
+        hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        return hotp.generate(self.hotp_counter)
 
-    def totp_uri(self):
-        """Get uri for user otp_secret if the 2fa has not already been setup."""
-        if self.has_2fa:
-            return None
-        return pyotp.totp.TOTP(self.otp_secret).provisioning_uri(
-            name=self.username, issuer_name="Data Delivery System"
-        )
+    def verify_HOTP(self, token):
+        """Verify the HOTP token.
 
-    def verify_totp(self, token):
-        """Verify the otp token."""
-        totp = pyotp.TOTP(self.otp_secret)
-        return totp.verify(token, valid_window=1)
+        raises AuthenticationError if token is invalid or has expired (older than 1 hour).
+        If the token is valid, the counter is incremented, to prohibit re-use.
+        """
+        hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        if self.hotp_issue_time is None:
+            raise AuthenticationError("No one-time authentication code currently issued.")
+        timediff = dds_web.utils.current_time() - self.hotp_issue_time
+        if timediff > datetime.timedelta(minutes=15):
+            raise AuthenticationError("One-time authentication code has expired.")
+
+        try:
+            hotp.verify(token, self.hotp_counter)
+        except twofactor_InvalidToken:
+            raise AuthenticationError("Invalid one-time authentication code.")
+
+        # Token verified, increment counter to prohibit re-use
+        self.hotp_counter += 1
+        # Reset the hotp_issue_time to allow a new code to be issued
+        self.hotp_issue_time = None
+        db.session.commit()
 
     # Email related
     @property

@@ -14,7 +14,7 @@ from dds_web.api import user
 from dds_web.api import project
 from dds_web.api import s3
 from dds_web.api import files
-from dds_web.api.errors import error_codes
+from dds_web.errors import error_codes
 
 ####################################################################################################
 # BLUEPRINTS ########################################################################## BLUEPRINTS #
@@ -28,8 +28,8 @@ api = flask_restful.Api(api_blueprint, errors=error_codes)
 ####################################################################################################
 
 # Login/access ###################################################################### Login/access #
-api.add_resource(user.Token, "/user/token", endpoint="token")
 api.add_resource(user.EncryptedToken, "/user/encrypted_token", endpoint="encrypted_token")
+api.add_resource(user.SecondFactor, "/user/second_factor", endpoint="second_factor")
 
 # S3 ########################################################################################## S3 #
 api.add_resource(s3.S3Info, "/s3/proj", endpoint="proj_s3_info")

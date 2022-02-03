@@ -20,7 +20,7 @@ from dds_web.api.dds_decorators import (
     connect_cloud,
     bucket_must_exists,
 )
-from dds_web.api.errors import (
+from dds_web.errors import (
     BucketNotFoundError,
     DatabaseError,
     DeletionError,

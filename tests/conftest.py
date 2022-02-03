@@ -11,7 +11,6 @@ from sqlalchemy_utils import create_database, database_exists
 import boto3
 
 # Own
-import dds_web.utils
 from dds_web.database.models import (
     ResearchUser,
     UnitUser,
@@ -27,6 +26,7 @@ from dds_web.database.models import (
     Identifier,
     DeletionRequest,
 )
+import dds_web.utils
 from dds_web import create_app, db
 
 
@@ -106,21 +106,18 @@ def demo_data():
             username="delete_me_researcher",
             password="password",
             name="Research User to test deletions",
-            has_2fa=True,
         ),
         UnitUser(
             username="delete_me_unituser",
             password="password",
             name="Unit User to test deletions",
             is_admin=False,
-            has_2fa=True,
         ),
         UnitUser(
             username="delete_me_unitadmin",
             password="password",
             name="Unit Admin to test deletions",
             is_admin=True,
-            has_2fa=True,
         ),
     ]
 
@@ -309,7 +306,6 @@ def add_data_to_db():
             user_id="delete_me_researcher", email="delete_me_researcher@mailtrap.io", primary=True
         )
     )
-    users[7].has_2fa = True
     users[8].emails.append(
         Email(user_id="delete_me_unituser", email="delete_me_unituser@mailtrap.io", primary=True)
     )

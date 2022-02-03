@@ -14,9 +14,7 @@ import flask
 from dds_web import auth
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import logging_bind_request
-from dds_web.api.errors import (
-    S3ProjectNotFoundError,
-)
+from dds_web.errors import S3ProjectNotFoundError
 from dds_web.api.schemas import project_schemas
 
 ####################################################################################################

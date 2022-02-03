@@ -74,14 +74,16 @@ class LogoutForm(flask_wtf.FlaskForm):
     logout = wtforms.SubmitField("Logout")
 
 
-# TODO: Remove TwoFactorAuthForm and connected endpoints.
-class TwoFactorAuthForm(flask_wtf.FlaskForm):
-    secret = wtforms.HiddenField("secret", id="secret")
-    otp = wtforms.StringField(
-        "otp",
-        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
+class Confirm2FACodeForm(flask_wtf.FlaskForm):
+    hotp = wtforms.StringField(
+        "hotp",
+        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=8, max=8)],
     )
-    submit = wtforms.SubmitField("Authenticate User")
+    submit = wtforms.SubmitField("Authenticate")
+
+
+class Cancel2FAForm(flask_wtf.FlaskForm):
+    cancel = wtforms.SubmitField("Cancel login and try again")
 
 
 class RequestResetForm(flask_wtf.FlaskForm):

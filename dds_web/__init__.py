@@ -48,6 +48,7 @@ auth = HTTPTokenAuth()
 # Login - web routes
 login_manager = flask_login.LoginManager()
 login_manager.login_view = "auth_blueprint.login"
+login_manager.session_protection = "strong"
 
 # Actions for logging
 actions = {}
@@ -165,6 +166,10 @@ def create_app(testing=False, database_uri=None):
         app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     # Disables error catching during request handling
     app.config["TESTING"] = testing
+    if testing:
+        # Simplifies testing as we don't test the session protection anyway
+        login_manager.session_protection = "basic"
+
     flask_bootstrap.Bootstrap(app)
     # Setup logging handlers
     setup_logging(app)
@@ -235,10 +240,11 @@ def create_app(testing=False, database_uri=None):
         # Set-up the schedulers
         dds_web.utils.scheduler_wrapper()
 
-        from dds_web.api.user import ENCRYPTION_KEY_CHAR_LENGTH
+        ENCRYPTION_KEY_BIT_LENGTH = 256
+        ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 
         if len(app.config.get("SECRET_KEY")) != ENCRYPTION_KEY_CHAR_LENGTH:
-            from dds_web.api.errors import KeyLengthError
+            from dds_web.errors import KeyLengthError
 
             raise KeyLengthError(ENCRYPTION_KEY_CHAR_LENGTH)
 

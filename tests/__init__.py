@@ -3,7 +3,7 @@
 from base64 import b64encode
 from urllib.parse import quote_plus
 import json
-import dds_web.api.errors as ddserr
+import dds_web.errors as ddserr
 import dds_web.database
 import flask
 import flask_login
@@ -27,6 +27,7 @@ USER_CREDENTIALS = {
     "nouser": ":password",
     "nopassword": "username:",
     "wronguser": "scriptkiddie:password",
+    "wrongpassword": "researchuser:wrongpassword",
     "researcher": "researchuser:password",
     "researchuser": "researchuser:password",
     "researchuser2": "researchuser2:password",
@@ -62,14 +63,34 @@ class UserAuth:
     def post_headers(self):
         return {"Authorization": f"Basic {self.basic()}"}
 
-    def token(self, client):
+    def fetch_hotp(self):
+        user = dds_web.database.models.User.query.filter_by(username=self.username).first()
+        return user.generate_HOTP_token()
 
-        response = client.get(DDSEndpoint.TOKEN, auth=(self.as_tuple()))
+    def partial_token(self, client):
+        """Return a partial token that can be used to get a full token."""
+        response = client.get(DDSEndpoint.ENCRYPTED_TOKEN, auth=(self.as_tuple()))
 
         # Get response from api
         response_json = response.json
         token = response_json["token"]
 
+        if token is not None:
+            return {"Authorization": f"Bearer {token}"}
+
+    def token(self, client):
+        temp_token = self.partial_token(client)
+
+        hotp_token = self.fetch_hotp()
+
+        response = client.get(
+            DDSEndpoint.SECOND_FACTOR,
+            headers=temp_token,
+            json={"HOTP": hotp_token.decode()},
+        )
+
+        response_json = response.json
+        token = response_json["token"]
         if token is not None:
             return {"Authorization": f"Bearer {token}"}
         else:
@@ -115,8 +136,8 @@ class DDSEndpoint:
     USER_CONFIRM_DELETE = "/confirm_deletion/"
 
     # Authentication - user and project
-    TOKEN = BASE_ENDPOINT + "/user/token"
     ENCRYPTED_TOKEN = BASE_ENDPOINT + "/user/encrypted_token"
+    SECOND_FACTOR = BASE_ENDPOINT + "/user/second_factor"
 
     # Remove user from project
     REMOVE_USER_FROM_PROJ = BASE_ENDPOINT + "/user/access/revoke"

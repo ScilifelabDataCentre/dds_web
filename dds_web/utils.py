@@ -16,6 +16,7 @@ import urllib.parse
 import pandas
 from contextlib import contextmanager
 import flask
+import flask_mail
 import flask_login
 import sqlalchemy
 
@@ -316,6 +317,31 @@ def page_query(q):
         offset += 1000
         if not r:
             break
+
+
+def create_one_time_password_email(user, hotp_value):
+    msg = flask_mail.Message(
+        "DDS One-Time Authentication Code",
+        recipients=[user.primary_email],
+    )
+
+    msg.attach(
+        "scilifelab_logo.png",
+        "image/png",
+        open(os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb").read(),
+        "inline",
+        headers=[
+            ["Content-ID", "<Logo>"],
+        ],
+    )
+    msg.body = flask.render_template(
+        "mail/authenticate.txt", one_time_value=hotp_value.decode("utf-8")
+    )
+    msg.html = flask.render_template(
+        "mail/authenticate.html", one_time_value=hotp_value.decode("utf-8")
+    )
+
+    return msg
 
 
 ####################################################################################################

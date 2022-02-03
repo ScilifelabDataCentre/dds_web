@@ -14,7 +14,7 @@ import flask
 import structlog
 
 # Own modules
-from dds_web.api.errors import BucketNotFoundError
+from dds_web.errors import BucketNotFoundError
 from dds_web.utils import get_username_or_request_ip
 
 

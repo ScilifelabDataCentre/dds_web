@@ -5,8 +5,7 @@
 ####################################################################################################
 
 # Standard Library
-import io
-import json
+import datetime
 import re
 
 # Installed
@@ -14,12 +13,9 @@ import flask
 import werkzeug
 from dds_web.api.db_connector import DBConnector
 import flask_login
-import pyqrcode
-import pyotp
 import itsdangerous
 import sqlalchemy
 import marshmallow
-
 
 # Own Modules
 from dds_web import auth
@@ -27,10 +23,11 @@ from dds_web import forms
 from dds_web.database import models
 import dds_web.utils
 from dds_web import db, limiter
-import dds_web.api.errors as ddserr
+import dds_web.errors as ddserr
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
 from dds_web import mail
+import dds_web.security
 
 
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
@@ -60,12 +57,8 @@ def bad_request(error):
 @flask_login.login_required
 def index():
     """DDS start page."""
-    # Check if user has 2fa setup
-    if flask_login.current_user.has_2fa:
-        form = forms.LogoutForm()
-        return flask.render_template("index.html", form=form)
-    else:
-        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
+    form = forms.LogoutForm()
+    return flask.render_template("index.html", form=form)
 
 
 @auth_blueprint.route("/confirm_invite/<token>", methods=["GET"])
@@ -103,11 +96,9 @@ def confirm_invite(token):
                 message=f"There is no pending invitation for the email adress: {email}"
             )
 
-    # Initiate form
+    # Initiate form if the invite exists
     form = forms.RegistrationForm()
-
     # invite columns: unit_id, email, role
-    flask.current_app.logger.debug(invite_row)
 
     # Prefill fields - facility readonly if filled, otherwise disabled
     form.unit_name.render_kw = {"disabled": True}
@@ -147,13 +138,84 @@ def register():
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
             raise ddserr.DatabaseError from sqlerr
 
-        # Go to two factor authentication setup
-        # TODO: Change this after email is introduced
-        flask_login.login_user(new_user)
-        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
-
     # Go to registration form
     return flask.render_template("user/register.html", form=form)
+
+
+@auth_blueprint.route("/cancel_2fa", methods=["POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["POST"],
+    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+)
+def cancel_2fa():
+    # Reset 2fa cookie
+    redirect_to_login = flask.redirect(flask.url_for("auth_blueprint.login"))
+    redirect_to_login.set_cookie("2fa_initiated_token", "", expires=0)
+    return redirect_to_login
+
+
+@auth_blueprint.route("/confirm_2fa", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["GET", "POST"],
+    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+)
+def confirm_2fa():
+    """Finalize login by validating the authentication one-time token"""
+
+    # Redirect to index if user is already authenticated
+    if flask_login.current_user.is_authenticated:
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
+
+    form = forms.Confirm2FACodeForm()
+
+    cancel_form = forms.Cancel2FAForm()
+
+    next = flask.request.args.get("next")
+    # is_safe_url should check if the url is safe for redirects.
+    if next and not dds_web.utils.is_safe_url(next):
+        return flask.abort(400)
+
+    if form.validate_on_submit():
+        try:
+            token = flask.request.cookies["2fa_initiated_token"]
+            user = dds_web.security.auth.verify_token_no_data(token)
+        except ddserr.AuthenticationError as e:
+            flask.flash(f"Error: Second factor could not be validated due to: {e}", "danger")
+            return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+        except Exception as e:
+            flask.current_app.logger.exception(e)
+            flask.flash(
+                "Error: Second factor could not be validated due to an unknown error", "danger"
+            )
+            return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+
+        hotp_value = form.hotp.data
+
+        # Raises authenticationerror if invalid
+        try:
+            user.verify_HOTP(hotp_value.encode())
+        except ddserr.AuthenticationError:
+            flask.flash("Invalid one-time code.")
+            return flask.redirect(
+                flask.url_for(
+                    "auth_blueprint.confirm_2fa", form=form, cancel_form=cancel_form, next=next
+                )
+            )
+
+        # Correct username, password and hotp code --> log user in
+        flask_login.login_user(user)
+        # Remove token from cookies and make it expired
+        flask.flash("Logged in successfully.")
+        redirect_to_index = flask.redirect(next or flask.url_for("auth_blueprint.index"))
+        redirect_to_index.set_cookie("2fa_initiated_token", "", expires=0)
+        return redirect_to_index
+
+    else:
+        return flask.render_template(
+            "user/confirm2fa.html", form=form, cancel_form=cancel_form, next=next
+        )
 
 
 @auth_blueprint.route("/login", methods=["GET", "POST"])
@@ -163,18 +225,16 @@ def register():
     error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
 )
 def login():
-    """Log user in with DDS credentials."""
-
-    # Redirect to index if user is already authenticated
-    if flask_login.current_user.is_authenticated:
-        if flask_login.current_user.has_2fa:
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
-        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
+    """Initiate a login by validating username password and sending a authentication one-time code"""
 
     next = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
     if next and not dds_web.utils.is_safe_url(next):
         return flask.abort(400)
+
+    # Redirect to next or index if user is already authenticated
+    if flask_login.current_user.is_authenticated:
+        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
 
     # Display greeting message, if applicable
     if next and re.search("confirm_deletion", next):
@@ -193,12 +253,20 @@ def login():
                 flask.url_for("auth_blueprint.login", next=next)
             )  # Try login again
 
-        # Correct username and password --> log user in
-        flask_login.login_user(user)
-        flask.flash("Logged in successfully.")
+        # Correct credentials still needs 2fa
 
-        # Go to home page
-        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
+        # Send 2fa token to user's email
+        if dds_web.security.auth.send_hotp_email(user):
+            flask.flash("One-Time Code has been sent to your primary email.")
+
+        # Generate signed token that indicates that the user has authenticated
+        token_2fa_initiated = dds_web.security.tokens.jwt_token(
+            user.username, expires_in=datetime.timedelta(minutes=15)
+        )
+
+        redirect_to_confirm = flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next))
+        redirect_to_confirm.set_cookie("2fa_initiated_token", token_2fa_initiated)
+        return redirect_to_confirm
 
     # Go to login form (get)
     return flask.render_template("user/login.html", form=form, next=next)
@@ -214,71 +282,6 @@ def logout():
         flask_login.logout_user()
 
     return flask.redirect(flask.url_for("auth_blueprint.index"))
-
-
-@auth_blueprint.route("/twofactor", methods=["GET"])
-@flask_login.login_required
-def two_factor_setup():
-    """Setup two factor authentication."""
-    # since this page contains the sensitive qrcode, make sure the browser
-    # does not cache it
-    if flask_login.current_user.has_2fa:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
-
-    return (
-        flask.render_template(
-            "user/two-factor-setup.html", secret=flask_login.current_user.otp_secret
-        ),
-        200,
-        {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
-        },
-    )
-
-
-@auth_blueprint.route("/qrcode", methods=["GET"])
-@flask_login.login_required
-def qrcode():
-    """Generate qrcode"""
-    if flask_login.current_user.has_2fa:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
-
-    # render qrcode for FreeTOTP
-    url = pyqrcode.create(flask_login.current_user.totp_uri())
-    stream = io.BytesIO()
-    url.svg(stream, scale=5)
-    return (
-        stream.getvalue(),
-        200,
-        {
-            "Content-Type": "image/svg+xml",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
-        },
-    )
-
-
-@auth_blueprint.route("/twofactor/verify", methods=["POST"])
-@flask_login.login_required
-def two_factor_verify():
-    """Verify two factor authentication."""
-    otp = int(flask.request.form.get("otp"))
-    if flask_login.current_user.verify_totp(otp):
-        flask.flash("The TOTP 2FA token is valid", "success")
-
-        # User has now setup 2FA
-        flask_login.current_user.set_2fa_seen()
-        try:
-            db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise ddserr.DatabaseError from sqlerr
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
-    else:
-        flask.flash("You have supplied an invalid 2FA token!", "danger")
-        return flask.redirect(flask.url_for("auth_blueprint.two_factor_setup"))
 
 
 @auth_blueprint.route("/reset_password", methods=["GET", "POST"])
@@ -407,6 +410,8 @@ def confirm_self_deletion(token):
                 message=f"User deletion request for {user.username} / {user.primary_email.email} failed due to database error: {sqlerr}",
                 alt_message=f"Deletion request for user {user.username} registered with {user.primary_email.email} failed for technical reasons. Please contact the unit for technical support!",
             )
+
+        flask.session.clear()
 
         return flask.make_response(
             flask.render_template("user/userdeleted.html", username=user.username, initial=True)
