@@ -37,6 +37,39 @@ import dds_web.utils
 # Association objects ######################################################## Association objects #
 
 
+class ProjectKeys(db.Model):
+    """
+    Many-to-many association table between projects and users (all).
+
+    Primary key(s):
+    - project_id
+    - user_id
+
+    Foreign key(s):
+    - project_id
+    - user_id
+    """
+
+    # Table setup
+    __tablename__ = "projectkeys"
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    project = db.relationship("Project", back_populates="project_keys")
+    # ---
+    user_id = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
+    )
+    user = db.relationship("User", back_populates="project_keys")
+    # ---
+
+    # Additional columns
+    key = db.Column(db.LargeBinary(32), nullable=False, unique=True)
+    nonce = db.Column(db.LargeBinary(12), nullable=False, unique=True)
+
+
 class ProjectUsers(db.Model):
     """
     Many-to-many association table between projects and research users.
@@ -175,9 +208,13 @@ class Project(db.Model):
     pi = db.Column(db.String(255), unique=False, nullable=True)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
     public_key = db.Column(db.String(64), nullable=True)
+
+    # TODO: These should be deleted
     private_key = db.Column(db.String(255), nullable=True)
     privkey_salt = db.Column(db.String(32), nullable=True)
     privkey_nonce = db.Column(db.String(24), nullable=True)
+    # ---
+
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=True, default=False)
     released = db.Column(db.DateTime(), nullable=True)
     is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, index=True)
@@ -201,6 +238,7 @@ class Project(db.Model):
     researchusers = db.relationship(
         "ProjectUsers", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
+    project_keys = db.relationship("ProjectKeys", back_populates="project", passive_deletes=True)
 
     @property
     def current_status(self):
@@ -289,6 +327,8 @@ class User(flask_login.UserMixin, db.Model):
     hotp_counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
     hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
     active = db.Column(db.Boolean)
+    kd_salt = db.Column(db.LargeBinary(32), default=None)
+    temporary_key = db.Column(db.LargeBinary(32), default=None)
 
     # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -300,6 +340,7 @@ class User(flask_login.UserMixin, db.Model):
     emails = db.relationship(
         "Email", back_populates="user", passive_deletes=True, cascade="all, delete"
     )
+    project_keys = db.relationship("ProjectKeys", back_populates="user", passive_deletes=True)
 
     # Delete requests if User is deleted:
     # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.
