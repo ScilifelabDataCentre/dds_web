@@ -42,7 +42,7 @@ def test_deactivate_user_as_superadmin(module_client):
     """Deactivate researchuser as super admin"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -62,7 +62,7 @@ def test_deactivate_user_as_superadmin(module_client):
 
     # Try to get token after deactivation
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
@@ -85,7 +85,7 @@ def test_reactivate_user_as_superadmin(module_client):
     """Reactivate researchuser as super admin"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
@@ -105,7 +105,7 @@ def test_reactivate_user_as_superadmin(module_client):
 
     # Try to get token after reactivation
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -115,7 +115,7 @@ def test_deactivate_user_as_unitadmin(module_client):
     """Deactivate researchuser as unit admin"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -138,7 +138,7 @@ def test_deactivate_unituser_as_unitadmin(module_client):
     """Deactivate unit user as unit admin"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -158,7 +158,7 @@ def test_deactivate_unituser_as_unitadmin(module_client):
 
     # Try to get token after deactivation
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
@@ -168,7 +168,7 @@ def test_reactivate_unituser_as_unitadmin(module_client):
     """Reactivate unituser as unit admin"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
@@ -188,7 +188,7 @@ def test_reactivate_unituser_as_unitadmin(module_client):
 
     # Try to get token after reactivation
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -198,7 +198,7 @@ def test_deactivate_user_as_unituser(module_client):
     """Deactivate researchuser as unit user"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -218,7 +218,7 @@ def test_deactivate_user_as_researchuser(module_client):
     """Deactivate researchuser as researchuser"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
-        tests.DDSEndpoint.TOKEN,
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.OK
