@@ -192,9 +192,6 @@ class ProjectStatus(flask_restful.Resource):
         proj.description = None
         proj.pi = None
         proj.public_key = None
-        proj.private_key = None
-        proj.privkey_salt = None
-        proj.privkey_nonce = None
         proj.is_sensitive = None
         proj.unit_id = None
         proj.created_by = None
@@ -232,33 +229,7 @@ class GetPrivate(flask_restful.Resource):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        # TODO (ina): Change handling of private key -- not secure
-        flask.current_app.logger.debug("Getting the private key.")
-
-        app_secret = flask.current_app.config.get("SECRET_KEY")
-        passphrase = app_secret.encode("utf-8")
-
-        enc_key = bytes.fromhex(project.private_key)
-        nonce = bytes.fromhex(project.privkey_nonce)
-        salt = bytes.fromhex(project.privkey_salt)
-
-        kdf = scrypt.Scrypt(
-            salt=salt,
-            length=32,
-            n=2**14,
-            r=8,
-            p=1,
-            backend=backends.default_backend(),
-        )
-
-        key_enc_key = kdf.derive(passphrase)
-        try:
-            decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
-        except Exception as err:
-            flask.current_app.logger.exception(err)
-            raise KeyNotFoundError
-
-        return flask.jsonify({"private": decrypted_key.hex().upper()})
+        return flask.jsonify({"private": "not implemented yet"})
 
 
 class UserProjects(flask_restful.Resource):
