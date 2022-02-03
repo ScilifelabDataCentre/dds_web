@@ -21,7 +21,7 @@ from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
 import dds_web.utils
 from dds_web.crypt import key_gen
-
+import cryptography
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -135,8 +135,10 @@ class CreateProjectSchema(marshmallow.Schema):
                 public_id=data["public_id"], created_time=data["date_created"]
             )
 
-            # Generate keys
+            # NOTE: TEMPORARY
+            # Generate keys and add to project
             data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
+            # ----
 
             # Create project
             current_user = auth.current_user()
@@ -151,13 +153,30 @@ class CreateProjectSchema(marshmallow.Schema):
                     }
                 )
             )
+            # Generate keys
+            # NOTE: TEMPORARY:
+            # key=b"temp" * 8 is only a temporary KEK until we have the actual KEK
+            aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(key=b"temp" * 8)
+            nonce = os.urandom(12)
+            project_private_key = bytes.fromhex(new_project.private_key)
+            aad = None
+            # ----
+
+            # Add new project keys to table.
+            new_project_key = models.ProjectKeys(
+                key=aesgcm.encrypt(nonce=nonce, data=project_private_key, associated_data=aad),
+                nonce=nonce,
+            )
+
             # Save
+            auth.current_user().project_keys.append(new_project_key)
+            new_project.project_keys.append(new_project_key)
             db.session.add(new_project)
             db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Project was not created")
+            raise ddserr.DatabaseError(message="Server Error: Project was not created")
         except (
             marshmallow.ValidationError,
             ddserr.DDSArgumentError,
