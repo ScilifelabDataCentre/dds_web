@@ -171,12 +171,6 @@ def test_auth_second_factor_correctauth_reused_hotp_401_unauthorized(client):
 
 
 # Token Authentication ###################################################### Token Authentication #
-def test_auth_token_mfa_missing(client):
-    pass
-
-
-def test_auth_token_mfa_inside_token_expired(client):
-    pass
 
 
 def test_auth_incorrect_token_without_periods(client):
