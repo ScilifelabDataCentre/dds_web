@@ -12,9 +12,7 @@ from flask import current_app
 
 # Own modules
 from dds_web import db
-from dds_web.security import auth
 from dds_web.database import models
-from dds_web.crypt import key_gen
 import dds_web.utils
 
 ####################################################################################################
@@ -36,7 +34,6 @@ def fill_db():
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
         bucket=f"testbucket",
-        **key_gen.ProjectKeys("project_1").key_dict(),
     )
 
     project_1.project_statuses.append(
@@ -52,7 +49,6 @@ def fill_db():
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
         bucket=f"secondproject-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-        **key_gen.ProjectKeys("project_2").key_dict(),
     )
 
     project_2.project_statuses.append(

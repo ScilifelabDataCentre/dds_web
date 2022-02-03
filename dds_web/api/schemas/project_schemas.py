@@ -20,7 +20,6 @@ from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
 import dds_web.utils
-from dds_web.crypt import key_gen
 
 
 ####################################################################################################
@@ -135,9 +134,6 @@ class CreateProjectSchema(marshmallow.Schema):
                 public_id=data["public_id"], created_time=data["date_created"]
             )
 
-            # Generate keys
-            data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
-
             # Create project
             current_user = auth.current_user()
             new_project = models.Project(
@@ -157,7 +153,7 @@ class CreateProjectSchema(marshmallow.Schema):
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Project was not created")
+            raise ddserr.DatabaseError(message="Server Error: Project was not created")
         except (
             marshmallow.ValidationError,
             ddserr.DDSArgumentError,
