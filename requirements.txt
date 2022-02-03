@@ -14,7 +14,6 @@ Flask-WTF==0.15.1
 immutabledict==2.2.0
 marshmallow-sqlalchemy==0.24.1
 marshmallow==3.13.0
-pandas # Version gives errors
 PyJWT==2.1.0
 pylint-flask==0.6
 pylint-flask-sqlalchemy==0.2.0
