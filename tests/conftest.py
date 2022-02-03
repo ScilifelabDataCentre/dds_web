@@ -357,6 +357,7 @@ def client():
                 for table in reversed(db.metadata.sorted_tables):
                     db.session.execute(table.delete())
                 db.session.commit()
+                db.engine.dispose()
 
 
 @pytest.fixture(scope="module")
@@ -384,6 +385,7 @@ def module_client():
                 for table in reversed(db.metadata.sorted_tables):
                     db.session.execute(table.delete())
                 db.session.commit()
+                db.engine.dispose()
 
 
 @pytest.fixture()
