@@ -7,7 +7,6 @@
 # Installed
 import marshmallow
 import sqlalchemy
-import os
 
 # Own modules
 from dds_web import db
@@ -172,7 +171,6 @@ class NewUserSchema(marshmallow.Schema):
             "username": data.get("username"),
             "password": data.get("password"),
             "name": data.get("name"),
-            "kd_salt": os.urandom(32),
         }
 
         # Create new user

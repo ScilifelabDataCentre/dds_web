@@ -6,7 +6,6 @@
 
 # Standard library
 import uuid
-import os
 
 # Installed
 from flask import current_app
@@ -15,7 +14,6 @@ from flask import current_app
 from dds_web import db
 from dds_web.security import auth
 from dds_web.database import models
-from dds_web.crypt import key_gen
 import dds_web.utils
 
 ####################################################################################################
@@ -37,7 +35,6 @@ def fill_db():
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
         bucket=f"testbucket",
-        **key_gen.ProjectKeys("project_1").key_dict(),
     )
 
     project_1.project_statuses.append(
@@ -53,7 +50,6 @@ def fill_db():
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
         bucket=f"secondproject-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-        **key_gen.ProjectKeys("project_2").key_dict(),
     )
 
     project_2.project_statuses.append(
@@ -69,7 +65,6 @@ def fill_db():
         username="researchuser_1",
         password="password",
         name="First Research User",
-        kd_salt=os.urandom(32),
     )
     email_researchuser_1.user = researchuser_1
     # Create association with user - not owner of project
@@ -87,7 +82,6 @@ def fill_db():
         username="researchuser_2",
         password="password",
         name="Second Research User",
-        kd_salt=os.urandom(32),
     )
     email_researchuser_2.user = researchuser_2
     # Create association with user - is owner of project
@@ -101,11 +95,15 @@ def fill_db():
 
     # Create first unit user
     unituser_1 = models.UnitUser(
-        username="unituser_1", password="password", name="First Unit User", kd_salt=os.urandom(32)
+        username="unituser_1",
+        password="password",
+        name="First Unit User",
     )
     # Create second unit user
     unituser_2 = models.UnitUser(
-        username="unituser_2", password="password", name="Second Unit User", kd_salt=os.urandom(32)
+        username="unituser_2",
+        password="password",
+        name="Second Unit User",
     )
 
     # create a few e-mail addresses

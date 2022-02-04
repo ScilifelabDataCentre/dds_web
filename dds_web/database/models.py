@@ -371,6 +371,7 @@ class User(flask_login.UserMixin, db.Model):
         """Generate the password hash and save in db."""
         pw_hasher = argon2.PasswordHasher(hash_len=32)
         self._password_hash = pw_hasher.hash(plaintext_password)
+        self.kd_salt = os.urandom(32)
 
     def verify_password(self, input_password):
         """Verifies that the specified password matches the encoded password in the database."""
