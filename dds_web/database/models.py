@@ -355,8 +355,6 @@ class User(flask_login.UserMixin, db.Model):
         super(User, self).__init__(**kwargs)
         if not self.hotp_secret:
             self.hotp_secret = os.urandom(20)
-        if not self.kd_salt:
-            self.kd_salt = os.urandom(32)
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""

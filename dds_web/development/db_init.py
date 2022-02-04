@@ -6,6 +6,7 @@
 
 # Standard library
 import uuid
+import os
 
 # Installed
 from flask import current_app
@@ -68,6 +69,7 @@ def fill_db():
         username="researchuser_1",
         password="password",
         name="First Research User",
+        kd_salt=os.urandom(32),
     )
     email_researchuser_1.user = researchuser_1
     # Create association with user - not owner of project
@@ -85,6 +87,7 @@ def fill_db():
         username="researchuser_2",
         password="password",
         name="Second Research User",
+        kd_salt=os.urandom(32),
     )
     email_researchuser_2.user = researchuser_2
     # Create association with user - is owner of project
@@ -98,15 +101,11 @@ def fill_db():
 
     # Create first unit user
     unituser_1 = models.UnitUser(
-        username="unituser_1",
-        password="password",
-        name="First Unit User",
+        username="unituser_1", password="password", name="First Unit User", kd_salt=os.urandom(32)
     )
     # Create second unit user
     unituser_2 = models.UnitUser(
-        username="unituser_2",
-        password="password",
-        name="Second Unit User",
+        username="unituser_2", password="password", name="Second Unit User", kd_salt=os.urandom(32)
     )
 
     # create a few e-mail addresses
