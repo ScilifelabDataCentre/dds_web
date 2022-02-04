@@ -19,6 +19,7 @@ from dds_web.database import models
 from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
+from dds_web.security import project_keys
 import dds_web.utils
 
 
@@ -148,12 +149,13 @@ class CreateProjectSchema(marshmallow.Schema):
                 )
             )
 
-            # Generate keys
+            project_user_key_dict = project_keys.generate_project_key_pair(current_user)
+            new_project.public_key = project_user_key_dict["public_key"]
             new_project_key = models.ProjectKeys(
                 project_id=new_project.id,
                 user_id=current_user.username,
-                key=aesgcm.encrypt(nonce, project_private_key, aad),
-                nonce=nonce,
+                key=project_user_key_dict["encrypted_private_key"]["encrypted_key"],
+                nonce=project_user_key_dict["encrypted_private_key"]["nonce"],
             )
 
             # Save

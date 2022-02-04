@@ -29,7 +29,6 @@ DATABASE_URI = "mysql+pymysql://root:{}@db/DeliverySystemTest".format(mysql_root
 
 
 def demo_data():
-    from dds_web.security import auth
     from dds_web.utils import timestamp
 
     units = [
@@ -51,39 +50,46 @@ def demo_data():
             username="researchuser",
             password="password",
             name="Research User",
+            kd_salt=os.urandom(32),
         ),
         ResearchUser(
             username="projectowner",
             password="password",
             name="Project Owner",
+            kd_salt=os.urandom(32),
         ),
         UnitUser(
             username="unituser",
             password="password",
             name="Unit User",
             is_admin=False,
+            kd_salt=os.urandom(32),
         ),
         UnitUser(
             username="unituser2",
             password="password",
             name="Unit User 2",
             is_admin=False,
+            kd_salt=os.urandom(32),
         ),
         UnitUser(
             username="unitadmin",
             password="password",
             name="Unit Admin",
             is_admin=True,
+            kd_salt=os.urandom(32),
         ),
         SuperAdmin(
             username="superadmin",
             password="password",
             name="Super Admin",
+            kd_salt=os.urandom(32),
         ),
         ResearchUser(
             username="researchuser2",
             password="password",
             name="Research User 2",
+            kd_salt=os.urandom(32),
         ),
     ]
 
