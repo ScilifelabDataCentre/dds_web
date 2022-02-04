@@ -31,7 +31,6 @@ class Config(object):
     # Expected paths - these are the bind paths *inside* the container
     USE_LOCAL_DB = True
     LOGS_DIR = "/dds_web/logs"
-    DDS_S3_CONFIG = "/code/dds_web/sensitive/s3_config.json"
     SAFESPRING_URL = os.environ.get("DDS_SAFESPRING_URL", "https://example.endpoint.net")
     DDS_SAFESPRING_PROJECT = os.environ.get("DDS_SAFESPRING_PROJECT", "project-name.example.se")
     DDS_SAFESPRING_ACCESS = os.environ.get("DDS_SAFESPRING_ACCESS", "SAFESPRINGACCESSKEY")
