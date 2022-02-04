@@ -229,10 +229,10 @@ class GetPrivate(flask_restful.Resource):
     @logging_bind_request
     def get(self):
         """Get private key from database"""
-        flask.current_app.logger.debug("Getting the private key.")
-
         # Verify access to project
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        flask.current_app.logger.debug("Getting the private key.")
 
         # Get Project keys row for current user and project
         project_keys_row = models.ProjectKeys.query.filter_by(
