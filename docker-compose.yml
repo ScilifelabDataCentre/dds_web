@@ -61,3 +61,7 @@ services:
       - type: bind
         source: $DDS_LOG_DIR
         target: /dds_web/logs
+
+  redis:
+    container_name: dds_redis
+    image: redis:latest
