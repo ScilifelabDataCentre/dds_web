@@ -61,18 +61,3 @@ services:
       - type: bind
         source: $DDS_LOG_DIR
         target: /dds_web/logs
-
-      # Staged uploads
-      - type: bind
-        source: $DDS_UPLOAD_TEST
-        target: /dds_web/uploads
-
-      # Staged download
-      - type: bind
-        source: $DDS_DOWNLOAD_TEST
-        target: /dds_web/downloads
-
-      # Cache test (?)
-      - type: bind
-        source: $DDS_TEMP_CACHE_TEST
-        target: /dds_web/local_temp_cache
