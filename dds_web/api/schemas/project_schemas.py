@@ -164,7 +164,7 @@ class CreateProjectSchema(marshmallow.Schema):
 
             # Add new project keys to table.
             # NOTE: TEMPORARY -- User Public should encrypt Project Private,
-            # KEK should encrypt User Public (not here)
+            # KEK should encrypt User Private (not here)
             new_project_key = models.ProjectKeys(
                 # key=aesgcm.encrypt(nonce=nonce, data=project_private_key, associated_data=aad),
                 key=project_private_key,
