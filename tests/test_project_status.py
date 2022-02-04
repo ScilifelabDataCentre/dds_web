@@ -30,9 +30,6 @@ fields_set_to_null = [
     "description",
     "pi",
     "public_key",
-    # "private_key",
-    # "privkey_salt",
-    # "privkey_nonce",
     "unit_id",
     "created_by",
     # "is_active",
@@ -90,8 +87,6 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     assert file_in_db(test_dict=first_new_file, project=project.id)
 
     for field, value in vars(project).items():
-        print(field)
-        print(value)
         if field in fields_set_to_null:
             assert value
 
