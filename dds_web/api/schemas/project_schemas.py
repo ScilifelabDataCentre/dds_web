@@ -20,7 +20,6 @@ from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
 import dds_web.utils
-from dds_web.crypt import key_gen
 import cryptography
 from dds_web.security import project_keys
 
@@ -135,11 +134,6 @@ class CreateProjectSchema(marshmallow.Schema):
             data["bucket"] = self.generate_bucketname(
                 public_id=data["public_id"], created_time=data["date_created"]
             )
-
-            # NOTE: TEMPORARY
-            # Generate keys and add to project
-            # data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
-            # ----
 
             # Create project
             current_user = auth.current_user()
