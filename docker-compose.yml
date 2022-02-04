@@ -52,7 +52,7 @@ services:
         source: ./tests
         target: /code/tests
 
-      # Sensitive config files: s3_config.json / .dds-cli.json / dds_app.cfg
+      # Sensitive config files: s3_config.json / dds_app.cfg
       - type: bind
         source: $DDS_SENSITIVE_FILES
         target: /code/dds_web/sensitive
