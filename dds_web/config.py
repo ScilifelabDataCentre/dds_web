@@ -25,16 +25,12 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Data related config
-    MAX_CONTENT_LENGTH = 16777216
+    MAX_CONTENT_LENGTH = 0x1000000
     MAX_DOWNLOAD_LIMIT = 1000000000
 
     # Expected paths - these are the bind paths *inside* the container
     USE_LOCAL_DB = True
     LOGS_DIR = "/dds_web/logs"
-    UPLOAD_FOLDER = "/dds_web/uploads"
-    DOWNLOAD_FOLDER = "/dds_web/downloads"
-    LOCAL_TEMP_CACHE = "/dds_web/local_temp_cache"
-    DDS_S3_CONFIG = "/code/dds_web/sensitive/s3_config.json"
     SAFESPRING_URL = os.environ.get("DDS_SAFESPRING_URL", "https://example.endpoint.net")
     DDS_SAFESPRING_PROJECT = os.environ.get("DDS_SAFESPRING_PROJECT", "project-name.example.se")
     DDS_SAFESPRING_ACCESS = os.environ.get("DDS_SAFESPRING_ACCESS", "SAFESPRINGACCESSKEY")
