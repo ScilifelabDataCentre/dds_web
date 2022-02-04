@@ -1,0 +1,29 @@
+{% extends 'mail/mail_base.html' %}
+{% block body %}
+<table role="presentation" border="0" cellpadding="0" cellspacing="0"
+  style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;">
+  <tr>
+    <td>
+      <img src="cid:Logo" alt="Logo" border="0"
+        style="border:0; outline:none; text-decoration:none; display:block; Margin-bottom: 15px; max-width: 400px; max-height: 87px;">
+    </td>
+  </tr>
+  <tr>
+    <td style=" font-family: arial, sans-serif; font-size: 14px; vertical-align: top;">
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: bold; margin: 0; Margin-bottom: 5px;">The
+        project {{project_id}} is now available to you in the SciLifeLab Data Delivery System (DDS).</p>
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 10px;">
+        The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple
+        way.</p>
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">
+        {% if unit_name is none %}
+        You were added to this project by {{sender_name}}.
+        {% else %}
+        You were added to this project by {{sender_name}} on behalf of {{unit_name}}{% if unit_email is not none %} (<a
+          href="mailto: {{unit_email}}">{{unit_email}}</a>){% endif %}.
+        {% endif %}
+      </p>
+    </td>
+  </tr>
+</table>
+{% endblock %}
