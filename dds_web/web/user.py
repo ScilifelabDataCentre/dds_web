@@ -7,6 +7,7 @@
 # Standard Library
 import datetime
 import re
+import os
 
 # Installed
 import flask
@@ -332,6 +333,7 @@ def reset_password(token):
     # Validate form
     if form.validate_on_submit():
         user.password = form.password.data
+        user.kd_salt = os.urandom(32)
         db.session.commit()
         flask.flash("Your password has been updated! You are now able to log in.", "success")
         return flask.redirect(flask.url_for("auth_blueprint.login"))
@@ -350,6 +352,7 @@ def change_password():
     if form.validate_on_submit():
         # Change password
         flask_login.current_user.password = form.new_password.data
+        flask_login.current_user.kd_salt = os.urandom(32)
         db.session.commit()
 
         flask_login.logout_user()
