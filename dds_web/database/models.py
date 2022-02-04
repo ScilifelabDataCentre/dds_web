@@ -330,7 +330,7 @@ class User(flask_login.UserMixin, db.Model):
     active = db.Column(db.Boolean)
     kd_salt = db.Column(db.LargeBinary(32), default=None)
     temporary_key = db.Column(db.LargeBinary(32), default=None)
-    public_key = db.Column(db.LargeBinary(70), default=None)
+    public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
 
     # Inheritance related, set automatically
@@ -359,7 +359,9 @@ class User(flask_login.UserMixin, db.Model):
         if not self.hotp_secret:
             self.hotp_secret = os.urandom(20)
         if not self.public_key or not self.private_key:
-            generate_user_key_pair(self)
+            key_pair = generate_user_key_pair()
+            self.public_key = key_pair["public_key"]
+            self.private_key = key_pair["private_key"]
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
