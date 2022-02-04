@@ -22,6 +22,7 @@ from dds_web.api.schemas import custom_fields
 import dds_web.utils
 from dds_web.crypt import key_gen
 import cryptography
+from dds_web.security import project_keys
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -137,13 +138,21 @@ class CreateProjectSchema(marshmallow.Schema):
 
             # NOTE: TEMPORARY
             # Generate keys and add to project
-            data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
+            # data.update(**key_gen.ProjectKeys(data["public_id"]).key_dict())
             # ----
 
             # Create project
             current_user = auth.current_user()
+            project_key_pair = project_keys.generate_project_key_pair(user=current_user)
+            flask.current_app.logger.debug(f"project_key_pair: {project_key_pair}")
+
             new_project = models.Project(
-                **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
+                **{
+                    **data,
+                    "unit_id": current_user.unit.id,
+                    "created_by": current_user.username,
+                    "public_key": project_key_pair["public_key"],
+                }
             )
             new_project.project_statuses.append(
                 models.ProjectStatuses(
@@ -156,16 +165,28 @@ class CreateProjectSchema(marshmallow.Schema):
             # Generate keys
             # NOTE: TEMPORARY:
             # key=b"temp" * 8 is only a temporary KEK until we have the actual KEK
-            aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(key=b"temp" * 8)
-            nonce = os.urandom(12)
-            project_private_key = bytes.fromhex(new_project.private_key)
+            # temporary_kek = project_keys.derive_key(user=current_user, password="password")
+            # flask.current_app.logger.debug(f"temporary_kek: {temporary_kek} ({len(temporary_kek)})")
+            #  b'\xda\xcd\x81\x0f\x0c\\\x03\xb4\xad\x0f\x0b\x85\xe6ib@\x03\x19\x8axD\x99aC\xa0\x88xZ\x13\x84\xe5{' (32)
+
+            # aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(key=temporary_kek)
+            nonce = project_key_pair["encrypted_private_key"]["nonce"]
+            project_private_key = project_key_pair["encrypted_private_key"]["encrypted_key"]
+            flask.current_app.logger.debug(
+                f"project_private_key before encrypted by temp kek: {project_private_key}"
+            )
+            # b"\xe5\x0c\x1f\xa0\xebj\x04\x00\x93\xadV\xfc\xbf9J\xe1J\xc4v`V!d^'/\x8d\xd2/\xe8\xc7\xa5\x99a\xa7\x89\x0e9Z\x12N\xc0\x9f8\xecS\xe6o"
             aad = None
             # ----
 
             # Add new project keys to table.
             new_project_key = models.ProjectKeys(
-                key=aesgcm.encrypt(nonce=nonce, data=project_private_key, associated_data=aad),
+                # key=aesgcm.encrypt(nonce=nonce, data=project_private_key, associated_data=aad),
+                key=project_private_key,
                 nonce=nonce,
+            )
+            flask.current_app.logger.debug(
+                f"project_private_key after encrypted by temp kek: {new_project_key.key}"
             )
 
             # Save

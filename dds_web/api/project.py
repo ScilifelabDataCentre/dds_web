@@ -38,7 +38,7 @@ from dds_web.errors import (
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas
 from dds_web.api.schemas import user_schemas
-
+from dds_web.security import project_keys
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -229,36 +229,28 @@ class GetPrivate(flask_restful.Resource):
     @logging_bind_request
     def get(self):
         """Get private key from database"""
-
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-
-        # TODO (ina): Change handling of private key -- not secure
         flask.current_app.logger.debug("Getting the private key.")
 
-        app_secret = flask.current_app.config.get("SECRET_KEY")
-        passphrase = app_secret.encode("utf-8")
+        # Verify access to project
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        enc_key = bytes.fromhex(project.private_key)
-        nonce = bytes.fromhex(project.privkey_nonce)
-        salt = bytes.fromhex(project.privkey_salt)
+        # Get Project keys row for current user and project
+        project_keys_row = models.ProjectKeys.query.filter_by(
+            project_id=project.id, user_id=auth.current_user().username
+        ).one_or_none()
+        if not project_keys_row:
+            raise AccessDeniedError("Project key missing.")
 
-        kdf = scrypt.Scrypt(
-            salt=salt,
-            length=32,
-            n=2**14,
-            r=8,
-            p=1,
-            backend=backends.default_backend(),
+        # Return the decrypted project private key
+        return flask.jsonify(
+            {
+                "private": project_keys.obtain_project_private_key(
+                    user=auth.current_user(), project_key=project_keys_row
+                )
+                .hex()
+                .upper()
+            }
         )
-
-        key_enc_key = kdf.derive(passphrase)
-        try:
-            decrypted_key = decrypt(ciphertext=enc_key, aad=None, nonce=nonce, key=key_enc_key)
-        except Exception as err:
-            flask.current_app.logger.exception(err)
-            raise KeyNotFoundError
-
-        return flask.jsonify({"private": decrypted_key.hex().upper()})
 
 
 class UserProjects(flask_restful.Resource):

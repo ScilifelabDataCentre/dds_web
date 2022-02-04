@@ -37,12 +37,13 @@ def manage_project_key_among_users(existing_user, current_user, project_key):
 
 
 def obtain_project_private_key(user, project_key):
-    password = dds_web.cache.get(user.username)
+    # password = dds_web.cache.get(user.username)
+    password = "password"
     key_encryption_key = derive_key(user, password)
     try:
         aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(key_encryption_key)
         aad = b"project key for user " + user.username.encode()
-        dds_web.cache.delete(user.username)
+        # dds_web.cache.delete(user.username)
         del password
         del key_encryption_key
         gc.collect()
@@ -53,10 +54,18 @@ def obtain_project_private_key(user, project_key):
 
 
 def encrypt_project_key(user, user_key, project_private_key):
+    flask.current_app.logger.debug(f"project_private_key - RAW: {project_private_key}")
     aad = b"project key for user " + user.username.encode()
     aesgcm = cryptography.hazmat.primitives.ciphers.aead.AESGCM(user_key)
     nonce = os.urandom(12)
-    return {"nonce": nonce, "encrypted_key": aesgcm.encrypt(nonce, project_private_key, aad)}
+    encrypted_project_private_key = aesgcm.encrypt(nonce, project_private_key, aad)
+    flask.current_app.logger.debug(
+        f"project_private_key - ENCRYPTED: {encrypted_project_private_key}"
+    )
+    return {
+        "nonce": nonce,
+        "encrypted_key": encrypted_project_private_key,
+    }
 
 
 def encrypt_project_key_with_temp_key(user, project_private_key):
@@ -72,7 +81,9 @@ def encrypt_project_key_with_password(user, project_private_key):
     password = "password"
     user_key = derive_key(user, password)
     # dds_web.cache.delete(user.username)
-    encrypted_project_key = encrypt_project_key(user, user_key, project_private_key)
+    encrypted_project_key = encrypt_project_key(
+        user=user, user_key=user_key, project_private_key=project_private_key
+    )
     del password
     del user_key
     gc.collect()
