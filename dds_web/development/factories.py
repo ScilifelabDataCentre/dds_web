@@ -67,6 +67,7 @@ class UnitUserFactory(factory.alchemy.SQLAlchemyModelFactory):
     username = factory.Sequence(lambda n: f"unit_user_{n}")
     password = "password"
     name = factory.Faker("name")
+    kd_salt = os.urandom(32)
 
     unit = factory.SubFactory(UnitFactory)
 
@@ -89,6 +90,7 @@ class ResearchUserFactory(factory.alchemy.SQLAlchemyModelFactory):
     username = factory.Sequence(lambda n: f"research_user_{n}")
     password = "password"
     name = factory.Faker("name")
+    kd_salt = os.urandom(32)
 
     @factory.post_generation
     def emails(self, create, extracted, **kwargs):
