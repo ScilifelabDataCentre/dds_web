@@ -45,6 +45,7 @@ def manage_project_key_among_users(existing_user, current_user, project_key):
 
 def obtain_project_private_key(user, project_key):
     """Decrypt the project private key with the user specific KEK."""
+    # TODO: Change to cache
     # password = dds_web.cache.get(user.username)
     password = "password"
 
@@ -91,6 +92,7 @@ def encrypt_project_key_with_temp_key(user, project_private_key):
 
 def encrypt_project_key_with_password(user, project_private_key):
     """Encrypt the project private key with KEK derived from users password."""
+    # TODO: Change to cache
     # password = dds_web.cache.get(user.username)
     password = "password"
 
