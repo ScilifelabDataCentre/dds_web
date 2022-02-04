@@ -26,6 +26,7 @@ from cryptography.hazmat.primitives import hashes
 # Own modules
 from dds_web import db, auth
 from dds_web.errors import AuthenticationError
+from dds_web.security.project_user_keys import generate_user_key_pair
 import dds_web.utils
 
 
@@ -329,6 +330,8 @@ class User(flask_login.UserMixin, db.Model):
     active = db.Column(db.Boolean)
     kd_salt = db.Column(db.LargeBinary(32), default=None)
     temporary_key = db.Column(db.LargeBinary(32), default=None)
+    public_key = db.Column(db.LargeBinary(300), default=None)
+    private_key = db.Column(db.LargeBinary(300), default=None)
 
     # Inheritance related, set automatically
     type = db.Column(db.String(20), unique=False, nullable=False)
@@ -355,6 +358,10 @@ class User(flask_login.UserMixin, db.Model):
         super(User, self).__init__(**kwargs)
         if not self.hotp_secret:
             self.hotp_secret = os.urandom(20)
+        if not self.public_key or not self.private_key:
+            key_pair = generate_user_key_pair()
+            self.public_key = key_pair["public_key"]
+            self.private_key = key_pair["private_key"]
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
