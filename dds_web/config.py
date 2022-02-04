@@ -25,7 +25,7 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Data related config
-    MAX_CONTENT_LENGTH = 16777216
+    MAX_CONTENT_LENGTH = 0x1000000
     MAX_DOWNLOAD_LIMIT = 1000000000
 
     # Expected paths - these are the bind paths *inside* the container
