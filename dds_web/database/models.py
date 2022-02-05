@@ -360,9 +360,9 @@ class User(flask_login.UserMixin, db.Model):
         if not self.hotp_secret:
             self.hotp_secret = os.urandom(20)
         if not self.public_key or not self.private_key:
-            key_pair = generate_user_key_pair()
+            key_pair = generate_user_key_pair(self)
             self.public_key = key_pair["public_key"]
-            self.private_key = key_pair["private_key"]
+            self.private_key = key_pair["encrypted_private_key"]
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
