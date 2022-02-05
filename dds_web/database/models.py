@@ -26,7 +26,7 @@ from cryptography.hazmat.primitives import hashes
 # Own modules
 from dds_web import db, auth
 from dds_web.errors import AuthenticationError
-from dds_web.security.user_keys import generate_user_key_pair
+from dds_web.security.project_user_keys import generate_user_key_pair
 import dds_web.utils
 
 

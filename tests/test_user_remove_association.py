@@ -60,7 +60,7 @@ def test_remove_not_associated_user_from_project(client, boto3_session):
         data=json.dumps(rem_user),
         content_type="application/json",
     )
-    assert response.status_code == http.HTTPStatus.OK
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "User already not associated with this project" in response.json["message"]
 
 

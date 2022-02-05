@@ -22,6 +22,14 @@ from dds_web.api import files
 api_blueprint = flask.Blueprint("api_blueprint", __name__)
 api = flask_restful.Api(api_blueprint)
 
+
+@api.representation("application/json")
+def output_json(data, code, headers=None):
+    resp = flask.make_response(flask.json.dumps(data), code)
+    resp.headers.extend(headers or {})
+    return resp
+
+
 ####################################################################################################
 # RESOURCES ############################################################################ RESOURCES #
 ####################################################################################################
