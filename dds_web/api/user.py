@@ -178,6 +178,12 @@ class AddUser(flask_restful.Resource):
             message = "User was not associated with the project"
             raise ddserr.DatabaseError(message=f"Server Error: {message}")
 
+        # If project is already released and not expired, send mail to user
+        if project.current_status == "Available":
+            AddUser.compose_and_send_email_to_user(
+                existing_user, "project_release", project=project
+            )
+
         flask.current_app.logger.debug(
             f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
         )
