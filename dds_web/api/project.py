@@ -64,7 +64,7 @@ class ProjectStatus(flask_restful.Resource):
             history.sort(key=lambda x: x[1], reverse=True)
             return_info.update({"history": history})
 
-        return flask.jsonify(return_info)
+        return return_info
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
@@ -164,9 +164,7 @@ class ProjectStatus(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(message="Server Error: Status was not updated")
 
-        return flask.jsonify(
-            {"message": f"{public_id} updated to status {new_status}" + delete_message}
-        )
+        return {"message": f"{public_id} updated to status {new_status}" + delete_message}
 
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""
@@ -219,7 +217,7 @@ class GetPublic(flask_restful.Resource):
         if not project.public_key:
             raise KeyNotFoundError(project=project.public_id)
 
-        return flask.jsonify({"public": project.public_key})
+        return {"public": project.public_key}
 
 
 class GetPrivate(flask_restful.Resource):
@@ -258,7 +256,7 @@ class GetPrivate(flask_restful.Resource):
             flask.current_app.logger.exception(err)
             raise KeyNotFoundError
 
-        return flask.jsonify({"private": decrypted_key.hex().upper()})
+        return {"private": decrypted_key.hex().upper()}
 
 
 class UserProjects(flask_restful.Resource):
@@ -320,7 +318,7 @@ class UserProjects(flask_restful.Resource):
             "total_size": total_size,
         }
 
-        return flask.jsonify(return_info)
+        return return_info
 
 
 class RemoveContents(flask_restful.Resource):
@@ -333,9 +331,11 @@ class RemoveContents(flask_restful.Resource):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        # Delete files
+        # Check if project contains anything
         if not project.files:
             raise EmptyProjectException("The are no project contents to delete.")
+
+        # Delete files
         try:
             self.delete_project_contents(project)
         except sqlalchemy.exc.SQLAlchemyError as err:
@@ -345,10 +345,8 @@ class RemoveContents(flask_restful.Resource):
                 message=f"No project contents deleted: {err}",
                 project=project.public_id,
             )
-        except (DeletionError, BucketNotFoundError):
-            raise
 
-        return flask.jsonify({"removed": True})
+        return {"removed": True}
 
     @staticmethod
     def delete_project_contents(project):
@@ -402,7 +400,10 @@ class CreateProject(flask_restful.Resource):
                         }
                     )
                     if invite_user_result["status"] == 200:
-                        invite_msg = f"Invitation sent to {user['email']}. The user should have a valid account to be added to a project"
+                        invite_msg = (
+                            f"Invitation sent to {user['email']}. "
+                            "The user should have a valid account to be added to a project"
+                        )
                     else:
                         invite_msg = invite_user_result["message"]
                     user_addition_statuses.append(invite_msg)
@@ -421,14 +422,12 @@ class CreateProject(flask_restful.Resource):
                         addition_status = add_user_result["message"]
                     user_addition_statuses.append(addition_status)
 
-        return flask.jsonify(
-            {
-                "status": 200,
-                "message": "Added new project '{}'".format(new_project.title),
-                "project_id": new_project.public_id,
-                "user_addition_statuses": user_addition_statuses,
-            }
-        )
+        return {
+            "status": 200,
+            "message": f"Added new project '{new_project.title}'",
+            "project_id": new_project.public_id,
+            "user_addition_statuses": user_addition_statuses,
+        }
 
 
 class ProjectUsers(flask_restful.Resource):
@@ -453,4 +452,4 @@ class ProjectUsers(flask_restful.Resource):
                     user_info["Primary email"] = user_email.email
             research_users.append(user_info)
 
-        return flask.jsonify({"research_users": research_users})
+        return {"research_users": research_users}
