@@ -6,11 +6,9 @@
 
 # Standard library
 import datetime
-import base64
 import os
 
 # Installed
-from sqlalchemy.ext import hybrid
 import sqlalchemy
 import flask
 import argon2
@@ -67,8 +65,7 @@ class ProjectKeys(db.Model):
     # ---
 
     # Additional columns
-    key = db.Column(db.LargeBinary(32), nullable=False, unique=True)
-    nonce = db.Column(db.LargeBinary(12), nullable=False, unique=True)
+    key = db.Column(db.LargeBinary(100), nullable=False, unique=True)
 
 
 class ProjectUsers(db.Model):

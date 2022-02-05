@@ -5,6 +5,9 @@ import flask
 from cryptography.hazmat.primitives import asymmetric, ciphers, hashes, serialization
 import gc
 
+from dds_web.database import models
+from dds_web.errors import KeyNotFoundError
+
 
 def __get_padding_for_rsa():
     """
@@ -37,11 +40,32 @@ def decrypt_with_rsa(ciphertext, private_key):
 
 
 def encrypt_project_private_key_for_user(user, project_private_key):
-    return encrypt_with_rsa(project_private_key, user.public_key)
+    user_public_key = serialization.load_der_public_key(user.public_key)
+    if isinstance(user_public_key, asymmetric.rsa.RSAPublicKey):
+        return encrypt_with_rsa(project_private_key, user_public_key)
+    exception = Exception("User public key cannot be loaded!")
+    flask.current_app.logger.exception(exception)
+    raise exception
 
 
 def decrypt_project_private_key_for_user(user, encrypted_project_private_key):
-    return decrypt_with_rsa(encrypted_project_private_key, decrypt_user_private_key(user))
+    user_private_key = serialization.load_der_private_key(
+        decrypt_user_private_key(user), password=None
+    )
+    if isinstance(user_private_key, asymmetric.rsa.RSAPrivateKey):
+        return decrypt_with_rsa(encrypted_project_private_key, user_private_key)
+    exception = Exception("User private key cannot be loaded!")
+    flask.current_app.logger.exception(exception)
+    raise exception
+
+
+def obtain_project_private_key(user, project):
+    project_key = models.ProjectKeys.query.filter_by(
+        project_id=project.id, user_id=user.username
+    ).first()
+    if project_key:
+        return decrypt_project_private_key_for_user(user, project_key.key)
+    raise KeyNotFoundError
 
 
 def generate_project_key_pair(user):
@@ -51,15 +75,16 @@ def generate_project_key_pair(user):
         format=serialization.PrivateFormat.Raw,
         encryption_algorithm=serialization.NoEncryption(),
     )
+    public_key_bytes = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw,
+    )
     encrypted_private_key = encrypt_project_private_key_for_user(user, private_key_bytes)
     del private_key_bytes
     del private_key
     gc.collect()
     return {
-        "public_key": private_key.public_key()
-        .public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
-        .hex()
-        .upper(),
+        "public_key": public_key_bytes,
         "encrypted_private_key": encrypted_private_key,
     }
 
@@ -115,14 +140,14 @@ def generate_user_key_pair(user):
     private_key_bytes = private_key.private_bytes(
         serialization.Encoding.DER, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
     )
+    public_key_bytes = private_key.public_key().public_bytes(
+        serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo
+    )
     encrypted_private_key = encrypt_user_private_key(user, private_key_bytes)
     del private_key_bytes
     del private_key
     gc.collect()
     return {
-        "public_key": private_key.public_key()
-        .public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
-        .hex()
-        .upper(),
+        "public_key": public_key_bytes,
         "encrypted_private_key": encrypted_private_key,
     }
