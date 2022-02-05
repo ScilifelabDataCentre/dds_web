@@ -95,6 +95,8 @@ class AuthenticationError(LoggedHTTPException):
 class AccessDeniedError(LoggedHTTPException):
     """Errors due to incorrect project permissions."""
 
+    code = http.HTTPStatus.FORBIDDEN  # 403
+
     def __init__(
         self,
         project=None,
