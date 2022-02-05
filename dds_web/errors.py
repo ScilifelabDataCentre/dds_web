@@ -42,10 +42,7 @@ class LoggedHTTPException(exceptions.HTTPException):
             project=flask.request.args.get("project"),
             user=get_username_or_request_ip(),
         ):
-            if error_codes[self.__class__.__name__]:
-                code = error_codes[self.__class__.__name__]
-                code = code["status"]
-                structlog.threadlocal.bind_threadlocal(response=f"{code.value} {code.phrase}")
+            structlog.threadlocal.bind_threadlocal(response=f"{self.code.value} {self.code.phrase}")
 
             if kwargs:
                 structlog.threadlocal.bind_threadlocal(extra=json.dumps(kwargs))
@@ -60,13 +57,6 @@ class LoggedHTTPException(exceptions.HTTPException):
 
 ####################################################################################################
 # EXCEPTIONS ########################################################################## EXCEPTIONS #
-####################################################################################################
-
-
-class ItemDeletionError(exceptions.HTTPException):
-    pass
-
-
 ####################################################################################################
 
 
@@ -311,7 +301,7 @@ error_codes = {
     "DatabaseError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "NoSuchProjectError": {"status": http.HTTPStatus.BAD_REQUEST},
     "AuthenticationError": {"status": http.HTTPStatus.UNAUTHORIZED},
-    "AccessDeniedError": {"status": http.HTTPStatus.FORBIDDEN},
+    # "AccessDeniedError": {"status": http.HTTPStatus.FORBIDDEN},
     "JwtTokenGenerationError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
     "MissingProjectIDError": {"status": http.HTTPStatus.BAD_REQUEST},
     "DDSArgumentError": {"status": http.HTTPStatus.BAD_REQUEST},

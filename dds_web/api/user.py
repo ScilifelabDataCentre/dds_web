@@ -183,7 +183,7 @@ class AddUser(flask_restful.Resource):
 
         if role not in allowed_roles or existing_user.role not in allowed_roles:
             raise ddserr.AccessDeniedError(
-                "User Role should be either 'Project Owner' or 'Researcher' to be added to a project"
+                message="User Role should be either 'Project Owner' or 'Researcher' to be added to a project"
             )
 
         owner = False
