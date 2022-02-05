@@ -237,7 +237,9 @@ class Project(db.Model):
     researchusers = db.relationship(
         "ProjectUsers", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
-    project_user_keys = db.relationship("ProjectUserKeys", back_populates="project", passive_deletes=True)
+    project_user_keys = db.relationship(
+        "ProjectUserKeys", back_populates="project", passive_deletes=True
+    )
 
     @property
     def current_status(self):
@@ -342,7 +344,9 @@ class User(flask_login.UserMixin, db.Model):
     emails = db.relationship(
         "Email", back_populates="user", passive_deletes=True, cascade="all, delete"
     )
-    project_user_keys = db.relationship("ProjectUserKeys", back_populates="user", passive_deletes=True)
+    project_user_keys = db.relationship(
+        "ProjectUserKeys", back_populates="user", passive_deletes=True
+    )
 
     # Delete requests if User is deleted:
     # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.
