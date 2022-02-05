@@ -36,7 +36,7 @@ import dds_web.utils
 # Association objects ######################################################## Association objects #
 
 
-class ProjectKeys(db.Model):
+class ProjectUserKeys(db.Model):
     """
     Many-to-many association table between projects and users (all).
 
@@ -50,18 +50,18 @@ class ProjectKeys(db.Model):
     """
 
     # Table setup
-    __tablename__ = "projectkeys"
+    __tablename__ = "projectuserkeys"
 
     # Foreign keys & relationships
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
     )
-    project = db.relationship("Project", back_populates="project_keys")
+    project = db.relationship("Project", back_populates="project_user_keys")
     # ---
     user_id = db.Column(
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
     )
-    user = db.relationship("User", back_populates="project_keys")
+    user = db.relationship("User", back_populates="project_user_keys")
     # ---
 
     # Additional columns
@@ -237,7 +237,7 @@ class Project(db.Model):
     researchusers = db.relationship(
         "ProjectUsers", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
-    project_keys = db.relationship("ProjectKeys", back_populates="project", passive_deletes=True)
+    project_user_keys = db.relationship("ProjectUserKeys", back_populates="project", passive_deletes=True)
 
     @property
     def current_status(self):
@@ -342,7 +342,7 @@ class User(flask_login.UserMixin, db.Model):
     emails = db.relationship(
         "Email", back_populates="user", passive_deletes=True, cascade="all, delete"
     )
-    project_keys = db.relationship("ProjectKeys", back_populates="user", passive_deletes=True)
+    project_user_keys = db.relationship("ProjectUserKeys", back_populates="user", passive_deletes=True)
 
     # Delete requests if User is deleted:
     # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.

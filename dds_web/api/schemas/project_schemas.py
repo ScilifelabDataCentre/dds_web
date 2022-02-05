@@ -163,14 +163,14 @@ class CreateProjectSchema(marshmallow.Schema):
             # ----
 
             # Add new project keys to table.
-            new_project_key = models.ProjectKeys(
+            new_project_key = models.ProjectUserKeys(
                 key=aesgcm.encrypt(nonce=nonce, data=project_private_key, associated_data=aad),
                 nonce=nonce,
             )
 
             # Save
-            auth.current_user().project_keys.append(new_project_key)
-            new_project.project_keys.append(new_project_key)
+            auth.current_user().project_user_keys.append(new_project_key)
+            new_project.project_user_keys.append(new_project_key)
             db.session.add(new_project)
             db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:

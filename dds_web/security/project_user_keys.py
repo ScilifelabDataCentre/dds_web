@@ -60,7 +60,7 @@ def decrypt_project_private_key_for_user(user, encrypted_project_private_key):
 
 
 def obtain_project_private_key(user, project):
-    project_key = models.ProjectKeys.query.filter_by(
+    project_key = models.ProjectUserKeys.query.filter_by(
         project_id=project.id, user_id=user.username
     ).first()
     if project_key:
