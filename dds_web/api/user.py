@@ -5,10 +5,6 @@
 ####################################################################################################
 
 # Standard library
-import datetime
-import logging
-import pathlib
-import secrets
 import os
 import smtplib
 import time

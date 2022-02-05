@@ -68,6 +68,14 @@ def obtain_project_private_key(user, project):
     raise KeyNotFoundError
 
 
+def share_project_private_key_with_user(current_user, existing_user, project):
+    return models.ProjectUserKeys(
+        key=encrypt_project_private_key_for_user(
+            existing_user, obtain_project_private_key(current_user, project)
+        )
+    )
+
+
 def generate_project_key_pair(user):
     private_key = asymmetric.x25519.X25519PrivateKey.generate()
     private_key_bytes = private_key.private_bytes(
