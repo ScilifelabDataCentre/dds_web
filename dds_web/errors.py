@@ -332,7 +332,11 @@ class TooManyRequestsError(LoggedHTTPException):
         general_logger.warning(self.description)
 
 
-# ----------------------------------------------------------------------------------- #
+class RoleException(LoggedHTTPException):
 
+    code = http.HTTPStatus.FORBIDDEN
 
-# ----------------------------------------------------------------------------------- #
+    def __init__(self, message="Invalid role."):
+
+        super().__init__(message)
+        general_logger.warning(message)

@@ -21,6 +21,8 @@ import itsdangerous
 import marshmallow
 import structlog
 import sqlalchemy
+import http
+
 
 # Own modules
 from dds_web import auth, mail, db, basic_auth, limiter
@@ -51,6 +53,11 @@ class AddUser(flask_restful.Resource):
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load(args)
 
+        if existing_user and not project:
+            raise ddserr.DDSArgumentError(
+                message="User exists! Specify a project if you want to add this user to a project."
+            )
+
         if not existing_user:
             # Send invite if the user doesn't exist
             invite_user_result = self.invite_user(args)
@@ -65,15 +72,6 @@ class AddUser(flask_restful.Resource):
                 return flask.make_response(
                     flask.jsonify(add_user_result), add_user_result["status"]
                 )
-            else:
-                return flask.make_response(
-                    flask.jsonify(
-                        {
-                            "message": "User exists! Specify a project if you want to add this user to a project."
-                        }
-                    ),
-                    ddserr.error_codes["DDSArgumentError"]["status"],
-                )
 
     @staticmethod
     @logging_bind_request
@@ -87,7 +85,7 @@ class AddUser(flask_restful.Resource):
         except ddserr.InviteError as invite_err:
             return {
                 "message": invite_err.description,
-                "status": ddserr.error_codes["InviteError"]["status"].value,
+                "status": ddserr.InviteError.code.value,
             }
 
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
@@ -182,13 +180,15 @@ class AddUser(flask_restful.Resource):
         allowed_roles = ["Project Owner", "Researcher"]
 
         if role not in allowed_roles or existing_user.role not in allowed_roles:
-            raise ddserr.AccessDeniedError(
-                message="User Role should be either 'Project Owner' or 'Researcher' to be added to a project"
-            )
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": (
+                    "User Role should be either 'Project Owner' or "
+                    "'Researcher' to be added to a project"
+                ),
+            }
 
-        owner = False
-        if role == "Project Owner":
-            owner = True
+        owner = role == "Project Owner"
 
         project = project_schemas.ProjectRequiredSchema().load({"project": project})
         ownership_change = False
@@ -196,7 +196,7 @@ class AddUser(flask_restful.Resource):
             if rusers.researchuser is existing_user:
                 if rusers.owner == owner:
                     return {
-                        "status": 403,
+                        "status": ddserr.RoleException.code.value,
                         "message": "User is already associated with the project in this capacity",
                     }
 
@@ -226,7 +226,7 @@ class AddUser(flask_restful.Resource):
         )
 
         return {
-            "status": 200,
+            "status": http.HTTPStatus.OK,
             "message": f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}.",
         }
 
@@ -415,9 +415,12 @@ class DeleteUser(flask_restful.Resource):
     def delete(self):
 
         user = user_schemas.UserSchema().load(flask.request.json)
-        if user is None:
+        if not user:
             raise ddserr.UserDeletionError(
-                message=f"This e-mail address is not associated with a user in the DDS, make sure it is not misspelled."
+                message=(
+                    f"This e-mail address is not associated with a user in the DDS, "
+                    "make sure it is not misspelled."
+                )
             )
 
         user_email_str = user.primary_email
@@ -494,7 +497,7 @@ class RemoveUserAssociation(flask_restful.Resource):
             )
         else:
             message = f"{user_email} already not associated with this project"
-            status = ddserr.error_codes["NoSuchUserError"]["status"].value
+            status = NoSuchUserError.code.value
 
         return {"message": message}, status
 
