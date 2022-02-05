@@ -66,6 +66,7 @@ class ProjectKeys(db.Model):
 
     # Additional columns
     key = db.Column(db.LargeBinary(100), nullable=False, unique=True)
+    nonce = db.Column(db.LargeBinary(12), nullable=False, unique=True)
 
 
 class ProjectUsers(db.Model):
