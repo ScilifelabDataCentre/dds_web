@@ -506,7 +506,7 @@ class EncryptedToken(flask_restful.Resource):
         limiter.limit(
             dds_web.utils.rate_limit_from_config,
             methods=["GET"],
-            error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+            error_message=ddserr.TooManyRequestsError.description,
         )
     ]
 

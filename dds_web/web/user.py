@@ -64,7 +64,7 @@ def index():
 @auth_blueprint.route("/confirm_invite/<token>", methods=["GET"])
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
-    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+    error_message=ddserr.TooManyRequestsError.description,
 )
 @logging_bind_request
 def confirm_invite(token):
@@ -120,7 +120,7 @@ def confirm_invite(token):
 @auth_blueprint.route("/register", methods=["POST"])
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
-    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+    error_message=ddserr.TooManyRequestsError.description,
 )
 def register():
     """Handles the creation of a new user"""
@@ -146,7 +146,7 @@ def register():
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
     methods=["POST"],
-    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+    error_message=ddserr.TooManyRequestsError.description,
 )
 def cancel_2fa():
     # Reset 2fa cookie
@@ -159,7 +159,7 @@ def cancel_2fa():
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
     methods=["GET", "POST"],
-    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+    error_message=ddserr.TooManyRequestsError.description,
 )
 def confirm_2fa():
     """Finalize login by validating the authentication one-time token"""
@@ -222,7 +222,7 @@ def confirm_2fa():
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
     methods=["POST"],
-    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+    error_message=ddserr.TooManyRequestsError.description,
 )
 def login():
     """Initiate a login by validating username password and sending a authentication one-time code"""
@@ -288,7 +288,7 @@ def logout():
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
     methods=["POST"],
-    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+    error_message=ddserr.TooManyRequestsError.description,
 )
 @logging_bind_request
 def request_reset_password():
@@ -312,7 +312,7 @@ def request_reset_password():
 @auth_blueprint.route("/reset_password/<token>", methods=["GET", "POST"])
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
-    error_message=ddserr.error_codes["TooManyRequestsError"]["message"],
+    error_message=ddserr.TooManyRequestsError.description,
 )
 def reset_password(token):
     """Perform the password reset when password is lost."""
