@@ -65,8 +65,7 @@ class ProjectUserKeys(db.Model):
     # ---
 
     # Additional columns
-    key = db.Column(db.LargeBinary(100), nullable=False, unique=True)
-    nonce = db.Column(db.LargeBinary(12), nullable=False, unique=True)
+    key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
 
 
 class ProjectUsers(db.Model):
@@ -206,13 +205,7 @@ class Project(db.Model):
     description = db.Column(db.Text)
     pi = db.Column(db.String(255), unique=False, nullable=True)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
-    public_key = db.Column(db.String(64), nullable=True)
-
-    # TODO: These should be deleted
-    private_key = db.Column(db.String(255), nullable=True)
-    privkey_salt = db.Column(db.String(32), nullable=True)
-    privkey_nonce = db.Column(db.String(24), nullable=True)
-    # ---
+    public_key = db.Column(db.LargeBinary(100), nullable=True)
 
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=True, default=False)
     released = db.Column(db.DateTime(), nullable=True)

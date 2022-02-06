@@ -65,18 +65,22 @@ def obtain_project_private_key(user, project):
     ).first()
     if project_key:
         return decrypt_project_private_key_for_user(user, project_key.key)
-    raise KeyNotFoundError
+    raise KeyNotFoundError(project=project.public_id)
 
 
 def share_project_private_key_with_user(current_user, existing_user, project):
-    return models.ProjectUserKeys(
+    project_existing_user_key = models.ProjectUserKeys(
+        project_id=project.id,
+        user_id=existing_user.username,
         key=encrypt_project_private_key_for_user(
             existing_user, obtain_project_private_key(current_user, project)
-        )
+        ),
     )
+    existing_user.project_user_keys.append(project_existing_user_key)
+    project.project_user_keys.append(project_existing_user_key)
 
 
-def generate_project_key_pair(user):
+def generate_project_key_pair(user, project):
     private_key = asymmetric.x25519.X25519PrivateKey.generate()
     private_key_bytes = private_key.private_bytes(
         encoding=serialization.Encoding.Raw,
@@ -91,10 +95,12 @@ def generate_project_key_pair(user):
     del private_key_bytes
     del private_key
     gc.collect()
-    return {
-        "public_key": public_key_bytes,
-        "encrypted_private_key": encrypted_private_key,
-    }
+    project.public_key = public_key_bytes
+    project_user_key = models.ProjectUserKeys(
+        project_id=project.id, user_id=user.username, key=encrypted_private_key
+    )
+    user.project_user_keys.append(project_user_key)
+    project.project_user_keys.append(project_user_key)
 
 
 def encrypt_with_aes(key, plaintext, aad=None):

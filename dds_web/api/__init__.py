@@ -7,7 +7,6 @@
 # Installed
 import flask
 import flask_restful
-import collections
 
 # Own modules
 from dds_web.api import user
