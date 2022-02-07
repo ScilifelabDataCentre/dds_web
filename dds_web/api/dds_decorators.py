@@ -12,9 +12,11 @@ import boto3
 import botocore
 import flask
 import structlog
+import sqlalchemy
 
 # Own modules
-from dds_web.errors import BucketNotFoundError
+from dds_web import db
+from dds_web.errors import BucketNotFoundError, DatabaseError
 from dds_web.utils import get_username_or_request_ip
 
 
@@ -27,6 +29,24 @@ action_logger = structlog.getLogger("actions")
 ####################################################################################################
 
 # S3 ########################################################################################## S3 #
+
+
+def dbsession(func):
+    @functools.wraps(func)
+    def session_wrapper(*args, **kwargs):
+
+        try:
+            result = func(*args, **kwargs)
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            db.session.rollback()
+            # TODO: For specific errors such as "Failed to add new file to database" -- check endpoint?
+            # - Failed updating file information?
+            raise DatabaseError(str(sqlerr))
+
+        return result
+
+    return session_wrapper
 
 
 def connect_cloud(func):
