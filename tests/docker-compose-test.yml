@@ -6,7 +6,6 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
       - DDS_PYTEST_ARGS=${DDS_PYTEST_ARGS}
-      - RATELIMIT_STORAGE_URI=memory://
     build:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./

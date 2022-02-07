@@ -34,6 +34,7 @@ services:
       - FLASK_ENV=development
       - FLASK_APP=dds_web
       - INIT_DEV_DB=${DDS_INIT_DEV_DB}
+      # - RATELIMIT_STORAGE_URI=redis://dds_redis  # use redis for persistent limiter between code reloads
     depends_on:
       db:
         condition: service_healthy

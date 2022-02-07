@@ -57,5 +57,5 @@ class Config(object):
 
     TOKEN_ENDPOINT_ACCESS_LIMIT = "10/hour"
     RATELIMIT_STORAGE_URI = os.environ.get(
-        "RATELIMIT_STORAGE_URI", "redis://dds_redis"
+        "RATELIMIT_STORAGE_URI", "memory://"
     )  # Use in devel only! Use Redis or memcached in prod
