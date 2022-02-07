@@ -32,7 +32,7 @@ import dds_web.forms
 import dds_web.errors as ddserr
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
-from dds_web.api.dds_decorators import logging_bind_request, dbsession
+from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
 
 # initiate bound logger
@@ -45,11 +45,9 @@ action_logger = structlog.getLogger("actions")
 class AddUser(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
-    @dbsession
     def post(self):
         """Create an invite and send email."""
 
-        raise sqlalchemy.exc.SQLAlchemyError("tetsing")
         project = flask.request.args.get("project", None)
         args = flask.request.json
         # Check if email is registered to a user
@@ -62,29 +60,33 @@ class AddUser(flask_restful.Resource):
 
         if not existing_user:
             # Send invite if the user doesn't exist
-            invite_user_result = self.invite_user(args=args)
+            invite_user_result = self.invite_user(args)
             return invite_user_result, invite_user_result["status"]
 
         else:
             # If there is an existing user, add them to project.
             if project:
-                add_user_result = self.add_user_to_project(project=project, role=args.get("role"))
+                add_user_result = self.add_user_to_project(existing_user, project, args.get("role"))
                 flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
                 return add_user_result, add_user_result["status"]
 
     @staticmethod
     @logging_bind_request
     def invite_user(args):
-        """Invite a new user."""
+        """Invite a new user"""
 
         try:
             # Use schema to validate and check args, and create invite row
             new_invite = user_schemas.InviteUserSchema().load(args)
+
         except ddserr.InviteError as invite_err:
             return {
                 "message": invite_err.description,
                 "status": ddserr.InviteError.code.value,
             }
+
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise ddserr.DatabaseError(message=str(sqlerr))
         except marshmallow.ValidationError as valerr:
             raise ddserr.InviteError(message=valerr.messages)
 
@@ -147,6 +149,8 @@ class AddUser(flask_restful.Resource):
             auth.current_user().unit.invites.append(new_invite)
         else:
             db.session.add(new_invite)
+
+        db.session.commit()
 
         return {
             "email": new_invite.email,

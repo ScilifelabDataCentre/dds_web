@@ -20,7 +20,7 @@ from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
-from dds_web.api.dds_decorators import logging_bind_request, dbsession
+from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.errors import (
     DatabaseError,
     DDSArgumentError,
@@ -79,12 +79,12 @@ class NewFile(flask_restful.Resource):
 
         new_file = file_schemas.NewFileSchema().load({**flask.request.json, **flask.request.args})
 
-        # try:
-        #     db.session.commit()
-        # except sqlalchemy.exc.SQLAlchemyError as err:
-        #     flask.current_app.logger.debug(err)
-        #     db.session.rollback()
-        #     raise DatabaseError(f"Failed to add new file to database.")
+        try:
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            flask.current_app.logger.debug(err)
+            db.session.rollback()
+            raise DatabaseError(f"Failed to add new file to database.")
 
         return {"message": f"File '{new_file.name}' added to db."}
 
@@ -100,65 +100,70 @@ class NewFile(flask_restful.Resource):
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
             raise DDSArgumentError("Information is missing, cannot add file to database.")
 
-        # Check if file already in db
-        existing_file = models.File.query.filter(
-            sqlalchemy.and_(
-                models.File.name == sqlalchemy.func.binary(file_info.get("name")),
-                models.File.project_id == project.id,
+        try:
+            # Check if file already in db
+            existing_file = models.File.query.filter(
+                sqlalchemy.and_(
+                    models.File.name == sqlalchemy.func.binary(file_info.get("name")),
+                    models.File.project_id == project.id,
+                )
+            ).first()
+
+            # Error if not found
+            if not existing_file or existing_file is None:
+                raise NoSuchFileError(
+                    "Cannot update non-existent file "
+                    f"'{werkzeug.utils.secure_filename(file_info.get('name'))}' in the database!"
+                )
+
+            # Get version row
+            current_file_version = models.Version.query.filter(
+                sqlalchemy.and_(
+                    models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
+                    models.Version.time_deleted.is_(None),
+                )
+            ).all()
+            if len(current_file_version) > 1:
+                flask.current_app.logger.warning(
+                    "There is more than one version of the file "
+                    "which does not yet have a deletion timestamp."
+                )
+
+            # Same timestamp for deleted and created new file
+            new_timestamp = dds_web.utils.current_time()
+
+            # Overwritten == deleted/deactivated
+            for version in current_file_version:
+                if version.time_deleted is None:
+                    version.time_deleted = new_timestamp
+
+            # Update file info
+            existing_file.subpath = file_info.get("subpath")
+            existing_file.size_original = file_info.get("size")
+            existing_file.size_stored = file_info.get("size_processed")
+            existing_file.compressed = file_info.get("compressed")
+            existing_file.salt = file_info.get("salt")
+            existing_file.public_key = file_info.get("public_key")
+            existing_file.time_uploaded = new_timestamp
+            existing_file.checksum = file_info.get("checksum")
+
+            # New version
+            new_version = models.Version(
+                size_stored=file_info.get("size_processed"),
+                time_uploaded=new_timestamp,
+                active_file=existing_file.id,
+                project_id=project,
             )
-        ).first()
 
-        # Error if not found
-        if not existing_file or existing_file is None:
-            raise NoSuchFileError(
-                "Cannot update non-existent file "
-                f"'{werkzeug.utils.secure_filename(file_info.get('name'))}' in the database!"
-            )
+            # Update foreign keys and relationships
+            project.file_versions.append(new_version)
+            existing_file.versions.append(new_version)
 
-        # Get version row
-        current_file_version = models.Version.query.filter(
-            sqlalchemy.and_(
-                models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
-                models.Version.time_deleted.is_(None),
-            )
-        ).all()
-        if len(current_file_version) > 1:
-            flask.current_app.logger.warning(
-                "There is more than one version of the file "
-                "which does not yet have a deletion timestamp."
-            )
-
-        # Same timestamp for deleted and created new file
-        new_timestamp = dds_web.utils.current_time()
-
-        # Overwritten == deleted/deactivated
-        for version in current_file_version:
-            if version.time_deleted is None:
-                version.time_deleted = new_timestamp
-
-        # Update file info
-        existing_file.subpath = file_info.get("subpath")
-        existing_file.size_original = file_info.get("size")
-        existing_file.size_stored = file_info.get("size_processed")
-        existing_file.compressed = file_info.get("compressed")
-        existing_file.salt = file_info.get("salt")
-        existing_file.public_key = file_info.get("public_key")
-        existing_file.time_uploaded = new_timestamp
-        existing_file.checksum = file_info.get("checksum")
-
-        # New version
-        new_version = models.Version(
-            size_stored=file_info.get("size_processed"),
-            time_uploaded=new_timestamp,
-            active_file=existing_file.id,
-            project_id=project,
-        )
-
-        # Update foreign keys and relationships
-        project.file_versions.append(new_version)
-        existing_file.versions.append(new_version)
-
-        db.session.add(new_version)
+            db.session.add(new_version)
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            raise DatabaseError(f"Failed updating file information: {err}")
 
         return {"message": f"File '{file_info.get('name')}' updated in db."}
 
