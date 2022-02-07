@@ -301,13 +301,6 @@ def add_data_to_db():
     users[3].created_projects.append(projects[3])
     users[2].created_projects.append(projects[4])
 
-    generate_project_key_pair(users[2], projects[0])
-    generate_project_key_pair(users[2], projects[2])
-    generate_project_key_pair(users[2], projects[4])
-
-    generate_project_key_pair(users[3], projects[1])
-    generate_project_key_pair(users[3], projects[3])
-
     units[0].projects.extend(projects)
     units[0].users.extend([users[2], users[3], users[4]])
     units[0].invites.append(invites[0])
@@ -334,6 +327,15 @@ def client():
             units, users = add_data_to_db()
             db.session.add_all(units)
             db.session.add_all(users)
+
+            db.session.commit()
+
+            generate_project_key_pair(users[2], units[0].projects[0])
+            generate_project_key_pair(users[2], units[0].projects[2])
+            generate_project_key_pair(users[2], units[0].projects[4])
+
+            generate_project_key_pair(users[3], units[0].projects[1])
+            generate_project_key_pair(users[3], units[0].projects[3])
 
             db.session.commit()
 
@@ -368,6 +370,15 @@ def module_client():
             units, users = add_data_to_db()
             db.session.add_all(units)
             db.session.add_all(users)
+
+            db.session.commit()
+
+            generate_project_key_pair(users[2], units[0].projects[0])
+            generate_project_key_pair(users[2], units[0].projects[2])
+            generate_project_key_pair(users[2], units[0].projects[4])
+
+            generate_project_key_pair(users[3], units[0].projects[1])
+            generate_project_key_pair(users[3], units[0].projects[3])
 
             db.session.commit()
 

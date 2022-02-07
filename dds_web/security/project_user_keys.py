@@ -91,16 +91,17 @@ def generate_project_key_pair(user, project):
         encoding=serialization.Encoding.Raw,
         format=serialization.PublicFormat.Raw,
     )
-    encrypted_private_key = encrypt_project_private_key_for_user(user, private_key_bytes)
+    project.public_key = public_key_bytes
+    for unit_user in user.unit.users:
+        encrypted_private_key = encrypt_project_private_key_for_user(unit_user, private_key_bytes)
+        project_user_key = models.ProjectUserKeys(
+            project_id=project.id, user_id=unit_user.username, key=encrypted_private_key
+        )
+        unit_user.project_user_keys.append(project_user_key)
+        project.project_user_keys.append(project_user_key)
     del private_key_bytes
     del private_key
     gc.collect()
-    project.public_key = public_key_bytes
-    project_user_key = models.ProjectUserKeys(
-        project_id=project.id, user_id=user.username, key=encrypted_private_key
-    )
-    user.project_user_keys.append(project_user_key)
-    project.project_user_keys.append(project_user_key)
 
 
 def encrypt_with_aes(key, plaintext, aad=None):

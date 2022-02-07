@@ -154,8 +154,6 @@ def fill_db():
 
     db.session.commit()
 
-    share_project_private_key_with_user(unituser_1, unituser_2, project_1)
-    share_project_private_key_with_user(unituser_2, unituser_1, project_2)
     share_project_private_key_with_user(unituser_1, researchuser_1, project_1)
     share_project_private_key_with_user(unituser_1, researchuser_2, project_1)
 
