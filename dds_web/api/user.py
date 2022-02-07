@@ -495,7 +495,10 @@ class RemoveUserAssociation(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load({"project": project_id})
 
         if not existing_user:
-            raise ddserr.NoSuchUserError(f"{user_email} already not associated with this project")
+            raise ddserr.NoSuchUserError(
+                f"The user with email '{user_email}' does not have access to the specified project."
+                " Cannot remove non-existent project access."
+            )
 
         user_in_project = False
         for user_association in project.researchusers:
@@ -504,7 +507,10 @@ class RemoveUserAssociation(flask_restful.Resource):
                 db.session.delete(user_association)
 
         if not user_in_project:
-            raise ddserr.NoSuchUserError(f"{user_email} already not associated with this project")
+            raise ddserr.NoSuchUserError(
+                f"The user with email '{user_email}' does not have access to the specified project."
+                " Cannot remove non-existent project access."
+            )
 
         try:
             db.session.commit()
