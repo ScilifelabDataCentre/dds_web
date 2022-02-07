@@ -12,7 +12,6 @@ import sqlalchemy
 from dds_web import auth, db, utils
 from dds_web import errors as ddserr
 from dds_web.database import models
-from dds_web.security.project_user_keys import share_project_private_key_with_user
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -181,8 +180,6 @@ class NewUserSchema(marshmallow.Schema):
             new_user.is_admin = invite.role == "Unit Admin"
 
             invite.unit.users.append(new_user)
-            for project in invite.unit.projects:
-                share_project_private_key_with_user(auth.current_user(), new_user, project)
         elif invite.role == "Super Admin":
             new_user = models.SuperAdmin(**common_user_fields)
 
