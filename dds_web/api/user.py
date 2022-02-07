@@ -5,10 +5,6 @@
 ####################################################################################################
 
 # Standard library
-import datetime
-import logging
-import pathlib
-import secrets
 import os
 import smtplib
 import time
@@ -33,6 +29,7 @@ import dds_web.errors as ddserr
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.security.project_user_keys import share_project_private_key_with_user
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
 
 # initiate bound logger
@@ -212,6 +209,7 @@ class AddUser(flask_restful.Resource):
                     owner=owner,
                 )
             )
+            share_project_private_key_with_user(auth.current_user(), existing_user, project)
 
         try:
             db.session.commit()
