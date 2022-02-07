@@ -200,6 +200,7 @@ class AddUser(flask_restful.Resource):
         # Compose and send email
         unit_name = None
         project_id = None
+        deadline = None
         if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
             unit = auth.current_user().unit
             unit_name = unit.external_display_name
@@ -219,6 +220,9 @@ class AddUser(flask_restful.Resource):
             subject = f"Project made available by {subject_subject} in the SciLifeLab Data Delivery System"
             recepients = [x.email for x in userobj.emails]
             project_id = project.public_id
+            deadline = project.current_deadline.astimezone(datetime.timezone.utc).strftime(
+                "%Y-%m-%d %H:%M:%S %Z"
+            )
 
         msg = flask_mail.Message(
             subject,
@@ -245,6 +249,7 @@ class AddUser(flask_restful.Resource):
             unit_name=unit_name,
             unit_email=unit_email,
             project_id=project_id,
+            deadline=deadline,
         )
         msg.html = flask.render_template(
             f"mail/{mail_type}.html",
@@ -253,6 +258,7 @@ class AddUser(flask_restful.Resource):
             unit_name=unit_name,
             unit_email=unit_email,
             project_id=project_id,
+            deadline=deadline,
         )
 
         AddUser.send_email_with_retry(msg)

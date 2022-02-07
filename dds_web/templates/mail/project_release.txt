@@ -1,9 +1,14 @@
-You have been invited to join the SciLifeLab Data Delivery System (DDS).
+The project {{project_id}} is now available for your access in the SciLifeLab Data Delivery System (DDS).
 The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple way.
 
 {% if unit_name is none %}
-The invite was sent to you by {{sender_name}}.
+You were added to this project by {{sender_name}}.
 {% else %}
-The invite was sent to you by {{sender_name}} on behalf of {{unit_name}}{% if unit_email is not none %} ({{unit_email}}){% endif %}.
+You were added to this project by {{sender_name}} on behalf of {{unit_name}}{% if unit_email is not none %} ({{unit_email}}){% endif %}.
 {% endif %}
-Please copy paste the following link into your browser to create your account: {{link}}
+
+The DDS CLI command 'dds ls -p {{project_id}}' can be used to list the files in this project.
+
+The DDS CLI command 'dds data get -p {{project_id}}' can be used to download the files in this project to your current directory.
+
+Your access to this project will expire on {{deadline}}
