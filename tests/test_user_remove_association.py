@@ -61,9 +61,7 @@ def test_remove_not_associated_user_from_project(client, boto3_session):
         content_type="application/json",
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert (
-        f"{rem_user['email']} already not associated with this project" in response.json["message"]
-    )
+    assert "Cannot remove non-existent project access" in response.json["message"]
 
 
 def test_remove_nonexistent_user_from_project(client, boto3_session):
@@ -89,7 +87,7 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert f"{email} already not associated with this project" in response.json["message"]
+    assert "Cannot remove non-existent project access" in response.json["message"]
 
 
 def test_remove_existing_user_from_nonexistent_proj(client, boto3_session):
