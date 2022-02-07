@@ -1,7 +1,6 @@
 # Standard Library
 import os
 import uuid
-from contextlib import contextmanager
 import unittest.mock
 import datetime
 
@@ -28,14 +27,16 @@ from dds_web.database.models import (
 )
 import dds_web.utils
 from dds_web import create_app, db
-
+from dds_web.security.project_user_keys import (
+    generate_project_key_pair,
+    share_project_private_key_with_user,
+)
 
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI = "mysql+pymysql://root:{}@db/DeliverySystemTest".format(mysql_root_password)
 
 
 def demo_data():
-    from dds_web.security import auth
     from dds_web.utils import timestamp
 
     units = [
@@ -129,10 +130,6 @@ def demo_data():
             "from this project. Create a new project to test the entire system. ",
             pi="PI",
             bucket=f"publicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-            public_key="2E2F3F1C91ECA5D4CBEFFB59A487511319E76FBA34709C6CC49BF9DC0EC8B10B",
-            private_key="494D26A977118F7E6AB6D87548E762DEB85C537292D65618FDC18A0EFAB6B860468F17BA26F7A0BDA4F23938A5A10801",
-            privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
-            privkey_nonce="847D75C4C548474FC54714AA",
         ),
         Project(
             public_id="unused_project_id",
@@ -140,10 +137,6 @@ def demo_data():
             description="This is a test project to check for permissions.",
             pi="PI",
             bucket=f"unusedprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-            public_key="2E2F3F1C91ECA5D4CBEFFB59A487511319E76FBA34709C6CC49BF9DC0EC8B10B",
-            private_key="494D26A977118F7E6AB6D87548E762DEB85C537292D65618FDC18A0EFAB6B860468F17BA26F7A0BDA4F23938A5A10801",
-            privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
-            privkey_nonce="847D75C4C548474FC54714AA",
         ),
         Project(
             public_id="restricted_project_id",
@@ -151,10 +144,6 @@ def demo_data():
             description="This is a test project without user access for the current research users",
             pi="PI",
             bucket=f"eliteprojectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-            public_key="2E2F3F1C91ECA5D4CBEFFB59A487511319E76FBA34709C6CC49BF9DC0EC8B10B",
-            private_key="494D26A977118F7E6AB6D87548E762DEB85C537292D65618FDC18A0EFAB6B860468F17BA26F7A0BDA4F23938A5A10801",
-            privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
-            privkey_nonce="847D75C4C548474FC54714AA",
         ),
         Project(
             public_id="second_public_project_id",
@@ -162,10 +151,6 @@ def demo_data():
             description="This is a second test project. You will be able to upload to but NOT download ",
             pi="PI",
             bucket=f"secondpublicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-            public_key="2E2F3F1C91ECA5D4CBEFFB59A487511319E76FBA34709C6CC49BF9DC0EC8B10B",
-            private_key="494D26A977118F7E6AB6D87548E762DEB85C537292D65618FDC18A0EFAB6B860468F17BA26F7A0BDA4F23938A5A10801",
-            privkey_salt="23D9FF66A5EE317D45D13809070C6D3F",
-            privkey_nonce="847D75C4C548474FC54714AA",
         ),
         Project(
             public_id="file_testing_project",
@@ -173,10 +158,6 @@ def demo_data():
             description="this project is used for testing to add new files.",
             pi="file testing project PI",
             bucket="bucket",
-            public_key="public_key",
-            private_key="private_key",
-            privkey_salt="privkey_salt",
-            privkey_nonce="privkey_nonce",
         ),
     ]
 
@@ -349,6 +330,21 @@ def client():
 
             db.session.commit()
 
+            generate_project_key_pair(users[2], units[0].projects[0])
+            generate_project_key_pair(users[2], units[0].projects[2])
+            generate_project_key_pair(users[2], units[0].projects[4])
+
+            generate_project_key_pair(users[3], units[0].projects[1])
+            generate_project_key_pair(users[3], units[0].projects[3])
+
+            db.session.commit()
+
+            share_project_private_key_with_user(users[2], users[0], units[0].projects[0])
+            share_project_private_key_with_user(users[2], users[1], units[0].projects[0])
+            share_project_private_key_with_user(users[3], users[6], units[0].projects[3])
+
+            db.session.commit()
+
             try:
                 yield client
             finally:
@@ -374,6 +370,21 @@ def module_client():
             units, users = add_data_to_db()
             db.session.add_all(units)
             db.session.add_all(users)
+
+            db.session.commit()
+
+            generate_project_key_pair(users[2], units[0].projects[0])
+            generate_project_key_pair(users[2], units[0].projects[2])
+            generate_project_key_pair(users[2], units[0].projects[4])
+
+            generate_project_key_pair(users[3], units[0].projects[1])
+            generate_project_key_pair(users[3], units[0].projects[3])
+
+            db.session.commit()
+
+            share_project_private_key_with_user(users[2], users[0], units[0].projects[0])
+            share_project_private_key_with_user(users[2], users[1], units[0].projects[0])
+            share_project_private_key_with_user(users[3], users[6], units[0].projects[3])
 
             db.session.commit()
 

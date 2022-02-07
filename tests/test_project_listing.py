@@ -43,9 +43,6 @@ def test_list_proj_access_granted_ls(client):
     assert "public_project_id" == list_of_projects[0].get("Project ID")
 
 
-# public key
-
-
 def test_proj_public_no_token(client):
     """Attempting to get the public key without a token should not work"""
 
