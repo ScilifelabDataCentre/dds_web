@@ -6,11 +6,9 @@
 
 # Standard library
 import datetime
-import base64
 import os
 
 # Installed
-from sqlalchemy.ext import hybrid
 import sqlalchemy
 import flask
 import argon2
@@ -38,7 +36,7 @@ import dds_web.utils
 # Association objects ######################################################## Association objects #
 
 
-class ProjectKeys(db.Model):
+class ProjectUserKeys(db.Model):
     """
     Many-to-many association table between projects and users (all).
 
@@ -52,23 +50,22 @@ class ProjectKeys(db.Model):
     """
 
     # Table setup
-    __tablename__ = "projectkeys"
+    __tablename__ = "projectuserkeys"
 
     # Foreign keys & relationships
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
     )
-    project = db.relationship("Project", back_populates="project_keys")
+    project = db.relationship("Project", back_populates="project_user_keys")
     # ---
     user_id = db.Column(
         db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
     )
-    user = db.relationship("User", back_populates="project_keys")
+    user = db.relationship("User", back_populates="project_user_keys")
     # ---
 
     # Additional columns
-    key = db.Column(db.LargeBinary(32), nullable=False, unique=True)
-    nonce = db.Column(db.LargeBinary(12), nullable=False, unique=True)
+    key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
 
 
 class ProjectUsers(db.Model):
@@ -208,13 +205,7 @@ class Project(db.Model):
     description = db.Column(db.Text)
     pi = db.Column(db.String(255), unique=False, nullable=True)
     bucket = db.Column(db.String(255), unique=True, nullable=False)
-    public_key = db.Column(db.String(64), nullable=True)
-
-    # TODO: These should be deleted
-    private_key = db.Column(db.String(255), nullable=True)
-    privkey_salt = db.Column(db.String(32), nullable=True)
-    privkey_nonce = db.Column(db.String(24), nullable=True)
-    # ---
+    public_key = db.Column(db.LargeBinary(100), nullable=True)
 
     is_sensitive = db.Column(db.Boolean, unique=False, nullable=True, default=False)
     released = db.Column(db.DateTime(), nullable=True)
@@ -239,7 +230,9 @@ class Project(db.Model):
     researchusers = db.relationship(
         "ProjectUsers", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
-    project_keys = db.relationship("ProjectKeys", back_populates="project", passive_deletes=True)
+    project_user_keys = db.relationship(
+        "ProjectUserKeys", back_populates="project", passive_deletes=True
+    )
 
     @property
     def current_status(self):
@@ -330,6 +323,7 @@ class User(flask_login.UserMixin, db.Model):
     active = db.Column(db.Boolean)
     kd_salt = db.Column(db.LargeBinary(32), default=None)
     temporary_key = db.Column(db.LargeBinary(32), default=None)
+    nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
 
@@ -343,7 +337,9 @@ class User(flask_login.UserMixin, db.Model):
     emails = db.relationship(
         "Email", back_populates="user", passive_deletes=True, cascade="all, delete"
     )
-    project_keys = db.relationship("ProjectKeys", back_populates="user", passive_deletes=True)
+    project_user_keys = db.relationship(
+        "ProjectUserKeys", back_populates="user", passive_deletes=True
+    )
 
     # Delete requests if User is deleted:
     # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.
@@ -359,9 +355,9 @@ class User(flask_login.UserMixin, db.Model):
         if not self.hotp_secret:
             self.hotp_secret = os.urandom(20)
         if not self.public_key or not self.private_key:
-            key_pair = generate_user_key_pair()
+            key_pair = generate_user_key_pair(self)
             self.public_key = key_pair["public_key"]
-            self.private_key = key_pair["private_key"]
+            self.private_key = key_pair["encrypted_private_key"]
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
@@ -378,6 +374,7 @@ class User(flask_login.UserMixin, db.Model):
         """Generate the password hash and save in db."""
         pw_hasher = argon2.PasswordHasher(hash_len=32)
         self._password_hash = pw_hasher.hash(plaintext_password)
+        self.kd_salt = os.urandom(32)
 
     def verify_password(self, input_password):
         """Verifies that the specified password matches the encoded password in the database."""
