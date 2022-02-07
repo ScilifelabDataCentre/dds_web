@@ -13,14 +13,21 @@ from dds_web.api import user
 from dds_web.api import project
 from dds_web.api import s3
 from dds_web.api import files
-from dds_web.errors import error_codes
 
 ####################################################################################################
 # BLUEPRINTS ########################################################################## BLUEPRINTS #
 ####################################################################################################
 
 api_blueprint = flask.Blueprint("api_blueprint", __name__)
-api = flask_restful.Api(api_blueprint, errors=error_codes)
+api = flask_restful.Api(api_blueprint)
+
+
+@api.representation("application/json")
+def output_json(data, code, headers=None):
+    resp = flask.make_response(flask.json.dumps(data), code)
+    resp.headers.extend(headers or {})
+    return resp
+
 
 ####################################################################################################
 # RESOURCES ############################################################################ RESOURCES #

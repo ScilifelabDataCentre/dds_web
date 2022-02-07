@@ -42,10 +42,7 @@ class LoggedHTTPException(exceptions.HTTPException):
             project=flask.request.args.get("project"),
             user=get_username_or_request_ip(),
         ):
-            if error_codes[self.__class__.__name__]:
-                code = error_codes[self.__class__.__name__]
-                code = code["status"]
-                structlog.threadlocal.bind_threadlocal(response=f"{code.value} {code.phrase}")
+            structlog.threadlocal.bind_threadlocal(response=f"{self.code.value} {self.code.phrase}")
 
             if kwargs:
                 structlog.threadlocal.bind_threadlocal(extra=json.dumps(kwargs))
@@ -60,13 +57,6 @@ class LoggedHTTPException(exceptions.HTTPException):
 
 ####################################################################################################
 # EXCEPTIONS ########################################################################## EXCEPTIONS #
-####################################################################################################
-
-
-class ItemDeletionError(exceptions.HTTPException):
-    pass
-
-
 ####################################################################################################
 
 
@@ -86,6 +76,8 @@ class KeyLengthError(SystemExit):
 class AuthenticationError(LoggedHTTPException):
     """Base class for errors due to authentication failure."""
 
+    code = http.HTTPStatus.UNAUTHORIZED
+
     def __init__(self, message="Missing or incorrect credentials"):
         super().__init__(message)
 
@@ -94,6 +86,8 @@ class AuthenticationError(LoggedHTTPException):
 
 class AccessDeniedError(LoggedHTTPException):
     """Errors due to incorrect project permissions."""
+
+    code = http.HTTPStatus.FORBIDDEN  # 403
 
     def __init__(
         self,
@@ -112,6 +106,8 @@ class AccessDeniedError(LoggedHTTPException):
 
 class DatabaseError(LoggedHTTPException):
     """Baseclass for database related issues."""
+
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
     def __init__(
         self,
@@ -133,6 +129,8 @@ class DatabaseError(LoggedHTTPException):
 class EmptyProjectException(LoggedHTTPException):
     """Something is attempted on an empty project."""
 
+    code = http.HTTPStatus.BAD_REQUEST
+
     def __init__(self, project, username=None, message="The project is empty."):
 
         if not username:
@@ -148,6 +146,8 @@ class EmptyProjectException(LoggedHTTPException):
 class DeletionError(LoggedHTTPException):
     """Deletion of item failed."""
 
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
     def __init__(self, project, message, pass_message=False):
 
         if project:
@@ -159,6 +159,8 @@ class DeletionError(LoggedHTTPException):
 
 class NoSuchProjectError(LoggedHTTPException):
     """The project does not exist in the database"""
+
+    code = http.HTTPStatus.BAD_REQUEST
 
     def __init__(self, project, message="The specified project does not exist."):
 
@@ -172,6 +174,8 @@ class NoSuchProjectError(LoggedHTTPException):
 class BucketNotFoundError(LoggedHTTPException):
     """No bucket name found in the database."""
 
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
     def __init__(self, message="No bucket found for the specified project."):
         super().__init__(message)
 
@@ -180,6 +184,8 @@ class BucketNotFoundError(LoggedHTTPException):
 
 class S3ProjectNotFoundError(LoggedHTTPException):
     """No Safespring project found in database or connection failed."""
+
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
     def __init__(self, message="Safespring S3 project not found."):
         super().__init__(message)
@@ -190,6 +196,8 @@ class S3ProjectNotFoundError(LoggedHTTPException):
 class S3ConnectionError(LoggedHTTPException):
     """Error when attempting to connect or perform action with S3 connection."""
 
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
     def __init__(self, message):
         super().__init__(message)
 
@@ -199,6 +207,8 @@ class S3ConnectionError(LoggedHTTPException):
 class S3InfoNotFoundError(LoggedHTTPException):
     """S3 info could not be found."""
 
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
     def __init__(self, message):
         super().__init__(message)
 
@@ -207,6 +217,8 @@ class S3InfoNotFoundError(LoggedHTTPException):
 
 class JwtTokenGenerationError(LoggedHTTPException):
     """Errors when generating the JWT token during authentication."""
+
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
     def __init__(self, message="Error during JWT Token generation.", pass_message=False):
 
@@ -222,6 +234,8 @@ class JwtTokenGenerationError(LoggedHTTPException):
 class MissingProjectIDError(LoggedHTTPException):
     """Errors due to missing project ID in request."""
 
+    code = http.HTTPStatus.BAD_REQUEST
+
     def __init__(self, message="Attempting to validate users project access without project ID"):
         super().__init__(message)
 
@@ -230,6 +244,8 @@ class MissingProjectIDError(LoggedHTTPException):
 
 class DDSArgumentError(LoggedHTTPException):
     """Base class for errors occurring due to missing request arguments."""
+
+    code = http.HTTPStatus.BAD_REQUEST
 
     def __init__(self, message):
         super().__init__(message)
@@ -240,6 +256,8 @@ class DDSArgumentError(LoggedHTTPException):
 class MissingMethodError(LoggedHTTPException):
     """Raised when none of the following are found in a request: put, get, ls, rm."""
 
+    code = http.HTTPStatus.BAD_REQUEST
+
     def __init__(self, message="No method found in request."):
         super().__init__(message)
 
@@ -248,6 +266,8 @@ class MissingMethodError(LoggedHTTPException):
 
 class KeyNotFoundError(LoggedHTTPException):
     """Key not found in database."""
+
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
     def __init__(self, project, message="No key found for current project", pass_message=False):
         self.message = f"{message}: {project}"
@@ -259,6 +279,8 @@ class KeyNotFoundError(LoggedHTTPException):
 
 class InviteError(LoggedHTTPException):
     """Invite related errors."""
+
+    code = http.HTTPStatus.BAD_REQUEST
 
     def __init__(self, message="An error occurred during invite handling."):
         super().__init__(message)
@@ -280,6 +302,8 @@ class UserDeletionError(LoggedHTTPException):
 class NoSuchUserError(LoggedHTTPException):
     """There is no such user found in the database."""
 
+    code = http.HTTPStatus.BAD_REQUEST
+
     def __init__(self, message="User not found."):
         super().__init__(message)
 
@@ -289,44 +313,30 @@ class NoSuchUserError(LoggedHTTPException):
 class NoSuchFileError(Exception):
     """There is no such file found in the database."""
 
+    code = http.HTTPStatus.BAD_REQUEST
+
     def __init__(self, message="Specified file does not exist."):
         super().__init__(message)
 
         general_logger.warning(message)
 
 
-# ----------------------------------------------------------------------------------- #
+class TooManyRequestsError(LoggedHTTPException):
+
+    code = http.HTTPStatus.TOO_MANY_REQUESTS
+    description = "Too many authentication requests in one hour"
+
+    def __init__(self):
+
+        super().__init__(self.description)
+        general_logger.warning(self.description)
 
 
-# ----------------------------------------------------------------------------------- #
+class RoleException(LoggedHTTPException):
 
+    code = http.HTTPStatus.FORBIDDEN
 
-error_codes = {
-    "ItemDeletionError": {
-        "message": "Removal of item(s) from S3 bucket failed.",
-        "status": http.HTTPStatus.INTERNAL_SERVER_ERROR,
-    },
-    "DatabaseError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "NoSuchProjectError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "AuthenticationError": {"status": http.HTTPStatus.UNAUTHORIZED},
-    "AccessDeniedError": {"status": http.HTTPStatus.FORBIDDEN},
-    "JwtTokenGenerationError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "MissingProjectIDError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "DDSArgumentError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "MissingMethodError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "EmptyProjectException": {"status": http.HTTPStatus.BAD_REQUEST},
-    "DeletionError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "S3ConnectionError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "S3ProjectNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "S3InfoNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "KeyNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "BucketNotFoundError": {"status": http.HTTPStatus.INTERNAL_SERVER_ERROR},
-    "InviteError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "UserDeletionError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "NoSuchUserError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "NoSuchFileError": {"status": http.HTTPStatus.BAD_REQUEST},
-    "TooManyRequestsError": {
-        "message": "Too many authentication requests in one hour",
-        "status": http.HTTPStatus.TOO_MANY_REQUESTS,
-    },
-}
+    def __init__(self, message="Invalid role."):
+
+        super().__init__(message)
+        general_logger.warning(message)
