@@ -3,6 +3,7 @@ import os
 import uuid
 import unittest.mock
 import datetime
+import subprocess
 
 # Installed
 import pytest
@@ -33,7 +34,46 @@ from dds_web.security.project_user_keys import (
 )
 
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
-DATABASE_URI = "mysql+pymysql://root:{}@db/DeliverySystemTest".format(mysql_root_password)
+DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
+DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
+
+
+def fill_basic_db(db):
+    """
+    Fill the database with basic data.
+    """
+    db.create_all()
+
+    units, users = add_data_to_db()
+    db.session.add_all(units)
+    db.session.add_all(users)
+
+    db.session.commit()
+
+    generate_project_key_pair(users[2], units[0].projects[0])
+    generate_project_key_pair(users[2], units[0].projects[2])
+    generate_project_key_pair(users[2], units[0].projects[4])
+
+    generate_project_key_pair(users[3], units[0].projects[1])
+    generate_project_key_pair(users[3], units[0].projects[3])
+
+    db.session.commit()
+
+    share_project_private_key_with_user(users[2], users[0], units[0].projects[0])
+    share_project_private_key_with_user(users[2], users[1], units[0].projects[0])
+    share_project_private_key_with_user(users[3], users[6], units[0].projects[3])
+
+    db.session.commit()
+
+
+def new_test_db(uri):
+    dbname = uri[uri.rindex("/") + 1 :]
+    dbname_base = DATABASE_URI_BASE[DATABASE_URI_BASE.rindex("/") + 1 :]
+    dump_args = ["mysqldump", "-h", "db", "-u", "root", f"-p{mysql_root_password}", dbname_base]
+    load_args = ["mysql", "-h", "db", "-u", "root", f"-p{mysql_root_password}", dbname]
+    proc1 = subprocess.run(dump_args, capture_output=True)
+    proc1 = subprocess.run(dump_args, stdout=subprocess.PIPE)
+    proc2 = subprocess.run(load_args, input=proc1.stdout, capture_output=True)
 
 
 def demo_data():
@@ -316,38 +356,27 @@ def add_data_to_db():
 @pytest.fixture(scope="function")
 def client():
     # Create database specific for tests
+    if not database_exists(DATABASE_URI_BASE):
+        create_database(DATABASE_URI_BASE)
+        app = create_app(testing=True, database_uri=DATABASE_URI_BASE)
+        with app.test_request_context():
+            with app.test_client():
+                fill_basic_db(db)
+                db.engine.dispose()
+
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
+
+    # Fill database with values from base db
+    new_test_db(DATABASE_URI)
+
     app = create_app(testing=True, database_uri=DATABASE_URI)
     with app.test_request_context():
         with app.test_client() as client:
-
-            db.create_all()
-
-            units, users = add_data_to_db()
-            db.session.add_all(units)
-            db.session.add_all(users)
-
-            db.session.commit()
-
-            generate_project_key_pair(users[2], units[0].projects[0])
-            generate_project_key_pair(users[2], units[0].projects[2])
-            generate_project_key_pair(users[2], units[0].projects[4])
-
-            generate_project_key_pair(users[3], units[0].projects[1])
-            generate_project_key_pair(users[3], units[0].projects[3])
-
-            db.session.commit()
-
-            share_project_private_key_with_user(users[2], users[0], units[0].projects[0])
-            share_project_private_key_with_user(users[2], users[1], units[0].projects[0])
-            share_project_private_key_with_user(users[3], users[6], units[0].projects[3])
-
-            db.session.commit()
-
             try:
                 yield client
             finally:
+                # aborts any pending transactions
                 db.session.rollback()
                 # Removes all data from the database
                 for table in reversed(db.metadata.sorted_tables):
@@ -359,38 +388,27 @@ def client():
 @pytest.fixture(scope="module")
 def module_client():
     # Create database specific for tests
+    if not database_exists(DATABASE_URI_BASE):
+        create_database(DATABASE_URI_BASE)
+        app = create_app(testing=True, database_uri=DATABASE_URI_BASE)
+        with app.test_request_context():
+            with app.test_client() as client:
+                fill_basic_db(db)
+                db.engine.dispose()
+
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
+
+    # Fill database with values from base db
+    new_test_db(DATABASE_URI)
+
     app = create_app(testing=True, database_uri=DATABASE_URI)
     with app.test_request_context():
         with app.test_client() as client:
-
-            db.create_all()
-
-            units, users = add_data_to_db()
-            db.session.add_all(units)
-            db.session.add_all(users)
-
-            db.session.commit()
-
-            generate_project_key_pair(users[2], units[0].projects[0])
-            generate_project_key_pair(users[2], units[0].projects[2])
-            generate_project_key_pair(users[2], units[0].projects[4])
-
-            generate_project_key_pair(users[3], units[0].projects[1])
-            generate_project_key_pair(users[3], units[0].projects[3])
-
-            db.session.commit()
-
-            share_project_private_key_with_user(users[2], users[0], units[0].projects[0])
-            share_project_private_key_with_user(users[2], users[1], units[0].projects[0])
-            share_project_private_key_with_user(users[3], users[6], units[0].projects[3])
-
-            db.session.commit()
-
             try:
                 yield client
             finally:
+                # aborts any pending transactions
                 db.session.rollback()
                 # Removes all data from the database
                 for table in reversed(db.metadata.sorted_tables):
