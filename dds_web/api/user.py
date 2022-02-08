@@ -74,7 +74,7 @@ class AddUser(flask_restful.Resource):
 
     @staticmethod
     @logging_bind_request
-    def invite_user(args, project):
+    def invite_user(args, project=None):
         """Invite a new user"""
 
         try:
@@ -93,7 +93,7 @@ class AddUser(flask_restful.Resource):
             raise ddserr.InviteError(message=valerr.messages)
 
         # Create URL safe token for invitation link
-        TKEK = "Bogus"
+        TKEK = "bogus"
         # TODO change to real TKEK.
 
         if project:
