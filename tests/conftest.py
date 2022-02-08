@@ -7,7 +7,7 @@ import subprocess
 
 # Installed
 import pytest
-from sqlalchemy_utils import create_database, database_exists, drop_database
+from sqlalchemy_utils import create_database, database_exists
 import boto3
 
 # Own
@@ -364,6 +364,9 @@ def client():
                 fill_basic_db(db)
                 db.engine.dispose()
 
+    if not database_exists(DATABASE_URI):
+        create_database(DATABASE_URI)
+
     # Fill database with values from base db
     new_test_db(DATABASE_URI)
 
@@ -392,6 +395,9 @@ def module_client():
             with app.test_client() as client:
                 fill_basic_db(db)
                 db.engine.dispose()
+
+    if not database_exists(DATABASE_URI):
+        create_database(DATABASE_URI)
 
     # Fill database with values from base db
     new_test_db(DATABASE_URI)
