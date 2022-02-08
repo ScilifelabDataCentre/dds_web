@@ -158,6 +158,13 @@ class ProjectStatus(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(message="Server Error: Status was not updated")
 
+        # Mail users once project is made available
+        if new_status == "Available":
+            for user in project.researchusers:
+                AddUser.compose_and_send_email_to_user(
+                    user.researchuser, "project_release", project=project
+                )
+
         return {"message": f"{public_id} updated to status {new_status}" + delete_message}
 
     def is_transition_possible(self, current_status, new_status):
