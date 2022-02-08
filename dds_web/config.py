@@ -60,5 +60,7 @@ class Config(object):
         "RATELIMIT_STORAGE_URI", "memory://"
     )  # Use in devel only! Use Redis or memcached in prod
 
+    INVITATION_EXPIRES_IN_HOURS = 7 * 24
+
     # 512MiB; at least 4GiB (0x400000) recommended in production
     ARGON_MEMORY_COST = os.environ.get("ARGON_MEMORY_COST", 0x80000)
