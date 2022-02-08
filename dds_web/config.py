@@ -63,3 +63,5 @@ class Config(object):
     RATELIMIT_STORAGE_URL = os.environ.get(
         "RATELIMIT_STORAGE_URL", "memory://"
     )  # Use in devel only! Use Redis or memcached in prod
+
+    INVITATION_EXPIRES_IN_HOURS = 7 * 24
