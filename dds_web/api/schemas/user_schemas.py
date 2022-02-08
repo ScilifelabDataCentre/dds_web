@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Installed
+import flask
 import marshmallow
 import sqlalchemy
 
@@ -123,6 +124,12 @@ class NewUserSchema(marshmallow.Schema):
         required=True,
         validate=marshmallow.validate.And(marshmallow.validate.Email(), utils.email_not_taken),
     )
+    token_email = marshmallow.fields.Email(
+        required=True,
+    )
+    TKEK = marshmallow.fields.String(
+        required=True,
+    )
     name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=255))
 
     class Meta:
@@ -152,11 +159,19 @@ class NewUserSchema(marshmallow.Schema):
     def verify_and_get_invite(self, data, **kwargs):
         """Verifies that the email is in the invite table and in that case saves the invite info."""
 
+        form_email = data["email"]
+        token_email = data["token_email"]  # Originates from the token and not from the form
+
+        # Avoid a simple attacker scenarios where one is submitting a different email than the invite was sent to
+        if form_email != token_email:
+            flask.current_app.logger.warning(f"Email mismatch: {form_email} != {token_email}")
+            raise ddserr.InviteError(message="Form email and token email not the same")
+
         invite = models.Invite.query.filter(
             models.Invite.email == sqlalchemy.func.binary(data.get("email"))
         ).one_or_none()
         if not invite:
-            raise ddserr.InviteError
+            raise ddserr.InviteError(message="No invite found for this email at schema validation")
 
         data["invite"] = invite
 
@@ -190,6 +205,8 @@ class NewUserSchema(marshmallow.Schema):
         new_user.active = True
 
         db.session.add(new_user)
+
+        # Use the TKEK here
 
         # Delete old invite
         db.session.delete(invite)
