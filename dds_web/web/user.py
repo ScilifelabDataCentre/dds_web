@@ -68,7 +68,7 @@ def index():
 def confirm_invite(token):
     """Confirm invitation."""
     try:
-        email = dds_web.security.auth.verify_invite_token_no_data(token)
+        email = dds_web.security.auth.verify_invite_token_no_sensdata(token)
     except Exception as err:
         flask.flash("This invitation link has expired or is invalid.", "danger")
         return flask.redirect(flask.url_for("auth_blueprint.index"))

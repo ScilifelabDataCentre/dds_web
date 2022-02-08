@@ -111,7 +111,10 @@ class AddUser(flask_restful.Resource):
             flask.current_app.logger.error(
                 "Invitation link was not possible to create due to length."
             )
-            return {"message": "Invite failed due to server error", "status": 500}
+            return {
+                "message": "Invite failed due to server error",
+                "status": http.HTTPStatus.INTERNAL_SERVER_ERROR,
+            }
 
         # Compose and send email
         unit_name = None

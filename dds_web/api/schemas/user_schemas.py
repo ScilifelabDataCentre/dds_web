@@ -202,7 +202,7 @@ class NewUserSchema(marshmallow.Schema):
 
         db.session.add(new_user)
 
-        # Use the TKEK here
+        # TODO Use the TKEK here
 
         # Delete old invite
         db.session.delete(invite)

@@ -76,7 +76,7 @@ def verify_token_no_data(token):
     return user
 
 
-def verify_invite_token_no_data(token):
+def verify_invite_token_no_sensdata(token):
     email, TKEK = verify_invite_token(token)
     del TKEK
     gc.collect()
