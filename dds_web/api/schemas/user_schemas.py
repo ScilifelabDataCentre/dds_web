@@ -136,10 +136,7 @@ class NewUserSchema(marshmallow.Schema):
 
         if utils.username_in_db(username=value):
             raise marshmallow.ValidationError(
-                message=(
-                    f"The username '{value}' is already taken by another user. "
-                    "Try something else."
-                )
+                message=(f"The username '{value}' is already taken by another user. ")
             )
 
     @marshmallow.validates("email")
