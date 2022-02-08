@@ -37,6 +37,7 @@ mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
 
+
 def fill_basic_db(db):
     """
     Fill the database with basic data.
@@ -66,8 +67,8 @@ def fill_basic_db(db):
 
 
 def new_test_db(uri):
-    dbname = uri[uri.rindex("/")+1:]
-    dbname_base = DATABASE_URI_BASE[DATABASE_URI_BASE.rindex("/")+1:]
+    dbname = uri[uri.rindex("/") + 1 :]
+    dbname_base = DATABASE_URI_BASE[DATABASE_URI_BASE.rindex("/") + 1 :]
     dump_args = ["mysqldump", "-h", "db", "-u", "root", f"-p{mysql_root_password}", dbname_base]
     load_args = ["mysql", "-h", "db", "-u", "root", f"-p{mysql_root_password}", dbname]
     proc1 = subprocess.run(dump_args, capture_output=True)
@@ -356,7 +357,6 @@ def add_data_to_db():
 def client():
     # Create database specific for tests
     if not database_exists(DATABASE_URI_BASE):
-        print('here')
         create_database(DATABASE_URI_BASE)
         app = create_app(testing=True, database_uri=DATABASE_URI_BASE)
         with app.test_request_context():
