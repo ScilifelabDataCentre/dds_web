@@ -71,17 +71,9 @@ def new_test_db(uri):
     dbname_base = DATABASE_URI_BASE[DATABASE_URI_BASE.rindex("/") + 1 :]
     dump_args = ["mysqldump", "-h", "db", "-u", "root", f"-p{mysql_root_password}", dbname_base]
     load_args = ["mysql", "-h", "db", "-u", "root", f"-p{mysql_root_password}", dbname]
-    print(dump_args)
-    print(load_args)
     proc1 = subprocess.run(dump_args, capture_output=True)
-    #    print(proc1.stdout)
-    #    print(proc1.stderr)
     proc1 = subprocess.run(dump_args, stdout=subprocess.PIPE)
     proc2 = subprocess.run(load_args, input=proc1.stdout, capture_output=True)
-    print(proc2.stdout)
-    print(proc2.stderr)
-    if proc2.returncode != 0:
-        return False
 
 
 def demo_data():
