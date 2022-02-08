@@ -69,21 +69,50 @@ def get_user_roles_common(user):
 
 
 def verify_token_no_data(token):
-    user, claims = __verify_general_token(token)
+    claims = __verify_general_token(token)
+    user = user_from_subject(claims.get("sub"))
     del claims
     gc.collect()
     return user
 
 
+def verify_invite_token_no_data(token):
+    email, TKEK = verify_invite_token(token)
+    del TKEK
+    gc.collect()
+    return email
+
+
+def verify_invite_token(token):
+    claims = __verify_general_token(token)
+
+    sensitive_content = json.loads(claims["sen_con"])
+
+    # Anyone can post a token to this endpoint so need to be very careful that it's an invite token
+    if "invited_email" not in sensitive_content:
+        raise AuthenticationError(message="Invalid token")
+
+    # I believe this could only happen by mistake on our side, but still worth checking for
+    if claims.get("sub") != sensitive_content["invited_email"]:
+        raise AuthenticationError(message="Invalid token")
+
+    del claims
+    gc.collect()
+
+    return sensitive_content["invited_email"], sensitive_content["TKEK"]
+
+
 @auth.verify_token
 def verify_token(token):
-    user, data = __verify_general_token(token)
-    return handle_multi_factor_authentication(user, data.get("mfa_auth_time"))
+    claims = __verify_general_token(token)
+    user = user_from_subject(claims.get("sub"))
+
+    return handle_multi_factor_authentication(user, claims.get("mfa_auth_time"))
 
 
 def __verify_general_token(token):
     """Verifies the format, signature and expiration time of an encrypted and signed JWT token.
-    Raises ValueError if token is invalid, could raise other exceptions from dependencies.
+    Raises AuthenticationError if token is invalid, could raise other exceptions from dependencies.
 
     If user given by the "sub" claim is found in the database it returns
     (user, claims)
@@ -112,15 +141,18 @@ def __verify_general_token(token):
     if expiration_time and (
         dds_web.utils.current_time() <= datetime.datetime.fromtimestamp(expiration_time)
     ):
-        username = data.get("sub")
-        if username:
-            user = models.User.query.get(username)
-        if user and user.is_active:
-            return user, data
-
-        return None, data
+        return data
 
     raise AuthenticationError(message="Expired token")
+
+
+def user_from_subject(subject):
+    if subject:
+        user = models.User.query.get(subject)
+    if user and user.is_active:
+        return user
+
+    return None
 
 
 def handle_multi_factor_authentication(user, mfa_auth_time_string):
