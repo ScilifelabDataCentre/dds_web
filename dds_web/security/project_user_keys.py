@@ -74,6 +74,12 @@ def share_project_private_key_with_user(current_user, existing_user, project):
     )
 
 
+def share_project_private_key_with_invite(current_user, invite, project):
+    __init_and_append_project_invite_key(
+        invite, project, obtain_project_private_key(current_user, project)
+    )
+
+
 def __init_and_append_project_user_key(user, project, project_private_key):
     project_user_key = models.ProjectUserKeys(
         project_id=project.id,
@@ -82,6 +88,17 @@ def __init_and_append_project_user_key(user, project, project_private_key):
     )
     user.project_user_keys.append(project_user_key)
     project.project_user_keys.append(project_user_key)
+
+
+def __init_and_append_project_invite_key(invite, project, project_private_key):
+    invite_user_key = models.InviteUserKeys(
+        project_id=project.id,
+        invite_id=invite.id,
+        # TODO: Replace with real key: project_private_key encrypted with invitees public
+        key=ciphers.aead.AESGCM.generate_key(bit_length=256),
+    )
+    invite.invite_user_keys.append(invite_user_key)
+    project.invite_user_keys.append(invite_user_key)
 
 
 def generate_project_key_pair(user, project):

@@ -32,7 +32,10 @@ import dds_web.errors as ddserr
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 from dds_web.api.dds_decorators import logging_bind_request
-from dds_web.security.project_user_keys import share_project_private_key_with_user
+from dds_web.security.project_user_keys import (
+    share_project_private_key_with_invite,
+    share_project_private_key_with_user,
+)
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
 
 # initiate bound logger
@@ -60,7 +63,7 @@ class AddUser(flask_restful.Resource):
 
         if not existing_user:
             # Send invite if the user doesn't exist
-            invite_user_result = self.invite_user(args)
+            invite_user_result = self.invite_user(args, project)
             return invite_user_result, invite_user_result["status"]
 
         else:
@@ -72,7 +75,7 @@ class AddUser(flask_restful.Resource):
 
     @staticmethod
     @logging_bind_request
-    def invite_user(args):
+    def invite_user(args, project=None):
         """Invite a new user"""
 
         try:
@@ -91,8 +94,11 @@ class AddUser(flask_restful.Resource):
             raise ddserr.InviteError(message=valerr.messages)
 
         # Create URL safe token for invitation link
-        TKEK = "bogus"
+        TKEK = "Bogus"
         # TODO change to real TKEK.
+
+        if project:
+            share_project_private_key_with_invite(auth.current_user(), new_invite, project)
 
         token = encrypted_jwt_token(
             username="",
