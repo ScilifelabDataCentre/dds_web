@@ -225,6 +225,8 @@ class AddUser(flask_restful.Resource):
             deadline = project.current_deadline.astimezone(datetime.timezone.utc).strftime(
                 "%Y-%m-%d %H:%M:%S %Z"
             )
+        else:
+            raise ddserr.DDSArgumentError(message="Invalid mail type!")
 
         msg = flask_mail.Message(
             subject,
