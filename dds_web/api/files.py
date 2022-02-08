@@ -86,7 +86,7 @@ class NewFile(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(f"Failed to add new file to database.")
 
-        return flask.jsonify({"message": f"File '{new_file.name}' added to db."})
+        return {"message": f"File '{new_file.name}' added to db."}
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
@@ -112,7 +112,8 @@ class NewFile(flask_restful.Resource):
             # Error if not found
             if not existing_file or existing_file is None:
                 raise NoSuchFileError(
-                    f"Cannot update non-existent file '{werkzeug.utils.secure_filename(file_info.get('name'))}' in the database!"
+                    "Cannot update non-existent file "
+                    f"'{werkzeug.utils.secure_filename(file_info.get('name'))}' in the database!"
                 )
 
             # Get version row
@@ -124,7 +125,8 @@ class NewFile(flask_restful.Resource):
             ).all()
             if len(current_file_version) > 1:
                 flask.current_app.logger.warning(
-                    "There is more than one version of the file which does not yet have a deletion timestamp."
+                    "There is more than one version of the file "
+                    "which does not yet have a deletion timestamp."
                 )
 
             # Same timestamp for deleted and created new file
@@ -163,7 +165,7 @@ class NewFile(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(f"Failed updating file information: {err}")
 
-        return flask.jsonify({"message": f"File '{file_info.get('name')}' updated in db."})
+        return {"message": f"File '{file_info.get('name')}' updated in db."}
 
 
 class MatchFiles(flask_restful.Resource):
@@ -189,9 +191,9 @@ class MatchFiles(flask_restful.Resource):
 
         # The files checked are not in the db
         if not matching_files or matching_files is None:
-            return flask.jsonify({"files": None})
+            return {"files": None}
 
-        return flask.jsonify({"files": {x.name: x.name_in_bucket for x in matching_files}})
+        return {"files": {x.name: x.name_in_bucket for x in matching_files}}
 
 
 class ListFiles(flask_restful.Resource):
@@ -219,12 +221,10 @@ class ListFiles(flask_restful.Resource):
             # Get number of files in project and return if empty
             num_files = project.num_files
             if num_files == 0:
-                return flask.jsonify(
-                    {
-                        "num_items": num_files,
-                        "message": f"The project {project.public_id} is empty.",
-                    }
-                )
+                return {
+                    "num_items": num_files,
+                    "message": f"The project {project.public_id} is empty.",
+                }
 
             # Get files and folders
             try:
@@ -258,7 +258,7 @@ class ListFiles(flask_restful.Resource):
                         info.update({"size": dds_web.utils.format_byte_size(folder_size)})
                     files_folders.append(info)
 
-        return flask.jsonify({"files_folders": files_folders})
+        return {"files_folders": files_folders}
 
 
 class RemoveFile(flask_restful.Resource):
@@ -283,7 +283,7 @@ class RemoveFile(flask_restful.Resource):
                 raise S3ConnectionError(str(error))
 
         # Return deleted and not deleted files
-        return flask.jsonify({"not_removed": not_removed_dict, "not_exists": not_exist_list})
+        return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
 
 
 class RemoveDir(flask_restful.Resource):
@@ -344,7 +344,7 @@ class RemoveDir(flask_restful.Resource):
                             continue
         except (ValueError,):
             raise
-        return flask.jsonify({"not_removed": not_removed_dict, "not_exists": not_exist_list})
+        return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
 
 
 class FileInfo(flask_restful.Resource):
@@ -362,13 +362,11 @@ class FileInfo(flask_restful.Resource):
             input_
         )
 
-        return flask.jsonify(
-            {
-                "files": found_files,
-                "folder_contents": found_folder_contents,
-                "not_found": not_found,
-            }
-        )
+        return {
+            "files": found_files,
+            "folder_contents": found_folder_contents,
+            "not_found": not_found,
+        }
 
 
 class FileInfoAll(flask_restful.Resource):
@@ -383,7 +381,7 @@ class FileInfoAll(flask_restful.Resource):
             {**flask.request.args, "get_all": True, "url": True}
         )
 
-        return flask.jsonify({"files": files})
+        return {"files": files}
 
 
 class UpdateFile(flask_restful.Resource):
@@ -429,4 +427,4 @@ class UpdateFile(flask_restful.Resource):
             # flask.current_app.logger.debug("File %s updated", file_name)
             db.session.commit()
 
-        return flask.jsonify({"message": "File info updated."})
+        return {"message": "File info updated."}

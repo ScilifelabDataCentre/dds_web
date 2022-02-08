@@ -13,7 +13,6 @@ import re
 import urllib.parse
 
 # Installed
-import pandas
 from contextlib import contextmanager
 import flask
 import flask_mail

@@ -25,16 +25,12 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Data related config
-    MAX_CONTENT_LENGTH = 16777216
+    MAX_CONTENT_LENGTH = 0x1000000
     MAX_DOWNLOAD_LIMIT = 1000000000
 
     # Expected paths - these are the bind paths *inside* the container
     USE_LOCAL_DB = True
     LOGS_DIR = "/dds_web/logs"
-    UPLOAD_FOLDER = "/dds_web/uploads"
-    DOWNLOAD_FOLDER = "/dds_web/downloads"
-    LOCAL_TEMP_CACHE = "/dds_web/local_temp_cache"
-    DDS_S3_CONFIG = "/code/dds_web/sensitive/s3_config.json"
     SAFESPRING_URL = os.environ.get("DDS_SAFESPRING_URL", "https://example.endpoint.net")
     DDS_SAFESPRING_PROJECT = os.environ.get("DDS_SAFESPRING_PROJECT", "project-name.example.se")
     DDS_SAFESPRING_ACCESS = os.environ.get("DDS_SAFESPRING_ACCESS", "SAFESPRINGACCESSKEY")
@@ -60,8 +56,11 @@ class Config(object):
     MAIL_DEFAULT_SENDER = "dds@noreply.se"
 
     TOKEN_ENDPOINT_ACCESS_LIMIT = "10/hour"
-    RATELIMIT_STORAGE_URL = os.environ.get(
-        "RATELIMIT_STORAGE_URL", "memory://"
+    RATELIMIT_STORAGE_URI = os.environ.get(
+        "RATELIMIT_STORAGE_URI", "memory://"
     )  # Use in devel only! Use Redis or memcached in prod
 
     INVITATION_EXPIRES_IN_HOURS = 7 * 24
+
+    # 512MiB; at least 4GiB (0x400000) recommended in production
+    ARGON_MEMORY_COST = os.environ.get("ARGON_MEMORY_COST", 0x80000)

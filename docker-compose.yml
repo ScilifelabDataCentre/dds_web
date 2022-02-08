@@ -1,4 +1,5 @@
 version: "3.8"
+# for persistent endpoint limiter, uncomment RATELIMIT_STORAGE_URI and the redis entry
 
 services:
 
@@ -34,6 +35,7 @@ services:
       - FLASK_ENV=development
       - FLASK_APP=dds_web
       - INIT_DEV_DB=${DDS_INIT_DEV_DB}
+      # - RATELIMIT_STORAGE_URI=redis://dds_redis
     depends_on:
       db:
         condition: service_healthy
@@ -52,7 +54,7 @@ services:
         source: ./tests
         target: /code/tests
 
-      # Sensitive config files: s3_config.json / .dds-cli.json / dds_app.cfg
+      # Sensitive config file: dds_app.cfg
       - type: bind
         source: $DDS_SENSITIVE_FILES
         target: /code/dds_web/sensitive
@@ -62,17 +64,6 @@ services:
         source: $DDS_LOG_DIR
         target: /dds_web/logs
 
-      # Staged uploads
-      - type: bind
-        source: $DDS_UPLOAD_TEST
-        target: /dds_web/uploads
-
-      # Staged download
-      - type: bind
-        source: $DDS_DOWNLOAD_TEST
-        target: /dds_web/downloads
-
-      # Cache test (?)
-      - type: bind
-        source: $DDS_TEMP_CACHE_TEST
-        target: /dds_web/local_temp_cache
+#  redis:
+#    container_name: dds_redis
+#    image: redis:latest
