@@ -7,7 +7,7 @@ import subprocess
 
 # Installed
 import pytest
-from sqlalchemy_utils import create_database, database_exists, drop_database
+from sqlalchemy_utils import create_database, database_exists
 import boto3
 
 # Own
@@ -364,9 +364,10 @@ def client():
                 fill_basic_db(db)
                 db.engine.dispose()
 
-    if database_exists(DATABASE_URI):
-        drop_database(DATABASE_URI)
-    create_database(DATABASE_URI)
+    if not database_exists(DATABASE_URI):
+        create_database(DATABASE_URI)
+
+    # Fill database with values from base db
     new_test_db(DATABASE_URI)
 
     app = create_app(testing=True, database_uri=DATABASE_URI)
@@ -375,6 +376,12 @@ def client():
             try:
                 yield client
             finally:
+                # aborts any pending transactions
+                db.session.rollback()
+                # Removes all data from the database
+                for table in reversed(db.metadata.sorted_tables):
+                    db.session.execute(table.delete())
+                db.session.commit()
                 db.engine.dispose()
 
 
@@ -389,9 +396,10 @@ def module_client():
                 fill_basic_db(db)
                 db.engine.dispose()
 
-    if database_exists(DATABASE_URI):
-        drop_database(DATABASE_URI)
-    create_database(DATABASE_URI)
+    if not database_exists(DATABASE_URI):
+        create_database(DATABASE_URI)
+
+    # Fill database with values from base db
     new_test_db(DATABASE_URI)
 
     app = create_app(testing=True, database_uri=DATABASE_URI)
@@ -400,6 +408,12 @@ def module_client():
             try:
                 yield client
             finally:
+                # aborts any pending transactions
+                db.session.rollback()
+                # Removes all data from the database
+                for table in reversed(db.metadata.sorted_tables):
+                    db.session.execute(table.delete())
+                db.session.commit()
                 db.engine.dispose()
 
 
