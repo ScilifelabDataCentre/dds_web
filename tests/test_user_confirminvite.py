@@ -4,13 +4,16 @@ import flask
 from dds_web import db
 from dds_web.database import models
 import dds_web.errors as ddserr
+from dds_web.security.tokens import encrypted_jwt_token
 import itsdangerous
 import pytest
+import datetime
 
 
 def get_email_token(email):
-    s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
-    token = s.dumps(email, salt="email-confirm")
+    sensitive_content = json.dumps({"invited_email": email, "TKEK": "BOGUS"})
+
+    token = encrypted_jwt_token(email, sensitive_content, expires_in=datetime.timedelta(hours=24))
 
     return token
 
@@ -21,20 +24,27 @@ def test_no_token(client):
 
 
 def test_invalid_token(client):
-    with pytest.raises(itsdangerous.exc.BadSignature):
-        response = client.get(
-            tests.DDSEndpoint.USER_CONFIRM + "invalidtokentesting",
-            content_type="application/json",
-        )
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM + "invalidtokentesting",
+        content_type="application/json",
+        follow_redirects=True,
+    )
+
+    assert response.status == "200 OK"
+    # index redirects to login
+    assert flask.request.path == flask.url_for("auth_blueprint.login")
 
 
 def test_expired_token(client):
-    with pytest.raises(itsdangerous.exc.BadTimeSignature):
-        response = client.get(
-            tests.DDSEndpoint.USER_CONFIRM
-            + "ImZpcnN0X3Rlc3RfZW1haWxAbWFpbHRyYXAuaW8i.YW2HiQ.zT4zcM-yt_5S6NfCn2VoYDQSv_g",
-            content_type="application/json",
-        )
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM
+        + "ImZpcnN0X3Rlc3RfZW1haWxAbWFpbHRyYXAuaW8i.YW2HiQ.zT4zcM-yt_5S6NfCn2VoYDQSv_g",
+        content_type="application/json",
+        follow_redirects=True,
+    )
+    assert response.status == "200 OK"
+    # index redirects to login
+    assert flask.request.path == flask.url_for("auth_blueprint.login")
 
 
 def test_valid_token(client):
