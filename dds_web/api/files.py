@@ -357,6 +357,11 @@ class FileInfo(flask_restful.Resource):
 
         input_ = {**flask.request.args, **{"requested_items": flask.request.json, "url": True}}
 
+        # Check eligibility to download
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        user_role = auth.current_user().role
+        check_eligibility_for_download(project.current_status, user_role)
+
         # Get project contents
         found_files, found_folder_contents, not_found = project_schemas.ProjectContentSchema().dump(
             input_
@@ -376,6 +381,11 @@ class FileInfoAll(flask_restful.Resource):
     @logging_bind_request
     def get(self):
         """Get file info."""
+
+        # Check eligibility to download
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        user_role = auth.current_user().role
+        check_eligibility_for_download(project.current_status, user_role)
 
         files, _, _ = project_schemas.ProjectContentSchema().dump(
             {**flask.request.args, "get_all": True, "url": True}
