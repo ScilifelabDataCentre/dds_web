@@ -36,6 +36,38 @@ import dds_web.utils
 # Association objects ######################################################## Association objects #
 
 
+class InviteUserKeys(db.Model):
+    """
+    Many-to-many association table between invites and projects. Contains all project private keys encrypted with TKEKs.
+
+    Primary key(s):
+    - project_id
+    - invite_id
+
+    Foreign key(s):
+    - project_id
+    - invite_id
+    """
+
+    # Table setup
+    __tablename__ = "inviteuserkeys"
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    project = db.relationship("Project", back_populates="invite_user_keys")
+    # ---
+    invite_id = db.Column(
+        db.Integer, db.ForeignKey("invites.id", ondelete="CASCADE"), primary_key=True
+    )
+    invite = db.relationship("Invite", back_populates="invite_user_keys")
+    # ---
+
+    # Additional columns
+    key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
+
+
 class ProjectUserKeys(db.Model):
     """
     Many-to-many association table between projects and users (all).
@@ -224,6 +256,9 @@ class Project(db.Model):
     # Additional relationships
     files = db.relationship("File", back_populates="project")
     file_versions = db.relationship("Version", back_populates="project")
+    invite_user_keys = db.relationship(
+        "InviteUserKeys", back_populates="project", passive_deletes=True, cascade="all, delete"
+    )
     project_statuses = db.relationship(
         "ProjectStatuses", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
@@ -678,6 +713,9 @@ class Invite(db.Model):
     # Foreign keys & relationships
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"))
     unit = db.relationship("Unit", back_populates="invites")
+    invite_user_keys = db.relationship(
+        "InviteUserKeys", back_populates="invite", passive_deletes=True, cascade="all, delete"
+    )
     # ---
 
     # Additional columns
