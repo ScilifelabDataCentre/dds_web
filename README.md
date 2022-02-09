@@ -1,4 +1,5 @@
-![CodeQL](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/codeql-analysis.yml/badge.svg) 
+![CodeQL](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/codeql-analysis.yml/badge.svg)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![Linting](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/python-black.yml/badge.svg)
 ![Tests](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/docker-compose-tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/ScilifelabDataCentre/dds_web/branch/dev/graph/badge.svg?token=r5tM6o08Sd)](https://codecov.io/gh/ScilifelabDataCentre/dds_web)
@@ -19,7 +20,9 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 
 The backend interface is built using [Flask](https://flask.palletsprojects.com/en/2.0.x/).
 
+---
 ## Development
+<br>
 
 ### Running with Docker
 
@@ -38,7 +41,7 @@ one for the SQL database (`mariadb`) and one for the application.
 
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
 If using this method, you can stop the web server with the command `docker-compose down`.
-
+<br><br>
 
 ### Python debugger inside docker
 It's possible to use the interactive debugging tool `pdb` inside Docker with this method:
@@ -63,34 +66,17 @@ docker container ls
 ```
 docker container attach <container_id/name>
 ```
+<br>
+
 ### Config settings
 
 When run from the cloned repo, all settings are set to default values.
 These values are publicly visible on GitHub and **should not be used in production!**
+<br><br>
 
-At the time of writing, much of the functionality will not work with the defaults.
-Please see the _Production_ section below for how to set what you need.
-
-### Uploads config
-
-In order to test uploading files through the web interface, you will need to configure 3 files in the `run_dir/sensitive` directory:
-
-* `s3_config.json` - JSON file with the endpoint url and keys for uploading data.
-* `dds_app.cfg` - App config file that should look something like this:
-
-  ```bash
-  DDS_S3_CONFIG="/code/dds_web/sensitive/s3_config.json" # Tells the app where to find the s3_config.json file (NOTE: will soon not be needed)
-  ```
-
-Note that uploads with the default projects shipped in the development database will probably not work.
-You will need to create a new project first, then use that for testing.
-
-### Setting up users
-
-When you first initialise the database, a user with admin privileges will be automatically created.
-You can log in with the username `admin` and the password `password`.
-Once logged in, you can create user accounts and start to use the system.
-
+> :exclamation: <br> 
+> At the time of writing, upload within the default projects will most likely not work. <br>
+> To use the upload functionality with the `CLI`, first create a project.
 ### Database changes
 
 If the database is modified, you will need to rebuild the containers from scratch.
@@ -108,6 +94,7 @@ docker volume prune
 Then run `docker-compose up` as normal. The images will be rebuilt from scratch before launch.
 
 If there are still issues, try deleting the `pycache` folders and repeat the above steps.
+<br><br>
 
 ### Run tests
 Tests run on github actions on every pull request and push against master and dev. To run the tests locally, use this command:
@@ -118,6 +105,9 @@ This will create a test database in the mariadb container called `DeliverySystem
 
 It's possible to supply arguments to pytest via the environment variable `$DDS_PYTEST_ARGS`.
 For example to only run the `test_x` inside the file `tests/test_y.py` you would set this variable as follows: `export DDS_PYTEST_ARGS=tests/test_y.py::test_x`.
+
+---
+<br>
 
 ## Production
 
@@ -130,6 +120,7 @@ but for production there is no need.
 
 In addition to using `gunicorn` to serve files and running the MySQL database separately,
 you will also need to overwrite all (or most) of the default configuration values.
+<br><br>
 
 ### Environment variables
 
@@ -151,6 +142,7 @@ Then use the `--env-file` argument when running `docker-compose`, eg:
 ```bash
 docker-compose --env-file ~/my_setup.env up
 ```
+<br>
 
 ### Config file
 
@@ -164,6 +156,7 @@ SITE_NAME = "My Custom Data Delivery System"
 SECRET_KEY = "some-mega-random-string"
 SQLALCHEMY_DATABASE_URI = "mysql+pymysql://TEST_USER:TEST_PASSWORD@db/DeliverySystem"
 ```
+<br>
 
 ### Flask env
 
