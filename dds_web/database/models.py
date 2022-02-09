@@ -684,6 +684,18 @@ class Invite(db.Model):
     email = db.Column(db.String(254), unique=True, nullable=False)
     role = db.Column(db.String(20), unique=False, nullable=False)
 
+    kd_salt = db.Column(db.LargeBinary(32), default=None)
+    nonce = db.Column(db.LargeBinary(12), default=None)
+    temporary_key = db.Column(db.LargeBinary(32), default=None)  # TODO remove this
+    public_key = db.Column(db.LargeBinary(300), default=None)
+    encrypted_private_key = db.Column(db.LargeBinary(300), default=None)
+
+    def __init__(self, **kwargs):
+        if not self.public_key or not self.private_key:
+            key_pair = generate_user_key_pair(self)
+            self.public_key = key_pair["public_key"]
+            self.encrypted_private_key = key_pair["encrypted_private_key"]
+
     def __repr__(self):
         """Called by print, creates representation of object"""
 

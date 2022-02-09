@@ -127,29 +127,47 @@ def __decrypt_with_aes(key, ciphertext, nonce, aad=None):
     return aesgcm.decrypt(nonce, ciphertext, aad)
 
 
-def __encrypt_user_private_key(user, private_key):
-    user.temporary_key = ciphers.aead.AESGCM.generate_key(bit_length=256)
+def __aad_for_owner(owner):
+    if isinstance(owner, models.Invite):
+        return b"private key for invite " + owner.email.encode()
+
+    return b"private key for user " + owner.username.encode()
+
+
+def __encrypt_user_private_key(owner, private_key):
+    """owner can be either a user or an invite.
+
+    Will update owners temporary key and nonce as side-effects.
+    Need to be committed to the database to be persisted."""
+    owner.temporary_key = ciphers.aead.AESGCM.generate_key(bit_length=256)
     encrypted_key_dict = __encrypt_with_aes(
-        user.temporary_key, private_key, aad=b"private key for user " + user.username.encode()
+        owner.temporary_key, private_key, aad=__aad_for_owner(owner)
     )
-    user.nonce = encrypted_key_dict["nonce"]
+    owner.nonce = encrypted_key_dict["nonce"]
     return encrypted_key_dict["encrypted_key"]
 
 
-def __decrypt_user_private_key(user):
-    if user.temporary_key and user.private_key and user.nonce:
+def __decrypt_user_private_key(owner):
+    """owner can be either a user or an invite"""
+
+    if owner.temporary_key and owner.private_key and owner.nonce:
         return __decrypt_with_aes(
-            user.temporary_key,
-            user.private_key,
-            user.nonce,
-            aad=b"private key for user " + user.username.encode(),
+            owner.temporary_key,
+            owner.private_key,
+            owner.nonce,
+            aad=__aad_for_owner(owner),
         )
-    exception = Exception("User account is not properly setup!")
+    if isinstance(owner, models.Invite):
+        msg = "Invite row is not properly initialized!"
+    else:
+        msg = "User row is not properly setup!"
+    exception = Exception(msg)
     flask.current_app.logger.exception(exception)
     raise exception
 
 
-def generate_user_key_pair(user):
+def generate_user_key_pair(owner):
+    """owner can be either a user or an invite"""
     private_key = asymmetric.rsa.generate_private_key(public_exponent=65537, key_size=4096)
     private_key_bytes = private_key.private_bytes(
         serialization.Encoding.DER, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
@@ -157,7 +175,7 @@ def generate_user_key_pair(user):
     public_key_bytes = private_key.public_key().public_bytes(
         serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo
     )
-    encrypted_private_key = __encrypt_user_private_key(user, private_key_bytes)
+    encrypted_private_key = __encrypt_user_private_key(owner, private_key_bytes)
     del private_key_bytes
     del private_key
     gc.collect()
