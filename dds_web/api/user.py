@@ -10,6 +10,7 @@ import os
 import smtplib
 import time
 import json
+import datetime
 
 # Installed
 import flask
@@ -118,51 +119,7 @@ class AddUser(flask_restful.Resource):
             }
 
         # Compose and send email
-        unit_name = None
-        if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
-            unit = auth.current_user().unit
-            unit_name = unit.external_display_name
-            unit_email = unit.contact_email
-            sender_name = auth.current_user().name
-            subject = f"{unit_name} invites you to the SciLifeLab Data Delivery System"
-        else:
-            sender_name = auth.current_user().name
-            subject = f"{sender_name} invites you to the SciLifeLab Data Delivery System"
-
-        msg = flask_mail.Message(
-            subject,
-            recipients=[new_invite.email],
-        )
-
-        # Need to attach the image to be able to use it
-        msg.attach(
-            "scilifelab_logo.png",
-            "image/png",
-            open(
-                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
-            ).read(),
-            "inline",
-            headers=[
-                ["Content-ID", "<Logo>"],
-            ],
-        )
-
-        msg.body = flask.render_template(
-            "mail/invite.txt",
-            link=link,
-            sender_name=sender_name,
-            unit_name=unit_name,
-            unit_email=unit_email,
-        )
-        msg.html = flask.render_template(
-            "mail/invite.html",
-            link=link,
-            sender_name=sender_name,
-            unit_name=unit_name,
-            unit_email=unit_email,
-        )
-
-        AddUser.send_email_with_retry(msg)
+        AddUser.compose_and_send_email_to_user(new_invite, "invite", link=link)
 
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
@@ -243,6 +200,12 @@ class AddUser(flask_restful.Resource):
                 message=f"Server Error: User was not associated with the project"
             )
 
+        # If project is already released and not expired, send mail to user
+        if project.current_status == "Available":
+            AddUser.compose_and_send_email_to_user(
+                existing_user, "project_release", project=project
+            )
+
         flask.current_app.logger.debug(
             f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
         )
@@ -254,6 +217,78 @@ class AddUser(flask_restful.Resource):
                 f"{project.public_id} as Owner={owner}."
             ),
         }
+
+    @staticmethod
+    @logging_bind_request
+    def compose_and_send_email_to_user(userobj, mail_type, link=None, project=None):
+
+        # Compose and send email
+        unit_name = None
+        project_id = None
+        deadline = None
+        if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
+            unit = auth.current_user().unit
+            unit_name = unit.external_display_name
+            unit_email = unit.contact_email
+            sender_name = auth.current_user().name
+            subject_subject = unit_name
+
+        else:
+            sender_name = auth.current_user().name
+            subject_subject = sender_name
+
+        # Fill in email subject with sentence subject
+        if mail_type == "invite":
+            subject = f"{subject_subject} invites you to the SciLifeLab Data Delivery System"
+            recepients = [userobj.email]
+        elif mail_type == "project_release":
+            subject = f"Project made available by {subject_subject} in the SciLifeLab Data Delivery System"
+            recepients = [x.email for x in userobj.emails]
+            project_id = project.public_id
+            deadline = project.current_deadline.astimezone(datetime.timezone.utc).strftime(
+                "%Y-%m-%d %H:%M:%S %Z"
+            )
+        else:
+            raise ddserr.DDSArgumentError(message="Invalid mail type!")
+
+        msg = flask_mail.Message(
+            subject,
+            recipients=recepients,
+        )
+
+        # Need to attach the image to be able to use it
+        msg.attach(
+            "scilifelab_logo.png",
+            "image/png",
+            open(
+                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+            ).read(),
+            "inline",
+            headers=[
+                ["Content-ID", "<Logo>"],
+            ],
+        )
+
+        msg.body = flask.render_template(
+            f"mail/{mail_type}.txt",
+            link=link,
+            sender_name=sender_name,
+            unit_name=unit_name,
+            unit_email=unit_email,
+            project_id=project_id,
+            deadline=deadline,
+        )
+        msg.html = flask.render_template(
+            f"mail/{mail_type}.html",
+            link=link,
+            sender_name=sender_name,
+            unit_name=unit_name,
+            unit_email=unit_email,
+            project_id=project_id,
+            deadline=deadline,
+        )
+
+        AddUser.send_email_with_retry(msg)
 
 
 class RetrieveUserInfo(flask_restful.Resource):
