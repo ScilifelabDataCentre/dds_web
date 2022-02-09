@@ -234,9 +234,9 @@ def send_reset_email(email_row):
         recipients=[email_row.email],
     )
     message.body = (
-        "To reset your password, visit the following link: "
+        "To reset your password, visit the following link:\n"
         f"{flask.url_for('auth_blueprint.reset_password', token=token, _external=True)}"
-        "If you did not make this request then simply ignore this email and no changes will be made."
+        "\n\nIf you did not make this request then simply ignore this email and no changes will be made."
     )
     mail.send(message)
 
