@@ -6,6 +6,7 @@
 
 # Standard library
 import logging
+import datetime
 
 # Installed
 import click
@@ -160,6 +161,9 @@ def create_app(testing=False, database_uri=None):
 
     # User config file, if e.g. using in production
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
+    app.config["REMEMBER_COOKIE_DURATION"] = datetime.timedelta(
+        hours=app.config.get("REMEMBER_COOKIE_DURATION_HOURS", 1)
+    )
 
     # Test related configs
     if database_uri is not None:
