@@ -70,7 +70,7 @@ def get_user_roles_common(user):
 
 def verify_token_no_data(token):
     claims = __verify_general_token(token)
-    user = user_from_subject(claims.get("sub"))
+    user = __user_from_subject(claims.get("sub"))
     del claims
     gc.collect()
     return user
@@ -99,7 +99,7 @@ def matching_email_with_invite(token, email):
 @auth.verify_token
 def verify_token(token):
     claims = __verify_general_token(token)
-    user = user_from_subject(claims.get("sub"))
+    user = __user_from_subject(claims.get("sub"))
 
     return handle_multi_factor_authentication(user, claims.get("mfa_auth_time"))
 
@@ -136,7 +136,7 @@ def __verify_general_token(token):
     raise AuthenticationError(message="Expired token")
 
 
-def user_from_subject(subject):
+def __user_from_subject(subject):
     if subject:
         user = models.User.query.get(subject)
         if user and user.is_active:
