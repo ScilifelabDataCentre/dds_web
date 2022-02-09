@@ -88,7 +88,7 @@ def verify_invite_token(token):
     email = claims.get("inv")
     if email:
         return email, models.Invite.query.filter(models.Invite.email == email).first()
-    return None, None
+    raise AuthenticationError(message="Invalid token")
 
 
 def matching_email_with_invite(token, email):

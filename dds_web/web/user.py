@@ -68,7 +68,11 @@ def index():
 def confirm_invite(token):
     """Confirm invitation."""
     # Verify token and, on success, get row from invite table
-    email, invite_row = dds_web.security.auth.verify_invite_token(token)
+    try:
+        email, invite_row = dds_web.security.auth.verify_invite_token(token)
+    except ddserr.AuthenticationError as err:
+        flask.flash("This invitation link has expired or is invalid.", "danger")
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     # Check the invite exists
     if not invite_row:
@@ -76,7 +80,8 @@ def confirm_invite(token):
             flask.flash("Registration has already been completed.")
             return flask.make_response(flask.render_template("user/userexists.html"))
         else:
-            flask.flash("This invitation link has expired or is invalid.", "danger")
+            # Perhaps the invite has been cancelled by an admin
+            flask.flash("This invitation link is invalid.", "danger")
             return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     # Save encrypted token to be reused at registration
