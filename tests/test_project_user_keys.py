@@ -1,3 +1,6 @@
+import http
+import json
+
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.padding import MGF1, OAEP
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey, RSAPrivateKey
@@ -5,7 +8,10 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey, X2
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.hashes import SHA256
 
+import dds_web
+import tests
 from dds_web.database import models
+from tests.test_user_delete import user_from_email
 
 
 def __aes_decrypt(user):
@@ -98,3 +104,32 @@ def test_project_key_sharing(client):
         unituser_private_key.decrypt(project_unituser_key.key, __padding())
         == project_private_key_bytes
     )
+
+
+def test_delete_user_deletes_project_user_keys(client):
+    """Unit admin deletes unit user"""
+
+    email_to_delete = "unituser2@mailtrap.io"
+
+    project_unituser2_keys_before_delete = models.ProjectUserKeys.query.filter_by(
+        user_id="unituser2"
+    ).all()
+    assert len(project_unituser2_keys_before_delete) == 5
+
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        data=json.dumps({"email": email_to_delete}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Make sure that user was deleted
+    exists = user_from_email(email_to_delete)
+    assert exists is None
+    assert dds_web.utils.email_in_db(email_to_delete) is False
+
+    project_unituser2_keys_after_delete = models.ProjectUserKeys.query.filter_by(
+        user_id="unituser2"
+    ).all()
+    assert len(project_unituser2_keys_after_delete) == 0
