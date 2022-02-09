@@ -16,3 +16,7 @@ jobs:
 
     - name: Run tests against database container
       run: docker-compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build --exit-code-from backend
+
+    - uses: codecov/codecov-action@v2
+      with:
+        files: ./coverage/report.xml
