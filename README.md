@@ -1,4 +1,6 @@
-![CodeQL](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/codeql-analysis.yml/badge.svg)
+![CodeQL](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/codeql-analysis.yml/badge.svg) 
+![Linting](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/python-black.yml/badge.svg)
+
 # SciLifeLab Data Centre - Data Delivery System
 
 **A single cloud-based system for all SciLifeLab units, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way.**
