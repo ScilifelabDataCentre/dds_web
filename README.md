@@ -75,7 +75,7 @@ These values are publicly visible on GitHub and **should not be used in producti
 <br><br>
 
 > :exclamation: <br> 
-> At the time of writing, upload within the default projects will most likely not work. <br>
+> At the time of writing, upload within projects created in the development database will most likely not work. <br>
 > To use the upload functionality with the `CLI`, first create a project.
 ### Database changes
 
