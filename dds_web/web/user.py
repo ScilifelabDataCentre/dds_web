@@ -67,19 +67,13 @@ def index():
 @logging_bind_request
 def confirm_invite(token):
     """Confirm invitation."""
-    try:
-        email = dds_web.security.auth.verify_invite_token_no_sensdata(token)
-    except Exception as err:
-        flask.flash("This invitation link has expired or is invalid.", "danger")
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
-
-    # Get row from invite table
-    invite_row = models.Invite.query.filter(models.Invite.email == email).first()
+    # Verify token and, on success, get row from invite table
+    email, invite_row = dds_web.security.auth.verify_invite_token(token)
 
     # Check the invite exists
     if not invite_row:
-        if dds_web.utils.email_in_db(email=email):
-            flask.flash("Registration already completed.")
+        if email and dds_web.utils.email_in_db(email=email):
+            flask.flash("Registration has already been completed.")
             return flask.make_response(flask.render_template("user/userexists.html"))
         else:
             flask.flash("This invitation link has expired or is invalid.", "danger")
@@ -87,7 +81,7 @@ def confirm_invite(token):
 
     # Save encrypted token to be reused at registration
     # token is in the session already if the user refreshes the page
-    if not "invite_token" in flask.session:
+    if "invite_token" not in flask.session:
         # New visit or session has expired
         flask.session["invite_token"] = token
 
@@ -119,31 +113,25 @@ def confirm_invite(token):
 )
 def register():
     """Handles the creation of a new user"""
-    token = flask.session.get("invite_token")
-
     form = dds_web.forms.RegistrationForm()
 
     # Two reasons are possible for the token to be None.
     # The most likely reason is that the session has expired (given by PERMANENT_SESSION_LIFETIME config variable)
     # Less likely is that the confirm_invite was not called before posting the registration form.
-    if token is None:
-        flask.current_app.logger.info("No token found in session when posting to register.")
+    if flask.session.get("invite_token") is None:
+        flask.current_app.logger.info(
+            "No token has been found in session when posting to register."
+        )
         flask.flash(
             "Error in registration process, please go back and use the link in the invitation email again."
         )
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
-    # This method can raise exceptions, but they should occur very rarely since token should be verified
-    # and therefore we don't need any special message to user.
-    token_email, TKEK = dds_web.security.auth.verify_invite_token(token)
-
     # Validate form - validators defined in form class
     if form.validate_on_submit():
         # Create new user row by loading form data into schema
         try:
-            new_user = user_schemas.NewUserSchema().load(
-                {**form.data, "token_email": token_email, "TKEK": TKEK}
-            )
+            new_user = user_schemas.NewUserSchema().load(form.data)
         except Exception as err:
             # This should never happen since the form is validated
             # Any error catched here is likely a bug/issue
@@ -151,7 +139,6 @@ def register():
             flask.flash("Error in registration process, please try again.")
             return flask.redirect(flask.url_for("auth_blueprint.index"))
 
-        flask.session.pop("invite_token", None)
         flask.flash("Registration successful!")
         return flask.make_response(flask.render_template("user/userexists.html"))
 
