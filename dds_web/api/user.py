@@ -94,8 +94,6 @@ class AddUser(flask_restful.Resource):
         TKEK = "bogus"
         # TODO change to real TKEK.
 
-        sensitive_content = json.dumps({"invited_email": new_invite.email, "TKEK": TKEK})
-
         token = encrypted_jwt_token(
             username="",
             sensitive_content=TKEK,
