@@ -177,7 +177,7 @@ def confirm_2fa():
 
     if form.validate_on_submit():
         try:
-            token = flask.request.cookies["2fa_initiated_token"]
+            token = flask.session.get("2fa_intiated_token")
             user = dds_web.security.auth.verify_token_no_data(token)
         except ddserr.AuthenticationError as e:
             flask.flash(f"Error: Second factor could not be validated due to: {e}", "danger")
@@ -262,9 +262,8 @@ def login():
             user.username, expires_in=datetime.timedelta(minutes=15)
         )
 
-        redirect_to_confirm = flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next))
-        redirect_to_confirm.set_cookie("2fa_initiated_token", token_2fa_initiated)
-        return redirect_to_confirm
+        flask.session["2fa_initiated_token"] = token_2fa_initiated
+        return flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next))
 
     # Go to login form (get)
     return flask.render_template("user/login.html", form=form, next=next)
