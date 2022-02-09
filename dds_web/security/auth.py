@@ -69,30 +69,49 @@ def get_user_roles_common(user):
 
 
 def verify_token_no_data(token):
-    user, claims = __verify_general_token(token)
+    claims = __verify_general_token(token)
+    user = __user_from_subject(claims.get("sub"))
     del claims
     gc.collect()
     return user
 
 
+def __base_verify_token_for_invite(token):
+    claims = __verify_general_token(token)
+    if claims.get("sub"):
+        raise AuthenticationError(message="Invalid token")
+    return claims
+
+
+def verify_invite_token(token):
+    claims = __base_verify_token_for_invite(token)
+    email = claims.get("inv")
+    if email:
+        return email, models.Invite.query.filter(models.Invite.email == email).first()
+    raise AuthenticationError(message="Invalid token")
+
+
+def matching_email_with_invite(token, email):
+    claims = __base_verify_token_for_invite(token)
+    return claims.get("inv") == email
+
+
 @auth.verify_token
 def verify_token(token):
-    user, data = __verify_general_token(token)
-    return handle_multi_factor_authentication(user, data.get("mfa_auth_time"))
+    claims = __verify_general_token(token)
+    user = __user_from_subject(claims.get("sub"))
+
+    return handle_multi_factor_authentication(user, claims.get("mfa_auth_time"))
 
 
 def __verify_general_token(token):
-    """Verifies the format, signature and expiration time of an encrypted and signed JWT token.
-    Raises ValueError if token is invalid, could raise other exceptions from dependencies.
-
-    If user given by the "sub" claim is found in the database it returns
-    (user, claims)
-
-    Where claims is a dictionary of the token claims.
-
-    If the user is not found in the database, it returns
-    (None, claims)
     """
+    Verifies the format, signature and expiration time of an encrypted and signed JWT token.
+    Raises AuthenticationError if token is invalid or absent, could raise other exceptions from dependencies.
+    On successful verification, it returns a dictionary of the claims in the token.
+    """
+    if not token:
+        raise AuthenticationError(message="No token")
     try:
         data = (
             verify_token_signature(token)
@@ -112,15 +131,18 @@ def __verify_general_token(token):
     if expiration_time and (
         dds_web.utils.current_time() <= datetime.datetime.fromtimestamp(expiration_time)
     ):
-        username = data.get("sub")
-        if username:
-            user = models.User.query.get(username)
-        if user and user.is_active:
-            return user, data
-
-        return None, data
+        return data
 
     raise AuthenticationError(message="Expired token")
+
+
+def __user_from_subject(subject):
+    if subject:
+        user = models.User.query.get(subject)
+        if user and user.is_active:
+            return user
+
+    return None
 
 
 def handle_multi_factor_authentication(user, mfa_auth_time_string):

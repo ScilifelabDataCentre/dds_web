@@ -5,10 +5,12 @@
 ####################################################################################################
 
 # Installed
+import flask
 import marshmallow
 import sqlalchemy
 
 # Own modules
+import dds_web
 from dds_web import auth, db, utils
 from dds_web import errors as ddserr
 from dds_web.database import models
@@ -132,10 +134,7 @@ class NewUserSchema(marshmallow.Schema):
 
         if utils.username_in_db(username=value):
             raise marshmallow.ValidationError(
-                message=(
-                    f"The username '{value}' is already taken by another user. "
-                    "Try something else."
-                )
+                message=f"The username '{value}' is already taken by another user. "
             )
 
     @marshmallow.validates("email")
@@ -155,13 +154,18 @@ class NewUserSchema(marshmallow.Schema):
             models.Invite.email == sqlalchemy.func.binary(data.get("email"))
         ).one_or_none()
         if not invite:
-            raise ddserr.InviteError
+            raise ddserr.InviteError(
+                message="No invite has been found for this email at schema validation"
+            )
 
         data["invite"] = invite
 
     @marshmallow.post_load
     def make_user(self, data, **kwargs):
         """Deserialize to an User object"""
+        token = flask.session.get("invite_token")
+        if not dds_web.security.auth.matching_email_with_invite(token, data.get("email")):
+            raise ddserr.InviteError(message="Form email and token email are not the same")
 
         common_user_fields = {
             "username": data.get("username"),
@@ -189,6 +193,10 @@ class NewUserSchema(marshmallow.Schema):
         new_user.active = True
 
         db.session.add(new_user)
+
+        # TODO Use the TKEK here via the token.
+        # Idea is to handle it in auth.py together with project_user_keys.py
+        flask.session.pop("invite_token", None)
 
         # Delete old invite
         db.session.delete(invite)

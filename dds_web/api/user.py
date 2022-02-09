@@ -5,9 +5,11 @@
 ####################################################################################################
 
 # Standard library
+import datetime
 import os
 import smtplib
 import time
+import json
 import datetime
 
 # Installed
@@ -89,11 +91,30 @@ class AddUser(flask_restful.Resource):
             raise ddserr.InviteError(message=valerr.messages)
 
         # Create URL safe token for invitation link
-        s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
-        token = s.dumps(new_invite.email, salt="email-confirm")
+        TKEK = "bogus"
+        # TODO change to real TKEK.
+
+        token = encrypted_jwt_token(
+            username="",
+            sensitive_content=TKEK,
+            expires_in=datetime.timedelta(
+                hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"]
+            ),
+            additional_claims={"inv": new_invite.email},
+        )
 
         # Create link for invitation email
         link = flask.url_for("auth_blueprint.confirm_invite", token=token, _external=True)
+
+        # Quick search gave this as the URL length limit.
+        if len(link) >= 2048:
+            flask.current_app.logger.error(
+                "Invitation link was not possible to create due to length."
+            )
+            return {
+                "message": "Invite failed due to server error",
+                "status": http.HTTPStatus.INTERNAL_SERVER_ERROR,
+            }
 
         # Compose and send email
         AddUser.compose_and_send_email_to_user(new_invite, "invite", link=link)

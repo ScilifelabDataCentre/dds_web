@@ -61,5 +61,7 @@ class Config(object):
     )  # Use in devel only! Use Redis or memcached in prod
     REMEMBER_COOKIE_DURATION_HOURS = 1
 
+    INVITATION_EXPIRES_IN_HOURS = 7 * 24
+
     # 512MiB; at least 4GiB (0x400000) recommended in production
     ARGON_MEMORY_COST = os.environ.get("ARGON_MEMORY_COST", 0x80000)

@@ -67,38 +67,34 @@ def index():
 @logging_bind_request
 def confirm_invite(token):
     """Confirm invitation."""
-    s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config.get("SECRET_KEY"))
-
+    # Verify token and, on success, get row from invite table
     try:
-        # Get email from token
-        email = s.loads(token, salt="email-confirm", max_age=604800)
-
-        # Get row from invite table
-        invite_row = models.Invite.query.filter(models.Invite.email == email).first()
-
-    except itsdangerous.exc.SignatureExpired as signerr:
-        db.session.delete(invite_row)
-        db.session.commit()
-        raise  # TODO: Do not raise api error here, should fix new error handling for web page
-    except (itsdangerous.exc.BadSignature, itsdangerous.exc.BadTimeSignature) as badsignerr:
-        raise
-    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise
+        email, invite_row = dds_web.security.auth.verify_invite_token(token)
+    except ddserr.AuthenticationError as err:
+        flask.flash("This invitation link has expired or is invalid.", "danger")
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     # Check the invite exists
     if not invite_row:
-        if dds_web.utils.email_in_db(email=email):
+        if email and dds_web.utils.email_in_db(email=email):
+            flask.flash("Registration has already been completed.")
             return flask.make_response(flask.render_template("user/userexists.html"))
         else:
-            raise ddserr.InviteError(
-                message=f"There is no pending invitation for the email adress: {email}"
-            )
+            # Perhaps the invite has been cancelled by an admin
+            flask.flash("This invitation link is invalid.", "danger")
+            return flask.redirect(flask.url_for("auth_blueprint.index"))
 
-    # Initiate form if the invite exists
+    # Save encrypted token to be reused at registration
+    # token is in the session already if the user refreshes the page
+    if "invite_token" not in flask.session:
+        # New visit or session has expired
+        flask.session["invite_token"] = token
+
     form = forms.RegistrationForm()
-    # invite columns: unit_id, email, role
 
-    # Prefill fields - facility readonly if filled, otherwise disabled
+    # Prefill fields - unit readonly if filled, otherwise disabled
+    # These should only be used for display to user and not when actually registering
+    # the user, then the values should be fetched from the database again.
     form.unit_name.render_kw = {"disabled": True}
     if invite_row.unit:  # backref to unit
         form.unit_name.data = invite_row.unit.name
@@ -124,17 +120,32 @@ def register():
     """Handles the creation of a new user"""
     form = dds_web.forms.RegistrationForm()
 
+    # Two reasons are possible for the token to be None.
+    # The most likely reason is that the session has expired (given by PERMANENT_SESSION_LIFETIME config variable)
+    # Less likely is that the confirm_invite was not called before posting the registration form.
+    if flask.session.get("invite_token") is None:
+        flask.current_app.logger.info(
+            "No token has been found in session when posting to register."
+        )
+        flask.flash(
+            "Error in registration process, please go back and use the link in the invitation email again."
+        )
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
+
     # Validate form - validators defined in form class
     if form.validate_on_submit():
         # Create new user row by loading form data into schema
         try:
             new_user = user_schemas.NewUserSchema().load(form.data)
+        except Exception as err:
+            # This should never happen since the form is validated
+            # Any error catched here is likely a bug/issue
+            flask.current_app.logger.warning(err)
+            flask.flash("Error in registration process, please try again.")
+            return flask.redirect(flask.url_for("auth_blueprint.index"))
 
-        except marshmallow.ValidationError as valerr:
-            flask.current_app.logger.warning(valerr)
-            raise
-        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as sqlerr:
-            raise ddserr.DatabaseError from sqlerr
+        flask.flash("Registration successful!")
+        return flask.make_response(flask.render_template("user/userexists.html"))
 
     # Go to registration form
     return flask.render_template("user/register.html", form=form)
