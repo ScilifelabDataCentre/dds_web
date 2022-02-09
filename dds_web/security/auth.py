@@ -76,30 +76,24 @@ def verify_token_no_data(token):
     return user
 
 
-def verify_invite_token_no_sensdata(token):
-    email, TKEK = verify_invite_token(token)
-    del TKEK
-    gc.collect()
-    return email
+def __base_verify_token_for_invite(token):
+    claims = __verify_general_token(token)
+    if claims.get("sub"):
+        raise AuthenticationError(message="Invalid token")
+    return claims
 
 
 def verify_invite_token(token):
-    claims = __verify_general_token(token)
+    claims = __base_verify_token_for_invite(token)
+    email = claims.get("inv")
+    if email:
+        return email, models.Invite.query.filter(models.Invite.email == email).first()
+    return None, None
 
-    sensitive_content = json.loads(claims["sen_con"])
 
-    # Anyone can post a token to this endpoint so need to be very careful that it's an invite token
-    if "invited_email" not in sensitive_content:
-        raise AuthenticationError(message="Invalid token")
-
-    # I believe this could only happen by mistake on our side, but still worth checking for
-    if claims.get("sub") != sensitive_content["invited_email"]:
-        raise AuthenticationError(message="Invalid token")
-
-    del claims
-    gc.collect()
-
-    return sensitive_content["invited_email"], sensitive_content["TKEK"]
+def matching_email_with_invite(token, email):
+    claims = __base_verify_token_for_invite(token)
+    return claims.get("inv") == email
 
 
 @auth.verify_token
@@ -111,17 +105,13 @@ def verify_token(token):
 
 
 def __verify_general_token(token):
-    """Verifies the format, signature and expiration time of an encrypted and signed JWT token.
-    Raises AuthenticationError if token is invalid, could raise other exceptions from dependencies.
-
-    If user given by the "sub" claim is found in the database it returns
-    (user, claims)
-
-    Where claims is a dictionary of the token claims.
-
-    If the user is not found in the database, it returns
-    (None, claims)
     """
+    Verifies the format, signature and expiration time of an encrypted and signed JWT token.
+    Raises AuthenticationError if token is invalid or absent, could raise other exceptions from dependencies.
+    On successful verification, it returns a dictionary of the claims in the token.
+    """
+    if not token:
+        raise AuthenticationError(message="No token")
     try:
         data = (
             verify_token_signature(token)
@@ -149,8 +139,8 @@ def __verify_general_token(token):
 def user_from_subject(subject):
     if subject:
         user = models.User.query.get(subject)
-    if user and user.is_active:
-        return user
+        if user and user.is_active:
+            return user
 
     return None
 
