@@ -10,6 +10,7 @@ import marshmallow
 import sqlalchemy
 
 # Own modules
+import dds_web
 from dds_web import auth, db, utils
 from dds_web import errors as ddserr
 from dds_web.database import models
@@ -120,12 +121,6 @@ class NewUserSchema(marshmallow.Schema):
         required=True,
         validate=marshmallow.validate.And(marshmallow.validate.Email(), utils.email_not_taken),
     )
-    token_email = marshmallow.fields.Email(
-        required=True,
-    )
-    TKEK = marshmallow.fields.String(
-        required=True,
-    )
     name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=255))
 
     class Meta:
@@ -139,7 +134,7 @@ class NewUserSchema(marshmallow.Schema):
 
         if utils.username_in_db(username=value):
             raise marshmallow.ValidationError(
-                message=(f"The username '{value}' is already taken by another user. ")
+                message=f"The username '{value}' is already taken by another user. "
             )
 
     @marshmallow.validates("email")
@@ -155,25 +150,22 @@ class NewUserSchema(marshmallow.Schema):
     def verify_and_get_invite(self, data, **kwargs):
         """Verifies that the email is in the invite table and in that case saves the invite info."""
 
-        form_email = data["email"]
-        token_email = data["token_email"]  # Originates from the token and not from the form
-
-        # Avoid a simple attacker scenarios where one is submitting a different email than the invite was sent to
-        if form_email != token_email:
-            flask.current_app.logger.warning(f"Email mismatch: {form_email} != {token_email}")
-            raise ddserr.InviteError(message="Form email and token email not the same")
-
         invite = models.Invite.query.filter(
             models.Invite.email == sqlalchemy.func.binary(data.get("email"))
         ).one_or_none()
         if not invite:
-            raise ddserr.InviteError(message="No invite found for this email at schema validation")
+            raise ddserr.InviteError(
+                message="No invite has been found for this email at schema validation"
+            )
 
         data["invite"] = invite
 
     @marshmallow.post_load
     def make_user(self, data, **kwargs):
         """Deserialize to an User object"""
+        token = flask.session.get("invite_token")
+        if not dds_web.security.auth.matching_email_with_invite(token, data.get("email")):
+            raise ddserr.InviteError(message="Form email and token email are not the same")
 
         common_user_fields = {
             "username": data.get("username"),
@@ -202,7 +194,9 @@ class NewUserSchema(marshmallow.Schema):
 
         db.session.add(new_user)
 
-        # TODO Use the TKEK here
+        # TODO Use the TKEK here via the token.
+        # Idea is to handle it in auth.py together with project_user_keys.py
+        flask.session.pop("invite_token", None)
 
         # Delete old invite
         db.session.delete(invite)
