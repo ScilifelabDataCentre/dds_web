@@ -114,9 +114,6 @@ For example to only run the `test_x` inside the file `tests/test_y.py` you would
 When running in production, you will likely want to manually build and run the two containers.
 Whilst in `docker-compose.yml` the web server is run by Flask (`command: python3 app.py`),
 the default server in the container is `gunicorn` (`CMD ["gunicorn", "app:app"]`).
-The other difference is that the docker image comes with compiled CSS files ready to go,
-but the docker-compose script mounts the local volume. So for development you need to run `npm`
-but for production there is no need.
 
 In addition to using `gunicorn` to serve files and running the MySQL database separately,
 you will also need to overwrite all (or most) of the default configuration values.
