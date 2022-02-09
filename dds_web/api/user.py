@@ -96,11 +96,12 @@ class AddUser(flask_restful.Resource):
         sensitive_content = json.dumps({"invited_email": new_invite.email, "TKEK": TKEK})
 
         token = encrypted_jwt_token(
-            new_invite.email,
-            sensitive_content,
+            username="",
+            sensitive_content=TKEK,
             expires_in=datetime.timedelta(
                 hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"]
             ),
+            additional_claims={"inv": new_invite.email},
         )
 
         # Create link for invitation email
