@@ -17,7 +17,7 @@ from tests.test_user_delete import user_from_email
 def __aes_decrypt(user):
     aesgcm = AESGCM(user.temporary_key)
     return aesgcm.decrypt(
-        user.nonce, user.private_key, b"private key for user " + user.username.encode()
+        user.nonce, user.private_key, b"private key for " + user.username.encode()
     )
 
 

@@ -5,11 +5,9 @@
 ####################################################################################################
 
 # Standard library
-import datetime
 import os
 import smtplib
 import time
-import json
 import datetime
 
 # Installed
@@ -32,7 +30,10 @@ import dds_web.errors as ddserr
 from dds_web.api.db_connector import DBConnector
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 from dds_web.api.dds_decorators import logging_bind_request
-from dds_web.security.project_user_keys import share_project_private_key_with_user
+from dds_web.security.project_user_keys import (
+    generate_invite_key_pair,
+    share_project_private_key_with_user,
+)
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
 
 # initiate bound logger
@@ -91,12 +92,9 @@ class AddUser(flask_restful.Resource):
             raise ddserr.InviteError(message=valerr.messages)
 
         # Create URL safe token for invitation link
-        TKEK = "bogus"
-        # TODO change to real TKEK.
-
         token = encrypted_jwt_token(
             username="",
-            sensitive_content=TKEK,
+            sensitive_content=generate_invite_key_pair(new_invite).hex(),
             expires_in=datetime.timedelta(
                 hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"]
             ),

@@ -355,9 +355,7 @@ class User(flask_login.UserMixin, db.Model):
         if not self.hotp_secret:
             self.hotp_secret = os.urandom(20)
         if not self.public_key or not self.private_key:
-            key_pair = generate_user_key_pair(self)
-            self.public_key = key_pair["public_key"]
-            self.private_key = key_pair["encrypted_private_key"]
+            generate_user_key_pair(self)
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
@@ -683,6 +681,9 @@ class Invite(db.Model):
     # Additional columns
     email = db.Column(db.String(254), unique=True, nullable=False)
     role = db.Column(db.String(20), unique=False, nullable=False)
+    nonce = db.Column(db.LargeBinary(12), default=None)
+    public_key = db.Column(db.LargeBinary(300), default=None)
+    private_key = db.Column(db.LargeBinary(300), default=None)
 
     def __repr__(self):
         """Called by print, creates representation of object"""

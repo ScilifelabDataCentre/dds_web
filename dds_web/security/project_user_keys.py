@@ -112,7 +112,7 @@ def __encrypt_with_aes(key, plaintext, aad=None):
     """
     aesgcm = ciphers.aead.AESGCM(key)
     nonce = os.urandom(12)
-    return {"nonce": nonce, "encrypted_key": aesgcm.encrypt(nonce, plaintext, aad)}
+    return nonce, aesgcm.encrypt(nonce, plaintext, aad)
 
 
 def __decrypt_with_aes(key, ciphertext, nonce, aad=None):
@@ -127,13 +127,22 @@ def __decrypt_with_aes(key, ciphertext, nonce, aad=None):
     return aesgcm.decrypt(nonce, ciphertext, aad)
 
 
-def __encrypt_user_private_key(user, private_key):
-    user.temporary_key = ciphers.aead.AESGCM.generate_key(bit_length=256)
-    encrypted_key_dict = __encrypt_with_aes(
-        user.temporary_key, private_key, aad=b"private key for user " + user.username.encode()
+def __owner_identifier(owner):
+    return owner.email if isinstance(owner, models.Invite) else owner.username
+
+
+def __encrypt_owner_private_key(owner, private_key):
+    temporary_key = ciphers.aead.AESGCM.generate_key(bit_length=256)
+    nonce, encrypted_key = __encrypt_with_aes(
+        temporary_key, private_key, aad=b"private key for " + __owner_identifier(owner).encode()
     )
-    user.nonce = encrypted_key_dict["nonce"]
-    return encrypted_key_dict["encrypted_key"]
+    owner.nonce = nonce
+    owner.private_key = encrypted_key
+    return temporary_key
+
+
+def __encrypt_user_private_key(user, private_key):
+    user.temporary_key = __encrypt_owner_private_key(user, private_key)
 
 
 def __decrypt_user_private_key(user):
@@ -142,14 +151,18 @@ def __decrypt_user_private_key(user):
             user.temporary_key,
             user.private_key,
             user.nonce,
-            aad=b"private key for user " + user.username.encode(),
+            aad=b"private key for " + user.username.encode(),
         )
     exception = Exception("User account is not properly setup!")
     flask.current_app.logger.exception(exception)
     raise exception
 
 
-def generate_user_key_pair(user):
+def __encrypt_invite_private_key(invite, private_key):
+    return __encrypt_owner_private_key(invite, private_key)
+
+
+def __generate_rsa_key_pair(owner):
     private_key = asymmetric.rsa.generate_private_key(public_exponent=65537, key_size=4096)
     private_key_bytes = private_key.private_bytes(
         serialization.Encoding.DER, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
@@ -157,11 +170,22 @@ def generate_user_key_pair(user):
     public_key_bytes = private_key.public_key().public_bytes(
         serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo
     )
-    encrypted_private_key = __encrypt_user_private_key(user, private_key_bytes)
-    del private_key_bytes
+    owner.public_key = public_key_bytes
     del private_key
     gc.collect()
-    return {
-        "public_key": public_key_bytes,
-        "encrypted_private_key": encrypted_private_key,
-    }
+    return private_key_bytes
+
+
+def generate_user_key_pair(user):
+    private_key_bytes = __generate_rsa_key_pair(user)
+    __encrypt_user_private_key(user, private_key_bytes)
+    del private_key_bytes
+    gc.collect()
+
+
+def generate_invite_key_pair(invite):
+    private_key_bytes = __generate_rsa_key_pair(invite)
+    temporary_key = __encrypt_invite_private_key(invite, private_key_bytes)
+    del private_key_bytes
+    gc.collect()
+    return temporary_key
