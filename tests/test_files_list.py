@@ -42,7 +42,7 @@ def test_list_files_incorrect_project(client):
     assert "The specified project does not exist." in response_json.get("message")
 
 
-def test_list_files(client, boto3_session):
+def test_list_files_auth(client, boto3_session):
     """Confirm that the correct files/folders are listed."""
     response = client.get(
         tests.DDSEndpoint.LIST_FILES,
