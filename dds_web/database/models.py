@@ -38,7 +38,7 @@ import dds_web.utils
 
 class InviteUserKeys(db.Model):
     """
-    Many-to-many association table between invites and projects. Contains all project private keys encrypted with TKEKs.
+    Many-to-many association table between invites and projects. Contains all project private keys encrypted with invitees public key.
 
     Primary key(s):
     - project_id
@@ -65,6 +65,7 @@ class InviteUserKeys(db.Model):
     # ---
 
     # Additional columns
+    owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
     key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
 
 
@@ -357,7 +358,7 @@ class User(flask_login.UserMixin, db.Model):
     hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
     active = db.Column(db.Boolean)
     kd_salt = db.Column(db.LargeBinary(32), default=None)
-    temporary_key = db.Column(db.LargeBinary(32), default=None)
+    temporary_key = db.Column(db.LargeBinary(32), default=None, nullable=True)
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
@@ -724,7 +725,7 @@ class Invite(db.Model):
 
     kd_salt = db.Column(db.LargeBinary(32), default=None)
     nonce = db.Column(db.LargeBinary(12), default=None)
-    temporary_key = db.Column(db.LargeBinary(32), default=None)  # TODO remove this
+    temporary_key = db.Column(db.LargeBinary(32), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     encrypted_private_key = db.Column(db.LargeBinary(300), default=None)
 
@@ -733,6 +734,18 @@ class Invite(db.Model):
             key_pair = generate_user_key_pair(self)
             self.public_key = key_pair["public_key"]
             self.encrypted_private_key = key_pair["encrypted_private_key"]
+
+    @property
+    def projects(self):
+        """Return list of project the invitee as access to."""
+
+        return [key.project for key in self.invite_user_keys]
+
+    @property
+    def keys(self):
+        """Return list of encrypted project keys."""
+
+        return [key.key for key in self.invite_user_keys]
 
     def __repr__(self):
         """Called by print, creates representation of object"""

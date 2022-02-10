@@ -49,29 +49,56 @@ class AddUser(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     def post(self):
-        """Create an invite and send email."""
+        """Associate existing users or unanswered invites with projects or create invites"""
 
-        project = flask.request.args.get("project", None)
         args = flask.request.json
-        # Check if email is registered to a user
+        # Check if email is registered to a user or invite
         existing_user = user_schemas.UserSchema().load(args)
+        unanswered_invite = user_schemas.UnansweredInvite().load(args)
 
-        if existing_user and not project:
-            raise ddserr.DDSArgumentError(
-                message="User exists! Specify a project if you want to add this user to a project."
-            )
+        # A project may or may not be specified
+        project = flask.request.args.get("project", None)
+        if project:
+            project = project_schemas.ProjectRequiredSchema().load({"project": project})
 
-        if not existing_user:
-            # Send invite if the user doesn't exist
-            invite_user_result = self.invite_user(args, project)
-            return invite_user_result, invite_user_result["status"]
-
-        else:
+        if existing_user:
             # If there is an existing user, add them to project.
             if project:
                 add_user_result = self.add_user_to_project(existing_user, project, args.get("role"))
                 flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
                 return add_user_result, add_user_result["status"]
+            else:
+                raise ddserr.DDSArgumentError(
+                    message="User already invited! Specify a project if you want to add this user to a project."
+                )
+
+        elif unanswered_invite:
+            # Attach additional keys to invite if the user doesn't exist (and has not yet project access)
+            invite_user_result = self.add_project_to_invite(
+                unanswered_invite, project, args.get("role", None)
+            )
+            return invite_user_result, invite_user_result["status"]
+        else:
+            # Send invite if the user doesn't exist
+            invite_user_result = self.invite_user(args, project)
+            return invite_user_result, invite_user_result["status"]
+
+    @staticmethod
+    @logging_bind_request
+    def add_project_to_invite(invite, project=None, role="Researcher"):
+        """Give invitee access to further project"""
+
+        # That user was already invited but has not yet signed up
+        if project and project not in invite.projects():
+            share_project_private_key_with_invite(auth.current_user(), invite, project, role)
+            return {
+                "status": http.HTTPStatus.OK,
+                "message": f"{invite.email} was granted access to {project.public_id}",
+            }
+        else:
+            raise ddserr.DDSArgumentError(
+                message=f"Nothing more to do until {invite.email} signs up for the system."
+            )
 
     @staticmethod
     @logging_bind_request
@@ -93,16 +120,14 @@ class AddUser(flask_restful.Resource):
         except marshmallow.ValidationError as valerr:
             raise ddserr.InviteError(message=valerr.messages)
 
-        # Create URL safe token for invitation link
-        TKEK = "Bogus"
-        # TODO change to real TKEK.
-
         if project:
-            share_project_private_key_with_invite(auth.current_user(), new_invite, project)
+            share_project_private_key_with_invite(
+                auth.current_user(), new_invite, project, new_invite.role
+            )
 
         token = encrypted_jwt_token(
             username="",
-            sensitive_content=TKEK,
+            sensitive_content=new_invite.temporary_key,
             expires_in=datetime.timedelta(
                 hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"]
             ),
@@ -171,7 +196,6 @@ class AddUser(flask_restful.Resource):
 
         owner = role == "Project Owner"
 
-        project = project_schemas.ProjectRequiredSchema().load({"project": project})
         ownership_change = False
         for rusers in project.researchusers:
             if rusers.researchuser is existing_user:
