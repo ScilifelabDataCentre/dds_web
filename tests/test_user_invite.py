@@ -1,4 +1,3 @@
-import json
 import tests
 import flask
 from dds_web import db
