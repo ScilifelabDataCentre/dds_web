@@ -82,12 +82,13 @@ class DBConnector:
                 # Get first subpath (may be many and first may not have files in)
                 first_parts = set(x[0].split(os.sep)[0] for x in distinct_folders)
                 distinct_folders = list(first_parts)
+
             else:
                 # Get distinct sub folders in specific folder with regex
                 # Match /<something that is not /> x number of times
                 # TODO: Check how to make regexp less vulnerable to sql injections
                 distinct_folders = (
-                    files.filter(models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)+$"))
+                    files.filter(models.File.subpath.regexp_match(f"^{folder}(\/[^\/]+)+$"))
                     .with_entities(models.File.subpath)
                     .distinct()
                     .all()
