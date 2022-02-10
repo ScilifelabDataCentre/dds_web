@@ -68,6 +68,11 @@ def test_valid_token(client):
     assert b"Registration form" in response.data
 
 
+def test_register_no_form(client):
+    response = client.post(tests.DDSEndpoint.USER_NEW, content_type="application/json")
+    assert response.status == "400 BAD REQUEST"
+
+
 def test_register_no_token_in_session(client):
     invite = models.Invite.query.filter_by(
         email="existing_invite_email@mailtrap.io", role="Researcher"
