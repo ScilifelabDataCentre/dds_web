@@ -556,6 +556,11 @@ class RemoveUserAssociation(flask_restful.Resource):
             if user_association.user_id == existing_user.username:
                 user_in_project = True
                 db.session.delete(user_association)
+                project_user_key = models.ProjectUserKeys.query.filter_by(
+                    project_id=project.id, user_id=existing_user.username
+                ).first()
+                if project_user_key:
+                    db.session.delete(project_user_key)
 
         if not user_in_project:
             raise ddserr.NoSuchUserError(

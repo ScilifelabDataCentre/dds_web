@@ -133,3 +133,37 @@ def test_delete_user_deletes_project_user_keys(client):
         user_id="unituser2"
     ).all()
     assert len(project_unituser2_keys_after_delete) == 0
+
+
+def test_remove_user_from_project_deletes_project_user_keys(client):
+    """Remove an associated user from a project"""
+
+    username = "researchuser2"
+    email = "researchuser2@mailtrap.io"
+    public_id = "second_public_project_id"
+    user_to_remove = {"email": email}
+    project = models.Project.query.filter_by(public_id=public_id).first()
+    assert project
+    researchuser = models.User.query.filter_by(username=username).first()
+    assert researchuser
+    project_user_keys = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id=researchuser.username
+    ).all()
+    assert len(project_user_keys) == 1
+
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project.public_id},
+        data=json.dumps(user_to_remove),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert (
+        f"User with email {email} no longer associated with {project.public_id}."
+        in response.json["message"]
+    )
+    project_user_key = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id=researchuser.username
+    ).first()
+    assert not project_user_key
