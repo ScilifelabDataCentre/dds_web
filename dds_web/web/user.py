@@ -201,7 +201,7 @@ def confirm_2fa():
         )
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
-    # Valid invite token, but user does not exist (should never happen)
+    # Valid 2fa initiated token, but user does not exist (should never happen)
     if not user:
         flask.session.pop("2fa_initiated_token", None)
         flask.flash("Error: Internal error.", "danger")
