@@ -7,7 +7,7 @@ import subprocess
 
 # Installed
 import pytest
-from sqlalchemy_utils import create_database, database_exists
+from sqlalchemy_utils import create_database, database_exists, drop_database
 import boto3
 
 # Own
@@ -353,8 +353,8 @@ def add_data_to_db():
     return units, users
 
 
-@pytest.fixture(scope="function")
-def client():
+@pytest.fixture(scope="session")
+def setup_database():
     # Create database specific for tests
     if not database_exists(DATABASE_URI_BASE):
         create_database(DATABASE_URI_BASE)
@@ -366,7 +366,16 @@ def client():
 
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
+    try:
+        yield None
+    finally:
+        # Drop database to save container space
+        drop_database(DATABASE_URI)
+        drop_database(DATABASE_URI_BASE)
 
+
+@pytest.fixture(scope="function")
+def client(setup_database):
     # Fill database with values from base db
     new_test_db(DATABASE_URI)
 
@@ -386,19 +395,7 @@ def client():
 
 
 @pytest.fixture(scope="module")
-def module_client():
-    # Create database specific for tests
-    if not database_exists(DATABASE_URI_BASE):
-        create_database(DATABASE_URI_BASE)
-        app = create_app(testing=True, database_uri=DATABASE_URI_BASE)
-        with app.test_request_context():
-            with app.test_client() as client:
-                fill_basic_db(db)
-                db.engine.dispose()
-
-    if not database_exists(DATABASE_URI):
-        create_database(DATABASE_URI)
-
+def module_client(setup_database):
     # Fill database with values from base db
     new_test_db(DATABASE_URI)
 
