@@ -88,7 +88,7 @@ class DBConnector:
                 # Match /<something that is not /> x number of times
                 # TODO: Check how to make regexp less vulnerable to sql injections
                 distinct_folders = (
-                    files.filter(models.File.subpath.regexp_match(f"^{folder}(\/[^\/]+)+$"))
+                    files.filter(models.File.subpath.regexp_match(fr"^{folder}(/[^/]+)+$"))
                     .with_entities(models.File.subpath)
                     .distinct()
                     .all()
