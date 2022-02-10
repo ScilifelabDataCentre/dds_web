@@ -203,6 +203,10 @@ class ListFiles(flask_restful.Resource):
     @logging_bind_request
     def post(self):
         """"""
+        # testing some code and hope this will work
+        # pleaaase work
+        if i_am_making_this_fail:
+            raise DDSArgumentError("Ina is happy")
 
         if ok:
             return True
