@@ -4,6 +4,7 @@ import uuid
 import unittest.mock
 import datetime
 import subprocess
+import uuid
 
 # Installed
 import pytest
@@ -201,50 +202,54 @@ def demo_data():
         ),
     ]
 
-    files_and_versions = [
-        (
-            File(
-                name="filename1",
-                name_in_bucket="name_in_bucket_1",
-                subpath="filename1/subpath",
-                size_original=15000,
-                size_stored=10000,
-                compressed=True,
-                salt="A" * 32,
-                public_key="B" * 64,
-                checksum="C" * 64,
+    files_and_versions = []
+    for i in range(5):
+        files_and_versions.append(
+            (
+                File(
+                    name=f"filename{i+1}",
+                    name_in_bucket=str(uuid.uuid4()),
+                    subpath=f"sub/path/to/folder{i+1}",
+                    size_original=5000 * (i + 1),
+                    size_stored=3000 * (i + 1),
+                    compressed=True,
+                    salt=chr(ord("A") + 3 * i) * 32,
+                    public_key=chr(ord("B") + 3 * i) * 64,
+                    checksum=chr(ord("C") + 3 * i) * 64,
+                ),
+                [
+                    Version(
+                        size_stored=3000 * (j + 1),
+                        time_uploaded=dds_web.utils.current_time() - datetime.timedelta(days=j),
+                    )
+                    for j in range(i + 1)
+                ],
             ),
-            [
-                Version(
-                    size_stored=10000,
-                    time_uploaded=dds_web.utils.current_time(),
+        )
+
+    for i in range(5):
+        files_and_versions.append(
+            (
+                File(
+                    name=f"filename_b{i+1}",
+                    name_in_bucket=str(uuid.uuid4()),
+                    subpath=f"sub/path/to/files",
+                    size_original=500 * (i + 1),
+                    size_stored=300 * (i + 1),
+                    compressed=True,
+                    salt=chr(ord("Z") - 3 * i) * 32,
+                    public_key=chr(ord("Y") - 3 * i) * 64,
+                    checksum=chr(ord("X") - 3 * i) * 64,
                 ),
-                Version(
-                    size_stored=30000,
-                    time_uploaded=dds_web.utils.current_time() - datetime.timedelta(days=1),
-                ),
-            ],
-        ),
-        (
-            File(
-                name="filename2",
-                name_in_bucket="name_in_bucket_2",
-                subpath="filename2/subpath",
-                size_original=15000,
-                size_stored=10000,
-                compressed=True,
-                salt="D" * 32,
-                public_key="E" * 64,
-                checksum="F" * 64,
+                [
+                    Version(
+                        size_stored=300 * (j + 1),
+                        time_uploaded=dds_web.utils.current_time() - datetime.timedelta(days=j),
+                    )
+                    for j in range(i + 1)
+                ],
             ),
-            [
-                Version(
-                    size_stored=10000,
-                    time_uploaded=dds_web.utils.current_time(),
-                ),
-            ],
-        ),
-    ]
+        )
 
     invites = [Invite(email="existing_invite_email@mailtrap.io", role="Researcher")]
 
