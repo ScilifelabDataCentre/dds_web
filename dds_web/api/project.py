@@ -336,6 +336,8 @@ class RemoveContents(flask_restful.Resource):
                 db.session.rollback()
             else:
                 # Commit changes to db
+                for project_key in project.project_user_keys:
+                    db.session.delete(project_key)
                 db.session.commit()
 
 
