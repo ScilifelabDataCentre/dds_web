@@ -42,14 +42,50 @@ def test_list_files_incorrect_project(client):
     assert "The specified project does not exist." in response_json.get("message")
 
 
-def test_list_files_auth(client, boto3_session):
+def test_list_files_auth(client):
     """Confirm that the correct files/folders are listed."""
     response = client.get(
         tests.DDSEndpoint.LIST_FILES,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
         query_string={"project": "public_project_id"},
     )
-    assert response.json == {"files_folders": [{"folder": True, "name": "sub"}]}
+    expected = {
+        "files_folders": [
+            {"folder": True, "name": "filename1"},
+            {"folder": True, "name": "filename2"},
+            {"folder": True, "name": "sub"},
+        ]
+    }
+    assert "files_folders" in response.json
+    assert len(response.json["files_folders"]) == len(expected["files_folders"])
+    for entry in response.json["files_folders"]:
+        assert len(entry) == 2
+        assert entry["folder"] is True
+    assert set(entry["name"] for entry in response.json["files_folders"]) == set(
+        entry["name"] for entry in expected["files_folders"]
+    )
+
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json={"subpath": ""},
+    )
+    expected = {
+        "files_folders": [
+            {"folder": True, "name": "filename1"},
+            {"folder": True, "name": "filename2"},
+            {"folder": True, "name": "sub"},
+        ]
+    }
+    assert "files_folders" in response.json
+    assert len(response.json["files_folders"]) == len(expected["files_folders"])
+    for entry in response.json["files_folders"]:
+        assert len(entry) == 2
+        assert entry["folder"] is True
+    assert set(entry["name"] for entry in response.json["files_folders"]) == set(
+        entry["name"] for entry in expected["files_folders"]
+    )
 
     response = client.get(
         tests.DDSEndpoint.LIST_FILES,
@@ -91,7 +127,7 @@ def test_list_files_auth(client, boto3_session):
         query_string={"project": "public_project_id"},
         json={"subpath": "sub/path/to/folder1"},
     )
-    assert response.json == {"files_folders": [{"folder": False, "name": "filename1"}]}
+    assert response.json == {"files_folders": [{"folder": False, "name": "filename_a1"}]}
 
     response = client.get(
         tests.DDSEndpoint.LIST_FILES,
