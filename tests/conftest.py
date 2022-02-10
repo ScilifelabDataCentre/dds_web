@@ -45,7 +45,7 @@ def fill_basic_db(db):
     """
     db.create_all()
 
-    units, users = add_data_to_db()
+    units, users, projects = add_data_to_db()
     db.session.add_all(units)
     db.session.add_all(users)
 
@@ -60,9 +60,9 @@ def fill_basic_db(db):
 
     db.session.commit()
 
-    share_project_private_key_with_user(users[2], users[0], units[0].projects[0])
-    share_project_private_key_with_user(users[2], users[1], units[0].projects[0])
-    share_project_private_key_with_user(users[3], users[6], units[0].projects[3])
+    share_project_private_key_with_user(users[2], users[0], projects[0])
+    share_project_private_key_with_user(users[2], users[1], projects[0])
+    share_project_private_key_with_user(users[3], users[6], projects[3])
 
     db.session.commit()
 
@@ -399,7 +399,7 @@ def add_data_to_db():
     for user in users:
         user.active = True
 
-    return units, users
+    return units, users, projects
 
 
 @pytest.fixture(scope="function")
