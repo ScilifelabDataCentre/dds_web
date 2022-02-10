@@ -201,6 +201,16 @@ class ListFiles(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    def post(self):
+        """"""
+
+        if ok:
+            return True
+
+        return False
+
+    @auth.login_required
+    @logging_bind_request
     def get(self):
         """Get a list of files within the specified folder."""
 
