@@ -40,3 +40,80 @@ def test_list_files_incorrect_project(client):
     response_json = response.json
     assert response_json.get("message")
     assert "The specified project does not exist." in response_json.get("message")
+
+
+def test_list_files(client, boto3_session):
+    """Confirm that the correct files/folders are listed."""
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+    )
+    assert response.json == {"files_folders": [{"folder": True, "name": "sub"}]}
+
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json={"subpath": "sub/path"},
+    )
+    assert response.json == {"files_folders": [{"folder": True, "name": "to"}]}
+
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json={"subpath": "sub/path/to"},
+    )
+    # compare in multiple steps as the order of the returned entries is not guaranteed
+    expected = {
+        "files_folders": [
+            {"folder": True, "name": "folder1"},
+            {"folder": True, "name": "folder2"},
+            {"folder": True, "name": "folder3"},
+            {"folder": True, "name": "folder4"},
+            {"folder": True, "name": "folder5"},
+            {"folder": True, "name": "files"},
+        ]
+    }
+    assert "files_folders" in response.json
+    assert len(response.json["files_folders"]) == len(expected["files_folders"])
+    for entry in response.json["files_folders"]:
+        assert len(entry) == 2
+        assert entry["folder"] is True
+    assert set(entry["name"] for entry in response.json["files_folders"]) == set(
+        entry["name"] for entry in expected["files_folders"]
+    )
+
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json={"subpath": "sub/path/to/folder1"},
+    )
+    assert response.json == {"files_folders": [{"folder": False, "name": "filename1"}]}
+
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json={"subpath": "sub/path/to/files"},
+    )
+    # compare in multiple steps as the order of the returned entries is not guaranteed
+    expected = {
+        "files_folders": [
+            {"folder": False, "name": "filename_b1"},
+            {"folder": False, "name": "filename_b2"},
+            {"folder": False, "name": "filename_b3"},
+            {"folder": False, "name": "filename_b4"},
+            {"folder": False, "name": "filename_b5"},
+        ]
+    }
+    assert "files_folders" in response.json
+    assert len(response.json["files_folders"]) == len(expected["files_folders"])
+    for entry in response.json["files_folders"]:
+        assert len(entry) == 2
+        assert entry["folder"] is False
+    assert set(entry["name"] for entry in response.json["files_folders"]) == set(
+        entry["name"] for entry in expected["files_folders"]
+    )
