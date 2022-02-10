@@ -531,7 +531,7 @@ def test_delete_file(client):
 def __setup_version(file_id):
     versions = models.Version.query.filter_by(active_file=file_id).all()
 
-    assert len(versions) == 2
+    assert len(versions) == 1
     version = versions[0]
     assert version is not None
     assert version.file is not None
