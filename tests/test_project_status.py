@@ -89,6 +89,16 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     for field, value in vars(project).items():
         if field in fields_set_to_null:
             assert value
+    assert project.project_user_keys
+
+    response = module_client.get(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json["current_status"] == project.current_status
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
@@ -103,6 +113,7 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     for field, value in vars(project).items():
         if field in fields_set_to_null:
             assert not value
+    assert not project.project_user_keys
 
 
 def test_aborted_project(module_client, boto3_session):
@@ -162,6 +173,7 @@ def test_aborted_project(module_client, boto3_session):
         if field in fields_set_to_null:
             assert value
     assert len(project.researchusers) > 0
+    assert project.project_user_keys
 
     time.sleep(1)
     new_status["new_status"] = "Archived"
@@ -178,6 +190,7 @@ def test_aborted_project(module_client, boto3_session):
     assert project.current_status == "Archived"
     assert max(project.project_statuses, key=lambda x: x.date_created).is_aborted
     assert not file_in_db(test_dict=first_new_file, project=project.id)
+    assert not project.project_user_keys
 
     for field, value in vars(project).items():
         if field in fields_set_to_null:
@@ -237,6 +250,20 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "In Progress"
+    assert project.project_user_keys
+
+    response = module_client.get(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps({"history": True}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json["current_status"] == project.current_status
+    assert response.json["current_deadline"]
+    assert response.json["history"]
 
     time.sleep(1)
     new_status["new_status"] = "Archived"
@@ -258,6 +285,7 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
         if field in fields_set_to_null:
             assert not value
     assert len(project.researchusers) == 0
+    assert not project.project_user_keys
 
 
 def test_check_invalid_transitions_from_in_progress(module_client, test_project):
@@ -493,6 +521,7 @@ def test_set_project_to_archived(module_client, test_project, boto3_session):
     project = project_row(project_id=project_id)
 
     assert file_in_db(test_dict=first_new_file, project=project.id)
+    assert project.project_user_keys
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
@@ -506,6 +535,7 @@ def test_set_project_to_archived(module_client, test_project, boto3_session):
     assert project.current_status == "Archived"
     assert not max(project.project_statuses, key=lambda x: x.date_created).is_aborted
     assert not file_in_db(test_dict=first_new_file, project=project.id)
+    assert not project.project_user_keys
 
 
 def test_invalid_transitions_from_archived(module_client, test_project):
