@@ -66,3 +66,136 @@ def test_valid_token(client):
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
     assert response.status == "200 OK"
     assert b"Registration form" in response.data
+
+
+def test_register_no_token_in_session(client):
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+    assert invite
+
+    token = get_email_token(email=invite.email)
+    assert token
+
+    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    assert response.status == "200 OK"
+    assert b"Registration form" in response.data
+
+    form_token = flask.g.csrf_token
+
+    with client.session_transaction() as client_session:
+        client_session.pop("invite_token", None)
+
+    form_data = {
+        "csrf_token": form_token,
+        "email": invite.email,
+        "name": "Test User",
+        "username": "user_not_existing",
+        "password": "Password123",
+        "confirm": "Password123",
+        "submit": "submit",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        json=form_data,
+        follow_redirects=True,
+    )
+    assert response.status == "200 OK"
+    assert flask.request.path == tests.DDSEndpoint.LOGIN
+
+    # Invite should be kept and user should not be created
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+
+    assert invite is not None
+
+    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    assert user is None
+
+
+def test_register_weak_password(client):
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+    assert invite
+
+    token = get_email_token(email=invite.email)
+    assert token
+
+    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    assert response.status == "200 OK"
+    assert b"Registration form" in response.data
+
+    form_token = flask.g.csrf_token
+
+    form_data = {
+        "csrf_token": form_token,
+        "email": invite.email,
+        "name": "Test User",
+        "username": "user_not_existing",
+        "password": "password",
+        "confirm": "password",
+        "submit": "submit",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        json=form_data,
+        follow_redirects=True,
+    )
+    assert response.status == "200 OK"
+    assert flask.request.path == tests.DDSEndpoint.USER_NEW
+
+    # Invite should be kept and user should not be created
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+
+    assert invite is not None
+
+    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    assert user is None
+
+
+def test_successful_register(client):
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+    assert invite
+
+    token = get_email_token(email=invite.email)
+    assert token
+
+    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    assert response.status == "200 OK"
+    assert b"Registration form" in response.data
+
+    form_token = flask.g.csrf_token
+
+    form_data = {
+        "csrf_token": form_token,
+        "email": invite.email,
+        "name": "Test User",
+        "username": "user_not_existing",
+        "password": "Password123",
+        "confirm": "Password123",
+        "submit": "submit",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        json=form_data,
+        follow_redirects=True,
+    )
+    assert response.status == "200 OK"
+
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+
+    assert invite is None
+
+    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    assert user is not None
