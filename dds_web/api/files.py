@@ -207,7 +207,7 @@ class ListFiles(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         extra_args = flask.request.json
         if extra_args is None:
-            extra_args={}
+            extra_args = {}
 
         # Check if to return file size
         show_size = extra_args.get("show_size")
