@@ -145,14 +145,12 @@ def __decrypt_with_aes(key, ciphertext, nonce, aad=None):
 
 
 def __aad_for_owner(owner):
-    if isinstance(owner, models.Invite):
-        return b"private key for invite " + owner.email.encode()
-
-    return b"private key for user " + owner.username.encode()
+    name = owner.email if isinstance(owner, models.Invite) else owner.username
+    return b"Private key for" + name.encode()
 
 
 def __encrypt_user_private_key(owner, private_key):
-    """owner can be either a user or an invite.
+    """Owner can be either an user or invite.
 
     Will update owners temporary key and nonce as side-effects.
     Need to be committed to the database to be persisted."""
@@ -165,7 +163,7 @@ def __encrypt_user_private_key(owner, private_key):
 
 
 def __decrypt_user_private_key(owner):
-    """owner can be either a user or an invite"""
+    """Owner can be either an user or invite"""
 
     if owner.temporary_key and owner.private_key and owner.nonce:
         return __decrypt_with_aes(
@@ -184,7 +182,7 @@ def __decrypt_user_private_key(owner):
 
 
 def generate_user_key_pair(owner):
-    """owner can be either a user or an invite"""
+    """Owner can be either an user or invite"""
     private_key = asymmetric.rsa.generate_private_key(public_exponent=65537, key_size=4096)
     private_key_bytes = private_key.private_bytes(
         serialization.Encoding.DER, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
