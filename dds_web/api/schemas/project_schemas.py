@@ -127,7 +127,7 @@ class CreateProjectSchema(marshmallow.Schema):
                 )
 
             unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
-            data["public_id"] = "{}{:03d}".format(unit_row.internal_ref, unit_row.counter)
+            data["public_id"] = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)
 
             # Generate bucket name
             data["bucket"] = self.generate_bucketname(
