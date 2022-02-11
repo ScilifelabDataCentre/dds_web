@@ -31,6 +31,7 @@ import dds_web.utils
 from dds_web import create_app, db
 from dds_web.security.project_user_keys import (
     generate_project_key_pair,
+    generate_invite_key_pair,
     share_project_private_key,
 )
 
@@ -296,6 +297,8 @@ def demo_data():
         )
 
     invites = [Invite(email="existing_invite_email@mailtrap.io", role="Researcher")]
+    for invite in invites:
+        generate_invite_key_pair(invite)
 
     return (units, users, projects, invites, files_and_versions)
 
