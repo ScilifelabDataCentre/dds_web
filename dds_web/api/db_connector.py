@@ -121,13 +121,6 @@ class DBConnector:
         not_removed_dict, not_exist_list, error = ({}, [], "")
 
         with ApiS3Connector(project=self.project) as s3conn:
-            # Error if not enough info
-            if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                return (
-                    not_removed_dict,
-                    not_exist_list,
-                    "No s3 info returned! " + s3conn.message,
-                )
 
             # Delete each file
             for x in files:
@@ -146,10 +139,11 @@ class DBConnector:
                     continue
 
                 # Remove from s3 bucket
-                delete_ok, error = s3conn.remove_one(file=name_in_bucket)
-                if not delete_ok:
+                try:
+                    s3conn.remove_one(file=name_in_bucket)
+                except botocore.client.ClientError as err:
                     db.session.rollback()
-                    not_removed_dict[x] = error
+                    not_removed_dict[x] = str(err)
                     continue
 
                 # Commit to db if ok

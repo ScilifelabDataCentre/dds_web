@@ -108,15 +108,7 @@ class ApiS3Connector:
     def remove_one(self, file, *args, **kwargs):
         """Removes file from s3"""
 
-        removed, error = (False, "")
-        try:
-            _ = self.resource.meta.client.delete_object(Bucket=self.project.bucket, Key=file)
-        except botocore.client.ClientError as err:
-            error = str(err)
-        else:
-            removed = True
-
-        return removed, error
+        _ = self.resource.meta.client.delete_object(Bucket=self.project.bucket, Key=file)
 
     def generate_get_url(self, key):
         """Generate presigned urls for get requests."""
