@@ -32,7 +32,7 @@ from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
-    share_project_private_key_with_user,
+    share_project_private_key,
 )
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
 
@@ -119,7 +119,10 @@ class AddUser(flask_restful.Resource):
 
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
-            auth.current_user().unit.invites.append(new_invite)
+            if "Unit" in auth.current_user().role:
+                auth.current_user().unit.invites.append(new_invite)
+                for project in auth.current_user().unit.projects:
+                    share_project_private_key(auth.current_user(), new_invite, project)
         else:
             db.session.add(new_invite)
 
@@ -185,7 +188,7 @@ class AddUser(flask_restful.Resource):
                     owner=owner,
                 )
             )
-            share_project_private_key_with_user(auth.current_user(), existing_user, project)
+            share_project_private_key(auth.current_user(), existing_user, project)
 
         try:
             db.session.commit()

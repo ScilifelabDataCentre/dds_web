@@ -68,6 +68,38 @@ class ProjectUserKeys(db.Model):
     key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
 
 
+class ProjectInviteKeys(db.Model):
+    """
+    Many-to-many association table between projects and invites.
+
+    Primary key(s):
+    - project_id
+    - invite_id
+
+    Foreign key(s):
+    - project_id
+    - invite_id
+    """
+
+    # Table setup
+    __tablename__ = "projectinvitekeys"
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    project = db.relationship("Project", back_populates="project_invite_keys")
+    # ---
+    invite_id = db.Column(
+        db.Integer, db.ForeignKey("invites.id", ondelete="CASCADE"), primary_key=True
+    )
+    invite = db.relationship("Invite", back_populates="project_invite_keys")
+    # ---
+
+    # Additional columns
+    key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
+
+
 class ProjectUsers(db.Model):
     """
     Many-to-many association table between projects and research users.
@@ -232,6 +264,9 @@ class Project(db.Model):
     )
     project_user_keys = db.relationship(
         "ProjectUserKeys", back_populates="project", passive_deletes=True
+    )
+    project_invite_keys = db.relationship(
+        "ProjectInviteKeys", back_populates="project", passive_deletes=True
     )
 
     @property
@@ -676,6 +711,9 @@ class Invite(db.Model):
     # Foreign keys & relationships
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"))
     unit = db.relationship("Unit", back_populates="invites")
+    project_invite_keys = db.relationship(
+        "ProjectInviteKeys", back_populates="invite", passive_deletes=True
+    )
     # ---
 
     # Additional columns

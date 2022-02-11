@@ -39,16 +39,16 @@ def __decrypt_with_rsa(ciphertext, private_key):
     return private_key.decrypt(ciphertext, __get_padding_for_rsa())
 
 
-def __encrypt_project_private_key_for_user(user, project_private_key):
-    user_public_key = serialization.load_der_public_key(user.public_key)
-    if isinstance(user_public_key, asymmetric.rsa.RSAPublicKey):
-        return __encrypt_with_rsa(project_private_key, user_public_key)
-    exception = Exception("User public key cannot be loaded!")
+def __encrypt_project_private_key(owner, project_private_key):
+    public_key = serialization.load_der_public_key(owner.public_key)
+    if isinstance(public_key, asymmetric.rsa.RSAPublicKey):
+        return __encrypt_with_rsa(project_private_key, public_key)
+    exception = Exception("Public key cannot be loaded for encrypting the project private key!")
     flask.current_app.logger.exception(exception)
     raise exception
 
 
-def __decrypt_project_private_key_for_user(user, encrypted_project_private_key):
+def __decrypt_project_private_key(user, encrypted_project_private_key):
     user_private_key = serialization.load_der_private_key(
         __decrypt_user_private_key(user), password=None
     )
@@ -64,24 +64,39 @@ def obtain_project_private_key(user, project):
         project_id=project.id, user_id=user.username
     ).first()
     if project_key:
-        return __decrypt_project_private_key_for_user(user, project_key.key)
+        return __decrypt_project_private_key(user, project_key.key)
     raise KeyNotFoundError(project=project.public_id)
 
 
-def share_project_private_key_with_user(current_user, existing_user, project):
-    __init_and_append_project_user_key(
-        existing_user, project, obtain_project_private_key(current_user, project)
-    )
+def share_project_private_key(from_user, to_another, project):
+    if isinstance(to_another, models.Invite):
+        __init_and_append_project_invite_key(
+            to_another, project, obtain_project_private_key(from_user, project)
+        )
+    else:
+        __init_and_append_project_user_key(
+            to_another, project, obtain_project_private_key(from_user, project)
+        )
 
 
 def __init_and_append_project_user_key(user, project, project_private_key):
     project_user_key = models.ProjectUserKeys(
         project_id=project.id,
         user_id=user.username,
-        key=__encrypt_project_private_key_for_user(user, project_private_key),
+        key=__encrypt_project_private_key(user, project_private_key),
     )
     user.project_user_keys.append(project_user_key)
     project.project_user_keys.append(project_user_key)
+
+
+def __init_and_append_project_invite_key(invite, project, project_private_key):
+    project_invite_key = models.ProjectInviteKeys(
+        project_id=project.id,
+        invite_id=invite.id,
+        key=__encrypt_project_private_key(invite, project_private_key),
+    )
+    invite.project_invite_keys.append(project_invite_key)
+    project.project_invite_keys.append(project_invite_key)
 
 
 def generate_project_key_pair(user, project):
