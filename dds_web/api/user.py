@@ -120,6 +120,7 @@ class AddUser(flask_restful.Resource):
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
             if "Unit" in auth.current_user().role:
+                # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
                 for project in auth.current_user().unit.projects:
                     share_project_private_key(auth.current_user(), new_invite, project)
