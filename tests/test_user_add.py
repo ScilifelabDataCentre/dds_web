@@ -318,7 +318,7 @@ def test_existing_user_change_ownership_same_permissions(client):
         data=json.dumps(user_same_ownership),
         content_type="application/json",
     )
-    response.status_code == http.HTTPStatus.FORBIDDEN
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
 def test_add_existing_user_with_unsuitable_role(client):
@@ -332,4 +332,4 @@ def test_add_existing_user_with_unsuitable_role(client):
         data=json.dumps(user_with_unsuitable_role),
         content_type="application/json",
     )
-    response.status_code == http.HTTPStatus.FORBIDDEN
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
