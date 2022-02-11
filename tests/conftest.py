@@ -305,6 +305,9 @@ def add_data_to_db():
     )
     users[6].emails.append(add_email_to_user_6)
 
+    users[1].emails.append(
+        Email(user_id="projectowner", email="projectowner@mailtrap.io", primary=True)
+    )
     users[2].emails.append(Email(user_id="unituser", email="unituser1@mailtrap.io", primary=True))
     users[2].identifiers.append(Identifier(username="unituser", identifier="B" * 58))
     users[2].deletion_request.append(

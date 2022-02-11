@@ -79,3 +79,16 @@ def test_get_info_superadmin_user(client):
     assert user_info["name"] == "Super Admin"
     case = unittest.TestCase()
     case.assertCountEqual(user_info["emails_all"], ["superadmin@mailtrap.io"])
+
+
+def test_show_usage_unit_user(client):
+    """Show the amount of GB hours and the total cost for a unit"""
+    # Preliminary test - to be expanded later
+    response = client.get(
+        tests.DDSEndpoint.USAGE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert "project_usage" in response.json.keys()
+    assert "total_usage" in response.json.keys()
