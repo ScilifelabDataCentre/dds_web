@@ -188,6 +188,41 @@ def test_research_user_cannot_add_existing_user_to_existing_project(client):
     assert project_user_after_addition is None
 
 
+# projectowner adds researchuser2 to projects[0]
+def test_project_owner_can_add_existing_user_to_existing_project(client):
+    user_copy = existing_research_user_to_existing_project.copy()
+    project_id = user_copy.pop("project")
+
+    project = models.Project.query.filter_by(public_id=project_id).one_or_none()
+    user = models.Email.query.filter_by(
+        email=existing_research_user_to_existing_project["email"]
+    ).one_or_none()
+    project_user_before_addition = models.ProjectUsers.query.filter(
+        sqlalchemy.and_(
+            models.ProjectUsers.user_id == user.user_id,
+            models.ProjectUsers.project_id == project.id,
+        )
+    ).one_or_none()
+    assert project_user_before_addition is None
+
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
+        query_string={"project": project_id},
+        data=json.dumps(user_copy),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_user_after_addition = models.ProjectUsers.query.filter(
+        sqlalchemy.and_(
+            models.ProjectUsers.user_id == user.user_id,
+            models.ProjectUsers.project_id == project.id,
+        )
+    ).one_or_none()
+    assert project_user_after_addition is not None
+
+
 def test_add_existing_user_to_existing_project(client):
     user_copy = existing_research_user_to_existing_project.copy()
     project_id = user_copy.pop("project")

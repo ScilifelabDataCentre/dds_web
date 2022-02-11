@@ -9,7 +9,6 @@ import gc
 
 # Installed
 import datetime
-import argon2
 import http
 import flask
 import json
@@ -64,7 +63,14 @@ def get_user_roles(user):
 
 def get_user_roles_common(user):
     """Return the users role as saved in the db."""
-
+    if user.role == "Researcher":
+        project_public_id = flask.request.args.get("project")
+        if project_public_id:
+            project = models.Project.query.filter_by(public_id=project_public_id).first()
+            if project:
+                project_user = models.ProjectUsers.query.filter_by(project_id=project.id, user_id=user.username).first()
+                if project_user and project_user.owner is True:
+                    return "Project Owner"
     return user.role
 
 
