@@ -43,7 +43,7 @@ action_logger = structlog.getLogger("actions")
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
 class AddUser(flask_restful.Resource):
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     def post(self):
         """Create an invite and send email."""
