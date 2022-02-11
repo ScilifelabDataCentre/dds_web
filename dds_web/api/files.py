@@ -220,50 +220,62 @@ class ListFiles(flask_restful.Resource):
         files_folders = list()
 
         # Check project not empty
-        with DBConnector(project=project) as dbconn:
-            # Get number of files in project and return if empty
-            num_files = project.num_files
-            if num_files == 0:
-                return {
-                    "num_items": num_files,
-                    "message": f"The project {project.public_id} is empty.",
+        if project.num_files == 0:
+            raise EmptyProjectException(project=project)
+
+        # Get files and folders
+        try:
+            distinct_files, distinct_folders = self.items_in_subpath(
+                project=project, folder=subpath
+            )
+        except DatabaseError:
+            raise
+
+        # Collect file and folder info to return to CLI
+        if distinct_files:
+            for x in distinct_files:
+                info = {
+                    "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
+                    "folder": False,
+                }
+                if show_size:
+                    info.update({"size": dds_web.utils.format_byte_size(x[1])})
+                files_folders.append(info)
+        if distinct_folders:
+            for x in distinct_folders:
+                info = {
+                    "name": x if subpath == "." else x.split(os.sep)[-1],
+                    "folder": True,
                 }
 
-            # Get files and folders
-            try:
-                distinct_files, distinct_folders = self.items_in_subpath(
-                    project=project, folder=subpath
-                )
-            except DatabaseError:
-                raise
-
-            # Collect file and folder info to return to CLI
-            if distinct_files:
-                for x in distinct_files:
-                    info = {
-                        "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
-                        "folder": False,
-                    }
-                    if show_size:
-                        info.update({"size": dds_web.utils.format_byte_size(x[1])})
-                    files_folders.append(info)
-            if distinct_folders:
-                for x in distinct_folders:
-                    info = {
-                        "name": x if subpath == "." else x.split(os.sep)[-1],
-                        "folder": True,
-                    }
-
-                    if show_size:
-                        try:
-                            folder_size = dbconn.folder_size(folder_name=x)
-                        except DatabaseError:
-                            raise
-
-                        info.update({"size": dds_web.utils.format_byte_size(folder_size)})
-                    files_folders.append(info)
+                if show_size:
+                    folder_size = self.folder_size(folder_name=x)
+                    info.update({"size": dds_web.utils.format_byte_size(folder_size)})
+                files_folders.append(info)
 
         return {"files_folders": files_folders}
+
+    def get_folder_size(self, project, folder_name):
+        """Get total size of folder."""
+        # Sum up folder file sizes
+        try:
+            file_info = (
+                models.File.query.with_entities(
+                    sqlalchemy.func.sum(models.File.size_original).label("sizeSum")
+                )
+                .filter(
+                    sqlalchemy.and_(
+                        models.File.project_id == sqlalchemy.func.binary(self.project.id),
+                        models.File.subpath.like(f"{folder_name}%"),
+                    )
+                )
+                .first()
+            )
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+
+        return file_info.sizeSum
 
     @staticmethod
     def items_in_subpath(project, folder="."):
@@ -366,43 +378,79 @@ class RemoveDir(flask_restful.Resource):
         not_removed_dict, not_exist_list = ({}, [])
 
         try:
-            with DBConnector(project=project) as dbconn:
 
-                with ApiS3Connector(project=project) as s3conn:
+            with ApiS3Connector(project=project) as s3conn:
 
-                    for x in flask.request.json:
-                        # Get all files in the folder
-                        in_db, folder_deleted, error = dbconn.delete_folder(folder=x)
-
+                for x in flask.request.json:
+                    # Get all files in the folder
+                    try:
+                        in_db = self.delete_folder(project=project, folder=x)
                         if not in_db:
-                            db.session.rollback()
                             not_exist_list.append(x)
-                            continue
+                            raise FileNotFoundError(
+                                "Could not find the specified folder in the database."
+                            )
+                    except (sqlalchemy.exc.SQLAlchemyError, FileNotFoundError) as err:
+                        db.session.rollback()
+                        not_removed_dict[x] = str(err)
+                        continue
 
-                        # Error with db --> folder error
-                        if not folder_deleted:
-                            db.session.rollback()
-                            not_removed_dict[x] = error
-                            continue
+                    # Delete from s3
+                    try:
+                        s3conn.remove_folder(folder=x)
+                    except botocore.client.ClientError as err:
+                        db.session.rollback()
+                        not_removed_dict[x] = str(err)
+                        continue
 
-                        # Delete from s3
-                        try:
-                            s3conn.remove_folder(folder=x)
-                        except botocore.client.ClientError as err:
-                            db.session.rollback()
-                            not_removed_dict[x] = str(err)
-                            continue
-
-                        # Commit to db if no error so far
-                        try:
-                            db.session.commit()
-                        except sqlalchemy.exc.SQLAlchemyError as err:
-                            db.session.rollback()
-                            not_removed_dict[x] = str(err)
-                            continue
+                    # Commit to db if no error so far
+                    try:
+                        db.session.commit()
+                    except sqlalchemy.exc.SQLAlchemyError as err:
+                        db.session.rollback()
+                        not_removed_dict[x] = str(err)
+                        continue
         except (ValueError,):
             raise
         return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
+
+    def delete_folder(self, project, folder):
+        """Delete all items in folder"""
+        exists = False
+        try:
+            # File names in root
+            files = (
+                models.File.query.filter(
+                    models.File.project_id == sqlalchemy.func.binary(project.id)
+                )
+                .filter(
+                    sqlalchemy.or_(
+                        models.File.subpath == sqlalchemy.func.binary(folder),
+                        models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)*$"),
+                    )
+                )
+                .all()
+            )
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+
+        if files:
+            exists = True
+            for x in files:
+                # get current version
+                current_file_version = models.Version.query.filter(
+                    sqlalchemy.and_(
+                        models.Version.active_file == sqlalchemy.func.binary(x.id),
+                        models.Version.time_deleted.is_(None),
+                    )
+                ).first()
+                current_file_version.time_deleted = dds_web.utils.current_time()
+
+                # Delete file and update project size
+                db.session.delete(x)
+            project.date_updated = dds_web.utils.current_time()
+
+        return exists
 
 
 class FileInfo(flask_restful.Resource):

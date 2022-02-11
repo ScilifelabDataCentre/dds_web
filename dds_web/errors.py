@@ -198,10 +198,14 @@ class S3ConnectionError(LoggedHTTPException):
 
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-    def __init__(self, message):
+    def __init__(self, message, alt_message=None, pass_message=False):
         super().__init__(message)
 
-        general_logger.warning(message)
+        general_logger.warning(
+            (alt_message or "An error occurred when connecting to the S3 storage")
+            if pass_message
+            else message
+        )
 
 
 class S3InfoNotFoundError(LoggedHTTPException):
