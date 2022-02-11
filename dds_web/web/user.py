@@ -227,6 +227,7 @@ def confirm_2fa():
         flask.flash("Logged in successfully.")
         # Remove token from session
         flask.session.pop("2fa_initiated_token", None)
+        # Next is assured to be url_safe above
         return flask.redirect(next or flask.url_for("auth_blueprint.index"))
 
     else:
