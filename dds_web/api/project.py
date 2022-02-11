@@ -371,12 +371,12 @@ class CreateProject(flask_restful.Resource):
 
         # TODO: Change -- the bucket should be created before the row is added to the database
         # This is a quick fix so that things do not break
-        try:
-            with ApiS3Connector(project=new_project) as s3:
+        with ApiS3Connector(project=new_project) as s3:
+            try:
                 s3.resource.create_bucket(Bucket=new_project.bucket)
-        except botocore.exceptions.ClientError as err:
-            # For now just keeping the project row
-            raise S3ConnectionError(str(err))
+            except botocore.exceptions.ClientError as err:
+                # For now just keeping the project row
+                raise S3ConnectionError(str(err))
 
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."
