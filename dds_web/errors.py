@@ -112,6 +112,7 @@ class DatabaseError(LoggedHTTPException):
     def __init__(
         self,
         message,
+        alt_message=None,
         pass_message=False,
         project=None,
     ):
@@ -122,7 +123,9 @@ class DatabaseError(LoggedHTTPException):
             structlog.threadlocal.bind_threadlocal(project=project)
 
         super().__init__(
-            "The system encountered an error in the database." if not pass_message else message
+            (alt_message or "The system encountered an error in the database.")
+            if not pass_message
+            else message
         )
 
 

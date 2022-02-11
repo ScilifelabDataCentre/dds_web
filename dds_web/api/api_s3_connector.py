@@ -64,7 +64,6 @@ class ApiS3Connector:
 
     def get_s3_info(self):
         """Get information required to connect to cloud."""
-
         endpoint, name, accesskey, secretkey = (
             models.Unit.query.filter_by(id=self.project.responsible_unit.id)
             .with_entities(
@@ -91,9 +90,12 @@ class ApiS3Connector:
         bucket.objects.all().delete()
 
     @bucket_must_exists
-    def remove_folder(self, folder, *args, **kwargs):
+    def remove_multiple(self, items, *args, **kwargs):
         """Removes all with prefix."""
-        self.resource.Bucket(self.project.bucket).objects.filter(Prefix=f"{folder}/").delete()
+        _ = self.resource.meta.client.delete_objects(
+            Bucket=self.project.bucket,
+            Delete={"Objects": [{"Key": x} for x in items]},
+        )
 
     @bucket_must_exists
     def remove_one(self, file, *args, **kwargs):

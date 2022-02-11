@@ -12,6 +12,7 @@ import flask_restful
 import flask
 import sqlalchemy
 import werkzeug
+import botocore
 
 # Own modules
 import dds_web.utils
@@ -349,7 +350,9 @@ class RemoveFile(flask_restful.Resource):
 
         check_eligibility_for_deletion(project.current_status, project.has_been_available)
 
-        not_removed_dict, not_exist_list = self.delete_multiple(files=flask.request.json)
+        not_removed_dict, not_exist_list = self.delete_multiple(
+            project=project, files=flask.request.json
+        )
 
         # Return deleted and not deleted files
         return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
@@ -446,7 +449,7 @@ class RemoveDir(flask_restful.Resource):
                 for x in flask.request.json:
                     # Get all files in the folder
                     try:
-                        in_db = self.delete_folder(project=project, folder=x)
+                        in_db, objects_to_delete = self.delete_folder(project=project, folder=x)
                         if not in_db:
                             not_exist_list.append(x)
                             raise FileNotFoundError(
@@ -459,7 +462,7 @@ class RemoveDir(flask_restful.Resource):
 
                     # Delete from s3
                     try:
-                        s3conn.remove_folder(folder=x)
+                        s3conn.remove_multiple(items=objects_to_delete)
                     except botocore.client.ClientError as err:
                         db.session.rollback()
                         not_removed_dict[x] = str(err)
@@ -479,6 +482,8 @@ class RemoveDir(flask_restful.Resource):
     def delete_folder(self, project, folder):
         """Delete all items in folder"""
         exists = False
+        names_in_bucket = []
+        print(f"folder: {folder}")
         try:
             # File names in root
             files = (
@@ -493,6 +498,7 @@ class RemoveDir(flask_restful.Resource):
                 )
                 .all()
             )
+            print(f"files in folder: {files}")
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError(message=str(err))
 
@@ -509,10 +515,11 @@ class RemoveDir(flask_restful.Resource):
                 current_file_version.time_deleted = dds_web.utils.current_time()
 
                 # Delete file and update project size
+                names_in_bucket.append(x.name_in_bucket)
                 db.session.delete(x)
             project.date_updated = dds_web.utils.current_time()
 
-        return exists
+        return exists, names_in_bucket
 
 
 class FileInfo(flask_restful.Resource):
