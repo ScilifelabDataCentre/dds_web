@@ -93,21 +93,11 @@ class ApiS3Connector:
     @bucket_must_exists
     def remove_folder(self, folder, *args, **kwargs):
         """Removes all with prefix."""
-
-        removed, error = (False, "")
-        try:
-            self.resource.Bucket(self.project.bucket).objects.filter(Prefix=f"{folder}/").delete()
-        except botocore.client.ClientError as err:
-            error = str(err)
-        else:
-            removed = True
-
-        return removed, error
+        self.resource.Bucket(self.project.bucket).objects.filter(Prefix=f"{folder}/").delete()
 
     @bucket_must_exists
     def remove_one(self, file, *args, **kwargs):
         """Removes file from s3"""
-
         _ = self.resource.meta.client.delete_object(Bucket=self.project.bucket, Key=file)
 
     def generate_get_url(self, key):

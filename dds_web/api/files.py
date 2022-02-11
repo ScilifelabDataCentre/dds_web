@@ -369,13 +369,6 @@ class RemoveDir(flask_restful.Resource):
             with DBConnector(project=project) as dbconn:
 
                 with ApiS3Connector(project=project) as s3conn:
-                    # Error if not enough info
-                    if None in [s3conn.url, s3conn.keys, s3conn.bucketname]:
-                        return (
-                            not_removed_dict,
-                            not_exist_list,
-                            "No s3 info returned! " + s3conn.message,
-                        )
 
                     for x in flask.request.json:
                         # Get all files in the folder
@@ -393,11 +386,11 @@ class RemoveDir(flask_restful.Resource):
                             continue
 
                         # Delete from s3
-                        folder_deleted, error = s3conn.remove_folder(folder=x)
-
-                        if not folder_deleted:
+                        try:
+                            s3conn.remove_folder(folder=x)
+                        except botocore.client.ClientError as err:
                             db.session.rollback()
-                            not_removed_dict[x] = error
+                            not_removed_dict[x] = str(err)
                             continue
 
                         # Commit to db if no error so far

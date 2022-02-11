@@ -11,6 +11,7 @@ import os
 # Installed
 import flask
 import sqlalchemy
+import botocore
 
 # Own modules
 from dds_web.database import models
@@ -141,7 +142,7 @@ class DBConnector:
                 # Remove from s3 bucket
                 try:
                     s3conn.remove_one(file=name_in_bucket)
-                except botocore.client.ClientError as err:
+                except (BucketNotFoundError, botocore.client.ClientError) as err:
                     db.session.rollback()
                     not_removed_dict[x] = str(err)
                     continue
