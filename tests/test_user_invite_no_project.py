@@ -148,7 +148,7 @@ def test_register_weak_password(registry_form_data, client):
     assert user is None
 
 
-def test_successful_register(registry_form_data, client):
+def test_successful_registration(registry_form_data, client):
     response = client.post(
         tests.DDSEndpoint.USER_NEW,
         json=registry_form_data,
@@ -164,3 +164,35 @@ def test_successful_register(registry_form_data, client):
 
     user = models.User.query.filter_by(username=registry_form_data["username"]).one_or_none()
     assert user is not None
+
+
+def test_successful_registration_should_transfer_keys(registry_form_data, client):
+    invite = models.Invite.query.filter_by(
+        email=registry_form_data["email"], role="Researcher"
+    ).one_or_none()
+
+    invite_encrypted_private_key = invite.private_key
+    invite_public_key = invite.public_key
+
+    assert invite_encrypted_private_key
+    assert invite_public_key
+
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        json=registry_form_data,
+        follow_redirects=True,
+    )
+    assert response.status == "200 OK"
+
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+
+    assert invite is None
+
+    user = models.User.query.filter_by(username=registry_form_data["username"]).one_or_none()
+    assert user is not None
+
+    assert user.public_key == invite_public_key
+    # Encryption should have changed the stored value
+    assert user.private_key != invite_encrypted_private_key
