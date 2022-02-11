@@ -283,7 +283,7 @@ class UserProjects(flask_restful.Resource):
             project_info["Size"] = proj_size
 
             if usage:
-                proj_bhours, proj_cost = DBConnector().project_usage(p)
+                proj_bhours, proj_cost = self.project_usage(project=project)
                 total_bhours_db += proj_bhours
                 total_cost_db += proj_cost
                 # return ByteHours
@@ -302,6 +302,30 @@ class UserProjects(flask_restful.Resource):
         }
 
         return return_info
+
+    @staticmethod
+    def project_usage(project):
+
+        bhours = 0.0
+        cost = 0.0
+
+        for v in project.file_versions:
+            # Calculate hours of the current file
+            time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
+            time_uploaded = v.time_uploaded
+
+            file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
+
+            # Calculate BHours
+            bhours += v.size_stored * file_hours
+
+            # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
+            cost_gbhour = 0.09 / (30 * 24)
+
+            # Save file cost to project info and increase total unit cost
+            cost += bhours / 1e9 * cost_gbhour
+
+        return bhours, cost
 
 
 class RemoveContents(flask_restful.Resource):

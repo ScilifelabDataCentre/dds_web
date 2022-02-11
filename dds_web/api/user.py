@@ -530,7 +530,7 @@ class DeleteUser(flask_restful.Resource):
         }
 
     @staticmethod
-    def delete_user(user=user):
+    def delete_user(user):
         try:
             parent_user = models.User.query.get(user.username)
             db.session.delete(parent_user)

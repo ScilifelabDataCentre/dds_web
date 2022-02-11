@@ -26,6 +26,7 @@ import dds_web.errors as ddserr
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
 import dds_web.security
+from dds_web.api.user import DeleteUser
 
 
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
