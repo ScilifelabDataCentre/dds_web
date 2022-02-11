@@ -4,6 +4,7 @@ import unittest
 
 # Own
 import tests
+from tests.test_user_delete import user_from_email
 
 
 def test_get_info_unit_user(client):
@@ -92,3 +93,8 @@ def test_show_usage_unit_user(client):
     assert response.status_code == http.HTTPStatus.OK
     assert "project_usage" in response.json.keys()
     assert "total_usage" in response.json.keys()
+    unit_user = user_from_email("unituser1@mailtrap.io")
+    case = unittest.TestCase()
+    case.assertCountEqual(
+        [x.public_id for x in user.projects], response.json["project_usage"].keys()
+    )

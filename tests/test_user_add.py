@@ -43,7 +43,7 @@ def test_add_user_with_researcher(client):
         data=json.dumps(first_new_user),
         content_type="application/json",
     )
-    response.status_code == http.HTTPStatus.FORBIDDEN
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
     invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     assert invited_user is None
 
@@ -169,7 +169,7 @@ def test_add_user_with_unitpersonnel_permission_denied(client):
         data=json.dumps(new_unit_admin),
         content_type="application/json",
     )
-    response.status_code == http.HTTPStatus.FORBIDDEN
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     invited_user = models.Invite.query.filter_by(email=new_unit_admin["email"]).one_or_none()
     assert invited_user is None
