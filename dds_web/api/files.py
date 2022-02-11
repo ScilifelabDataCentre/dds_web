@@ -350,17 +350,84 @@ class RemoveFile(flask_restful.Resource):
 
         check_eligibility_for_deletion(project.current_status, project.has_been_available)
 
-        with DBConnector(project=project) as dbconn:
-            not_removed_dict, not_exist_list, error = dbconn.delete_multiple(
-                files=flask.request.json
-            )
+        not_removed_dict, not_exist_list, error = self.delete_multiple(files=flask.request.json)
 
-            # S3 connection error
-            if not any([not_removed_dict, not_exist_list]) and error != "":
-                raise S3ConnectionError(str(error))
+        # S3 connection error
+        if not any([not_removed_dict, not_exist_list]) and error != "":
+            raise S3ConnectionError(str(error))
 
         # Return deleted and not deleted files
         return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
+
+    def delete_multiple(self, project, files):
+        """Delete multiple files."""
+
+        not_removed_dict, not_exist_list, error = ({}, [], "")
+
+        with ApiS3Connector(project=project) as s3conn:
+
+            # Delete each file
+            for x in files:
+                # Delete from db
+                try:
+                    name_in_bucket = self.delete_one(project=project, filename=x)
+                    if not name_in_bucket:
+                        raise DatabaseError(
+                            message="Remote file name not found.", pass_message=True
+                        )
+                except FileNotFoundError:
+                    db.session.rollback()
+                    not_exist_list.append(x)
+                    continue
+                except (sqlalchemy.exc.SQLAlchemyError, DatabaseError) as err:
+                    db.session.rollback()
+                    not_removed_dict[x] = str(err)
+                    continue
+
+                # Remove from s3 bucket
+                try:
+                    s3conn.remove_one(file=name_in_bucket)
+                except (BucketNotFoundError, botocore.client.ClientError) as err:
+                    db.session.rollback()
+                    not_removed_dict[x] = str(err)
+                    continue
+
+                # Commit to db if ok
+                try:
+                    db.session.commit()
+                except sqlalchemy.exc.SQLAlchemyError as err:
+                    db.session.rollback()
+                    not_removed_dict[x] = str(err)
+                    continue
+
+        return not_removed_dict, not_exist_list, error
+
+    def delete_one(self, project, filename):
+        """Delete a single file in project."""
+        # Get matching files in project
+        file = models.File.query.filter(
+            models.File.name == sqlalchemy.func.binary(filename),
+            models.File.project_id == sqlalchemy.func.binary(project.id),
+        ).one_or_none()
+
+        if not file:
+            raise FileNotFoundError("Could not find the specified file.")
+
+        name_in_bucket = file.name_in_bucket
+
+        # get current version
+        current_file_version = models.Version.query.filter(
+            sqlalchemy.and_(
+                models.Version.active_file == sqlalchemy.func.binary(file.id),
+                models.Version.time_deleted.is_(None),
+            )
+        ).first()
+        current_file_version.time_deleted = dds_web.utils.current_time()
+
+        db.session.delete(file)
+        project.date_updated = dds_web.utils.current_time()
+
+        return name_in_bucket
 
 
 class RemoveDir(flask_restful.Resource):
