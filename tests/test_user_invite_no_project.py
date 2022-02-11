@@ -17,12 +17,12 @@ def get_email_token(email):
     )
 
 
-def test_no_token(client):
+def test_confirm_invite_no_token(client):
     response = client.get(tests.DDSEndpoint.USER_CONFIRM, content_type="application/json")
     assert response.status == "404 NOT FOUND"
 
 
-def test_invalid_token(client):
+def test_confirm_invite_invalid_token(client):
     response = client.get(
         tests.DDSEndpoint.USER_CONFIRM + "invalidtokentesting",
         content_type="application/json",
@@ -34,7 +34,7 @@ def test_invalid_token(client):
     assert flask.request.path == flask.url_for("auth_blueprint.login")
 
 
-def test_expired_token(client):
+def test_confirm_invite_expired_token(client):
     response = client.get(
         tests.DDSEndpoint.USER_CONFIRM
         + (
@@ -54,7 +54,7 @@ def test_expired_token(client):
     assert flask.request.path == flask.url_for("auth_blueprint.login")
 
 
-def test_valid_token(client):
+def test_confirm_invite_valid_token(client):
     invite = models.Invite.query.filter_by(
         email="existing_invite_email@mailtrap.io", role="Researcher"
     ).one_or_none()
@@ -79,6 +79,7 @@ def registry_form_data(client):
         email="existing_invite_email@mailtrap.io", role="Researcher"
     ).one_or_none()
     assert invite
+    assert invite.public_key
 
     token = get_email_token(email=invite.email)
     assert token
