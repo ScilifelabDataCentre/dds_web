@@ -29,7 +29,6 @@ from dds_web.database import models
 import dds_web.utils
 import dds_web.forms
 import dds_web.errors as ddserr
-from dds_web.api.db_connector import DBConnector
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.security.project_user_keys import share_project_private_key_with_user

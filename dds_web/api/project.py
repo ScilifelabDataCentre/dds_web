@@ -18,7 +18,6 @@ import dds_web.utils
 from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.db_connector import DBConnector
 from dds_web.api.dds_decorators import logging_bind_request, dbsession
 from dds_web.errors import (
     DDSArgumentError,
