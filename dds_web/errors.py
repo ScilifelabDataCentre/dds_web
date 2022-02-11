@@ -148,13 +148,13 @@ class DeletionError(LoggedHTTPException):
 
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-    def __init__(self, project, message, pass_message=False):
+    def __init__(self, project, message, alt_message=None, pass_message=False):
 
         if project:
             structlog.threadlocal.bind_threadlocal(project=project)
 
         general_logger.warning(message)
-        super().__init__("Deletion failed." if not pass_message else message)
+        super().__init__((alt_message or "Deletion failed.") if not pass_message else message)
 
 
 class NoSuchProjectError(LoggedHTTPException):

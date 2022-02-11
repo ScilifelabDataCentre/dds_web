@@ -30,12 +30,9 @@ import dds_web.utils
 def verify_project_exists(spec_proj):
     """Check that project exists."""
 
-    try:
-        project = models.Project.query.filter(
-            models.Project.public_id == sqlalchemy.func.binary(spec_proj)
-        ).one_or_none()
-    except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise
+    project = models.Project.query.filter(
+        models.Project.public_id == sqlalchemy.func.binary(spec_proj)
+    ).one_or_none()
 
     if not project:
         flask.current_app.logger.warning("No such project!!")

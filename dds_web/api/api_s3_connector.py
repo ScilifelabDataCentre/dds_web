@@ -65,20 +65,17 @@ class ApiS3Connector:
     def get_s3_info(self):
         """Get information required to connect to cloud."""
 
-        try:
-            endpoint, name, accesskey, secretkey = (
-                models.Unit.query.filter_by(id=self.project.responsible_unit.id)
-                .with_entities(
-                    models.Unit.safespring_endpoint,
-                    models.Unit.safespring_name,
-                    models.Unit.safespring_access,
-                    models.Unit.safespring_secret,
-                )
-                .one_or_none()
+        endpoint, name, accesskey, secretkey = (
+            models.Unit.query.filter_by(id=self.project.responsible_unit.id)
+            .with_entities(
+                models.Unit.safespring_endpoint,
+                models.Unit.safespring_name,
+                models.Unit.safespring_access,
+                models.Unit.safespring_secret,
             )
-            bucket = self.project.bucket
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError from sqlerr
+            .one_or_none()
+        )
+        bucket = self.project.bucket
 
         return (
             name,
@@ -90,14 +87,8 @@ class ApiS3Connector:
     @bucket_must_exists
     def remove_all(self, *args, **kwargs):
         """Removes all contents from the project specific s3 bucket."""
-
-        try:
-            bucket = self.resource.Bucket(self.project.bucket)
-            bucket.objects.all().delete()
-        except botocore.client.ClientError as err:
-            raise DeletionError(message=str(err), project=self.project.get("id"))
-        else:
-            return True
+        bucket = self.resource.Bucket(self.project.bucket)
+        bucket.objects.all().delete()
 
     @bucket_must_exists
     def remove_folder(self, folder, *args, **kwargs):

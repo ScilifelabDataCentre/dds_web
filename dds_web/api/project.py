@@ -19,7 +19,7 @@ from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.db_connector import DBConnector
-from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.api.dds_decorators import logging_bind_request, dbsession
 from dds_web.errors import (
     DDSArgumentError,
     DatabaseError,
@@ -140,12 +140,14 @@ class ProjectStatus(flask_restful.Resource):
             project.project_statuses.append(add_status)
             if not project.is_active:
                 # Deletes files (also commits session in the function - possibly refactor later)
-                removed = RemoveContents().delete_project_contents(project)
+                removed = RemoveContents().delete_project_contents(project=project)
                 delete_message = f"\nAll files in {public_id} deleted"
-                if new_status == "Deleted" or is_aborted:
-                    # Delete metadata from project row
-                    project = self.delete_project_info(project)
-                    delete_message += " and project info cleared"
+                if new_status in ["Deleted", "Archived"]:
+                    self.rm_project_user_keys(project=project)
+                    if new_status == "Deleted" or is_aborted:
+                        # Delete metadata from project row
+                        project = self.delete_project_info(project)
+                        delete_message += " and project info cleared"
             db.session.commit()
         except (
             sqlalchemy.exc.SQLAlchemyError,
@@ -181,6 +183,11 @@ class ProjectStatus(flask_restful.Resource):
                 result = True
                 break
         return result
+
+    def rm_project_user_keys(self, project):
+        """Remove ProjectUserKey rows for specified project."""
+        for project_key in project.project_user_keys:
+            db.session.delete(project_key)
 
     def delete_project_info(self, proj):
         """Delete certain metadata from proj on deletion/abort"""
@@ -302,6 +309,7 @@ class RemoveContents(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @dbsession
     def delete(self):
         """Removes all project contents."""
 
@@ -311,34 +319,42 @@ class RemoveContents(flask_restful.Resource):
         if not project.files:
             raise EmptyProjectException("The are no project contents to delete.")
 
-        # Delete files
-        try:
-            self.delete_project_contents(project)
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
-        except DatabaseError as err:
-            raise DeletionError(
-                message=f"No project contents deleted: {err}",
-                project=project.public_id,
-            )
+        self.delete_project_contents(project=project)
 
         return {"removed": True}
 
     @staticmethod
     def delete_project_contents(project):
         """Remove project contents"""
-        DBConnector(project=project).delete_all()
-
-        # Delete from bucket
+        # Delete from cloud
         with ApiS3Connector(project=project) as s3conn:
-            removed = s3conn.remove_all()
-            if not removed:
-                db.session.rollback()
-            else:
-                # Commit changes to db
-                for project_key in project.project_user_keys:
-                    db.session.delete(project_key)
-                db.session.commit()
+            try:
+                s3conn.remove_all()
+            except botocore.client.ClientError as err:
+                raise DeletionError(message=str(err), project=project.public_id)
+
+        # If ok delete from database
+        try:
+            models.File.query.filter(models.File.poject_id == project.id).delete()
+            # TODO: put in class
+            project.date_updated = dds_web.utils.current_time()
+
+            # Update all versions associated with project
+            models.Version.query.filter(
+                sqlalchemy.and_(
+                    models.Version.project_id == project.id,
+                    models.Version.time_deleted.is_(None),
+                )
+            ).update({"time_deleted": dds_web.utils.current_time()})
+        except (sqlalchemy.exc.SQLAlchemyError, AttributeError) as sqlerr:
+            raise DeletionError(
+                project=project.public_id,
+                message=str(sqlerr),
+                alt_message=(
+                    "Project bucket contents were deleted, but they were not deleted from the "
+                    "database. Please contact SciLifeLab Data Centre."
+                ),
+            )
 
 
 class CreateProject(flask_restful.Resource):

@@ -69,36 +69,6 @@ class DBConnector:
         else:
             return file_info.sizeSum
 
-    def delete_all(self):
-        """Delete all files in project."""
-
-        try:
-            num_deleted = models.File.query.filter(
-                models.File.project_id == self.project.id
-            ).delete()
-
-            # TODO (ina): put in class
-            self.project.date_updated = dds_web.utils.current_time()
-            db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            db.session.rollback()
-            raise
-
-        try:
-            # Update all versions associated with project
-            models.Version.query.filter(
-                sqlalchemy.and_(
-                    models.Version.project_id == self.project.id,
-                    models.Version.time_deleted.is_(None),
-                )
-            ).update({"time_deleted": dds_web.utils.current_time()})
-            db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            db.session.rollback()
-            raise
-
-        return True
-
     def delete_folder(self, folder):
         """Delete all items in folder"""
 
