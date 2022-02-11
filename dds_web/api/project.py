@@ -335,7 +335,7 @@ class RemoveContents(flask_restful.Resource):
 
         # If ok delete from database
         try:
-            models.File.query.filter(models.File.poject_id == project.id).delete()
+            models.File.query.filter(models.File.project_id == project.id).delete()
             # TODO: put in class
             project.date_updated = dds_web.utils.current_time()
 
