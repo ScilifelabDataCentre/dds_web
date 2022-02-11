@@ -231,7 +231,9 @@ class ListFiles(flask_restful.Resource):
 
             # Get files and folders
             try:
-                distinct_files, distinct_folders = dbconn.items_in_subpath(folder=subpath)
+                distinct_files, distinct_folders = self.items_in_subpath(
+                    project=project, folder=subpath
+                )
             except DatabaseError:
                 raise
 
@@ -262,6 +264,66 @@ class ListFiles(flask_restful.Resource):
                     files_folders.append(info)
 
         return {"files_folders": files_folders}
+
+    @staticmethod
+    def items_in_subpath(project, folder="."):
+        """Get all items in root folder of project."""
+        distinct_files = []
+        distinct_folders = []
+        # Get everything in root:
+        # Files have subpath "." and folders do not have child folders
+        # Get everything in folder:
+        # Files have subpath == folder and folders have child folders (regexp)
+        try:
+            # All files in project
+            files = models.File.query.filter(
+                models.File.project_id == sqlalchemy.func.binary(project.id)
+            )
+
+            # File names in root
+            distinct_files = (
+                files.filter(models.File.subpath == sqlalchemy.func.binary(folder))
+                .with_entities(models.File.name, models.File.size_original)
+                .all()
+            )
+
+            # Folder names in folder (or root)
+            if folder == ".":
+                # Get distinct folders in root, subpath should not be "."
+                distinct_folders = (
+                    files.filter(models.File.subpath != sqlalchemy.func.binary(folder))
+                    .with_entities(models.File.subpath)
+                    .distinct()
+                    .all()
+                )
+
+                # Get first subpath (may be many and first may not have files in)
+                first_parts = set(x[0].split(os.sep)[0] for x in distinct_folders)
+                distinct_folders = list(first_parts)
+
+            else:
+                # Get distinct sub folders in specific folder with regex
+                # Match /<something that is not /> x number of times
+                distinct_folders = (
+                    files.filter(models.File.subpath.regexp_match(rf"^{folder}(/[^/]+)+$"))
+                    .with_entities(models.File.subpath)
+                    .distinct()
+                    .all()
+                )
+
+                # Get length of specified folder
+                len_folder = len(folder.split(os.sep))
+
+                # Get subfolders in level under specified folder
+                split_paths = set(
+                    f"{os.sep}".join(x[0].split(os.sep)[: len_folder + 1]) for x in distinct_folders
+                )
+                distinct_folders = list(split_paths)
+
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            raise DatabaseError(message=str(err))
+        else:
+            return distinct_files, distinct_folders
 
 
 class RemoveFile(flask_restful.Resource):
