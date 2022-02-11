@@ -1,11 +1,14 @@
+import http
 import json
+
+import pytest
+import marshmallow
+
 from dds_web import db
 import dds_web.utils
 from dds_web.database import models
+from dds_web.errors import NoSuchFileError
 import tests
-import pytest
-import http
-import marshmallow
 
 first_new_file = {
     "name": "filename1",
@@ -52,7 +55,7 @@ def project_row(project_id):
 
 
 def test_new_file(client):
-    """Add file to database."""
+    """Add and overwrite file to database."""
 
     project_1 = project_row(project_id="file_testing_project")
     assert project_1
@@ -67,6 +70,37 @@ def test_new_file(client):
     assert response.status_code == http.HTTPStatus.OK
 
     assert file_in_db(test_dict=first_new_file, project=project_1.id)
+
+    updated_file = first_new_file.copy()
+    updated_file["size"] = 1200
+    updated_file["size_processed"] = 600
+
+    response = client.put(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(updated_file),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=updated_file, project=project_1.id)
+
+
+def test_update_nonexistent_file(client):
+    """Try to update a non existent file"""
+    with pytest.raises(NoSuchFileError) as error:
+        response = client.put(
+            tests.DDSEndpoint.FILE_NEW,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            query_string={"project": "file_testing_project"},
+            data=json.dumps(first_new_file),
+            content_type="application/json",
+        )
+
+    assert f"Cannot update non-existent file '{first_new_file['name']}' in the database!" in str(
+        error.value
+    )
 
 
 def test_new_file_invalid_credentials(client):
