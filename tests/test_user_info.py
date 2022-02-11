@@ -96,5 +96,5 @@ def test_show_usage_unit_user(client):
     unit_user = user_from_email("unituser1@mailtrap.io")
     case = unittest.TestCase()
     case.assertCountEqual(
-        [x.public_id for x in user.projects], response.json["project_usage"].keys()
+        [x.public_id for x in unit_user.projects], response.json["project_usage"].keys()
     )
