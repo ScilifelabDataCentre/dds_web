@@ -508,7 +508,7 @@ class DeleteUser(flask_restful.Resource):
                 message="To delete your own account, use the '--self' flag instead!"
             )
 
-        DBConnector().delete_user(user)
+        self.delete_user(user)
 
         msg = (
             f"The user account {user.username} ({user_email_str}, {user.role}) has been "
@@ -528,6 +528,16 @@ class DeleteUser(flask_restful.Resource):
                 f"({user_email_str}, {user.role})!"
             )
         }
+
+    @staticmethod
+    def delete_user(user=user):
+        try:
+            parent_user = models.User.query.get(user.username)
+            db.session.delete(parent_user)
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            db.session.rollback()
+            raise DatabaseError(message=str(err))
 
 
 class RemoveUserAssociation(flask_restful.Resource):

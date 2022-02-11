@@ -420,7 +420,7 @@ def confirm_self_deletion(token):
         try:
             user = user_schemas.UserSchema().load({"email": email})
             _ = DBConnector.remove_user_self_deletion_request(user)
-            DBConnector.delete_user(user)
+            DeleteUser.delete_user(user=user)
 
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise ddserr.UserDeletionError(

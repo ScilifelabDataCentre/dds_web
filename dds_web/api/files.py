@@ -350,11 +350,7 @@ class RemoveFile(flask_restful.Resource):
 
         check_eligibility_for_deletion(project.current_status, project.has_been_available)
 
-        not_removed_dict, not_exist_list, error = self.delete_multiple(files=flask.request.json)
-
-        # S3 connection error
-        if not any([not_removed_dict, not_exist_list]) and error != "":
-            raise S3ConnectionError(str(error))
+        not_removed_dict, not_exist_list = self.delete_multiple(files=flask.request.json)
 
         # Return deleted and not deleted files
         return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
@@ -362,7 +358,7 @@ class RemoveFile(flask_restful.Resource):
     def delete_multiple(self, project, files):
         """Delete multiple files."""
 
-        not_removed_dict, not_exist_list, error = ({}, [], "")
+        not_removed_dict, not_exist_list = ({}, [])
 
         with ApiS3Connector(project=project) as s3conn:
 
@@ -400,7 +396,7 @@ class RemoveFile(flask_restful.Resource):
                     not_removed_dict[x] = str(err)
                     continue
 
-        return not_removed_dict, not_exist_list, error
+        return not_removed_dict, not_exist_list
 
     def delete_one(self, project, filename):
         """Delete a single file in project."""

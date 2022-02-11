@@ -48,17 +48,6 @@ class DBConnector:
         return True
 
     @staticmethod
-    def delete_user(user):
-
-        try:
-            parent_user = models.User.query.get(user.username)
-            db.session.delete(parent_user)
-            db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            db.session.rollback()
-            raise DatabaseError(message=str(err))
-
-    @staticmethod
     def remove_user_self_deletion_request(user):
 
         try:
