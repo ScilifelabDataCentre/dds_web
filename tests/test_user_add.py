@@ -115,6 +115,11 @@ def test_add_user_with_unitadmin(client):
     assert invited_user.email == first_new_user["email"]
     assert invited_user.role == first_new_user["role"]
 
+    assert invited_user.nonce is not None
+    assert invited_user.public_key is not None
+    assert invited_user.private_key is not None
+    assert invited_user.project_invite_keys == []
+
 
 def test_add_user_existing_email(client):
     invited_user = models.Invite.query.filter_by(
@@ -130,7 +135,7 @@ def test_add_user_existing_email(client):
     assert response.status == "400 BAD REQUEST"
 
 
-def test_add_user_with_unitpersonnel_permission_denied(client):
+def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
