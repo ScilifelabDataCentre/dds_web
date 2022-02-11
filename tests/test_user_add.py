@@ -132,6 +132,12 @@ def test_add_unit_user_with_unitadmin(client):
     assert invited_user.email == new_unit_user["email"]
     assert invited_user.role == new_unit_user["role"]
 
+    assert invited_user.nonce is not None
+    assert invited_user.public_key is not None
+    assert invited_user.private_key is not None
+    assert invited_user.project_invite_keys != []
+    assert len(invited_user.project_invite_keys) == len(invited_user.unit.projects)
+
 
 def test_add_user_with_superadmin(client):
     response = client.post(
@@ -151,27 +157,6 @@ def test_add_user_with_superadmin(client):
     assert invited_user.public_key is not None
     assert invited_user.private_key is not None
     assert invited_user.project_invite_keys == []
-
-
-def test_add_unit_user_with_unitadmin(client):
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(new_unit_user),
-        content_type="application/json",
-    )
-    assert response.status_code == http.HTTPStatus.OK
-
-    invited_user = models.Invite.query.filter_by(email=new_unit_user["email"]).one_or_none()
-    assert invited_user
-    assert invited_user.email == new_unit_user["email"]
-    assert invited_user.role == new_unit_user["role"]
-
-    assert invited_user.nonce is not None
-    assert invited_user.public_key is not None
-    assert invited_user.private_key is not None
-    assert invited_user.project_invite_keys != []
-    assert len(invited_user.project_invite_keys) == len(invited_user.unit.projects)
 
 
 def test_add_user_existing_email(client):
