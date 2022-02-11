@@ -143,6 +143,19 @@ def test_deactivate_unituser_as_unitadmin(module_client):
     )
     assert response.status_code == http.HTTPStatus.OK
 
+    # Try without action
+    response = module_client.post(
+        tests.DDSEndpoint.USER_ACTIVATION,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        data=json.dumps({**unituser}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert (
+        "Please provide an action 'deactivate' or 'reactivate' for this request."
+        in response.json["message"]
+    )
+
     # Deactivate user
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
