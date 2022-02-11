@@ -1,5 +1,6 @@
 import tests
 import flask
+import pytest
 from dds_web import db
 from dds_web.database import models
 import dds_web.errors as ddserr
@@ -72,7 +73,8 @@ def test_register_no_form(client):
     assert response.status == "400 BAD REQUEST"
 
 
-def test_register_no_token_in_session(client):
+@pytest.fixture()
+def registry_form_data(client):
     invite = models.Invite.query.filter_by(
         email="existing_invite_email@mailtrap.io", role="Researcher"
     ).one_or_none()
@@ -87,10 +89,7 @@ def test_register_no_token_in_session(client):
 
     form_token = flask.g.csrf_token
 
-    with client.session_transaction() as client_session:
-        client_session.pop("invite_token", None)
-
-    form_data = {
+    return {
         "csrf_token": form_token,
         "email": invite.email,
         "name": "Test User",
@@ -100,9 +99,14 @@ def test_register_no_token_in_session(client):
         "submit": "submit",
     }
 
+
+def test_register_no_token_in_session(registry_form_data, client):
+    with client.session_transaction() as client_session:
+        client_session.pop("invite_token", None)
+
     response = client.post(
         tests.DDSEndpoint.USER_NEW,
-        json=form_data,
+        json=registry_form_data,
         follow_redirects=True,
     )
     assert response.status == "200 OK"
@@ -115,34 +119,14 @@ def test_register_no_token_in_session(client):
 
     assert invite is not None
 
-    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    user = models.User.query.filter_by(username=registry_form_data["username"]).one_or_none()
     assert user is None
 
 
-def test_register_weak_password(client):
-    invite = models.Invite.query.filter_by(
-        email="existing_invite_email@mailtrap.io", role="Researcher"
-    ).one_or_none()
-    assert invite
-
-    token = get_email_token(email=invite.email)
-    assert token
-
-    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
-    assert response.status == "200 OK"
-    assert b"Registration form" in response.data
-
-    form_token = flask.g.csrf_token
-
-    form_data = {
-        "csrf_token": form_token,
-        "email": invite.email,
-        "name": "Test User",
-        "username": "user_not_existing",
-        "password": "password",
-        "confirm": "password",
-        "submit": "submit",
-    }
+def test_register_weak_password(registry_form_data, client):
+    form_data = registry_form_data
+    form_data["password"] = "password"
+    form_data["confirm"] = "password"
 
     response = client.post(
         tests.DDSEndpoint.USER_NEW,
@@ -163,34 +147,10 @@ def test_register_weak_password(client):
     assert user is None
 
 
-def test_successful_register(client):
-    invite = models.Invite.query.filter_by(
-        email="existing_invite_email@mailtrap.io", role="Researcher"
-    ).one_or_none()
-    assert invite
-
-    token = get_email_token(email=invite.email)
-    assert token
-
-    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
-    assert response.status == "200 OK"
-    assert b"Registration form" in response.data
-
-    form_token = flask.g.csrf_token
-
-    form_data = {
-        "csrf_token": form_token,
-        "email": invite.email,
-        "name": "Test User",
-        "username": "user_not_existing",
-        "password": "Password123",
-        "confirm": "Password123",
-        "submit": "submit",
-    }
-
+def test_successful_register(registry_form_data, client):
     response = client.post(
         tests.DDSEndpoint.USER_NEW,
-        json=form_data,
+        json=registry_form_data,
         follow_redirects=True,
     )
     assert response.status == "200 OK"
@@ -201,5 +161,5 @@ def test_successful_register(client):
 
     assert invite is None
 
-    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    user = models.User.query.filter_by(username=registry_form_data["username"]).one_or_none()
     assert user is not None
