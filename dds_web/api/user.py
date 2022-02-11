@@ -17,7 +17,6 @@ import flask
 import flask_restful
 import flask_mail
 import itsdangerous
-import isodate
 import marshmallow
 import structlog
 import sqlalchemy
