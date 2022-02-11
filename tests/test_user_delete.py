@@ -76,6 +76,18 @@ def test_del_self(client):
 
     assert del_req is not None
 
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE_SELF,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).token(client),
+        data=None,
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert (
+        "The confirmation link has already been sent to your address delete_me_researcher@mailtrap.io!"
+        in response.json["message"]
+    )
+
 
 ########################### CONFIRM SELF-DELETION ROUTE TESTS ###########################
 

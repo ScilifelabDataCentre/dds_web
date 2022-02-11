@@ -43,7 +43,7 @@ def test_add_user_with_researcher(client):
         data=json.dumps(first_new_user),
         content_type="application/json",
     )
-    assert response.status == "403 FORBIDDEN"
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
     invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     assert invited_user is None
 
@@ -55,7 +55,7 @@ def test_add_user_with_unituser_no_role(client):
         data=json.dumps(first_new_email),
         content_type="application/json",
     )
-    assert response.status == "400 BAD REQUEST"
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
     assert invited_user is None
 
@@ -67,7 +67,7 @@ def test_add_user_with_unitadmin_with_extraargs(client):
         data=json.dumps(first_new_user_extra_args),
         content_type="application/json",
     )
-    assert response.status == "400 BAD REQUEST"
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     invited_user = models.Invite.query.filter_by(
         email=first_new_user_extra_args["email"]
     ).one_or_none()
@@ -81,7 +81,7 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
         data=json.dumps(first_new_user_invalid_role),
         content_type="application/json",
     )
-    assert response.status == "400 BAD REQUEST"
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     invited_user = models.Invite.query.filter_by(
         email=first_new_user_invalid_role["email"]
     ).one_or_none()
@@ -110,7 +110,37 @@ def test_add_user_with_unitadmin(client):
         data=json.dumps(first_new_user),
         content_type="application/json",
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+    assert invited_user.email == first_new_user["email"]
+    assert invited_user.role == first_new_user["role"]
+
+
+def test_add_unit_user_with_unitadmin(client):
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        data=json.dumps(new_unit_user),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=new_unit_user["email"]).one_or_none()
+    assert invited_user
+    assert invited_user.email == new_unit_user["email"]
+    assert invited_user.role == new_unit_user["role"]
+
+
+def test_add_user_with_superadmin(client):
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+        data=json.dumps(first_new_user),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
 
     invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     assert invited_user
@@ -155,7 +185,7 @@ def test_add_user_existing_email(client):
         data=json.dumps(existing_invite),
         content_type="application/json",
     )
-    assert response.status == "400 BAD REQUEST"
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
 
 def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
@@ -165,7 +195,7 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
         data=json.dumps(new_unit_admin),
         content_type="application/json",
     )
-    assert response.status == "403 FORBIDDEN"
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     invited_user = models.Invite.query.filter_by(email=new_unit_admin["email"]).one_or_none()
     assert invited_user is None
@@ -178,7 +208,7 @@ def test_add_existing_user_without_project(client):
         data=json.dumps(existing_research_user),
         content_type="application/json",
     )
-    assert response.status == "400 BAD REQUEST"
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
 
 def test_add_existing_user_to_existing_project(client):
@@ -204,7 +234,52 @@ def test_add_existing_user_to_existing_project(client):
         data=json.dumps(user_copy),
         content_type="application/json",
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_user_after_addition = models.ProjectUsers.query.filter(
+        sqlalchemy.and_(
+            models.ProjectUsers.user_id == user.user_id,
+            models.ProjectUsers.project_id == project.id,
+        )
+    ).one_or_none()
+    assert project_user_after_addition
+
+
+def test_add_existing_user_to_existing_project_after_release(client):
+    user_copy = existing_research_user_to_existing_project.copy()
+    project_id = user_copy.pop("project")
+
+    project = models.Project.query.filter_by(public_id=project_id).one_or_none()
+    user = models.Email.query.filter_by(
+        email=existing_research_user_to_existing_project["email"]
+    ).one_or_none()
+    project_user_before_addition = models.ProjectUsers.query.filter(
+        sqlalchemy.and_(
+            models.ProjectUsers.user_id == user.user_id,
+            models.ProjectUsers.project_id == project.id,
+        )
+    ).one_or_none()
+    assert project_user_before_addition is None
+
+    # release project
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project_id},
+        data=json.dumps({"new_status": "Available"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Available"
+
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project_id},
+        data=json.dumps(user_copy),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
 
     project_user_after_addition = models.ProjectUsers.query.filter(
         sqlalchemy.and_(
@@ -225,7 +300,7 @@ def test_add_existing_user_to_nonexistent_proj(client):
         data=json.dumps(user_copy),
         content_type="application/json",
     )
-    assert response.status == "400 BAD REQUEST"
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
 
 def test_existing_user_change_ownership(client):
@@ -252,7 +327,7 @@ def test_existing_user_change_ownership(client):
         content_type="application/json",
     )
 
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
 
     db.session.refresh(project_user)
 
@@ -269,7 +344,7 @@ def test_existing_user_change_ownership_same_permissions(client):
         data=json.dumps(user_same_ownership),
         content_type="application/json",
     )
-    assert response.status == "403 FORBIDDEN"
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
 def test_add_existing_user_with_unsuitable_role(client):
@@ -283,4 +358,4 @@ def test_add_existing_user_with_unsuitable_role(client):
         data=json.dumps(user_with_unsuitable_role),
         content_type="application/json",
     )
-    assert response.status == "403 FORBIDDEN"
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
