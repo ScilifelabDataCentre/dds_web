@@ -158,10 +158,8 @@ def register():
     error_message=ddserr.TooManyRequestsError.description,
 )
 def cancel_2fa():
-    # Reset 2fa cookie
-    redirect_to_login = flask.redirect(flask.url_for("auth_blueprint.login"))
-    redirect_to_login.set_cookie("2fa_initiated_token", "", expires=0)
-    return redirect_to_login
+    flask.session.pop("2fa_initiated_token", None)
+    return flask.redirect(flask.url_for("auth_blueprint.login"))
 
 
 @auth_blueprint.route("/confirm_2fa", methods=["GET", "POST"])
@@ -186,19 +184,30 @@ def confirm_2fa():
     if next and not dds_web.utils.is_safe_url(next):
         return flask.abort(400)
 
+    # Check user has initiated 2FA
+    token = flask.session.get("2fa_initiated_token")
+    try:
+        user = dds_web.security.auth.verify_token_no_data(token)
+    except ddserr.AuthenticationError:
+        flask.flash(
+            f"Error: Please initiate a log in before entering the one-time authentication code."
+        )
+        return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+    except Exception as e:
+        flask.current_app.logger.exception(e)
+        flask.flash(
+            "Error: Second factor could not be validated due to an internal server error.",
+            "danger",
+        )
+        return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+
+    # Valid 2fa initiated token, but user does not exist (should never happen)
+    if not user:
+        flask.session.pop("2fa_initiated_token", None)
+        flask.flash("Error: Internal error.", "danger")
+        return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+
     if form.validate_on_submit():
-        try:
-            token = flask.request.cookies["2fa_initiated_token"]
-            user = dds_web.security.auth.verify_token_no_data(token)
-        except ddserr.AuthenticationError as e:
-            flask.flash(f"Error: Second factor could not be validated due to: {e}", "danger")
-            return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
-        except Exception as e:
-            flask.current_app.logger.exception(e)
-            flask.flash(
-                "Error: Second factor could not be validated due to an unknown error", "danger"
-            )
-            return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
         hotp_value = form.hotp.data
 
@@ -215,11 +224,11 @@ def confirm_2fa():
 
         # Correct username, password and hotp code --> log user in
         flask_login.login_user(user)
-        # Remove token from cookies and make it expired
         flask.flash("Logged in successfully.")
-        redirect_to_index = flask.redirect(next or flask.url_for("auth_blueprint.index"))
-        redirect_to_index.set_cookie("2fa_initiated_token", "", expires=0)
-        return redirect_to_index
+        # Remove token from session
+        flask.session.pop("2fa_initiated_token", None)
+        # Next is assured to be url_safe above
+        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
 
     else:
         return flask.render_template(
@@ -273,9 +282,8 @@ def login():
             user.username, expires_in=datetime.timedelta(minutes=15)
         )
 
-        redirect_to_confirm = flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next))
-        redirect_to_confirm.set_cookie("2fa_initiated_token", token_2fa_initiated)
-        return redirect_to_confirm
+        flask.session["2fa_initiated_token"] = token_2fa_initiated
+        return flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next))
 
     # Go to login form (get)
     return flask.render_template("user/login.html", form=form, next=next)

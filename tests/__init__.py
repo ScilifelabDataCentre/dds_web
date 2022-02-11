@@ -122,6 +122,12 @@ class DDSEndpoint:
     # Base url - local or remote
     BASE_ENDPOINT = "/api/v1"
 
+    # Web
+    INDEX = "/"
+    LOGIN = "/login"
+    CANCEL_2FA = "/cancel_2fa"
+    CONFIRM_2FA = "/confirm_2fa"
+
     # User creation
     USER_ADD = BASE_ENDPOINT + "/user/add"
     USER_CONFIRM = "/confirm_invite/"
