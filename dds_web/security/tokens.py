@@ -33,6 +33,7 @@ def encrypted_jwt_token(
             "alg": "A256KW",
             "enc": "A256GCM",
             "exp": (dds_web.utils.current_time() + expires_in).timestamp(),
+            "iat": (dds_web.utils.current_time()).timestamp(),
             "csg": username,
         },
         claims=__signed_jwt_token(
@@ -85,6 +86,7 @@ def __signed_jwt_token(
         header={
             "alg": "HS256",
             "exp": expiration_time.timestamp(),
+            "iat": (dds_web.utils.current_time()).timestamp(),
             "csg": username,
         },
         claims=data,
