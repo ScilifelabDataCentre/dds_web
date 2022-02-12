@@ -4,6 +4,7 @@ import unittest
 
 # Own
 import tests
+from tests.test_user_delete import user_from_email
 
 
 def test_get_info_unit_user(client):
@@ -79,3 +80,21 @@ def test_get_info_superadmin_user(client):
     assert user_info["name"] == "Super Admin"
     case = unittest.TestCase()
     case.assertCountEqual(user_info["emails_all"], ["superadmin@mailtrap.io"])
+
+
+def test_show_usage_unit_user(client):
+    """Show the amount of GB hours and the total cost for a unit"""
+    # Preliminary test - to be expanded later
+    response = client.get(
+        tests.DDSEndpoint.USAGE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert "project_usage" in response.json.keys()
+    assert "total_usage" in response.json.keys()
+    unit_user = user_from_email("unituser1@mailtrap.io")
+    case = unittest.TestCase()
+    case.assertCountEqual(
+        [x.public_id for x in unit_user.projects], response.json["project_usage"].keys()
+    )
