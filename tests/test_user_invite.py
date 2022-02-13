@@ -1,18 +1,17 @@
 import tests
 import flask
-from dds_web import db
 from dds_web.database import models
-import dds_web.errors as ddserr
+from dds_web.security.project_user_keys import generate_invite_key_pair
 from dds_web.security.tokens import encrypted_jwt_token
 import datetime
 
 
-def get_email_token(email):
+def get_email_token(invite):
     return encrypted_jwt_token(
         username="",
-        sensitive_content="BOGUS",
+        sensitive_content=generate_invite_key_pair(invite).hex(),
         expires_in=datetime.timedelta(hours=24),
-        additional_claims={"inv": email},
+        additional_claims={"inv": invite.email},
     )
 
 
@@ -59,7 +58,7 @@ def test_valid_token(client):
     ).one_or_none()
     assert invite
 
-    token = get_email_token(email=invite.email)
+    token = get_email_token(invite)
     assert token
 
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
@@ -78,7 +77,7 @@ def test_register_no_token_in_session(client):
     ).one_or_none()
     assert invite
 
-    token = get_email_token(email=invite.email)
+    token = get_email_token(invite)
     assert token
 
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
@@ -125,7 +124,7 @@ def test_register_weak_password(client):
     ).one_or_none()
     assert invite
 
-    token = get_email_token(email=invite.email)
+    token = get_email_token(invite)
     assert token
 
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
@@ -169,7 +168,9 @@ def test_successful_register(client):
     ).one_or_none()
     assert invite
 
-    token = get_email_token(email=invite.email)
+    invite_id = invite.id
+
+    token = get_email_token(invite)
     assert token
 
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
@@ -201,5 +202,11 @@ def test_successful_register(client):
 
     assert invite is None
 
+    assert len(models.ProjectInviteKeys.query.filter_by(invite_id=invite_id).all()) == 0
+
     user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
     assert user is not None
+    assert user.temporary_key is not None
+    assert user.nonce is not None
+    assert user.public_key is not None
+    assert user.private_key is not None

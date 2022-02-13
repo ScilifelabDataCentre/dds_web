@@ -168,13 +168,39 @@ def __decrypt_user_private_key(user):
             user.nonce,
             aad=b"private key for " + user.username.encode(),
         )
-    exception = Exception("User account is not properly setup!")
+    exception = Exception("User keys are not properly setup!")
     flask.current_app.logger.exception(exception)
     raise exception
 
 
 def __encrypt_invite_private_key(invite, private_key):
     return __encrypt_owner_private_key(invite, private_key)
+
+
+def __decrypt_invite_private_key(invite, temporary_key):
+    if temporary_key and invite.private_key and invite.nonce:
+        return __decrypt_with_aes(
+            temporary_key,
+            invite.private_key,
+            invite.nonce,
+            aad=b"private key for " + invite.email.encode(),
+        )
+    exception = Exception("Invite keys are not properly setup!")
+    flask.current_app.logger.exception(exception)
+    raise exception
+
+
+def verify_invite_temporary_key(invite, temporary_key):
+    # TODO Returns a boolean for now, will change when working with key derivation
+    private_key_bytes = __decrypt_invite_private_key(invite, temporary_key)
+    if isinstance(
+        serialization.load_der_private_key(private_key_bytes, password=None),
+        asymmetric.rsa.RSAPrivateKey,
+    ):
+        del private_key_bytes
+        gc.collect()
+        return True
+    return False
 
 
 def __generate_rsa_key_pair(owner):
