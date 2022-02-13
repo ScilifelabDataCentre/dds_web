@@ -1,6 +1,7 @@
 """ Code for generating and maintaining project and user related keys """
 import os
 
+import cryptography.exceptions
 from cryptography.hazmat.primitives import asymmetric, ciphers, hashes, serialization
 import flask
 import gc
@@ -138,8 +139,11 @@ def __decrypt_with_aes(key, ciphertext, nonce, aad=None):
     :param nonce: a unique value that has to be used only once to encrypt a given data with the given key
     :param aad: Additional data that should be authenticated with the key, but is not encrypted. Can be None.
     """
-    aesgcm = ciphers.aead.AESGCM(key)
-    return aesgcm.decrypt(nonce, ciphertext, aad)
+    try:
+        aesgcm = ciphers.aead.AESGCM(key)
+        return aesgcm.decrypt(nonce, ciphertext, aad)
+    except (cryptography.exceptions.InvalidTag, ValueError):
+        return None
 
 
 def __owner_identifier(owner):
@@ -185,15 +189,13 @@ def __decrypt_invite_private_key(invite, temporary_key):
             invite.nonce,
             aad=b"private key for " + invite.email.encode(),
         )
-    exception = Exception("Invite keys are not properly setup!")
-    flask.current_app.logger.exception(exception)
-    raise exception
+    return None
 
 
 def verify_invite_temporary_key(invite, temporary_key):
     # TODO Returns a boolean for now, will change when working with key derivation
     private_key_bytes = __decrypt_invite_private_key(invite, temporary_key)
-    if isinstance(
+    if private_key_bytes and isinstance(
         serialization.load_der_private_key(private_key_bytes, password=None),
         asymmetric.rsa.RSAPrivateKey,
     ):

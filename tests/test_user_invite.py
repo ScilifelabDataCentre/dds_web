@@ -1,5 +1,6 @@
 import tests
 import flask
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from dds_web.database import models
 from dds_web.security.project_user_keys import generate_invite_key_pair
 from dds_web.security.tokens import encrypted_jwt_token
@@ -210,3 +211,154 @@ def test_successful_register(client):
     assert user.nonce is not None
     assert user.public_key is not None
     assert user.private_key is not None
+
+
+def test_invite_key_verification_fails_with_no_setup(client):
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+    assert invite
+
+    token = encrypted_jwt_token(
+        username="",
+        sensitive_content=b"wrong_key".hex(),
+        expires_in=datetime.timedelta(hours=24),
+        additional_claims={"inv": invite.email},
+    )
+    assert token
+
+    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    assert response.status == "200 OK"
+    assert b"Registration form" in response.data
+
+    form_token = flask.g.csrf_token
+
+    form_data = {
+        "csrf_token": form_token,
+        "email": invite.email,
+        "name": "Test User",
+        "username": "user_not_existing",
+        "password": "Password123",
+        "confirm": "Password123",
+        "submit": "submit",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        json=form_data,
+        follow_redirects=True,
+    )
+    assert response.status == "200 OK"
+
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+
+    assert invite is not None
+
+    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    assert user is None
+
+
+def test_invite_key_verification_fails_with_wrong_valid_key(client):
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+    assert invite
+
+    generate_invite_key_pair(invite)
+    assert invite.nonce is not None
+    assert invite.private_key is not None
+    assert invite.public_key is not None
+
+    token = encrypted_jwt_token(
+        username="",
+        sensitive_content=AESGCM.generate_key(bit_length=256).hex(),
+        expires_in=datetime.timedelta(hours=24),
+        additional_claims={"inv": invite.email},
+    )
+    assert token
+
+    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    assert response.status == "200 OK"
+    assert b"Registration form" in response.data
+
+    form_token = flask.g.csrf_token
+
+    form_data = {
+        "csrf_token": form_token,
+        "email": invite.email,
+        "name": "Test User",
+        "username": "user_not_existing",
+        "password": "Password123",
+        "confirm": "Password123",
+        "submit": "submit",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        json=form_data,
+        follow_redirects=True,
+    )
+    assert response.status == "200 OK"
+
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+
+    assert invite is not None
+
+    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    assert user is None
+
+
+def test_invite_key_verification_fails_with_wrong_invalid_key(client):
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+    assert invite
+
+    generate_invite_key_pair(invite)
+    assert invite.nonce is not None
+    assert invite.private_key is not None
+    assert invite.public_key is not None
+
+    token = encrypted_jwt_token(
+        username="",
+        sensitive_content=b"wrong_key".hex(),
+        expires_in=datetime.timedelta(hours=24),
+        additional_claims={"inv": invite.email},
+    )
+    assert token
+
+    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    assert response.status == "200 OK"
+    assert b"Registration form" in response.data
+
+    form_token = flask.g.csrf_token
+
+    form_data = {
+        "csrf_token": form_token,
+        "email": invite.email,
+        "name": "Test User",
+        "username": "user_not_existing",
+        "password": "Password123",
+        "confirm": "Password123",
+        "submit": "submit",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        json=form_data,
+        follow_redirects=True,
+    )
+    assert response.status == "200 OK"
+
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+
+    assert invite is not None
+
+    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    assert user is None

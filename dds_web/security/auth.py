@@ -104,6 +104,7 @@ def verify_invite_key(token):
             temporary_key = bytes.fromhex(claims.get("sen_con"))
             if verify_invite_temporary_key(invite, temporary_key):
                 return temporary_key
+            return None
         raise InviteError(message="Invite could not be found!")
     raise AuthenticationError(message="Invalid token")
 

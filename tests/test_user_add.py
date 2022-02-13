@@ -131,6 +131,18 @@ def test_add_unit_user_with_unitadmin(client):
     assert invited_user
     assert invited_user.email == new_unit_user["email"]
     assert invited_user.role == new_unit_user["role"]
+    project_invite_keys = invited_user.project_invite_keys
+    number_of_asserted_projects = 0
+    for project_invite_key in project_invite_keys:
+        if (
+            project_invite_key.project.public_id == "public_project_id"
+            or project_invite_key.project.public_id == "unused_project_id"
+            or project_invite_key.project.public_id == "restricted_project_id"
+            or project_invite_key.project.public_id == "second_public_project_id"
+            or project_invite_key.project.public_id == "file_testing_project"
+        ):
+            number_of_asserted_projects += 1
+    assert len(project_invite_keys) == number_of_asserted_projects
 
 
 def test_add_user_with_superadmin(client):
