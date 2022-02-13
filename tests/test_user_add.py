@@ -143,6 +143,7 @@ def test_add_unit_user_with_unitadmin(client):
         ):
             number_of_asserted_projects += 1
     assert len(project_invite_keys) == number_of_asserted_projects
+    assert len(project_invite_keys) == 5
 
 
 def test_add_user_with_superadmin(client):
