@@ -14,6 +14,7 @@ import dds_web
 from dds_web import auth, db, utils
 from dds_web import errors as ddserr
 from dds_web.database import models
+from dds_web.security.project_user_keys import transfer_invite_private_key_to_user
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -195,11 +196,9 @@ class NewUserSchema(marshmallow.Schema):
         db.session.add(new_user)
 
         # Verify and transfer invite keys to the new user
-        new_user.temporary_key = dds_web.security.auth.verify_invite_key(token)
-        if new_user.temporary_key:
-            new_user.nonce = invite.nonce
-            new_user.public_key = invite.public_key
-            new_user.private_key = invite.private_key
+        temporary_key = dds_web.security.auth.verify_invite_key(token)
+        if temporary_key:
+            transfer_invite_private_key_to_user(invite, temporary_key, new_user)
             for project_invite_key in invite.project_invite_keys:
                 project_user_key = models.ProjectUserKeys(
                     project_id=project_invite_key.project_id,

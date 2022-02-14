@@ -11,6 +11,13 @@ from cryptography.hazmat.primitives.hashes import SHA256
 import dds_web
 import tests
 from dds_web.database import models
+from dds_web.security.auth import verify_invite_key
+from dds_web.security.project_user_keys import (
+    generate_invite_key_pair,
+    share_project_private_key,
+    transfer_invite_private_key_to_user,
+)
+from dds_web.security.tokens import encrypted_jwt_token
 from tests.test_user_delete import user_from_email
 
 
@@ -167,3 +174,82 @@ def test_remove_user_from_project_deletes_project_user_keys(client):
         project_id=project.id, user_id=researchuser.username
     ).first()
     assert not project_user_key
+
+
+def test_share_project_keys_via_two_invites(client):
+    # this test focuses only on the secure parts related to the following scenario
+
+    # unituser invites a new Unit Personnel
+    invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
+    temporary_key = generate_invite_key_pair(invite1)
+    token1 = encrypted_jwt_token(
+        username="",
+        sensitive_content=temporary_key.hex(),
+        additional_claims={"inv": invite1.email},
+    )
+    unituser = models.User.query.filter_by(username="unituser").first()
+    unituser.unit.invites.append(invite1)
+    for project in unituser.unit.projects:
+        share_project_private_key(unituser, invite1, project)
+    dds_web.db.session.commit()
+
+    # ************************************
+
+    # invited Unit Personnel follows the link and registers itself
+    common_user_fields = {
+        "username": "user_not_existing",
+        "password": "Password123",
+        "name": "Test User",
+    }
+    new_user = models.UnitUser(**common_user_fields)
+    invite1.unit.users.append(new_user)
+    new_email = models.Email(email=invite1.email, primary=True)
+    new_user.emails.append(new_email)
+    new_user.active = True
+    dds_web.db.session.add(new_user)
+    transfer_invite_private_key_to_user(invite1, verify_invite_key(token1), new_user)
+    for project_invite_key in invite1.project_invite_keys:
+        project_user_key = models.ProjectUserKeys(
+            project_id=project_invite_key.project_id,
+            user_id=new_user.username,
+            key=project_invite_key.key,
+        )
+        dds_web.db.session.add(project_user_key)
+        dds_web.db.session.delete(project_invite_key)
+
+    assert temporary_key == new_user.temporary_key
+    assert invite1.nonce != new_user.nonce
+    assert invite1.public_key == new_user.public_key
+    assert invite1.private_key != new_user.private_key
+
+    dds_web.db.session.delete(invite1)
+    dds_web.db.session.commit()
+
+    # ************************************
+
+    # new Unit Personnel invites another new Unit Personnel
+    invite2 = models.Invite(email="another_unit_user@mailtrap.io", role="Unit Personnel")
+    token2 = encrypted_jwt_token(
+        username="",
+        sensitive_content=generate_invite_key_pair(invite2).hex(),
+        additional_claims={"inv": invite2.email},
+    )
+    unituser = models.User.query.filter_by(username="user_not_existing").first()
+    unituser.unit.invites.append(invite2)
+    for project in unituser.unit.projects:
+        share_project_private_key(unituser, invite2, project)
+    dds_web.db.session.commit()
+
+    project_invite_keys = invite2.project_invite_keys
+    number_of_asserted_projects = 0
+    for project_invite_key in project_invite_keys:
+        if (
+            project_invite_key.project.public_id == "public_project_id"
+            or project_invite_key.project.public_id == "unused_project_id"
+            or project_invite_key.project.public_id == "restricted_project_id"
+            or project_invite_key.project.public_id == "second_public_project_id"
+            or project_invite_key.project.public_id == "file_testing_project"
+        ):
+            number_of_asserted_projects += 1
+    assert len(project_invite_keys) == number_of_asserted_projects
+    assert len(project_invite_keys) == 5

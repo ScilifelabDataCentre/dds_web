@@ -150,8 +150,9 @@ def __owner_identifier(owner):
     return owner.email if isinstance(owner, models.Invite) else owner.username
 
 
-def __encrypt_owner_private_key(owner, private_key):
-    temporary_key = ciphers.aead.AESGCM.generate_key(bit_length=256)
+def __encrypt_owner_private_key(owner, private_key, temporary_key=None):
+    if temporary_key is None:
+        temporary_key = ciphers.aead.AESGCM.generate_key(bit_length=256)
     nonce, encrypted_key = __encrypt_with_aes(
         temporary_key, private_key, aad=b"private key for " + __owner_identifier(owner).encode()
     )
@@ -192,8 +193,19 @@ def __decrypt_invite_private_key(invite, temporary_key):
     return None
 
 
+def transfer_invite_private_key_to_user(invite, temporary_key, user):
+    private_key_bytes = __decrypt_invite_private_key(invite, temporary_key)
+    if private_key_bytes and isinstance(
+        serialization.load_der_private_key(private_key_bytes, password=None),
+        asymmetric.rsa.RSAPrivateKey,
+    ):
+        user.temporary_key = __encrypt_owner_private_key(user, private_key_bytes, temporary_key)
+        user.public_key = invite.public_key
+        del private_key_bytes
+        gc.collect()
+
+
 def verify_invite_temporary_key(invite, temporary_key):
-    # TODO Returns a boolean for now, will change when working with key derivation
     private_key_bytes = __decrypt_invite_private_key(invite, temporary_key)
     if private_key_bytes and isinstance(
         serialization.load_der_private_key(private_key_bytes, password=None),
