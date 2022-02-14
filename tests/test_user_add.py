@@ -117,6 +117,11 @@ def test_add_user_with_unitadmin(client):
     assert invited_user.email == first_new_user["email"]
     assert invited_user.role == first_new_user["role"]
 
+    assert invited_user.nonce is not None
+    assert invited_user.public_key is not None
+    assert invited_user.private_key is not None
+    assert invited_user.project_invite_keys == []
+
 
 def test_add_unit_user_with_unitadmin(client):
     response = client.post(
@@ -131,6 +136,11 @@ def test_add_unit_user_with_unitadmin(client):
     assert invited_user
     assert invited_user.email == new_unit_user["email"]
     assert invited_user.role == new_unit_user["role"]
+
+    assert invited_user.nonce is not None
+    assert invited_user.public_key is not None
+    assert invited_user.private_key is not None
+
     project_invite_keys = invited_user.project_invite_keys
     number_of_asserted_projects = 0
     for project_invite_key in project_invite_keys:
@@ -143,6 +153,7 @@ def test_add_unit_user_with_unitadmin(client):
         ):
             number_of_asserted_projects += 1
     assert len(project_invite_keys) == number_of_asserted_projects
+    assert len(project_invite_keys) == len(invited_user.unit.projects)
     assert len(project_invite_keys) == 5
 
 
@@ -175,7 +186,7 @@ def test_add_user_existing_email(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
 
-def test_add_user_with_unitpersonnel_permission_denied(client):
+def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
