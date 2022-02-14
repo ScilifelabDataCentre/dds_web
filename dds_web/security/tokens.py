@@ -32,8 +32,11 @@ def encrypted_jwt_token(
         header={
             "alg": "A256KW",
             "enc": "A256GCM",
+            # exp: This registered claim according to JWT specification identifies the time on or after which the JWT MUST NOT be accepted for processing.
             "exp": (dds_web.utils.current_time() + expires_in).timestamp(),
+            # iat: issued at value is a registered claim and identifies the time at which the token was issued.
             "iat": (dds_web.utils.current_time()).timestamp(),
+            # csg: consignee claim for transmitting the user name to which the token was issued. Is not registered according to JWT specification.
             "csg": username,
         },
         claims=__signed_jwt_token(
@@ -85,8 +88,11 @@ def __signed_jwt_token(
     token = jwt.JWT(
         header={
             "alg": "HS256",
+            # exp: This registered claim according to JWT specification identifies the time on or after which the JWT MUST NOT be accepted for processing.
             "exp": expiration_time.timestamp(),
+            # iat: issued at value is a registered claim and identifies the time at which the token was issued.
             "iat": (dds_web.utils.current_time()).timestamp(),
+            # csg: consignee claim for transmitting the user name to which the token was issued. Is not registered according to JWT specification.
             "csg": username,
         },
         claims=data,
