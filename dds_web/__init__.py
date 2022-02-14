@@ -226,7 +226,6 @@ def create_app(testing=False, database_uri=None):
     )
 
     app.cli.add_command(fill_db_wrapper)
-    # app.cli.add_command(create_superadmin)
 
     with app.app_context():  # Everything in here has access to sessions
         db.create_all()  # TODO: remove this when we have migrations
