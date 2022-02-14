@@ -226,6 +226,7 @@ def create_app(testing=False, database_uri=None):
     )
 
     app.cli.add_command(fill_db_wrapper)
+    app.cli.add_command(create_superadmin)
 
     with app.app_context():  # Everything in here has access to sessions
         db.create_all()  # TODO: remove this when we have migrations
@@ -272,3 +273,23 @@ def fill_db_wrapper(dev_db_size):
         dds_web.development.factories.create_all()
 
     flask.current_app.logger.info("DB filled")
+
+
+@click.command("create-superadmin")
+@click.argument("username")
+@click.argument("password")
+@click.argument("name")
+@flask.cli.with_appcontext
+def create_superadmin(username, password, name):
+    from dds_web.database import models
+
+    existing_user = models.User.query.filter_by(username=username).one_or_none()
+    if existing_user:
+        if isinstance(existing_user, models.SuperAdmin):
+            flask.current_app.logger.info(
+                f"Super admin with username '{username}' already exists, not creating user."
+            )
+    else:
+        new_super_admin = models.SuperAdmin(username=username, name=name, password=password)
+        db.session.add(new_super_admin)
+        db.session.commit()
