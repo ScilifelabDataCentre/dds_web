@@ -1,5 +1,6 @@
 import http
 import json
+import time
 
 import pytest
 import marshmallow
@@ -283,6 +284,7 @@ def test_upload_move_available_delete_file(client, boto3_session):
     assert "Project Status prevents files from being deleted." in response.json["message"]
 
     # Move project back to In Progress
+    time.sleep(1)
     new_status["new_status"] = "In Progress"
     response = client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
