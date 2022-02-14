@@ -22,6 +22,7 @@ from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.errors import (
+    AccessDeniedError,
     DatabaseError,
     DDSArgumentError,
     EmptyProjectException,
@@ -205,6 +206,10 @@ class ListFiles(flask_restful.Resource):
         """Get a list of files within the specified folder."""
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        if auth.current_user().role == "Researcher" and project.current_status == "In Progress":
+            raise AccessDeniedError("There's no data available at this time.")
+
         extra_args = flask.request.json
         if extra_args is None:
             extra_args = {}
