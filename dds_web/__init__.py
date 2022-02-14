@@ -255,20 +255,40 @@ def create_app(testing=False, database_uri=None):
         return app
 
 
-@click.command("init-dev-db")
-@click.argument("dev_db_size", type=click.Choice(["small", "big"]))
+@click.command("init-db")
+@click.argument("db_type", type=click.Choice(["production", "dev-small", "dev-big"]))
 @flask.cli.with_appcontext
-def fill_db_wrapper(dev_db_size):
-    flask.current_app.logger.info("Initializing development db")
-    assert flask.current_app.config["USE_LOCAL_DB"]
+def fill_db_wrapper(db_type):
+
     db.create_all()
-    if dev_db_size == "small":
-        from dds_web.development.db_init import fill_db
 
-        fill_db()
-    elif dev_db_size == "big":
-        import dds_web.development.factories
+    if db_type == "production":
+        from dds_web.database import models
 
-        dds_web.development.factories.create_all()
+        username = flask.current_app.config["SUPERADMIN_USERNAME"]
+        password = flask.current_app.config["SUPERADMIN_PASSWORD"]
+        name = flask.current_app.config["SUPERADMIN_NAME"]
+        existing_user = models.User.query.filter_by(username=username).one_or_none()
+        if existing_user:
+            if isinstance(existing_user, models.SuperAdmin):
+                flask.current_app.logger.info(
+                    f"Super admin with username '{username}' already exists, not creating user."
+                )
+        else:
+            new_super_admin = models.SuperAdmin(username=username, name=name, password=password)
+            db.session.add(new_super_admin)
+            db.session.commit()
+    else:
+        flask.current_app.logger.info("Initializing development db")
+        assert flask.current_app.config["USE_LOCAL_DB"]
 
-    flask.current_app.logger.info("DB filled")
+        if db_type == "dev-small":
+            from dds_web.development.db_init import fill_db
+
+            fill_db()
+        elif db_type == "dev-big":
+            import dds_web.development.factories
+
+            dds_web.development.factories.create_all()
+
+        flask.current_app.logger.info("DB filled")

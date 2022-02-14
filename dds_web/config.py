@@ -65,3 +65,7 @@ class Config(object):
 
     # 512MiB; at least 4GiB (0x400000) recommended in production
     ARGON_MEMORY_COST = os.environ.get("ARGON_MEMORY_COST", 0x80000)
+
+    SUPERADMIN_USERNAME = os.environ.get("DDS_SUPERADMIN_USERNAME", "superadmin")
+    SUPERADMIN_PASSWORD = os.environ.get("DDS_SUPERADMIN_PASSWORD", "password")
+    SUPERADMIN_NAME = os.environ.get("DDS_SUPERADMIN_NAME", "superadmin")

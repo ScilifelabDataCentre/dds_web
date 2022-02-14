@@ -6,7 +6,7 @@
 FROM python:latest as base
 
 # Install some necessary systems packages
-RUN apt-get update && apt-get upgrade
+RUN apt-get update && apt-get upgrade -y
 
 # Copy the content to a code folder in container
 COPY ./requirements.txt /code/requirements.txt

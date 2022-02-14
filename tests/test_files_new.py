@@ -1,11 +1,14 @@
+import http
 import json
+
+import pytest
+import marshmallow
+
 from dds_web import db
 import dds_web.utils
 from dds_web.database import models
+from dds_web.errors import NoSuchFileError
 import tests
-import pytest
-import http
-import marshmallow
 
 first_new_file = {
     "name": "filename1",
@@ -52,7 +55,7 @@ def project_row(project_id):
 
 
 def test_new_file(client):
-    """Add file to database."""
+    """Add and overwrite file to database."""
 
     project_1 = project_row(project_id="file_testing_project")
     assert project_1
@@ -67,6 +70,142 @@ def test_new_file(client):
     assert response.status_code == http.HTTPStatus.OK
 
     assert file_in_db(test_dict=first_new_file, project=project_1.id)
+
+    updated_file = first_new_file.copy()
+    updated_file["size"] = 1200
+    updated_file["size_processed"] = 600
+
+    response = client.put(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(updated_file),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=updated_file, project=project_1.id)
+    assert f"File '{updated_file['name']}' updated in db." in response.json["message"]
+
+
+def test_update_nonexistent_file(client):
+    """Try to update a non existent file"""
+    with pytest.raises(NoSuchFileError) as error:
+        response = client.put(
+            tests.DDSEndpoint.FILE_NEW,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            query_string={"project": "file_testing_project"},
+            data=json.dumps(first_new_file),
+            content_type="application/json",
+        )
+
+    assert f"Cannot update non-existent file '{first_new_file['name']}' in the database!" in str(
+        error.value
+    )
+
+
+def test_match_file_endpoint(client):
+    """Test Match file endpoint"""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(first_new_file),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=first_new_file, project=project_1.id)
+
+    response = client.get(
+        tests.DDSEndpoint.FILE_MATCH,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps([first_new_file["name"]]),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json["files"][first_new_file["name"]] == first_new_file["name_in_bucket"]
+
+
+def test_upload_and_delete_file(client, boto3_session):
+    """Upload and delete a file"""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(first_new_file),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=first_new_file, project=project_1.id)
+
+    response = client.delete(
+        tests.DDSEndpoint.REMOVE_FILE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps([first_new_file["name"]]),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert not response.json["not_removed"]
+    assert not file_in_db(test_dict=first_new_file, project=project_1.id)
+
+
+def test_upload_and_delete_folder(client, boto3_session):
+    """Upload and delete a folder"""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    file_1_in_folder = first_new_file.copy()
+    file_1_in_folder["name"] = "file_1_in_folder"
+    file_1_in_folder["name_in_bucket"] = "bucketfile_1_in_folder"
+    file_2_in_folder = first_new_file.copy()
+    file_2_in_folder["name"] = "file_2_in_folder"
+    file_2_in_folder["name_in_bucket"] = "bucketfile_2_in_folder"
+
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(file_1_in_folder),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=file_1_in_folder, project=project_1.id)
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(file_2_in_folder),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=file_2_in_folder, project=project_1.id)
+
+    # Remove folder
+    response = client.delete(
+        tests.DDSEndpoint.REMOVE_FOLDER,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps([file_1_in_folder["subpath"]]),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert not response.json["not_removed"]
+    assert not file_in_db(test_dict=file_1_in_folder, project=project_1.id)
+    assert not file_in_db(test_dict=file_2_in_folder, project=project_1.id)
 
 
 def test_new_file_invalid_credentials(client):

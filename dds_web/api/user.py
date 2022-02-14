@@ -5,11 +5,9 @@
 ####################################################################################################
 
 # Standard library
-import datetime
 import os
 import smtplib
 import time
-import json
 import datetime
 
 # Installed
@@ -42,7 +40,7 @@ action_logger = structlog.getLogger("actions")
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
 class AddUser(flask_restful.Resource):
-    @auth.login_required
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     def post(self):
         """Create an invite and send email."""
@@ -221,6 +219,7 @@ class AddUser(flask_restful.Resource):
         if hasattr(userobj, "emails") and userobj.emails:
             # Compose and send email
             unit_name = None
+            unit_email = None
             project_id = None
             deadline = None
             if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
@@ -643,7 +642,7 @@ class ShowUsage(flask_restful.Resource):
         current_user = auth.current_user()
 
         # Check that user is unit account
-        if current_user.role != "unit":
+        if current_user.role not in ["Unit Admin", "Unit Personnel"]:
             raise ddserr.AccessDeniedError(
                 "Access denied - only unit accounts can get invoicing information."
             )
