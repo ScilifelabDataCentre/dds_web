@@ -221,7 +221,7 @@ class ListFiles(flask_restful.Resource):
 
         # Check project not empty
         if project.num_files == 0:
-            raise EmptyProjectException(project=project)
+            return {"num_items": 0, "message": f"The project {project.public_id} is empty."}
 
         # Get files and folders
         try:
