@@ -122,7 +122,8 @@ class AddUser(flask_restful.Resource):
                 # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
                 for project in auth.current_user().unit.projects:
-                    share_project_private_key(auth.current_user(), new_invite, project)
+                    if project.is_active:
+                        share_project_private_key(auth.current_user(), new_invite, project)
         else:
             db.session.add(new_invite)
 
