@@ -67,18 +67,19 @@ def test_list_files_auth(client):
         tests.DDSEndpoint.LIST_FILES,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
         query_string={"project": "public_project_id"},
+        json={"show_size": True},
     )
     expected = {
         "files_folders": [
-            {"folder": True, "name": "filename1"},
-            {"folder": True, "name": "filename2"},
-            {"folder": True, "name": "sub"},
+            {"folder": True, "name": "filename1", "size": "15 KB"},
+            {"folder": True, "name": "filename2", "size": "82.5 KB"},
+            {"folder": True, "name": "sub", "size": "15 KB"},
         ]
     }
     assert "files_folders" in response.json
     assert len(response.json["files_folders"]) == len(expected["files_folders"])
     for entry in response.json["files_folders"]:
-        assert len(entry) == 2
+        assert len(entry) == 3
         assert entry["folder"] is True
     assert set(entry["name"] for entry in response.json["files_folders"]) == set(
         entry["name"] for entry in expected["files_folders"]
@@ -172,3 +173,16 @@ def test_list_files_auth(client):
     assert set(entry["name"] for entry in response.json["files_folders"]) == set(
         entry["name"] for entry in expected["files_folders"]
     )
+
+
+def test_list_project_with_no_files(client):
+    """List project with no files"""
+
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": "file_testing_project"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert "The project file_testing_project is empty." in response.json["message"]
+    assert response.json["num_items"] == 0

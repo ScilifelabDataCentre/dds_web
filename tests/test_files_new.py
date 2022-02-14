@@ -1,5 +1,6 @@
 import http
 import json
+import time
 
 import pytest
 import marshmallow
@@ -71,7 +72,20 @@ def test_new_file(client):
 
     assert file_in_db(test_dict=first_new_file, project=project_1.id)
 
+    # Update file with incomplete info
     updated_file = first_new_file.copy()
+    updated_file.pop("size")
+    response = client.put(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(updated_file),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Information is missing, cannot add file to database." in response.json["message"]
+
+    # Update with full info
     updated_file["size"] = 1200
     updated_file["size_processed"] = 600
 
@@ -121,6 +135,7 @@ def test_match_file_endpoint(client):
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=first_new_file, project=project_1.id)
 
+    # Match existing file
     response = client.get(
         tests.DDSEndpoint.FILE_MATCH,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -130,6 +145,17 @@ def test_match_file_endpoint(client):
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json["files"][first_new_file["name"]] == first_new_file["name_in_bucket"]
+
+    # Match nonexistent file
+    response = client.get(
+        tests.DDSEndpoint.FILE_MATCH,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(["non_existent_file"]),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json["files"] is None
 
 
 def test_upload_and_delete_file(client, boto3_session):
@@ -194,7 +220,18 @@ def test_upload_and_delete_folder(client, boto3_session):
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=file_2_in_folder, project=project_1.id)
 
-    # Remove folder
+    # Remove invalid folder
+    response = client.delete(
+        tests.DDSEndpoint.REMOVE_FOLDER,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(["invalid_folder"]),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json["not_exists"][0] == "invalid_folder"
+
+    # Remove valid folder
     response = client.delete(
         tests.DDSEndpoint.REMOVE_FOLDER,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -206,6 +243,72 @@ def test_upload_and_delete_folder(client, boto3_session):
     assert not response.json["not_removed"]
     assert not file_in_db(test_dict=file_1_in_folder, project=project_1.id)
     assert not file_in_db(test_dict=file_2_in_folder, project=project_1.id)
+
+
+def test_upload_move_available_delete_file(client, boto3_session):
+    """Test delete a file once project has been made available"""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(first_new_file),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=first_new_file, project=project_1.id)
+
+    # Make project Available
+    new_status = {"new_status": "Available"}
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert project_1.current_status == "Available"
+    # Try deleting the uploaded file
+    response = client.delete(
+        tests.DDSEndpoint.REMOVE_FILE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps([first_new_file["name"]]),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Project Status prevents files from being deleted." in response.json["message"]
+
+    # Move project back to In Progress
+    time.sleep(1)
+    new_status["new_status"] = "In Progress"
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert project_1.current_status == "In Progress"
+
+    # Try deleting uploaded file again
+    response = client.delete(
+        tests.DDSEndpoint.REMOVE_FILE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps([first_new_file["name"]]),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert (
+        "Existing project contents cannot be deleted since the project has been previously made available to recipients."
+        in response.json["message"]
+    )
 
 
 def test_new_file_invalid_credentials(client):
