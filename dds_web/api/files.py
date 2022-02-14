@@ -254,7 +254,7 @@ class ListFiles(flask_restful.Resource):
                 }
 
                 if show_size:
-                    folder_size = self.folder_size(folder_name=x)
+                    folder_size = self.get_folder_size(project=project, folder_name=x)
                     info.update({"size": dds_web.utils.format_byte_size(folder_size)})
                 files_folders.append(info)
 
@@ -270,7 +270,7 @@ class ListFiles(flask_restful.Resource):
                 )
                 .filter(
                     sqlalchemy.and_(
-                        models.File.project_id == sqlalchemy.func.binary(self.project.id),
+                        models.File.project_id == sqlalchemy.func.binary(project.id),
                         models.File.subpath.like(f"{folder_name}%"),
                     )
                 )
