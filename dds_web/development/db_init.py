@@ -15,7 +15,7 @@ from dds_web import db
 from dds_web.database import models
 from dds_web.security.project_user_keys import (
     generate_project_key_pair,
-    share_project_private_key_with_user,
+    share_project_private_key,
 )
 import dds_web.utils
 
@@ -154,7 +154,7 @@ def fill_db():
 
     db.session.commit()
 
-    share_project_private_key_with_user(unituser_1, researchuser_1, project_1)
-    share_project_private_key_with_user(unituser_1, researchuser_2, project_1)
+    share_project_private_key(unituser_1, researchuser_1, project_1)
+    share_project_private_key(unituser_1, researchuser_2, project_1)
 
     db.session.commit()

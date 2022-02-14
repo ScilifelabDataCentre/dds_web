@@ -68,6 +68,38 @@ class ProjectUserKeys(db.Model):
     key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
 
 
+class ProjectInviteKeys(db.Model):
+    """
+    Many-to-many association table between projects and invites.
+
+    Primary key(s):
+    - project_id
+    - invite_id
+
+    Foreign key(s):
+    - project_id
+    - invite_id
+    """
+
+    # Table setup
+    __tablename__ = "projectinvitekeys"
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    project = db.relationship("Project", back_populates="project_invite_keys")
+    # ---
+    invite_id = db.Column(
+        db.Integer, db.ForeignKey("invites.id", ondelete="CASCADE"), primary_key=True
+    )
+    invite = db.relationship("Invite", back_populates="project_invite_keys")
+    # ---
+
+    # Additional columns
+    key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
+
+
 class ProjectUsers(db.Model):
     """
     Many-to-many association table between projects and research users.
@@ -233,6 +265,9 @@ class Project(db.Model):
     project_user_keys = db.relationship(
         "ProjectUserKeys", back_populates="project", passive_deletes=True
     )
+    project_invite_keys = db.relationship(
+        "ProjectInviteKeys", back_populates="project", passive_deletes=True
+    )
 
     @property
     def current_status(self):
@@ -355,9 +390,7 @@ class User(flask_login.UserMixin, db.Model):
         if not self.hotp_secret:
             self.hotp_secret = os.urandom(20)
         if not self.public_key or not self.private_key:
-            key_pair = generate_user_key_pair(self)
-            self.public_key = key_pair["public_key"]
-            self.private_key = key_pair["encrypted_private_key"]
+            generate_user_key_pair(self)
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
@@ -678,11 +711,17 @@ class Invite(db.Model):
     # Foreign keys & relationships
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"))
     unit = db.relationship("Unit", back_populates="invites")
+    project_invite_keys = db.relationship(
+        "ProjectInviteKeys", back_populates="invite", passive_deletes=True
+    )
     # ---
 
     # Additional columns
     email = db.Column(db.String(254), unique=True, nullable=False)
     role = db.Column(db.String(20), unique=False, nullable=False)
+    nonce = db.Column(db.LargeBinary(12), default=None)
+    public_key = db.Column(db.LargeBinary(300), default=None)
+    private_key = db.Column(db.LargeBinary(300), default=None)
 
     def __repr__(self):
         """Called by print, creates representation of object"""

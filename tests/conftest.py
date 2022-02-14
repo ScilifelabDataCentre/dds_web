@@ -31,7 +31,7 @@ import dds_web.utils
 from dds_web import create_app, db
 from dds_web.security.project_user_keys import (
     generate_project_key_pair,
-    share_project_private_key_with_user,
+    share_project_private_key,
 )
 
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
@@ -60,9 +60,9 @@ def fill_basic_db(db):
 
     db.session.commit()
 
-    share_project_private_key_with_user(users[2], users[0], projects[0])
-    share_project_private_key_with_user(users[2], users[1], projects[0])
-    share_project_private_key_with_user(users[3], users[6], projects[3])
+    share_project_private_key(users[2], users[0], projects[0])
+    share_project_private_key(users[2], users[1], projects[0])
+    share_project_private_key(users[3], users[6], projects[3])
 
     db.session.commit()
 

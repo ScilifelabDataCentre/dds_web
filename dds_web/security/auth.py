@@ -17,11 +17,11 @@ from jwcrypto import jwk, jwt
 import structlog
 
 # Own modules
-from dds_web.errors import AuthenticationError, AccessDeniedError
+from dds_web import basic_auth, auth, mail
+from dds_web.errors import AuthenticationError, AccessDeniedError, InviteError
 from dds_web.database import models
-from dds_web import basic_auth, auth
+from dds_web.security.project_user_keys import verify_invite_temporary_key
 import dds_web.utils
-from dds_web import mail
 
 action_logger = structlog.getLogger("actions")
 
@@ -102,6 +102,20 @@ def verify_invite_token(token):
 def matching_email_with_invite(token, email):
     claims = __base_verify_token_for_invite(token)
     return claims.get("inv") == email
+
+
+def verify_invite_key(token):
+    claims = __base_verify_token_for_invite(token)
+    email = claims.get("inv")
+    if email:
+        invite = models.Invite.query.filter(models.Invite.email == email).first()
+        if invite:
+            temporary_key = bytes.fromhex(claims.get("sen_con"))
+            if verify_invite_temporary_key(invite, temporary_key):
+                return temporary_key
+            return None
+        raise InviteError(message="Invite could not be found!")
+    raise AuthenticationError(message="Invalid token")
 
 
 @auth.verify_token
