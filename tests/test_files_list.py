@@ -50,7 +50,7 @@ def test_list_files_auth_not_available(client):
         query_string={"project": "public_project_id"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
-    assert "no data available" in response.json().get("message")
+    assert "no data available" in response.json["message"]
 
 
 def test_list_files_auth(client):
@@ -58,10 +58,10 @@ def test_list_files_auth(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        query_string={"project": "public_project_id", "new_status": "Available"},
+        query_string={"project": "public_project_id"},
+        json={"new_status": "Available"},
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert response.json["current_status"] == "Available"
 
     response = client.get(
         tests.DDSEndpoint.LIST_FILES,

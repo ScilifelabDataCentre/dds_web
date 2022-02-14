@@ -66,6 +66,9 @@ class ProjectStatus(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         public_id = project.public_id
         extra_args = flask.request.json
+        if not extra_args:
+            raise DDSArgumentError(message="Missing new status")
+
         new_status = extra_args.get("new_status")
         if new_status not in [
             "In Progress",
@@ -163,7 +166,7 @@ class ProjectStatus(flask_restful.Resource):
         if new_status == "Available":
             for user in project.researchusers:
                 AddUser.compose_and_send_email_to_user(
-                    user.researchuser, "project_release", project=project
+                    userobj=user.researchuser, mail_type="project_release", project=project
                 )
 
         return {"message": f"{public_id} updated to status {new_status}" + delete_message}
