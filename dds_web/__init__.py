@@ -262,6 +262,8 @@ def create_app(testing=False, database_uri=None):
 def fill_db_wrapper(db_type):
 
     if db_type == "production":
+        from dds_web.database import models
+
         username = flask.current_app.config["SUPERADMIN_USERNAME"]
         password = flask.current_app.config["SUPERADMIN_PASSWORD"]
         name = flask.current_app.config["SUPERADMIN_NAME"]
