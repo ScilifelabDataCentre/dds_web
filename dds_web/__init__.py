@@ -226,7 +226,7 @@ def create_app(testing=False, database_uri=None):
     )
 
     app.cli.add_command(fill_db_wrapper)
-    app.cli.add_command(create_superadmin)
+    # app.cli.add_command(create_superadmin)
 
     with app.app_context():  # Everything in here has access to sessions
         db.create_all()  # TODO: remove this when we have migrations
@@ -256,40 +256,36 @@ def create_app(testing=False, database_uri=None):
         return app
 
 
-@click.command("init-dev-db")
-@click.argument("dev_db_size", type=click.Choice(["small", "big"]))
+@click.command("init-db")
+@click.argument("db_type", type=click.Choice(["production", "dev-small", "dev-big"]))
 @flask.cli.with_appcontext
-def fill_db_wrapper(dev_db_size):
-    flask.current_app.logger.info("Initializing development db")
-    assert flask.current_app.config["USE_LOCAL_DB"]
-    db.create_all()
-    if dev_db_size == "small":
-        from dds_web.development.db_init import fill_db
+def fill_db_wrapper(db_type):
 
-        fill_db()
-    elif dev_db_size == "big":
-        import dds_web.development.factories
-
-        dds_web.development.factories.create_all()
-
-    flask.current_app.logger.info("DB filled")
-
-
-@click.command("create-superadmin")
-@click.argument("username")
-@click.argument("password")
-@click.argument("name")
-@flask.cli.with_appcontext
-def create_superadmin(username, password, name):
-    from dds_web.database import models
-
-    existing_user = models.User.query.filter_by(username=username).one_or_none()
-    if existing_user:
-        if isinstance(existing_user, models.SuperAdmin):
-            flask.current_app.logger.info(
-                f"Super admin with username '{username}' already exists, not creating user."
-            )
+    if db_type == "production":
+        username = flask.current_app.config["SUPERADMIN_USERNAME"]
+        password = flask.current_app.config["SUPERADMIN_PASSWORD"]
+        name = flask.current_app.config["SUPERADMIN_NAME"]
+        existing_user = models.User.query.filter_by(username=username).one_or_none()
+        if existing_user:
+            if isinstance(existing_user, models.SuperAdmin):
+                flask.current_app.logger.info(
+                    f"Super admin with username '{username}' already exists, not creating user."
+                )
+        else:
+            new_super_admin = models.SuperAdmin(username=username, name=name, password=password)
+            db.session.add(new_super_admin)
+            db.session.commit()
     else:
-        new_super_admin = models.SuperAdmin(username=username, name=name, password=password)
-        db.session.add(new_super_admin)
-        db.session.commit()
+        flask.current_app.logger.info("Initializing development db")
+        assert flask.current_app.config["USE_LOCAL_DB"]
+        db.create_all()
+        if db_type == "dev-small":
+            from dds_web.development.db_init import fill_db
+
+            fill_db()
+        elif db_type == "dev-big":
+            import dds_web.development.factories
+
+            dds_web.development.factories.create_all()
+
+        flask.current_app.logger.info("DB filled")
