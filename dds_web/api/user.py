@@ -36,7 +36,6 @@ from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
 # initiate bound logger
 action_logger = structlog.getLogger("actions")
 
-
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
