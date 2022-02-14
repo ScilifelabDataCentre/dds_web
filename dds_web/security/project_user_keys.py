@@ -44,6 +44,7 @@ def __encrypt_project_private_key(owner, project_private_key):
     public_key = serialization.load_der_public_key(owner.public_key)
     if isinstance(public_key, asymmetric.rsa.RSAPublicKey):
         return __encrypt_with_rsa(project_private_key, public_key)
+    # TODO: Change exception type
     exception = Exception("Public key cannot be loaded for encrypting the project private key!")
     flask.current_app.logger.exception(exception)
     raise exception
