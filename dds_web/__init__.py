@@ -260,6 +260,8 @@ def create_app(testing=False, database_uri=None):
 @flask.cli.with_appcontext
 def fill_db_wrapper(db_type):
 
+    db.create_all()
+
     if db_type == "production":
         from dds_web.database import models
 
@@ -279,7 +281,7 @@ def fill_db_wrapper(db_type):
     else:
         flask.current_app.logger.info("Initializing development db")
         assert flask.current_app.config["USE_LOCAL_DB"]
-        db.create_all()
+
         if db_type == "dev-small":
             from dds_web.development.db_init import fill_db
 
