@@ -11,7 +11,7 @@ import re
 # Installed
 import flask
 import werkzeug
-from dds_web.api.db_connector import DBConnector
+from dds_web.api import db_tools
 import flask_login
 import itsdangerous
 import sqlalchemy
@@ -26,6 +26,7 @@ import dds_web.errors as ddserr
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
 import dds_web.security
+from dds_web.api.user import DeleteUser
 
 
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
@@ -404,7 +405,7 @@ def confirm_self_deletion(token):
 
     except itsdangerous.exc.SignatureExpired:
 
-        email = DBConnector.remove_user_self_deletion_request(flask_login.current_user)
+        email = db_tools.remove_user_self_deletion_request(flask_login.current_user)
         raise ddserr.UserDeletionError(
             message=f"Deletion request for {email} has expired. Please login to the DDS and request deletion anew."
         )
@@ -419,8 +420,8 @@ def confirm_self_deletion(token):
     if deletion_request_row:
         try:
             user = user_schemas.UserSchema().load({"email": email})
-            _ = DBConnector.remove_user_self_deletion_request(user)
-            DBConnector.delete_user(user)
+            _ = db_tools.remove_user_self_deletion_request(user)
+            DeleteUser.delete_user(user=user)
 
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise ddserr.UserDeletionError(

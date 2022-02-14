@@ -31,38 +31,48 @@ action_logger = structlog.getLogger("actions")
 # S3 ########################################################################################## S3 #
 
 
+def dbsession(func):
+    @functools.wraps(func)
+    def make_commit(*args, **kwargs):
+
+        # Run function, catch errors
+        try:
+            result = func(*args, **kwargs)
+        except:
+            db.session.rollback()
+            raise
+
+        # If ok, commit any changes
+        try:
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError(message=str(sqlerr), alt_message="Saving database changes failed.")
+
+        return result
+
+    return make_commit
+
+
 def connect_cloud(func):
     """Connect to S3"""
 
     @functools.wraps(func)
     def init_resource(self, *args, **kwargs):
 
-        _, self.keys, self.url, self.bucketname = self.get_s3_info()
-        if None in [self.keys, self.url]:
-            self.keys, self.url, self.bucketname, self.message = (
-                None,
-                None,
-                None,
-                self.message,
-            )
-        else:
+        try:
+            _, self.keys, self.url, self.bucketname = self.get_s3_info()
             # Connect to service
-            try:
-                session = boto3.session.Session()
-
-                self.resource = session.resource(
-                    service_name="s3",
-                    endpoint_url=self.url,
-                    aws_access_key_id=self.keys["access_key"],
-                    aws_secret_access_key=self.keys["secret_key"],
-                )
-            except botocore.client.ClientError as err:
-                self.keys, self.url, self.bucketname, self.message = (
-                    None,
-                    None,
-                    None,
-                    err,
-                )
+            session = boto3.session.Session()
+            self.resource = session.resource(
+                service_name="s3",
+                endpoint_url=self.url,
+                aws_access_key_id=self.keys["access_key"],
+                aws_secret_access_key=self.keys["secret_key"],
+            )
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError(message=str(sqlerr))
+        except botocore.client.ClientError as clierr:
+            raise S3ConnectionError(message=str(clierr))
 
         return func(self, *args, **kwargs)
 

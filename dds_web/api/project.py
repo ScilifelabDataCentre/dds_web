@@ -18,8 +18,7 @@ import dds_web.utils
 from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.db_connector import DBConnector
-from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.api.dds_decorators import logging_bind_request, dbsession
 from dds_web.errors import (
     DDSArgumentError,
     DatabaseError,
@@ -67,6 +66,9 @@ class ProjectStatus(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         public_id = project.public_id
         extra_args = flask.request.json
+        if not extra_args:
+            raise DDSArgumentError(message="Missing new status")
+
         new_status = extra_args.get("new_status")
         if new_status not in [
             "In Progress",
@@ -140,12 +142,14 @@ class ProjectStatus(flask_restful.Resource):
             project.project_statuses.append(add_status)
             if not project.is_active:
                 # Deletes files (also commits session in the function - possibly refactor later)
-                removed = RemoveContents().delete_project_contents(project)
+                removed = RemoveContents().delete_project_contents(project=project)
                 delete_message = f"\nAll files in {public_id} deleted"
-                if new_status == "Deleted" or is_aborted:
-                    # Delete metadata from project row
-                    project = self.delete_project_info(project)
-                    delete_message += " and project info cleared"
+                if new_status in ["Deleted", "Archived"]:
+                    self.rm_project_user_keys(project=project)
+                    if new_status == "Deleted" or is_aborted:
+                        # Delete metadata from project row
+                        project = self.delete_project_info(project)
+                        delete_message += " and project info cleared"
             db.session.commit()
         except (
             sqlalchemy.exc.SQLAlchemyError,
@@ -162,7 +166,7 @@ class ProjectStatus(flask_restful.Resource):
         if new_status == "Available":
             for user in project.researchusers:
                 AddUser.compose_and_send_email_to_user(
-                    user.researchuser, "project_release", project=project
+                    userobj=user.researchuser, mail_type="project_release", project=project
                 )
 
         return {"message": f"{public_id} updated to status {new_status}" + delete_message}
@@ -181,6 +185,11 @@ class ProjectStatus(flask_restful.Resource):
                 result = True
                 break
         return result
+
+    def rm_project_user_keys(self, project):
+        """Remove ProjectUserKey rows for specified project."""
+        for project_key in project.project_user_keys:
+            db.session.delete(project_key)
 
     def delete_project_info(self, proj):
         """Delete certain metadata from proj on deletion/abort"""
@@ -276,7 +285,7 @@ class UserProjects(flask_restful.Resource):
             project_info["Size"] = proj_size
 
             if usage:
-                proj_bhours, proj_cost = DBConnector().project_usage(p)
+                proj_bhours, proj_cost = self.project_usage(project=project)
                 total_bhours_db += proj_bhours
                 total_cost_db += proj_cost
                 # return ByteHours
@@ -296,12 +305,37 @@ class UserProjects(flask_restful.Resource):
 
         return return_info
 
+    @staticmethod
+    def project_usage(project):
+
+        bhours = 0.0
+        cost = 0.0
+
+        for v in project.file_versions:
+            # Calculate hours of the current file
+            time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
+            time_uploaded = v.time_uploaded
+
+            file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
+
+            # Calculate BHours
+            bhours += v.size_stored * file_hours
+
+            # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
+            cost_gbhour = 0.09 / (30 * 24)
+
+            # Save file cost to project info and increase total unit cost
+            cost += bhours / 1e9 * cost_gbhour
+
+        return bhours, cost
+
 
 class RemoveContents(flask_restful.Resource):
     """Removes all project contents."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @dbsession
     def delete(self):
         """Removes all project contents."""
 
@@ -311,34 +345,42 @@ class RemoveContents(flask_restful.Resource):
         if not project.files:
             raise EmptyProjectException("The are no project contents to delete.")
 
-        # Delete files
-        try:
-            self.delete_project_contents(project)
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
-        except DatabaseError as err:
-            raise DeletionError(
-                message=f"No project contents deleted: {err}",
-                project=project.public_id,
-            )
+        self.delete_project_contents(project=project)
 
         return {"removed": True}
 
     @staticmethod
     def delete_project_contents(project):
         """Remove project contents"""
-        DBConnector(project=project).delete_all()
-
-        # Delete from bucket
+        # Delete from cloud
         with ApiS3Connector(project=project) as s3conn:
-            removed = s3conn.remove_all()
-            if not removed:
-                db.session.rollback()
-            else:
-                # Commit changes to db
-                for project_key in project.project_user_keys:
-                    db.session.delete(project_key)
-                db.session.commit()
+            try:
+                s3conn.remove_all()
+            except botocore.client.ClientError as err:
+                raise DeletionError(message=str(err), project=project.public_id)
+
+        # If ok delete from database
+        try:
+            models.File.query.filter(models.File.project_id == project.id).delete()
+            # TODO: put in class
+            project.date_updated = dds_web.utils.current_time()
+
+            # Update all versions associated with project
+            models.Version.query.filter(
+                sqlalchemy.and_(
+                    models.Version.project_id == project.id,
+                    models.Version.time_deleted.is_(None),
+                )
+            ).update({"time_deleted": dds_web.utils.current_time()})
+        except (sqlalchemy.exc.SQLAlchemyError, AttributeError) as sqlerr:
+            raise DeletionError(
+                project=project.public_id,
+                message=str(sqlerr),
+                alt_message=(
+                    "Project bucket contents were deleted, but they were not deleted from the "
+                    "database. Please contact SciLifeLab Data Centre."
+                ),
+            )
 
 
 class CreateProject(flask_restful.Resource):
@@ -355,12 +397,12 @@ class CreateProject(flask_restful.Resource):
 
         # TODO: Change -- the bucket should be created before the row is added to the database
         # This is a quick fix so that things do not break
-        try:
-            with ApiS3Connector(project=new_project) as s3:
+        with ApiS3Connector(project=new_project) as s3:
+            try:
                 s3.resource.create_bucket(Bucket=new_project.bucket)
-        except botocore.exceptions.ClientError as err:
-            # For now just keeping the project row
-            raise S3ConnectionError(str(err))
+            except botocore.exceptions.ClientError as err:
+                # For now just keeping the project row
+                raise S3ConnectionError(str(err))
 
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."

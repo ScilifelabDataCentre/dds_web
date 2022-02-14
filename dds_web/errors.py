@@ -112,6 +112,7 @@ class DatabaseError(LoggedHTTPException):
     def __init__(
         self,
         message,
+        alt_message=None,
         pass_message=False,
         project=None,
     ):
@@ -122,7 +123,9 @@ class DatabaseError(LoggedHTTPException):
             structlog.threadlocal.bind_threadlocal(project=project)
 
         super().__init__(
-            "The system encountered an error in the database." if not pass_message else message
+            (alt_message or "The system encountered an error in the database.")
+            if not pass_message
+            else message
         )
 
 
@@ -148,13 +151,13 @@ class DeletionError(LoggedHTTPException):
 
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-    def __init__(self, project, message, pass_message=False):
+    def __init__(self, project, message, alt_message=None, pass_message=False):
 
         if project:
             structlog.threadlocal.bind_threadlocal(project=project)
 
         general_logger.warning(message)
-        super().__init__("Deletion failed." if not pass_message else message)
+        super().__init__((alt_message or "Deletion failed.") if not pass_message else message)
 
 
 class NoSuchProjectError(LoggedHTTPException):
@@ -198,10 +201,14 @@ class S3ConnectionError(LoggedHTTPException):
 
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-    def __init__(self, message):
+    def __init__(self, message, alt_message=None, pass_message=False):
         super().__init__(message)
 
-        general_logger.warning(message)
+        general_logger.warning(
+            (alt_message or "An error occurred when connecting to the S3 storage")
+            if pass_message
+            else message
+        )
 
 
 class S3InfoNotFoundError(LoggedHTTPException):
