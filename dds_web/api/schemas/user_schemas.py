@@ -40,6 +40,23 @@ class UserSchema(marshmallow.Schema):
         return email_row.user
 
 
+class UnansweredInvite(marshmallow.Schema):
+    """Schema to return an unanswered invite."""
+
+    email = marshmallow.fields.Email(required=True)
+
+    class Meta:
+        unknown = marshmallow.EXCLUDE
+
+    @marshmallow.post_load
+    def return_invite(self, data, **kwargs):
+        """Return the invite object."""
+        # returns the invite, if there is exactly one or raises an exception.
+        # returns none, if there is no invite
+        invite = models.Invite.query.filter_by(email=data.get("email")).one_or_one()
+        return invite
+
+
 class InviteUserSchema(marshmallow.Schema):
     """Schema for AddUser endpoint"""
 
