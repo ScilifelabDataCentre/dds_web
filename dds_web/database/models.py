@@ -114,7 +114,7 @@ class ProjectInvites(db.Model):
     """
 
     # Table setup
-    __tablename__ = "projectusers"
+    __tablename__ = "projectinvites"
 
     # Foreign keys & relationships
     project_id = db.Column(
@@ -122,7 +122,7 @@ class ProjectInvites(db.Model):
     )
     project = db.relationship("Project", back_populates="invites")
     # ---
-    invite_id = db.Column(
+    researchuser_id = db.Column(
         db.Integer, db.ForeignKey("researchusers.id", ondelete="CASCADE"), primary_key=True
     )
     # researchuser was kept for consistency with ResearchUser model.
