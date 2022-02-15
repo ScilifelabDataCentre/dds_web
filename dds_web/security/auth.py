@@ -253,7 +253,7 @@ def extract_encrypted_token_content(token, username):
 
 
 def decrypt_and_verify_token_signature(token):
-    """Streamline decryption and signature verification and returns the claims."""
+    """Streamline decryption and signature verification and return the claims."""
     return verify_token_signature(token=decrypt_token(token=token))
 
 
