@@ -256,7 +256,7 @@ class AddUser(flask_restful.Resource):
 
         msg = flask_mail.Message(
             subject,
-            recipients=recepients,
+            recipients=recipients,
         )
 
         # Need to attach the image to be able to use it
