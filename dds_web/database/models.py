@@ -25,6 +25,7 @@ from cryptography.hazmat.primitives import hashes
 from dds_web import db, auth
 from dds_web.errors import AuthenticationError
 from dds_web.security.project_user_keys import generate_user_key_pair
+from dds_web.security.tokens import encrypted_jwt_token
 import dds_web.utils
 
 
@@ -439,8 +440,15 @@ class User(flask_login.UserMixin, db.Model):
 
     def get_reset_token(self, expires_sec=3600):
         """Generate token for resetting password."""
-        s = Serializer(flask.current_app.config["SECRET_KEY"], expires_sec)
-        return s.dumps({"user_id": self.username}).decode("utf-8")
+        token = encrypted_jwt_token(
+            username=self.username,
+            sensitive_content="",
+            expires_in=datetime.timedelta(
+                seconds=expires_sec,
+            ),
+            additional_claims={"rst": "pwd"},
+        )
+        return token
 
     @staticmethod
     def verify_reset_token(token):
