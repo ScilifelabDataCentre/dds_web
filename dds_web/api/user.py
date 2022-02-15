@@ -28,12 +28,13 @@ import dds_web.utils
 import dds_web.forms
 import dds_web.errors as ddserr
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
-from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.api.dds_decorators import logging_bind_request, user_required
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
     share_project_private_key,
 )
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
+
 
 # initiate bound logger
 action_logger = structlog.getLogger("actions")
@@ -417,20 +418,14 @@ class UserActivation(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
-    def post(self):
-        user = user_schemas.UserSchema().load(flask.request.json)
+    @user_required
+    def post(self, user):
         action = flask.request.json.get("action")
         if action is None or action == "":
             raise ddserr.DDSArgumentError(
                 message="Please provide an action 'deactivate' or 'reactivate' for this request."
             )
-        if user is None:
-            raise ddserr.NoSuchUserError(
-                message=(
-                    "This e-mail address is not associated with a user in the DDS, "
-                    "make sure it is not misspelled."
-                )
-            )
+
         user_email_str = user.primary_email
         current_user = auth.current_user()
 
@@ -452,8 +447,29 @@ class UserActivation(flask_restful.Resource):
             raise ddserr.DDSArgumentError(message="User is already in desired state!")
 
         # TODO: Check if user has lost access to any projects and if so, grant access again.
+        if action == "reactivate":
+            user.active = True
+
+            # TODO: Super admins (current_user) don't have access to projects currently, how handle this?
+            list_of_projects = None
+            if user.role in ["Project Owner", "Researcher"]:
+                list_of_projects = user.project_associations
+            elif user.role in ["Unit Personnel", "Unit Admin"]:
+                list_of_projects = user.unit.projects
+
+            for proj in list_of_projects:
+                if proj.is_active:
+                    project_keys_row = models.ProjectUserKeys.query.filter_by(
+                        project_id=proj.id, user_id=user.username
+                    ).one_or_none()
+                    if not project_keys_row:
+                        share_project_private_key(
+                            from_user=current_user, to_another=user, project=proj
+                        )
+        else:
+            user.active = False
+
         try:
-            user.active = action == "reactivate"
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()

@@ -16,9 +16,9 @@ import sqlalchemy
 
 # Own modules
 from dds_web import db
-from dds_web.errors import BucketNotFoundError, DatabaseError
+from dds_web.errors import BucketNotFoundError, DatabaseError, DDSArgumentError, NoSuchUserError
 from dds_web.utils import get_username_or_request_ip
-
+from dds_web.api.schemas import user_schemas
 
 # initiate logging
 action_logger = structlog.getLogger("actions")
@@ -28,7 +28,33 @@ action_logger = structlog.getLogger("actions")
 # DECORATORS ########################################################################## DECORATORS #
 ####################################################################################################
 
-# S3 ########################################################################################## S3 #
+
+def user_required(func):
+    """Specify that the user object is required information."""
+
+    @functools.wraps(func)
+    def get_other_user(*args, **kwargs):
+        """Get the user object from the database."""
+        extra_args = flask.request.json
+        if not extra_args:
+            raise DDSArgumentError(message="Required information missing.")
+
+        user_email = extra_args.pop("email")
+        if not user_email:
+            raise DDSArgumentError(message="User email missing.")
+
+        user = user_schemas.UserSchema().load({"email": user_email})
+        if not user:
+            raise NoSuchUserError(
+                message=(
+                    "This e-mail address is not associated with a user in the DDS, "
+                    "make sure it is not misspelled."
+                )
+            )
+
+        return func(*args, **kwargs, user=user)
+
+    return get_other_user
 
 
 def dbsession(func):
@@ -51,6 +77,9 @@ def dbsession(func):
         return result
 
     return make_commit
+
+
+# S3 ########################################################################################## S3 #
 
 
 def connect_cloud(func):
