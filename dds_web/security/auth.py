@@ -74,9 +74,8 @@ def get_user_roles(user):
 def get_user_roles_common(user):
     """Get the user role.
 
-    If the user is a Researcher, check if a project has been specified and in that case if the user
-    is set as a owner for that project. If so, the user role is Project Owner. If not, the user role
-    is Researcher.
+    If the user has Researcher role and a project, which the user has been set as an owner,
+    has been specified, the user role is returned as Project Owner. Otherwise, it is Researcher.
 
     For all other users, return the value of the role set in the database table.
     """

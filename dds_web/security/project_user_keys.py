@@ -207,13 +207,13 @@ def transfer_invite_private_key_to_user(invite, temporary_key, user):
 
 
 def verify_invite_temporary_key(invite, temporary_key):
-    """Verify the temporary key assigned to specific user invite."""
+    """Verify the temporary key generated for the specific user invite."""
     private_key_bytes = __decrypt_invite_private_key(invite=invite, temporary_key=temporary_key)
     if private_key_bytes and isinstance(
         serialization.load_der_private_key(data=private_key_bytes, password=None),
         asymmetric.rsa.RSAPrivateKey,
     ):
-        # Cleanup sensitive information
+        # Clean up sensitive information
         del private_key_bytes
         gc.collect()
         return True
