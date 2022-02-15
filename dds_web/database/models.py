@@ -355,6 +355,11 @@ class Project(db.Model):
 
         return len(self.files)
 
+    def __str__(self):
+        """Called by str(), creates representation of object"""
+
+        return f"Project {self.public_id}"
+
     def __repr__(self):
         """Called by print, creates representation of object"""
 
@@ -538,6 +543,11 @@ class User(flask_login.UserMixin, db.Model):
     @property
     def is_active(self):
         return self.active
+
+    def __str__(self):
+        """Called by str(), creates representation of object"""
+
+        return f"User {self.username}"
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -767,6 +777,11 @@ class Invite(db.Model):
         """Return list of project items."""
 
         return [proj.project for proj in self.project_associations]
+
+    def __str__(self):
+        """Called by str(), creates representation of object"""
+
+        return f"Pending invite for {self.email}"
 
     def __repr__(self):
         """Called by print, creates representation of object"""
