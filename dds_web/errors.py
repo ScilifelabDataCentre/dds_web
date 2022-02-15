@@ -10,14 +10,12 @@ import logging
 # Installed
 from werkzeug import exceptions
 import flask
-import dds_web
-import flask_login
 import http
 import json
 import structlog
 
 # Own modules
-from dds_web import actions, auth
+from dds_web import auth
 
 ####################################################################################################
 # LOGGING ################################################################################ LOGGING #
@@ -71,6 +69,50 @@ class KeyLengthError(SystemExit):
         super().__init__(message)
 
         general_logger.error(message)
+
+
+class TokenMissingError(LoggedHTTPException):
+    """Errors due to missing token."""
+
+    code = http.HTTPStatus.BAD_REQUEST
+
+    def __init__(self, message="Token is missing"):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class SensitiveContentMissingError(LoggedHTTPException):
+    """Errors due to missing sensitive content in the encrypted token."""
+
+    code = http.HTTPStatus.BAD_REQUEST
+
+    def __init__(self, message="Sensitive content is missing in the encrypted token!"):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class KeySetupError(LoggedHTTPException):
+    """Errors due to missing keys."""
+
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    def __init__(self, message="Keys are not properly setup!"):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class KeyOperationError(LoggedHTTPException):
+    """Errors due to issues in key operations."""
+
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    def __init__(self, message="A key cannot be processed!"):
+        super().__init__(message)
+
+        general_logger.warning(message)
 
 
 class AuthenticationError(LoggedHTTPException):

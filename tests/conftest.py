@@ -1,6 +1,5 @@
 # Standard Library
 import os
-import uuid
 import unittest.mock
 import datetime
 import subprocess
@@ -33,6 +32,7 @@ from dds_web.security.project_user_keys import (
     generate_project_key_pair,
     share_project_private_key,
 )
+from dds_web.security.tokens import encrypted_jwt_token
 
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
@@ -60,9 +60,33 @@ def fill_basic_db(db):
 
     db.session.commit()
 
-    share_project_private_key(users[2], users[0], projects[0])
-    share_project_private_key(users[2], users[1], projects[0])
-    share_project_private_key(users[3], users[6], projects[3])
+    user2_token = encrypted_jwt_token(
+        username=users[2].username,
+        sensitive_content="password",
+    )
+    share_project_private_key(
+        from_user=users[2],
+        to_another=users[0],
+        from_user_token=user2_token,
+        project=projects[0],
+    )
+    share_project_private_key(
+        from_user=users[2],
+        to_another=users[1],
+        from_user_token=user2_token,
+        project=projects[0],
+    )
+
+    user3_token = encrypted_jwt_token(
+        username=users[3].username,
+        sensitive_content="password",
+    )
+    share_project_private_key(
+        from_user=users[3],
+        to_another=users[6],
+        from_user_token=user3_token,
+        project=projects[3],
+    )
 
     db.session.commit()
 

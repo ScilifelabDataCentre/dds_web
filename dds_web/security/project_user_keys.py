@@ -1,13 +1,43 @@
 """ Code for generating and maintaining project and user related keys """
 import os
 
+import argon2
 import cryptography.exceptions
 from cryptography.hazmat.primitives import asymmetric, ciphers, hashes, serialization
 import flask
 import gc
 
 from dds_web.database import models
-from dds_web.errors import KeyNotFoundError
+from dds_web.errors import (
+    KeyNotFoundError,
+    KeyOperationError,
+    KeySetupError,
+    SensitiveContentMissingError,
+)
+from dds_web.security.auth import (
+    extract_encrypted_token_sensitive_content,
+    extract_token_invite_key,
+)
+
+
+def __derive_key(user, password):
+    if user.kd_salt is None:
+        raise KeySetupError(message="User keys are not properly setup!")
+
+    derived_key = argon2.low_level.hash_secret_raw(
+        secret=password.encode(),
+        salt=user.kd_salt,
+        time_cost=2,
+        memory_cost=flask.current_app.config["ARGON_MEMORY_COST"],
+        parallelism=8,
+        hash_len=32,
+        type=argon2.Type.ID,
+    )
+
+    if len(derived_key) != 32:
+        raise KeySetupError(message="Derived key is not 256 bits long!")
+
+    return derived_key
 
 
 def __get_padding_for_rsa():
@@ -41,43 +71,45 @@ def __decrypt_with_rsa(ciphertext, private_key):
 
 
 def __encrypt_project_private_key(owner, project_private_key):
-    public_key = serialization.load_der_public_key(owner.public_key)
-    if isinstance(public_key, asymmetric.rsa.RSAPublicKey):
-        return __encrypt_with_rsa(project_private_key, public_key)
-    # TODO: Change exception type
-    exception = Exception("Public key cannot be loaded for encrypting the project private key!")
-    flask.current_app.logger.exception(exception)
-    raise exception
+    if owner.public_key:
+        owner_public_key = serialization.load_der_public_key(owner.public_key)
+        if isinstance(owner_public_key, asymmetric.rsa.RSAPublicKey):
+            return __encrypt_with_rsa(project_private_key, owner_public_key)
+        raise KeyOperationError(
+            message="User public key cannot be loaded for encrypting the project private key!"
+        )
+    raise KeySetupError(message="User keys are not properly setup!")
 
 
-def __decrypt_project_private_key(user, encrypted_project_private_key):
-    user_private_key = serialization.load_der_private_key(
-        __decrypt_user_private_key(user), password=None
-    )
-    if isinstance(user_private_key, asymmetric.rsa.RSAPrivateKey):
-        return __decrypt_with_rsa(encrypted_project_private_key, user_private_key)
-    exception = Exception("User private key cannot be loaded!")
-    flask.current_app.logger.exception(exception)
-    raise exception
+def __decrypt_project_private_key(user, token, encrypted_project_private_key):
+    private_key_bytes = __decrypt_user_private_key(user, token)
+    if private_key_bytes:
+        user_private_key = serialization.load_der_private_key(private_key_bytes, password=None)
+        if isinstance(user_private_key, asymmetric.rsa.RSAPrivateKey):
+            return __decrypt_with_rsa(encrypted_project_private_key, user_private_key)
+        raise KeyOperationError(
+            message="User private key cannot be loaded for decrypting the project private key!"
+        )
+    raise KeyOperationError(message="User private key cannot be decrypted!")
 
 
-def obtain_project_private_key(user, project):
+def obtain_project_private_key(user, token, project):
     project_key = models.ProjectUserKeys.query.filter_by(
         project_id=project.id, user_id=user.username
     ).first()
     if project_key:
-        return __decrypt_project_private_key(user, project_key.key)
+        return __decrypt_project_private_key(user, token, project_key.key)
     raise KeyNotFoundError(project=project.public_id)
 
 
-def share_project_private_key(from_user, to_another, project):
+def share_project_private_key(from_user, to_another, from_user_token, project):
     if isinstance(to_another, models.Invite):
         __init_and_append_project_invite_key(
-            to_another, project, obtain_project_private_key(from_user, project)
+            to_another, project, obtain_project_private_key(from_user, from_user_token, project)
         )
     else:
         __init_and_append_project_user_key(
-            to_another, project, obtain_project_private_key(from_user, project)
+            to_another, project, obtain_project_private_key(from_user, from_user_token, project)
         )
 
 
@@ -151,36 +183,33 @@ def __owner_identifier(owner):
     return owner.email if isinstance(owner, models.Invite) else owner.username
 
 
-def __encrypt_owner_private_key(owner, private_key, temporary_key=None):
-    if temporary_key is None:
-        temporary_key = ciphers.aead.AESGCM.generate_key(bit_length=256)
+def __encrypt_owner_private_key(owner, private_key, owner_key=None):
+    key = owner_key
+    if key is None:
+        key = ciphers.aead.AESGCM.generate_key(bit_length=256)
+
     nonce, encrypted_key = __encrypt_with_aes(
-        temporary_key, private_key, aad=b"private key for " + __owner_identifier(owner).encode()
+        key, private_key, aad=b"private key for " + __owner_identifier(owner).encode()
     )
     owner.nonce = nonce
     owner.private_key = encrypted_key
-    return temporary_key
+    return key
 
 
-def __encrypt_user_private_key(user, private_key):
-    user.temporary_key = __encrypt_owner_private_key(user, private_key)
+def __decrypt_user_private_key(user, token):
+    password = extract_encrypted_token_sensitive_content(token, user.username)
+    if password is None:
+        raise SensitiveContentMissingError
+    user_key = __derive_key(user, password)
 
-
-def __decrypt_user_private_key(user):
-    if user.temporary_key and user.private_key and user.nonce:
+    if user.private_key and user.nonce:
         return __decrypt_with_aes(
-            user.temporary_key,
+            user_key,
             user.private_key,
             user.nonce,
             aad=b"private key for " + user.username.encode(),
         )
-    exception = Exception("User keys are not properly setup!")
-    flask.current_app.logger.exception(exception)
-    raise exception
-
-
-def __encrypt_invite_private_key(invite, private_key):
-    return __encrypt_owner_private_key(invite, private_key)
+    raise KeySetupError(message="User keys are not properly setup!")
 
 
 def __decrypt_invite_private_key(invite, temporary_key):
@@ -194,30 +223,34 @@ def __decrypt_invite_private_key(invite, temporary_key):
         )
 
 
-def transfer_invite_private_key_to_user(invite, temporary_key, user):
-    private_key_bytes = __decrypt_invite_private_key(invite, temporary_key)
-    if private_key_bytes and isinstance(
-        serialization.load_der_private_key(private_key_bytes, password=None),
-        asymmetric.rsa.RSAPrivateKey,
-    ):
-        user.temporary_key = __encrypt_owner_private_key(user, private_key_bytes, temporary_key)
-        user.public_key = invite.public_key
+def verify_and_transfer_invite_to_user(token, user, password):
+    invite, temporary_key = extract_token_invite_key(token)
+    private_key_bytes = __verify_invite_temporary_key(invite, temporary_key)
+    if private_key_bytes:
+        __transfer_invite_private_key_to_user(invite, private_key_bytes, user, password)
         del private_key_bytes
         gc.collect()
+        return True
+    return False
 
 
-def verify_invite_temporary_key(invite, temporary_key):
+def __transfer_invite_private_key_to_user(invite, private_key_bytes, user, password):
+    user_key = __derive_key(user, password)
+    __encrypt_owner_private_key(user, private_key_bytes, user_key)
+    user.public_key = invite.public_key
+    del user_key
+    gc.collect()
+
+
+def __verify_invite_temporary_key(invite, temporary_key):
     """Verify the temporary key generated for the specific user invite."""
     private_key_bytes = __decrypt_invite_private_key(invite=invite, temporary_key=temporary_key)
     if private_key_bytes and isinstance(
         serialization.load_der_private_key(data=private_key_bytes, password=None),
         asymmetric.rsa.RSAPrivateKey,
     ):
-        # Clean up sensitive information
-        del private_key_bytes
-        gc.collect()
-        return True
-    return False
+        return private_key_bytes
+    return None
 
 
 def __generate_rsa_key_pair(owner):
@@ -234,16 +267,18 @@ def __generate_rsa_key_pair(owner):
     return private_key_bytes
 
 
-def generate_user_key_pair(user):
+def generate_user_key_pair(user, password):
     private_key_bytes = __generate_rsa_key_pair(user)
-    __encrypt_user_private_key(user, private_key_bytes)
+    user_key = __derive_key(user, password)
+    __encrypt_owner_private_key(user, private_key_bytes, user_key)
+    del user_key
     del private_key_bytes
     gc.collect()
 
 
 def generate_invite_key_pair(invite):
     private_key_bytes = __generate_rsa_key_pair(invite)
-    temporary_key = __encrypt_invite_private_key(invite, private_key_bytes)
+    temporary_key = __encrypt_owner_private_key(invite, private_key_bytes)
     del private_key_bytes
     gc.collect()
     return temporary_key

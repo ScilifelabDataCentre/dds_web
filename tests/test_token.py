@@ -2,10 +2,10 @@ import datetime
 
 import pytest
 
-from dds_web.errors import AuthenticationError
+from dds_web.errors import AuthenticationError, TokenMissingError
 from dds_web.security.tokens import encrypted_jwt_token, jwt_token
 from dds_web.security.auth import (
-    extract_encrypted_token_content,
+    extract_encrypted_token_sensitive_content,
     decrypt_and_verify_token_signature,
     verify_invite_token,
     matching_email_with_invite,
@@ -17,14 +17,20 @@ def test_encrypted_data_transfer_via_token(client):
     username = "researchuser"
     sensitive_content = "sensitive_content"
     encrypted_token = encrypted_jwt_token(username, sensitive_content)
-    extracted_content = extract_encrypted_token_content(encrypted_token, username)
+    extracted_content = extract_encrypted_token_sensitive_content(encrypted_token, username)
     assert sensitive_content == extracted_content
 
 
 def test_encrypted_data_destined_for_another_user(client):
     encrypted_token = encrypted_jwt_token("researchuser", "sensitive_content")
-    extracted_content = extract_encrypted_token_content(encrypted_token, "projectowner")
+    extracted_content = extract_encrypted_token_sensitive_content(encrypted_token, "projectowner")
     assert extracted_content is None
+
+
+def test_extract_encrypted_token_sensitive_content_no_token(client):
+    with pytest.raises(TokenMissingError) as error:
+        extract_encrypted_token_sensitive_content(None, "projectowner")
+    assert "There is no token to extract sensitive content from." in str(error.value)
 
 
 def test_encrypted_and_signed_token(client):
