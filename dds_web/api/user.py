@@ -453,7 +453,7 @@ class UserActivation(flask_restful.Resource):
             # TODO: Super admins (current_user) don't have access to projects currently, how handle this?
             list_of_projects = None
             if user.role in ["Project Owner", "Researcher"]:
-                list_of_projects = user.project_associations
+                list_of_projects = [x.project for x in user.project_associations]
             elif user.role in ["Unit Personnel", "Unit Admin"]:
                 list_of_projects = user.unit.projects
 
