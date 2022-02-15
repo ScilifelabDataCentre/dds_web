@@ -220,10 +220,13 @@ class AddUser(flask_restful.Resource):
     @staticmethod
     @logging_bind_request
     def compose_and_send_email_to_user(userobj, mail_type, link=None, project=None):
-        flask.current_app.logger.info(
-            f"Sending email to user: {userobj} with {hasattr(userobj, 'emails')}"
-        )
-        # Compose and send email
+        """Compose and send email"""
+        if hasattr(userobj, "emails"):
+            recipients = [x.email for x in userobj.emails]
+        else:
+            # userobj likely an invite
+            recipients = [userobj.email]
+
         unit_name = None
         unit_email = None
         project_id = None
@@ -242,10 +245,8 @@ class AddUser(flask_restful.Resource):
         # Fill in email subject with sentence subject
         if mail_type == "invite":
             subject = f"{subject_subject} invites you to the SciLifeLab Data Delivery System"
-            recepients = [userobj.email]
         elif mail_type == "project_release":
             subject = f"Project made available by {subject_subject} in the SciLifeLab Data Delivery System"
-            recepients = [x.email for x in userobj.emails]
             project_id = project.public_id
             deadline = project.current_deadline.astimezone(datetime.timezone.utc).strftime(
                 "%Y-%m-%d %H:%M:%S %Z"
