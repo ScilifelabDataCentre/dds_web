@@ -141,8 +141,8 @@ def __decrypt_with_aes(key, ciphertext, nonce, aad=None):
     :param aad: Additional data that should be authenticated with the key, but is not encrypted. Can be None.
     """
     try:
-        aesgcm = ciphers.aead.AESGCM(key)
-        return aesgcm.decrypt(nonce, ciphertext, aad)
+        aesgcm = ciphers.aead.AESGCM(key=key)
+        return aesgcm.decrypt(nonce=nonce, data=ciphertext, associated_data=aad)
     except (cryptography.exceptions.InvalidTag, ValueError):
         return None
 
@@ -184,14 +184,14 @@ def __encrypt_invite_private_key(invite, private_key):
 
 
 def __decrypt_invite_private_key(invite, temporary_key):
+    """Decrypt invite private key."""
     if temporary_key and invite.private_key and invite.nonce:
         return __decrypt_with_aes(
-            temporary_key,
-            invite.private_key,
-            invite.nonce,
+            key=temporary_key,
+            ciphertext=invite.private_key,
+            nonce=invite.nonce,
             aad=b"private key for " + invite.email.encode(),
         )
-    return None
 
 
 def transfer_invite_private_key_to_user(invite, temporary_key, user):
@@ -207,11 +207,13 @@ def transfer_invite_private_key_to_user(invite, temporary_key, user):
 
 
 def verify_invite_temporary_key(invite, temporary_key):
-    private_key_bytes = __decrypt_invite_private_key(invite, temporary_key)
+    """Verify the temporary key assigned to specific user invite."""
+    private_key_bytes = __decrypt_invite_private_key(invite=invite, temporary_key=temporary_key)
     if private_key_bytes and isinstance(
-        serialization.load_der_private_key(private_key_bytes, password=None),
+        serialization.load_der_private_key(data=private_key_bytes, password=None),
         asymmetric.rsa.RSAPrivateKey,
     ):
+        # Cleanup sensitive information
         del private_key_bytes
         gc.collect()
         return True

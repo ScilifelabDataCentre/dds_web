@@ -41,7 +41,6 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def verify_file_not_exists(self, data, **kwargs):
         """Check that the file does not match anything already in the database."""
-
         # Check that there is no such file in the database
         project = data.get("project_row")
         try:
@@ -64,7 +63,6 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
     @marshmallow.post_load
     def return_items(self, data, **kwargs):
         """Create file object."""
-
         new_file = models.File(
             name=data.get("name"),
             name_in_bucket=data.get("name_in_bucket"),

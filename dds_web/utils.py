@@ -319,6 +319,7 @@ def page_query(q):
 
 
 def create_one_time_password_email(user, hotp_value):
+    """Create HOTP email."""
     msg = flask_mail.Message(
         "DDS One-Time Authentication Code",
         recipients=[user.primary_email],
