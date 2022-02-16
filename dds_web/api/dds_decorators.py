@@ -62,6 +62,9 @@ def renew_access_required(func):
     @functools.wraps(func)
     def access_decorator(*args, user, project, **kwargs):
         """Check if the current user has access to renew project access."""
+        if auth.current_user() == user:
+            raise AccessDeniedError(message="You cannot renew your own access.")
+
         # Get roles
         current_user_role = auth.current_user().role
         other_user_role = user.role
