@@ -75,19 +75,19 @@ def renew_access_required(func):
                 other_user_role = "Project Owner"
 
         # Check access
-        if (
+        if not (
             (
                 current_user_role in "Unit Admin"
                 and other_user_role
-                not in ["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"]
+                in ["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"]
             )
             or (
                 current_user_role == "Unit Personnel"
-                and other_user_role not in ["Unit Personnel", "Project Owner", "Researcher"]
+                and other_user_role in ["Unit Personnel", "Project Owner", "Researcher"]
             )
             or (
                 current_user_role == "Project Owner"
-                and other_user_role not in ["Project Owner", "Researcher"]
+                and other_user_role in ["Project Owner", "Researcher"]
             )
         ):
             raise AccessDeniedError(
@@ -112,11 +112,10 @@ def user_required(func):
         if not extra_args:
             raise DDSArgumentError(message="Required information missing.")
 
-        user_email = extra_args.pop("email")
-        if not user_email:
+        if "email" not in extra_args:
             raise DDSArgumentError(message="User email missing.")
 
-        user = user_schemas.UserSchema().load({"email": user_email})
+        user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
         if not user:
             raise NoSuchUserError()
 
