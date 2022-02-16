@@ -182,3 +182,7 @@ From the [Flask docs](https://flask.palletsprojects.com/en/2.0.x/config/#environ
 > flask run will use the interactive debugger and reloader by default in debug mode.
 
 This variable should be set to `production` when running in production.
+
+### Upgrades
+
+Whenever you upgrade to a newer version, start by running `flask db upgrade` to make sure that the database schema is up-to-date.
