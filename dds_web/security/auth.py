@@ -151,7 +151,10 @@ def extract_token_invite_key(token):
     if not invite:
         raise InviteError(message="Invite could not be found!")
 
-    return invite, bytes.fromhex(claims.get("sen_con"))
+    try:
+        return invite, bytes.fromhex(claims.get("sen_con"))
+    except ValueError:
+        raise ValueError("Temporary key is expected be in hexadecimal digits for a byte string.")
 
 
 def obtain_current_encrypted_token():

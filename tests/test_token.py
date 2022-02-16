@@ -2,7 +2,8 @@ import datetime
 
 import pytest
 
-from dds_web.errors import AuthenticationError, TokenMissingError
+import tests
+from dds_web.errors import AuthenticationError, TokenMissingError, InviteError
 from dds_web.security.tokens import encrypted_jwt_token, jwt_token
 from dds_web.security.auth import (
     extract_encrypted_token_sensitive_content,
@@ -10,6 +11,10 @@ from dds_web.security.auth import (
     verify_invite_token,
     matching_email_with_invite,
     verify_token_no_data,
+    extract_token_invite_key,
+    obtain_current_encrypted_token,
+    obtain_current_encrypted_token_claims,
+    verify_token,
 )
 
 
@@ -148,3 +153,94 @@ def test_verify_token_no_data(client):
     assert user.username == "unitadmin"
     user = verify_token_no_data(jwt_token(username="unitadmin"))
     assert user.username == "unitadmin"
+
+
+def test_extract_token_invite_key_with_wrong_token(client):
+    with pytest.raises(AuthenticationError) as error:
+        extract_token_invite_key(encrypted_jwt_token(username="unitadmin", sensitive_content=None))
+    assert "Invalid token" in str(error.value)
+
+
+def test_extract_token_invite_key_with_no_invite(client):
+    with pytest.raises(InviteError) as error:
+        extract_token_invite_key(
+            encrypted_jwt_token(
+                username="",
+                sensitive_content="bogus",
+                expires_in=datetime.timedelta(hours=24),
+                additional_claims={"inv": "bogus.tkek@bogus.com"},
+            )
+        )
+    assert "Invite could not be found!" in str(error.value)
+
+
+def test_extract_token_invite_key_with_wrong_format_for_key(client):
+    with pytest.raises(ValueError) as error:
+        extract_token_invite_key(
+            encrypted_jwt_token(
+                username="",
+                sensitive_content="bogus",
+                expires_in=datetime.timedelta(hours=24),
+                additional_claims={"inv": "existing_invite_email@mailtrap.io"},
+            )
+        )
+    assert "Temporary key is expected be in hexadecimal digits for a byte string." in str(
+        error.value
+    )
+
+
+def test_extract_token_invite_key_successful(client):
+    invite, temporary_key = extract_token_invite_key(
+        encrypted_jwt_token(
+            username="",
+            sensitive_content=b"bogus".hex(),
+            expires_in=datetime.timedelta(hours=24),
+            additional_claims={"inv": "existing_invite_email@mailtrap.io"},
+        )
+    )
+    assert invite
+    assert invite.email == "existing_invite_email@mailtrap.io"
+    assert temporary_key == b"bogus"
+
+
+def test_obtain_current_encrypted_token_fails(client):
+    with pytest.raises(TokenMissingError) as error:
+        obtain_current_encrypted_token()
+
+    assert "Encrypted token is required but missing!" in str(error.value)
+
+
+def test_obtain_current_encrypted_token_succeeds(client):
+    initial_token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+
+    # Use an endpoint to put the token in the request header.
+    client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC,
+        query_string={"project": "restricted_project_id"},
+        headers=initial_token,
+    )
+
+    obtained_token = obtain_current_encrypted_token()
+    assert str(initial_token["Authorization"].split()[1]) == str(obtained_token)
+
+
+def test_obtain_current_encrypted_token_claims(client):
+    initial_token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+
+    # Use an endpoint to put the token in the request header.
+    client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC,
+        query_string={"project": "restricted_project_id"},
+        headers=initial_token,
+    )
+
+    obtained_token_claims = obtain_current_encrypted_token_claims()
+    assert obtained_token_claims.get("sub") == "unitadmin"
+
+
+def test_expired_encrypted_token(client):
+    token = encrypted_jwt_token("researchuser", None, expires_in=datetime.timedelta(seconds=-2))
+    with pytest.raises(AuthenticationError) as error:
+        verify_token(token)
+
+    assert "Expired token" in str(error.value)
