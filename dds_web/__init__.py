@@ -20,6 +20,7 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_bootstrap
 import flask_login
+import flask_migrate
 
 # import flask_qrcode
 from flask_limiter import Limiter
@@ -57,6 +58,9 @@ actions = {}
 
 # Limiter
 limiter = Limiter(key_func=get_remote_address)
+
+# Migration
+migrate = flask_migrate.Migrate()
 
 
 ####################################################################################################
@@ -219,6 +223,9 @@ def create_app(testing=False, database_uri=None):
     # Initialize limiter
     limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
     limiter.init_app(app)
+
+    # Initialize migrations
+    migrate.init_app(app, db)
 
     # initialize OIDC
     oauth.register(
