@@ -1,5 +1,4 @@
 """Initialize Flask app."""
-
 ####################################################################################################
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
@@ -218,8 +217,6 @@ def create_app(testing=False, database_uri=None):
     def load_user(user_id):
         return models.User.query.get(user_id)
 
-    oauth.init_app(app)
-
     # Initialize limiter
     limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
     limiter.init_app(app)
@@ -228,6 +225,7 @@ def create_app(testing=False, database_uri=None):
     migrate.init_app(app, db)
 
     # initialize OIDC
+    oauth.init_app(app)
     oauth.register(
         "default_login",
         client_secret=app.config.get("OIDC_CLIENT_SECRET"),
