@@ -223,12 +223,8 @@ def delrequest_exists(email):
     return False
 
 
-def send_reset_email(email_row):
+def send_reset_email(email_row, token):
     """Generate password reset email."""
-    # Generate token
-    token = email_row.user.get_reset_token()
-
-    # Create and send email
     msg = flask_mail.Message(
         "WARNING! Password Reset Request for SciLifeLab Data Delivery System",
         recipients=[email_row.email],

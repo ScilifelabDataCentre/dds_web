@@ -28,7 +28,6 @@ from dds_web.api.schemas import user_schemas
 import dds_web.security
 from dds_web.api.user import DeleteUser
 
-
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 
 ####################################################################################################
@@ -319,7 +318,15 @@ def request_reset_password():
     form = forms.RequestResetForm()
     if form.validate_on_submit():
         email = models.Email.query.filter_by(email=form.email.data).first()
-        dds_web.utils.send_reset_email(email_row=email)
+        token = dds_web.security.tokens.encrypted_jwt_token(
+            username=email.user.username,
+            sensitive_content="",
+            expires_in=datetime.timedelta(
+                seconds=3600,
+            ),
+            additional_claims={"rst": "pwd"},
+        )
+        dds_web.utils.send_reset_email(email_row=email, token=token)
         flask.flash("An email has been sent with instructions to reset your password.", "info")
         return flask.redirect(flask.url_for("auth_blueprint.login"))
 
@@ -339,18 +346,29 @@ def reset_password(token):
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     # Verify that the token is valid and contains enough info
-    user = models.User.verify_reset_token(token=token)
-    if not user:
+    try:
+        user = dds_web.security.auth.verify_password_reset_token(token=token)
+    except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
-        return flask.redirect(flask.url_for("auth_blueprint.request_reset_password"))
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     # Get form for reseting password
     form = forms.ResetPasswordForm()
 
     # Validate form
     if form.validate_on_submit():
+        # Delete project user keys for user
+        for project_user_key in user.project_user_keys:
+            db.session.delete(project_user_key)
+        db.session.commit()
+
+        # Update user password
         user.password = form.password.data
         db.session.commit()
+
+        dds_web.security.project_user_keys.generate_user_key_pair(user)
+        db.session.commit()
+
         flask.flash("Your password has been updated! You are now able to log in.", "success")
         return flask.redirect(flask.url_for("auth_blueprint.login"))
 
