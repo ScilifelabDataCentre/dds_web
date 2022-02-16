@@ -77,11 +77,30 @@ These values are publicly visible on GitHub and **should not be used in producti
 > :exclamation: <br> 
 > At the time of writing, upload within projects created in the development database will most likely not work. <br>
 > To use the upload functionality with the `CLI`, first create a project.
+
 ### Database changes
 
-If the database is modified, you will need to rebuild the containers from scratch.
+> :heavy_exclamation_mark: Do your database changes in `models.py` while the containers are running (`docker-compose up`). Do not restart them to regenerate the database.
 
-First, remove all docker containers and volumes
+If you modify the database models (e.g. tables or indexes), you must create a migration for the changes. We use `Alembic` (via `flask-migrate`) which compares our database models with the running database to generate a suggested migration.
+
+Run the command `flask db migrate -m <commit message/name>` in the running backend:
+
+```bash
+docker exec dds_backend flask db migrate -m <commit message/name>
+```
+
+This will create a migration in the folder `migrations/versions`. Confirm that the changes in the file match the changes you did, otherwise change the `upgrade` and `downgrade` functions as needed. Keep an eye out for changes to the `apscheduler` tables and indexes, and make sure they are not included in the migration. Once the migration looks ok, test it by running `flask db upgrade` in the backend:
+
+```bash
+docker exec dds_backend flask db upgrade
+```
+
+Finally, confirm that the database looks correct after running the migration and commit the migration file to git.
+
+#### Database issues while running `docker-compose up`
+
+If you run into issues with complaints about the db while running `docker-compose up` you can try to reset the containers by running `docker-compose down` before trying again. If you still have issues, try cleaning up containers and volumes manually.
 
 > :warning: These commands will remove _all_ containers and volumes!
 > If you are working on other projects please be more selective.
@@ -94,7 +113,6 @@ docker volume prune
 Then run `docker-compose up` as normal. The images will be rebuilt from scratch before launch.
 
 If there are still issues, try deleting the `pycache` folders and repeat the above steps.
-<br><br>
 
 ### Run tests
 Tests run on github actions on every pull request and push against master and dev. To run the tests locally, use this command:
