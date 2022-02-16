@@ -96,9 +96,9 @@ This will create a migration in the folder `migrations/versions`. Confirm that t
 docker exec dds_backend flask db upgrade
 ```
 
-Finally, confirm that the database looks correct after running the migration and commit the migration file to git.
+Finally, confirm that the database looks correct after running the migration and commit the migration file to git. Note that you need to run `black` on the generated migration file. 
 
-#### Database issues while running `docker-compose up`
+### Database issues while running `docker-compose up`
 
 If you run into issues with complaints about the db while running `docker-compose up` you can try to reset the containers by running `docker-compose down` before trying again. If you still have issues, try cleaning up containers and volumes manually.
 
