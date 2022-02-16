@@ -36,7 +36,7 @@ from dds_web.errors import (
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas, user_schemas
-from dds_web.security.project_user_keys import obtain_project_private_key
+from dds_web.security.project_user_keys import obtain_project_private_key, share_project_private_key
 
 
 ####################################################################################################

@@ -17,6 +17,7 @@ import marshmallow
 
 # Own modules
 from dds_web import db, auth
+from dds_web.security.auth import get_user_roles_common
 from dds_web.errors import (
     BucketNotFoundError,
     DatabaseError,
@@ -67,8 +68,8 @@ def renew_access_required(func):
             raise AccessDeniedError(message="You cannot renew your own access.")
 
         # Get roles
-        current_user_role = auth.current_user().role
-        other_user_role = user.role
+        current_user_role = get_user_roles_common(user=auth.current_user())
+        other_user_role = get_user_roles_common(user=user)
 
         # Check if Researcher and if so is project owner or not
         if other_user_role == "Researcher" and project:

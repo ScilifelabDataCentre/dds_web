@@ -212,3 +212,215 @@ def test_fix_access_projectowner_valid_email(client):
         project_id=project.id, user_id="researchuser"
     ).first()
     assert user_project_key_row
+
+
+def test_fix_access_unitpersonnel_valid_email_researcher(client):
+    """Unit Personnel giving access to researcher - ok."""
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    assert project
+
+    user_project_row = models.ProjectUsers.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    assert user_project_row
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    if user_project_key_row:
+        db.session.delete(user_project_key_row)
+        db.session.commit()
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    assert not user_project_key_row
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_ACCESS,
+        headers=token,
+        query_string=proj_query,
+        data=json.dumps({"email": "researchuser@mailtrap.io"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    assert user_project_key_row
+
+
+def test_fix_access_unitpersonnel_valid_email_projectowner(client):
+    """Unit Personnel giving access to project owner - ok."""
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    assert project
+
+    user_project_row = models.ProjectUsers.query.filter_by(
+        project_id=project.id, user_id="projectowner"
+    ).first()
+    assert user_project_row
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="projectowner"
+    ).first()
+    if user_project_key_row:
+        db.session.delete(user_project_key_row)
+        db.session.commit()
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="projectowner"
+    ).first()
+    assert not user_project_key_row
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_ACCESS,
+        headers=token,
+        query_string=proj_query,
+        data=json.dumps({"email": "projectowner@mailtrap.io"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="projectowner"
+    ).first()
+    assert user_project_key_row
+
+
+def test_fix_access_unitpersonnel_valid_email_unitpersonnel(client):
+    """Unit Personnel giving access to unit personnel - ok."""
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    assert project
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser2"
+    ).first()
+    if user_project_key_row:
+        db.session.delete(user_project_key_row)
+        db.session.commit()
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser2"
+    ).first()
+    assert not user_project_key_row
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_ACCESS,
+        headers=token,
+        query_string=proj_query,
+        data=json.dumps({"email": "unituser2@mailtrap.io"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser2"
+    ).first()
+    assert user_project_key_row
+
+
+def test_fix_access_unitadmin_valid_email_researcher(client):
+    """Unit admin giving access to researcher - ok."""
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    assert project
+
+    user_project_row = models.ProjectUsers.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    assert user_project_row
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    if user_project_key_row:
+        db.session.delete(user_project_key_row)
+        db.session.commit()
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    assert not user_project_key_row
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_ACCESS,
+        headers=token,
+        query_string=proj_query,
+        data=json.dumps({"email": "researchuser@mailtrap.io"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    assert user_project_key_row
+
+
+def test_fix_access_unitadmin_valid_email_projectowner(client):
+    """Unit admin giving access to project owner - ok."""
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    assert project
+
+    user_project_row = models.ProjectUsers.query.filter_by(
+        project_id=project.id, user_id="projectowner"
+    ).first()
+    assert user_project_row
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="projectowner"
+    ).first()
+    if user_project_key_row:
+        db.session.delete(user_project_key_row)
+        db.session.commit()
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="projectowner"
+    ).first()
+    assert not user_project_key_row
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_ACCESS,
+        headers=token,
+        query_string=proj_query,
+        data=json.dumps({"email": "projectowner@mailtrap.io"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="projectowner"
+    ).first()
+    assert user_project_key_row
+
+
+def test_fix_access_unitadmin_valid_email_unituser(client):
+    """Unit admin giving access to unituser - ok."""
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    assert project
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser"
+    ).first()
+    if user_project_key_row:
+        db.session.delete(user_project_key_row)
+        db.session.commit()
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser"
+    ).first()
+    assert not user_project_key_row
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_ACCESS,
+        headers=token,
+        query_string=proj_query,
+        data=json.dumps({"email": "unituser1@mailtrap.io"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser"
+    ).first()
+    assert user_project_key_row
