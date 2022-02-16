@@ -94,6 +94,10 @@ def renew_access_required(func):
                 and other_user_role in ["Project Owner", "Researcher"]
             )
         ):
+            flask.current_app.logger.debug(
+                f"Current user: {auth.current_user()}{current_user_role}"
+            )
+            flask.current_app.logger.debug(f"Other user: {user}{other_user_role}")
             raise AccessDeniedError(
                 message=(
                     "You do not have the necessary permissions "
