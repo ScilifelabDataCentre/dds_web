@@ -26,6 +26,7 @@ from dds_web.errors import (
 )
 from dds_web.utils import get_username_or_request_ip
 from dds_web.api.schemas import user_schemas, project_schemas
+from dds_web.database import models
 
 # initiate logging
 action_logger = structlog.getLogger("actions")
