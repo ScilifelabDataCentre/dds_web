@@ -1,6 +1,8 @@
 import http
 import json
+import uuid
 
+import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.padding import MGF1, OAEP
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
@@ -10,12 +12,20 @@ from cryptography.hazmat.primitives.hashes import SHA256
 import dds_web
 import tests
 from dds_web.database import models
+from dds_web.errors import (
+    KeySetupError,
+    KeyOperationError,
+    KeyNotFoundError,
+    SensitiveContentMissingError,
+)
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
+    generate_user_key_pair,
     share_project_private_key,
     verify_and_transfer_invite_to_user,
 )
 from dds_web.security.tokens import encrypted_jwt_token
+from dds_web.utils import timestamp
 from tests.test_user_delete import user_from_email
 
 
@@ -25,6 +35,173 @@ def __padding():
         algorithm=SHA256(),
         label=None,
     )
+
+
+def test_user_key_setup_error_with_salt(client):
+    # user is created without a password, so salt will be missing
+    user = models.User(username="testuser")
+    with pytest.raises(KeySetupError) as error:
+        generate_user_key_pair(user, "password")
+
+    assert "User keys are not properly setup!" in str(error.value)
+
+
+def test_user_key_setup_error_with_private_key(client):
+    invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
+    unituser = models.User.query.filter_by(username="unituser").first()
+    unituser_token = encrypted_jwt_token(
+        username=unituser.username,
+        sensitive_content="password",
+    )
+
+    # Somehow private key has disappeared
+    unituser.private_key = None
+
+    with pytest.raises(KeySetupError) as error:
+        share_project_private_key(
+            from_user=unituser,
+            to_another=invite1,
+            from_user_token=unituser_token,
+            project=unituser.unit.projects[0],
+        )
+
+    assert "User keys are not properly setup!" in str(error.value)
+
+
+def test_user_key_setup_error_with_nonce(client):
+    invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
+    unituser = models.User.query.filter_by(username="unituser").first()
+    unituser_token = encrypted_jwt_token(
+        username=unituser.username,
+        sensitive_content="password",
+    )
+
+    # Somehow nonce has disappeared
+    unituser.nonce = None
+
+    with pytest.raises(KeySetupError) as error:
+        share_project_private_key(
+            from_user=unituser,
+            to_another=invite1,
+            from_user_token=unituser_token,
+            project=unituser.unit.projects[0],
+        )
+
+    assert "User keys are not properly setup!" in str(error.value)
+
+
+def test_user_key_setup_error_with_public_key(client):
+    invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
+
+    # Somehow the key pair for the invite has not taken place or disappeared
+
+    unituser = models.User.query.filter_by(username="unituser").first()
+    unituser_token = encrypted_jwt_token(
+        username=unituser.username,
+        sensitive_content="password",
+    )
+    with pytest.raises(KeySetupError) as error:
+        share_project_private_key(
+            from_user=unituser,
+            to_another=invite1,
+            from_user_token=unituser_token,
+            project=unituser.unit.projects[0],
+        )
+
+    assert "User keys are not properly setup!" in str(error.value)
+
+
+def test_user_key_operation_error_with_load_user_public_key(client):
+    invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
+    generate_invite_key_pair(invite1)
+    unituser = models.User.query.filter_by(username="unituser").first()
+    unituser_token = encrypted_jwt_token(
+        username=unituser.username,
+        sensitive_content="password",
+    )
+
+    # Somehow the public key of the invite is not the expected public key
+    invite1.public_key = b"useless_bytes"
+
+    with pytest.raises(KeyOperationError) as error:
+        share_project_private_key(
+            from_user=unituser,
+            to_another=invite1,
+            from_user_token=unituser_token,
+            project=unituser.unit.projects[0],
+        )
+
+    assert "User public key could not be loaded!" in str(error.value)
+
+
+def test_user_key_operation_error_with_decrypt_user_private_key(client):
+    invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
+    unituser = models.User.query.filter_by(username="unituser").first()
+
+    # Somehow a wrong password has ended up in the encrypted token
+    unituser_token = encrypted_jwt_token(
+        username=unituser.username,
+        sensitive_content="passwor",
+    )
+    with pytest.raises(KeyOperationError) as error:
+        share_project_private_key(
+            from_user=unituser,
+            to_another=invite1,
+            from_user_token=unituser_token,
+            project=unituser.unit.projects[0],
+        )
+
+    assert "User private key could not be decrypted!" in str(error.value)
+
+
+def test_sensitive_content_missing_error(client):
+    invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
+    unituser = models.User.query.filter_by(username="unituser").first()
+
+    # Somehow the password is missing in the encrypted token
+    unituser_token = encrypted_jwt_token(
+        username=unituser.username,
+        sensitive_content=None,
+    )
+    with pytest.raises(SensitiveContentMissingError) as error:
+        share_project_private_key(
+            from_user=unituser,
+            to_another=invite1,
+            from_user_token=unituser_token,
+            project=unituser.unit.projects[0],
+        )
+
+    assert "Sensitive content is missing in the encrypted token!" in str(error.value)
+
+
+def test_user_key_not_found_error_for_project(client):
+    project_without_keys = models.Project(
+        public_id="random_project_id",
+        title="random project_title",
+        description="This is a random project. ",
+        pi="PI",
+        bucket=f"publicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+    )
+
+    # Somehow the key pair for the project is not created or persisted to the database
+
+    invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
+    unituser = models.User.query.filter_by(username="unituser").first()
+    unituser.unit.projects.append(project_without_keys)
+    dds_web.db.session.commit()
+    unituser_token = encrypted_jwt_token(
+        username=unituser.username,
+        sensitive_content="password",
+    )
+    with pytest.raises(KeyNotFoundError) as error:
+        share_project_private_key(
+            from_user=unituser,
+            to_another=invite1,
+            from_user_token=unituser_token,
+            project=project_without_keys,
+        )
+
+    assert "Unrecoverable key error. Aborting." in str(error.value)
 
 
 def test_user_key_generation(client):

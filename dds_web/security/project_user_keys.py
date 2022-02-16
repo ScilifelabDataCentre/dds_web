@@ -71,26 +71,28 @@ def __decrypt_with_rsa(ciphertext, private_key):
 
 
 def __encrypt_project_private_key(owner, project_private_key):
-    if owner.public_key:
+    if owner.public_key is None:
+        raise KeySetupError(message="User keys are not properly setup!")
+
+    try:
         owner_public_key = serialization.load_der_public_key(owner.public_key)
         if isinstance(owner_public_key, asymmetric.rsa.RSAPublicKey):
             return __encrypt_with_rsa(project_private_key, owner_public_key)
-        raise KeyOperationError(
-            message="User public key cannot be loaded for encrypting the project private key!"
-        )
-    raise KeySetupError(message="User keys are not properly setup!")
+    except ValueError:
+        raise KeyOperationError(message="User public key could not be loaded!")
 
 
 def __decrypt_project_private_key(user, token, encrypted_project_private_key):
     private_key_bytes = __decrypt_user_private_key(user, token)
-    if private_key_bytes:
+    if private_key_bytes is None:
+        raise KeyOperationError(message="User private key could not be decrypted!")
+
+    try:
         user_private_key = serialization.load_der_private_key(private_key_bytes, password=None)
         if isinstance(user_private_key, asymmetric.rsa.RSAPrivateKey):
             return __decrypt_with_rsa(encrypted_project_private_key, user_private_key)
-        raise KeyOperationError(
-            message="User private key cannot be loaded for decrypting the project private key!"
-        )
-    raise KeyOperationError(message="User private key cannot be decrypted!")
+    except ValueError:
+        raise KeyOperationError(message="User private key could not be loaded!")
 
 
 def obtain_project_private_key(user, token, project):
