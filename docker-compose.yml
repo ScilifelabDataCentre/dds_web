@@ -54,6 +54,11 @@ services:
       - 127.0.0.1:5000:5000
     volumes:
 
+      # Migrations
+      - type: bind
+        source: ./migrations
+        target: /code/migrations
+
       # Main website files (so can edit locally)
       - type: bind
         source: ./dds_web
