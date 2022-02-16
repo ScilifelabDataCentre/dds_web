@@ -61,9 +61,12 @@ def renew_access_required(func):
 
     @functools.wraps(func)
     def access_decorator(*args, user, project, **kwargs):
-
+        """Check if the current user has access to renew project access."""
+        # Get roles
         current_user_role = auth.current_user().role
         other_user_role = user.role
+
+        # Check if Researcher and if so is project owner or not
         if other_user_role == "Researcher" and project:
             project_user_row = models.ProjectUsers.query.filter_by(
                 project_id=project.id, user_id=user.username
@@ -71,6 +74,7 @@ def renew_access_required(func):
             if project_user_row and project_user_row.owner:
                 other_user_role = "Project Owner"
 
+        # Check access
         if (
             (
                 current_user_role in "Unit Admin"
