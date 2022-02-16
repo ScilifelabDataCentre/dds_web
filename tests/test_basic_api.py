@@ -1,14 +1,14 @@
 # IMPORTS ################################################################################ IMPORTS #
 
 # Standard library
-from cryptography.hazmat.primitives.twofactor.hotp import HOTP
-import flask
 import http
 import datetime
+import unittest
 
 # Installed
-from jwcrypto import jwk, jws
-import pytest
+from cryptography.hazmat.primitives.twofactor.hotp import HOTP
+import flask
+import flask_mail
 
 # Own
 import tests
@@ -68,6 +68,15 @@ def test_auth_incorrect_username_check_statuscode_401_incorrect_info(client):
     assert "Missing or incorrect credentials" == response_json.get("message")
 
 
+def test_auth_correct_credentials(client):
+    """Test that the token endpoint called correctly returns a token and sends an email."""
+
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.get(tests.DDSEndpoint.ENCRYPTED_TOKEN, auth=("researchuser", "password"))
+        assert mock_mail_send.call_count == 1
+    assert response.status_code == http.HTTPStatus.OK
+
+
 # Second Factor #################################################################### Second Factor #
 
 
@@ -109,7 +118,6 @@ def test_auth_second_factor_incorrect_hotp_counter_statuscode_401_unauthorized(c
     assert "Invalid one-time authentication code." == response_json.get("message")
 
 
-@pytest.mark.skip("Returns invalid code instead of expired code since the hotp value gets updated")
 def test_auth_second_factor_expired_hotp_statuscode_401_unauthorized(client):
     """Test that the second_factor endpoint with expired hotp returns 401/UNAUTHORIZED"""
     user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
@@ -126,7 +134,7 @@ def test_auth_second_factor_expired_hotp_statuscode_401_unauthorized(client):
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
-    assert "One-time authentication code has expired." == response_json.get("message")
+    assert "Invalid one-time authentication code." == response_json.get("message")
 
 
 def test_auth_second_factor_correctauth_check_statuscode_200_correct_info(client):
