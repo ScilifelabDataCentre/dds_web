@@ -197,7 +197,7 @@ class AddUser(flask_restful.Resource):
             link = project.invites
 
         for rusers in link:
-            if rusers.researchuser is whom:
+            if rusers.researchuser == whom:
                 if rusers.owner == owner:
                     return {
                         "status": ddserr.RoleException.code.value,
