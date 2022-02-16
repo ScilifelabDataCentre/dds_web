@@ -51,7 +51,7 @@ class AddUser(flask_restful.Resource):
         project = flask.request.args.get("project", None)
         if project:
             project = project_schemas.ProjectRequiredSchema().load({"project": project})
-            role = args.get("role", None)
+            role = flask.request.json.get("role", None)
 
         args = flask.request.json
         # Check if email is registered to a user
