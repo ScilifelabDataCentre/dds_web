@@ -60,21 +60,30 @@ def renew_access_required(func):
     """Check that user has permission to give access to another user in this project."""
 
     @functools.wraps(func)
-    def access_decorator(*args, user, **kwargs):
+    def access_decorator(*args, user, project, **kwargs):
 
         current_user_role = auth.current_user().role
+        other_user_role = user.role
+        if other_user_role == "Researcher" and project:
+            project_user_row = models.ProjectUsers.query.filter_by(
+                project_id=project.id, user_id=user.username
+            ).one_or_none()
+            if project_user_row and project_user_row.owner:
+                other_user_role = "Project Owner"
+
         if (
             (
-                current_user_role == "Unit Admin"
-                and user.role not in ["Unit Admin", "Unit Personnel"]
+                current_user_role in "Unit Admin"
+                and other_user_role
+                not in ["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"]
             )
             or (
                 current_user_role == "Unit Personnel"
-                and user.role not in ["Unit Personnel", "Project Owner"]
+                and other_user_role not in ["Unit Personnel", "Project Owner", "Researcher"]
             )
             or (
                 current_user_role == "Project Owner"
-                and user.role not in ["Project Owner", "Researcher"]
+                and other_user_role not in ["Project Owner", "Researcher"]
             )
         ):
             raise AccessDeniedError(
@@ -84,7 +93,7 @@ def renew_access_required(func):
                 )
             )
 
-        return func(*args, user=user, **kwargs)
+        return func(*args, user=user, project=project, **kwargs)
 
     return access_decorator
 

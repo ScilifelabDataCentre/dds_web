@@ -488,14 +488,14 @@ class ProjectAccess(flask_restful.Resource):
     @logging_bind_request
     @dbsession
     @user_required
-    @renew_access_required
     @project_optional
+    @renew_access_required
     def post(self, user, project):
         """Give access to user."""
         # Give access to specific project or all active projects if no project specified
         list_of_projects = None
         if not project:
-            if user.role in ["Project Owner", "Researcher"]:
+            if user.role == "Researcher":
                 list_of_projects = [x.project for x in user.project_associations]
             elif user.role in ["Unit Personnel", "Unit Admin"]:
                 list_of_projects = user.unit.projects
