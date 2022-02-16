@@ -84,6 +84,18 @@ def verify_token_no_data(token):
     return user
 
 
+def verify_password_reset_token(token):
+    claims = __verify_general_token(token)
+    user = __user_from_subject(claims.get("sub"))
+    if user:
+        rst = claims.get("rst")
+        del claims
+        gc.collect()
+        if rst and rst == "pwd":
+            return user
+    raise AuthenticationError(message="Invalid token")
+
+
 def __base_verify_token_for_invite(token):
     claims = __verify_general_token(token)
     if claims.get("sub"):
