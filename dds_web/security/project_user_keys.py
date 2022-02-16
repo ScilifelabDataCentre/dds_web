@@ -83,7 +83,7 @@ def __encrypt_project_private_key(owner, project_private_key):
 
 
 def __decrypt_project_private_key(user, token, encrypted_project_private_key):
-    private_key_bytes = __decrypt_user_private_key(user, token)
+    private_key_bytes = __decrypt_user_private_key_via_token(user, token)
     if private_key_bytes is None:
         raise KeyOperationError(message="User private key could not be decrypted!")
 
@@ -198,12 +198,7 @@ def __encrypt_owner_private_key(owner, private_key, owner_key=None):
     return key
 
 
-def __decrypt_user_private_key(user, token):
-    password = extract_encrypted_token_sensitive_content(token, user.username)
-    if password is None:
-        raise SensitiveContentMissingError
-    user_key = __derive_key(user, password)
-
+def __decrypt_user_private_key(user, user_key):
     if user.private_key and user.nonce:
         return __decrypt_with_aes(
             user_key,
@@ -212,6 +207,15 @@ def __decrypt_user_private_key(user, token):
             aad=b"private key for " + user.username.encode(),
         )
     raise KeySetupError(message="User keys are not properly setup!")
+
+
+def __decrypt_user_private_key_via_token(user, token):
+    password = extract_encrypted_token_sensitive_content(token, user.username)
+    if password is None:
+        raise SensitiveContentMissingError
+    user_key = __derive_key(user, password)
+
+    return __decrypt_user_private_key(user, user_key)
 
 
 def __decrypt_invite_private_key(invite, temporary_key):
@@ -223,6 +227,29 @@ def __decrypt_invite_private_key(invite, temporary_key):
             nonce=invite.nonce,
             aad=b"private key for " + invite.email.encode(),
         )
+
+
+def update_user_keys_for_password_change(user, current_password, new_password):
+    """
+    Updates the user key (key encryption key) and the encrypted user private key
+
+    :param user: a user object from the models, its password is about to change
+    :param current_password: the password that is being replaced. It is expected to be validated via its web form.
+    :param new_password: the password that is replacing the previous one. It is expected to be validated via its web form.
+    """
+    old_user_key = __derive_key(user, current_password)
+    private_key_bytes = __decrypt_user_private_key(user, old_user_key)
+    if private_key_bytes is None:
+        raise KeyOperationError(message="User private key could not be decrypted!")
+
+    user.kd_salt = os.urandom(32)
+    new_user_key = __derive_key(user, new_password)
+    __encrypt_owner_private_key(user, private_key_bytes, new_user_key)
+
+    del new_user_key
+    del old_user_key
+    del private_key_bytes
+    gc.collect()
 
 
 def verify_and_transfer_invite_to_user(token, user, password):

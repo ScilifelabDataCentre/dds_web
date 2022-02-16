@@ -23,6 +23,7 @@ from dds_web.security.project_user_keys import (
     generate_user_key_pair,
     share_project_private_key,
     verify_and_transfer_invite_to_user,
+    update_user_keys_for_password_change,
 )
 from dds_web.security.tokens import encrypted_jwt_token
 from dds_web.utils import timestamp
@@ -409,3 +410,61 @@ def test_share_project_keys_via_two_invites(client):
             number_of_asserted_projects += 1
     assert len(project_invite_keys) == number_of_asserted_projects
     assert len(project_invite_keys) == 5
+
+
+def test_update_user_keys_for_password_change(client):
+    user = models.User(username="randomtestuser", password="password")
+
+    public_key_initial = user.public_key
+    nonce_initial = user.nonce
+    private_key_initial = user.private_key
+    kd_salt_initial = user.kd_salt
+
+    assert public_key_initial is not None
+    assert nonce_initial is not None
+    assert private_key_initial is not None
+    assert kd_salt_initial is not None
+
+    update_user_keys_for_password_change(user, "password", "bogus")
+    user.password = "bogus"
+
+    public_key_after_password_change = user.public_key
+    nonce_after_password_change = user.nonce
+    private_key_after_password_change = user.private_key
+    kd_salt_after_password_change = user.kd_salt
+
+    assert public_key_after_password_change is not None
+    assert nonce_after_password_change is not None
+    assert private_key_after_password_change is not None
+    assert kd_salt_after_password_change is not None
+
+    assert public_key_after_password_change == public_key_initial
+    assert nonce_after_password_change != nonce_initial
+    assert private_key_after_password_change != private_key_initial
+    assert kd_salt_after_password_change != kd_salt_initial
+
+    # It shouldn't matter whichever comes first between set password
+    # and update user keys as the password is not stored in database
+
+    user.password = "password"
+    update_user_keys_for_password_change(user, "bogus", "password")
+
+    public_key_final = user.public_key
+    nonce_final = user.nonce
+    private_key_final = user.private_key
+    kd_salt_final = user.kd_salt
+
+    assert public_key_final is not None
+    assert nonce_final is not None
+    assert private_key_final is not None
+    assert kd_salt_final is not None
+
+    assert public_key_final == public_key_initial
+    assert nonce_final != nonce_initial
+    assert private_key_final != private_key_initial
+    assert kd_salt_final != kd_salt_initial
+
+    assert public_key_after_password_change == public_key_final
+    assert nonce_after_password_change != nonce_final
+    assert private_key_after_password_change != private_key_final
+    assert kd_salt_after_password_change != kd_salt_final
