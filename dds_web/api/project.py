@@ -18,7 +18,13 @@ import dds_web.utils
 from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import logging_bind_request, dbsession, user_required
+from dds_web.api.dds_decorators import (
+    logging_bind_request,
+    dbsession,
+    user_required,
+    renew_access_required,
+    project_optional,
+)
 from dds_web.errors import (
     DDSArgumentError,
     DatabaseError,
@@ -480,15 +486,36 @@ class ProjectAccess(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
+    @dbsession
     @user_required
-    def post(self, user):
-        extra_args = flask.request.args
-        project = project_schemas.ProjectRequiredSchema().load(extra_args) if extra_args else None
+    @renew_access_required
+    @project_optional
+    def post(self, user, project):
+        """Give access to user."""
+        # Give access to specific project or all active projects if no project specified
+        list_of_projects = None
+        if not project:
+            if user.role in ["Project Owner", "Researcher"]:
+                list_of_projects = [x.project for x in user.project_associations]
+            elif user.role in ["Unit Personnel", "Unit Admin"]:
+                list_of_projects = user.unit.projects
+        else:
+            list_of_projects = [project]
 
-        # Comb through the ProjectUsers table (researchers) /  Unit.projects (unituser)
-        # for active projects to which the these have access but the specified user
-        # does not have keys for anymore.
-        # The access is granted anew by encrypting the
-        # Projects' Private Keys with the new Public Key of that User.
+        self.give_project_access(
+            project_list=list_of_projects, current_user=auth.current_user(), user=user
+        )
 
         return {"message": f"Attempting to fix project access for {user.primary_email}"}
+
+    @staticmethod
+    def give_project_access(project_list, current_user, user):
+        """Give specific user project access."""
+        # Loop through and check that the project(s) is(are) active
+        for proj in project_list:
+            if proj.is_active:
+                project_keys_row = models.ProjectUserKeys.query.filter_by(
+                    project_id=proj.id, user_id=user.username
+                ).one_or_none()
+                if not project_keys_row:
+                    share_project_private_key(from_user=current_user, to_another=user, project=proj)

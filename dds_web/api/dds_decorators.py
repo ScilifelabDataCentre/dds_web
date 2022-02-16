@@ -13,12 +13,19 @@ import botocore
 import flask
 import structlog
 import sqlalchemy
+import marshmallow
 
 # Own modules
-from dds_web import db
-from dds_web.errors import BucketNotFoundError, DatabaseError, DDSArgumentError, NoSuchUserError
+from dds_web import db, auth
+from dds_web.errors import (
+    BucketNotFoundError,
+    DatabaseError,
+    DDSArgumentError,
+    NoSuchUserError,
+    AccessDeniedError,
+)
 from dds_web.utils import get_username_or_request_ip
-from dds_web.api.schemas import user_schemas
+from dds_web.api.schemas import user_schemas, project_schemas
 
 # initiate logging
 action_logger = structlog.getLogger("actions")
@@ -29,6 +36,57 @@ action_logger = structlog.getLogger("actions")
 ####################################################################################################
 
 # S3 ########################################################################################## S3 #
+
+
+def project_optional(func):
+    """Verify that user has access to project."""
+
+    @functools.wraps(func)
+    def verify_access(*args, **kwargs):
+        """Check for access."""
+
+        project_info = flask.request.args
+        if project_info and project_info.get("project"):
+            project = project_schemas.ProjectRequiredSchema().load(project_info)
+        else:
+            project = None
+
+        return func(*args, project=project, **kwargs)
+
+    return verify_access
+
+
+def renew_access_required(func):
+    """Check that user has permission to give access to another user in this project."""
+
+    @functools.wraps(func)
+    def access_decorator(*args, user, **kwargs):
+
+        current_user_role = auth.current_user().role
+        if (
+            (
+                current_user_role == "Unit Admin"
+                and user.role not in ["Unit Admin", "Unit Personnel"]
+            )
+            or (
+                current_user_role == "Unit Personnel"
+                and user.role not in ["Unit Personnel", "Project Owner"]
+            )
+            or (
+                current_user_role == "Project Owner"
+                and user.role not in ["Project Owner", "Researcher"]
+            )
+        ):
+            raise AccessDeniedError(
+                message=(
+                    "You do not have the necessary permissions "
+                    "to shared project access with this user."
+                )
+            )
+
+        return func(*args, user=user, **kwargs)
+
+    return access_decorator
 
 
 def user_required(func):
