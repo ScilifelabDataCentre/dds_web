@@ -129,9 +129,14 @@ class AddUser(flask_restful.Resource):
             if "Unit" in auth.current_user().role:
                 # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
-                for project in auth.current_user().unit.projects:
-                    if project.is_active:
-                        share_project_private_key(auth.current_user(), new_invite, project)
+                for unit_project in auth.current_user().unit.projects:
+                    if unit_project.is_active:
+                        share_project_private_key(auth.current_user(), new_invite, unit_project)
+
+                if project:  # specified project is disregarded for unituser invites
+                    msg = f"{str(new_invite)} was successful."
+                else:
+                    msg = f"{str(new_invite)} was successful, but specification for {str(project)} dropped. Unit Users have automatic access to projects of their unit."
         else:
             db.session.add(new_invite)
             if project:
@@ -145,10 +150,11 @@ class AddUser(flask_restful.Resource):
                 share_project_private_key(auth.current_user(), new_invite, project)
 
         db.session.commit()
+        msg = f"{str(new_invite)} was successful."
 
         return {
             "email": new_invite.email,
-            "message": "Invite successful!",
+            "message": msg,
             "status": http.HTTPStatus.OK,
         }
 
@@ -236,14 +242,12 @@ class AddUser(flask_restful.Resource):
             AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
-            f"{str(whom)} was associated with project {str(project)} as Owner={owner}."
+            f"{str(whom)} was associated with {str(project)} as Owner={owner}."
         )
 
         return {
             "status": http.HTTPStatus.OK,
-            "message": (
-                f"{str(whom)} was associated with project." f"{str(project)} as Owner={owner}."
-            ),
+            "message": (f"{str(whom)} was associated with " f"{str(project)} as Owner={owner}."),
         }
 
     @staticmethod

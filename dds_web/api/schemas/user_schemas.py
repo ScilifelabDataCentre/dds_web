@@ -90,15 +90,11 @@ class InviteUserSchema(marshmallow.Schema):
         elif curr_user_role == "Unit Personnel":
             if attempted_invite_role in ["Super Admin", "Unit Admin"]:
                 raise ddserr.AccessDeniedError
-        elif curr_user_role == "Researcher":
-            # research users can only invite in certain projects if they are set as the owner
-            # TODO: Add required project field for researchers to be able to invite (if
-            raise ddserr.AccessDeniedError(
-                message=(
-                    "Research users cannot invite at this time. "
-                    "Project owner invite config will be fixed."
-                )
-            )
+        elif (
+            curr_user_role == "Researcher"
+        ):  # project ownership is validated in @basic_auth.get_user_roles
+            if attempted_invite_role not in ["Researcher", "Project Owner"]:
+                raise ddserr.AccessDeniedError
 
     @marshmallow.post_load
     def make_invite(self, data, **kwargs):
