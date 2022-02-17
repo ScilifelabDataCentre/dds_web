@@ -2,13 +2,11 @@
 
 # Standard library
 import http
-import json
 import pytest
 import marshmallow
 import unittest
 
 # Own
-from dds_web import db
 from dds_web.database import models
 import tests
 
@@ -41,6 +39,26 @@ def test_list_proj_access_granted_ls(client):
     response_json = response.json
     list_of_projects = response_json.get("project_info")
     assert "public_project_id" == list_of_projects[0].get("Project ID")
+
+
+def test_proj_private_successful(client):
+    """Successfully get the private key"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.get(tests.DDSEndpoint.PROJ_PRIVATE, query_string=proj_query, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json.get("private")
+
+
+def test_proj_private_without_project(client):
+    """Attempting to get the private key without specifying a project"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    with pytest.raises(marshmallow.ValidationError) as error:
+        client.get(tests.DDSEndpoint.PROJ_PRIVATE, headers=token)
+    assert "project" in str(error.value)
+    assert "Missing data for required field." in str(error.value)
 
 
 def test_proj_public_no_token(client):

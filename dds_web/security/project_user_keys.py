@@ -95,7 +95,7 @@ def __decrypt_project_private_key(user, token, encrypted_project_private_key):
         raise KeyOperationError(message="User private key could not be loaded!")
 
 
-def obtain_project_private_key(user, token, project):
+def obtain_project_private_key(user, project, token):
     project_key = models.ProjectUserKeys.query.filter_by(
         project_id=project.id, user_id=user.username
     ).first()
@@ -107,11 +107,19 @@ def obtain_project_private_key(user, token, project):
 def share_project_private_key(from_user, to_another, from_user_token, project):
     if isinstance(to_another, models.Invite):
         __init_and_append_project_invite_key(
-            to_another, project, obtain_project_private_key(from_user, from_user_token, project)
+            invite=to_another,
+            project=project,
+            project_private_key=obtain_project_private_key(
+                user=from_user, project=project, token=from_user_token
+            ),
         )
     else:
         __init_and_append_project_user_key(
-            to_another, project, obtain_project_private_key(from_user, from_user_token, project)
+            user=to_another,
+            project=project,
+            project_private_key=obtain_project_private_key(
+                user=from_user, project=project, token=from_user_token
+            ),
         )
 
 
