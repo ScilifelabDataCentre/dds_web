@@ -320,7 +320,7 @@ def request_reset_password():
         email = models.Email.query.filter_by(email=form.email.data).first()
         token = dds_web.security.tokens.encrypted_jwt_token(
             username=email.user.username,
-            sensitive_content="",
+            sensitive_content=None,
             expires_in=datetime.timedelta(
                 seconds=3600,
             ),
