@@ -31,6 +31,7 @@ from dds_web.errors import (
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas, user_schemas
 from dds_web.security.project_user_keys import obtain_project_private_key
+from dds_web.api.files import check_eligibility_for_deletion
 
 
 ####################################################################################################
@@ -293,7 +294,7 @@ class UserProjects(flask_restful.Resource):
             project_info["Size"] = proj_size
 
             if usage:
-                proj_bhours, proj_cost = self.project_usage(project=project)
+                proj_bhours, proj_cost = self.project_usage(project=p)
                 total_bhours_db += proj_bhours
                 total_cost_db += proj_cost
                 # return ByteHours
@@ -349,9 +350,13 @@ class RemoveContents(flask_restful.Resource):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
+        check_eligibility_for_deletion(project.current_status, project.has_been_available)
+
         # Check if project contains anything
         if not project.files:
-            raise EmptyProjectException("The are no project contents to delete.")
+            raise EmptyProjectException(
+                project=project, message="There are no project contents to delete."
+            )
 
         self.delete_project_contents(project=project)
 
