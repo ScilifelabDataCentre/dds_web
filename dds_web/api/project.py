@@ -578,4 +578,9 @@ class ProjectAccess(flask_restful.Resource):
                     project_id=proj.id, user_id=user.username
                 ).one_or_none()
                 if not project_keys_row:
-                    share_project_private_key(from_user=current_user, to_another=user, project=proj)
+                    share_project_private_key(
+                        from_user=current_user,
+                        to_another=user,
+                        project=proj,
+                        from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                    )
