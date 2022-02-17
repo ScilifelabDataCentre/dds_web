@@ -6,7 +6,6 @@ import datetime
 import unittest
 
 # Installed
-from cryptography.hazmat.primitives.twofactor.hotp import HOTP
 import flask
 import flask_mail
 
@@ -16,6 +15,7 @@ import dds_web
 from dds_web import db
 from dds_web.security.auth import decrypt_and_verify_token_signature
 from dds_web.security.tokens import encrypted_jwt_token
+
 
 # TESTS #################################################################################### TESTS #
 

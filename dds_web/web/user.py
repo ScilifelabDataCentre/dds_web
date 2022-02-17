@@ -15,7 +15,6 @@ from dds_web.api import db_tools
 import flask_login
 import itsdangerous
 import sqlalchemy
-import marshmallow
 
 # Own Modules
 from dds_web import forms
@@ -27,6 +26,7 @@ from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
 import dds_web.security
 from dds_web.api.user import DeleteUser
+from dds_web.security.project_user_keys import update_user_keys_for_password_change
 
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 
@@ -386,6 +386,11 @@ def change_password():
     if form.validate_on_submit():
         # Change password
         flask_login.current_user.password = form.new_password.data
+        update_user_keys_for_password_change(
+            user=flask_login.current_user,
+            current_password=form.current_password.data,
+            new_password=form.new_password.data,
+        )
         db.session.commit()
 
         flask_login.logout_user()

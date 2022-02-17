@@ -57,7 +57,7 @@ def update_token_with_mfa(token_claims):
     )
     return encrypted_jwt_token(
         username=token_claims.get("sub"),
-        sensitive_content=None,
+        sensitive_content=token_claims.get("sen_con"),
         expires_in=expires_in,
         additional_claims={"mfa_auth_time": dds_web.utils.current_time().timestamp()},
     )
