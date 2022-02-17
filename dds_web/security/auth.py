@@ -79,7 +79,8 @@ def get_user_roles_common(user):
     For all other users, return the value of the role set in the database table.
     """
     if user.role == "Researcher":
-        project_public_id = flask.request.args.get("project")
+        request_args = flask.request.args
+        project_public_id = request_args.get("project") if request_args else None
         if project_public_id:
             project = models.Project.query.filter_by(public_id=project_public_id).first()
             if project:

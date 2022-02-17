@@ -31,6 +31,7 @@ import wtforms
 # Own modules
 from dds_web.database import models
 from dds_web import auth, db, mail
+import dds_web.errors as ddserr
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
