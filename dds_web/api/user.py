@@ -28,12 +28,13 @@ import dds_web.utils
 import dds_web.forms
 import dds_web.errors as ddserr
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
-from dds_web.api.dds_decorators import logging_bind_request, user_required
+from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
     share_project_private_key,
 )
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
+from dds_web.api.project import ProjectAccess
 
 
 # initiate bound logger
@@ -467,8 +468,20 @@ class UserActivation(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
-    @user_required
     def post(self, user):
+        # Verify that user specified
+        extra_args = flask.request.json
+        if not extra_args:
+            raise DDSArgumentError(message="Required information missing.")
+
+        if "email" not in extra_args:
+            raise DDSArgumentError(message="User email missing.")
+
+        user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
+        if not user:
+            raise NoSuchUserError()
+
+        # Verify that the action is specified -- reactivate or deactivate
         action = flask.request.json.get("action")
         if action is None or action == "":
             raise ddserr.DDSArgumentError(
@@ -506,15 +519,10 @@ class UserActivation(flask_restful.Resource):
             elif user.role in ["Unit Personnel", "Unit Admin"]:
                 list_of_projects = user.unit.projects
 
-            for proj in list_of_projects:
-                if proj.is_active:
-                    project_keys_row = models.ProjectUserKeys.query.filter_by(
-                        project_id=proj.id, user_id=user.username
-                    ).one_or_none()
-                    if not project_keys_row:
-                        share_project_private_key(
-                            from_user=current_user, to_another=user, project=proj
-                        )
+            ProjectAccess.give_project_access(
+                project_list=list_of_projects, current_user=current_user, user=user
+            )
+
         else:
             user.active = False
 

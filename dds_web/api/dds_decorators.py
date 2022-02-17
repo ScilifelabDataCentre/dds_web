@@ -37,34 +37,6 @@ action_logger = structlog.getLogger("actions")
 ####################################################################################################
 
 
-def user_required(func):
-    """Specify that the user object is required information."""
-
-    @functools.wraps(func)
-    def get_other_user(*args, **kwargs):
-        """Get the user object from the database."""
-        extra_args = flask.request.json
-        if not extra_args:
-            raise DDSArgumentError(message="Required information missing.")
-
-        user_email = extra_args.pop("email")
-        if not user_email:
-            raise DDSArgumentError(message="User email missing.")
-
-        user = user_schemas.UserSchema().load({"email": user_email})
-        if not user:
-            raise NoSuchUserError(
-                message=(
-                    "This e-mail address is not associated with a user in the DDS, "
-                    "make sure it is not misspelled."
-                )
-            )
-
-        return func(*args, **kwargs, user=user)
-
-    return get_other_user
-
-
 def dbsession(func):
     @functools.wraps(func)
     def make_commit(*args, **kwargs):
