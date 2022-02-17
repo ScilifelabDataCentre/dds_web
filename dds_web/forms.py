@@ -3,17 +3,14 @@
 # IMPORTS ################################################################################ IMPORTS #
 
 # Standard library
-import re
 
 # Installed
 import flask_wtf
 import flask_login
 import wtforms
-import marshmallow
 
 # Own modules
 from dds_web import utils
-from dds_web.database import models
 
 # FORMS #################################################################################### FORMS #
 

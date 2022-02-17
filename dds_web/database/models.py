@@ -357,7 +357,6 @@ class User(flask_login.UserMixin, db.Model):
     hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
     active = db.Column(db.Boolean)
     kd_salt = db.Column(db.LargeBinary(32), default=None)
-    temporary_key = db.Column(db.LargeBinary(32), default=None)
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
@@ -389,8 +388,6 @@ class User(flask_login.UserMixin, db.Model):
         super(User, self).__init__(**kwargs)
         if not self.hotp_secret:
             self.hotp_secret = os.urandom(20)
-        if not self.public_key or not self.private_key:
-            generate_user_key_pair(self)
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
@@ -407,7 +404,14 @@ class User(flask_login.UserMixin, db.Model):
         """Generate the password hash and save in db."""
         pw_hasher = argon2.PasswordHasher(hash_len=32)
         self._password_hash = pw_hasher.hash(plaintext_password)
-        self.kd_salt = os.urandom(32)
+
+        # User key pair should only be set from here if the password is lost
+        # and all the keys associated with the user should be cleaned up
+        # before setting the password.
+        # This should help the tests for setup as well.
+        if not self.public_key or not self.private_key:
+            self.kd_salt = os.urandom(32)
+            generate_user_key_pair(self, plaintext_password)
 
     def verify_password(self, input_password):
         """Verifies that the specified password matches the encoded password in the database."""

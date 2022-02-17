@@ -17,6 +17,7 @@ from dds_web.security.project_user_keys import (
     generate_project_key_pair,
     share_project_private_key,
 )
+from dds_web.security.tokens import encrypted_jwt_token
 import dds_web.utils
 
 ####################################################################################################
@@ -154,7 +155,23 @@ def fill_db():
 
     db.session.commit()
 
-    share_project_private_key(unituser_1, researchuser_1, project_1)
-    share_project_private_key(unituser_1, researchuser_2, project_1)
+    unituser_1_token = encrypted_jwt_token(
+        username=unituser_1.username,
+        sensitive_content=password,
+    )
+
+    share_project_private_key(
+        from_user=unituser_1,
+        to_another=researchuser_1,
+        from_user_token=unituser_1_token,
+        project=project_1,
+    )
+
+    share_project_private_key(
+        from_user=unituser_1,
+        to_another=researchuser_2,
+        from_user_token=unituser_1_token,
+        project=project_1,
+    )
 
     db.session.commit()
