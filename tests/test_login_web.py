@@ -1,10 +1,48 @@
+import http
+
 import tests
 import flask
-from dds_web import db
-from dds_web.database import models
-import dds_web.errors as ddserr
-from dds_web.security.tokens import encrypted_jwt_token
-import datetime
+
+
+def successful_web_login(client, user_auth):
+    response = client.get(tests.DDSEndpoint.LOGIN)
+    assert response.status_code == http.HTTPStatus.OK
+
+    form_token = flask.g.csrf_token
+
+    form_data = {
+        "csrf_token": form_token,
+        "username": user_auth.as_tuple()[0],
+        "password": user_auth.as_tuple()[1],
+        "submit": "Login",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.LOGIN,
+        json=form_data,
+        follow_redirects=True,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert flask.request.path == tests.DDSEndpoint.CONFIRM_2FA
+
+    form_token = flask.g.csrf_token
+
+    form_data = {
+        "csrf_token": form_token,
+        "hotp": user_auth.fetch_hotp().decode(),
+        "submit": "Authenticate",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.CONFIRM_2FA,
+        json=form_data,
+        follow_redirects=True,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert flask.request.path == flask.url_for("auth_blueprint.index")
+
+    return flask.g.csrf_token
 
 
 def test_cancel_2fa(client):

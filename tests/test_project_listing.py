@@ -2,6 +2,7 @@
 
 # Standard library
 import http
+import json
 import pytest
 import marshmallow
 import unittest
@@ -39,6 +40,24 @@ def test_list_proj_access_granted_ls(client):
     response_json = response.json
     list_of_projects = response_json.get("project_info")
     assert "public_project_id" == list_of_projects[0].get("Project ID")
+
+
+def test_list_proj_unit_user(client):
+    """Unit user should be able to list projects"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.LIST_PROJ,
+        headers=token,
+        data=json.dumps({"usage": True}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    public_project = response.json.get("project_info")[0]
+    assert "public_project_id" == public_project.get("Project ID")
+    assert "Cost" in public_project.keys() and public_project["Cost"] is not None
+    assert "Usage" in public_project.keys() and public_project["Usage"] is not None
 
 
 def test_proj_private_successful(client):

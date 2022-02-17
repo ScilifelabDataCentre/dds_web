@@ -127,6 +127,7 @@ class DDSEndpoint:
     LOGIN = "/login"
     CANCEL_2FA = "/cancel_2fa"
     CONFIRM_2FA = "/confirm_2fa"
+    CHANGE_PASSWORD = "/change_password"
 
     # User creation
     USER_ADD = BASE_ENDPOINT + "/user/add"
