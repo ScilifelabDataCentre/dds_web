@@ -485,7 +485,7 @@ class ProjectAccess(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     @dbsession
-    def post(self, user, project):
+    def post(self):
         """Give access to user."""
         # Verify that user specified
         extra_args = flask.request.json
