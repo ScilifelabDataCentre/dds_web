@@ -131,12 +131,18 @@ class AddUser(flask_restful.Resource):
                 auth.current_user().unit.invites.append(new_invite)
                 for unit_project in auth.current_user().unit.projects:
                     if unit_project.is_active:
-                        share_project_private_key(auth.current_user(), new_invite, unit_project)
+                        share_project_private_key(
+                            from_user=auth.current_user(),
+                            to_another=new_invite,
+                            from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                            project=unit_project,
+                        )
 
                 if project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
                 else:
                     msg = f"{str(new_invite)} was successful, but specification for {str(project)} dropped. Unit Users have automatic access to projects of their unit."
+
         else:
             db.session.add(new_invite)
             if project:
@@ -226,7 +232,12 @@ class AddUser(flask_restful.Resource):
                     )
                 )
 
-            share_project_private_key(auth.current_user(), whom, project)
+            share_project_private_key(
+                from_user=auth.current_user(),
+                to_another=existing_user,
+                from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                project=project,
+            )
 
         try:
             db.session.commit()
@@ -490,7 +501,7 @@ class UserActivation(flask_restful.Resource):
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            raise DatabaseError(message=str(err))
+            raise ddserr.DatabaseError(message=str(err))
         msg = (
             f"The user account {user.username} ({user_email_str}, {user.role}) "
             f" has been {action}d successfully been by {current_user.name} ({current_user.role})."
@@ -575,7 +586,7 @@ class DeleteUser(flask_restful.Resource):
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            raise DatabaseError(message=str(err))
+            raise ddserr.DatabaseError(message=str(err))
 
 
 class RemoveUserAssociation(flask_restful.Resource):
@@ -651,7 +662,8 @@ class EncryptedToken(flask_restful.Resource):
         return {
             "message": "Please take this token to /user/second_factor to authenticate with MFA!",
             "token": encrypted_jwt_token(
-                username=auth.current_user().username, sensitive_content=None
+                username=auth.current_user().username,
+                sensitive_content=flask.request.authorization.get("password"),
             ),
         }
 
@@ -666,9 +678,7 @@ class SecondFactor(flask_restful.Resource):
 
         token_schemas.TokenSchema().load(args)
 
-        token_claims = dds_web.security.auth.decrypt_and_verify_token_signature(
-            flask.request.headers["Authorization"].split()[1]
-        )
+        token_claims = dds_web.security.auth.obtain_current_encrypted_token_claims()
 
         return {"token": update_token_with_mfa(token_claims)}
 
