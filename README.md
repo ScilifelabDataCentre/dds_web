@@ -102,7 +102,7 @@ docker exec dds_backend flask db upgrade
 
 Finally, confirm that the database looks correct after running the migration and commit the migration file to git. Note that you need to run `black` on the generated migration file. 
 
-> If you want to start over, start from autogeneration method 2.
+> If you want to start over, restore the content of `migrations/versions` and start from autogeneration method 2.
 
 
 ### Database issues while running `docker-compose up`
