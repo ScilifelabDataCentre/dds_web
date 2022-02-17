@@ -125,63 +125,35 @@ It's possible to supply arguments to pytest via the environment variable `$DDS_P
 For example to only run the `test_x` inside the file `tests/test_y.py` you would set this variable as follows: `export DDS_PYTEST_ARGS=tests/test_y.py::test_x`.
 
 ---
-<br>
+
 
 ## Production
 
-When running in production, you will likely want to manually build and run the two containers.
-Whilst in `docker-compose.yml` the web server is run by Flask (`command: python3 app.py`),
-the default server in the container is `gunicorn` (`CMD ["gunicorn", "app:app"]`).
-
-In addition to using `gunicorn` to serve files and running the MySQL database separately,
-you will also need to overwrite all (or most) of the default configuration values.
-<br><br>
-
-### Environment variables
-
-In the root of the repo you will find a file called `.env` - this sets the default values used for things like SQL database usernames and passwords, as well as file paths for uploads, downloads and more.
-
-These values can be overwritten by setting as environment variables.
-Copy the lines that you need to change and add to your `~/.bashrc` file, appending the `export` command.
-For example:
+The production version of the backend image is published at [Dockerhub](https://hub.docker.com/repository/docker/scilifelabdatacentre/dds-backend). It can also be built by running:
 
 ```bash
-export DDS_MYSQL_ROOT_PASS="your_custom_password"
-export DDS_MYSQL_USER="your_custom_user"
-export DDS_MYSQL_PASS="your_custom_password"
+docker build --target production -f Dockerfiles/backend.Dockerfile .
 ```
 
-If you prefer, you can make a copy of the `.env` file somewhere and make edits there.
-Then use the `--env-file` argument when running `docker-compose`, eg:
+Use `docker-compose.yml` as a reference for the required environment.
 
-```bash
-docker-compose --env-file ~/my_setup.env up
+
+### Configuration
+
+The environment variable `DDS_APP_CONFIG` defines the location of the config file, e.g. `/code/dds_web/dds_app.cfg`. The config values are listed in `dds_web/config.py`. Add them to the file in the format:
+
 ```
-<br>
-
-### Config file
-
-In addition to the above, an environment variable `DDS_APP_CONFIG` can be used.
-This should be a path to a config file with variables that overwrite the defaults set in `dds_web/config.py`.
-
-For example:
-
-```bash
-SITE_NAME = "My Custom Data Delivery System"
-SECRET_KEY = "some-mega-random-string"
-SQLALCHEMY_DATABASE_URI = "mysql+pymysql://TEST_USER:TEST_PASSWORD@db/DeliverySystem"
+MAX_CONTENT_LENGTH = 0x1000000
+MAX_DOWNLOAD_LIMIT = 1000000000
 ```
-<br>
 
-### Flask env
+> :heavy_exclamation_mark: It is recommended that you redefine all values in `config.py` in your config file to avoid using default values by mistake.
 
-Finally, an environment variable `FLASK_ENV` can be set as either `development` or `production`.
-From the [Flask docs](https://flask.palletsprojects.com/en/2.0.x/config/#environment-and-debug-features):
 
-> Setting `FLASK_ENV` to development will enable debug mode.
-> flask run will use the interactive debugger and reloader by default in debug mode.
+### Initialise the database
 
-This variable should be set to `production` when running in production.
+Before you can use the system, you must run `flask db upgrade` to initialise the database schema and prepare for future database migrations. You can also add a superuser by running `flask init-db production`. In order to customize the user, make sure to set the `SUPERADMIN*` config options.
+
 
 ### Upgrades
 
