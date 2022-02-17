@@ -9,8 +9,11 @@ import pytest
 import unittest
 import marshmallow
 
+existing_project = "public_project_id"
 first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
+first_new_owner = {**first_new_email, "role": "Project Owner"}
+first_new_user_existing_project = {**first_new_user, "project": "public_project_id"}
 first_new_user_extra_args = {**first_new_user, "extra": "test"}
 first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
 first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_new_user["role"]}
@@ -443,3 +446,156 @@ def test_add_existing_user_with_unsuitable_role(client):
         content_type="application/json",
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+### Tests for Invite-Project associations ###
+
+
+def test_new_invite_with_project_by_unituser(client):
+    "Test that a new invite including a project can be created"
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        data=json.dumps(first_new_user),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+    assert invited_user.email == first_new_user["email"]
+    assert invited_user.role == first_new_user["role"]
+
+    assert invited_user.nonce is not None
+    assert invited_user.public_key is not None
+    assert invited_user.private_key is not None
+
+    project_associations = invited_user.project_associations
+    assert len(project_associations) == 1
+    assert project_associations[0].project.public_id == project
+
+    project_invite_keys = invited_user.project_invite_keys
+    assert len(project_invite_keys) == 1
+    assert project_invite_keys[0].project.public_id == project
+
+
+def test_add_project_to_existing_invite_by_unituser(client):
+    "Test that a project can be associated with an existing invite"
+
+    # Create invite upfront
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        data=json.dumps(first_new_user),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+
+    # Check that the invite has no projects yet
+
+    assert invited_user
+    assert len(invited_user.project_associations) == 0
+    assert len(invited_user.project_invite_keys) == 0
+
+    # Add project to existing invite
+
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        data=json.dumps(first_new_user),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Check that the invite has now a project association
+
+    project_associations = invited_user.project_associations
+    assert len(project_associations) == 1
+    assert project_associations[0].project.public_id == project
+
+    project_invite_keys = invited_user.project_invite_keys
+    assert len(project_invite_keys) == 1
+    assert project_invite_keys[0].project.public_id == project
+
+
+def test_update_project_to_existing_invite_by_unituser(client):
+    "Test that project ownership can be updated for an existing invite"
+
+    # Create Invite upfront
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        data=json.dumps(first_new_user),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_obj = models.Project.query.filter_by(public_id=existing_project).one_or_none()
+    invite_obj = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+
+    project_invite = models.ProjectInvites.query.filter(
+        sqlalchemy.and_(
+            models.ProjectInvites.invite_id == invite_obj.id,
+            models.ProjectUsers.project_id == project_obj.id,
+        )
+    ).one_or_none()
+
+    assert project_invite
+    assert not project_invite.owner
+
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        data=json.dumps(first_new_owner),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+
+    db.session.refresh(project_invite)
+
+    assert project_invite.owner
+
+
+def test_invite_to_project_by_project_owner(client):
+    "Test that a project owner can invite to its project"
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
+        query_string={"project": project},
+        data=json.dumps(first_new_user),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+    assert invited_user.email == first_new_user["email"]
+    assert invited_user.role == first_new_user["role"]
+
+    assert invited_user.nonce is not None
+    assert invited_user.public_key is not None
+    assert invited_user.private_key is not None
+
+    project_associations = invited_user.project_associations
+    assert len(project_associations) == 1
+    assert project_associations[0].project.public_id == project
+
+    project_invite_keys = invited_user.project_invite_keys
+    assert len(project_invite_keys) == 1
+    assert project_invite_keys[0].project.public_id == project

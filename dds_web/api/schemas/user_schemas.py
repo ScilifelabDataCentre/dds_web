@@ -40,6 +40,31 @@ class UserSchema(marshmallow.Schema):
         return email_row.user
 
 
+class UnansweredInvite(marshmallow.Schema):
+    """Schema to return an unanswered invite."""
+
+    email = marshmallow.fields.Email(required=True)
+
+    class Meta:
+        unknown = marshmallow.EXCLUDE
+
+    @marshmallow.post_load
+    def return_invite(self, data, **kwargs):
+        """Return the invite object."""
+        # returns the invite, if there is exactly one or raises an exception.
+        # returns none, if there is no invite
+        invite = models.Invite.query.filter_by(email=data.get("email")).one_or_none()
+
+        # double check if there is no existing user with this email
+        userexists = utils.email_in_db(email=data.get("email"))
+
+        if userexists and invite:
+            raise ddserr.DatabaseError(message="Email exists for user and invite at the same time")
+
+        # if the user exists already, the invite object must not be returned to prevent sign-up
+        return invite if not userexists else None
+
+
 class InviteUserSchema(marshmallow.Schema):
     """Schema for AddUser endpoint"""
 
@@ -73,15 +98,11 @@ class InviteUserSchema(marshmallow.Schema):
         elif curr_user_role == "Unit Personnel":
             if attempted_invite_role in ["Super Admin", "Unit Admin"]:
                 raise ddserr.AccessDeniedError
-        elif curr_user_role == "Researcher":
-            # research users can only invite in certain projects if they are set as the owner
-            # TODO: Add required project field for researchers to be able to invite (if
-            raise ddserr.AccessDeniedError(
-                message=(
-                    "Research users cannot invite at this time. "
-                    "Project owner invite config will be fixed."
-                )
-            )
+        elif (
+            curr_user_role == "Researcher"
+        ):  # project ownership is validated in @basic_auth.get_user_roles
+            if attempted_invite_role not in ["Researcher", "Project Owner"]:
+                raise ddserr.AccessDeniedError
 
     @marshmallow.post_load
     def make_invite(self, data, **kwargs):

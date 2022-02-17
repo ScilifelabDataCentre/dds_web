@@ -300,7 +300,7 @@ def test_create_project_with_users(client, boto3_session):
     assert response.status == "200 OK"
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
-        assert "associated with project" in x
+        assert "associated with Project" in x
 
     resp_json = response.json
     created_proj = models.Project.query.filter_by(public_id=resp_json["project_id"]).one_or_none()

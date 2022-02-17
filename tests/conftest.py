@@ -319,7 +319,7 @@ def demo_data():
             ),
         )
 
-    invites = [Invite(email="existing_invite_email@mailtrap.io", role="Researcher")]
+    invites = [Invite(**{"email": "existing_invite_email@mailtrap.io", "role": "Researcher"})]
 
     return (units, users, projects, invites, files_and_versions)
 
