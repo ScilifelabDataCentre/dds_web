@@ -548,7 +548,7 @@ class ProjectAccess(flask_restful.Resource):
         # Check access
         if not (
             (
-                current_user_role in "Unit Admin"
+                current_user_role == "Unit Admin"
                 and other_user_role
                 in ["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"]
             )
