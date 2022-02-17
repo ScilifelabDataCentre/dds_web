@@ -61,6 +61,34 @@ def test_project(module_client):
     return project_id
 
 
+def test_submit_request_with_invalid_args(module_client, test_project):
+    """Submit status request with invalid arguments"""
+
+    project_id = test_project
+    project = project_row(project_id=project_id)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps({}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Missing new status" in response.json["message"]
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps({"new_status": "Invalid"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Invalid status" in response.json["message"]
+
+
 def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     """Create project and set status to deleted"""
 
@@ -376,6 +404,57 @@ def test_set_project_to_deleted_from_available(module_client, test_project):
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Available"
+
+
+def test_check_deadline_remains_same_when_made_available_again_after_going_to_in_progress(
+    module_client, test_project
+):
+    """Check deadline remains same when an available project goes to In Progress and is made available again"""
+    project_id = test_project
+    project = project_row(project_id=project_id)
+    assert project.current_status == "Available"
+    deadline_initial = project.current_deadline
+
+    time.sleep(1)
+    new_status = {"new_status": "In Progress"}
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "In Progress"
+    time.sleep(1)
+
+    # Try to delete the project
+    new_status = {"new_status": "Deleted"}
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert (
+        "Project cannot be deleted if it has ever been made available, abort it instead"
+        in response.json["message"]
+    )
+    assert project.current_status == "In Progress"
+
+    new_status = {"new_status": "Available"}
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Available"
+    assert project.current_deadline == deadline_initial
 
 
 def test_set_project_to_expired_from_available(module_client, test_project):
