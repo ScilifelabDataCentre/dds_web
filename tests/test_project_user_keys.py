@@ -207,16 +207,16 @@ def test_user_key_not_found_error_for_project(client):
 
 def test_user_key_generation(client):
     user = models.User(username="testuser", password="password")
-    assert user.public_key is not None
+    assert user.public_key
     assert isinstance(serialization.load_der_public_key(user.public_key), RSAPublicKey)
-    assert user.nonce is not None
-    assert user.private_key is not None
+    assert user.nonce
+    assert user.private_key
 
 
 def test_project_key_generation(client):
     # Setup is done in conftest.py
     project = models.Project.query.filter_by(public_id="public_project_id").first()
-    assert project.public_key is not None
+    assert project.public_key
     assert isinstance(X25519PublicKey.from_public_bytes(project.public_key), X25519PublicKey)
     number_of_unitusers_with_project_key = 0
     project_user_keys = project.project_user_keys
@@ -229,8 +229,8 @@ def test_project_key_generation(client):
             number_of_unitusers_with_project_key += 1
     assert number_of_unitusers_with_project_key == 3
     user = project_user_keys[0].user
-    assert user.nonce is not None
-    assert user.private_key is not None
+    assert user.nonce
+    assert user.private_key
 
 
 def test_project_key_sharing(client):
@@ -240,17 +240,17 @@ def test_project_key_sharing(client):
     project_researchuser_key = models.ProjectUserKeys.query.filter_by(
         project_id=project.id, user_id=researchuser.username
     ).first()
-    assert project_researchuser_key is not None
-    assert researchuser.nonce is not None
-    assert researchuser.private_key is not None
+    assert project_researchuser_key
+    assert researchuser.nonce
+    assert researchuser.private_key
 
     unituser = models.User.query.filter_by(username="unituser").first()
     project_unituser_key = models.ProjectUserKeys.query.filter_by(
         project_id=project.id, user_id=unituser.username
     ).first()
-    assert project_unituser_key is not None
-    assert unituser.nonce is not None
-    assert unituser.private_key is not None
+    assert project_unituser_key
+    assert unituser.nonce
+    assert unituser.private_key
 
 
 def test_delete_user_deletes_project_user_keys(client):
@@ -420,10 +420,10 @@ def test_update_user_keys_for_password_change(client):
     private_key_initial = user.private_key
     kd_salt_initial = user.kd_salt
 
-    assert public_key_initial is not None
-    assert nonce_initial is not None
-    assert private_key_initial is not None
-    assert kd_salt_initial is not None
+    assert public_key_initial
+    assert nonce_initial
+    assert private_key_initial
+    assert kd_salt_initial
 
     update_user_keys_for_password_change(user, "password", "bogus")
     user.password = "bogus"
@@ -433,10 +433,10 @@ def test_update_user_keys_for_password_change(client):
     private_key_after_password_change = user.private_key
     kd_salt_after_password_change = user.kd_salt
 
-    assert public_key_after_password_change is not None
-    assert nonce_after_password_change is not None
-    assert private_key_after_password_change is not None
-    assert kd_salt_after_password_change is not None
+    assert public_key_after_password_change
+    assert nonce_after_password_change
+    assert private_key_after_password_change
+    assert kd_salt_after_password_change
 
     assert public_key_after_password_change == public_key_initial
     assert nonce_after_password_change != nonce_initial
@@ -454,10 +454,10 @@ def test_update_user_keys_for_password_change(client):
     private_key_final = user.private_key
     kd_salt_final = user.kd_salt
 
-    assert public_key_final is not None
-    assert nonce_final is not None
-    assert private_key_final is not None
-    assert kd_salt_final is not None
+    assert public_key_final
+    assert nonce_final
+    assert private_key_final
+    assert kd_salt_final
 
     assert public_key_final == public_key_initial
     assert nonce_final != nonce_initial

@@ -21,7 +21,7 @@ from dds_web.security.auth import (
 
 
 def __derive_key(user, password):
-    if user.kd_salt is None:
+    if not user.kd_salt:
         raise KeySetupError(message="User keys are not properly setup!")
 
     derived_key = argon2.low_level.hash_secret_raw(
@@ -71,7 +71,7 @@ def __decrypt_with_rsa(ciphertext, private_key):
 
 
 def __encrypt_project_private_key(owner, project_private_key):
-    if owner.public_key is None:
+    if not owner.public_key:
         raise KeySetupError(message="User keys are not properly setup!")
 
     try:
@@ -84,7 +84,7 @@ def __encrypt_project_private_key(owner, project_private_key):
 
 def __decrypt_project_private_key(user, token, encrypted_project_private_key):
     private_key_bytes = __decrypt_user_private_key_via_token(user, token)
-    if private_key_bytes is None:
+    if not private_key_bytes:
         raise KeyOperationError(message="User private key could not be decrypted!")
 
     try:
@@ -186,9 +186,7 @@ def __owner_identifier(owner):
 
 
 def __encrypt_owner_private_key(owner, private_key, owner_key=None):
-    key = owner_key
-    if key is None:
-        key = ciphers.aead.AESGCM.generate_key(bit_length=256)
+    key = owner_key or ciphers.aead.AESGCM.generate_key(bit_length=256)
 
     nonce, encrypted_key = __encrypt_with_aes(
         key, private_key, aad=b"private key for " + __owner_identifier(owner).encode()
@@ -211,7 +209,7 @@ def __decrypt_user_private_key(user, user_key):
 
 def __decrypt_user_private_key_via_token(user, token):
     password = extract_encrypted_token_sensitive_content(token, user.username)
-    if password is None:
+    if not password:
         raise SensitiveContentMissingError
     user_key = __derive_key(user, password)
 
@@ -239,7 +237,7 @@ def update_user_keys_for_password_change(user, current_password, new_password):
     """
     old_user_key = __derive_key(user, current_password)
     private_key_bytes = __decrypt_user_private_key(user, old_user_key)
-    if private_key_bytes is None:
+    if not private_key_bytes:
         raise KeyOperationError(message="User private key could not be decrypted!")
 
     user.kd_salt = os.urandom(32)
