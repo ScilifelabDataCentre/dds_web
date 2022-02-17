@@ -29,7 +29,6 @@ import wtforms
 
 
 # Own modules
-from dds_web.security.auth import get_user_roles_common
 from dds_web.database import models
 from dds_web import auth, db, mail
 import dds_web.errors as ddserr
@@ -344,40 +343,6 @@ def create_one_time_password_email(user, hotp_value):
     )
 
     return msg
-
-
-# Check args
-def verify_renew_access_permission(user, project):
-    """Check that user has permission to give access to another user in this project."""
-
-    if auth.current_user() == user:
-        raise ddserr.AccessDeniedError(message="You cannot renew your own access.")
-
-    # Get roles
-    current_user_role = get_user_roles_common(user=auth.current_user())
-    other_user_role = get_user_roles_common(user=user)
-
-    # Check access
-    if not (
-        (
-            current_user_role in "Unit Admin"
-            and other_user_role in ["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"]
-        )
-        or (
-            current_user_role == "Unit Personnel"
-            and other_user_role in ["Unit Personnel", "Project Owner", "Researcher"]
-        )
-        or (
-            current_user_role == "Project Owner"
-            and other_user_role in ["Project Owner", "Researcher"]
-        )
-    ):
-        raise ddserr.AccessDeniedError(
-            message=(
-                "You do not have the necessary permissions "
-                "to shared project access with this user."
-            )
-        )
 
 
 ####################################################################################################

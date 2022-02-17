@@ -525,6 +525,40 @@ class ProjectAccess(flask_restful.Resource):
         return {"message": f"Attempting to fix project access for {user.primary_email}"}
 
     @staticmethod
+    def verify_renew_access_permission(user, project):
+        """Check that user has permission to give access to another user in this project."""
+
+        if auth.current_user() == user:
+            raise ddserr.AccessDeniedError(message="You cannot renew your own access.")
+
+        # Get roles
+        current_user_role = get_user_roles_common(user=auth.current_user())
+        other_user_role = get_user_roles_common(user=user)
+
+        # Check access
+        if not (
+            (
+                current_user_role in "Unit Admin"
+                and other_user_role
+                in ["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"]
+            )
+            or (
+                current_user_role == "Unit Personnel"
+                and other_user_role in ["Unit Personnel", "Project Owner", "Researcher"]
+            )
+            or (
+                current_user_role == "Project Owner"
+                and other_user_role in ["Project Owner", "Researcher"]
+            )
+        ):
+            raise ddserr.AccessDeniedError(
+                message=(
+                    "You do not have the necessary permissions "
+                    "to shared project access with this user."
+                )
+            )
+
+    @staticmethod
     def give_project_access(project_list, current_user, user):
         """Give specific user project access."""
         # Loop through and check that the project(s) is(are) active
