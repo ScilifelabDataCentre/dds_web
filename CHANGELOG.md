@@ -6,3 +6,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Secure operations that require cryptographic keys are protected for each user with the user's password ([#889](https://github.com/ScilifelabDataCentre/dds_web/pull/889))
 * Implemented the functionality to add project to the invites of a new user as outlined in [issue 887](https://github.com/scilifelabdatacentre/dds_web/issues/887) ([PR888](https://github.com/ScilifelabDataCentre/dds_web/pull/888)).
 * Added tests for web login and change password ([900](https://github.com/ScilifelabDataCentre/dds_web/pull/900))
+* Size-based log rotation working (15*1MiB)[#897](https://github.com/ScilifelabDataCentre/dds_web/pull/897))
