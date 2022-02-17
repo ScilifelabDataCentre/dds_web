@@ -153,7 +153,12 @@ class AddUser(flask_restful.Resource):
                         owner=new_invite.role == "Project Owner",
                     )
                 )
-                share_project_private_key(auth.current_user(), new_invite, project)
+                share_project_private_key(
+                    from_user=auth.current_user(),
+                    to_another=new_invite,
+                    project=project,
+                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                )
 
         db.session.commit()
         msg = f"{str(new_invite)} was successful."
@@ -234,7 +239,7 @@ class AddUser(flask_restful.Resource):
 
             share_project_private_key(
                 from_user=auth.current_user(),
-                to_another=existing_user,
+                to_another=whom,
                 from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
                 project=project,
             )
