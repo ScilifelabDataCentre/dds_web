@@ -23,6 +23,7 @@ from dds_web.api.dds_decorators import (
     dbsession,
 )
 from dds_web.errors import (
+    AccessDeniedError,
     DDSArgumentError,
     DatabaseError,
     EmptyProjectException,
@@ -35,7 +36,7 @@ from dds_web.errors import (
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas, user_schemas
 from dds_web.security.project_user_keys import obtain_project_private_key, share_project_private_key
-
+from dds_web.security.auth import get_user_roles_common
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -529,7 +530,7 @@ class ProjectAccess(flask_restful.Resource):
         """Check that user has permission to give access to another user in this project."""
 
         if auth.current_user() == user:
-            raise ddserr.AccessDeniedError(message="You cannot renew your own access.")
+            raise AccessDeniedError(message="You cannot renew your own access.")
 
         # Get roles
         current_user_role = get_user_roles_common(user=auth.current_user())
@@ -551,7 +552,7 @@ class ProjectAccess(flask_restful.Resource):
                 and other_user_role in ["Project Owner", "Researcher"]
             )
         ):
-            raise ddserr.AccessDeniedError(
+            raise AccessDeniedError(
                 message=(
                     "You do not have the necessary permissions "
                     "to shared project access with this user."
