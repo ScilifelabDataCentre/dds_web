@@ -54,7 +54,15 @@ class UnansweredInvite(marshmallow.Schema):
         # returns the invite, if there is exactly one or raises an exception.
         # returns none, if there is no invite
         invite = models.Invite.query.filter_by(email=data.get("email")).one_or_none()
-        return invite
+
+        # double check if there is no existing user with this email
+        userexists = utils.email_in_db(email=data.get("email"))
+
+        if userexists and invite:
+            raise ddserr.DatabaseError(message="Email exists for user and invite at the same time")
+
+        # if the user exists already, the invite object must not be returned to prevent sign-up
+        return invite if not userexists else None
 
 
 class InviteUserSchema(marshmallow.Schema):
