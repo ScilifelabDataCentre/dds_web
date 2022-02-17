@@ -15,6 +15,7 @@ import tests
 import dds_web
 from dds_web import db
 from dds_web.security.auth import decrypt_and_verify_token_signature
+from dds_web.security.tokens import encrypted_jwt_token
 
 # TESTS #################################################################################### TESTS #
 
@@ -116,6 +117,36 @@ def test_auth_second_factor_incorrect_hotp_counter_statuscode_401_unauthorized(c
     response_json = response.json
     assert response_json.get("message")
     assert "Invalid one-time authentication code." == response_json.get("message")
+
+
+def test_auth_second_factor_incorrect_token(client):
+    """
+    Test that the two_factor endpoint called with a password_reset token returns 401/UNAUTHORIZED and
+    does not send a mail.
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    hotp_token = user_auth.fetch_hotp()
+
+    reset_token = encrypted_jwt_token(
+        username="researchuser",
+        sensitive_content=None,
+        expires_in=datetime.timedelta(
+            seconds=3600,
+        ),
+        additional_claims={"rst": "pwd"},
+    )
+
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers={"Authorization": f"Bearer {reset_token}"},
+        json={"HOTP": hotp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Invalid token" == response_json.get("message")
 
 
 def test_auth_second_factor_expired_hotp_statuscode_401_unauthorized(client):

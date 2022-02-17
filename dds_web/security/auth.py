@@ -133,6 +133,10 @@ def verify_invite_key(token):
 @auth.verify_token
 def verify_token(token):
     claims = __verify_general_token(token)
+
+    if claims.get("rst"):
+        raise AuthenticationError(message="Invalid token")
+
     user = __user_from_subject(claims.get("sub"))
 
     return handle_multi_factor_authentication(user, claims.get("mfa_auth_time"))
