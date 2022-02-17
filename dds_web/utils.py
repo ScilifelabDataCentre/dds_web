@@ -357,14 +357,6 @@ def verify_renew_access_permission(user, project):
     current_user_role = get_user_roles_common(user=auth.current_user())
     other_user_role = get_user_roles_common(user=user)
 
-    # Check if Researcher and if so is project owner or not
-    if other_user_role == "Researcher" and project:
-        project_user_row = models.ProjectUsers.query.filter_by(
-            project_id=project.id, user_id=user.username
-        ).one_or_none()
-        if project_user_row and project_user_row.owner:
-            other_user_role = "Project Owner"
-
     # Check access
     if not (
         (
@@ -380,8 +372,6 @@ def verify_renew_access_permission(user, project):
             and other_user_role in ["Project Owner", "Researcher"]
         )
     ):
-        flask.current_app.logger.debug(f"Current user: {auth.current_user()}{current_user_role}")
-        flask.current_app.logger.debug(f"Other user: {user}{other_user_role}")
         raise ddserr.AccessDeniedError(
             message=(
                 "You do not have the necessary permissions "
