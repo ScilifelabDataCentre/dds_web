@@ -238,7 +238,6 @@ def create_app(testing=False, database_uri=None):
     app.cli.add_command(fill_db_wrapper)
 
     with app.app_context():  # Everything in here has access to sessions
-        db.create_all()  # TODO: remove this when we have migrations
         from dds_web.database import models
 
         # Need to import auth so that the modifications to the auth objects take place
@@ -269,8 +268,6 @@ def create_app(testing=False, database_uri=None):
 @click.argument("db_type", type=click.Choice(["production", "dev-small", "dev-big"]))
 @flask.cli.with_appcontext
 def fill_db_wrapper(db_type):
-
-    db.create_all()
 
     if db_type == "production":
         from dds_web.database import models
