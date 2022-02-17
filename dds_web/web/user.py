@@ -362,11 +362,14 @@ def reset_password(token):
             db.session.delete(project_user_key)
         db.session.commit()
 
+        # Reset user keys, will be regenerated on setting new password
+        user.kd_salt = None
+        user.nonce = None
+        user.public_key = None
+        user.private_key = None
+
         # Update user password
         user.password = form.password.data
-        db.session.commit()
-
-        dds_web.security.project_user_keys.generate_user_key_pair(user)
         db.session.commit()
 
         flask.flash("Your password has been updated! You are now able to log in.", "success")
