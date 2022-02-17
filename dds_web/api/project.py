@@ -507,7 +507,7 @@ class ProjectAccess(flask_restful.Resource):
             project = project_schemas.ProjectRequiredSchema().load(project_info)
 
         # Verify permission to give user access
-        dds_web.utils.verify_renew_access_permission(user=user, project=project)
+        self.verify_renew_access_permission(user=user, project=project)
 
         # Give access to specific project or all active projects if no project specified
         list_of_projects = None
