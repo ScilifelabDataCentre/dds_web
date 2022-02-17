@@ -354,7 +354,9 @@ class RemoveContents(flask_restful.Resource):
 
         # Check if project contains anything
         if not project.files:
-            raise EmptyProjectException("The are no project contents to delete.")
+            raise EmptyProjectException(
+                project=project, message="There are no project contents to delete."
+            )
 
         self.delete_project_contents(project=project)
 

@@ -317,6 +317,16 @@ def test_upload_and_remove_all_project_contents(client, boto3_session):
     project_1 = project_row(project_id="file_testing_project")
     assert project_1
     assert project_1.current_status == "In Progress"
+
+    # Try to remove all contents on empty project
+    response = client.delete(
+        tests.DDSEndpoint.REMOVE_PROJ_CONT,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "There are no project contents to delete." in response.json["message"]
+
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
