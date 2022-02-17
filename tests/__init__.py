@@ -127,6 +127,7 @@ class DDSEndpoint:
     LOGIN = "/login"
     CANCEL_2FA = "/cancel_2fa"
     CONFIRM_2FA = "/confirm_2fa"
+    CHANGE_PASSWORD = "/change_password"
 
     # User creation
     USER_ADD = BASE_ENDPOINT + "/user/add"
@@ -164,6 +165,7 @@ class DDSEndpoint:
     # Project specific urls
     PROJECT_CREATE = BASE_ENDPOINT + "/proj/create"
     PROJECT_STATUS = BASE_ENDPOINT + "/proj/status"
+    PROJECT_ACCESS = BASE_ENDPOINT + "/proj/access"
 
     # Listing urls
     LIST_PROJ = BASE_ENDPOINT + "/proj/list"

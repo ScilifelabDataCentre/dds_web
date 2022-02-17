@@ -100,6 +100,39 @@ class ProjectInviteKeys(db.Model):
     key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
 
 
+class ProjectInvites(db.Model):
+    """
+    Many-to-many association table between projects and invites.
+
+    Primary key(s):
+    - project_id
+    - invite_id
+
+    Foreign key(s):
+    - project_id
+    - invite_id
+    """
+
+    # Table setup
+    __tablename__ = "projectinvites"
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    project = db.relationship("Project", back_populates="invites")
+    # ---
+    invite_id = db.Column(
+        db.Integer, db.ForeignKey("invites.id", ondelete="CASCADE"), primary_key=True
+    )
+    # researchuser was kept for consistency with ResearchUser model.
+    researchuser = db.relationship("Invite", back_populates="project_associations")
+    # ---
+
+    # Additional columns
+    owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
+
+
 class ProjectUsers(db.Model):
     """
     Many-to-many association table between projects and research users.
@@ -262,6 +295,9 @@ class Project(db.Model):
     researchusers = db.relationship(
         "ProjectUsers", back_populates="project", passive_deletes=True, cascade="all, delete"
     )
+    invites = db.relationship(
+        "ProjectInvites", back_populates="project", passive_deletes=True, cascade="all, delete"
+    )
     project_user_keys = db.relationship(
         "ProjectUserKeys", back_populates="project", passive_deletes=True
     )
@@ -319,6 +355,11 @@ class Project(db.Model):
 
         return len(self.files)
 
+    def __str__(self):
+        """Called by str(), creates representation of object"""
+
+        return f"Project {self.public_id}"
+
     def __repr__(self):
         """Called by print, creates representation of object"""
 
@@ -357,7 +398,6 @@ class User(flask_login.UserMixin, db.Model):
     hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
     active = db.Column(db.Boolean)
     kd_salt = db.Column(db.LargeBinary(32), default=None)
-    temporary_key = db.Column(db.LargeBinary(32), default=None)
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
@@ -389,8 +429,6 @@ class User(flask_login.UserMixin, db.Model):
         super(User, self).__init__(**kwargs)
         if not self.hotp_secret:
             self.hotp_secret = os.urandom(20)
-        if not self.public_key or not self.private_key:
-            generate_user_key_pair(self)
 
     def get_id(self):
         """Get user id - in this case username. Used by flask_login."""
@@ -407,7 +445,14 @@ class User(flask_login.UserMixin, db.Model):
         """Generate the password hash and save in db."""
         pw_hasher = argon2.PasswordHasher(hash_len=32)
         self._password_hash = pw_hasher.hash(plaintext_password)
-        self.kd_salt = os.urandom(32)
+
+        # User key pair should only be set from here if the password is lost
+        # and all the keys associated with the user should be cleaned up
+        # before setting the password.
+        # This should help the tests for setup as well.
+        if not self.public_key or not self.private_key:
+            self.kd_salt = os.urandom(32)
+            generate_user_key_pair(self, plaintext_password)
 
     def verify_password(self, input_password):
         """Verifies that the specified password matches the encoded password in the database."""
@@ -502,6 +547,11 @@ class User(flask_login.UserMixin, db.Model):
     @property
     def is_active(self):
         return self.active
+
+    def __str__(self):
+        """Called by str(), creates representation of object"""
+
+        return f"User {self.username}"
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -712,7 +762,10 @@ class Invite(db.Model):
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"))
     unit = db.relationship("Unit", back_populates="invites")
     project_invite_keys = db.relationship(
-        "ProjectInviteKeys", back_populates="invite", passive_deletes=True
+        "ProjectInviteKeys", back_populates="invite", passive_deletes=True, cascade="all, delete"
+    )
+    project_associations = db.relationship(
+        "ProjectInvites", back_populates="researchuser", passive_deletes=True, cascade="all, delete"
     )
     # ---
 
@@ -722,6 +775,17 @@ class Invite(db.Model):
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
+
+    @property
+    def projects(self):
+        """Return list of project items."""
+
+        return [proj.project for proj in self.project_associations]
+
+    def __str__(self):
+        """Called by str(), creates representation of object"""
+
+        return f"Pending invite for {self.email}"
 
     def __repr__(self):
         """Called by print, creates representation of object"""

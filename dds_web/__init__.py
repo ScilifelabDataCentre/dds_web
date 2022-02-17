@@ -7,6 +7,7 @@
 # Standard library
 import logging
 import datetime
+import pathlib
 
 # Installed
 import click
@@ -77,16 +78,19 @@ def setup_logging(app):
             "handlers": {
                 "general": {
                     "level": logging.DEBUG,
-                    "class": "dds_web.dds_rotating_file_handler.DDSRotatingFileHandler",
-                    "filename": "dds",
-                    "basedir": app.config.get("LOGS_DIR"),
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "filename": pathlib.Path(app.config.get("LOGS_DIR")) / pathlib.Path("dds.log"),
                     "formatter": "general",
+                    "maxBytes": 0x100000,
+                    "backupCount": 15,
                 },
                 "actions": {
                     "level": logging.INFO,
-                    "class": "dds_web.dds_rotating_file_handler.DDSRotatingFileHandler",
-                    "filename": "actions",
-                    "basedir": app.config.get("LOGS_DIR"),
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "maxBytes": 0x100000,
+                    "backupCount": 15,
+                    "filename": pathlib.Path(app.config.get("LOGS_DIR"))
+                    / pathlib.Path("actions.log"),
                     "formatter": "default",
                 },
                 "console": {

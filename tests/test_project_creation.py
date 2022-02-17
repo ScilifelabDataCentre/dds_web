@@ -153,7 +153,7 @@ def test_create_project_sensitive(client, boto3_session):
         data=json.dumps(p_data),
         content_type="application/json",
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
         title=proj_data["title"],
@@ -297,10 +297,10 @@ def test_create_project_with_users(client, boto3_session):
         data=json.dumps(proj_data_with_existing_users),
         content_type="application/json",
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
-        assert "associated with project" in x
+        assert "associated with Project" in x
 
     resp_json = response.json
     created_proj = models.Project.query.filter_by(public_id=resp_json["project_id"]).one_or_none()
@@ -334,7 +334,7 @@ def test_create_project_with_invited_users(client, boto3_session):
         data=json.dumps(proj_data_with_nonexisting_users),
         content_type="application/json",
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
         assert "Invitation sent" in x
@@ -348,7 +348,7 @@ def test_create_project_with_unsuitable_roles(client, boto3_session):
         data=json.dumps(proj_data_with_unsuitable_user_roles),
         content_type="application/json",
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
         assert "User Role should be either 'Project Owner' or 'Researcher'" in x

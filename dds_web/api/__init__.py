@@ -58,6 +58,7 @@ api.add_resource(project.GetPrivate, "/proj/private", endpoint="private_key")
 api.add_resource(project.CreateProject, "/proj/create", endpoint="create_project")
 api.add_resource(project.ProjectUsers, "/proj/users", endpoint="list_project_users")
 api.add_resource(project.ProjectStatus, "/proj/status", endpoint="project_status")
+api.add_resource(project.ProjectAccess, "/proj/access", endpoint="project_access")
 
 # User management ################################################################ User management #
 api.add_resource(user.RetrieveUserInfo, "/user/info", endpoint="user_info")

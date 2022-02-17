@@ -165,7 +165,6 @@ def test_successful_registration(registry_form_data, client):
 
     user = models.User.query.filter_by(username=registry_form_data["username"]).one_or_none()
     assert user is not None
-    assert user.temporary_key is not None
     assert user.nonce is not None
     assert user.public_key is not None
     assert user.private_key is not None

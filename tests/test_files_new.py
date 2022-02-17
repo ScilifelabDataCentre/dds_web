@@ -311,6 +311,62 @@ def test_upload_move_available_delete_file(client, boto3_session):
     )
 
 
+def test_upload_and_remove_all_project_contents(client, boto3_session):
+    """Upload and then delete all project contents"""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    # Try to remove all contents on empty project
+    response = client.delete(
+        tests.DDSEndpoint.REMOVE_PROJ_CONT,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "There are no project contents to delete." in response.json["message"]
+
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(first_new_file),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=first_new_file, project=project_1.id)
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    file_1_in_folder = first_new_file.copy()
+    file_1_in_folder["name"] = "file_1_in_folder"
+    file_1_in_folder["name_in_bucket"] = "bucketfile_1_in_folder"
+
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(file_1_in_folder),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=file_1_in_folder, project=project_1.id)
+
+    # Remove all contents
+    response = client.delete(
+        tests.DDSEndpoint.REMOVE_PROJ_CONT,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json["removed"]
+    assert not file_in_db(test_dict=first_new_file, project=project_1.id)
+    assert not file_in_db(test_dict=file_1_in_folder, project=project_1.id)
+
+
 def test_new_file_invalid_credentials(client):
     """Test create file with researcher creds."""
 

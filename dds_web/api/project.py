@@ -18,8 +18,12 @@ import dds_web.utils
 from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import logging_bind_request, dbsession
+from dds_web.api.dds_decorators import (
+    logging_bind_request,
+    dbsession,
+)
 from dds_web.errors import (
+    AccessDeniedError,
     DDSArgumentError,
     DatabaseError,
     EmptyProjectException,
@@ -27,11 +31,13 @@ from dds_web.errors import (
     BucketNotFoundError,
     KeyNotFoundError,
     S3ConnectionError,
+    NoSuchUserError,
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas, user_schemas
-from dds_web.security.project_user_keys import obtain_project_private_key
-
+from dds_web.security.project_user_keys import obtain_project_private_key, share_project_private_key
+from dds_web.security.auth import get_user_roles_common
+from dds_web.api.files import check_eligibility_for_deletion
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -240,7 +246,15 @@ class GetPrivate(flask_restful.Resource):
         flask.current_app.logger.debug("Getting the private key.")
 
         return flask.jsonify(
-            {"private": obtain_project_private_key(auth.current_user(), project).hex().upper()}
+            {
+                "private": obtain_project_private_key(
+                    user=auth.current_user(),
+                    project=project,
+                    token=dds_web.security.auth.obtain_current_encrypted_token(),
+                )
+                .hex()
+                .upper()
+            }
         )
 
 
@@ -285,7 +299,7 @@ class UserProjects(flask_restful.Resource):
             project_info["Size"] = proj_size
 
             if usage:
-                proj_bhours, proj_cost = self.project_usage(project=project)
+                proj_bhours, proj_cost = self.project_usage(project=p)
                 total_bhours_db += proj_bhours
                 total_cost_db += proj_cost
                 # return ByteHours
@@ -341,9 +355,13 @@ class RemoveContents(flask_restful.Resource):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
+        check_eligibility_for_deletion(project.current_status, project.has_been_available)
+
         # Check if project contains anything
         if not project.files:
-            raise EmptyProjectException("The are no project contents to delete.")
+            raise EmptyProjectException(
+                project=project, message="There are no project contents to delete."
+            )
 
         self.delete_project_contents(project=project)
 
@@ -417,7 +435,8 @@ class CreateProject(flask_restful.Resource):
                         {
                             "email": user.get("email"),
                             "role": user.get("role"),
-                        }
+                        },
+                        project=new_project,
                     )
                     if invite_user_result["status"] == 200:
                         invite_msg = (
@@ -431,9 +450,9 @@ class CreateProject(flask_restful.Resource):
                     # If it is an existing user, add them to project.
                     addition_status = ""
                     try:
-                        add_user_result = AddUser.add_user_to_project(
-                            existing_user=existing_user,
-                            project=new_project.public_id,
+                        add_user_result = AddUser.add_to_project(
+                            whom=existing_user,
+                            project=new_project,
                             role=user.get("role"),
                         )
                     except DatabaseError as err:
@@ -473,3 +492,100 @@ class ProjectUsers(flask_restful.Resource):
             research_users.append(user_info)
 
         return {"research_users": research_users}
+
+
+class ProjectAccess(flask_restful.Resource):
+    """Renew project access for users."""
+
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
+    @logging_bind_request
+    @dbsession
+    def post(self):
+        """Give access to user."""
+        # Verify that user specified
+        extra_args = flask.request.json
+        if not extra_args:
+            raise DDSArgumentError(message="Required information missing.")
+
+        if "email" not in extra_args:
+            raise DDSArgumentError(message="User email missing.")
+
+        user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
+        if not user:
+            raise NoSuchUserError()
+
+        # Verify that project specified
+        project_info = flask.request.args
+        project = None
+        if project_info and project_info.get("project"):
+            project = project_schemas.ProjectRequiredSchema().load(project_info)
+
+        # Verify permission to give user access
+        self.verify_renew_access_permission(user=user, project=project)
+
+        # Give access to specific project or all active projects if no project specified
+        list_of_projects = None
+        if not project:
+            if user.role == "Researcher":
+                list_of_projects = [x.project for x in user.project_associations]
+            elif user.role in ["Unit Personnel", "Unit Admin"]:
+                list_of_projects = user.unit.projects
+        else:
+            list_of_projects = [project]
+
+        self.give_project_access(
+            project_list=list_of_projects, current_user=auth.current_user(), user=user
+        )
+
+        return {"message": f"Attempting to fix project access for {user.primary_email}"}
+
+    @staticmethod
+    def verify_renew_access_permission(user, project):
+        """Check that user has permission to give access to another user in this project."""
+
+        if auth.current_user() == user:
+            raise AccessDeniedError(message="You cannot renew your own access.")
+
+        # Get roles
+        current_user_role = get_user_roles_common(user=auth.current_user())
+        other_user_role = get_user_roles_common(user=user)
+
+        # Check access
+        if not (
+            (
+                current_user_role == "Unit Admin"
+                and other_user_role
+                in ["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"]
+            )
+            or (
+                current_user_role == "Unit Personnel"
+                and other_user_role in ["Unit Personnel", "Project Owner", "Researcher"]
+            )
+            or (
+                current_user_role == "Project Owner"
+                and other_user_role in ["Project Owner", "Researcher"]
+            )
+        ):
+            raise AccessDeniedError(
+                message=(
+                    "You do not have the necessary permissions "
+                    "to shared project access with this user."
+                )
+            )
+
+    @staticmethod
+    def give_project_access(project_list, current_user, user):
+        """Give specific user project access."""
+        # Loop through and check that the project(s) is(are) active
+        for proj in project_list:
+            if proj.is_active:
+                project_keys_row = models.ProjectUserKeys.query.filter_by(
+                    project_id=proj.id, user_id=user.username
+                ).one_or_none()
+                if not project_keys_row:
+                    share_project_private_key(
+                        from_user=current_user,
+                        to_another=user,
+                        project=proj,
+                        from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                    )
