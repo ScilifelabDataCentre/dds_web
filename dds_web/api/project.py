@@ -245,7 +245,15 @@ class GetPrivate(flask_restful.Resource):
         flask.current_app.logger.debug("Getting the private key.")
 
         return flask.jsonify(
-            {"private": obtain_project_private_key(auth.current_user(), project).hex().upper()}
+            {
+                "private": obtain_project_private_key(
+                    user=auth.current_user(),
+                    project=project,
+                    token=dds_web.security.auth.obtain_current_encrypted_token(),
+                )
+                .hex()
+                .upper()
+            }
         )
 
 
@@ -422,7 +430,8 @@ class CreateProject(flask_restful.Resource):
                         {
                             "email": user.get("email"),
                             "role": user.get("role"),
-                        }
+                        },
+                        project=new_project,
                     )
                     if invite_user_result["status"] == 200:
                         invite_msg = (
@@ -436,9 +445,9 @@ class CreateProject(flask_restful.Resource):
                     # If it is an existing user, add them to project.
                     addition_status = ""
                     try:
-                        add_user_result = AddUser.add_user_to_project(
-                            existing_user=existing_user,
-                            project=new_project.public_id,
+                        add_user_result = AddUser.add_to_project(
+                            whom=existing_user,
+                            project=new_project,
                             role=user.get("role"),
                         )
                     except DatabaseError as err:

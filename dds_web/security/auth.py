@@ -18,9 +18,8 @@ import structlog
 
 # Own modules
 from dds_web import basic_auth, auth, mail
-from dds_web.errors import AuthenticationError, AccessDeniedError, InviteError
+from dds_web.errors import AuthenticationError, AccessDeniedError, InviteError, TokenMissingError
 from dds_web.database import models
-from dds_web.security.project_user_keys import verify_invite_temporary_key
 import dds_web.utils
 
 action_logger = structlog.getLogger("actions")
@@ -136,8 +135,11 @@ def matching_email_with_invite(token, email):
     return claims.get("inv") == email
 
 
-def verify_invite_key(token):
-    """Verify token, email, invite and temporary key."""
+def extract_token_invite_key(token):
+    """Verify token, email and invite.
+
+    Return invite and temporary key.
+    """
     claims = __base_verify_token_for_invite(token=token)
 
     # Verify email in token
@@ -150,19 +152,32 @@ def verify_invite_key(token):
     if not invite:
         raise InviteError(message="Invite could not be found!")
 
-    # Verify temporary key from token claims
-    temporary_key = bytes.fromhex(claims.get("sen_con"))
-    if verify_invite_temporary_key(invite=invite, temporary_key=temporary_key):
-        return temporary_key
+    try:
+        return invite, bytes.fromhex(claims.get("sen_con"))
+    except ValueError:
+        raise ValueError("Temporary key is expected be in hexadecimal digits for a byte string.")
+
+
+def obtain_current_encrypted_token():
+    try:
+        return flask.request.headers["Authorization"].split()[1]
+    except KeyError:
+        raise TokenMissingError("Encrypted token is required but missing!")
+
+
+def obtain_current_encrypted_token_claims():
+    token = obtain_current_encrypted_token()
+    if token:
+        return decrypt_and_verify_token_signature(token)
 
 
 @auth.verify_token
 def verify_token(token):
-    """Verify token used in token authencation."""
+    """Verify token used in token authentication."""
     claims = __verify_general_token(token=token)
     user = __user_from_subject(subject=claims.get("sub"))
 
-    return handle_multi_factor_authentication(
+    return __handle_multi_factor_authentication(
         user=user, mfa_auth_time_string=claims.get("mfa_auth_time")
     )
 
@@ -210,7 +225,7 @@ def __user_from_subject(subject):
             return user
 
 
-def handle_multi_factor_authentication(user, mfa_auth_time_string):
+def __handle_multi_factor_authentication(user, mfa_auth_time_string):
     """Verify multifactor authentication time frame."""
     if user:
         if mfa_auth_time_string:
@@ -246,8 +261,10 @@ def send_hotp_email(user):
     return False
 
 
-def extract_encrypted_token_content(token, username):
+def extract_encrypted_token_sensitive_content(token, username):
     """Extract the sensitive content from inside the encrypted token."""
+    if token is None:
+        raise TokenMissingError(message="There is no token to extract sensitive content from.")
     content = decrypt_and_verify_token_signature(token=token)
     if content.get("sub") == username:
         return content.get("sen_con")

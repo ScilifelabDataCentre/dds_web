@@ -14,7 +14,7 @@ import dds_web
 from dds_web import auth, db, utils
 from dds_web import errors as ddserr
 from dds_web.database import models
-from dds_web.security.project_user_keys import transfer_invite_private_key_to_user
+from dds_web.security.project_user_keys import verify_and_transfer_invite_to_user
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -38,6 +38,31 @@ class UserSchema(marshmallow.Schema):
             return None
 
         return email_row.user
+
+
+class UnansweredInvite(marshmallow.Schema):
+    """Schema to return an unanswered invite."""
+
+    email = marshmallow.fields.Email(required=True)
+
+    class Meta:
+        unknown = marshmallow.EXCLUDE
+
+    @marshmallow.post_load
+    def return_invite(self, data, **kwargs):
+        """Return the invite object."""
+        # returns the invite, if there is exactly one or raises an exception.
+        # returns none, if there is no invite
+        invite = models.Invite.query.filter_by(email=data.get("email")).one_or_none()
+
+        # double check if there is no existing user with this email
+        userexists = utils.email_in_db(email=data.get("email"))
+
+        if userexists and invite:
+            raise ddserr.DatabaseError(message="Email exists for user and invite at the same time")
+
+        # if the user exists already, the invite object must not be returned to prevent sign-up
+        return invite if not userexists else None
 
 
 class InviteUserSchema(marshmallow.Schema):
@@ -73,15 +98,11 @@ class InviteUserSchema(marshmallow.Schema):
         elif curr_user_role == "Unit Personnel":
             if attempted_invite_role in ["Super Admin", "Unit Admin"]:
                 raise ddserr.AccessDeniedError
-        elif curr_user_role == "Researcher":
-            # research users can only invite in certain projects if they are set as the owner
-            # TODO: Add required project field for researchers to be able to invite (if
-            raise ddserr.AccessDeniedError(
-                message=(
-                    "Research users cannot invite at this time. "
-                    "Project owner invite config will be fixed."
-                )
-            )
+        elif (
+            curr_user_role == "Researcher"
+        ):  # project ownership is validated in @basic_auth.get_user_roles
+            if attempted_invite_role not in ["Researcher", "Project Owner"]:
+                raise ddserr.AccessDeniedError
 
     @marshmallow.post_load
     def make_invite(self, data, **kwargs):
@@ -196,9 +217,7 @@ class NewUserSchema(marshmallow.Schema):
         db.session.add(new_user)
 
         # Verify and transfer invite keys to the new user
-        temporary_key = dds_web.security.auth.verify_invite_key(token)
-        if temporary_key:
-            transfer_invite_private_key_to_user(invite, temporary_key, new_user)
+        if verify_and_transfer_invite_to_user(token, new_user, data.get("password")):
             for project_invite_key in invite.project_invite_keys:
                 project_user_key = models.ProjectUserKeys(
                     project_id=project_invite_key.project_id,
@@ -207,9 +226,6 @@ class NewUserSchema(marshmallow.Schema):
                 )
                 db.session.add(project_user_key)
                 db.session.delete(project_invite_key)
-
-            # TODO decrypt the user private key using the temp key,
-            #  derive a key from the password and encrypt the user private key with the derived key
 
             flask.session.pop("invite_token", None)
 
