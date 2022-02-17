@@ -45,33 +45,42 @@ class AddUser(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     def post(self):
-        """Create an invite and send email."""
+        """Associate existing users or unanswered invites with projects or create invites"""
 
+        # A project may or may not be specified
         project = flask.request.args.get("project", None)
+        if project:
+            project = project_schemas.ProjectRequiredSchema().load({"project": project})
+            role = flask.request.json.get("role", None)
+
         args = flask.request.json
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load(args)
+        unanswered_invite = user_schemas.UnansweredInvite().load(args)
 
-        if existing_user and not project:
-            raise ddserr.DDSArgumentError(
-                message="User exists! Specify a project if you want to add this user to a project."
-            )
-
-        if not existing_user:
-            # Send invite if the user doesn't exist
-            invite_user_result = self.invite_user(args)
-            return invite_user_result, invite_user_result["status"]
-
-        else:
-            # If there is an existing user, add them to project.
-            if project:
-                add_user_result = self.add_user_to_project(existing_user, project, args.get("role"))
+        if existing_user or unanswered_invite:
+            if project and role:
+                whom = existing_user or unanswered_invite
+                add_user_result = self.add_to_project(whom, project, role)
                 flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
                 return add_user_result, add_user_result["status"]
+            else:
+                raise ddserr.DDSArgumentError(
+                    message="This user was already added to the system. Specify the project you wish to give access to."
+                )
+
+        else:
+            # Send invite if the user doesn't exist
+            if project:
+                invite_user_result = self.invite_user(args, project)
+            else:
+                invite_user_result = self.invite_user(args)
+
+            return invite_user_result, invite_user_result["status"]
 
     @staticmethod
     @logging_bind_request
-    def invite_user(args):
+    def invite_user(args, project=None):
         """Invite a new user"""
 
         try:
@@ -120,22 +129,43 @@ class AddUser(flask_restful.Resource):
             if "Unit" in auth.current_user().role:
                 # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
-                for project in auth.current_user().unit.projects:
-                    if project.is_active:
+                for unit_project in auth.current_user().unit.projects:
+                    if unit_project.is_active:
                         share_project_private_key(
                             from_user=auth.current_user(),
                             to_another=new_invite,
                             from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                            project=project,
+                            project=unit_project,
                         )
+
+                if project:  # specified project is disregarded for unituser invites
+                    msg = f"{str(new_invite)} was successful."
+                else:
+                    msg = f"{str(new_invite)} was successful, but specification for {str(project)} dropped. Unit Users have automatic access to projects of their unit."
+
         else:
             db.session.add(new_invite)
+            if project:
+                project.invites.append(
+                    models.ProjectInvites(
+                        project_id=project.id,
+                        invite_id=new_invite.id,
+                        owner=new_invite.role == "Project Owner",
+                    )
+                )
+                share_project_private_key(
+                    from_user=auth.current_user(),
+                    to_another=new_invite,
+                    project=project,
+                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                )
 
         db.session.commit()
+        msg = f"{str(new_invite)} was successful."
 
         return {
             "email": new_invite.email,
-            "message": "Invite successful!",
+            "message": msg,
             "status": http.HTTPStatus.OK,
         }
 
@@ -155,12 +185,12 @@ class AddUser(flask_restful.Resource):
 
     @staticmethod
     @logging_bind_request
-    def add_user_to_project(existing_user, project, role):
+    def add_to_project(whom, project, role):
         """Add existing user to a project"""
 
         allowed_roles = ["Project Owner", "Researcher"]
 
-        if role not in allowed_roles or existing_user.role not in allowed_roles:
+        if role not in allowed_roles or whom.role not in allowed_roles:
             return {
                 "status": ddserr.AccessDeniedError.code.value,
                 "message": (
@@ -170,15 +200,19 @@ class AddUser(flask_restful.Resource):
             }
 
         owner = role == "Project Owner"
-
-        project = project_schemas.ProjectRequiredSchema().load({"project": project})
         ownership_change = False
-        for rusers in project.researchusers:
-            if rusers.researchuser is existing_user:
+
+        if isinstance(whom, models.ResearchUser):
+            link = project.researchusers
+        else:
+            link = project.invites
+
+        for rusers in link:
+            if rusers.researchuser == whom:
                 if rusers.owner == owner:
                     return {
                         "status": ddserr.RoleException.code.value,
-                        "message": "User is already associated with the project in this capacity. ",
+                        "message": f"{str(whom)} is already associated with the {str(project)} in this capacity. ",
                     }
 
                 ownership_change = True
@@ -186,16 +220,26 @@ class AddUser(flask_restful.Resource):
                 break
 
         if not ownership_change:
-            project.researchusers.append(
-                models.ProjectUsers(
-                    project_id=project.id,
-                    user_id=existing_user.username,
-                    owner=owner,
+            if isinstance(whom, models.ResearchUser):
+                project.researchusers.append(
+                    models.ProjectUsers(
+                        project_id=project.id,
+                        user_id=whom.username,
+                        owner=owner,
+                    )
                 )
-            )
+            else:
+                project.invites.append(
+                    models.ProjectInvites(
+                        project_id=project.id,
+                        invite_id=whom.id,
+                        owner=owner,
+                    )
+                )
+
             share_project_private_key(
                 from_user=auth.current_user(),
-                to_another=existing_user,
+                to_another=whom,
                 from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
                 project=project,
             )
@@ -211,20 +255,15 @@ class AddUser(flask_restful.Resource):
 
         # If project is already released and not expired, send mail to user
         if project.current_status == "Available":
-            AddUser.compose_and_send_email_to_user(
-                existing_user, "project_release", project=project
-            )
+            AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
-            f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
+            f"{str(whom)} was associated with {str(project)} as Owner={owner}."
         )
 
         return {
             "status": http.HTTPStatus.OK,
-            "message": (
-                f"User {existing_user.username} associated with project "
-                f"{project.public_id} as Owner={owner}."
-            ),
+            "message": (f"{str(whom)} was associated with " f"{str(project)} as Owner={owner}."),
         }
 
     @staticmethod
