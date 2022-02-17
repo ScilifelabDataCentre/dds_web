@@ -34,7 +34,6 @@ from dds_web.security.project_user_keys import (
     share_project_private_key,
 )
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
-from dds_web.api.project import ProjectAccess
 
 
 # initiate bound logger
@@ -468,7 +467,7 @@ class UserActivation(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
-    def post(self, user):
+    def post(self):
         # Verify that user specified
         extra_args = flask.request.json
         if not extra_args:
@@ -479,7 +478,7 @@ class UserActivation(flask_restful.Resource):
 
         user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
         if not user:
-            raise NoSuchUserError()
+            raise ddserr.NoSuchUserError()
 
         # Verify that the action is specified -- reactivate or deactivate
         action = flask.request.json.get("action")
@@ -518,6 +517,8 @@ class UserActivation(flask_restful.Resource):
                 list_of_projects = [x.project for x in user.project_associations]
             elif user.role in ["Unit Personnel", "Unit Admin"]:
                 list_of_projects = user.unit.projects
+
+            from dds_web.api.project import ProjectAccess  # Needs to be here because of circ.import
 
             ProjectAccess.give_project_access(
                 project_list=list_of_projects, current_user=current_user, user=user
