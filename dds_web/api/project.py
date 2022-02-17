@@ -21,9 +21,6 @@ from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
     logging_bind_request,
     dbsession,
-    user_required,
-    renew_access_required,
-    project_optional,
 )
 from dds_web.errors import (
     DDSArgumentError,
@@ -33,6 +30,7 @@ from dds_web.errors import (
     BucketNotFoundError,
     KeyNotFoundError,
     S3ConnectionError,
+    NoSuchUserError,
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas, user_schemas
@@ -487,11 +485,29 @@ class ProjectAccess(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     @dbsession
-    @user_required
-    @project_optional
-    @renew_access_required
     def post(self, user, project):
         """Give access to user."""
+        # Verify that user specified
+        extra_args = flask.request.json
+        if not extra_args:
+            raise DDSArgumentError(message="Required information missing.")
+
+        if "email" not in extra_args:
+            raise DDSArgumentError(message="User email missing.")
+
+        user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
+        if not user:
+            raise NoSuchUserError()
+
+        # Verify that project specified
+        project_info = flask.request.args
+        project = None
+        if project_info and project_info.get("project"):
+            project = project_schemas.ProjectRequiredSchema().load(project_info)
+
+        # Verify permission to give user access
+        dds_web.utils.verify_renew_access_permission(user=user, project=project)
+
         # Give access to specific project or all active projects if no project specified
         list_of_projects = None
         if not project:
