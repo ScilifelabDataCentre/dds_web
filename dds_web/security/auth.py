@@ -301,9 +301,9 @@ def decrypt_token(token):
     # Decrypt token
     try:
         decrypted_token = jwt.JWT(key=key, jwt=token)
-    except ValueError:
+    except ValueError as exc:
         # "Token format unrecognized"
-        raise AuthenticationError(message="Invalid token")
+        raise AuthenticationError(message="Invalid token") from exc
 
     return decrypted_token.claims
 
@@ -324,9 +324,9 @@ def verify_token_signature(token):
         # jwt dependency uses a 60 seconds leeway to check exp
         # it also prints out a stack trace for it, so we handle it here
         raise AuthenticationError(message="Expired token")
-    except ValueError:
+    except ValueError as exc:
         # "Token format unrecognized"
-        raise AuthenticationError(message="Invalid token")
+        raise AuthenticationError(message="Invalid token") from exc
 
 
 @basic_auth.verify_password
