@@ -517,14 +517,10 @@ def test_add_project_to_existing_invite_by_unituser(client):
     assert response.status_code == http.HTTPStatus.OK
 
     # Check that the invite has now a project association
-
-    project_associations = invited_user.project_associations
-    assert len(project_associations) == 1
-    assert project_associations[0].project.public_id == project
-
     project_invite_keys = invited_user.project_invite_keys
     assert len(project_invite_keys) == 1
     assert project_invite_keys[0].project.public_id == project
+    assert not project_invite_keys[0].owner
 
 
 def test_update_project_to_existing_invite_by_unituser(client):
@@ -545,10 +541,10 @@ def test_update_project_to_existing_invite_by_unituser(client):
     project_obj = models.Project.query.filter_by(public_id=existing_project).one_or_none()
     invite_obj = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
 
-    project_invite = models.ProjectInvites.query.filter(
+    project_invite = models.ProjectInviteKeys.query.filter(
         sqlalchemy.and_(
-            models.ProjectInvites.invite_id == invite_obj.id,
-            models.ProjectUsers.project_id == project_obj.id,
+            models.ProjectInviteKeys.invite_id == invite_obj.id,
+            models.ProjectUsersKeys.project_id == project_obj.id,
         )
     ).one_or_none()
 
