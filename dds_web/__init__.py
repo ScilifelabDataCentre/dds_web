@@ -20,6 +20,7 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_bootstrap
 import flask_login
+import flask_migrate
 
 # import flask_qrcode
 from flask_limiter import Limiter
@@ -57,6 +58,9 @@ actions = {}
 
 # Limiter
 limiter = Limiter(key_func=get_remote_address)
+
+# Migration
+migrate = flask_migrate.Migrate()
 
 
 ####################################################################################################
@@ -214,13 +218,15 @@ def create_app(testing=False, database_uri=None):
     def load_user(user_id):
         return models.User.query.get(user_id)
 
-    oauth.init_app(app)
-
     # Initialize limiter
     limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
     limiter.init_app(app)
 
+    # Initialize migrations
+    migrate.init_app(app, db)
+
     # initialize OIDC
+    oauth.init_app(app)
     oauth.register(
         "default_login",
         client_secret=app.config.get("OIDC_CLIENT_SECRET"),
@@ -232,7 +238,6 @@ def create_app(testing=False, database_uri=None):
     app.cli.add_command(fill_db_wrapper)
 
     with app.app_context():  # Everything in here has access to sessions
-        db.create_all()  # TODO: remove this when we have migrations
         from dds_web.database import models
 
         # Need to import auth so that the modifications to the auth objects take place
@@ -263,8 +268,6 @@ def create_app(testing=False, database_uri=None):
 @click.argument("db_type", type=click.Choice(["production", "dev-small", "dev-big"]))
 @flask.cli.with_appcontext
 def fill_db_wrapper(db_type):
-
-    db.create_all()
 
     if db_type == "production":
         from dds_web.database import models
