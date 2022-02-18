@@ -167,7 +167,8 @@ class NewUserSchema(marshmallow.Schema):
             for project_invite_key in invite.project_invite_keys:
                 if isinstance(new_user, models.ResearchUser):
                     new_project_user = models.ProjectUsers(
-                        project_id=project_invite_key.project_id, owner=True
+                        project_id=project_invite_key.project_id,
+                        owner=invite.role == "Project Owner",
                     )
                     new_user.project_associations.append(new_project_user)
 
