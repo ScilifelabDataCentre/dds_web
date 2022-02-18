@@ -17,6 +17,7 @@ def get_email_token(invite):
     )
 
 
+# Confirm Invite ##################################################################### Confirm Invite #
 def test_confirm_invite_no_token(client):
     response = client.get(tests.DDSEndpoint.USER_CONFIRM, content_type="application/json")
     assert response.status == "404 NOT FOUND"
@@ -68,6 +69,7 @@ def test_confirm_invite_valid_token(client):
     assert b"Registration form" in response.data
 
 
+# Registration ##################################################################### Registration #
 def test_register_no_form(client):
     response = client.post(tests.DDSEndpoint.USER_NEW, content_type="application/json")
     assert response.status == "400 BAD REQUEST"
@@ -351,3 +353,82 @@ def test_invite_key_verification_fails_with_wrong_invalid_key(client):
 
     user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
     assert user is None
+
+
+# Invitation to Registration ######################################### Invitation to Registration #
+
+
+def perform_invite(client, inviting_user, email, role=None, project=None):
+    json_data = {"email": email, "role": role}
+    query_string = {}
+    if project:
+        if not role:
+            raise ValueError("Role must be specified when inviting to a project")
+        query_string = {"project": project.public_id}
+
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS[inviting_user.username]).token(client),
+        query_string=query_string,
+        json=json_data,
+        content_type="application/json",
+    )
+
+    if response.status != "200 OK":
+        print(response.status_code)
+        raise ValueError(f"Invitation failed: {response.data}")
+
+
+def invite_confirm_and_register(
+    client, inviting_user, email, projects, initial_role, role_per_project=None
+):
+    # Invite
+    if projects is None or projects == []:
+        perform_invite(client, inviting_user, email, role=initial_role)
+    else:
+        for project, role in zip(projects, role_per_project):
+            perform_invite(client, inviting_user, email, role=role, project=project)
+
+    # Confirm invite
+    invite = models.Invite.query.filter_by(email=email).one_or_none()
+    token = get_email_token(invite)
+
+    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    assert response.status == "200 OK"
+
+    # Complete registration
+    form_token = flask.g.csrf_token
+
+    form_data = {
+        "csrf_token": form_token,
+        "email": invite.email,
+        "name": "Test User",
+        "username": "user_not_existing",
+        "password": "Password123",
+        "confirm": "Password123",
+        "submit": "submit",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        json=form_data,
+        follow_redirects=True,
+    )
+    assert response.status == "200 OK"
+
+    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    return user
+
+
+def test_invite_to_register_researcher_with_project_by_unituser(client):
+    "Test that a new invite including a project can be created"
+    unituser = models.User.query.filter_by(username="unituser").one_or_none()
+    researcher_to_be = "researcher_to_be@example.org"
+
+    user = invite_confirm_and_register(
+        client,
+        inviting_user=unituser,
+        email=researcher_to_be,
+        projects=None,
+        initial_role="Researcher",
+    )
