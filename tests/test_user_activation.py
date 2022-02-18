@@ -32,10 +32,7 @@ def test_deactivate_nouser_as_superadmin(module_client):
         content_type="application/json",
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert (
-        f"This e-mail address is not associated with a user in the DDS, make sure it is not misspelled."
-        in response.json["message"]
-    )
+    assert "User not found" in response.json["message"]
 
 
 def test_deactivate_user_as_superadmin(module_client):

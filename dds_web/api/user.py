@@ -35,6 +35,7 @@ from dds_web.security.project_user_keys import (
 )
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
 
+
 # initiate bound logger
 action_logger = structlog.getLogger("actions")
 
@@ -467,19 +468,25 @@ class UserActivation(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
     def post(self):
-        user = user_schemas.UserSchema().load(flask.request.json)
+        # Verify that user specified
+        extra_args = flask.request.json
+        if not extra_args:
+            raise DDSArgumentError(message="Required information missing.")
+
+        if "email" not in extra_args:
+            raise DDSArgumentError(message="User email missing.")
+
+        user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
+        if not user:
+            raise ddserr.NoSuchUserError()
+
+        # Verify that the action is specified -- reactivate or deactivate
         action = flask.request.json.get("action")
         if action is None or action == "":
             raise ddserr.DDSArgumentError(
                 message="Please provide an action 'deactivate' or 'reactivate' for this request."
             )
-        if user is None:
-            raise ddserr.NoSuchUserError(
-                message=(
-                    "This e-mail address is not associated with a user in the DDS, "
-                    "make sure it is not misspelled."
-                )
-            )
+
         user_email_str = user.primary_email
         current_user = auth.current_user()
 
@@ -501,8 +508,26 @@ class UserActivation(flask_restful.Resource):
             raise ddserr.DDSArgumentError(message="User is already in desired state!")
 
         # TODO: Check if user has lost access to any projects and if so, grant access again.
+        if action == "reactivate":
+            user.active = True
+
+            # TODO: Super admins (current_user) don't have access to projects currently, how handle this?
+            list_of_projects = None
+            if user.role in ["Project Owner", "Researcher"]:
+                list_of_projects = [x.project for x in user.project_associations]
+            elif user.role in ["Unit Personnel", "Unit Admin"]:
+                list_of_projects = user.unit.projects
+
+            from dds_web.api.project import ProjectAccess  # Needs to be here because of circ.import
+
+            ProjectAccess.give_project_access(
+                project_list=list_of_projects, current_user=current_user, user=user
+            )
+
+        else:
+            user.active = False
+
         try:
-            user.active = action == "reactivate"
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()

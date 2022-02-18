@@ -537,7 +537,7 @@ class ProjectAccess(flask_restful.Resource):
             project_list=list_of_projects, current_user=auth.current_user(), user=user
         )
 
-        return {"message": f"Attempting to fix project access for {user.primary_email}"}
+        return {"message": f"Project access updated for user '{user.primary_email}'."}
 
     @staticmethod
     def verify_renew_access_permission(user, project):
