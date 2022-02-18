@@ -134,6 +134,20 @@ def test_add_user_with_unitadmin(client):
     assert invited_user.private_key is not None
     assert invited_user.project_invite_keys == []
 
+    # Repeating the invite should not send a new invite:
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            data=json.dumps(first_new_user),
+            content_type="application/json",
+        )
+        # No new mail should be sent for the token and neither for an invite
+        assert mock_mail_send.call_count == 0
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    message = response.json.get("message")
+    assert "user was already added to the system" in message
+
 
 def test_add_unit_user_with_unitadmin(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
@@ -172,6 +186,20 @@ def test_add_unit_user_with_unitadmin(client):
     assert len(project_invite_keys) == len(invited_user.unit.projects)
     assert len(project_invite_keys) == 5
 
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            data=json.dumps(new_unit_user),
+            content_type="application/json",
+        )
+        # No new mail should be sent for the token and neither for an invite
+        assert mock_mail_send.call_count == 0
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    message = response.json.get("message")
+    assert "user was already added to the system" in message
+
 
 def test_add_user_with_superadmin(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
@@ -191,8 +219,22 @@ def test_add_user_with_superadmin(client):
     assert invited_user.email == first_new_user["email"]
     assert invited_user.role == first_new_user["role"]
 
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            data=json.dumps(first_new_user),
+            content_type="application/json",
+        )
+        # No new mail should be sent for the token and neither for an invite
+        assert mock_mail_send.call_count == 0
 
-def test_add_user_existing_email(client):
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    message = response.json.get("message")
+    assert "user was already added to the system" in message
+
+
+def test_add_user_existing_email_no_project(client):
     invited_user = models.Invite.query.filter_by(
         email=existing_invite["email"], role=existing_invite["role"]
     ).one_or_none()
