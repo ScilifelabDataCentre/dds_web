@@ -10,6 +10,7 @@ import unittest
 import marshmallow
 
 existing_project = "public_project_id"
+existing_project_2 = "second_public_project_id"
 first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
 first_new_owner = {**first_new_email, "role": "Project Owner"}
@@ -494,7 +495,7 @@ def test_add_existing_user_with_unsuitable_role(client):
 # Invite to project ########################################################### Invite to project #
 
 
-def test_new_invite_with_project_by_unituser(client):
+def test_invite_with_project_by_unituser(client):
     "Test that a new invite including a project can be created"
 
     project = existing_project
@@ -591,7 +592,7 @@ def test_update_project_to_existing_invite_by_unituser(client):
     project_invite = models.ProjectInvites.query.filter(
         sqlalchemy.and_(
             models.ProjectInvites.invite_id == invite_obj.id,
-            models.ProjectUsers.project_id == project_obj.id,
+            models.ProjectInvites.project_id == project_obj.id,
         )
     ).one_or_none()
 
@@ -611,6 +612,63 @@ def test_update_project_to_existing_invite_by_unituser(client):
     db.session.refresh(project_invite)
 
     assert project_invite.owner
+
+
+def test_invited_as_owner_and_researcher_to_different_project(client):
+    "Test that an invite can be owner of one project and researcher of another"
+
+    # Create Invite upfront as owner
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        data=json.dumps(first_new_owner),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Perform second invite as researcher
+    project2 = existing_project_2
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project2},
+        data=json.dumps(first_new_user),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_obj_owner = models.Project.query.filter_by(public_id=existing_project).one_or_none()
+    project_obj_not_owner = models.Project.query.filter_by(
+        public_id=existing_project_2
+    ).one_or_none()
+
+    invite_obj = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+
+    project_invite_owner = models.ProjectInvites.query.filter(
+        sqlalchemy.and_(
+            models.ProjectInvites.invite_id == invite_obj.id,
+            models.ProjectInvites.project_id == project_obj_owner.id,
+        )
+    ).one_or_none()
+
+    assert project_invite_owner
+    assert project_invite_owner.owner
+
+    project_invite_not_owner = models.ProjectInvites.query.filter(
+        sqlalchemy.and_(
+            models.ProjectInvites.invite_id == invite_obj.id,
+            models.ProjectInvites.project_id == project_obj_not_owner.id,
+        )
+    ).one_or_none()
+
+    assert project_invite_not_owner
+    assert not project_invite_not_owner.owner
+
+    # Owner or not should not be stored on the invite
+    assert invite_obj.role == "Researcher"
 
 
 def test_invite_to_project_by_project_owner(client):
