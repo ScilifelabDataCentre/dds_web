@@ -206,9 +206,8 @@ class NewUserSchema(marshmallow.Schema):
             new_user.is_admin = invite.role == "Unit Admin"
 
             invite.unit.users.append(new_user)
-        elif invite.role in ["Project Owner", "Researcher"]:
+        elif invite.role == "Researcher":
             new_user = models.ResearchUser(**common_user_fields)
-            # Currently no project associations
 
         # Create new email and append to user relationship
         new_email = models.Email(email=data.get("email"), primary=True)
@@ -220,6 +219,12 @@ class NewUserSchema(marshmallow.Schema):
         # Verify and transfer invite keys to the new user
         if verify_and_transfer_invite_to_user(token, new_user, data.get("password")):
             for project_invite_key in invite.project_invite_keys:
+                if isinstance(new_user, models.ResearchUser):
+                    project_user = models.ProjectUsers(
+                        project_id=project_invite_key.project_id, owner=project_invite_key.owner
+                    )
+                    new_user.project_associations.append(project_user)
+
                 project_user_key = models.ProjectUserKeys(
                     project_id=project_invite_key.project_id,
                     user_id=new_user.username,

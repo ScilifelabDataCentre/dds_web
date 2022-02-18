@@ -55,17 +55,18 @@ class AddUser(flask_restful.Resource):
                 message="Missing required information, cannot add or invite."
             )
 
+        # Verify valid role
         role = json_info.get("role")
-        project = args.get("project") if args else None
-        email = json_info.get("email")
-
         if not dds_web.utils.valid_user_role(specified_role=role):
             raise ddserr.DDSArgumentError(message="Invalid user role.")
 
         # A project may or may not be specified
+        project = args.get("project") if args else None
         if project:
             project = project_schemas.ProjectRequiredSchema().load({"project": project})
 
+        # Verify email
+        email = json_info.get("email")
         if not email:
             raise ddserr.DDSArgumentError(message="Email adress required to add or invite.")
 
@@ -105,6 +106,16 @@ class AddUser(flask_restful.Resource):
 
         current_user_role = get_user_roles_common(user=auth.current_user())
 
+        if not project:
+            if current_user_role == "Project Owner":
+                raise ddserr.DDSArgumentError(
+                    message="Project ID required to invite users to projects."
+                )
+            if new_user_role == "Project Owner":
+                raise ddserr.DDSArgumentError(
+                    message="Project ID required to invite a 'Project Owner'."
+                )
+
         # Verify role or current and new user
         if current_user_role == "Super Admin" and project:
             return {
@@ -124,15 +135,16 @@ class AddUser(flask_restful.Resource):
         elif current_user_role == "Project Owner":
             if new_user_role in ["Super Admin", "Unit Admin", "Unit Personnel"]:
                 raise ddserr.AccessDeniedError()
-            elif new_user_role in ["Project Owner", "Researcher"] and not project:
-                raise ddserr.DDSArgumentError(
-                    message="Project ID required to invite users to projects."
-                )
         elif current_user_role == "Researcher":
             raise ddserr.AccessDeniedError()
 
         # Create invite row
-        new_invite = models.Invite(email=email, role=new_user_role)
+        new_invite = models.Invite(
+            email=email,
+            role=(
+                "Researcher" if new_user_role in ["Researcher", "Project Owner"] else new_user_role
+            ),
+        )
 
         # Create URL safe token for invitation link
         token = encrypted_jwt_token(
@@ -187,6 +199,7 @@ class AddUser(flask_restful.Resource):
                     to_another=new_invite,
                     project=project,
                     from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                    project_owner=new_user_role == "Project Owner",
                 )
 
         db.session.commit()
