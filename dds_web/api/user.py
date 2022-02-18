@@ -135,12 +135,15 @@ class AddUser(flask_restful.Resource):
                 "status": ddserr.AccessDeniedError.code.value,
                 "message": ddserr.AccessDeniedError.description,
             }
-        elif current_user_role == "Project Owner":
-            if new_user_role in ["Super Admin", "Unit Admin", "Unit Personnel"]:
-                return {
-                    "status": ddserr.AccessDeniedError.code.value,
-                    "message": ddserr.AccessDeniedError.description,
-                }
+        elif current_user_role == "Project Owner" and new_user_role in [
+            "Super Admin",
+            "Unit Admin",
+            "Unit Personnel",
+        ]:
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": ddserr.AccessDeniedError.description,
+            }
         elif current_user_role == "Researcher":
             return {
                 "status": ddserr.AccessDeniedError.code.value,
