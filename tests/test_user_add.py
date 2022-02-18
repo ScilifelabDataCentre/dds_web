@@ -1,3 +1,4 @@
+import flask_mail
 import http
 import json
 import sqlalchemy
@@ -5,6 +6,7 @@ from dds_web import db
 from dds_web.database import models
 import tests
 import pytest
+import unittest
 import marshmallow
 
 existing_project = "public_project_id"
@@ -92,13 +94,16 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
 
 
 def test_add_user_with_unitadmin_and_invalid_email(client):
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            data=json.dumps(first_new_user_invalid_email),
-            content_type="application/json",
-        )
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        with pytest.raises(marshmallow.ValidationError):
+            response = client.post(
+                tests.DDSEndpoint.USER_ADD,
+                headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+                data=json.dumps(first_new_user_invalid_email),
+                content_type="application/json",
+            )
+        # An email is always sent when receiving the partial token
+        mock_mail_send.assert_called_once()
 
     invited_user = models.Invite.query.filter_by(
         email=first_new_user_invalid_email["email"]
@@ -107,12 +112,16 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
 
 
 def test_add_user_with_unitadmin(client):
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(first_new_user),
-        content_type="application/json",
-    )
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            data=json.dumps(first_new_user),
+            content_type="application/json",
+        )
+        # One mail sent for partial token and one for the invite
+        assert mock_mail_send.call_count == 2
+
     assert response.status_code == http.HTTPStatus.OK
 
     invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
@@ -127,12 +136,16 @@ def test_add_user_with_unitadmin(client):
 
 
 def test_add_unit_user_with_unitadmin(client):
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(new_unit_user),
-        content_type="application/json",
-    )
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            data=json.dumps(new_unit_user),
+            content_type="application/json",
+        )
+        # One mail sent for partial token and one for the invite
+        assert mock_mail_send.call_count == 2
+
     assert response.status_code == http.HTTPStatus.OK
 
     invited_user = models.Invite.query.filter_by(email=new_unit_user["email"]).one_or_none()
@@ -161,12 +174,16 @@ def test_add_unit_user_with_unitadmin(client):
 
 
 def test_add_user_with_superadmin(client):
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
-        data=json.dumps(first_new_user),
-        content_type="application/json",
-    )
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            data=json.dumps(first_new_user),
+            content_type="application/json",
+        )
+        # One mail sent for partial token and one for the invite
+        assert mock_mail_send.call_count == 2
+
     assert response.status_code == http.HTTPStatus.OK
 
     invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()

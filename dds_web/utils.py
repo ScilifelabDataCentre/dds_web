@@ -224,22 +224,29 @@ def delrequest_exists(email):
     return False
 
 
-def send_reset_email(email_row):
+def send_reset_email(email_row, token):
     """Generate password reset email."""
-    # Generate token
-    token = email_row.user.get_reset_token()
-
-    # Create and send email
-    message = flask_mail.Message(
-        "Password Reset Request",
+    msg = flask_mail.Message(
+        "WARNING! Password Reset Request for SciLifeLab Data Delivery System",
         recipients=[email_row.email],
     )
-    message.body = (
-        "To reset your password, visit the following link:\n"
-        f"{flask.url_for('auth_blueprint.reset_password', token=token, _external=True)}"
-        "\n\nIf you did not make this request then simply ignore this email and no changes will be made."
+
+    # Need to attach the image to be able to use it
+    msg.attach(
+        "scilifelab_logo.png",
+        "image/png",
+        open(os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb").read(),
+        "inline",
+        headers=[
+            ["Content-ID", "<Logo>"],
+        ],
     )
-    mail.send(message)
+
+    link = flask.url_for("auth_blueprint.reset_password", token=token, _external=True)
+    msg.body = flask.render_template("mail/password_reset.txt", link=link)
+    msg.html = flask.render_template("mail/password_reset.html", link=link)
+
+    mail.send(msg)
 
 
 def is_safe_url(target):

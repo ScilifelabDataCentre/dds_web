@@ -10,6 +10,7 @@ import unittest.mock
 
 # Installed
 import boto3
+import flask_mail
 
 # Own
 import tests
@@ -186,13 +187,16 @@ def test_aborted_project(module_client, boto3_session):
     )
 
     new_status["new_status"] = "Available"
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
-    )
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = module_client.post(
+            tests.DDSEndpoint.PROJECT_STATUS,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+            query_string={"project": project_id},
+            data=json.dumps(new_status),
+            content_type="application/json",
+        )
+        # One mail sent for the partial token and one for project release
+        assert mock_mail_send.call_count == 2
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Available"
