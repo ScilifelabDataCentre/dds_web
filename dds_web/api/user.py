@@ -150,9 +150,7 @@ class AddUser(flask_restful.Resource):
         # Create invite row
         new_invite = models.Invite(
             email=email,
-            role=(
-                "Researcher" if new_user_role in ["Researcher", "Project Owner"] else new_user_role
-            ),
+            role=("Researcher" if new_user_role == "Project Owner" else new_user_role),
         )
 
         # Create URL safe token for invitation link
