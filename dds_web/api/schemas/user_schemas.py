@@ -166,7 +166,6 @@ class NewUserSchema(marshmallow.Schema):
         if verify_and_transfer_invite_to_user(token, new_user, data.get("password")):
             for project_invite_key in invite.project_invite_keys:
                 if isinstance(new_user, models.ResearchUser):
-                    flask.current_app.logger.debug("new user is researchuser")
                     new_project_user = models.ProjectUsers(
                         project_id=project_invite_key.project_id, owner=True
                     )
