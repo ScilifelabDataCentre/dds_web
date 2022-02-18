@@ -21,13 +21,15 @@ from dds_web.security.auth import (
 def test_encrypted_data_transfer_via_token(client):
     username = "researchuser"
     sensitive_content = "sensitive_content"
-    encrypted_token = encrypted_jwt_token(username, sensitive_content)
+    encrypted_token = encrypted_jwt_token(username=username, sensitive_content=sensitive_content)
     extracted_content = extract_encrypted_token_sensitive_content(encrypted_token, username)
     assert sensitive_content == extracted_content
 
 
 def test_encrypted_data_destined_for_another_user(client):
-    encrypted_token = encrypted_jwt_token("researchuser", "sensitive_content")
+    encrypted_token = encrypted_jwt_token(
+        username="researchuser", sensitive_content="sensitive_content"
+    )
     extracted_content = extract_encrypted_token_sensitive_content(encrypted_token, "projectowner")
     assert extracted_content is None
 
@@ -239,7 +241,9 @@ def test_obtain_current_encrypted_token_claims(client):
 
 
 def test_expired_encrypted_token(client):
-    token = encrypted_jwt_token("researchuser", None, expires_in=datetime.timedelta(seconds=-2))
+    token = encrypted_jwt_token(
+        username="researchuser", sensitive_content=None, expires_in=datetime.timedelta(seconds=-2)
+    )
     with pytest.raises(AuthenticationError) as error:
         verify_token(token)
 
