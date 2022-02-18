@@ -194,13 +194,21 @@ def __owner_identifier(owner):
 
 
 def __encrypt_owner_private_key(owner, private_key, owner_key=None):
+    """Encrypt owners private key."""
+    # Generate key or use current key if exists
     key = owner_key or ciphers.aead.AESGCM.generate_key(bit_length=256)
 
+    # Encrypt private key
     nonce, encrypted_key = __encrypt_with_aes(
-        key, private_key, aad=b"private key for " + __owner_identifier(owner).encode()
+        key=key,
+        plaintext=private_key,
+        aad=b"private key for " + __owner_identifier(owner=owner).encode(),
     )
+
+    # Save nonce and private key to database
     owner.nonce = nonce
     owner.private_key = encrypted_key
+
     return key
 
 
@@ -289,6 +297,8 @@ def __verify_invite_temporary_key(invite, temporary_key):
 
 
 def __generate_rsa_key_pair(owner):
+    """Generate RSA key pair."""
+    # Generate keys and get them in bytes
     private_key = asymmetric.rsa.generate_private_key(public_exponent=65537, key_size=4096)
     private_key_bytes = private_key.private_bytes(
         serialization.Encoding.DER, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
@@ -296,9 +306,14 @@ def __generate_rsa_key_pair(owner):
     public_key_bytes = private_key.public_key().public_bytes(
         serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo
     )
+
+    # Set row public key
     owner.public_key = public_key_bytes
+
+    # Clean up sensitive information
     del private_key
     gc.collect()
+
     return private_key_bytes
 
 
@@ -312,8 +327,15 @@ def generate_user_key_pair(user, password):
 
 
 def generate_invite_key_pair(invite):
-    private_key_bytes = __generate_rsa_key_pair(invite)
-    temporary_key = __encrypt_owner_private_key(invite, private_key_bytes)
+    """Generate new Key Pair for invited user."""
+    # Generate keys
+    private_key_bytes = __generate_rsa_key_pair(owner=invite)
+
+    # Generate temporary key and encrypt private key
+    temporary_key = __encrypt_owner_private_key(owner=invite, private_key=private_key_bytes)
+
+    # Clean up sensitive information
     del private_key_bytes
     gc.collect()
+
     return temporary_key
