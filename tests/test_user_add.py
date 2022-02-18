@@ -136,7 +136,7 @@ def test_add_user_with_unitadmin(client):
     assert invited_user.project_invite_keys == []
 
     # Repeating the invite should not send a new invite:
-    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send_2:
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -144,7 +144,7 @@ def test_add_user_with_unitadmin(client):
             content_type="application/json",
         )
         # No new mail should be sent for the token and neither for an invite
-        assert mock_mail_send.call_count == 0
+        assert mock_mail_send_2.call_count == 0
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     message = response.json.get("message")
     assert "user was already added to the system" in message
@@ -187,7 +187,7 @@ def test_add_unit_user_with_unitadmin(client):
     assert len(project_invite_keys) == len(invited_user.unit.projects)
     assert len(project_invite_keys) == 5
 
-    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send_2:
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -195,7 +195,7 @@ def test_add_unit_user_with_unitadmin(client):
             content_type="application/json",
         )
         # No new mail should be sent for the token and neither for an invite
-        assert mock_mail_send.call_count == 0
+        assert mock_mail_send_2.call_count == 0
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     message = response.json.get("message")
@@ -220,15 +220,16 @@ def test_add_user_with_superadmin(client):
     assert invited_user.email == first_new_user["email"]
     assert invited_user.role == first_new_user["role"]
 
-    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send_2:
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
             data=json.dumps(first_new_user),
             content_type="application/json",
         )
+        assert b"Specify the project you wish to give access to." in response.data
         # No new mail should be sent for the token and neither for an invite
-        assert mock_mail_send.call_count == 0
+        assert mock_mail_send_2.call_count == 0
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     message = response.json.get("message")
@@ -639,20 +640,20 @@ def test_invited_as_owner_and_researcher_to_different_project(client):
 
     invite_obj = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
 
-    project_invite_owner = models.ProjectInvites.query.filter(
+    project_invite_owner = models.ProjectInviteKeys.query.filter(
         sqlalchemy.and_(
-            models.ProjectInvites.invite_id == invite_obj.id,
-            models.ProjectInvites.project_id == project_obj_owner.id,
+            models.ProjectInviteKeys.invite_id == invite_obj.id,
+            models.ProjectInviteKeys.project_id == project_obj_owner.id,
         )
     ).one_or_none()
 
     assert project_invite_owner
     assert project_invite_owner.owner
 
-    project_invite_not_owner = models.ProjectInvites.query.filter(
+    project_invite_not_owner = models.ProjectInviteKeys.query.filter(
         sqlalchemy.and_(
-            models.ProjectInvites.invite_id == invite_obj.id,
-            models.ProjectInvites.project_id == project_obj_not_owner.id,
+            models.ProjectInviteKeys.invite_id == invite_obj.id,
+            models.ProjectInviteKeys.project_id == project_obj_not_owner.id,
         )
     ).one_or_none()
 

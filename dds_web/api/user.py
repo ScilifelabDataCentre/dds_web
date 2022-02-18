@@ -253,6 +253,7 @@ class AddUser(flask_restful.Resource):
 
         owner = role == "Project Owner"
         ownership_change = False
+        send_email = True
 
         if isinstance(whom, models.ResearchUser):
             project_user_row = models.ProjectUsers.query.filter_by(
@@ -264,6 +265,7 @@ class AddUser(flask_restful.Resource):
             ).one_or_none()
 
         if project_user_row:
+            send_email = False
             if project_user_row.owner == owner:
                 return {
                     "status": ddserr.RoleException.code.value,
@@ -299,7 +301,7 @@ class AddUser(flask_restful.Resource):
             )
 
         # If project is already released and not expired, send mail to user
-        if project.current_status == "Available":
+        if send_email and project.current_status == "Available":
             AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
