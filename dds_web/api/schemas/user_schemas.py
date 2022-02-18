@@ -65,59 +65,6 @@ class UnansweredInvite(marshmallow.Schema):
         return invite if not userexists else None
 
 
-class InviteUserSchema(marshmallow.Schema):
-    """Schema for AddUser endpoint"""
-
-    email = marshmallow.fields.Email(required=True)  # Validator below
-    role = marshmallow.fields.String(
-        required=True,
-        validate=marshmallow.validate.OneOf(
-            choices=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner", "Researcher"],
-        ),
-    )
-
-    @marshmallow.validates("email")
-    def validate_email(self, value):
-        """Check that email is not used by anyone in db."""
-
-        if models.Invite.query.filter_by(email=value).first():
-            raise ddserr.InviteError(message=f"Email '{value}' already has a pending invitation.")
-        elif utils.email_in_db(email=value):
-            raise ddserr.InviteError(
-                message=f"The email '{value}' is already registered to an existing user."
-            )
-
-    @marshmallow.validates("role")
-    def validate_role(self, attempted_invite_role):
-        """Validate current users permission to invite specified role."""
-
-        curr_user_role = auth.current_user().role
-        if curr_user_role == "Unit Admin":
-            if attempted_invite_role == "Super Admin":
-                raise ddserr.AccessDeniedError
-        elif curr_user_role == "Unit Personnel":
-            if attempted_invite_role in ["Super Admin", "Unit Admin"]:
-                raise ddserr.AccessDeniedError
-        elif (
-            curr_user_role == "Researcher"
-        ):  # project ownership is validated in @basic_auth.get_user_roles
-            if attempted_invite_role not in ["Researcher", "Project Owner"]:
-                raise ddserr.AccessDeniedError
-
-    @marshmallow.post_load
-    def make_invite(self, data, **kwargs):
-        """Deserialize to an Invite object"""
-
-        if data.get("role") == "Super Admin":
-            # TODO: here the unit needs to be specified
-            raise marshmallow.ValidationError("currently not creating invites for superadmins")
-
-        # Create invite
-        new_invite = models.Invite(**{"email": data.get("email"), "role": data.get("role")})
-
-        return new_invite
-
-
 class NewUserSchema(marshmallow.Schema):
     """Schema for NewUser endpoint"""
 
