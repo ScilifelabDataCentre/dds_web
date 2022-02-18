@@ -238,7 +238,7 @@ class AddUser(flask_restful.Resource):
     @staticmethod
     @logging_bind_request
     def add_to_project(whom, project, role):
-        """Add existing user to a project"""
+        """Add existing user or invite to a project"""
 
         allowed_roles = ["Project Owner", "Researcher"]
 
@@ -289,6 +289,7 @@ class AddUser(flask_restful.Resource):
                 to_another=whom,
                 from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
                 project=project,
+                is_project_owner=owner,
             )
 
         try:
