@@ -196,18 +196,19 @@ class NewUserSchema(marshmallow.Schema):
         }
 
         # Create new user
+
         invite = data.get("invite")
-        if invite.role == "Researcher":
-            new_user = models.ResearchUser(**common_user_fields)
-            # Currently no project associations
+        if invite.role == "Super Admin":
+            new_user = models.SuperAdmin(**common_user_fields)
         elif invite.role in ["Unit Admin", "Unit Personnel"]:
             new_user = models.UnitUser(**common_user_fields)
 
             new_user.is_admin = invite.role == "Unit Admin"
 
             invite.unit.users.append(new_user)
-        elif invite.role == "Super Admin":
-            new_user = models.SuperAdmin(**common_user_fields)
+        elif invite.role in ["Project Owner", "Researcher"]:
+            new_user = models.ResearchUser(**common_user_fields)
+            # Currently no project associations
 
         # Create new email and append to user relationship
         new_email = models.Email(email=data.get("email"), primary=True)

@@ -34,6 +34,7 @@ from dds_web.security.project_user_keys import (
     share_project_private_key,
 )
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
+from dds_web.security.auth import get_user_roles_common
 
 
 # initiate bound logger
@@ -47,22 +48,35 @@ class AddUser(flask_restful.Resource):
     @logging_bind_request
     def post(self):
         """Associate existing users or unanswered invites with projects or create invites"""
+        args = flask.request.args
+        json_info = flask.request.json
+        if not json_info:
+            raise ddserr.DDSArgumentError(
+                message="Missing required information, cannot add or invite."
+            )
+
+        role = json_info.get("role")
+        project = args.get("project") if args else None
+        email = json_info.get("email")
+
+        if not dds_web.utils.valid_user_role(specified_role=role):
+            raise ddserr.DDSArgumentError(message="Invalid user role.")
 
         # A project may or may not be specified
-        project = flask.request.args.get("project", None)
         if project:
             project = project_schemas.ProjectRequiredSchema().load({"project": project})
-            role = flask.request.json.get("role", None)
 
-        args = flask.request.json
+        if not email:
+            raise ddserr.DDSArgumentError(message="Email adress required to add or invite.")
+
         # Check if email is registered to a user
-        existing_user = user_schemas.UserSchema().load(args)
-        unanswered_invite = user_schemas.UnansweredInvite().load(args)
+        existing_user = user_schemas.UserSchema().load({"email": email})
+        unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
 
         if existing_user or unanswered_invite:
             if project and role:
                 whom = existing_user or unanswered_invite
-                add_user_result = self.add_to_project(whom, project, role)
+                add_user_result = self.add_to_project(whom=whom, project=project, role=role)
                 flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
                 return add_user_result, add_user_result["status"]
             else:
@@ -71,38 +85,59 @@ class AddUser(flask_restful.Resource):
                 )
 
         else:
+            if not role:
+                raise ddserr.DDSArgumentError(message="No user role specified.")
+
             # Send invite if the user doesn't exist
             if project:
-                invite_user_result = self.invite_user(args, project)
+                invite_user_result = self.invite_user(
+                    email=email, new_user_role=role, project=project
+                )
             else:
-                invite_user_result = self.invite_user(args)
+                invite_user_result = self.invite_user(email=email, new_user_role=role)
 
             return invite_user_result, invite_user_result["status"]
 
     @staticmethod
     @logging_bind_request
-    def invite_user(args, project=None):
+    def invite_user(email, new_user_role, project=None):
         """Invite a new user"""
 
-        try:
-            # Use schema to validate and check args, and create invite row
-            new_invite = user_schemas.InviteUserSchema().load(args)
+        current_user_role = get_user_roles_common(user=auth.current_user())
 
-        except ddserr.InviteError as invite_err:
+        # Verify role or current and new user
+        if current_user_role == "Super Admin" and project:
             return {
-                "message": invite_err.description,
                 "status": ddserr.InviteError.code.value,
+                "message": (
+                    "Super Admins do not have project data access and can therefore "
+                    "not invite users to specific projects."
+                ),
             }
+        elif current_user_role == "Unit Admin" and new_user_role == "Super Admin":
+            raise ddserr.AccessDeniedError()
+        elif current_user_role == "Unit Personnel" and new_user_role in [
+            "Super Admin",
+            "Unit Admin",
+        ]:
+            raise ddserr.AccessDeniedError()
+        elif current_user_role == "Project Owner":
+            if new_user_role in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+                raise ddserr.AccessDeniedError()
+            elif new_user_role in ["Project Owner", "Researcher"] and not project:
+                raise ddserr.DDSArgumentError(
+                    message="Project ID required to invite users to projects."
+                )
+        elif current_user_role == "Researcher":
+            raise ddserr.AccessDeniedError()
 
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise ddserr.DatabaseError(message=str(sqlerr))
-        except marshmallow.ValidationError as valerr:
-            raise ddserr.InviteError(message=valerr.messages)
+        # Create invite row
+        new_invite = models.Invite(email=email, role=new_user_role)
 
         # Create URL safe token for invitation link
         token = encrypted_jwt_token(
             username="",
-            sensitive_content=generate_invite_key_pair(new_invite).hex(),
+            sensitive_content=generate_invite_key_pair(invite=new_invite).hex(),
             expires_in=datetime.timedelta(
                 hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"]
             ),
@@ -123,7 +158,7 @@ class AddUser(flask_restful.Resource):
             }
 
         # Compose and send email
-        AddUser.compose_and_send_email_to_user(new_invite, "invite", link=link)
+        AddUser.compose_and_send_email_to_user(userobj=new_invite, mail_type="invite", link=link)
 
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
@@ -147,13 +182,6 @@ class AddUser(flask_restful.Resource):
         else:
             db.session.add(new_invite)
             if project:
-                project.invites.append(
-                    models.ProjectInvites(
-                        project_id=project.id,
-                        invite_id=new_invite.id,
-                        owner=new_invite.role == "Project Owner",
-                    )
-                )
                 share_project_private_key(
                     from_user=auth.current_user(),
                     to_another=new_invite,

@@ -90,6 +90,17 @@ def username_not_taken(input):
         )
 
 
+def valid_user_role(specified_role):
+    """Returns whether or not a role is valid in the DDS."""
+    return specified_role in [
+        "Super Admin",
+        "Unit Admin",
+        "Unit Personnel",
+        "Project Owner",
+        "Researcher",
+    ]
+
+
 # wtforms ################################################################################ wtforms #
 
 
