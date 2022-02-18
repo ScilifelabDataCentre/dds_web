@@ -55,9 +55,12 @@ class AddUser(flask_restful.Resource):
                 message="Missing required information, cannot add or invite."
             )
 
-        project = args.get("project") if args else None
         role = json_info.get("role")
+        project = args.get("project") if args else None
         email = json_info.get("email")
+
+        if not dds_web.utils.valid_user_role(specified_role=role):
+            raise ddserr.DDSArgumentError(message="Invalid user role.")
 
         # A project may or may not be specified
         if project:

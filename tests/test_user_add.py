@@ -72,11 +72,11 @@ def test_add_user_with_unitadmin_with_extraargs(client):
         data=json.dumps(first_new_user_extra_args),
         content_type="application/json",
     )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.status_code == http.HTTPStatus.OK
     invited_user = models.Invite.query.filter_by(
         email=first_new_user_extra_args["email"]
     ).one_or_none()
-    assert invited_user is None
+    assert invited_user
 
 
 def test_add_user_with_unitadmin_and_invalid_role(client):

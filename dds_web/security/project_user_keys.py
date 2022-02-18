@@ -134,10 +134,11 @@ def __init_and_append_project_user_key(user, project, project_private_key):
 
 
 def __init_and_append_project_invite_key(invite, project, project_private_key):
+    """Save encrypted project private key to ProjectInviteKeys."""
     project_invite_key = models.ProjectInviteKeys(
         project_id=project.id,
         invite_id=invite.id,
-        key=__encrypt_project_private_key(invite, project_private_key),
+        key=__encrypt_project_private_key(owner=invite, project_private_key=project_private_key),
     )
     invite.project_invite_keys.append(project_invite_key)
     project.project_invite_keys.append(project_invite_key)
