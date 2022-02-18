@@ -103,13 +103,15 @@ class AddUser(flask_restful.Resource):
 
         if not project:
             if current_user_role == "Project Owner":
-                raise ddserr.DDSArgumentError(
-                    message="Project ID required to invite users to projects."
-                )
+                return {
+                    "status": ddserr.InviteError.code.value,
+                    "message": "Project ID required to invite users to projects.",
+                }
             if new_user_role == "Project Owner":
-                raise ddserr.DDSArgumentError(
-                    message="Project ID required to invite a 'Project Owner'."
-                )
+                return {
+                    "status": ddserr.InviteError.code.value,
+                    "message": "Project ID required to invite a 'Project Owner'.",
+                }
 
         # Verify role or current and new user
         if current_user_role == "Super Admin" and project:
@@ -121,17 +123,29 @@ class AddUser(flask_restful.Resource):
                 ),
             }
         elif current_user_role == "Unit Admin" and new_user_role == "Super Admin":
-            raise ddserr.AccessDeniedError()
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": ddserr.AccessDeniedError.description,
+            }
         elif current_user_role == "Unit Personnel" and new_user_role in [
             "Super Admin",
             "Unit Admin",
         ]:
-            raise ddserr.AccessDeniedError()
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": ddserr.AccessDeniedError.description,
+            }
         elif current_user_role == "Project Owner":
             if new_user_role in ["Super Admin", "Unit Admin", "Unit Personnel"]:
-                raise ddserr.AccessDeniedError()
+                return {
+                    "status": ddserr.AccessDeniedError.code.value,
+                    "message": ddserr.AccessDeniedError.description,
+                }
         elif current_user_role == "Researcher":
-            raise ddserr.AccessDeniedError()
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": ddserr.AccessDeniedError.description,
+            }
 
         # Create invite row
         new_invite = models.Invite(
