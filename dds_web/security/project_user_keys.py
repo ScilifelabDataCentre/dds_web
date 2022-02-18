@@ -104,7 +104,9 @@ def obtain_project_private_key(user, project, token):
     raise KeyNotFoundError(project=project.public_id)
 
 
-def share_project_private_key(from_user, to_another, from_user_token, project, project_owner=False):
+def share_project_private_key(
+    from_user, to_another, from_user_token, project, is_project_owner=False
+):
     if isinstance(to_another, models.Invite):
         __init_and_append_project_invite_key(
             invite=to_another,
@@ -112,7 +114,7 @@ def share_project_private_key(from_user, to_another, from_user_token, project, p
             project_private_key=obtain_project_private_key(
                 user=from_user, project=project, token=from_user_token
             ),
-            project_owner=project_owner,
+            is_project_owner=is_project_owner,
         )
     else:
         __init_and_append_project_user_key(
@@ -134,13 +136,15 @@ def __init_and_append_project_user_key(user, project, project_private_key):
     project.project_user_keys.append(project_user_key)
 
 
-def __init_and_append_project_invite_key(invite, project, project_private_key, project_owner=False):
+def __init_and_append_project_invite_key(
+    invite, project, project_private_key, is_project_owner=False
+):
     """Save encrypted project private key to ProjectInviteKeys."""
     project_invite_key = models.ProjectInviteKeys(
         project_id=project.id,
         invite_id=invite.id,
         key=__encrypt_project_private_key(owner=invite, project_private_key=project_private_key),
-        owner=project_owner,
+        owner=is_project_owner,
     )
     invite.project_invite_keys.append(project_invite_key)
     project.project_invite_keys.append(project_invite_key)

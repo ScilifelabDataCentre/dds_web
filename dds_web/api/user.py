@@ -206,7 +206,7 @@ class AddUser(flask_restful.Resource):
                     to_another=new_invite,
                     project=project,
                     from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                    project_owner=new_user_role == "Project Owner",
+                    is_project_owner=new_user_role == "Project Owner",
                 )
 
         db.session.commit()
