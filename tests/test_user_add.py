@@ -498,7 +498,6 @@ def test_add_project_to_existing_invite_by_unituser(client):
     # Check that the invite has no projects yet
 
     assert invited_user
-    assert len(invited_user.project_associations) == 0
     assert len(invited_user.project_invite_keys) == 0
 
     # Add project to existing invite
@@ -541,7 +540,7 @@ def test_update_project_to_existing_invite_by_unituser(client):
     project_invite = models.ProjectInviteKeys.query.filter(
         sqlalchemy.and_(
             models.ProjectInviteKeys.invite_id == invite_obj.id,
-            models.ProjectUsersKeys.project_id == project_obj.id,
+            models.ProjectUserKeys.project_id == project_obj.id,
         )
     ).one_or_none()
 
