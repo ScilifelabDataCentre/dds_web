@@ -318,17 +318,20 @@ def request_reset_password():
     form = forms.RequestResetForm()
     if form.validate_on_submit():
         email = models.Email.query.filter_by(email=form.email.data).first()
-        token = dds_web.security.tokens.encrypted_jwt_token(
-            username=email.user.username,
-            sensitive_content=None,
-            expires_in=datetime.timedelta(
-                seconds=3600,
-            ),
-            additional_claims={"rst": "pwd"},
-        )
-        dds_web.utils.send_reset_email(email_row=email, token=token)
-        flask.flash("An email has been sent with instructions to reset your password.", "info")
-        return flask.redirect(flask.url_for("auth_blueprint.login"))
+        if email.user.is_active:
+            token = dds_web.security.tokens.encrypted_jwt_token(
+                username=email.user.username,
+                sensitive_content=None,
+                expires_in=datetime.timedelta(
+                    seconds=3600,
+                ),
+                additional_claims={"rst": "pwd"},
+            )
+            dds_web.utils.send_reset_email(email_row=email, token=token)
+            flask.flash("An email has been sent with instructions to reset your password.", "info")
+            return flask.redirect(flask.url_for("auth_blueprint.login"))
+
+        flask.flash("Your account is deactivated. You cannot reset your password.", "warning")
 
     # Show form
     return flask.render_template("user/request_reset_password.html", form=form)
@@ -348,6 +351,9 @@ def reset_password(token):
     # Verify that the token is valid and contains enough info
     try:
         user = dds_web.security.auth.verify_password_reset_token(token=token)
+        if not user.is_active:
+            flask.flash("Your account is not active. You cannot reset your password.", "warning")
+            return flask.redirect(flask.url_for("auth_blueprint.index"))
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
         return flask.redirect(flask.url_for("auth_blueprint.index"))
