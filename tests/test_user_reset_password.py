@@ -7,6 +7,7 @@ import pytest
 import unittest
 
 import tests
+from dds_web import db
 from dds_web.database import models
 from dds_web.security.project_user_keys import generate_invite_key_pair
 from dds_web.security.tokens import encrypted_jwt_token
@@ -28,6 +29,32 @@ def test_request_reset_password_nonexisting_email(client):
     form_data = {
         "csrf_token": form_token,
         "email": "incorrect@example.org",
+        "submit": "Request Password Reset",
+    }
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.REQUEST_RESET_PASSWORD,
+            json=form_data,
+            content_type="application/json",
+        )
+        assert mock_mail_send.call_count == 0
+
+
+def test_request_reset_password_inactive_user(client):
+    response = client.get(tests.DDSEndpoint.REQUEST_RESET_PASSWORD)
+    assert response.status_code == http.HTTPStatus.OK
+    form_token = flask.g.csrf_token
+
+    researchuser = models.User.query.filter_by(username="researchuser").first()
+    researchuser.active = False
+    db.session.add(researchuser)
+    db.session.commit()
+
+    db.session.refresh(researchuser)
+
+    form_data = {
+        "csrf_token": form_token,
+        "email": researchuser.primary_email,
         "submit": "Request Password Reset",
     }
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
