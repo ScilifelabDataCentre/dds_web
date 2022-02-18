@@ -1,8 +1,10 @@
 # Standard libraries
 import http
+import unittest
 
 # Installed
 import flask
+import flask_mail
 import itsdangerous
 import json
 import pytest
@@ -57,8 +59,8 @@ def test_del_self_nouser(client):
             data=None,
             content_type="application/json",
         )
-        # An email sent for partial token but none for deletion confirmation
-        assert mock_mail_send.call_count == 1
+        # No token email and none for deletion confirmation
+        assert mock_mail_send.call_count == 0
         assert response.status_code == http.HTTPStatus.UNAUTHORIZED
 
 
