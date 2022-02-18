@@ -6,6 +6,7 @@ import subprocess
 import uuid
 
 # Installed
+import flask_migrate
 import pytest
 from sqlalchemy_utils import create_database, database_exists, drop_database
 import boto3
@@ -43,7 +44,6 @@ def fill_basic_db(db):
     """
     Fill the database with basic data.
     """
-    db.create_all()
 
     units, users, projects = add_data_to_db()
     db.session.add_all(units)
@@ -437,6 +437,7 @@ def setup_database():
         app = create_app(testing=True, database_uri=DATABASE_URI_BASE)
         with app.test_request_context():
             with app.test_client():
+                flask_migrate.upgrade()
                 fill_basic_db(db)
                 db.engine.dispose()
 
