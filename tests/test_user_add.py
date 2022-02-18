@@ -592,10 +592,7 @@ def test_invite_to_project_by_project_owner(client):
     assert invited_user.public_key is not None
     assert invited_user.private_key is not None
 
-    project_associations = invited_user.project_associations
-    assert len(project_associations) == 1
-    assert project_associations[0].project.public_id == project
-
     project_invite_keys = invited_user.project_invite_keys
     assert len(project_invite_keys) == 1
     assert project_invite_keys[0].project.public_id == project
+    assert not project_invite_keys[0].owner
