@@ -40,7 +40,7 @@ submit_with_same_ownership = {
     "project": "second_public_project_id",
 }
 
-
+# Inviting Users ################################################################# Inviting Users #
 def test_add_user_with_researcher(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
@@ -219,6 +219,38 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
     assert invited_user is None
 
 
+def test_invite_to_project_by_project_owner(client):
+    "Test that a project owner can invite to its project"
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
+        query_string={"project": project},
+        data=json.dumps(first_new_user),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+    assert invited_user.email == first_new_user["email"]
+    assert invited_user.role == first_new_user["role"]
+
+    assert invited_user.nonce is not None
+    assert invited_user.public_key is not None
+    assert invited_user.private_key is not None
+
+    project_associations = invited_user.project_associations
+    assert len(project_associations) == 1
+    assert project_associations[0].project.public_id == project
+
+    project_invite_keys = invited_user.project_invite_keys
+    assert len(project_invite_keys) == 1
+    assert project_invite_keys[0].project.public_id == project
+
+
+# Add existing users to projects ################################# Add existing users to projects #
 def test_add_existing_user_without_project(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
@@ -448,7 +480,7 @@ def test_add_existing_user_with_unsuitable_role(client):
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
-### Tests for Invite-Project associations ###
+# Invite to project ########################################################### Invite to project #
 
 
 def test_new_invite_with_project_by_unituser(client):
@@ -568,34 +600,3 @@ def test_update_project_to_existing_invite_by_unituser(client):
     db.session.refresh(project_invite)
 
     assert project_invite.owner
-
-
-def test_invite_to_project_by_project_owner(client):
-    "Test that a project owner can invite to its project"
-
-    project = existing_project
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
-        query_string={"project": project},
-        data=json.dumps(first_new_user),
-        content_type="application/json",
-    )
-    assert response.status_code == http.HTTPStatus.OK
-
-    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
-    assert invited_user
-    assert invited_user.email == first_new_user["email"]
-    assert invited_user.role == first_new_user["role"]
-
-    assert invited_user.nonce is not None
-    assert invited_user.public_key is not None
-    assert invited_user.private_key is not None
-
-    project_associations = invited_user.project_associations
-    assert len(project_associations) == 1
-    assert project_associations[0].project.public_id == project
-
-    project_invite_keys = invited_user.project_invite_keys
-    assert len(project_invite_keys) == 1
-    assert project_invite_keys[0].project.public_id == project
