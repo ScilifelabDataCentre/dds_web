@@ -50,23 +50,30 @@ def create_delete_request(email_str):
 
 def test_del_self_nouser(client):
     """Request self deletion without user"""
-    response = client.delete(
-        tests.DDSEndpoint.USER_DELETE_SELF,
-        headers=None,
-        data=None,
-        content_type="application/json",
-    )
-    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.delete(
+            tests.DDSEndpoint.USER_DELETE_SELF,
+            headers=None,
+            data=None,
+            content_type="application/json",
+        )
+        # An email sent for partial token but none for deletion confirmation
+        assert mock_mail_send.call_count == 1
+        assert response.status_code == http.HTTPStatus.UNAUTHORIZED
 
 
 def test_del_self(client):
     """Request self deletion."""
-    response = client.delete(
-        tests.DDSEndpoint.USER_DELETE_SELF,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).token(client),
-        data=None,
-        content_type="application/json",
-    )
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+
+        response = client.delete(
+            tests.DDSEndpoint.USER_DELETE_SELF,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).token(client),
+            data=None,
+            content_type="application/json",
+        )
+        # One email for partial token and one for deletion confirmation
+        assert mock_mail_send.call_count == 2
     assert response.status_code == http.HTTPStatus.OK
 
     # assert creation of deletion request
@@ -76,12 +83,15 @@ def test_del_self(client):
 
     assert del_req is not None
 
-    response = client.delete(
-        tests.DDSEndpoint.USER_DELETE_SELF,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).token(client),
-        data=None,
-        content_type="application/json",
-    )
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.delete(
+            tests.DDSEndpoint.USER_DELETE_SELF,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).token(client),
+            data=None,
+            content_type="application/json",
+        )
+        # One email for partial token but no new for deletion confirmation
+        assert mock_mail_send.call_count == 1
     assert response.status_code == http.HTTPStatus.OK
     assert (
         "The confirmation link has already been sent to your address delete_me_researcher@mailtrap.io!"
