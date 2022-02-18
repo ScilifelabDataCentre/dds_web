@@ -10,7 +10,7 @@ from dds_web.security.tokens import encrypted_jwt_token
 # Invitation to Registration ######################################### Invitation to Registration #
 
 # I have a feeling these tests will be extra hard to figure out why they fail so:
-DEBUG = True
+DEBUG = False
 
 
 def perform_invite(client, inviting_user, email, role=None, project=None):
