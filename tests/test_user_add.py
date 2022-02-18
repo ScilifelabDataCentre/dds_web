@@ -72,11 +72,11 @@ def test_add_user_with_unitadmin_with_extraargs(client):
         data=json.dumps(first_new_user_extra_args),
         content_type="application/json",
     )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.status_code == http.HTTPStatus.OK
     invited_user = models.Invite.query.filter_by(
         email=first_new_user_extra_args["email"]
     ).one_or_none()
-    assert invited_user is None
+    assert invited_user
 
 
 def test_add_user_with_unitadmin_and_invalid_role(client):
@@ -473,13 +473,10 @@ def test_new_invite_with_project_by_unituser(client):
     assert invited_user.public_key is not None
     assert invited_user.private_key is not None
 
-    project_associations = invited_user.project_associations
-    assert len(project_associations) == 1
-    assert project_associations[0].project.public_id == project
-
     project_invite_keys = invited_user.project_invite_keys
     assert len(project_invite_keys) == 1
     assert project_invite_keys[0].project.public_id == project
+    assert not project_invite_keys[0].owner
 
 
 def test_add_project_to_existing_invite_by_unituser(client):
