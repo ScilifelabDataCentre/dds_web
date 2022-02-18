@@ -182,13 +182,6 @@ class AddUser(flask_restful.Resource):
         else:
             db.session.add(new_invite)
             if project:
-                project.invites.append(
-                    models.ProjectInvites(
-                        project_id=project.id,
-                        invite_id=new_invite.id,
-                        owner=new_invite.role == "Project Owner",
-                    )
-                )
                 share_project_private_key(
                     from_user=auth.current_user(),
                     to_another=new_invite,
