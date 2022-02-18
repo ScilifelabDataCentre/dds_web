@@ -255,21 +255,22 @@ class AddUser(flask_restful.Resource):
         ownership_change = False
 
         if isinstance(whom, models.ResearchUser):
-            link = project.researchusers
+            project_user_row = models.ProjectUsers.query.filter_by(
+                project_id=project.id, user_id=whom.username
+            ).one_or_none()
         else:
-            link = project.invites
+            project_user_row = models.ProjectInviteKeys.query.filter_by(
+                project_id=project.id, invite_id=whom.id
+            ).one_or_none()
 
-        for rusers in link:
-            if rusers.researchuser == whom:
-                if rusers.owner == owner:
-                    return {
-                        "status": ddserr.RoleException.code.value,
-                        "message": f"{str(whom)} is already associated with the {str(project)} in this capacity. ",
-                    }
-
-                ownership_change = True
-                rusers.owner = owner
-                break
+        if project_user_row:
+            if project_user_row.owner == owner:
+                return {
+                    "status": ddserr.RoleException.code.value,
+                    "message": f"{str(whom)} is already associated with the {str(project)} in this capacity. ",
+                }
+            ownership_change = True
+            project_user_row.owner = owner
 
         if not ownership_change:
             if isinstance(whom, models.ResearchUser):
@@ -277,14 +278,6 @@ class AddUser(flask_restful.Resource):
                     models.ProjectUsers(
                         project_id=project.id,
                         user_id=whom.username,
-                        owner=owner,
-                    )
-                )
-            else:
-                project.invites.append(
-                    models.ProjectInvites(
-                        project_id=project.id,
-                        invite_id=whom.id,
                         owner=owner,
                     )
                 )
