@@ -55,7 +55,7 @@ class AddUser(flask_restful.Resource):
                 message="Missing required information, cannot add or invite."
             )
 
-        # Verify valid role
+        # Verify valid role (should also catch None)
         role = json_info.get("role")
         if not dds_web.utils.valid_user_role(specified_role=role):
             raise ddserr.DDSArgumentError(message="Invalid user role.")
@@ -75,27 +75,22 @@ class AddUser(flask_restful.Resource):
         unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
 
         if existing_user or unanswered_invite:
-            if project and role:
-                whom = existing_user or unanswered_invite
-                add_user_result = self.add_to_project(whom=whom, project=project, role=role)
-                flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
-                return add_user_result, add_user_result["status"]
-            else:
+            if not project:
                 raise ddserr.DDSArgumentError(
-                    message="This user was already added to the system. Specify the project you wish to give access to."
+                    message=(
+                        "This user was already added to the system. "
+                        "Specify the project you wish to give access to."
+                    )
                 )
+
+            add_user_result = self.add_to_project(
+                whom=existing_user or unanswered_invite, project=project, role=role
+            )
+            return add_user_result, add_user_result["status"]
 
         else:
-            if not role:
-                raise ddserr.DDSArgumentError(message="No user role specified.")
-
             # Send invite if the user doesn't exist
-            if project:
-                invite_user_result = self.invite_user(
-                    email=email, new_user_role=role, project=project
-                )
-            else:
-                invite_user_result = self.invite_user(email=email, new_user_role=role)
+            invite_user_result = self.invite_user(email=email, new_user_role=role, project=project)
 
             return invite_user_result, invite_user_result["status"]
 
