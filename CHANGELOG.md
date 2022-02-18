@@ -15,3 +15,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Add functionality for reactivating project access for user ([886](https://github.com/ScilifelabDataCentre/dds_web/pull/886))
 * Check if user is active before allowing password reset ([903](https://github.com/ScilifelabDataCentre/dds_web/pull/903))
 * Add support for database migrations using flask-migrate/Alembic ([#890](https://github.com/ScilifelabDataCentre/dds_web/pull/890))
+* Invite Researchers to projects ([911](https://github.com/ScilifelabDataCentre/dds_web/pull/911))

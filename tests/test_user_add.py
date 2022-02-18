@@ -73,11 +73,11 @@ def test_add_user_with_unitadmin_with_extraargs(client):
         data=json.dumps(first_new_user_extra_args),
         content_type="application/json",
     )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.status_code == http.HTTPStatus.OK
     invited_user = models.Invite.query.filter_by(
         email=first_new_user_extra_args["email"]
     ).one_or_none()
-    assert invited_user is None
+    assert invited_user
 
 
 def test_add_user_with_unitadmin_and_invalid_role(client):
@@ -114,9 +114,10 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
 
 def test_add_user_with_unitadmin(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            headers=token,
             data=json.dumps(first_new_user),
             content_type="application/json",
         )
@@ -139,7 +140,7 @@ def test_add_user_with_unitadmin(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            headers=token,
             data=json.dumps(first_new_user),
             content_type="application/json",
         )
@@ -151,10 +152,12 @@ def test_add_user_with_unitadmin(client):
 
 
 def test_add_unit_user_with_unitadmin(client):
+
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            headers=token,
             data=json.dumps(new_unit_user),
             content_type="application/json",
         )
@@ -190,7 +193,7 @@ def test_add_unit_user_with_unitadmin(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            headers=token,
             data=json.dumps(new_unit_user),
             content_type="application/json",
         )
@@ -203,10 +206,12 @@ def test_add_unit_user_with_unitadmin(client):
 
 
 def test_add_user_with_superadmin(client):
+
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            headers=token,
             data=json.dumps(first_new_user),
             content_type="application/json",
         )
@@ -223,7 +228,7 @@ def test_add_user_with_superadmin(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            headers=token,
             data=json.dumps(first_new_user),
             content_type="application/json",
         )
@@ -517,13 +522,10 @@ def test_invite_with_project_by_unituser(client):
     assert invited_user.public_key is not None
     assert invited_user.private_key is not None
 
-    project_associations = invited_user.project_associations
-    assert len(project_associations) == 1
-    assert project_associations[0].project.public_id == project
-
     project_invite_keys = invited_user.project_invite_keys
     assert len(project_invite_keys) == 1
     assert project_invite_keys[0].project.public_id == project
+    assert not project_invite_keys[0].owner
 
 
 def test_add_project_to_existing_invite_by_unituser(client):
@@ -545,7 +547,6 @@ def test_add_project_to_existing_invite_by_unituser(client):
     # Check that the invite has no projects yet
 
     assert invited_user
-    assert len(invited_user.project_associations) == 0
     assert len(invited_user.project_invite_keys) == 0
 
     # Add project to existing invite
@@ -561,14 +562,10 @@ def test_add_project_to_existing_invite_by_unituser(client):
     assert response.status_code == http.HTTPStatus.OK
 
     # Check that the invite has now a project association
-
-    project_associations = invited_user.project_associations
-    assert len(project_associations) == 1
-    assert project_associations[0].project.public_id == project
-
     project_invite_keys = invited_user.project_invite_keys
     assert len(project_invite_keys) == 1
     assert project_invite_keys[0].project.public_id == project
+    assert not project_invite_keys[0].owner
 
 
 def test_update_project_to_existing_invite_by_unituser(client):
@@ -589,10 +586,10 @@ def test_update_project_to_existing_invite_by_unituser(client):
     project_obj = models.Project.query.filter_by(public_id=existing_project).one_or_none()
     invite_obj = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
 
-    project_invite = models.ProjectInvites.query.filter(
+    project_invite = models.ProjectInviteKeys.query.filter(
         sqlalchemy.and_(
-            models.ProjectInvites.invite_id == invite_obj.id,
-            models.ProjectInvites.project_id == project_obj.id,
+            models.ProjectInviteKeys.invite_id == invite_obj.id,
+            models.ProjectUserKeys.project_id == project_obj.id,
         )
     ).one_or_none()
 
@@ -647,20 +644,20 @@ def test_invited_as_owner_and_researcher_to_different_project(client):
 
     invite_obj = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
 
-    project_invite_owner = models.ProjectInvites.query.filter(
+    project_invite_owner = models.ProjectInviteKeys.query.filter(
         sqlalchemy.and_(
-            models.ProjectInvites.invite_id == invite_obj.id,
-            models.ProjectInvites.project_id == project_obj_owner.id,
+            models.ProjectInviteKeys.invite_id == invite_obj.id,
+            models.ProjectInviteKeys.project_id == project_obj_owner.id,
         )
     ).one_or_none()
 
     assert project_invite_owner
     assert project_invite_owner.owner
 
-    project_invite_not_owner = models.ProjectInvites.query.filter(
+    project_invite_not_owner = models.ProjectInviteKeys.query.filter(
         sqlalchemy.and_(
-            models.ProjectInvites.invite_id == invite_obj.id,
-            models.ProjectInvites.project_id == project_obj_not_owner.id,
+            models.ProjectInviteKeys.invite_id == invite_obj.id,
+            models.ProjectInviteKeys.project_id == project_obj_not_owner.id,
         )
     ).one_or_none()
 
@@ -693,10 +690,7 @@ def test_invite_to_project_by_project_owner(client):
     assert invited_user.public_key is not None
     assert invited_user.private_key is not None
 
-    project_associations = invited_user.project_associations
-    assert len(project_associations) == 1
-    assert project_associations[0].project.public_id == project
-
     project_invite_keys = invited_user.project_invite_keys
     assert len(project_invite_keys) == 1
     assert project_invite_keys[0].project.public_id == project
+    assert not project_invite_keys[0].owner

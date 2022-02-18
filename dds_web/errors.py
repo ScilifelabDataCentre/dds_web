@@ -130,12 +130,13 @@ class AccessDeniedError(LoggedHTTPException):
     """Errors due to incorrect project permissions."""
 
     code = http.HTTPStatus.FORBIDDEN  # 403
+    description = "The user does not have the necessary permissions."
 
     def __init__(
         self,
         project=None,
         username=None,
-        message="The user does not have the necessary permissions.",
+        message=description,
     ):
         if username:
             structlog.threadlocal.bind_threadlocal(user=username)
