@@ -12,7 +12,7 @@ RUN apt-get update && apt-get upgrade -y
 COPY ./requirements.txt /code/requirements.txt
 
 # Install all dependencies
-RUN pip3 install -r /code/requirements.txt && pip3 install gunicorn
+RUN pip3 install -r /code/requirements.txt
 
 # Copy the content to a code folder in container
 COPY . /code
@@ -25,11 +25,14 @@ ENV PYTHONPATH /code
 ###################
 FROM base as test
 RUN pip3 install -r /code/tests/requirements-test.txt
+RUN apt-get install -y mariadb-client
 
 #########################
 ## PRODUCTION CONTAINER
 #########################
 FROM base as production
+
+RUN pip install gunicorn
 
 # Add parameters for gunicorn
 ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class=gthread --forwarded-allow-ips='*' --access-logfile -"
