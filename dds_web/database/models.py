@@ -240,7 +240,7 @@ class Project(db.Model):
     bucket = db.Column(db.String(255), unique=True, nullable=False)
     public_key = db.Column(db.LargeBinary(100), nullable=True)
 
-    is_sensitive = db.Column(db.Boolean, unique=False, nullable=True, default=False)
+    non_sensitive = db.Column(db.Boolean, unique=False, default=False)
     released = db.Column(db.DateTime(), nullable=True)
     is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, index=True)
 
