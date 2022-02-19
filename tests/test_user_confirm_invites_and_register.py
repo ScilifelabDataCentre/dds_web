@@ -17,6 +17,7 @@ def get_email_token(invite):
     )
 
 
+# Confirm Invite ##################################################################### Confirm Invite #
 def test_confirm_invite_no_token(client):
     response = client.get(tests.DDSEndpoint.USER_CONFIRM, content_type="application/json")
     assert response.status == "404 NOT FOUND"
@@ -68,6 +69,7 @@ def test_confirm_invite_valid_token(client):
     assert b"Registration form" in response.data
 
 
+# Registration ##################################################################### Registration #
 def test_register_no_form(client):
     response = client.post(tests.DDSEndpoint.USER_NEW, content_type="application/json")
     assert response.status == "400 BAD REQUEST"

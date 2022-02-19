@@ -432,10 +432,8 @@ class CreateProject(flask_restful.Resource):
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
-                        {
-                            "email": user.get("email"),
-                            "role": user.get("role"),
-                        },
+                        email=user.get("email"),
+                        new_user_role=user.get("role"),
                         project=new_project,
                     )
                     if invite_user_result["status"] == 200:
