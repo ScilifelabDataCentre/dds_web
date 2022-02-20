@@ -104,7 +104,9 @@ def obtain_project_private_key(user, project, token):
     raise KeyNotFoundError(project=project.public_id)
 
 
-def share_project_private_key(from_user, to_another, from_user_token, project):
+def share_project_private_key(
+    from_user, to_another, from_user_token, project, is_project_owner=False
+):
     if isinstance(to_another, models.Invite):
         __init_and_append_project_invite_key(
             invite=to_another,
@@ -112,6 +114,7 @@ def share_project_private_key(from_user, to_another, from_user_token, project):
             project_private_key=obtain_project_private_key(
                 user=from_user, project=project, token=from_user_token
             ),
+            is_project_owner=is_project_owner,
         )
     else:
         __init_and_append_project_user_key(
@@ -133,11 +136,15 @@ def __init_and_append_project_user_key(user, project, project_private_key):
     project.project_user_keys.append(project_user_key)
 
 
-def __init_and_append_project_invite_key(invite, project, project_private_key):
+def __init_and_append_project_invite_key(
+    invite, project, project_private_key, is_project_owner=False
+):
+    """Save encrypted project private key to ProjectInviteKeys."""
     project_invite_key = models.ProjectInviteKeys(
         project_id=project.id,
         invite_id=invite.id,
-        key=__encrypt_project_private_key(invite, project_private_key),
+        key=__encrypt_project_private_key(owner=invite, project_private_key=project_private_key),
+        owner=is_project_owner,
     )
     invite.project_invite_keys.append(project_invite_key)
     project.project_invite_keys.append(project_invite_key)
@@ -194,13 +201,21 @@ def __owner_identifier(owner):
 
 
 def __encrypt_owner_private_key(owner, private_key, owner_key=None):
+    """Encrypt owners private key."""
+    # Generate key or use current key if exists
     key = owner_key or ciphers.aead.AESGCM.generate_key(bit_length=256)
 
+    # Encrypt private key
     nonce, encrypted_key = __encrypt_with_aes(
-        key, private_key, aad=b"private key for " + __owner_identifier(owner).encode()
+        key=key,
+        plaintext=private_key,
+        aad=b"private key for " + __owner_identifier(owner=owner).encode(),
     )
+
+    # Save nonce and private key to database
     owner.nonce = nonce
     owner.private_key = encrypted_key
+
     return key
 
 
@@ -289,6 +304,8 @@ def __verify_invite_temporary_key(invite, temporary_key):
 
 
 def __generate_rsa_key_pair(owner):
+    """Generate RSA key pair."""
+    # Generate keys and get them in bytes
     private_key = asymmetric.rsa.generate_private_key(public_exponent=65537, key_size=4096)
     private_key_bytes = private_key.private_bytes(
         serialization.Encoding.DER, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
@@ -296,9 +313,14 @@ def __generate_rsa_key_pair(owner):
     public_key_bytes = private_key.public_key().public_bytes(
         serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo
     )
+
+    # Set row public key
     owner.public_key = public_key_bytes
+
+    # Clean up sensitive information
     del private_key
     gc.collect()
+
     return private_key_bytes
 
 
@@ -312,8 +334,15 @@ def generate_user_key_pair(user, password):
 
 
 def generate_invite_key_pair(invite):
-    private_key_bytes = __generate_rsa_key_pair(invite)
-    temporary_key = __encrypt_owner_private_key(invite, private_key_bytes)
+    """Generate new Key Pair for invited user."""
+    # Generate keys
+    private_key_bytes = __generate_rsa_key_pair(owner=invite)
+
+    # Generate temporary key and encrypt private key
+    temporary_key = __encrypt_owner_private_key(owner=invite, private_key=private_key_bytes)
+
+    # Clean up sensitive information
     del private_key_bytes
     gc.collect()
+
     return temporary_key

@@ -65,59 +65,6 @@ class UnansweredInvite(marshmallow.Schema):
         return invite if not userexists else None
 
 
-class InviteUserSchema(marshmallow.Schema):
-    """Schema for AddUser endpoint"""
-
-    email = marshmallow.fields.Email(required=True)  # Validator below
-    role = marshmallow.fields.String(
-        required=True,
-        validate=marshmallow.validate.OneOf(
-            choices=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner", "Researcher"],
-        ),
-    )
-
-    @marshmallow.validates("email")
-    def validate_email(self, value):
-        """Check that email is not used by anyone in db."""
-
-        if models.Invite.query.filter_by(email=value).first():
-            raise ddserr.InviteError(message=f"Email '{value}' already has a pending invitation.")
-        elif utils.email_in_db(email=value):
-            raise ddserr.InviteError(
-                message=f"The email '{value}' is already registered to an existing user."
-            )
-
-    @marshmallow.validates("role")
-    def validate_role(self, attempted_invite_role):
-        """Validate current users permission to invite specified role."""
-
-        curr_user_role = auth.current_user().role
-        if curr_user_role == "Unit Admin":
-            if attempted_invite_role == "Super Admin":
-                raise ddserr.AccessDeniedError
-        elif curr_user_role == "Unit Personnel":
-            if attempted_invite_role in ["Super Admin", "Unit Admin"]:
-                raise ddserr.AccessDeniedError
-        elif (
-            curr_user_role == "Researcher"
-        ):  # project ownership is validated in @basic_auth.get_user_roles
-            if attempted_invite_role not in ["Researcher", "Project Owner"]:
-                raise ddserr.AccessDeniedError
-
-    @marshmallow.post_load
-    def make_invite(self, data, **kwargs):
-        """Deserialize to an Invite object"""
-
-        if data.get("role") == "Super Admin":
-            # TODO: here the unit needs to be specified
-            raise marshmallow.ValidationError("currently not creating invites for superadmins")
-
-        # Create invite
-        new_invite = models.Invite(**{"email": data.get("email"), "role": data.get("role")})
-
-        return new_invite
-
-
 class NewUserSchema(marshmallow.Schema):
     """Schema for NewUser endpoint"""
 
@@ -196,18 +143,18 @@ class NewUserSchema(marshmallow.Schema):
         }
 
         # Create new user
+
         invite = data.get("invite")
-        if invite.role == "Researcher":
-            new_user = models.ResearchUser(**common_user_fields)
-            # Currently no project associations
+        if invite.role == "Super Admin":
+            new_user = models.SuperAdmin(**common_user_fields)
         elif invite.role in ["Unit Admin", "Unit Personnel"]:
             new_user = models.UnitUser(**common_user_fields)
 
             new_user.is_admin = invite.role == "Unit Admin"
 
             invite.unit.users.append(new_user)
-        elif invite.role == "Super Admin":
-            new_user = models.SuperAdmin(**common_user_fields)
+        elif invite.role == "Researcher":
+            new_user = models.ResearchUser(**common_user_fields)
 
         # Create new email and append to user relationship
         new_email = models.Email(email=data.get("email"), primary=True)
@@ -219,6 +166,12 @@ class NewUserSchema(marshmallow.Schema):
         # Verify and transfer invite keys to the new user
         if verify_and_transfer_invite_to_user(token, new_user, data.get("password")):
             for project_invite_key in invite.project_invite_keys:
+                if isinstance(new_user, models.ResearchUser):
+                    project_user = models.ProjectUsers(
+                        project_id=project_invite_key.project_id, owner=project_invite_key.owner
+                    )
+                    new_user.project_associations.append(project_user)
+
                 project_user_key = models.ProjectUserKeys(
                     project_id=project_invite_key.project_id,
                     user_id=new_user.username,

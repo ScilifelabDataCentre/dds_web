@@ -77,6 +77,11 @@ def test_auth_correct_credentials(client):
         assert mock_mail_send.call_count == 1
     assert response.status_code == http.HTTPStatus.OK
 
+    # Shouldn't send an email shortly after the first
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.get(tests.DDSEndpoint.ENCRYPTED_TOKEN, auth=("researchuser", "password"))
+        assert mock_mail_send.call_count == 0
+
 
 # Second Factor #################################################################### Second Factor #
 
