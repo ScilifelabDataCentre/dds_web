@@ -20,7 +20,7 @@ from dds_web import auth
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.api.dds_decorators import logging_bind_request, args_required
 from dds_web.errors import (
     AccessDeniedError,
     DatabaseError,
@@ -72,6 +72,7 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @args_required
     def post(self):
         """Add new file to DB"""
 
@@ -91,6 +92,7 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @args_required
     def put(self):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -174,6 +176,7 @@ class MatchFiles(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @args_required
     def get(self):
         """Matches specified files to files in db."""
 
@@ -202,6 +205,7 @@ class ListFiles(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     def get(self):
         """Get a list of files within the specified folder."""
 
@@ -348,6 +352,7 @@ class RemoveFile(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @args_required
     def delete(self):
         """Deletes the files"""
 
@@ -438,6 +443,7 @@ class RemoveDir(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @args_required
     def delete(self):
         """Deletes the folders."""
 
@@ -532,6 +538,7 @@ class FileInfo(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
@@ -559,6 +566,7 @@ class FileInfoAll(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     def get(self):
         """Get file info."""
 
@@ -579,6 +587,7 @@ class UpdateFile(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     def put(self):
         """Update info in db."""
 

@@ -18,10 +18,7 @@ import dds_web.utils
 from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import (
-    logging_bind_request,
-    dbsession,
-)
+from dds_web.api.dds_decorators import logging_bind_request, dbsession, args_required
 from dds_web.errors import (
     AccessDeniedError,
     DDSArgumentError,
@@ -47,6 +44,7 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     def get(self):
         """Get current project status and optionally entire status history"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -67,6 +65,7 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @args_required
     def post(self):
         """Update Project Status"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -220,6 +219,7 @@ class GetPublic(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     def get(self):
         """Get public key from database."""
 
@@ -238,6 +238,7 @@ class GetPrivate(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     def get(self):
         """Get private key from database"""
 
@@ -350,6 +351,7 @@ class RemoveContents(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @dbsession
+    @args_required
     def delete(self):
         """Removes all project contents."""
 
@@ -472,6 +474,7 @@ class ProjectUsers(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     def get(self):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)

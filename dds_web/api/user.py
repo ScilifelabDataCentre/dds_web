@@ -28,7 +28,7 @@ import dds_web.utils
 import dds_web.forms
 import dds_web.errors as ddserr
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
-from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.api.dds_decorators import logging_bind_request, args_required
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
     share_project_private_key,
@@ -669,6 +669,7 @@ class DeleteUser(flask_restful.Resource):
 class RemoveUserAssociation(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
+    @args_required
     def post(self):
         """Remove a user from a project"""
 

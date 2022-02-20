@@ -37,6 +37,19 @@ action_logger = structlog.getLogger("actions")
 ####################################################################################################
 
 
+def args_required(func):
+    @functools.wraps(func)
+    def verify_args(*args, **kwargs):
+
+        args = flask.request.args
+        if not args:
+            raise DDSArgumentError(message="Missing required information!")
+
+        return func(*args, **kwargs)
+
+    return verify_args
+
+
 def dbsession(func):
     @functools.wraps(func)
     def make_commit(*args, **kwargs):
@@ -110,7 +123,7 @@ def logging_bind_request(func):
     def wrapper_logging_bind_request(*args, **kwargs):
         with structlog.threadlocal.bound_threadlocal(
             resource=flask.request.path or "not applicable",
-            project=flask.request.args.get("project"),
+            project=flask.request.args.get("project") if flask.request.args else None,
             user=get_username_or_request_ip(),
         ):
             value = func(*args, **kwargs)

@@ -37,7 +37,7 @@ class LoggedHTTPException(exceptions.HTTPException):
         with structlog.threadlocal.bound_threadlocal(
             message=message,
             resource=flask.request.path or "not applicable",
-            project=flask.request.args.get("project"),
+            project=flask.request.args.get("project") if flask.request.args else None,
             user=get_username_or_request_ip(),
         ):
             structlog.threadlocal.bind_threadlocal(response=f"{self.code.value} {self.code.phrase}")
