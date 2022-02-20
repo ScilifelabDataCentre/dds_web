@@ -15,7 +15,7 @@ import sqlalchemy
 from dds_web import auth
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import logging_bind_request
-from dds_web.errors import S3ProjectNotFoundError, DatabaseError
+from dds_web.errors import S3ProjectNotFoundError, DatabaseError, DDSArgumentError
 from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
@@ -30,6 +30,9 @@ class S3Info(flask_restful.Resource):
     @logging_bind_request
     def get(self):
         """Get the safespring project"""
+        args = flask.request.args
+        if not args:
+            raise DDSArgumentError(message="Missing information required!")
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
