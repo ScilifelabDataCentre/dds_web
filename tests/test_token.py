@@ -1,7 +1,10 @@
 import datetime
 
+import flask
 import pytest
+from jwcrypto import jwt
 
+import dds_web.utils
 import tests
 from dds_web.errors import AuthenticationError, TokenMissingError, InviteError
 from dds_web.security.tokens import encrypted_jwt_token, jwt_token
@@ -43,7 +46,7 @@ def test_extract_encrypted_token_sensitive_content_no_token(client):
 def test_encrypted_and_signed_token(client):
     username = "researchuser"
     expires_in = datetime.timedelta(minutes=1)
-    expiry_datetime = datetime.datetime.utcnow() + expires_in
+    expiry_datetime = dds_web.utils.current_time() + expires_in
     additional_claim = {"iss": "DDS"}
     encrypted_token = encrypted_jwt_token(
         username=username,
@@ -210,6 +213,68 @@ def test_obtain_current_encrypted_token_fails(client):
         obtain_current_encrypted_token()
 
     assert "Encrypted token is required but missing!" in str(error.value)
+
+
+def test_fully_authenticated_encrypted_token_protected_header(client):
+    before_token_issue = dds_web.utils.current_time()
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    after_token_issue = dds_web.utils.current_time()
+
+    # token here is a dict
+    token = token["Authorization"].split()[1]
+
+    # token here becomes a jwt by deserializing from raw token string
+    token = jwt.JWT(jwt=token)
+
+    # now we access the jose header, which includes the integrity protected header
+    # and check what should be and not be there
+    assert token.token.jose_header["alg"] == "A256KW"
+    assert token.token.jose_header["enc"] == "A256GCM"
+
+    assert "iat" not in token.token.jose_header
+    assert "sub" not in token.token.jose_header
+    assert "sen_con" not in token.token.jose_header
+
+    # this exp is used for the cli, it is not the actual exp because that is
+    # encrypted in the token. We have not decrypted the token yet, just
+    # deserialized it. Jose header is visible in plaintext.
+    assert "exp" in token.token.jose_header
+    expiration_time = datetime.datetime.fromtimestamp(token.token.jose_header["exp"])
+    token_issue = expiration_time - datetime.timedelta(hours=48)
+    assert before_token_issue < token_issue
+    assert after_token_issue > token_issue
+
+
+def test_exp_for_cli_not_in_protected_header_of_invite_token(client):
+    token = encrypted_jwt_token(
+        username="",
+        sensitive_content=b"bogus".hex(),
+        expires_in=datetime.timedelta(
+            hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"]
+        ),
+        additional_claims={"inv": "bogus.email@bogus.com"},
+    )
+    token = jwt.JWT(jwt=token)
+    assert "exp" not in token.token.jose_header
+
+
+def test_exp_for_cli_not_in_protected_header_of_reset_password_token(client):
+    token = encrypted_jwt_token(
+        username="unitadmin",
+        sensitive_content=None,
+        expires_in=datetime.timedelta(
+            seconds=3600,
+        ),
+        additional_claims={"rst": "pwd"},
+    )
+    token = jwt.JWT(jwt=token)
+    assert "exp" not in token.token.jose_header
+
+
+def test_exp_for_cli_not_in_protected_header_of_partial_token(client):
+    token = encrypted_jwt_token(username="unitadmin", sensitive_content=None)
+    token = jwt.JWT(jwt=token)
+    assert "exp" not in token.token.jose_header
 
 
 def test_obtain_current_encrypted_token_succeeds(client):
