@@ -757,6 +757,8 @@ class SecondFactor(flask_restful.Resource):
     def get(self):
 
         args = flask.request.json or {}
+        if not args:
+            raise ddserr.DDSArgumentError(message="Missing required information")
 
         token_schemas.TokenSchema().load(args)
 
