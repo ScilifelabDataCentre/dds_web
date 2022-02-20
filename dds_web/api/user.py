@@ -518,10 +518,10 @@ class UserActivation(flask_restful.Resource):
         # Verify that user specified
         extra_args = flask.request.json
         if not extra_args:
-            raise DDSArgumentError(message="Required information missing.")
+            raise ddserr.DDSArgumentError(message="Required information missing.")
 
         if "email" not in extra_args:
-            raise DDSArgumentError(message="User email missing.")
+            raise ddserr.DDSArgumentError(message="User email missing.")
 
         user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
         if not user:
