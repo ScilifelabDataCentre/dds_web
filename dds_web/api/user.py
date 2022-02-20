@@ -675,7 +675,12 @@ class RemoveUserAssociation(flask_restful.Resource):
         project_id = flask.request.args.get("project")
 
         args = flask.request.json
-        user_email = args.pop("email")
+
+        if not args:
+            raise ddserr.DDSArgumentError(message="Required information missing.")
+
+        if not (user_email := args.get("email")):
+            raise ddserr.DDSArgumentError(message="User email missing.")
 
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load({"email": user_email})
