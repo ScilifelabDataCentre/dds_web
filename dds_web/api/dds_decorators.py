@@ -41,9 +41,9 @@ def args_required(func):
     @functools.wraps(func)
     def verify_args(*args, **kwargs):
 
-        args = flask.request.args
-        if not args:
-            raise DDSArgumentError(message="Missing required information!")
+        extra_args = flask.request.args
+        if not extra_args:
+            raise DDSArgumentError(message="Required information missing from request!")
 
         return func(*args, **kwargs)
 
