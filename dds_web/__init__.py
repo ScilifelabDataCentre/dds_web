@@ -21,8 +21,6 @@ import flask_mail
 import flask_bootstrap
 import flask_login
 import flask_migrate
-import marshmallow
-import json
 
 # import flask_qrcode
 from flask_limiter import Limiter
