@@ -32,5 +32,5 @@ def downgrade():
         ),
     )
     op.drop_column("projects", "non_sensitive")
-    )
+
     # ### end Alembic commands ###
