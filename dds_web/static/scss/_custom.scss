@@ -1,0 +1,30 @@
+// Override bootstrap styles
+.form-floating > label {
+  opacity: .65;
+}
+
+// New custom styles
+.filesize_badge {
+    @extend .badge, .border, .fw-light, .font-monospace;
+    background-color: $light;
+    color: $text-muted;
+}
+.toobig {
+    background-color: $danger;
+    color: $white;
+}
+.upload_file {
+    span {
+        @extend .filesize_badge;
+    }
+}
+.upload_file_toobig {
+    @extend .upload_file;
+    code {
+        @extend .text-muted;
+        text-decoration: line-through;
+    }
+    span {
+        @extend .toobig;
+    }
+}

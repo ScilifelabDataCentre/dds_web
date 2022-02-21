@@ -31,6 +31,17 @@ services:
         source: ./Dockerfiles/mariadb/db-encrypt
         target: /etc/mysql/encrypt
 
+  # Development service to watch for changes to SCSS files and recompile static CSS
+  node_builder:
+    container_name: dds_nodebuilder
+    build:
+      dockerfile: Dockerfiles/nodebuilder.Dockerfile
+      context: ./
+    volumes:
+      - type: bind
+        source: ./dds_web/static/
+        target: /build
+
   backend:
     container_name: dds_backend
     image: dds-backend-local:latest

@@ -17,7 +17,6 @@ from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
-import flask_bootstrap
 import flask_login
 
 # import flask_qrcode
@@ -174,7 +173,6 @@ def create_app(testing=False, database_uri=None):
         # Simplifies testing as we don't test the session protection anyway
         login_manager.session_protection = "basic"
 
-    flask_bootstrap.Bootstrap(app)
     # Setup logging handlers
     setup_logging(app)
 
@@ -229,6 +227,7 @@ def create_app(testing=False, database_uri=None):
 
     with app.app_context():  # Everything in here has access to sessions
         db.create_all()  # TODO: remove this when we have migrations
+        from dds_web import routes  # Import routes
         from dds_web.database import models
 
         # Need to import auth so that the modifications to the auth objects take place

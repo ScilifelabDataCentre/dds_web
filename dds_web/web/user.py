@@ -52,12 +52,12 @@ def bad_request(error):
 ####################################################################################################
 
 
-@auth_blueprint.route("/", methods=["GET"])
-@flask_login.login_required
-def index():
-    """DDS start page."""
-    form = forms.LogoutForm()
-    return flask.render_template("index.html", form=form)
+# @auth_blueprint.route("/logout", methods=["GET"])
+# @flask_login.login_required
+# def logout():
+#     """DDS log out page."""
+#     form = forms.LogoutForm()
+#     return flask.render_template("user/logout.html", form=form)
 
 
 @auth_blueprint.route("/confirm_invite/<token>", methods=["GET"])
@@ -73,7 +73,7 @@ def confirm_invite(token):
         email, invite_row = dds_web.security.auth.verify_invite_token(token)
     except ddserr.AuthenticationError as err:
         flask.flash("This invitation link has expired or is invalid.", "danger")
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("home"))
 
     # Check the invite exists
     if not invite_row:
@@ -83,7 +83,7 @@ def confirm_invite(token):
         else:
             # Perhaps the invite has been cancelled by an admin
             flask.flash("This invitation link is invalid.", "danger")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+            return flask.redirect(flask.url_for("home"))
 
     # Save encrypted token to be reused at registration
     # token is in the session already if the user refreshes the page
@@ -131,7 +131,7 @@ def register():
         flask.flash(
             "Error in registration process, please go back and use the link in the invitation email again."
         )
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("home"))
 
     # Validate form - validators defined in form class
     if form.validate_on_submit():
@@ -143,7 +143,7 @@ def register():
             # Any error catched here is likely a bug/issue
             flask.current_app.logger.warning(err)
             flask.flash("Error in registration process, please try again.")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+            return flask.redirect(flask.url_for("home"))
 
         flask.flash("Registration successful!")
         return flask.make_response(flask.render_template("user/userexists.html"))
@@ -174,7 +174,7 @@ def confirm_2fa():
 
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("home"))
 
     form = forms.Confirm2FACodeForm()
 
@@ -229,7 +229,7 @@ def confirm_2fa():
         # Remove token from session
         flask.session.pop("2fa_initiated_token", None)
         # Next is assured to be url_safe above
-        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
+        return flask.redirect(next or flask.url_for("home"))
 
     else:
         return flask.render_template(
@@ -253,7 +253,7 @@ def login():
 
     # Redirect to next or index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
+        return flask.redirect(next or flask.url_for("home"))
 
     # Display greeting message, if applicable
     if next and re.search("confirm_deletion", next):
@@ -299,7 +299,7 @@ def logout():
     if flask_login.current_user.is_authenticated:
         flask_login.logout_user()
 
-    return flask.redirect(flask.url_for("auth_blueprint.index"))
+    return flask.redirect(flask.url_for("home"))
 
 
 @auth_blueprint.route("/reset_password", methods=["GET", "POST"])
@@ -313,7 +313,7 @@ def request_reset_password():
     """Request to reset password when password is lost."""
     # Reset forgotten password only allowed if logged out
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("home"))
 
     # Validate form
     form = forms.RequestResetForm()
@@ -336,7 +336,7 @@ def reset_password(token):
     """Perform the password reset when password is lost."""
     # Go to index page if already logged in
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("home"))
 
     # Verify that the token is valid and contains enough info
     user = models.User.verify_reset_token(token=token)

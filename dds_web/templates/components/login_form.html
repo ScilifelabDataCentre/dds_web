@@ -1,0 +1,38 @@
+{% if login_error_message %}
+    <div class="alert alert-danger" role="alert">
+        <p class="lead">
+            <i class="far fa-exclamation-triangle"></i> Oops! Something went wrong.</strong>
+        </p>
+        <p class="mb-0">{{ login_error_message }}</p>
+    </div>
+{% endif %}
+<hr>
+<p class="small text-muted text-center" style="margin-top: -1.8rem;">or</p>
+<form method="POST" action="{{ url_for('auth_blueprint.login') }}" class="mt-2">
+    <div class="input-group mb-3">
+        <span class="input-group-text bg-success text-black"><i class="fas fa-user mx-1"></i></span>
+        <div class="col">
+            <div class="form-floating">
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username">
+                <label for="username">Username</label>
+            </div>
+        </div>
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text bg-success text-black"><i class="fas fa-key mx-1"></i></span>
+        <div class="col">
+            <div class="form-floating">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+                <label for="password">Password</label>
+            </div>
+        </div>
+    </div>
+    {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+    <button type="submit" class="btn btn-success w-100 mb-2">
+        <i class="fas fa-envelope me-2"></i>
+        Log in with email
+    </button>
+    <p class="text-center mb-1 small"><a class="text-muted text-decoration-none" href="#">Forgot your password?</a></p>
+</form>
