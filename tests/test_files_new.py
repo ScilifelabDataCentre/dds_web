@@ -8,7 +8,6 @@ import marshmallow
 from dds_web import db
 import dds_web.utils
 from dds_web.database import models
-from dds_web.errors import NoSuchFileError
 import tests
 
 first_new_file = {
@@ -104,17 +103,17 @@ def test_new_file(client):
 
 def test_update_nonexistent_file(client):
     """Try to update a non existent file"""
-    with pytest.raises(NoSuchFileError) as error:
-        response = client.put(
-            tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": "file_testing_project"},
-            data=json.dumps(first_new_file),
-            content_type="application/json",
-        )
-
-    assert f"Cannot update non-existent file '{first_new_file['name']}' in the database!" in str(
-        error.value
+    response = client.put(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(first_new_file),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert (
+        f"Cannot update non-existent file '{first_new_file['name']}' in the database!"
+        in response.json["message"]
     )
 
 
