@@ -122,6 +122,84 @@ def invite_confirm_register_and_get_private(
     return user
 
 
+# Researcher invited by Unit Admin ############################# Researcher invited by Unit Admin #
+
+
+def test_invite_to_register_researcher_without_project_by_unitadmin(client):
+    "Test that a user without a project can be created by unitadmin"
+    unitadmin = models.User.query.filter_by(username="unitadmin").one_or_none()
+    researcher_to_be = "researcher_to_be@example.org"
+
+    user = invite_confirm_register_and_get_private(
+        client,
+        inviting_user=unitadmin,
+        email=researcher_to_be,
+        projects=None,
+        role_per_project=["Researcher"],
+    )
+    assert user.role == "Researcher"
+    assert user.is_active
+    assert user.projects == []
+    assert user.project_user_keys == []
+
+
+def test_invite_to_register_researcher_with_project_by_unitadmin(client):
+    "Test that a researchuser with project access can be created by unitadmin"
+    unitadmin = models.User.query.filter_by(username="unitadmin").one_or_none()
+    researcher_to_be = "researcher_to_be@example.org"
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+
+    user = invite_confirm_register_and_get_private(
+        client,
+        inviting_user=unitadmin,
+        email=researcher_to_be,
+        projects=[project],
+        role_per_project=["Researcher"],
+    )
+    assert user.role == "Researcher"
+    assert user.is_active
+
+    assert len(user.projects) == 1
+    assert user.projects[0].public_id == project.public_id
+    assert len(user.project_associations) == 1
+    for project_user in user.project_associations:
+        assert not project_user.owner
+
+    assert len(user.project_user_keys) == 1
+    assert user.project_user_keys[0].project_id == project.id
+
+
+def test_invite_to_register_researcher_with_multiple_projects_by_unitadmin(client):
+    "Test that a researchuser with project access including project ownership can be created by unitadmin"
+    unituser = models.User.query.filter_by(username="unitadmin").one_or_none()
+    researcher_to_be = "researcher_to_be@example.org"
+    project1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    project2 = models.Project.query.filter_by(public_id="second_public_project_id").one_or_none()
+
+    user = invite_confirm_register_and_get_private(
+        client,
+        inviting_user=unituser,
+        email=researcher_to_be,
+        projects=[project1, project2],
+        role_per_project=["Researcher", "Project Owner"],
+    )
+    assert user.role == "Researcher"
+    assert user.is_active
+
+    assert len(user.projects) == 2
+    assert len(user.project_associations) == 2
+    for project_user in user.project_associations:
+        if project_user.project.public_id == project1.public_id:
+            assert not project_user.owner
+        else:
+            assert project_user.owner
+
+    assert len(user.project_user_keys) == 2
+
+
+# Researcher invited by Unit User ############################# Researcher invited by Unit User #
+
+
 def test_invite_to_register_researcher_without_project_by_unituser(client):
     "Test that a user without a project can be created"
     unituser = models.User.query.filter_by(username="unituser").one_or_none()
@@ -141,7 +219,7 @@ def test_invite_to_register_researcher_without_project_by_unituser(client):
 
 
 def test_invite_to_register_researcher_with_project_by_unituser(client):
-    "Test that a user with project access can be created"
+    "Test that a researchuser with project access can be created by unituser"
     unituser = models.User.query.filter_by(username="unituser").one_or_none()
     researcher_to_be = "researcher_to_be@example.org"
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
@@ -167,7 +245,7 @@ def test_invite_to_register_researcher_with_project_by_unituser(client):
 
 
 def test_invite_to_register_researcher_with_multiple_projects_by_unituser(client):
-    "Test that a user with project access can be created"
+    "Test that a researchuser with project access including project ownership can be created by unituser"
     unituser = models.User.query.filter_by(username="unituser").one_or_none()
     researcher_to_be = "researcher_to_be@example.org"
     project1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
