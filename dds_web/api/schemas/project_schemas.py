@@ -70,7 +70,7 @@ class CreateProjectSchema(marshmallow.Schema):
     pi = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(min=1, max=255)
     )
-    is_sensitive = marshmallow.fields.Boolean(required=False)
+    non_sensitive = marshmallow.fields.Boolean(required=False, default=False)
     date_created = custom_fields.MyDateTimeField(required=False)
 
     @marshmallow.pre_load
