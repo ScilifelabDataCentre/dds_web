@@ -13,6 +13,15 @@ from dds_web.security.tokens import encrypted_jwt_token
 DEBUG = False
 
 
+REGISTRATION_DATA = {
+    "name": "Test User",
+    "username": "user_not_existing",
+    "password": "Password123",
+    "confirm": "Password123",
+    "submit": "submit",
+}
+
+
 def perform_invite(client, inviting_user, email, role=None, project=None):
     json_data = {"email": email, "role": role}
     query_string = {}
@@ -52,6 +61,19 @@ def perform_invite(client, inviting_user, email, role=None, project=None):
     return invite_token
 
 
+def get_private(client, project, auth_token):
+    """Request decrypted project private key for user just created
+    to somewhat test that the decryption works"""
+    response = client.get(
+        tests.DDSEndpoint.PROJ_PRIVATE,
+        query_string={"project": project.public_id},
+        headers=auth_token,
+    )
+    assert (
+        response.status == "200 OK"
+    ), f"Unable to fetch project private key for project: {project}, response: {response.data}"
+
+
 def invite_confirm_register_and_get_private(
     client, inviting_user, email, projects, role_per_project=None
 ):
@@ -86,15 +108,7 @@ def invite_confirm_register_and_get_private(
     # Complete registration
     form_token = flask.g.csrf_token
 
-    form_data = {
-        "csrf_token": form_token,
-        "email": email,
-        "name": "Test User",
-        "username": "user_not_existing",
-        "password": "Password123",
-        "confirm": "Password123",
-        "submit": "submit",
-    }
+    form_data = {**REGISTRATION_DATA, "csrf_token": form_token, "email": email}
 
     response = client.post(
         tests.DDSEndpoint.USER_NEW,
@@ -105,19 +119,13 @@ def invite_confirm_register_and_get_private(
 
     user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
 
+    auth_token = tests.UserAuth(f"{form_data['username']}:{form_data['password']}").token(client)
+
     if projects is not None:
         for project in projects:
             # Request decrypted project private key for user just created
-            response = client.get(
-                tests.DDSEndpoint.PROJ_PRIVATE,
-                query_string={"project": project.public_id},
-                headers=tests.UserAuth(f"{form_data['username']}:{form_data['password']}").token(
-                    client
-                ),
-            )
-            assert (
-                response.status == "200 OK"
-            ), f"Unable to fetch project private key for project: {project}, response: {response.data}"
+            # to somewhat test that the decryption works
+            get_private(client, project, auth_token)
 
     return user
 
@@ -171,14 +179,14 @@ def test_invite_to_register_researcher_with_project_by_unitadmin(client):
 
 def test_invite_to_register_researcher_with_multiple_projects_by_unitadmin(client):
     "Test that a researchuser with project access including project ownership can be created by unitadmin"
-    unituser = models.User.query.filter_by(username="unitadmin").one_or_none()
+    unitadmin = models.User.query.filter_by(username="unitadmin").one_or_none()
     researcher_to_be = "researcher_to_be@example.org"
     project1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     project2 = models.Project.query.filter_by(public_id="second_public_project_id").one_or_none()
 
     user = invite_confirm_register_and_get_private(
         client,
-        inviting_user=unituser,
+        inviting_user=unitadmin,
         email=researcher_to_be,
         projects=[project1, project2],
         role_per_project=["Researcher", "Project Owner"],
@@ -270,3 +278,87 @@ def test_invite_to_register_researcher_with_multiple_projects_by_unituser(client
             assert project_user.owner
 
     assert len(user.project_user_keys) == 2
+
+
+# Researcher invited by Project Owner ############################# Researcher invited by Project Owner #
+
+
+def test_invite_to_register_researcher_with_project_by_project_owner(client):
+    "Test that a researchuser with project access can be created by project owner"
+    project_owner = models.User.query.filter_by(username="projectowner").one_or_none()
+    researcher_to_be = "researcher_to_be@example.org"
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+
+    user = invite_confirm_register_and_get_private(
+        client,
+        inviting_user=project_owner,
+        email=researcher_to_be,
+        projects=[project],
+        role_per_project=["Researcher"],
+    )
+    assert user.role == "Researcher"
+    assert user.is_active
+
+    assert len(user.projects) == 1
+    assert user.projects[0].public_id == project.public_id
+    assert len(user.project_associations) == 1
+    for project_user in user.project_associations:
+        assert not project_user.owner
+
+    assert len(user.project_user_keys) == 1
+    assert user.project_user_keys[0].project_id == project.id
+
+
+def test_invite_to_register_researcher_with_project_as_owner_by_project_owner(client):
+    "Test that a researchuser with project access can be created as project owner by project owner"
+    project_owner = models.User.query.filter_by(username="projectowner").one_or_none()
+    researcher_to_be = "researcher_to_be@example.org"
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+
+    user = invite_confirm_register_and_get_private(
+        client,
+        inviting_user=project_owner,
+        email=researcher_to_be,
+        projects=[project],
+        role_per_project=["Project Owner"],
+    )
+    assert user.role == "Researcher"
+    assert user.is_active
+
+    assert len(user.projects) == 1
+    assert user.projects[0].public_id == project.public_id
+    assert len(user.project_associations) == 1
+    for project_user in user.project_associations:
+        assert project_user.owner
+
+    assert len(user.project_user_keys) == 1
+    assert user.project_user_keys[0].project_id == project.id
+
+
+# Unituser invited by unit admin ################################# Unituser invited by unit admin #
+
+
+def test_invite_to_register_unituser_by_unitadmin(client):
+    "Test that a unit user can be created with project access"
+    unitadmin = models.User.query.filter_by(username="unitadmin").one_or_none()
+    unituser_to_be = "unituser_to_be@example.org"
+
+    projects = set(unitadmin.projects)
+    assert len(projects) > 1
+
+    user = invite_confirm_register_and_get_private(
+        client,
+        inviting_user=unitadmin,
+        email=unituser_to_be,
+        projects=None,
+        role_per_project=["Unit Personnel"],
+    )
+    assert user.role == "Unit Personnel"
+    assert user.is_active
+    assert set(user.projects) == projects
+    assert len(user.project_user_keys) == len(projects)
+
+    auth_token = tests.UserAuth(f"{user.username}:{REGISTRATION_DATA['password']}").token(client)
+
+    for project in projects:
+        get_private(client, project, auth_token)
