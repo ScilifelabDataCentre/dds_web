@@ -32,16 +32,5 @@ def downgrade():
         ),
     )
     op.drop_column("projects", "non_sensitive")
-    op.create_table(
-        "apscheduler_jobs",
-        sa.Column("id", mysql.VARCHAR(length=191), nullable=False),
-        sa.Column("next_run_time", mysql.DOUBLE(asdecimal=True), nullable=True),
-        sa.Column("job_state", sa.BLOB(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-        mysql_default_charset="utf8mb4",
-        mysql_engine="InnoDB",
-    )
-    op.create_index(
-        "ix_apscheduler_jobs_next_run_time", "apscheduler_jobs", ["next_run_time"], unique=False
     )
     # ### end Alembic commands ###
