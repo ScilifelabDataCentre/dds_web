@@ -40,6 +40,11 @@ def downgrade():
             "is_sensitive", mysql.TINYINT(display_width=1), autoincrement=False, nullable=True
         ),
     )
+    session = Session(bind=op.get_bind())
+    all_project_rows = session.query(models.Project).all()
+    for proj in all_project_rows:
+        proj.is_sensitive = not proj.non_sensitive
+    session.commit()
     op.drop_column("projects", "non_sensitive")
 
     # ### end Alembic commands ###
