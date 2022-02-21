@@ -18,7 +18,13 @@ import dds_web.utils
 from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import logging_bind_request, dbsession, args_required
+from dds_web.api.dds_decorators import (
+    logging_bind_request,
+    dbsession,
+    args_required,
+    json_required,
+    handle_validation_errors,
+)
 from dds_web.errors import (
     AccessDeniedError,
     DDSArgumentError,
@@ -45,9 +51,14 @@ class ProjectStatus(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     @args_required
+    @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        try:
+            project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        except marshmallow.ValidationError as valerr:
+            raise DDSArgumentError(message=valerr.messages)
+
         extra_args = flask.request.json
         return_info = {"current_status": project.current_status}
 
@@ -66,13 +77,16 @@ class ProjectStatus(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @args_required
+    @json_required
+    @handle_validation_errors
     def post(self):
         """Update Project Status"""
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        try:
+            project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        except marshmallow.ValidationError as valerr:
+            raise DDSArgumentError(message=valerr.messages)
         public_id = project.public_id
         extra_args = flask.request.json
-        if not extra_args:
-            raise DDSArgumentError(message="Missing new status")
 
         new_status = extra_args.get("new_status")
         if new_status not in [
@@ -220,6 +234,7 @@ class GetPublic(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     @args_required
+    @handle_validation_errors
     def get(self):
         """Get public key from database."""
 
@@ -239,6 +254,7 @@ class GetPrivate(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     @args_required
+    @handle_validation_errors
     def get(self):
         """Get private key from database"""
 
@@ -352,6 +368,7 @@ class RemoveContents(flask_restful.Resource):
     @logging_bind_request
     @dbsession
     @args_required
+    @handle_validation_errors
     def delete(self):
         """Removes all project contents."""
 
@@ -406,10 +423,11 @@ class RemoveContents(flask_restful.Resource):
 class CreateProject(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
         """Create a new project"""
         p_info = flask.request.json
-
         new_project = project_schemas.CreateProjectSchema().load(p_info)
 
         if not new_project:
@@ -475,6 +493,7 @@ class ProjectUsers(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     @args_required
+    @handle_validation_errors
     def get(self):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -501,17 +520,18 @@ class ProjectAccess(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     @dbsession
+    @json_required
+    @handle_validation_errors
     def post(self):
         """Give access to user."""
         # Verify that user specified
         extra_args = flask.request.json
-        if not extra_args:
-            raise DDSArgumentError(message="Required information missing.")
 
         if "email" not in extra_args:
             raise DDSArgumentError(message="User email missing.")
 
         user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
+
         if not user:
             raise NoSuchUserError()
 

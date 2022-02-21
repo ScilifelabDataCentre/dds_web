@@ -23,6 +23,7 @@ from dds_web.errors import (
     DDSArgumentError,
     NoSuchUserError,
     AccessDeniedError,
+    MissingJsonError,
 )
 from dds_web.utils import get_username_or_request_ip
 from dds_web.api.schemas import user_schemas, project_schemas
@@ -37,12 +38,40 @@ action_logger = structlog.getLogger("actions")
 ####################################################################################################
 
 
+def handle_validation_errors(func):
+    @functools.wraps(func)
+    def handle_error(*args, **kwargs):
+
+        try:
+            result = func(*args, **kwargs)
+        except marshmallow.exceptions.ValidationError as valerr:
+            if "_schema" in valerr.messages:
+                return valerr.messages["_schema"][0], 400
+            else:
+                return valerr.messages, 400
+
+        return result
+
+    return handle_error
+
+
+def json_required(func):
+    @functools.wraps(func)
+    def verify_json(*args, **kwargs):
+
+        if not flask.request.json:
+            raise MissingJsonError(message="Required data missing from request!")
+
+        return func(*args, **kwargs)
+
+    return verify_json
+
+
 def args_required(func):
     @functools.wraps(func)
     def verify_args(*args, **kwargs):
 
-        extra_args = flask.request.args
-        if not extra_args:
+        if not flask.request.args:
             raise DDSArgumentError(message="Required information missing from request!")
 
         return func(*args, **kwargs)

@@ -56,7 +56,7 @@ def test_fix_access_no_args(client):
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert response.json.get("message") == "Required information missing."
+    assert "Required data missing" in response.json.get("message")
 
     # Unit Personnel
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
@@ -65,7 +65,7 @@ def test_fix_access_no_args(client):
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert response.json.get("message") == "Required information missing."
+    assert "Required data missing" in response.json.get("message")
 
 
 def test_fix_access_no_email(client):

@@ -286,7 +286,7 @@ class MissingProjectIDError(LoggedHTTPException):
 
     code = http.HTTPStatus.BAD_REQUEST
 
-    def __init__(self, message="Attempting to validate users project access without project ID"):
+    def __init__(self, message="Project ID missing!"):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -294,6 +294,17 @@ class MissingProjectIDError(LoggedHTTPException):
 
 class DDSArgumentError(LoggedHTTPException):
     """Base class for errors occurring due to missing request arguments."""
+
+    code = http.HTTPStatus.BAD_REQUEST
+
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class MissingJsonError(LoggedHTTPException):
+    """Not enough data specified to the endpoint in the form of json."""
 
     code = http.HTTPStatus.BAD_REQUEST
 

@@ -393,15 +393,14 @@ def test_new_file_name_too_short(client):
 
     file_no_name = first_new_file.copy()
     file_no_name["name"] = ""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": "file_testing_project"},
-            data=json.dumps(file_no_name),
-            content_type="application/json",
-        )
-
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(file_no_name),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_no_name, project=project_1.id)
 
 
@@ -413,15 +412,14 @@ def test_new_file_nameinbucket_too_short(client):
 
     file_no_nameinbucket = first_new_file.copy()
     file_no_nameinbucket["name_in_bucket"] = ""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": "file_testing_project"},
-            data=json.dumps(file_no_nameinbucket),
-            content_type="application/json",
-        )
-
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(file_no_nameinbucket),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_no_nameinbucket, project=project_1.id)
 
 
@@ -433,15 +431,14 @@ def test_new_file_subpath_too_short(client):
 
     file_no_subpath = first_new_file.copy()
     file_no_subpath["subpath"] = ""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": "file_testing_project"},
-            data=json.dumps(file_no_subpath),
-            content_type="application/json",
-        )
-
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(file_no_subpath),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_no_subpath, project=project_1.id)
 
 
@@ -493,14 +490,14 @@ def test_new_file_publickey_wrong_length(client):
 
     file_wrong_public_key = first_new_file.copy()
     file_wrong_public_key["public_key"] = "test"
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": "file_testing_project"},
-            data=json.dumps(file_wrong_public_key),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(file_wrong_public_key),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_wrong_public_key, project=project_1.id)
 
 
@@ -511,14 +508,14 @@ def test_new_file_salt_wrong_length(client):
 
     file_wrong_salt = first_new_file.copy()
     file_wrong_salt["salt"] = "test"
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": "file_testing_project"},
-            data=json.dumps(file_wrong_salt),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(file_wrong_salt),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_wrong_salt, project=project_1.id)
 
 
@@ -529,14 +526,14 @@ def test_new_file_checksum_wrong_length(client):
 
     file_wrong_checksum = first_new_file.copy()
     file_wrong_checksum["checksum"] = "test"
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.FILE_NEW,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": "file_testing_project"},
-            data=json.dumps(file_wrong_checksum),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        data=json.dumps(file_wrong_checksum),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_wrong_checksum, project=project_1.id)
 
 

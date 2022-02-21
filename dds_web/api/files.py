@@ -20,7 +20,12 @@ from dds_web import auth
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import logging_bind_request, args_required
+from dds_web.api.dds_decorators import (
+    logging_bind_request,
+    args_required,
+    json_required,
+    handle_validation_errors,
+)
 from dds_web.errors import (
     AccessDeniedError,
     DatabaseError,
@@ -73,13 +78,18 @@ class NewFile(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @args_required
+    @json_required
+    @handle_validation_errors
     def post(self):
         """Add new file to DB"""
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
         check_eligibility_for_upload(project.current_status)
 
-        new_file = file_schemas.NewFileSchema().load({**flask.request.json, **flask.request.args})
+        new_file = file_schemas.NewFileSchema().load(
+            {**flask.request.json, "project": project.public_id}
+        )
 
         try:
             db.session.commit()
@@ -93,6 +103,8 @@ class NewFile(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @args_required
+    @json_required
+    @handle_validation_errors
     def put(self):
 
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -177,6 +189,8 @@ class MatchFiles(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @args_required
+    @json_required
+    @handle_validation_errors
     def get(self):
         """Matches specified files to files in db."""
 
@@ -206,6 +220,7 @@ class ListFiles(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     @args_required
+    @handle_validation_errors
     def get(self):
         """Get a list of files within the specified folder."""
 
@@ -353,6 +368,8 @@ class RemoveFile(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @args_required
+    @json_required
+    @handle_validation_errors
     def delete(self):
         """Deletes the files"""
 
@@ -444,6 +461,8 @@ class RemoveDir(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @args_required
+    @json_required
+    @handle_validation_errors
     def delete(self):
         """Deletes the folders."""
 
@@ -539,6 +558,8 @@ class FileInfo(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     @args_required
+    @json_required
+    @handle_validation_errors
     def get(self):
         """Checks which files can be downloaded, and get their info."""
 
@@ -550,9 +571,11 @@ class FileInfo(flask_restful.Resource):
         check_eligibility_for_download(project.current_status, user_role)
 
         # Get project contents
-        found_files, found_folder_contents, not_found = project_schemas.ProjectContentSchema().dump(
-            input_
-        )
+        (
+            found_files,
+            found_folder_contents,
+            not_found,
+        ) = project_schemas.ProjectContentSchema().dump(input_)
 
         return {
             "files": found_files,
@@ -567,6 +590,7 @@ class FileInfoAll(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     @args_required
+    @handle_validation_errors
     def get(self):
         """Get file info."""
 
@@ -588,6 +612,8 @@ class UpdateFile(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     @args_required
+    @json_required
+    @handle_validation_errors
     def put(self):
         """Update info in db."""
 

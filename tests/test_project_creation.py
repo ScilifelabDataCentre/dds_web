@@ -89,13 +89,13 @@ def test_create_project_with_credentials(client, boto3_session):
 
 def test_create_project_no_title(client):
     """Create project without a title specified."""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps({"pi": "piName"}),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        data=json.dumps({"pi": "piName"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -108,13 +108,13 @@ def test_create_project_title_too_short(client):
     """Create a project with too short title."""
     proj_data_short_title = proj_data.copy()
     proj_data_short_title["title"] = ""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_short_title),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        data=json.dumps(proj_data_short_title),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -167,13 +167,13 @@ def test_create_project_description_too_short(client):
     """Create a project with too short description."""
     proj_data_short_description = proj_data.copy()
     proj_data_short_description["description"] = ""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_short_description),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        data=json.dumps(proj_data_short_description),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -188,13 +188,13 @@ def test_create_project_pi_too_short(client):
     """Create a project with too short PI."""
     proj_data_short_pi = proj_data.copy()
     proj_data_short_pi["pi"] = ""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_short_pi),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        data=json.dumps(proj_data_short_pi),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -209,13 +209,13 @@ def test_create_project_pi_too_long(client):
     """Create a project with too long PI."""
     proj_data_long_pi = proj_data.copy()
     proj_data_long_pi["pi"] = "pi" * 128
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_long_pi),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        data=json.dumps(proj_data_long_pi),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -251,13 +251,13 @@ def test_create_project_sensitive_not_boolean(client):
     """Create project with incorrect is_sensitive format."""
     proj_data_sensitive_not_boolean = proj_data.copy()
     proj_data_sensitive_not_boolean["is_sensitive"] = "test"
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_sensitive_not_boolean),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        data=json.dumps(proj_data_sensitive_not_boolean),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",

@@ -96,13 +96,13 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
 
 def test_add_user_with_unitadmin_and_invalid_email(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        with pytest.raises(marshmallow.ValidationError):
-            response = client.post(
-                tests.DDSEndpoint.USER_ADD,
-                headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-                data=json.dumps(first_new_user_invalid_email),
-                content_type="application/json",
-            )
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            data=json.dumps(first_new_user_invalid_email),
+            content_type="application/json",
+        )
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
         # An email is always sent when receiving the partial token
         mock_mail_send.assert_called_once()
 

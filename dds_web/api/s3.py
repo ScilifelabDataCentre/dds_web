@@ -10,12 +10,18 @@
 import flask_restful
 import flask
 import sqlalchemy
+import marshmallow
 
 # Own modules
 from dds_web import auth
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import logging_bind_request, args_required
-from dds_web.errors import S3ProjectNotFoundError, DatabaseError, DDSArgumentError
+from dds_web.api.dds_decorators import logging_bind_request, args_required, handle_validation_errors
+from dds_web.errors import (
+    S3ProjectNotFoundError,
+    DatabaseError,
+    DDSArgumentError,
+    MissingProjectIDError,
+)
 from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
@@ -29,6 +35,7 @@ class S3Info(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     @args_required
+    @handle_validation_errors
     def get(self):
         """Get the safespring project"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)

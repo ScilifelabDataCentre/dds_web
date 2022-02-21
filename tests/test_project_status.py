@@ -76,7 +76,7 @@ def test_submit_request_with_invalid_args(module_client, test_project):
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "Missing new status" in response.json["message"]
+    assert "Required data missing" in response.json["message"]
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
