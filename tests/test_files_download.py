@@ -14,27 +14,22 @@ import tests
 def test_files_download_in_progress(client, boto3_session):
     """Try to download from a project that is in Progress"""
 
-    with unittest.mock.patch(
-        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
-    ) as mock_url:
-        mock_url.return_value = "url"
-        response = client.get(
-            tests.DDSEndpoint.FILE_INFO,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-            query_string={"project": "public_project_id"},
-            json=["filename1"],
-        )
-        assert response.status_code == http.HTTPStatus.BAD_REQUEST
-        assert "Current Project status limits file download." in response.json["message"]
+    response = client.get(
+        tests.DDSEndpoint.FILE_INFO,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json=["filename1"],
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Current Project status limits file download." in response.json["message"]
 
-        mock_url.return_value = "url"
-        response = client.get(
-            tests.DDSEndpoint.FILE_INFO_ALL,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-            query_string={"project": "public_project_id"},
-        )
-        assert response.status_code == http.HTTPStatus.BAD_REQUEST
-        assert "Current Project status limits file download." in response.json["message"]
+    response = client.get(
+        tests.DDSEndpoint.FILE_INFO_ALL,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Current Project status limits file download." in response.json["message"]
 
 
 def test_file_download(client, boto3_session):
