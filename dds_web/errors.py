@@ -360,7 +360,7 @@ class NoSuchUserError(LoggedHTTPException):
         general_logger.warning(message)
 
 
-class NoSuchFileError(Exception):
+class NoSuchFileError(LoggedHTTPException):
     """There is no such file found in the database."""
 
     code = http.HTTPStatus.BAD_REQUEST
