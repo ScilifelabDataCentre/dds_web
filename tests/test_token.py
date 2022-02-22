@@ -239,7 +239,7 @@ def test_fully_authenticated_encrypted_token_protected_header(client):
     # encrypted in the token. We have not decrypted the token yet, just
     # deserialized it. Jose header is visible in plaintext.
     assert "exp" in token.token.jose_header
-    expiration_time = datetime.datetime.fromtimestamp(token.token.jose_header["exp"])
+    expiration_time = datetime.datetime.fromisoformat(token.token.jose_header["exp"])
     token_issue = expiration_time - datetime.timedelta(hours=48)
     assert before_token_issue < token_issue
     assert after_token_issue > token_issue

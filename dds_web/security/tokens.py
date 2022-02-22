@@ -42,7 +42,9 @@ def encrypted_jwt_token(
         # exp claim in this (integrity) protected JWE header is provided only to let the
         # cli know the precise expiration time of the encrypted token. It has no impact
         # on the actual enforcement of the expiration of the token.
-        jwe_protected_header["exp"] = (dds_web.utils.current_time() + expires_in).timestamp()
+        # This time is in iso format in contrast to the actual exp claim in timestamp,
+        # because timestamp translates to a wrong time in local date time
+        jwe_protected_header["exp"] = (dds_web.utils.current_time() + expires_in).isoformat()
 
     token = jwt.JWT(
         header=jwe_protected_header,
@@ -86,6 +88,10 @@ def __signed_jwt_token(
     :param Dict or None additional_claims: Any additional token claims can be added. e.g., {"iss": "DDS"}
     """
     expiration_time = dds_web.utils.current_time() + expires_in
+
+    # exp claim has to be in timestamp, otherwise jwcrypto cannot verify the exp claim
+    # and so raises an exception for it. This does not cause any timezone issues as it
+    # is only issued and verified on the api side.
     data = {"sub": username, "exp": expiration_time.timestamp(), "nonce": secrets.token_hex(32)}
     if additional_claims:
         data.update(additional_claims)
