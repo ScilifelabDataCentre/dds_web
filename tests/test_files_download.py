@@ -72,17 +72,69 @@ def test_file_download_unknown_field(client):
         and response_json["project"].get("message") == "Project ID required."
     )
 
-#---
+
+# ---
+
+
+def test_file_download_empty(client):
+    """Make empty request."""
+    response = client.get(
+        tests.DDSEndpoint.FILE_INFO_ALL,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert response_json
+    assert (
+        "project" in response_json
+        and response_json["project"].get("message") == "Project ID required."
+    )
+
+
+def test_file_download_project_none(client):
+    """Make request with project as None."""
+    response = client.get(
+        tests.DDSEndpoint.FILE_INFO_ALL,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": None},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert response_json
+    assert (
+        "project" in response_json
+        and response_json["project"].get("message") == "Project ID required."
+    )
+
+
+def test_file_download_unknown_field(client):
+    """Make request with unknown field passed."""
+    response = client.get(
+        tests.DDSEndpoint.FILE_INFO_ALL,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"test": "test"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert response_json
+    assert (
+        "project" in response_json
+        and response_json["project"].get("message") == "Project ID required."
+    )
+
+
+# ---
+
 
 def test_files_download_in_progress(client, boto3_session):
     """Try to download from a project that is in Progress"""
 
-response = client.get(
-    tests.DDSEndpoint.FILE_INFO,
-    headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-    query_string={"project": "public_project_id"},
-    json=["filename1"],
-)
+    response = client.get(
+        tests.DDSEndpoint.FILE_INFO,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json=["filename1"],
+    )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Current Project status limits file download." in response.json["message"]
 
