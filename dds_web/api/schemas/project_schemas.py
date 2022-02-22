@@ -65,22 +65,30 @@ class CreateProjectSchema(marshmallow.Schema):
 
     title = marshmallow.fields.String(
         required=True,
+        allow_none=False,
         validate=marshmallow.validate.Length(min=1),
         error_messages={
             "required": {"message": "Title is required."},
-            "null": {"message": "The project title cannot be empty."},
-            "validator_failed": {"message": "Invalid project title."},
+            "null": {"message": "Title is required."},
         },
     )
     description = marshmallow.fields.String(
         required=True,
+        allow_none=False,
         validate=marshmallow.validate.Length(min=1),
-        error_messages={"required": {"message": "A description is required.", "code": 400}},
+        error_messages={
+            "required": {"message": "A project description is required."},
+            "null": {"message": "A project description is required."},
+        },
     )
     pi = marshmallow.fields.String(
         required=True,
+        allow_none=False,
         validate=marshmallow.validate.Length(min=1, max=255),
-        error_messages={"required": {"message": "Project title is required.", "code": 400}},
+        error_messages={
+            "required": {"message": "A principal investigator is required."},
+            "null": {"message": "A principal investigator is required."},
+        },
     )
     non_sensitive = marshmallow.fields.Boolean(required=False, default=False)
     date_created = custom_fields.MyDateTimeField(required=False)

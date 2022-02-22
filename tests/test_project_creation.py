@@ -45,6 +45,147 @@ proj_data_with_unsuitable_user_roles = {
 # TESTS #################################################################################### TESTS #
 
 
+def test_create_project_empty(client):
+    """Make empty request."""
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert response_json
+    assert "Required data missing from request" in response_json.get("message")
+
+
+def test_create_project_unknown_field(client):
+    """Make request with unknown field passed."""
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        data=json.dumps({"test": "test"}),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        response_json
+        and "title" in response_json
+        and response_json["title"].get("message") == "Title is required."
+    )
+
+
+def test_create_project_missing_title(client):
+    """Make request with missing title."""
+    proj_data_no_title = proj_data.copy()
+    proj_data_no_title.pop("title")
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        data=json.dumps(proj_data_no_title),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "title" in response_json and response_json["title"].get("message") == "Title is required."
+    )
+
+
+def test_create_project_none_title(client):
+    """Make request with missing title."""
+    proj_data_none_title = proj_data.copy()
+    proj_data_none_title["title"] = None
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        data=json.dumps(proj_data_none_title),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "title" in response_json and response_json["title"].get("message") == "Title is required."
+    )
+
+
+def test_create_project_no_description(client):
+    """Make request with missing title."""
+    proj_data_no_description = proj_data.copy()
+    proj_data_no_description.pop("description")
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        data=json.dumps(proj_data_no_description),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "description" in response_json
+        and response_json["description"].get("message") == "A project description is required."
+    )
+
+
+def test_create_project_none_description(client):
+    """Make request with missing title."""
+    proj_data_none_description = proj_data.copy()
+    proj_data_none_description["description"] = None
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        data=json.dumps(proj_data_none_description),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "description" in response_json
+        and response_json["description"].get("message") == "A project description is required."
+    )
+
+
+def test_create_project_no_pi(client):
+    """Make request with missing title."""
+    proj_data_no_pi = proj_data.copy()
+    proj_data_no_pi.pop("pi")
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        data=json.dumps(proj_data_no_pi),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "pi" in response_json
+        and response_json["pi"].get("message") == "A principal investigator is required."
+    )
+
+
+def test_create_project_none_pi(client):
+    """Make request with missing title."""
+    proj_data_none_pi = proj_data.copy()
+    proj_data_none_pi["pi"] = None
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        data=json.dumps(proj_data_none_pi),
+        content_type="application/json",
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "pi" in response_json
+        and response_json["pi"].get("message") == "A principal investigator is required."
+    )
+
+
 def test_create_project_without_credentials(client):
     """Create project without valid user credentials."""
     response = client.post(

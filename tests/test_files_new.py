@@ -60,6 +60,7 @@ def test_new_file_empty(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert "Required data missing from request" in response_json.get("message")
@@ -77,6 +78,7 @@ def test_new_file_no_project(client):
         data=json.dumps(first_new_file),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -94,6 +96,7 @@ def test_new_file_project_none(client):
         data=json.dumps(first_new_file),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -111,6 +114,7 @@ def test_new_file_unknown_field(client):
         data=json.dumps(first_new_file),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -131,6 +135,7 @@ def test_new_file_missing_name(client):
         data=json.dumps(file_no_name),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert "name" in response_json and response_json["name"].get("message") == "File name required."
@@ -148,6 +153,7 @@ def test_new_file_name_none(client):
         data=json.dumps(file_no_name),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert "name" in response_json and response_json["name"].get("message") == "File name required."
@@ -165,6 +171,7 @@ def test_new_file_missing_nameinbucket(client):
         data=json.dumps(file_no_nameinbucket),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -185,6 +192,7 @@ def test_new_file_nameinbucket_none(client):
         data=json.dumps(file_no_nameinbucket),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -205,6 +213,7 @@ def test_new_file_missing_subpath(client):
         data=json.dumps(file_no_subpath),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -225,6 +234,7 @@ def test_new_file_subpath_none(client):
         data=json.dumps(file_no_subpath),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -245,6 +255,7 @@ def test_new_file_missing_size(client):
         data=json.dumps(file_no_size),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert "size" in response_json and response_json["size"].get("message") == "File size required."
@@ -262,6 +273,7 @@ def test_new_file_size_none(client):
         data=json.dumps(file_no_size),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert "size" in response_json and response_json["size"].get("message") == "File size required."
@@ -279,6 +291,7 @@ def test_new_file_missing_size_processed(client):
         data=json.dumps(file_no_size_processed),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -299,6 +312,7 @@ def test_new_file_size_processed_none(client):
         data=json.dumps(file_no_size_processed),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -319,6 +333,7 @@ def test_new_file_missing_compressed(client):
         data=json.dumps(file_no_compressed),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
@@ -340,6 +355,7 @@ def test_new_file_compressed_none(client):
         data=json.dumps(file_no_compressed),
         content_type="application/json",
     )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert response_json
     assert (
