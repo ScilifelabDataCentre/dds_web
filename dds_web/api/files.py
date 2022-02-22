@@ -76,6 +76,7 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
     @handle_validation_errors
     def post(self):
         """Add new file to DB."""

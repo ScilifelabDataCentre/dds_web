@@ -182,6 +182,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
 
     project = marshmallow.fields.String(
         required=True,
+        allow_none=False,
         error_messages={
             "required": {"message": "Project ID required."},
             "null": {"message": "Project ID required."},
