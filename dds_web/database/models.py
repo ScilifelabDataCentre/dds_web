@@ -17,6 +17,7 @@ import pathlib
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from cryptography.hazmat.primitives.twofactor import (
     hotp as twofactor_hotp,
+    totp as twofactor_totp,
     InvalidToken as twofactor_InvalidToken,
 )
 from cryptography.hazmat.primitives import hashes
@@ -358,9 +359,14 @@ class User(flask_login.UserMixin, db.Model):
     username = db.Column(db.String(50), primary_key=True, autoincrement=False)
     name = db.Column(db.String(255), unique=False, nullable=True)
     _password_hash = db.Column(db.String(98), unique=False, nullable=False)
+    # 2fa columns
     hotp_secret = db.Column(db.LargeBinary(20), unique=False, nullable=False)
     hotp_counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
     hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
+    totp_enabled = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    _totp_secret = db.Column(db.LargeBinary(64), unique=False, nullable=False)
+    totp_last_verified = db.Column(db.DateTime, unique=False, nullable=True)
+
     active = db.Column(db.Boolean)
     kd_salt = db.Column(db.LargeBinary(32), default=None)
     nonce = db.Column(db.LargeBinary(12), default=None)
@@ -484,6 +490,65 @@ class User(flask_login.UserMixin, db.Model):
         self.hotp_counter += 1
         # Reset the hotp_issue_time to allow a new code to be issued
         self.hotp_issue_time = None
+        db.session.commit()
+
+    def setup_totp_secret(self):
+        """Generate random 512 bit as the new totp secret and return provisioning URI"""
+        self._totp_secret = os.urandom(64)
+        db.session.commit()
+
+    def get_totp_secret(self):
+        """Returns the users totp provisioning URI. Can only be sent before totp has been enabled."""
+        if self.totp_enabled:
+            # Can not be fetched again after it has been enabled
+            raise AuthenticationError("TOTP secret already enabled.")
+        totp = twofactor_totp.TOTP(self._totp_secret, 6, hashes.SHA512(), 30)
+        return totp.get_provisioning_uri(account_name=self.username, issuer="Data Delivery System")
+
+    def activate_totp(self):
+        """Set TOTP as the preferred means of second factor authentication.
+        Should be called after first totp token is verified
+        """
+        self.totp_enabled = True
+        db.session.commit()
+
+    def verify_totp(self, token):
+        """Verify the totp token. Checks the previous, current and comming time frame
+        to allow for some clock drift.
+
+        raises AuthenticationError if token is invalid, has expired or
+        if totp has been successfully verified within the last 90 seconds.
+        """
+        # can't use totp successfully more than once within 90 seconds.
+        # Time frame chosen so that no one can use the same token more than once
+        current_time = dds_web.utils.current_time()
+        if self.totp_last_used is not None and (
+            current_time - self.totp_last_used < datetime.timedelta(seconds=90)
+        ):
+            raise AuthenticationError(
+                "Authentication with TOTP needs to be at least 90 seconds apart."
+            )
+
+        # construct object
+        totp = twofactor_totp.TOTP(self._totp_secret, 6, hashes.SHA512(), 30)
+
+        # attempt to verify the token
+        # Allow for clock drift of 1 frame before or after
+        verified = False
+        for t_diff in [-30, 0, 30]:
+            verification_time = (current_time + datetime.timedelta(seconds=t_diff)).strftime("%s")
+            try:
+                totp.verify(token, verification_time)
+                verified = True
+                break
+            except twofactor_InvalidToken:
+                pass
+
+        if not verified:
+            raise AuthenticationError("Invalid TOTP token.")
+
+        # if the token is valid, save time of last successful verification
+        self.totp_last_used = current_time
         db.session.commit()
 
     # Email related

@@ -151,6 +151,44 @@ def register():
     return flask.render_template("user/register.html", form=form)
 
 
+@auth_blueprint.route("/activate_totp/<token>", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["GET", "POST"],
+    error_message=ddserr.TooManyRequestsError.description,
+)
+@flask_login.login_required
+def activate_totp(token):
+    user = flask_login.current_user
+
+    form = forms.ActivateTOTPForm()
+
+    dds_web.security.verify_activate_totp_token(token)
+
+    if flask.request.method == "GET":
+        if user.totp_enabled:
+            flask.flash("Two-factor authentication via TOTP is already enabled.")
+            return flask.redirect(flask.url_for("auth_blueprint.index"))
+
+        user.setup_totp_secret()
+        secret, uri = user.get_totp_secret()
+
+        return flask.render_template("user/activate_totp.html", secret=secret, uri=uri, form=form)
+
+    # POST request
+    if form.validate_on_submit():
+        if user.verify_totp(form.totp_code.data.encode()):
+            user.activate_totp()
+
+            flask.flash("Two-factor authentication via TOTP has been enabled.")
+            return flask.redirect(flask.url_for("auth_blueprint.index"))
+
+        flask.flash("Invalid two-factor authentication code.")
+
+    secret, uri = user.get_totp_secret()
+    return flask.render_template("user/activate_totp.html", secret=secret, uri=uri, form=form)
+
+
 @auth_blueprint.route("/cancel_2fa", methods=["POST"])
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,

@@ -249,7 +249,8 @@ def __handle_multi_factor_authentication(user, mfa_auth_time_string):
             if mfa_auth_time >= dds_web.utils.current_time() - MFA_EXPIRES_IN:
                 return user
 
-        send_hotp_email(user)
+        if not user.totp_enabled:
+            send_hotp_email(user)
 
         if flask.request.path.endswith("/user/second_factor"):
             return user
