@@ -205,7 +205,7 @@ class AddUser(flask_restful.Resource):
                             project=unit_project,
                         )
 
-                if project:  # specified project is disregarded for unituser invites
+                if not project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
                 else:
                     msg = f"{str(new_invite)} was successful, but specification for {str(project)} dropped. Unit Users have automatic access to projects of their unit."
