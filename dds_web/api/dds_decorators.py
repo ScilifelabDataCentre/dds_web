@@ -44,7 +44,7 @@ def handle_validation_errors(func):
 
         try:
             result = func(*args, **kwargs)
-        except marshmallow.exceptions.ValidationError as valerr:
+        except (marshmallow.exceptions.ValidationError) as valerr:
             if "_schema" in valerr.messages:
                 return valerr.messages["_schema"][0], 400
             else:

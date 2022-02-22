@@ -63,12 +63,24 @@ class CreateProjectSchema(marshmallow.Schema):
     class Meta:
         unknown = marshmallow.EXCLUDE
 
-    title = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
+    title = marshmallow.fields.String(
+        required=True,
+        validate=marshmallow.validate.Length(min=1),
+        error_messages={
+            "required": {"message": "Title is required."},
+            "null": {"message": "The project title cannot be empty."},
+            "validator_failed": {"message": "Invalid project title."},
+        },
+    )
     description = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(min=1)
+        required=True,
+        validate=marshmallow.validate.Length(min=1),
+        error_messages={"required": {"message": "A description is required.", "code": 400}},
     )
     pi = marshmallow.fields.String(
-        required=True, validate=marshmallow.validate.Length(min=1, max=255)
+        required=True,
+        validate=marshmallow.validate.Length(min=1, max=255),
+        error_messages={"required": {"message": "Project title is required.", "code": 400}},
     )
     non_sensitive = marshmallow.fields.Boolean(required=False, default=False)
     date_created = custom_fields.MyDateTimeField(required=False)
@@ -168,10 +180,16 @@ class CreateProjectSchema(marshmallow.Schema):
 class ProjectRequiredSchema(marshmallow.Schema):
     """Schema for verifying an existing project in args and database."""
 
-    project = marshmallow.fields.String(required=True)
+    project = marshmallow.fields.String(
+        required=True,
+        error_messages={
+            "required": {"message": "Project ID required."},
+            "null": {"message": "Project ID required."},
+        },
+    )
 
     class Meta:
-        unknown = marshmallow.EXCLUDE  # TODO: Change to RAISE
+        unknown = marshmallow.EXCLUDE
 
     @marshmallow.validates("project")
     def validate_project(self, value):
