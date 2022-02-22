@@ -397,8 +397,8 @@ def test_add_existing_user_to_existing_project_no_mail_flag(client):
                 data=json.dumps(user_copy),
                 content_type="application/json",
             )
-        # assert that no mail is being sent: One call is due to 2FA
-        assert mock_mail_send.call_count == 1
+        # assert that no mail is being sent.
+        assert mock_mail_send.call_count == 0
         assert mock_mail_func.called == False
 
     assert response.status_code == http.HTTPStatus.OK
