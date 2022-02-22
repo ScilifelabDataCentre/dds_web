@@ -16,3 +16,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Check if user is active before allowing password reset ([903](https://github.com/ScilifelabDataCentre/dds_web/pull/903))
 * Add support for database migrations using flask-migrate/Alembic ([#890](https://github.com/ScilifelabDataCentre/dds_web/pull/890))
 * Invite Researchers to projects ([911](https://github.com/ScilifelabDataCentre/dds_web/pull/911))
+* Changed `is_sensitive` to `non_sensitive` and set to default False ([#913](https://github.com/ScilifelabDataCentre/dds_web/pull/913))

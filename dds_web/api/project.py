@@ -214,7 +214,6 @@ class ProjectStatus(flask_restful.Resource):
         proj.description = None
         proj.pi = None
         proj.public_key = None
-        proj.is_sensitive = None
         proj.unit_id = None
         proj.created_by = None
         # Delete User associations

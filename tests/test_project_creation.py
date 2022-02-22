@@ -83,7 +83,7 @@ def test_create_project_with_credentials(client, boto3_session):
     assert (
         created_proj
         and created_proj.date_created > time_before_run
-        and not created_proj.is_sensitive
+        and not created_proj.non_sensitive
     )
 
 
@@ -146,7 +146,7 @@ def test_create_project_with_malformed_json(client):
 def test_create_project_sensitive(client, boto3_session):
     """Create a sensitive project."""
     p_data = proj_data
-    p_data["is_sensitive"] = True
+    p_data["non_sensitive"] = False
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
@@ -160,7 +160,7 @@ def test_create_project_sensitive(client, boto3_session):
         pi=proj_data["pi"],
         description=proj_data["description"],
     ).one_or_none()
-    assert created_proj and created_proj.is_sensitive
+    assert created_proj and not created_proj.non_sensitive
 
 
 def test_create_project_description_too_short(client):
@@ -248,7 +248,7 @@ def test_create_project_wrong_status(client, boto3_session):
 
 
 def test_create_project_sensitive_not_boolean(client):
-    """Create project with incorrect is_sensitive format."""
+    """Create project with incorrect non_sensitive format."""
     proj_data_sensitive_not_boolean = proj_data.copy()
     proj_data_sensitive_not_boolean["is_sensitive"] = "test"
     response = client.post(
