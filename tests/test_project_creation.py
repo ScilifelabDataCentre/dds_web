@@ -250,7 +250,7 @@ def test_create_project_wrong_status(client, boto3_session):
 def test_create_project_sensitive_not_boolean(client):
     """Create project with incorrect non_sensitive format."""
     proj_data_sensitive_not_boolean = proj_data.copy()
-    proj_data_sensitive_not_boolean["is_sensitive"] = "test"
+    proj_data_sensitive_not_boolean["non_sensitive"] = "test"
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
