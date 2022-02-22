@@ -724,7 +724,9 @@ class RemoveUserAssociation(flask_restful.Resource):
             f"User {existing_user.username} no longer associated with project {project.public_id}."
         )
 
-        return {"message": f"User with email {user_email} no longer associated with {project_id}."}
+        return {
+            "message": f"User with email {user_email} no longer associated with {project.public_id}."
+        }
 
 
 class EncryptedToken(flask_restful.Resource):
