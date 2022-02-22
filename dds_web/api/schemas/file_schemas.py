@@ -22,7 +22,11 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
     """Validates and creates a new file object."""
 
     # Length minimum 1 required, required=True accepts empty string
-    name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(min=1))
+    name = marshmallow.fields.String(
+        required=True,
+        validate=marshmallow.validate.Length(min=1),
+        error_messages={"required": {"message": "File name required."}},
+    )
     name_in_bucket = marshmallow.fields.String(
         required=True, validate=marshmallow.validate.Length(min=1)
     )

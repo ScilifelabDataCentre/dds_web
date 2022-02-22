@@ -54,51 +54,51 @@ def project_row(project_id):
 # TESTS #################################################################################### TESTS #
 
 
-def test_new_file_empty(client):
-    """Make empty request."""
-    response = client.post(
-        tests.DDSEndpoint.FILE_NEW,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-    )
-    response_json = response.json
-    assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+# def test_new_file_empty(client):
+#     """Make empty request."""
+#     response = client.post(
+#         tests.DDSEndpoint.FILE_NEW,
+#         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+#     )
+#     response_json = response.json
+#     assert response_json
+#     assert (
+#         "project" in response_json
+#         and response_json["project"].get("message") == "Project ID required."
+#     )
 
 
-def test_new_file_project_none(client):
-    """Make request with project as None."""
-    response = client.post(
-        tests.DDSEndpoint.FILE_NEW,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": None},
-    )
-    response_json = response.json
-    assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+# def test_new_file_project_none(client):
+#     """Make request with project as None."""
+#     response = client.post(
+#         tests.DDSEndpoint.FILE_NEW,
+#         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+#         query_string={"project": None},
+#     )
+#     response_json = response.json
+#     assert response_json
+#     assert (
+#         "project" in response_json
+#         and response_json["project"].get("message") == "Project ID required."
+#     )
 
 
-def test_new_file_unknown_field(client):
-    """Make request with unknown field passed."""
-    response = client.post(
-        tests.DDSEndpoint.FILE_NEW,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"test": "project_id"},
-    )
-    response_json = response.json
-    assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+# def test_new_file_unknown_field(client):
+#     """Make request with unknown field passed."""
+#     response = client.post(
+#         tests.DDSEndpoint.FILE_NEW,
+#         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+#         query_string={"test": "project_id"},
+#     )
+#     response_json = response.json
+#     assert response_json
+#     assert (
+#         "project" in response_json
+#         and response_json["project"].get("message") == "Project ID required."
+#     )
 
 
-def test_new_file_unknown_field(client):
+def test_new_file_missing_name(client):
     """Make request with unknown field passed."""
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
@@ -107,10 +107,7 @@ def test_new_file_unknown_field(client):
     )
     response_json = response.json
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert "name" in response_json and response_json["name"].get("message") == "File name required."
 
 
 # def test_new_file(client):
