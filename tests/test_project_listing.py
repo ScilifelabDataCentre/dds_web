@@ -76,7 +76,9 @@ def test_proj_private_without_project(client):
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJ_PRIVATE, headers=token)
     response_json = response.json
-    assert "Required information missing" in response_json.get("message")
+    assert "project" in response_json
+    assert isinstance(response_json["project"], list)
+    assert "Missing data for required field" in response_json["project"][0]
 
 
 def test_proj_public_no_token(client):
@@ -94,7 +96,9 @@ def test_proj_public_no_project(client):
     response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, headers=token)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
-    assert "Required information missing" in response_json.get("message")
+    assert "project" in response_json
+    assert isinstance(response_json["project"], list)
+    assert "Missing data for required field" in response_json["project"][0]
 
 
 def test_proj_public_insufficient_credentials(client):

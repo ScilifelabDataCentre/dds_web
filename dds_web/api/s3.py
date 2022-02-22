@@ -34,10 +34,10 @@ class S3Info(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
-    @args_required
     @handle_validation_errors
     def get(self):
-        """Get the safespring project"""
+        """Get the safespring project."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         try:

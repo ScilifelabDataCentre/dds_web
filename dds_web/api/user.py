@@ -419,7 +419,7 @@ class DeleteUserSelf(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     def delete(self):
-
+        """Request deletion of own account."""
         current_user = auth.current_user()
 
         email_str = current_user.primary_email
@@ -521,17 +521,17 @@ class UserActivation(flask_restful.Resource):
     @handle_validation_errors
     def post(self):
         # Verify that user specified
-        extra_args = flask.request.json
+        json_input = flask.request.json
 
-        if "email" not in extra_args:
+        if "email" not in json_input:
             raise ddserr.DDSArgumentError(message="User email missing.")
 
-        user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
+        user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
         if not user:
             raise ddserr.NoSuchUserError()
 
         # Verify that the action is specified -- reactivate or deactivate
-        action = flask.request.json.get("action")
+        action = json_input.get("action")
         if action is None or action == "":
             raise ddserr.DDSArgumentError(
                 message="Please provide an action 'deactivate' or 'reactivate' for this request."
@@ -609,7 +609,6 @@ class DeleteUser(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
-    @json_required
     @handle_validation_errors
     def delete(self):
 
@@ -674,22 +673,18 @@ class DeleteUser(flask_restful.Resource):
 class RemoveUserAssociation(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
-    @args_required
     @json_required
     @handle_validation_errors
     def post(self):
         """Remove a user from a project"""
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        json_input = flask.request.json
 
-        project_id = flask.request.args.get("project")
-
-        args = flask.request.json
-
-        if not (user_email := args.get("email")):
+        if not (user_email := json_input.get("email")):
             raise ddserr.DDSArgumentError(message="User email missing.")
 
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load({"email": user_email})
-        project = project_schemas.ProjectRequiredSchema().load({"project": project_id})
 
         if not existing_user:
             raise ddserr.NoSuchUserError(
@@ -759,7 +754,6 @@ class SecondFactor(flask_restful.Resource):
     """Take in and verify an authentication one-time code entered by an authenticated user with basic credentials"""
 
     @auth.login_required
-    @json_required
     @handle_validation_errors
     def get(self):
 
