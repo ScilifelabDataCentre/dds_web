@@ -68,10 +68,6 @@ def test_new_file_empty(client):
 
 def test_new_file_no_project(client):
     """Make request with no project ID."""
-
-    project_1 = project_row(project_id="file_testing_project")
-    assert project_1
-
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
