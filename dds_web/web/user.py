@@ -380,15 +380,15 @@ def reset_password(token):
 
         flask.flash("Your password has been updated! You are now able to log in.", "success")
         flask.session["reset_token"] = token
-        return flask.redirect(flask.url_for("auth_blueprint.confirm_password_reset"))
+        return flask.redirect(flask.url_for("auth_blueprint.password_reset_completed"))
 
     # Go to form
     return flask.render_template("user/reset_password.html", form=form)
 
 
-@auth_blueprint.route("/confirm_password_reset", methods=["GET"])
+@auth_blueprint.route("/password_reset_completed", methods=["GET"])
 @logging_bind_request
-def confirm_password_reset():
+def password_reset_completed():
     """Landing page after password reset"""
 
     token = flask.session["reset_token"]
@@ -410,7 +410,7 @@ def confirm_password_reset():
             ] = project.responsible_unit.contact_email
 
     return flask.render_template(
-        "user/confirm_password_reset.html", units_to_contact=units_to_contact
+        "user/password_reset_completed.html", units_to_contact=units_to_contact
     )
 
 
