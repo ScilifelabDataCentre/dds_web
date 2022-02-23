@@ -379,10 +379,39 @@ def reset_password(token):
         db.session.commit()
 
         flask.flash("Your password has been updated! You are now able to log in.", "success")
-        return flask.redirect(flask.url_for("auth_blueprint.login"))
+        flask.session["reset_token"] = token
+        return flask.redirect(flask.url_for("auth_blueprint.password_reset_completed"))
 
     # Go to form
     return flask.render_template("user/reset_password.html", form=form)
+
+
+@auth_blueprint.route("/password_reset_completed", methods=["GET"])
+@logging_bind_request
+def password_reset_completed():
+    """Landing page after password reset"""
+
+    token = flask.session["reset_token"]
+    flask.session.pop("reset_token", None)
+    try:
+        user = dds_web.security.auth.verify_password_reset_token(token=token)
+        if not user.is_active:
+            flask.flash("Your account is not active.", "warning")
+            return flask.redirect(flask.url_for("auth_blueprint.index"))
+    except ddserr.AuthenticationError:
+        flask.flash("That is an invalid or expired token", "warning")
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
+
+    units_to_contact = {}
+    for project in user.projects:
+        if project.responsible_unit.external_display_name not in units_to_contact:
+            units_to_contact[
+                project.responsible_unit.external_display_name
+            ] = project.responsible_unit.contact_email
+
+    return flask.render_template(
+        "user/password_reset_completed.html", units_to_contact=units_to_contact
+    )
 
 
 @auth_blueprint.route("/change_password", methods=["GET", "POST"])
