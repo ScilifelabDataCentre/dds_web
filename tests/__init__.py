@@ -135,6 +135,7 @@ class DDSEndpoint:
     USER_NEW = "/register"
     REQUEST_RESET_PASSWORD = "/reset_password"
     RESET_PASSWORD = "/reset_password/"
+    CONFIRM_PASSWORD_RESET = "/confirm_password_reset"
 
     # User INFO
     USER_INFO = BASE_ENDPOINT + "/user/info"
