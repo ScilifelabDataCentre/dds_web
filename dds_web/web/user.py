@@ -5,7 +5,9 @@
 ####################################################################################################
 
 # Standard Library
+import base64
 import datetime
+import io
 import re
 
 # Installed
@@ -14,6 +16,7 @@ import werkzeug
 from dds_web.api import db_tools
 import flask_login
 import itsdangerous
+import qrcode
 import sqlalchemy
 
 # Own Modules
@@ -163,7 +166,7 @@ def activate_totp(token):
 
     form = forms.ActivateTOTPForm()
 
-    dds_web.security.verify_activate_totp_token(token)
+    dds_web.security.auth.verify_activate_totp_token(token, current_user=user)
 
     if flask.request.method == "GET":
         if user.totp_enabled:
@@ -171,9 +174,19 @@ def activate_totp(token):
             return flask.redirect(flask.url_for("auth_blueprint.index"))
 
         user.setup_totp_secret()
-        secret, uri = user.get_totp_secret()
+        totp_secret, totp_uri = user.get_totp_secret()
 
-        return flask.render_template("user/activate_totp.html", secret=secret, uri=uri, form=form)
+        qrcode = qrcode.make(totp_uri)
+        stream = io.BytesIO()
+        qrcode.save(stream, "svg")
+
+        return flask.render_template(
+            "user/activate_totp.html",
+            totp_secret=totp_secret,
+            totp_uri=totp_uri,
+            qrcode=base64.b64encode(stream.getvalue()),
+            form=form,
+        )
 
     # POST request
     if form.validate_on_submit():
