@@ -233,7 +233,7 @@ def test_reset_password_researchuser(client):
         tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, json=form_data, follow_redirects=True
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.CONFIRM_PASSWORD_RESET
+    assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
 
     user = models.User.query.filter_by(username="researchuser").first()
 
@@ -285,7 +285,7 @@ def test_reset_password_project_owner(client):
         tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, json=form_data, follow_redirects=True
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.CONFIRM_PASSWORD_RESET
+    assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
 
     user = models.User.query.filter_by(username="projectowner").first()
 
@@ -337,7 +337,7 @@ def test_reset_password_unituser(client):
         tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, json=form_data, follow_redirects=True
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.CONFIRM_PASSWORD_RESET
+    assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
 
     user = models.User.query.filter_by(username="unituser").first()
 
