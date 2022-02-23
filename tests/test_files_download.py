@@ -11,27 +11,29 @@ from dds_web.database import models
 import tests
 
 
-def test_file_download_empty(client):
-    """Make empty request."""
+def get_json_file_info(client, args: dict, user_type="researchuser") -> dict:
+    """Make a request for file info."""
     response = client.get(
         tests.DDSEndpoint.FILE_INFO,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS[user_type]).token(client),
+        **args,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    response_json = response.json
+    return response.json
+
+
+def test_file_download_empty(client):
+    """Make empty request."""
+    args = {}
+    response_json = get_json_file_info(client, args)
     assert response_json
     assert "Required data missing from request" in response_json.get("message")
 
 
 def test_file_download_no_project(client):
     """Make request with no project ID."""
-    response = client.get(
-        tests.DDSEndpoint.FILE_INFO,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        json=["filename1"],
-    )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    response_json = response.json
+    args = {"json": ["filename1"]}
+    response_json = get_json_file_info(client, args)
     assert response_json
     assert (
         "project" in response_json
@@ -41,31 +43,21 @@ def test_file_download_no_project(client):
 
 def test_file_download_project_none(client):
     """Make request with project as None."""
-    response = client.get(
-        tests.DDSEndpoint.FILE_INFO,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        query_string={"project": None},
-        json=["filename1"],
-    )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    response_json = response.json
+    args = {"json": ["filename1"],
+            "query_string": {"project": None},}
+    response_json = get_json_file_info(client, args)
     assert response_json
     assert (
         "project" in response_json
-        and response_json["project"].get("message") == "Project ID cannot be null."
+        and response_json["project"].get("message") == "Project ID required."
     )
 
 
 def test_file_download_unknown_field(client):
     """Make request with unknown field passed."""
-    response = client.get(
-        tests.DDSEndpoint.FILE_INFO,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        query_string={"test": "test"},
-        json=["filename1"],
-    )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    response_json = response.json
+    args = {"json": ["filename1"],
+            "query_string": {"test": "test"},}
+    response_json = get_json_file_info(client, args)
     assert response_json
     assert (
         "project" in response_json
@@ -76,14 +68,21 @@ def test_file_download_unknown_field(client):
 # ---
 
 
-def test_file_download_empty(client):
+def get_json_file_info_all(client, args: dict, user_type="researchuser") -> dict:
+    """Make a request for file info."""
+    response = client.get(
+        tests.DDSEndpoint.FILE_INFO_ALL,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS[user_type]).token(client),
+        **args,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    return response.json
+
+
+def test_file_download_empty_all(client):
     """Make empty request."""
-    response = client.get(
-        tests.DDSEndpoint.FILE_INFO_ALL,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-    )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    response_json = response.json
+    args = {}
+    response_json = get_json_file_info_all(client, args)
     assert response_json
     assert (
         "project" in response_json
@@ -91,15 +90,10 @@ def test_file_download_empty(client):
     )
 
 
-def test_file_download_project_none(client):
+def test_file_download_project_none_all(client):
     """Make request with project as None."""
-    response = client.get(
-        tests.DDSEndpoint.FILE_INFO_ALL,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        query_string={"project": None},
-    )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    response_json = response.json
+    args = {"query_string": {"project": None}}
+    response_json = get_json_file_info_all(client, args)
     assert response_json
     assert (
         "project" in response_json
@@ -107,15 +101,10 @@ def test_file_download_project_none(client):
     )
 
 
-def test_file_download_unknown_field(client):
+def test_file_download_unknown_field_all(client):
     """Make request with unknown field passed."""
-    response = client.get(
-        tests.DDSEndpoint.FILE_INFO_ALL,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        query_string={"test": "test"},
-    )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    response_json = response.json
+    args = {"query_string": {"test": "test"}}
+    response_json = get_json_file_info_all(client, args)
     assert response_json
     assert (
         "project" in response_json
