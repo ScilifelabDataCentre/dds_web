@@ -52,7 +52,7 @@ def test_file_download_project_none(client):
     assert response_json
     assert (
         "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
+        and response_json["project"].get("message") == "Project ID cannot be null."
     )
 
 

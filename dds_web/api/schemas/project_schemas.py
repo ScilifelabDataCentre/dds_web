@@ -193,7 +193,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
         allow_none=False,
         error_messages={
             "required": {"message": "Project ID required."},
-            "null": {"message": "Project ID required."},
+            "null": {"message": "Project ID cannot be null."},
         },
     )
 
