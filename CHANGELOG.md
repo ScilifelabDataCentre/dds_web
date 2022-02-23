@@ -18,4 +18,6 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Invite Researchers to projects ([911](https://github.com/ScilifelabDataCentre/dds_web/pull/911))
 * Changed `is_sensitive` to `non_sensitive` and set to default False ([#913](https://github.com/ScilifelabDataCentre/dds_web/pull/913))
 * Rearrangement and clean up of the token ([910](https://github.com/ScilifelabDataCentre/dds_web/pull/910))
+
+## Sprint (2022-02-23 - 2022-03-09)
 * Add landing page after password reset ([931](https://github.com/ScilifelabDataCentre/dds_web/pull/931))
