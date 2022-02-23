@@ -56,7 +56,7 @@ def test_fix_access_no_args(client):
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert response.json.get("message") == "Required information missing."
+    assert "Required data missing" in response.json.get("message")
 
     # Unit Personnel
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
@@ -65,7 +65,7 @@ def test_fix_access_no_args(client):
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert response.json.get("message") == "Required information missing."
+    assert "Required data missing" in response.json.get("message")
 
 
 def test_fix_access_no_email(client):
@@ -76,8 +76,7 @@ def test_fix_access_no_email(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"something": "notanemail"}),
-        content_type="application/json",
+        json={"something": "notanemail"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert response.json.get("message") == "User email missing."
@@ -91,8 +90,7 @@ def test_fix_access_projectowner_with_invalid_email(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "notanemail@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "notanemail@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert response.json.get("message") == "User not found."
@@ -105,8 +103,7 @@ def test_fix_access_projectowner_valid_email_invalid_otheruser(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "unituser1@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "unituser1@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert "You do not have the necessary permissions" in response.json.get("message")
@@ -115,8 +112,7 @@ def test_fix_access_projectowner_valid_email_invalid_otheruser(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "unitadmin@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "unitadmin@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert "You do not have the necessary permissions" in response.json.get("message")
@@ -129,8 +125,7 @@ def test_fix_access_unituser_valid_email_invalid_otheruser(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "unitadmin@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "unitadmin@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert "You do not have the necessary permissions" in response.json.get("message")
@@ -143,8 +138,7 @@ def test_fix_access_user_trying_themselves(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "projectowner@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "projectowner@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert response.json.get("message") == "You cannot renew your own access."
@@ -154,8 +148,7 @@ def test_fix_access_user_trying_themselves(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "unituser1@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "unituser1@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert response.json.get("message") == "You cannot renew your own access."
@@ -165,8 +158,7 @@ def test_fix_access_user_trying_themselves(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "unitadmin@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "unitadmin@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert response.json.get("message") == "You cannot renew your own access."
@@ -203,8 +195,7 @@ def test_fix_access_projectowner_valid_email(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "researchuser@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "researchuser@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -240,8 +231,7 @@ def test_fix_access_unitpersonnel_valid_email_researcher(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "researchuser@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "researchuser@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -277,8 +267,7 @@ def test_fix_access_unitpersonnel_valid_email_projectowner(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "projectowner@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "projectowner@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -309,8 +298,7 @@ def test_fix_access_unitpersonnel_valid_email_unitpersonnel(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "unituser2@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "unituser2@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -346,8 +334,7 @@ def test_fix_access_unitadmin_valid_email_researcher(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "researchuser@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "researchuser@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -383,8 +370,7 @@ def test_fix_access_unitadmin_valid_email_projectowner(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "projectowner@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "projectowner@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -415,8 +401,7 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
         tests.DDSEndpoint.PROJECT_ACCESS,
         headers=token,
         query_string=proj_query,
-        data=json.dumps({"email": "unituser1@mailtrap.io"}),
-        content_type="application/json",
+        json={"email": "unituser1@mailtrap.io"},
     )
     assert response.status_code == http.HTTPStatus.OK
 

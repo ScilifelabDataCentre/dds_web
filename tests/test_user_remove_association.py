@@ -14,8 +14,7 @@ def test_remove_user_from_project(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_with_existing_users),
-        content_type="application/json",
+        json=proj_data_with_existing_users,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -26,8 +25,7 @@ def test_remove_user_from_project(client, boto3_session):
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(rem_user),
-        content_type="application/json",
+        json=rem_user,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert (
@@ -44,8 +42,7 @@ def test_remove_not_associated_user_from_project(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data),
-        content_type="application/json",
+        json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -57,8 +54,7 @@ def test_remove_not_associated_user_from_project(client, boto3_session):
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(rem_user),
-        content_type="application/json",
+        json=rem_user,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Cannot remove non-existent project access" in response.json["message"]
@@ -70,8 +66,7 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_with_existing_users),
-        content_type="application/json",
+        json=proj_data_with_existing_users,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -82,8 +77,7 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(rem_user),
-        content_type="application/json",
+        json=rem_user,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -101,8 +95,7 @@ def test_remove_existing_user_from_nonexistent_proj(client, boto3_session):
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(rem_user),
-        content_type="application/json",
+        json=rem_user,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST

@@ -46,8 +46,7 @@ def test_add_user_with_researcher(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        data=json.dumps(first_new_user),
-        content_type="application/json",
+        json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
@@ -58,8 +57,7 @@ def test_add_user_with_unituser_no_role(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(first_new_email),
-        content_type="application/json",
+        json=first_new_email,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
@@ -70,8 +68,7 @@ def test_add_user_with_unitadmin_with_extraargs(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(first_new_user_extra_args),
-        content_type="application/json",
+        json=first_new_user_extra_args,
     )
     assert response.status_code == http.HTTPStatus.OK
     invited_user = models.Invite.query.filter_by(
@@ -84,8 +81,7 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(first_new_user_invalid_role),
-        content_type="application/json",
+        json=first_new_user_invalid_role,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     invited_user = models.Invite.query.filter_by(
@@ -96,13 +92,12 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
 
 def test_add_user_with_unitadmin_and_invalid_email(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        with pytest.raises(marshmallow.ValidationError):
-            response = client.post(
-                tests.DDSEndpoint.USER_ADD,
-                headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-                data=json.dumps(first_new_user_invalid_email),
-                content_type="application/json",
-            )
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            json=first_new_user_invalid_email,
+        )
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
         # An email is always sent when receiving the partial token
         mock_mail_send.assert_called_once()
 
@@ -118,8 +113,7 @@ def test_add_user_with_unitadmin(client):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=token,
-            data=json.dumps(first_new_user),
-            content_type="application/json",
+            json=first_new_user,
         )
         # One mail sent for partial token and one for the invite
         assert mock_mail_send.call_count == 2
@@ -141,8 +135,7 @@ def test_add_user_with_unitadmin(client):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=token,
-            data=json.dumps(first_new_user),
-            content_type="application/json",
+            json=first_new_user,
         )
         # No new mail should be sent for the token and neither for an invite
         assert mock_mail_send.call_count == 0
@@ -158,8 +151,7 @@ def test_add_unit_user_with_unitadmin(client):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=token,
-            data=json.dumps(new_unit_user),
-            content_type="application/json",
+            json=new_unit_user,
         )
         # One mail sent for partial token and one for the invite
         assert mock_mail_send.call_count == 2
@@ -194,8 +186,7 @@ def test_add_unit_user_with_unitadmin(client):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=token,
-            data=json.dumps(new_unit_user),
-            content_type="application/json",
+            json=new_unit_user,
         )
         # No new mail should be sent for the token and neither for an invite
         assert mock_mail_send.call_count == 0
@@ -212,8 +203,7 @@ def test_add_user_with_superadmin(client):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=token,
-            data=json.dumps(first_new_user),
-            content_type="application/json",
+            json=first_new_user,
         )
         # One mail sent for partial token and one for the invite
         assert mock_mail_send.call_count == 2
@@ -229,8 +219,7 @@ def test_add_user_with_superadmin(client):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=token,
-            data=json.dumps(first_new_user),
-            content_type="application/json",
+            json=first_new_user,
         )
         # No new mail should be sent for the token and neither for an invite
         assert mock_mail_send.call_count == 0
@@ -248,8 +237,7 @@ def test_add_user_existing_email_no_project(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(existing_invite),
-        content_type="application/json",
+        json=existing_invite,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -258,8 +246,7 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(new_unit_admin),
-        content_type="application/json",
+        json=new_unit_admin,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -272,8 +259,7 @@ def test_add_existing_user_without_project(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(existing_research_user),
-        content_type="application/json",
+        json=existing_research_user,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -298,8 +284,7 @@ def test_research_user_cannot_add_existing_user_to_existing_project(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -333,8 +318,7 @@ def test_project_owner_can_add_existing_user_to_existing_project(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -367,8 +351,7 @@ def test_add_existing_user_to_existing_project(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -402,8 +385,7 @@ def test_add_existing_user_to_existing_project_after_release(client):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps({"new_status": "Available"}),
-        content_type="application/json",
+        json={"new_status": "Available"},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Available"
@@ -412,8 +394,7 @@ def test_add_existing_user_to_existing_project_after_release(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -433,8 +414,7 @@ def test_add_existing_user_to_nonexistent_proj(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -459,8 +439,7 @@ def test_existing_user_change_ownership(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(user_new_owner_status),
-        content_type="application/json",
+        json=user_new_owner_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -477,8 +456,7 @@ def test_existing_user_change_ownership_same_permissions(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(user_same_ownership),
-        content_type="application/json",
+        json=user_same_ownership,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -491,8 +469,7 @@ def test_add_existing_user_with_unsuitable_role(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(user_with_unsuitable_role),
-        content_type="application/json",
+        json=user_with_unsuitable_role,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -508,8 +485,7 @@ def test_invite_with_project_by_unituser(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(first_new_user),
-        content_type="application/json",
+        json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -537,8 +513,7 @@ def test_add_project_to_existing_invite_by_unituser(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(first_new_user),
-        content_type="application/json",
+        json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -555,8 +530,7 @@ def test_add_project_to_existing_invite_by_unituser(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(first_new_user),
-        content_type="application/json",
+        json=first_new_user,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -578,8 +552,7 @@ def test_update_project_to_existing_invite_by_unituser(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(first_new_user),
-        content_type="application/json",
+        json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -600,8 +573,7 @@ def test_update_project_to_existing_invite_by_unituser(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(first_new_owner),
-        content_type="application/json",
+        json=first_new_owner,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -621,8 +593,7 @@ def test_invited_as_owner_and_researcher_to_different_project(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(first_new_owner),
-        content_type="application/json",
+        json=first_new_owner,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -632,8 +603,7 @@ def test_invited_as_owner_and_researcher_to_different_project(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project2},
-        data=json.dumps(first_new_user),
-        content_type="application/json",
+        json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -676,8 +646,7 @@ def test_invite_to_project_by_project_owner(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
         query_string={"project": project},
-        data=json.dumps(first_new_user),
-        content_type="application/json",
+        json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.OK
 

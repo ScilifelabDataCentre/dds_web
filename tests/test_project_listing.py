@@ -49,7 +49,7 @@ def test_list_proj_unit_user(client):
     response = client.get(
         tests.DDSEndpoint.LIST_PROJ,
         headers=token,
-        data=json.dumps({"usage": True}),
+        json={"usage": True},
         content_type="application/json",
     )
 
@@ -74,10 +74,10 @@ def test_proj_private_without_project(client):
     """Attempting to get the private key without specifying a project"""
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
-    with pytest.raises(marshmallow.ValidationError) as error:
-        client.get(tests.DDSEndpoint.PROJ_PRIVATE, headers=token)
-    assert "project" in str(error.value)
-    assert "Missing data for required field." in str(error.value)
+    response = client.get(tests.DDSEndpoint.PROJ_PRIVATE, headers=token)
+    response_json = response.json
+    assert "project" in response_json
+    assert "Project ID required." in response_json["project"].get("message")
 
 
 def test_proj_public_no_token(client):
@@ -91,12 +91,12 @@ def test_proj_public_no_token(client):
 
 def test_proj_public_no_project(client):
     """Attempting to get public key without a project should not work"""
-    with pytest.raises(marshmallow.exceptions.ValidationError) as e_info:
-        token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
-        response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, headers=token)
-        assert response.status_code == http.HTTPStatus.BAD_REQUEST
-        response_json = response.json
-        assert "without project ID" in response_json.get("message")
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
+    response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, headers=token)
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert "project" in response_json
+    assert "Project ID required." in response_json["project"].get("message")
 
 
 def test_proj_public_insufficient_credentials(client):

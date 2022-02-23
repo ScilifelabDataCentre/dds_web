@@ -45,13 +45,146 @@ proj_data_with_unsuitable_user_roles = {
 # TESTS #################################################################################### TESTS #
 
 
+def test_create_project_empty(client):
+    """Make empty request."""
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert response_json
+    assert "Required data missing from request" in response_json.get("message")
+
+
+def test_create_project_unknown_field(client):
+    """Make request with unknown field passed."""
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json={"test": "test"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        response_json
+        and "title" in response_json
+        and response_json["title"].get("message") == "Title is required."
+    )
+
+
+def test_create_project_missing_title(client):
+    """Make request with missing title."""
+    proj_data_no_title = proj_data.copy()
+    proj_data_no_title.pop("title")
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=proj_data_no_title,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "title" in response_json and response_json["title"].get("message") == "Title is required."
+    )
+
+
+def test_create_project_none_title(client):
+    """Make request with missing title."""
+    proj_data_none_title = proj_data.copy()
+    proj_data_none_title["title"] = None
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=proj_data_none_title,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "title" in response_json and response_json["title"].get("message") == "Title is required."
+    )
+
+
+def test_create_project_no_description(client):
+    """Make request with missing title."""
+    proj_data_no_description = proj_data.copy()
+    proj_data_no_description.pop("description")
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=proj_data_no_description,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "description" in response_json
+        and response_json["description"].get("message") == "A project description is required."
+    )
+
+
+def test_create_project_none_description(client):
+    """Make request with missing title."""
+    proj_data_none_description = proj_data.copy()
+    proj_data_none_description["description"] = None
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=proj_data_none_description,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "description" in response_json
+        and response_json["description"].get("message") == "A project description is required."
+    )
+
+
+def test_create_project_no_pi(client):
+    """Make request with missing title."""
+    proj_data_no_pi = proj_data.copy()
+    proj_data_no_pi.pop("pi")
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=proj_data_no_pi,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "pi" in response_json
+        and response_json["pi"].get("message") == "A principal investigator is required."
+    )
+
+
+def test_create_project_none_pi(client):
+    """Make request with missing title."""
+    proj_data_none_pi = proj_data.copy()
+    proj_data_none_pi["pi"] = None
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=proj_data_none_pi,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert (
+        "pi" in response_json
+        and response_json["pi"].get("message") == "A principal investigator is required."
+    )
+
+
 def test_create_project_without_credentials(client):
     """Create project without valid user credentials."""
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        data=json.dumps(proj_data),
-        content_type="application/json",
+        json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     created_proj = models.Project.query.filter_by(
@@ -70,8 +203,7 @@ def test_create_project_with_credentials(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data),
-        content_type="application/json",
+        json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.OK
     created_proj = models.Project.query.filter_by(
@@ -89,13 +221,12 @@ def test_create_project_with_credentials(client, boto3_session):
 
 def test_create_project_no_title(client):
     """Create project without a title specified."""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps({"pi": "piName"}),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json={"pi": "piName"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -108,13 +239,12 @@ def test_create_project_title_too_short(client):
     """Create a project with too short title."""
     proj_data_short_title = proj_data.copy()
     proj_data_short_title["title"] = ""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_short_title),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data_short_title,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -130,8 +260,7 @@ def test_create_project_with_malformed_json(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data="",
-        content_type="application/json",
+        json="",
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     created_proj = models.Project.query.filter_by(
@@ -150,8 +279,7 @@ def test_create_project_sensitive(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(p_data),
-        content_type="application/json",
+        json=p_data,
     )
     assert response.status_code == http.HTTPStatus.OK
     created_proj = models.Project.query.filter_by(
@@ -167,13 +295,12 @@ def test_create_project_description_too_short(client):
     """Create a project with too short description."""
     proj_data_short_description = proj_data.copy()
     proj_data_short_description["description"] = ""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_short_description),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data_short_description,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -188,13 +315,12 @@ def test_create_project_pi_too_short(client):
     """Create a project with too short PI."""
     proj_data_short_pi = proj_data.copy()
     proj_data_short_pi["pi"] = ""
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_short_pi),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data_short_pi,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -209,13 +335,12 @@ def test_create_project_pi_too_long(client):
     """Create a project with too long PI."""
     proj_data_long_pi = proj_data.copy()
     proj_data_long_pi["pi"] = "pi" * 128
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_long_pi),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data_long_pi,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -233,8 +358,7 @@ def test_create_project_wrong_status(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_wrong_status),
-        content_type="application/json",
+        json=proj_data_wrong_status,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -251,13 +375,12 @@ def test_create_project_sensitive_not_boolean(client):
     """Create project with incorrect non_sensitive format."""
     proj_data_sensitive_not_boolean = proj_data.copy()
     proj_data_sensitive_not_boolean["non_sensitive"] = "test"
-    with pytest.raises(marshmallow.ValidationError):
-        response = client.post(
-            tests.DDSEndpoint.PROJECT_CREATE,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            data=json.dumps(proj_data_sensitive_not_boolean),
-            content_type="application/json",
-        )
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data_sensitive_not_boolean,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
         created_by="unituser",
@@ -275,8 +398,7 @@ def test_create_project_date_created_overridden(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_date_created_own),
-        content_type="application/json",
+        json=proj_data_date_created_own,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -294,8 +416,7 @@ def test_create_project_with_users(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_with_existing_users),
-        content_type="application/json",
+        json=proj_data_with_existing_users,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
@@ -331,8 +452,7 @@ def test_create_project_with_invited_users(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_with_nonexisting_users),
-        content_type="application/json",
+        json=proj_data_with_nonexisting_users,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
@@ -345,8 +465,7 @@ def test_create_project_with_unsuitable_roles(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_with_unsuitable_user_roles),
-        content_type="application/json",
+        json=proj_data_with_unsuitable_user_roles,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")

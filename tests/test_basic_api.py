@@ -86,6 +86,19 @@ def test_auth_correct_credentials(client):
 # Second Factor #################################################################### Second Factor #
 
 
+def test_auth_second_factor_empty(client):
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers={"Authorization": f"Bearer made.up.token.long.version"},
+    )
+
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert "Invalid token" == response_json.get("message")
+
+
 def test_auth_second_factor_incorrect_token(client):
     """
     Test that the two_factor endpoint called with incorrect partial token returns 401/UNAUTHORIZED
