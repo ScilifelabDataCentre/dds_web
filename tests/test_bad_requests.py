@@ -9,6 +9,7 @@ import tests
 
 ENDPOINTS = dict(tests.DDSEndpoint.__dict__)
 del ENDPOINTS["TIMEOUT"]
+del ENDPOINTS["PASSWORD_RESET_COMPLETED"]
 del ENDPOINTS["__dict__"]
 del ENDPOINTS["__weakref__"]
 del ENDPOINTS["__module__"]
