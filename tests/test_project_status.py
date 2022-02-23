@@ -14,7 +14,7 @@ import flask_mail
 
 # Own
 import tests
-from tests.test_files_new import project_row, file_in_db, first_new_file
+from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
 
 # CONFIG ################################################################################## CONFIG #
 
@@ -54,7 +54,7 @@ def test_project(module_client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(first_new_file),
+        data=json.dumps(FIRST_NEW_FILE),
         content_type="application/json",
     )
 
@@ -109,11 +109,11 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(first_new_file),
+        data=json.dumps(FIRST_NEW_FILE),
         content_type="application/json",
     )
 
-    assert file_in_db(test_dict=first_new_file, project=project.id)
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
     for field, value in vars(project).items():
         if field in fields_set_to_null:
@@ -162,13 +162,13 @@ def test_aborted_project(module_client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(first_new_file),
+        data=json.dumps(FIRST_NEW_FILE),
         content_type="application/json",
     )
 
     project = project_row(project_id=project_id)
 
-    assert file_in_db(test_dict=first_new_file, project=project.id)
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
     new_status = {"new_status": "Archived"}
     response = module_client.post(
@@ -221,7 +221,7 @@ def test_aborted_project(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Archived"
     assert max(project.project_statuses, key=lambda x: x.date_created).is_aborted
-    assert not file_in_db(test_dict=first_new_file, project=project.id)
+    assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
     assert not project.project_user_keys
 
     for field, value in vars(project).items():
@@ -247,13 +247,13 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(first_new_file),
+        data=json.dumps(FIRST_NEW_FILE),
         content_type="application/json",
     )
 
     project = project_row(project_id=project_id)
 
-    assert file_in_db(test_dict=first_new_file, project=project.id)
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
     new_status = {"new_status": "Available"}
     time.sleep(1)
@@ -311,7 +311,7 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Archived"
     assert max(project.project_statuses, key=lambda x: x.date_created).is_aborted
-    assert not file_in_db(test_dict=first_new_file, project=project.id)
+    assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
     for field, value in vars(project).items():
         if field in fields_set_to_null:
@@ -603,7 +603,7 @@ def test_set_project_to_archived(module_client, test_project, boto3_session):
     project_id = test_project
     project = project_row(project_id=project_id)
 
-    assert file_in_db(test_dict=first_new_file, project=project.id)
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
     assert project.project_user_keys
 
     response = module_client.post(
@@ -617,7 +617,7 @@ def test_set_project_to_archived(module_client, test_project, boto3_session):
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Archived"
     assert not max(project.project_statuses, key=lambda x: x.date_created).is_aborted
-    assert not file_in_db(test_dict=first_new_file, project=project.id)
+    assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
     assert not project.project_user_keys
 
 
