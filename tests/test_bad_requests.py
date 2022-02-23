@@ -44,8 +44,7 @@ def test_incorrect_json(client):
 
 def test_invalid_json(client):
     """Make requests with invalid json to all endpoints."""
-    args = {"data": "invalid",
-            "content_type": "application/json"}
+    args = {"data": "invalid", "content_type": "application/json"}
 
     run_requests(client, args)
 
@@ -59,24 +58,30 @@ def test_auth_empty_requests(client):
 
 def test_get_auth_empty_json(client):
     """Make authenticated requests with empty json to all endpoints."""
-    args = {"headers": tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            "json": {}}
+    args = {
+        "headers": tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        "json": {},
+    }
 
     run_requests(client, args)
 
 
 def test_get_auth_incorrect_json(client):
     """Make authenticated requests with incorrect (not what is expected) json to all endpoints."""
-    args = {"headers": tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            "json": {"incorrect": True}}
+    args = {
+        "headers": tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        "json": {"incorrect": True},
+    }
 
     run_requests(client, args)
 
 
 def test_get_auth_invalid_json(client):
     """Make authenticated requests with invalid json to all endpoints."""
-    args = {"headers": tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            "data": "invalid",
-            "content_type": "application/json"}
+    args = {
+        "headers": tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        "data": "invalid",
+        "content_type": "application/json",
+    }
 
     run_requests(client, args)
