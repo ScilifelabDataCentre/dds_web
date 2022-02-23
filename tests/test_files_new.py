@@ -379,8 +379,7 @@ def test_new_file(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(FIRST_NEW_FILE),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -393,8 +392,7 @@ def test_new_file(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(updated_file),
-        content_type="application/json",
+        json=updated_file,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Information is missing, cannot add file to database." in response.json["message"]
@@ -407,8 +405,7 @@ def test_new_file(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(updated_file),
-        content_type="application/json",
+        json=updated_file,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -422,8 +419,7 @@ def test_update_nonexistent_file(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(FIRST_NEW_FILE),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert (
@@ -443,8 +439,7 @@ def test_match_file_endpoint(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(FIRST_NEW_FILE),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=FIRST_NEW_FILE, project=project_1.id)
@@ -454,8 +449,7 @@ def test_match_file_endpoint(client):
         tests.DDSEndpoint.FILE_MATCH,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps([FIRST_NEW_FILE["name"]]),
-        content_type="application/json",
+        json=[FIRST_NEW_FILE["name"]],
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json["files"][FIRST_NEW_FILE["name"]] == FIRST_NEW_FILE["name_in_bucket"]
@@ -465,8 +459,7 @@ def test_match_file_endpoint(client):
         tests.DDSEndpoint.FILE_MATCH,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(["non_existent_file"]),
-        content_type="application/json",
+        json=["non_existent_file"],
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json["files"] is None
@@ -483,8 +476,7 @@ def test_upload_and_delete_file(client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(FIRST_NEW_FILE),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=FIRST_NEW_FILE, project=project_1.id)
@@ -493,8 +485,7 @@ def test_upload_and_delete_file(client, boto3_session):
         tests.DDSEndpoint.REMOVE_FILE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps([FIRST_NEW_FILE["name"]]),
-        content_type="application/json",
+        json=[FIRST_NEW_FILE["name"]],
     )
     assert response.status_code == http.HTTPStatus.OK
     assert not response.json["not_removed"]
@@ -519,8 +510,7 @@ def test_upload_and_delete_folder(client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_1_in_folder),
-        content_type="application/json",
+        json=file_1_in_folder,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=file_1_in_folder, project=project_1.id)
@@ -528,8 +518,7 @@ def test_upload_and_delete_folder(client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_2_in_folder),
-        content_type="application/json",
+        json=file_2_in_folder,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=file_2_in_folder, project=project_1.id)
@@ -539,8 +528,7 @@ def test_upload_and_delete_folder(client, boto3_session):
         tests.DDSEndpoint.REMOVE_FOLDER,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(["invalid_folder"]),
-        content_type="application/json",
+        json=["invalid_folder"],
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json["not_exists"][0] == "invalid_folder"
@@ -550,8 +538,7 @@ def test_upload_and_delete_folder(client, boto3_session):
         tests.DDSEndpoint.REMOVE_FOLDER,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps([file_1_in_folder["subpath"]]),
-        content_type="application/json",
+        json=[file_1_in_folder["subpath"]],
     )
     assert response.status_code == http.HTTPStatus.OK
     assert not response.json["not_removed"]
@@ -569,8 +556,7 @@ def test_upload_move_available_delete_file(client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(FIRST_NEW_FILE),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=FIRST_NEW_FILE, project=project_1.id)
@@ -581,8 +567,7 @@ def test_upload_move_available_delete_file(client, boto3_session):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert project_1.current_status == "Available"
@@ -591,8 +576,7 @@ def test_upload_move_available_delete_file(client, boto3_session):
         tests.DDSEndpoint.REMOVE_FILE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps([FIRST_NEW_FILE["name"]]),
-        content_type="application/json",
+        json=[FIRST_NEW_FILE["name"]],
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Project Status prevents files from being deleted." in response.json["message"]
@@ -604,8 +588,7 @@ def test_upload_move_available_delete_file(client, boto3_session):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert project_1.current_status == "In Progress"
@@ -615,8 +598,7 @@ def test_upload_move_available_delete_file(client, boto3_session):
         tests.DDSEndpoint.REMOVE_FILE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps([FIRST_NEW_FILE["name"]]),
-        content_type="application/json",
+        json=[FIRST_NEW_FILE["name"]],
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert (
@@ -645,8 +627,7 @@ def test_upload_and_remove_all_project_contents(client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(FIRST_NEW_FILE),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=FIRST_NEW_FILE, project=project_1.id)
@@ -663,8 +644,7 @@ def test_upload_and_remove_all_project_contents(client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_1_in_folder),
-        content_type="application/json",
+        json=file_1_in_folder,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=file_1_in_folder, project=project_1.id)
@@ -691,8 +671,7 @@ def test_new_file_invalid_credentials(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(FIRST_NEW_FILE),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -711,8 +690,7 @@ def test_new_file_name_too_short(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_no_name),
-        content_type="application/json",
+        json=file_no_name,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_no_name, project=project_1.id)
@@ -730,8 +708,7 @@ def test_new_file_nameinbucket_too_short(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_no_nameinbucket),
-        content_type="application/json",
+        json=file_no_nameinbucket,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_no_nameinbucket, project=project_1.id)
@@ -749,8 +726,7 @@ def test_new_file_subpath_too_short(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_no_subpath),
-        content_type="application/json",
+        json=file_no_subpath,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_no_subpath, project=project_1.id)
@@ -768,8 +744,7 @@ def test_new_file_size_bigint(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_size_bigint),
-        content_type="application/json",
+        json=file_size_bigint,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=file_size_bigint, project=project_1.id)
@@ -789,8 +764,7 @@ def test_new_file_sizeprocessed_bigint(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_sizeprocessed_bigint),
-        content_type="application/json",
+        json=file_sizeprocessed_bigint,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert file_in_db(test_dict=file_sizeprocessed_bigint, project=project_1.id)
@@ -808,8 +782,7 @@ def test_new_file_publickey_wrong_length(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_wrong_public_key),
-        content_type="application/json",
+        json=file_wrong_public_key,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_wrong_public_key, project=project_1.id)
@@ -826,8 +799,7 @@ def test_new_file_salt_wrong_length(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_wrong_salt),
-        content_type="application/json",
+        json=file_wrong_salt,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_wrong_salt, project=project_1.id)
@@ -844,8 +816,7 @@ def test_new_file_checksum_wrong_length(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(file_wrong_checksum),
-        content_type="application/json",
+        json=file_wrong_checksum,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert not file_in_db(test_dict=file_wrong_checksum, project=project_1.id)
@@ -860,8 +831,7 @@ def test_new_file_wrong_status(client):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -872,8 +842,7 @@ def test_new_file_wrong_status(client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
-        data=json.dumps(FIRST_NEW_FILE),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST

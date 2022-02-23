@@ -49,7 +49,7 @@ def test_list_proj_unit_user(client):
     response = client.get(
         tests.DDSEndpoint.LIST_PROJ,
         headers=token,
-        data=json.dumps({"usage": True}),
+        json={"usage": True},
         content_type="application/json",
     )
 

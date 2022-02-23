@@ -63,7 +63,7 @@ class ProjectStatus(flask_restful.Resource):
 
         # Get status history
         json_input = flask.request.json
-        if json_input and json_input.get("history") == True:
+        if json_input and json_input.get("history"):
             history = []
             for pstatus in project.project_statuses:
                 history.append(tuple((pstatus.status, pstatus.date_created)))

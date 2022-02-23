@@ -62,8 +62,7 @@ def test_create_project_unknown_field(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps({"test": "test"}),
-        content_type="application/json",
+        json={"test": "test"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
@@ -82,8 +81,7 @@ def test_create_project_missing_title(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(proj_data_no_title),
-        content_type="application/json",
+        json=proj_data_no_title,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
@@ -100,8 +98,7 @@ def test_create_project_none_title(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(proj_data_none_title),
-        content_type="application/json",
+        json=proj_data_none_title,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
@@ -118,8 +115,7 @@ def test_create_project_no_description(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(proj_data_no_description),
-        content_type="application/json",
+        json=proj_data_no_description,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
@@ -137,8 +133,7 @@ def test_create_project_none_description(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(proj_data_none_description),
-        content_type="application/json",
+        json=proj_data_none_description,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
@@ -156,8 +151,7 @@ def test_create_project_no_pi(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(proj_data_no_pi),
-        content_type="application/json",
+        json=proj_data_no_pi,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
@@ -175,8 +169,7 @@ def test_create_project_none_pi(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(proj_data_none_pi),
-        content_type="application/json",
+        json=proj_data_none_pi,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
@@ -191,8 +184,7 @@ def test_create_project_without_credentials(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        data=json.dumps(proj_data),
-        content_type="application/json",
+        json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     created_proj = models.Project.query.filter_by(
@@ -211,8 +203,7 @@ def test_create_project_with_credentials(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data),
-        content_type="application/json",
+        json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.OK
     created_proj = models.Project.query.filter_by(
@@ -233,8 +224,7 @@ def test_create_project_no_title(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps({"pi": "piName"}),
-        content_type="application/json",
+        json={"pi": "piName"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -252,8 +242,7 @@ def test_create_project_title_too_short(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_short_title),
-        content_type="application/json",
+        json=proj_data_short_title,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -271,8 +260,7 @@ def test_create_project_with_malformed_json(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data="",
-        content_type="application/json",
+        json="",
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     created_proj = models.Project.query.filter_by(
@@ -291,8 +279,7 @@ def test_create_project_sensitive(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(p_data),
-        content_type="application/json",
+        json=p_data,
     )
     assert response.status_code == http.HTTPStatus.OK
     created_proj = models.Project.query.filter_by(
@@ -311,8 +298,7 @@ def test_create_project_description_too_short(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_short_description),
-        content_type="application/json",
+        json=proj_data_short_description,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -332,8 +318,7 @@ def test_create_project_pi_too_short(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_short_pi),
-        content_type="application/json",
+        json=proj_data_short_pi,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -353,8 +338,7 @@ def test_create_project_pi_too_long(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_long_pi),
-        content_type="application/json",
+        json=proj_data_long_pi,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -374,8 +358,7 @@ def test_create_project_wrong_status(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_wrong_status),
-        content_type="application/json",
+        json=proj_data_wrong_status,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -395,8 +378,7 @@ def test_create_project_sensitive_not_boolean(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_sensitive_not_boolean),
-        content_type="application/json",
+        json=proj_data_sensitive_not_boolean,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -416,8 +398,7 @@ def test_create_project_date_created_overridden(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_date_created_own),
-        content_type="application/json",
+        json=proj_data_date_created_own,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -435,8 +416,7 @@ def test_create_project_with_users(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_with_existing_users),
-        content_type="application/json",
+        json=proj_data_with_existing_users,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
@@ -472,8 +452,7 @@ def test_create_project_with_invited_users(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_with_nonexisting_users),
-        content_type="application/json",
+        json=proj_data_with_nonexisting_users,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
@@ -486,8 +465,7 @@ def test_create_project_with_unsuitable_roles(client, boto3_session):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(proj_data_with_unsuitable_user_roles),
-        content_type="application/json",
+        json=proj_data_with_unsuitable_user_roles,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
