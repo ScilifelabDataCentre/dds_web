@@ -1,4 +1,5 @@
-Before submitting a pr:
+
+
 - [ ] Tests passing
 - [ ] Black formatting
 - [ ] Migrations for any changes to the database schema
