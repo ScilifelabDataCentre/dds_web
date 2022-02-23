@@ -77,8 +77,7 @@ def test_proj_private_without_project(client):
     response = client.get(tests.DDSEndpoint.PROJ_PRIVATE, headers=token)
     response_json = response.json
     assert "project" in response_json
-    assert isinstance(response_json["project"], list)
-    assert "Missing data for required field" in response_json["project"][0]
+    assert "Missing data for required field" in response_json["project"].get("message")
 
 
 def test_proj_public_no_token(client):
@@ -97,8 +96,7 @@ def test_proj_public_no_project(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert "project" in response_json
-    assert isinstance(response_json["project"], list)
-    assert "Missing data for required field" in response_json["project"][0]
+    assert "Missing data for required field" in response_json["project"].get("message")
 
 
 def test_proj_public_insufficient_credentials(client):
