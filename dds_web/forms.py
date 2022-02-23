@@ -79,6 +79,14 @@ class Confirm2FACodeForm(flask_wtf.FlaskForm):
     submit = wtforms.SubmitField("Authenticate")
 
 
+class ActivateTOTPForm(flask_wtf.FlaskForm):
+    totp = wtforms.StringField(
+        "totp",
+        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
+    )
+    submit = wtforms.SubmitField("Activate")
+
+
 class Cancel2FAForm(flask_wtf.FlaskForm):
     cancel = wtforms.SubmitField("Cancel login and try again")
 
