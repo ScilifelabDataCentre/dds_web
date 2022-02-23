@@ -264,7 +264,7 @@ def test_auth_expired_encrypted_token(client):
     """Test that an encrypted expired token returns 401/UNAUTHORIZED"""
 
     token = dds_web.api.user.encrypted_jwt_token(
-        "researchuser", None, expires_in=datetime.timedelta(hours=-2)
+        username="researchuser", sensitive_content=None, expires_in=datetime.timedelta(hours=-2)
     )
     # Fetch the project public key as an example
     response = client.get(
@@ -284,7 +284,7 @@ def test_auth_token_wrong_secret_key_encrypted_token(client):
     old_secret = flask.current_app.config.get("SECRET_KEY")
     flask.current_app.config["SECRET_KEY"] = "XX" * 16
     token = dds_web.api.user.encrypted_jwt_token(
-        "researchuser", None, expires_in=datetime.timedelta(hours=-2)
+        username="researchuser", sensitive_content=None, expires_in=datetime.timedelta(hours=-2)
     )
     # reset secret key
     flask.current_app.config["SECRET_KEY"] = old_secret
