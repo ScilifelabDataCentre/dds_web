@@ -93,7 +93,7 @@ class ProjectStatus(flask_restful.Resource):
         ]:
             raise DDSArgumentError("Invalid status")
 
-        send_email = extra_args.get("send_email", True)
+        send_email = json_input.get("send_email", True)
 
         curr_date = dds_web.utils.current_time()
         is_aborted = False
