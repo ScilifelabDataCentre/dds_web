@@ -118,6 +118,18 @@ def verify_password_reset_token(token):
     raise AuthenticationError(message="Invalid token")
 
 
+def verify_activate_totp_token(token, current_user):
+    claims = __verify_general_token(token)
+    user = __user_from_subject(claims.get("sub"))
+    if user and (user == current_user):
+        act = claims.get("act")
+        del claims
+        gc.collect()
+        if act and act == "totp":
+            return None
+    raise AuthenticationError(message="Invalid token")
+
+
 def __base_verify_token_for_invite(token):
     """Verify token and return claims."""
     claims = __verify_general_token(token=token)
