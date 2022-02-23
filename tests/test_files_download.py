@@ -43,8 +43,10 @@ def test_file_download_no_project(client):
 
 def test_file_download_project_none(client):
     """Make request with project as None."""
-    args = {"json": ["filename1"],
-            "query_string": {"project": None},}
+    args = {
+        "json": ["filename1"],
+        "query_string": {"project": None},
+    }
     response_json = get_json_file_info(client, args)
     assert response_json
     assert (
@@ -55,8 +57,10 @@ def test_file_download_project_none(client):
 
 def test_file_download_unknown_field(client):
     """Make request with unknown field passed."""
-    args = {"json": ["filename1"],
-            "query_string": {"test": "test"},}
+    args = {
+        "json": ["filename1"],
+        "query_string": {"test": "test"},
+    }
     response_json = get_json_file_info(client, args)
     assert response_json
     assert (
