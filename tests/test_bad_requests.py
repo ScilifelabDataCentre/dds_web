@@ -3,7 +3,6 @@ Make empty/bad requests to all endpoints.
 
 No assertions, only checking whether any uncaught exceptions are thrown.
 """
-import concurrent.futures
 
 from dds_web import db
 import tests
