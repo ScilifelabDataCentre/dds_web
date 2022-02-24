@@ -7,6 +7,7 @@
 # Standard library
 import datetime
 import os
+import time
 
 # Installed
 import sqlalchemy
@@ -364,7 +365,7 @@ class User(flask_login.UserMixin, db.Model):
     hotp_counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
     hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
     totp_enabled = db.Column(db.Boolean, unique=False, nullable=False, default=False)
-    _totp_secret = db.Column(db.LargeBinary(64), unique=False, nullable=False)
+    _totp_secret = db.Column(db.LargeBinary(64), unique=False, nullable=True)
     totp_last_verified = db.Column(db.DateTime, unique=False, nullable=True)
 
     active = db.Column(db.Boolean)
@@ -492,9 +493,18 @@ class User(flask_login.UserMixin, db.Model):
         self.hotp_issue_time = None
         db.session.commit()
 
+    @property
+    def totp_initiated(self):
+        return self._totp_secret is not None
+
+
     def setup_totp_secret(self):
-        """Generate random 512 bit as the new totp secret and return provisioning URI"""
-        self._totp_secret = os.urandom(64)
+        """Generate random 160 bit as the new totp secret and return provisioning URI
+        We're using SHA1 (Google Authenticator seems to only use SHA1 and 6 digit codes)
+        so secret should be at least 160 bits
+        https://cryptography.io/en/latest/hazmat/primitives/twofactor/#cryptography.hazmat.primitives.twofactor.totp.TOTP
+        """
+        self._totp_secret = os.urandom(20)
         db.session.commit()
 
     def get_totp_secret(self):
@@ -502,8 +512,12 @@ class User(flask_login.UserMixin, db.Model):
         if self.totp_enabled:
             # Can not be fetched again after it has been enabled
             raise AuthenticationError("TOTP secret already enabled.")
-        totp = twofactor_totp.TOTP(self._totp_secret, 6, hashes.SHA512(), 30)
-        return totp.get_provisioning_uri(account_name=self.username, issuer="Data Delivery System")
+        totp = twofactor_totp.TOTP(self._totp_secret, 6, hashes.SHA1(), 30)
+
+        return self._totp_secret, totp.get_provisioning_uri(
+            account_name=self.username,
+            issuer="Data Delivery System",
+        )
 
     def activate_totp(self):
         """Set TOTP as the preferred means of second factor authentication.
@@ -521,22 +535,23 @@ class User(flask_login.UserMixin, db.Model):
         """
         # can't use totp successfully more than once within 90 seconds.
         # Time frame chosen so that no one can use the same token more than once
+        # No need to use epoch time here.
         current_time = dds_web.utils.current_time()
-        if self.totp_last_used is not None and (
-            current_time - self.totp_last_used < datetime.timedelta(seconds=90)
+        if self.totp_last_verified is not None and (
+            current_time - self.totp_last_verified < datetime.timedelta(seconds=90)
         ):
             raise AuthenticationError(
                 "Authentication with TOTP needs to be at least 90 seconds apart."
             )
 
         # construct object
-        totp = twofactor_totp.TOTP(self._totp_secret, 6, hashes.SHA512(), 30)
+        totp = twofactor_totp.TOTP(self._totp_secret, 6, hashes.SHA1(), 30)
 
-        # attempt to verify the token
+        # attempt to verify the token using epoch time
         # Allow for clock drift of 1 frame before or after
         verified = False
         for t_diff in [-30, 0, 30]:
-            verification_time = (current_time + datetime.timedelta(seconds=t_diff)).strftime("%s")
+            verification_time = time.time() + t_diff
             try:
                 totp.verify(token, verification_time)
                 verified = True
@@ -548,7 +563,7 @@ class User(flask_login.UserMixin, db.Model):
             raise AuthenticationError("Invalid TOTP token.")
 
         # if the token is valid, save time of last successful verification
-        self.totp_last_used = current_time
+        self.totp_last_verified = current_time
         db.session.commit()
 
     # Email related

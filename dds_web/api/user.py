@@ -780,7 +780,7 @@ class RequestTOTPActivation(flask_restful.Resource):
             additional_claims={"act": "totp"},  # Open for suggestions
         )
 
-        link = flask.url_for(dds_web.auth_blueprint.activate_totp, token=token, _external=True)
+        link = flask.url_for("auth_blueprint.activate_totp", token=token, _external=True)
         # Send activation token to email to work as a validation step
         # TODO: refactor this since the email sending code is replicated in many places
         recipients = [user.primary_email]

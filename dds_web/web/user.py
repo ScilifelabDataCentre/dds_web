@@ -17,6 +17,7 @@ from dds_web.api import db_tools
 import flask_login
 import itsdangerous
 import qrcode
+import qrcode.image.svg
 import sqlalchemy
 
 # Own Modules
@@ -168,38 +169,49 @@ def activate_totp(token):
 
     dds_web.security.auth.verify_activate_totp_token(token, current_user=user)
 
-    if flask.request.method == "GET":
-        if user.totp_enabled:
-            flask.flash("Two-factor authentication via TOTP is already enabled.")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+    if user.totp_enabled:
+        flask.flash("Two-factor authentication via TOTP is already enabled.")
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
+    # Don't change secret on page reload
+    if not user.totp_initiated:
         user.setup_totp_secret()
-        totp_secret, totp_uri = user.get_totp_secret()
 
-        qrcode = qrcode.make(totp_uri)
-        stream = io.BytesIO()
-        qrcode.save(stream, "svg")
+    totp_secret, totp_uri = user.get_totp_secret()
 
-        return flask.render_template(
-            "user/activate_totp.html",
-            totp_secret=totp_secret,
-            totp_uri=totp_uri,
-            qrcode=base64.b64encode(stream.getvalue()),
-            form=form,
-        )
+    # QR code generation
+    image = qrcode.make(totp_uri, image_factory=qrcode.image.svg.SvgImage)
+    stream = io.BytesIO()
+    image.save(stream)
 
     # POST request
     if form.validate_on_submit():
-        if user.verify_totp(form.totp_code.data.encode()):
-            user.activate_totp()
+        try:
+            user.verify_totp(form.totp.data.encode())
+        except ddserr.AuthenticationError:
+            flask.flash("Invalid two-factor authentication code.")
+            return flask.render_template(
+                "user/activate_totp.html",
+                totp_secret=base64.b32encode(totp_secret).decode("utf-8"),
+                totp_uri=totp_uri,
+                qr_code=stream.getvalue().decode("utf-8"),
+                token=token,
+                form=form,
+            )
 
-            flask.flash("Two-factor authentication via TOTP has been enabled.")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+        user.activate_totp()
 
-        flask.flash("Invalid two-factor authentication code.")
+        flask.flash("Two-factor authentication via TOTP has been enabled.")
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
-    secret, uri = user.get_totp_secret()
-    return flask.render_template("user/activate_totp.html", secret=secret, uri=uri, form=form)
+    return flask.render_template(
+        "user/activate_totp.html",
+        totp_secret=base64.b32encode(totp_secret).decode("utf-8"),
+        totp_uri=totp_uri,
+        qr_code=stream.getvalue().decode("utf-8"),
+        token=token,
+        form=form,
+    )
 
 
 @auth_blueprint.route("/cancel_2fa", methods=["POST"])

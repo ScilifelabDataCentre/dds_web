@@ -1,0 +1,70 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class=flashes>
+        {% for category, message in messages %}
+        <div class="alert alert-{{category}}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    <div>
+        <h4>Activate one-time authentication using TOTP </h4>
+        <h5>Instructions:</h5>
+        <ul>
+            <li>Download an authenticator on your phone, for example
+                <a
+                    href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en&gl=US">Google
+                    Authenticator</a>.
+            </li>
+        </ul>
+    </div>
+    <div>
+        <h4>QR code</h4>
+        <div>
+            {{ qr_code | safe }}
+        </div>
+    </div>
+    <div>
+        <h4>Secret</h4>
+        <p>{{totp_secret}}</p>
+    </div>
+    <div>
+        <h4>TOTP URI</h4>
+        <p>{{totp_uri}}</p>
+    </div>
+    <div>
+        <h4>Codes</h4>
+        <p>{{codes}}</p>
+    </div>
+    <div>
+        <form method="POST" action="{{ url_for('auth_blueprint.activate_totp', token=token) }}">
+            {{ form.csrf_token }}
+
+            <!-- Token -->
+            {{ form.totp.label }}
+            {{ form.totp }}
+            <ul>
+                {% for error in form.totp.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Submit button -->
+            {{ form.submit }}
+
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}
