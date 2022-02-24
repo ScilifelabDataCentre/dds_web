@@ -13,8 +13,10 @@ import boto3
 import flask_mail
 
 # Own
+import dds_web
 import tests
 from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
+from tests.test_project_creation import proj_data_with_existing_users
 
 # CONFIG ################################################################################## CONFIG #
 
@@ -363,6 +365,41 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
     ) + datetime.timedelta(days=new_status["deadline"])
 
     assert db_deadline == calc_deadline
+
+
+def test_set_project_to_available_no_mail(module_client, boto3_session):
+    """Set status to Available for test project, but skip sending mails"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=token,
+        json=proj_data_with_existing_users,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json and response.json.get("user_addition_statuses")
+    for x in response.json.get("user_addition_statuses"):
+        assert "associated with Project" in x
+
+    public_project_id = response.json.get("project_id")
+
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        with unittest.mock.patch.object(
+            dds_web.api.user.AddUser, "compose_and_send_email_to_user"
+        ) as mock_mail_func:
+            response = module_client.post(
+                tests.DDSEndpoint.PROJECT_STATUS,
+                headers=token,
+                query_string={"project": public_project_id},
+                json={"new_status": "Available", "deadline": 10, "send_email": False},
+            )
+            # assert that no mail is being sent.
+            assert mock_mail_func.called == False
+        assert mock_mail_send.call_count == 0
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert "An e-mail notification has not been sent." in response.json["message"]
 
 
 def test_set_project_to_deleted_from_available(module_client, test_project):

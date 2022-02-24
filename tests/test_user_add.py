@@ -1,3 +1,4 @@
+import dds_web
 import flask_mail
 import http
 import json
@@ -362,6 +363,46 @@ def test_add_existing_user_to_existing_project(client):
         )
     ).one_or_none()
     assert project_user_after_addition
+
+
+def test_add_existing_user_to_existing_project_no_mail_flag(client):
+    "Test that an e-mail notification is not send when the --no-mail flag is used"
+
+    user_copy = existing_research_user_to_existing_project.copy()
+    project_id = user_copy.pop("project")
+    new_status = {"new_status": "Available"}
+    user_copy["send_email"] = False
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+
+    # make project available prior to test, otherwise an e-mail is never sent.
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=token,
+        query_string={"project": project_id},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+
+    # Test mail sending is suppressed
+
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        with unittest.mock.patch.object(
+            dds_web.api.user.AddUser, "compose_and_send_email_to_user"
+        ) as mock_mail_func:
+            print(user_copy)
+            response = client.post(
+                tests.DDSEndpoint.USER_ADD,
+                headers=token,
+                query_string={"project": project_id},
+                data=json.dumps(user_copy),
+                content_type="application/json",
+            )
+            # assert that no mail is being sent.
+            assert mock_mail_func.called == False
+    assert mock_mail_send.call_count == 0
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert "An e-mail notification has not been sent." in response.json["message"]
 
 
 def test_add_existing_user_to_existing_project_after_release(client):
