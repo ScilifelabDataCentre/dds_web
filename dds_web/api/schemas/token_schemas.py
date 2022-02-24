@@ -53,9 +53,17 @@ class TokenSchema(marshmallow.Schema):
 
         if user.totp_enabled:
             value = data.get("TOTP")
+            if value is None:
+                raise marshmallow.ValidationError(
+                    "Your account is setup to use TOTP, but you entered a one-time authentication code from email."
+                )
             # Raises authentication error if TOTP is incorrect
             user.verify_TOTP(value.encode())
         else:
             value = data.get("HOTP")
+            if value is None:
+                raise marshmallow.ValidationError(
+                    "Your account is setup to use one-time authentication code via email, you cannot authenticate with TOTP."
+                )
             # Raises authenticationerror if invalid
             user.verify_HOTP(value.encode())
