@@ -365,7 +365,7 @@ def test_add_existing_user_to_existing_project(client):
     assert project_user_after_addition
 
 
-def test_add_existing_user_to_existing_project_no_mail_flag(client, boto3_session):
+def test_add_existing_user_to_existing_project_no_mail_flag(client):
     "Test that an e-mail notification is not send when the --no-mail flag is used"
 
     user_copy = existing_research_user_to_existing_project.copy()

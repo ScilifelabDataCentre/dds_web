@@ -367,12 +367,12 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
     assert db_deadline == calc_deadline
 
 
-def test_set_project_to_available_no_mail(client, boto3_session):
+def test_set_project_to_available_no_mail(module_client, boto3_session):
     """Set status to Available for test project, but skip sending mails"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
 
-    response = client.post(
+    response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=token,
         json=proj_data_with_existing_users,
@@ -388,7 +388,7 @@ def test_set_project_to_available_no_mail(client, boto3_session):
         with unittest.mock.patch.object(
             dds_web.api.user.AddUser, "compose_and_send_email_to_user"
         ) as mock_mail_func:
-            response = client.post(
+            response = module_client.post(
                 tests.DDSEndpoint.PROJECT_STATUS,
                 headers=token,
                 query_string={"project": public_project_id},
