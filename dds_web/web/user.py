@@ -254,10 +254,6 @@ def confirm_2fa():
     if flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
-    form = forms.Confirm2FACodeForm()
-
-    cancel_form = forms.Cancel2FAForm()
-
     next = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
     if next and not dds_web.utils.is_safe_url(next):
@@ -280,6 +276,13 @@ def confirm_2fa():
         )
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
+    if user.totp_enabled:
+        form = forms.Confirm2FACodeTOTPForm()
+    else:
+        form = forms.Confirm2FACodeHOTPForm()
+
+    cancel_form = forms.Cancel2FAForm()
+
     # Valid 2fa initiated token, but user does not exist (should never happen)
     if not user:
         flask.session.pop("2fa_initiated_token", None)
@@ -288,20 +291,29 @@ def confirm_2fa():
 
     if form.validate_on_submit():
 
-        hotp_value = form.hotp.data
+        if user.totp_enabled:
+            twofactor_value = form.totp.data
+            twofactor_verify = user.verify_TOTP
+        else:
+            twofactor_value = form.hotp.data
+            twofactor_verify = user.verify_HOTP
 
         # Raises authenticationerror if invalid
         try:
-            user.verify_HOTP(hotp_value.encode())
-        except ddserr.AuthenticationError:
-            flask.flash("Invalid one-time code.")
+            twofactor_verify(twofactor_value.encode())
+        except ddserr.AuthenticationError as err:
+            flask.flash(f"Invalid one-time code: {err.description}")
             return flask.redirect(
                 flask.url_for(
-                    "auth_blueprint.confirm_2fa", form=form, cancel_form=cancel_form, next=next
+                    "auth_blueprint.confirm_2fa",
+                    form=form,
+                    cancel_form=cancel_form,
+                    next=next,
+                    using_totp=user.totp_enabled,
                 )
             )
 
-        # Correct username, password and hotp code --> log user in
+        # Correct username, password and twofactor code --> log user in
         flask_login.login_user(user)
         flask.flash("Logged in successfully.")
         # Remove token from session
@@ -311,7 +323,11 @@ def confirm_2fa():
 
     else:
         return flask.render_template(
-            "user/confirm2fa.html", form=form, cancel_form=cancel_form, next=next
+            "user/confirm2fa.html",
+            form=form,
+            cancel_form=cancel_form,
+            next=next,
+            using_totp=user.totp_enabled,
         )
 
 
@@ -351,10 +367,10 @@ def login():
             )  # Try login again
 
         # Correct credentials still needs 2fa
-
-        # Send 2fa token to user's email
-        if dds_web.security.auth.send_hotp_email(user):
-            flask.flash("One-Time Code has been sent to your primary email.")
+        if not user.totp_enabled:
+            # Send 2fa token to user's email
+            if dds_web.security.auth.send_hotp_email(user):
+                flask.flash("One-Time Code has been sent to your primary email.")
 
         # Generate signed token that indicates that the user has authenticated
         token_2fa_initiated = dds_web.security.tokens.jwt_token(

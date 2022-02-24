@@ -71,10 +71,18 @@ class LogoutForm(flask_wtf.FlaskForm):
     logout = wtforms.SubmitField("Logout")
 
 
-class Confirm2FACodeForm(flask_wtf.FlaskForm):
+class Confirm2FACodeHOTPForm(flask_wtf.FlaskForm):
     hotp = wtforms.StringField(
         "hotp",
         validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=8, max=8)],
+    )
+    submit = wtforms.SubmitField("Authenticate")
+
+
+class Confirm2FACodeTOTPForm(flask_wtf.FlaskForm):
+    totp = wtforms.StringField(
+        "totp",
+        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
     )
     submit = wtforms.SubmitField("Authenticate")
 

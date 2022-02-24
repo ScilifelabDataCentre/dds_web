@@ -17,13 +17,28 @@
     </div>
     {% endif %}
     {% endwith %}
+    {% if using_totp %}
+    <p>Please complete the login by entering the one-time authentication code displayed in your authenticator app.</p>
+    {% else %}
     <p>Please complete the login by entering the one-time authentication code that was sent to you.
         The one-time codes are valid for a short time (15 minutes) after they have been issued.
     </p>
-    <form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}">
+    {% endif %}
+    <form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}" autocomplete="off">
         {{ form.csrf_token }}
 
         <!-- Token -->
+        {% if using_totp %}
+        {{ form.totp.label }}
+        {{ form.totp }}
+        <ul>
+            {% for error in form.totp.errors %}
+            <li style="color:red;">
+                {{ error }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
         {{ form.hotp.label }}
         {{ form.hotp }}
         <ul>
@@ -33,6 +48,8 @@
             </li>
             {% endfor %}
         </ul>
+        {% endif %}
+
 
         <!-- Submit button -->
         {{ form.submit }}
