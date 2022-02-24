@@ -495,6 +495,8 @@ class User(flask_login.UserMixin, db.Model):
 
     @property
     def totp_initiated(self):
+        """To check if activation of TOTP has been initiated, not to be confused
+        with user.totp_enabled, that indicates if TOTP is successfully enabled for the user."""
         return self._totp_secret is not None
 
     def setup_totp_secret(self):
