@@ -190,13 +190,21 @@ def activate_totp(token):
             user.verify_TOTP(form.totp.data.encode())
         except ddserr.AuthenticationError:
             flask.flash("Invalid two-factor authentication code.")
-            return flask.render_template(
-                "user/activate_totp.html",
-                totp_secret=base64.b32encode(totp_secret).decode("utf-8"),
-                totp_uri=totp_uri,
-                qr_code=stream.getvalue().decode("utf-8"),
-                token=token,
-                form=form,
+            return (
+                flask.render_template(
+                    "user/activate_totp.html",
+                    totp_secret=base64.b32encode(totp_secret).decode("utf-8"),
+                    totp_uri=totp_uri,
+                    qr_code=stream.getvalue().decode("utf-8"),
+                    token=token,
+                    form=form,
+                ),
+                200,
+                {
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
+                },
             )
 
         user.activate_totp()
@@ -204,13 +212,21 @@ def activate_totp(token):
         flask.flash("Two-factor authentication via TOTP has been enabled.")
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
-    return flask.render_template(
-        "user/activate_totp.html",
-        totp_secret=base64.b32encode(totp_secret).decode("utf-8"),
-        totp_uri=totp_uri,
-        qr_code=stream.getvalue().decode("utf-8"),
-        token=token,
-        form=form,
+    return (
+        flask.render_template(
+            "user/activate_totp.html",
+            totp_secret=base64.b32encode(totp_secret).decode("utf-8"),
+            totp_uri=totp_uri,
+            qr_code=stream.getvalue().decode("utf-8"),
+            token=token,
+            form=form,
+        ),
+        200,
+        {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
     )
 
 
