@@ -21,6 +21,9 @@ from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
     logging_bind_request,
     dbsession,
+    args_required,
+    json_required,
+    handle_validation_errors,
 )
 from dds_web.errors import (
     AccessDeniedError,
@@ -47,16 +50,20 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-        extra_args = flask.request.json
-        return_info = {"current_status": project.current_status}
 
+        # Get current status and deadline
+        return_info = {"current_status": project.current_status}
         if project.current_deadline:
             return_info["current_deadline"] = project.current_deadline
 
-        if extra_args and extra_args.get("history") == True:
+        # Get status history
+        json_input = flask.request.json
+        if json_input and json_input.get("history"):
             history = []
             for pstatus in project.project_statuses:
                 history.append(tuple((pstatus.status, pstatus.date_created)))
@@ -67,15 +74,16 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
-        """Update Project Status"""
+        """Update Project Status."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-        public_id = project.public_id
-        extra_args = flask.request.json
-        if not extra_args:
-            raise DDSArgumentError(message="Missing new status")
 
-        new_status = extra_args.get("new_status")
+        # Check if valid status
+        json_input = flask.request.json
+        new_status = json_input.get("new_status")
         if new_status not in [
             "In Progress",
             "Deleted",
@@ -84,6 +92,8 @@ class ProjectStatus(flask_restful.Resource):
             "Archived",
         ]:
             raise DDSArgumentError("Invalid status")
+
+        send_email = json_input.get("send_email", True)
 
         curr_date = dds_web.utils.current_time()
         is_aborted = False
@@ -95,7 +105,7 @@ class ProjectStatus(flask_restful.Resource):
         # Moving to Available
         if new_status == "Available":
             # Optional int arg deadline in days
-            deadline = extra_args.get("deadline", project.responsible_unit.days_in_available)
+            deadline = json_input.get("deadline", project.responsible_unit.days_in_available)
             add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
                 days=deadline
             )
@@ -114,7 +124,7 @@ class ProjectStatus(flask_restful.Resource):
 
         # Moving to Expired
         if new_status == "Expired":
-            deadline = extra_args.get("deadline", project.responsible_unit.days_in_expired)
+            deadline = json_input.get("deadline", project.responsible_unit.days_in_expired)
             add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
                 days=deadline
             )
@@ -130,7 +140,7 @@ class ProjectStatus(flask_restful.Resource):
 
         # Moving to Archived
         if new_status == "Archived":
-            is_aborted = extra_args.get("is_aborted", False)
+            is_aborted = json_input.get("is_aborted", False)
             if project.current_status == "In Progress":
                 if not (project.has_been_available and is_aborted):
                     raise DDSArgumentError(
@@ -149,7 +159,7 @@ class ProjectStatus(flask_restful.Resource):
             if not project.is_active:
                 # Deletes files (also commits session in the function - possibly refactor later)
                 removed = RemoveContents().delete_project_contents(project=project)
-                delete_message = f"\nAll files in {public_id} deleted"
+                delete_message = f"\nAll files in {project.public_id} deleted"
                 if new_status in ["Deleted", "Archived"]:
                     self.rm_project_user_keys(project=project)
                     if new_status == "Deleted" or is_aborted:
@@ -169,13 +179,17 @@ class ProjectStatus(flask_restful.Resource):
             raise DatabaseError(message="Server Error: Status was not updated")
 
         # Mail users once project is made available
-        if new_status == "Available":
+        if new_status == "Available" and send_email:
             for user in project.researchusers:
                 AddUser.compose_and_send_email_to_user(
                     userobj=user.researchuser, mail_type="project_release", project=project
                 )
 
-        return {"message": f"{public_id} updated to status {new_status}" + delete_message}
+        return {
+            "message": f"{project.public_id} updated to status {new_status}"
+            + delete_message
+            + f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
+        }
 
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""
@@ -219,9 +233,10 @@ class GetPublic(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
         """Get public key from database."""
-
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         flask.current_app.logger.debug("Getting the public key.")
@@ -237,9 +252,10 @@ class GetPrivate(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
-        """Get private key from database"""
-
+        """Get private key from database."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         flask.current_app.logger.debug("Getting the private key.")
@@ -274,7 +290,7 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        usage_arg = flask.request.json.get("usage") if flask.request.json else None
+        usage_arg = flask.request.json.get("usage") if flask.request.json else False
         usage = bool(usage_arg) and current_user.role in [
             "Super Admin",
             "Unit Admin",
@@ -349,12 +365,16 @@ class RemoveContents(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @dbsession
+    @handle_validation_errors
     def delete(self):
         """Removes all project contents."""
-
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        check_eligibility_for_deletion(project.current_status, project.has_been_available)
+        # Verify project status ok for deletion
+        check_eligibility_for_deletion(
+            status=project.current_status, has_been_available=project.has_been_available
+        )
 
         # Check if project contains anything
         if not project.files:
@@ -362,6 +382,7 @@ class RemoveContents(flask_restful.Resource):
                 project=project, message="There are no project contents to delete."
             )
 
+        # Delete project contents from db and cloud
         self.delete_project_contents(project=project)
 
         return {"removed": True}
@@ -403,12 +424,12 @@ class RemoveContents(flask_restful.Resource):
 class CreateProject(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
-        """Create a new project"""
+        """Create a new project."""
+        # Add a new project to db
         p_info = flask.request.json
-        if not p_info:
-            raise DDSArgumentError(message="Required information missing!")
-
         new_project = project_schemas.CreateProjectSchema().load(p_info)
 
         if not new_project:
@@ -473,8 +494,9 @@ class ProjectUsers(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
-
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Get info on research users
@@ -499,17 +521,18 @@ class ProjectAccess(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     @dbsession
+    @json_required
+    @handle_validation_errors
     def post(self):
         """Give access to user."""
         # Verify that user specified
-        extra_args = flask.request.json
-        if not extra_args:
-            raise DDSArgumentError(message="Required information missing.")
+        json_input = flask.request.json
 
-        if "email" not in extra_args:
+        if "email" not in json_input:
             raise DDSArgumentError(message="User email missing.")
 
-        user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
+        user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
+
         if not user:
             raise NoSuchUserError()
 

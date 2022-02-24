@@ -56,8 +56,7 @@ def test_del_self_nouser(client):
         response = client.delete(
             tests.DDSEndpoint.USER_DELETE_SELF,
             headers=None,
-            data=None,
-            content_type="application/json",
+            json=None,
         )
         # No token email and none for deletion confirmation
         assert mock_mail_send.call_count == 0
@@ -71,8 +70,7 @@ def test_del_self(client):
         response = client.delete(
             tests.DDSEndpoint.USER_DELETE_SELF,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).token(client),
-            data=None,
-            content_type="application/json",
+            json=None,
         )
         # One email for partial token and one for deletion confirmation
         assert mock_mail_send.call_count == 2
@@ -89,8 +87,7 @@ def test_del_self(client):
         response = client.delete(
             tests.DDSEndpoint.USER_DELETE_SELF,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).token(client),
-            data=None,
-            content_type="application/json",
+            json=None,
         )
         # One email for partial token but no new for deletion confirmation
         assert mock_mail_send.call_count == 1
@@ -184,8 +181,7 @@ def test_del_request_others_unprivileged(client):
     response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unituser"]).token(client),
-        data=json.dumps({"email": email_to_delete}),
-        content_type="application/json",
+        json={"email": email_to_delete},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -205,8 +201,7 @@ def test_del_request_others_researcher(client):
         response = client.delete(
             tests.DDSEndpoint.USER_DELETE,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
-            data=json.dumps({"email": email_to_delete}),
-            content_type="application/json",
+            json={"email": email_to_delete},
         )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -226,8 +221,7 @@ def test_del_request_others_researcher(client):
     response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
-        data=json.dumps({"email": email_to_delete}),
-        content_type="application/json",
+        json={"email": email_to_delete},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -247,8 +241,7 @@ def test_del_request_others_self(client):
     response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
-        data=json.dumps({"email": email_to_delete}),
-        content_type="application/json",
+        json={"email": email_to_delete},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -267,8 +260,7 @@ def test_del_request_others_success(client):
     response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
-        data=json.dumps({"email": email_to_delete}),
-        content_type="application/json",
+        json={"email": email_to_delete},
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -286,8 +278,7 @@ def test_del_request_others_superaction(client):
     response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
-        data=json.dumps({"email": email_to_delete}),
-        content_type="application/json",
+        json={"email": email_to_delete},
     )
     assert response.status_code == http.HTTPStatus.OK
 

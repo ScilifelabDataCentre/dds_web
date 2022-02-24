@@ -47,7 +47,7 @@ class TokenSchema(marshmallow.Schema):
 
         # This can be easily extended to require at least one MFA method
         if ("HOTP" not in data) and ("TOTP" not in data):
-            raise marshmallow.ValidationError("MFA method not supplied")
+            raise marshmallow.exceptions.ValidationError("MFA method not supplied")
 
         user = auth.current_user()
 

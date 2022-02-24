@@ -8,7 +8,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Create endpoint for renewing users project access, e.g. after password reset ([886](https://github.com/ScilifelabDataCentre/dds_web/pull/885))
 * Added tests for web login and change password ([900](https://github.com/ScilifelabDataCentre/dds_web/pull/900))
 * Size-based log rotation working (15*1MiB)[#897](https://github.com/ScilifelabDataCentre/dds_web/pull/897))
-* Added check for project status in RemoveContents endpoint as outlined in [issue 898](https://github.com/ScilifelabDataCentre/dds_web/issues/898) ([PR899](https://github.com/ScilifelabDataCentre/dds_web/pull/899)). 
+* Added check for project status in RemoveContents endpoint as outlined in [issue 898](https://github.com/ScilifelabDataCentre/dds_web/issues/898) ([PR899](https://github.com/ScilifelabDataCentre/dds_web/pull/899)).
 * Implemented the functionality to add project to the invites of a new user as outlined in [issue 887](https://github.com/scilifelabdatacentre/dds_web/issues/887) ([PR888](https://github.com/ScilifelabDataCentre/dds_web/pull/888)).
 * Changed and fixed the implementation of password reset ([#891](https://github.com/ScilifelabDataCentre/dds_web/pull/891)
 * Changed log rotation to standard format and set maximum to 1MiB per file, max 15 files ([897](https://github.com/ScilifelabDataCentre/dds_web/pull/897))
@@ -18,3 +18,8 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Invite Researchers to projects ([911](https://github.com/ScilifelabDataCentre/dds_web/pull/911))
 * Changed `is_sensitive` to `non_sensitive` and set to default False ([#913](https://github.com/ScilifelabDataCentre/dds_web/pull/913))
 * Rearrangement and clean up of the token ([910](https://github.com/ScilifelabDataCentre/dds_web/pull/910))
+
+## Sprint (2022-02-23 - 2022-03-09)
+* Add landing page after password reset ([931](https://github.com/ScilifelabDataCentre/dds_web/pull/931))
+* Add endpoint for health check (intended for readinessProbe)  ([933](https://github.com/ScilifelabDataCentre/dds_web/pull/933))
+* Introduced a `--no-mail` flag in the CLI respectively a `send_email: True/False` json parameter to fix [issue 924](https://github.com/scilifelabdatacentre/dds_web/issues/924) ([#926](https://github.com/ScilifelabDataCentre/dds_web/pull/926))

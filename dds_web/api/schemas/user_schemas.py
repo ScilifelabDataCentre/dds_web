@@ -24,7 +24,14 @@ from dds_web.security.project_user_keys import verify_and_transfer_invite_to_use
 class UserSchema(marshmallow.Schema):
     """Schema for User class."""
 
-    email = marshmallow.fields.Email(required=True)
+    email = marshmallow.fields.Email(
+        required=True,
+        allow_none=False,
+        error_messages={
+            "required": {"message": "A user email is required."},
+            "null": {"message": "The user email cannot be null."},
+        },
+    )
 
     class Meta:
         unknown = marshmallow.EXCLUDE
@@ -43,7 +50,14 @@ class UserSchema(marshmallow.Schema):
 class UnansweredInvite(marshmallow.Schema):
     """Schema to return an unanswered invite."""
 
-    email = marshmallow.fields.Email(required=True)
+    email = marshmallow.fields.Email(
+        required=True,
+        allow_none=False,
+        error_messages={
+            "required": {"message": "An email is required."},
+            "null": {"message": "The email cannot be null."},
+        },
+    )
 
     class Meta:
         unknown = marshmallow.EXCLUDE
@@ -71,24 +85,39 @@ class NewUserSchema(marshmallow.Schema):
     # TODO: Look through and match to db
     username = marshmallow.fields.String(
         required=True,
+        allow_none=False,
         validate=marshmallow.validate.And(
             marshmallow.validate.Length(min=8, max=20),
             utils.valid_chars_in_username,
             # Validation for "username not taken" below
         ),
+        error_messages={
+            "required": {"message": "A username is required."},
+            "null": {"message": "The username cannot be null."},
+        },
     )
     password = marshmallow.fields.String(
         required=True,
+        allow_none=False,
         validate=marshmallow.validate.And(
             marshmallow.validate.Length(min=10, max=64),
             utils.contains_digit_or_specialchar,
             utils.contains_lowercase,
             utils.contains_uppercase,
         ),
+        error_messages={
+            "required": {"message": "A password is required."},
+            "null": {"message": "The password cannot be null."},
+        },
     )
     email = marshmallow.fields.Email(
         required=True,
+        allow_none=False,
         validate=marshmallow.validate.And(marshmallow.validate.Email(), utils.email_not_taken),
+        error_messages={
+            "required": {"message": "An email is required."},
+            "null": {"message": "The email cannot be null."},
+        },
     )
     name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=255))
 

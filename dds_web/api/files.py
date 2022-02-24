@@ -20,7 +20,11 @@ from dds_web import auth
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.api.dds_decorators import (
+    logging_bind_request,
+    json_required,
+    handle_validation_errors,
+)
 from dds_web.errors import (
     AccessDeniedError,
     DatabaseError,
@@ -72,13 +76,20 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
-        """Add new file to DB"""
-
+        """Add new file to DB."""
+        # Verify project id and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-        check_eligibility_for_upload(project.current_status)
 
-        new_file = file_schemas.NewFileSchema().load({**flask.request.json, **flask.request.args})
+        # Verify that project has correct status for upload
+        check_eligibility_for_upload(status=project.current_status)
+
+        # Create new files
+        new_file = file_schemas.NewFileSchema().load(
+            {**flask.request.json, "project": project.public_id}
+        )
 
         try:
             db.session.commit()
@@ -91,11 +102,14 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @handle_validation_errors
     def put(self):
-
+        """Update existing file."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        check_eligibility_for_upload(project.current_status)
+        # Verify that projet has correct status for upload
+        check_eligibility_for_upload(status=project.current_status)
 
         file_info = flask.request.json
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
@@ -174,13 +188,17 @@ class MatchFiles(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def get(self):
-        """Matches specified files to files in db."""
-
+        """Get name in bucket for all files specified."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        check_eligibility_for_upload(project.current_status)
+        # Verify project has correct status for upload
+        check_eligibility_for_upload(status=project.current_status)
 
+        # Get files specified
         try:
             matching_files = (
                 models.File.query.filter(models.File.name.in_(flask.request.json))
@@ -202,9 +220,10 @@ class ListFiles(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
         """Get a list of files within the specified folder."""
-
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         if auth.current_user().role == "Researcher" and project.current_status == "In Progress":
@@ -348,13 +367,19 @@ class RemoveFile(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def delete(self):
-        """Deletes the files"""
-
+        """Delete file(s)."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        check_eligibility_for_deletion(project.current_status, project.has_been_available)
+        # Verify project status ok for deletion
+        check_eligibility_for_deletion(
+            status=project.current_status, has_been_available=project.has_been_available
+        )
 
+        # Delete file(s) from db and cloud
         not_removed_dict, not_exist_list = self.delete_multiple(
             project=project, files=flask.request.json
         )
@@ -438,15 +463,20 @@ class RemoveDir(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def delete(self):
-        """Deletes the folders."""
-
+        """Delete folder(s)."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        check_eligibility_for_deletion(project.current_status, project.has_been_available)
+        # Verify project status ok for deletion
+        check_eligibility_for_deletion(
+            status=project.current_status, has_been_available=project.has_been_available
+        )
 
+        # Remove folder(s)
         not_removed_dict, not_exist_list = ({}, [])
-
         try:
 
             with ApiS3Connector(project=project) as s3conn:
@@ -488,7 +518,6 @@ class RemoveDir(flask_restful.Resource):
         """Delete all items in folder"""
         exists = False
         names_in_bucket = []
-        print(f"folder: {folder}")
         try:
             # File names in root
             files = (
@@ -498,12 +527,11 @@ class RemoveDir(flask_restful.Resource):
                 .filter(
                     sqlalchemy.or_(
                         models.File.subpath == sqlalchemy.func.binary(folder),
-                        models.File.subpath.op("regexp")(f"^{folder}(\/[^\/]+)*$"),
+                        models.File.subpath.regexp_match(rf"^{folder}(/[^/]+)*$"),
                     )
                 )
                 .all()
             )
-            print(f"files in folder: {files}")
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError(message=str(err))
 
@@ -532,20 +560,27 @@ class FileInfo(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def get(self):
         """Checks which files can be downloaded, and get their info."""
-
-        input_ = {**flask.request.args, **{"requested_items": flask.request.json, "url": True}}
-
-        # Check eligibility to download
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        # Verify project status ok for download
         user_role = auth.current_user().role
-        check_eligibility_for_download(project.current_status, user_role)
+        check_eligibility_for_download(status=project.current_status, user_role=user_role)
 
         # Get project contents
-        found_files, found_folder_contents, not_found = project_schemas.ProjectContentSchema().dump(
-            input_
-        )
+        input_ = {
+            "project": project.public_id,
+            **{"requested_items": flask.request.json, "url": True},
+        }
+        (
+            found_files,
+            found_folder_contents,
+            not_found,
+        ) = project_schemas.ProjectContentSchema().dump(input_)
 
         return {
             "files": found_files,
@@ -559,16 +594,18 @@ class FileInfoAll(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
-        """Get file info."""
-
-        # Check eligibility to download
+        """Get file info on all files."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        # Verify project status ok for download
         user_role = auth.current_user().role
-        check_eligibility_for_download(project.current_status, user_role)
+        check_eligibility_for_download(status=project.current_status, user_role=user_role)
 
         files, _, _ = project_schemas.ProjectContentSchema().dump(
-            {**flask.request.args, "get_all": True, "url": True}
+            {"project": project.public_id, "get_all": True, "url": True}
         )
 
         return {"files": files}
@@ -579,15 +616,15 @@ class UpdateFile(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def put(self):
         """Update info in db."""
-
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-        file_info = flask.request.json
-
         # Get file name from request from CLI
-        file_name = file_info.get("name")
+        file_name = flask.request.json.get("name")
         if not file_name:
             raise DDSArgumentError("No file name specified. Cannot update file.")
 

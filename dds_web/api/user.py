@@ -28,7 +28,12 @@ import dds_web.utils
 import dds_web.forms
 import dds_web.errors as ddserr
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
-from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.api.dds_decorators import (
+    logging_bind_request,
+    args_required,
+    json_required,
+    handle_validation_errors,
+)
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
     share_project_private_key,
@@ -46,14 +51,12 @@ action_logger = structlog.getLogger("actions")
 class AddUser(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
         """Associate existing users or unanswered invites with projects or create invites"""
         args = flask.request.args
         json_info = flask.request.json
-        if not json_info:
-            raise ddserr.DDSArgumentError(
-                message="Missing required information, cannot add or invite."
-            )
 
         # Verify valid role (should also catch None)
         role = json_info.get("role")
@@ -68,7 +71,10 @@ class AddUser(flask_restful.Resource):
         # Verify email
         email = json_info.get("email")
         if not email:
-            raise ddserr.DDSArgumentError(message="Email adress required to add or invite.")
+            raise ddserr.DDSArgumentError(message="Email address required to add or invite.")
+
+        # Notify the users about project additions? Invites are still being sent out.
+        send_email = json_info.get("send_email", True)
 
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load({"email": email})
@@ -84,7 +90,10 @@ class AddUser(flask_restful.Resource):
                 )
 
             add_user_result = self.add_to_project(
-                whom=existing_user or unanswered_invite, project=project, role=role
+                whom=existing_user or unanswered_invite,
+                project=project,
+                role=role,
+                send_email=send_email,
             )
             return add_user_result, add_user_result["status"]
 
@@ -196,7 +205,7 @@ class AddUser(flask_restful.Resource):
                             project=unit_project,
                         )
 
-                if project:  # specified project is disregarded for unituser invites
+                if not project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
                 else:
                     msg = f"{str(new_invite)} was successful, but specification for {str(project)} dropped. Unit Users have automatic access to projects of their unit."
@@ -237,7 +246,7 @@ class AddUser(flask_restful.Resource):
 
     @staticmethod
     @logging_bind_request
-    def add_to_project(whom, project, role):
+    def add_to_project(whom, project, role, send_email=True):
         """Add existing user or invite to a project"""
 
         allowed_roles = ["Project Owner", "Researcher"]
@@ -253,7 +262,6 @@ class AddUser(flask_restful.Resource):
 
         owner = role == "Project Owner"
         ownership_change = False
-        send_email = True
 
         if isinstance(whom, models.ResearchUser):
             project_user_row = models.ProjectUsers.query.filter_by(
@@ -311,7 +319,10 @@ class AddUser(flask_restful.Resource):
 
         return {
             "status": http.HTTPStatus.OK,
-            "message": (f"{str(whom)} was associated with " f"{str(project)} as Owner={owner}."),
+            "message": (
+                f"{str(whom)} was associated with "
+                f"{str(project)} as Owner={owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
+            ),
         }
 
     @staticmethod
@@ -416,7 +427,7 @@ class DeleteUserSelf(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     def delete(self):
-
+        """Request deletion of own account."""
         current_user = auth.current_user()
 
         email_str = current_user.primary_email
@@ -514,21 +525,21 @@ class UserActivation(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
         # Verify that user specified
-        extra_args = flask.request.json
-        if not extra_args:
-            raise DDSArgumentError(message="Required information missing.")
+        json_input = flask.request.json
 
-        if "email" not in extra_args:
-            raise DDSArgumentError(message="User email missing.")
+        if "email" not in json_input:
+            raise ddserr.DDSArgumentError(message="User email missing.")
 
-        user = user_schemas.UserSchema().load({"email": extra_args.pop("email")})
+        user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
         if not user:
             raise ddserr.NoSuchUserError()
 
         # Verify that the action is specified -- reactivate or deactivate
-        action = flask.request.json.get("action")
+        action = json_input.get("action")
         if action is None or action == "":
             raise ddserr.DDSArgumentError(
                 message="Please provide an action 'deactivate' or 'reactivate' for this request."
@@ -606,6 +617,7 @@ class DeleteUser(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
+    @handle_validation_errors
     def delete(self):
 
         user = user_schemas.UserSchema().load(flask.request.json)
@@ -669,17 +681,18 @@ class DeleteUser(flask_restful.Resource):
 class RemoveUserAssociation(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
         """Remove a user from a project"""
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        json_input = flask.request.json
 
-        project_id = flask.request.args.get("project")
-
-        args = flask.request.json
-        user_email = args.pop("email")
+        if not (user_email := json_input.get("email")):
+            raise ddserr.DDSArgumentError(message="User email missing.")
 
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load({"email": user_email})
-        project = project_schemas.ProjectRequiredSchema().load({"project": project_id})
 
         if not existing_user:
             raise ddserr.NoSuchUserError(
@@ -719,7 +732,9 @@ class RemoveUserAssociation(flask_restful.Resource):
             f"User {existing_user.username} no longer associated with project {project.public_id}."
         )
 
-        return {"message": f"User with email {user_email} no longer associated with {project_id}."}
+        return {
+            "message": f"User with email {user_email} no longer associated with {project.public_id}."
+        }
 
 
 class EncryptedToken(flask_restful.Resource):
@@ -749,12 +764,11 @@ class SecondFactor(flask_restful.Resource):
     """Take in and verify an authentication one-time code entered by an authenticated user with basic credentials"""
 
     @auth.login_required
+    @handle_validation_errors
     def get(self):
 
-        args = flask.request.json or {}
-
         try:
-            token_schemas.TokenSchema().load(args)
+            token_schemas.TokenSchema().load(flask.request.json)
         except marshmallow.ValidationError as err:
             raise ddserr.AuthenticationError(message=err.messages)
 

@@ -13,8 +13,10 @@ import boto3
 import flask_mail
 
 # Own
+import dds_web
 import tests
-from tests.test_files_new import project_row, file_in_db, first_new_file
+from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
+from tests.test_project_creation import proj_data_with_existing_users
 
 # CONFIG ################################################################################## CONFIG #
 
@@ -45,8 +47,7 @@ def test_project(module_client):
         response = module_client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-            data=json.dumps(proj_data),
-            content_type="application/json",
+            json=proj_data,
         )
     project_id = response.json.get("project_id")
     # add a file
@@ -54,8 +55,7 @@ def test_project(module_client):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(first_new_file),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
 
     return project_id
@@ -71,19 +71,17 @@ def test_submit_request_with_invalid_args(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps({}),
-        content_type="application/json",
+        json={},
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "Missing new status" in response.json["message"]
+    assert "Required data missing" in response.json["message"]
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps({"new_status": "Invalid"}),
-        content_type="application/json",
+        json={"new_status": "Invalid"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Invalid status" in response.json["message"]
@@ -96,8 +94,7 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        data=json.dumps(proj_data),
-        content_type="application/json",
+        json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -109,11 +106,10 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(first_new_file),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
 
-    assert file_in_db(test_dict=first_new_file, project=project.id)
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
     for field, value in vars(project).items():
         if field in fields_set_to_null:
@@ -133,8 +129,7 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -151,8 +146,7 @@ def test_aborted_project(module_client, boto3_session):
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        data=json.dumps(proj_data),
-        content_type="application/json",
+        json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -162,21 +156,19 @@ def test_aborted_project(module_client, boto3_session):
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(first_new_file),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
 
     project = project_row(project_id=project_id)
 
-    assert file_in_db(test_dict=first_new_file, project=project.id)
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
     new_status = {"new_status": "Archived"}
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -192,8 +184,7 @@ def test_aborted_project(module_client, boto3_session):
             tests.DDSEndpoint.PROJECT_STATUS,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
             query_string={"project": project_id},
-            data=json.dumps(new_status),
-            content_type="application/json",
+            json=new_status,
         )
         # One mail sent for the partial token and one for project release
         assert mock_mail_send.call_count == 2
@@ -214,14 +205,13 @@ def test_aborted_project(module_client, boto3_session):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Archived"
     assert max(project.project_statuses, key=lambda x: x.date_created).is_aborted
-    assert not file_in_db(test_dict=first_new_file, project=project.id)
+    assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
     assert not project.project_user_keys
 
     for field, value in vars(project).items():
@@ -235,8 +225,7 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        data=json.dumps(proj_data),
-        content_type="application/json",
+        json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -247,13 +236,12 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(first_new_file),
-        content_type="application/json",
+        json=FIRST_NEW_FILE,
     )
 
     project = project_row(project_id=project_id)
 
-    assert file_in_db(test_dict=first_new_file, project=project.id)
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
     new_status = {"new_status": "Available"}
     time.sleep(1)
@@ -262,8 +250,7 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -276,8 +263,7 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -288,8 +274,7 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps({"history": True}),
-        content_type="application/json",
+        json={"history": True},
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -304,14 +289,13 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Archived"
     assert max(project.project_statuses, key=lambda x: x.date_created).is_aborted
-    assert not file_in_db(test_dict=first_new_file, project=project.id)
+    assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
     for field, value in vars(project).items():
         if field in fields_set_to_null:
@@ -332,8 +316,7 @@ def test_check_invalid_transitions_from_in_progress(module_client, test_project)
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -346,8 +329,7 @@ def test_check_invalid_transitions_from_in_progress(module_client, test_project)
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -371,8 +353,7 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -384,6 +365,41 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
     ) + datetime.timedelta(days=new_status["deadline"])
 
     assert db_deadline == calc_deadline
+
+
+def test_set_project_to_available_no_mail(module_client, boto3_session):
+    """Set status to Available for test project, but skip sending mails"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=token,
+        json=proj_data_with_existing_users,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json and response.json.get("user_addition_statuses")
+    for x in response.json.get("user_addition_statuses"):
+        assert "associated with Project" in x
+
+    public_project_id = response.json.get("project_id")
+
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        with unittest.mock.patch.object(
+            dds_web.api.user.AddUser, "compose_and_send_email_to_user"
+        ) as mock_mail_func:
+            response = module_client.post(
+                tests.DDSEndpoint.PROJECT_STATUS,
+                headers=token,
+                query_string={"project": public_project_id},
+                json={"new_status": "Available", "deadline": 10, "send_email": False},
+            )
+            # assert that no mail is being sent.
+            assert mock_mail_func.called == False
+        assert mock_mail_send.call_count == 0
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert "An e-mail notification has not been sent." in response.json["message"]
 
 
 def test_set_project_to_deleted_from_available(module_client, test_project):
@@ -398,8 +414,7 @@ def test_set_project_to_deleted_from_available(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -421,8 +436,7 @@ def test_check_deadline_remains_same_when_made_available_again_after_going_to_in
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "In Progress"
@@ -434,8 +448,7 @@ def test_check_deadline_remains_same_when_made_available_again_after_going_to_in
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert (
@@ -449,8 +462,7 @@ def test_check_deadline_remains_same_when_made_available_again_after_going_to_in
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Available"
@@ -470,8 +482,7 @@ def test_set_project_to_expired_from_available(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -498,8 +509,7 @@ def test_project_availability_after_set_to_expired_more_than_twice(module_client
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -512,8 +522,7 @@ def test_project_availability_after_set_to_expired_more_than_twice(module_client
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -526,8 +535,7 @@ def test_project_availability_after_set_to_expired_more_than_twice(module_client
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -540,8 +548,7 @@ def test_project_availability_after_set_to_expired_more_than_twice(module_client
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -554,8 +561,7 @@ def test_project_availability_after_set_to_expired_more_than_twice(module_client
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -575,8 +581,7 @@ def test_invalid_transitions_from_expired(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Expired"
@@ -588,8 +593,7 @@ def test_invalid_transitions_from_expired(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Expired"
@@ -603,21 +607,20 @@ def test_set_project_to_archived(module_client, test_project, boto3_session):
     project_id = test_project
     project = project_row(project_id=project_id)
 
-    assert file_in_db(test_dict=first_new_file, project=project.id)
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
     assert project.project_user_keys
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Archived"
     assert not max(project.project_statuses, key=lambda x: x.date_created).is_aborted
-    assert not file_in_db(test_dict=first_new_file, project=project.id)
+    assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
     assert not project.project_user_keys
 
 
@@ -633,8 +636,7 @@ def test_invalid_transitions_from_archived(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"
@@ -646,8 +648,7 @@ def test_invalid_transitions_from_archived(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"
@@ -659,8 +660,7 @@ def test_invalid_transitions_from_archived(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"
@@ -672,8 +672,7 @@ def test_invalid_transitions_from_archived(module_client, test_project):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        data=json.dumps(new_status),
-        content_type="application/json",
+        json=new_status,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"

@@ -266,8 +266,7 @@ def test_delete_user_deletes_project_user_keys(client):
     response = client.delete(
         tests.DDSEndpoint.USER_DELETE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps({"email": email_to_delete}),
-        content_type="application/json",
+        json={"email": email_to_delete},
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -302,8 +301,7 @@ def test_remove_user_from_project_deletes_project_user_keys(client):
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project.public_id},
-        data=json.dumps(user_to_remove),
-        content_type="application/json",
+        json=user_to_remove,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert (

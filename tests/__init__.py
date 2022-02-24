@@ -122,6 +122,9 @@ class DDSEndpoint:
     # Base url - local or remote
     BASE_ENDPOINT = "/api/v1"
 
+    # status
+    STATUS = "/status"
+
     # Web
     INDEX = "/"
     LOGIN = "/login"
@@ -135,6 +138,7 @@ class DDSEndpoint:
     USER_NEW = "/register"
     REQUEST_RESET_PASSWORD = "/reset_password"
     RESET_PASSWORD = "/reset_password/"
+    PASSWORD_RESET_COMPLETED = "/password_reset_completed"
 
     # User INFO
     USER_INFO = BASE_ENDPOINT + "/user/info"
