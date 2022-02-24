@@ -41,10 +41,6 @@
         <p>{{totp_uri}}</p>
     </div>
     <div>
-        <h4>Codes</h4>
-        <p>{{codes}}</p>
-    </div>
-    <div>
         <form method="POST" action="{{ url_for('auth_blueprint.activate_totp', token=token) }}">
             {{ form.csrf_token }}
 
