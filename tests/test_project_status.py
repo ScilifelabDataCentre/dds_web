@@ -370,9 +370,11 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
 def test_set_project_to_available_no_mail(client, boto3_session):
     """Set status to Available for test project, but skip sending mails"""
 
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        headers=token,
         json=proj_data_with_existing_users,
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -388,12 +390,12 @@ def test_set_project_to_available_no_mail(client, boto3_session):
         ) as mock_mail_func:
             response = client.post(
                 tests.DDSEndpoint.PROJECT_STATUS,
-                headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+                headers=token,
                 query_string={"project": public_project_id},
                 json={"new_status": "Available", "deadline": 10, "send_email": False},
             )
-        # assert that no mail is being sent.
-        assert mock_mail_func.called == False
+            # assert that no mail is being sent.
+            assert mock_mail_func.called == False
         assert mock_mail_send.call_count == 0
 
     assert response.status_code == http.HTTPStatus.OK
