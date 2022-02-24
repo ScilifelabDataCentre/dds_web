@@ -497,7 +497,6 @@ class User(flask_login.UserMixin, db.Model):
     def totp_initiated(self):
         return self._totp_secret is not None
 
-
     def setup_totp_secret(self):
         """Generate random 160 bit as the new totp secret and return provisioning URI
         We're using SHA1 (Google Authenticator seems to only use SHA1 and 6 digit codes)
@@ -526,7 +525,7 @@ class User(flask_login.UserMixin, db.Model):
         self.totp_enabled = True
         db.session.commit()
 
-    def verify_totp(self, token):
+    def verify_TOTP(self, token):
         """Verify the totp token. Checks the previous, current and comming time frame
         to allow for some clock drift.
 

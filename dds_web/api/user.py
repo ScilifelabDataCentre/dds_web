@@ -753,7 +753,10 @@ class SecondFactor(flask_restful.Resource):
 
         args = flask.request.json or {}
 
-        token_schemas.TokenSchema().load(args)
+        try:
+            token_schemas.TokenSchema().load(args)
+        except marshmallow.ValidationError as err:
+            raise ddserr.AuthenticationError(message=err.messages)
 
         token_claims = dds_web.security.auth.obtain_current_encrypted_token_claims()
 
