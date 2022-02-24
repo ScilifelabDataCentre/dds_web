@@ -2,6 +2,17 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class=flashes>
+    {% for category, message in messages %}
+    <div class="alert alert-{{category}}" role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
 This page will have something on it later.
 <form method="POST" action="{{ url_for('auth_blueprint.logout') }}">
     {{ form.csrf_token }}
