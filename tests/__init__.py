@@ -122,6 +122,9 @@ class DDSEndpoint:
     # Base url - local or remote
     BASE_ENDPOINT = "/api/v1"
 
+    # status
+    STATUS = "/status"
+
     # Web
     INDEX = "/"
     LOGIN = "/login"
