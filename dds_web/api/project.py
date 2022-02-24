@@ -93,6 +93,8 @@ class ProjectStatus(flask_restful.Resource):
         ]:
             raise DDSArgumentError("Invalid status")
 
+        send_email = json_input.get("send_email", True)
+
         curr_date = dds_web.utils.current_time()
         is_aborted = False
         add_deadline = None
@@ -177,13 +179,17 @@ class ProjectStatus(flask_restful.Resource):
             raise DatabaseError(message="Server Error: Status was not updated")
 
         # Mail users once project is made available
-        if new_status == "Available":
+        if new_status == "Available" and send_email:
             for user in project.researchusers:
                 AddUser.compose_and_send_email_to_user(
                     userobj=user.researchuser, mail_type="project_release", project=project
                 )
 
-        return {"message": f"{project.public_id} updated to status {new_status}" + delete_message}
+        return {
+            "message": f"{project.public_id} updated to status {new_status}"
+            + delete_message
+            + f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
+        }
 
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""

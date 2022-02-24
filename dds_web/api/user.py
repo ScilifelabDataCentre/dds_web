@@ -71,7 +71,10 @@ class AddUser(flask_restful.Resource):
         # Verify email
         email = json_info.get("email")
         if not email:
-            raise ddserr.DDSArgumentError(message="Email adress required to add or invite.")
+            raise ddserr.DDSArgumentError(message="Email address required to add or invite.")
+
+        # Notify the users about project additions? Invites are still being sent out.
+        send_email = json_info.get("send_email", True)
 
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load({"email": email})
@@ -87,7 +90,10 @@ class AddUser(flask_restful.Resource):
                 )
 
             add_user_result = self.add_to_project(
-                whom=existing_user or unanswered_invite, project=project, role=role
+                whom=existing_user or unanswered_invite,
+                project=project,
+                role=role,
+                send_email=send_email,
             )
             return add_user_result, add_user_result["status"]
 
@@ -199,7 +205,7 @@ class AddUser(flask_restful.Resource):
                             project=unit_project,
                         )
 
-                if project:  # specified project is disregarded for unituser invites
+                if not project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
                 else:
                     msg = f"{str(new_invite)} was successful, but specification for {str(project)} dropped. Unit Users have automatic access to projects of their unit."
@@ -240,7 +246,7 @@ class AddUser(flask_restful.Resource):
 
     @staticmethod
     @logging_bind_request
-    def add_to_project(whom, project, role):
+    def add_to_project(whom, project, role, send_email=True):
         """Add existing user or invite to a project"""
 
         allowed_roles = ["Project Owner", "Researcher"]
@@ -256,7 +262,6 @@ class AddUser(flask_restful.Resource):
 
         owner = role == "Project Owner"
         ownership_change = False
-        send_email = True
 
         if isinstance(whom, models.ResearchUser):
             project_user_row = models.ProjectUsers.query.filter_by(
@@ -314,7 +319,10 @@ class AddUser(flask_restful.Resource):
 
         return {
             "status": http.HTTPStatus.OK,
-            "message": (f"{str(whom)} was associated with " f"{str(project)} as Owner={owner}."),
+            "message": (
+                f"{str(whom)} was associated with "
+                f"{str(project)} as Owner={owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
+            ),
         }
 
     @staticmethod
