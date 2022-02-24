@@ -367,7 +367,7 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
     assert db_deadline == calc_deadline
 
 
-def test_set_project_to_available_no_mail(client):
+def test_set_project_to_available_no_mail(client, boto3_session):
     """Set status to Available for test project, but skip sending mails"""
 
     response = client.post(
@@ -393,8 +393,8 @@ def test_set_project_to_available_no_mail(client):
                 json={"new_status": "Available", "deadline": 10, "send_email": False},
             )
         # assert that no mail is being sent.
-        assert mock_mail_send.call_count == 0
         assert mock_mail_func.called == False
+        assert mock_mail_send.call_count == 0
 
     assert response.status_code == http.HTTPStatus.OK
     assert "An e-mail notification has not been sent." in response.json["message"]
