@@ -281,15 +281,27 @@ def fill_db_wrapper(db_type):
         password = flask.current_app.config["SUPERADMIN_PASSWORD"]
         name = flask.current_app.config["SUPERADMIN_NAME"]
         existing_user = models.User.query.filter_by(username=username).one_or_none()
-        if existing_user:
+
+        email = flask.current_app.config["SUPERADMIN_EMAIL"]
+        existing_email = models.Email.query.filter_by(email=email).one_or_none()
+
+        if existing_email:
+            flask.current_app.logger.info(
+                f"User with email '{email}' already exists, not creating user."
+            )
+        elif existing_user:
             if isinstance(existing_user, models.SuperAdmin):
                 flask.current_app.logger.info(
                     f"Super admin with username '{username}' already exists, not creating user."
                 )
         else:
+            flask.current_app.logger.info(f"Adding Super Admin: {username} ({email})")
             new_super_admin = models.SuperAdmin(username=username, name=name, password=password)
-            db.session.add(new_super_admin)
+            new_email = models.Email(email=email, primary=True)
+            new_email.user = new_super_admin
+            db.session.add(new_email)
             db.session.commit()
+            flask.current_app.logger.info(f"Super Admin added: {username} ({email})")
     else:
         flask.current_app.logger.info("Initializing development db")
         assert flask.current_app.config["USE_LOCAL_DB"]

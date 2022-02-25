@@ -361,7 +361,7 @@ class User(flask_login.UserMixin, db.Model):
     hotp_secret = db.Column(db.LargeBinary(20), unique=False, nullable=False)
     hotp_counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
     hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
-    active = db.Column(db.Boolean)
+    active = db.Column(db.Boolean, nullable=False, default=True)
     kd_salt = db.Column(db.LargeBinary(32), default=None)
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)

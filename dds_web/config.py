@@ -69,3 +69,4 @@ class Config(object):
     SUPERADMIN_USERNAME = os.environ.get("DDS_SUPERADMIN_USERNAME", "superadmin")
     SUPERADMIN_PASSWORD = os.environ.get("DDS_SUPERADMIN_PASSWORD", "password")
     SUPERADMIN_NAME = os.environ.get("DDS_SUPERADMIN_NAME", "superadmin")
+    SUPERADMIN_EMAIL = os.environ.get("DDS_SUPERADMIN_EMAIL", "superadmin@example.com")
