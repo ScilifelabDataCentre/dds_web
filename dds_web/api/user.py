@@ -200,7 +200,7 @@ class AddUser(flask_restful.Resource):
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
             # TODO Change / move this later. This is just so that we can add an initial unit admin.
             if auth.current_user().role == "Super Admin":
-                if new_invite.role == "Unit Admin" and unit:
+                if unit:
                     unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
                     if not unit_row:
                         raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
