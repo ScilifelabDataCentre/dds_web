@@ -201,7 +201,8 @@ def confirm_2fa():
         )
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
-    # Valid 2fa initiated token, but user does not exist (should never happen)
+    # Valid 2fa initiated token, but user does not exist (not never happen) or is inactive (could happen)
+    # Currently same error for both, not vital, they get message to contact us
     if not user:
         flask.session.pop("2fa_initiated_token", None)
         flask.flash("Your account is not active. Contact Data Centre.", "danger")

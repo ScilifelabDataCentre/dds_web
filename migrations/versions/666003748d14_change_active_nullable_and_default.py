@@ -37,7 +37,7 @@ def downgrade():
     all_user_rows = session.query(models.User).all()
     for user in all_user_rows:
         if not user.active:
-            user.active = None
+            user.active = False
     session.commit()
     op.alter_column("users", "active", existing_type=mysql.TINYINT(display_width=1), nullable=True)
     # ### end Alembic commands ###
