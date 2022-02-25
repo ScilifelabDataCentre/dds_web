@@ -203,7 +203,7 @@ class AddUser(flask_restful.Resource):
                 if new_invite.role == "Unit Admin" and unit:
                     unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
                     if not unit_row:
-                        raise ddserr.DDSArgumentError(message="Invalid unit publid_id.")
+                        raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
 
                     unit_row.invites.append(new_invite)
                 else:
