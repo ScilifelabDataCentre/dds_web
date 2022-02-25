@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+
+  backend:
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
+      - DDS_PYTEST_ARGS=${DDS_PYTEST_ARGS}
+    build:
+      dockerfile: Dockerfiles/backend.Dockerfile
+      context: ./
+      target: test
+    command: bash -c "COVERAGE_FILE=./coverage/.coverage pytest --color=yes $DDS_PYTEST_ARGS --cov=./dds_web --cov-report=xml:coverage/report.xml"
+    restart: "no"
+    volumes:
+      - type: bind
+        source: ./coverage
+        target: /code/coverage

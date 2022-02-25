@@ -1,562 +1,177 @@
 """USED ONLY DURING DEVELOPMENT! Adds test data to the database."""
 
-import os
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
+
+# Standard library
 import uuid
 
+# Installed
 from flask import current_app
 
-from dds_web import db, timestamp
+# Own modules
+from dds_web import db
+from dds_web.database import models
+from dds_web.security.project_user_keys import (
+    generate_project_key_pair,
+    share_project_private_key,
+)
+from dds_web.security.tokens import encrypted_jwt_token
+import dds_web.utils
 
-from dds_web.database.models import User, Project, Facility, File, Role
-
-
-# def create_files_for_project(project):
-#     """ Get a project model and creates dummy test file structure for it """
-
-#     files_list = [
-#         {
-#             'name': '{}_description.txt',
-#             'dpath': '',
-#             'size': '146 kb'
-#         },
-#         {
-#             'name': 'Sample_1/{}_data.txt',
-#             'dpath': 'Sample_1',
-#             'size': '10.3 mb'
-#         },
-#         {
-#             'name': 'Sample_1/{}_source.txt',
-#             'dpath': 'Sample_1',
-#             'size': '257 kb'
-#         },
-#         {
-#             'name': 'Sample_1/meta/{}_info.txt',
-#             'dpath': 'Sample_1/meta',
-#             'size': '96 kb'
-#         },
-#         {
-#             'name': 'Sample_2/{}_data.txt',
-#             'dpath': 'Sample_2',
-#             'size': '8.7 mb'
-#         },
-#         {
-#             'name': 'Sample_2/{}_source.txt',
-#             'dpath': 'Sample_2',
-#             'size': '350 kb'
-#         },
-#         {
-#             'name': 'Sample_2/meta/{}_info.txt',
-#             'dpath': 'Sample_2/meta',
-#             'size': '67 kb'
-#         },
-#         {
-#             'name': '{}_sample_list.txt',
-#             'dpath': '',
-#             'size': '18 kb'
-#         },
-#         {
-#             'name': 'Plates/Sample_1/{}_layout.txt',
-#             'dpath': 'Plates/Sample_1',
-#             'size': '79 kb'
-#         },
-#         {
-#             'name': 'Plates/Sample_2/{}_layout.txt',
-#             'dpath': 'Plates/Sample_2',
-#             'size': '95 kb'
-#         }
-#     ]
-
-# for fnum, finfo in enumerate(files_list):
-#     mfile = File(name=finfo['name'].format(project.id), directory_path=finfo['dpath'],
-#                  size=1, size_enc=1, extension='ext', compressed=True,
-#                  public_key='public_key', salt='salt',
-#                  date_uploaded='2020-05-25', project_id=project
-#                  )
-#     project.project_files.append(mfile)
+####################################################################################################
+# FUNCTIONS ############################################################################ FUNCTIONS #
+####################################################################################################
 
 
 def fill_db():
     """Fills the database with initial entries used for development."""
 
-    users = [
-        User(
-            public_id="public_user_id",
-            username="username",
-            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
-            admin=False,
-        ),
-        User(
-            public_id="public_admin_id",
-            username="admin",
-            password="$argon2id$v=19$m=102400,t=2,p=8$0jcemW3Ln+HTPUt/E3xtKQ$aZGqrrBBU5gq5TbWYwUWD62UiQUmTksbKOkmbMJzdhs",
-            admin=True,
+    # Foreign key/relationship updates:
+    # The model with the row db.relationship should append the row of the model with foreign key
+
+    password = "password"
+
+    # Create first unit user
+    unituser_1 = models.UnitUser(
+        username="unituser_1",
+        password=password,
+        name="First Unit User",
+    )
+
+    # Create second unit user
+    unituser_2 = models.UnitUser(
+        username="unituser_2",
+        password=password,
+        name="Second Unit User",
+    )
+
+    # create a few e-mail addresses
+    email_unituser_1 = models.Email(email="unituser1@mailtrap.io", primary=True)
+    email_unituser_1b = models.Email(email="unituser1@somewhereelse.se", primary=False)
+    email_unituser_2 = models.Email(email="unituser2@mailtrap.io", primary=True)
+    email_unituser_1.user = unituser_1
+    email_unituser_1b.user = unituser_1
+    email_unituser_2.user = unituser_2
+    unituser_1.active = True
+    unituser_2.active = True
+
+    # Create first unit
+    unit_1 = models.Unit(
+        public_id="unit_1",
+        name="Unit 1",
+        external_display_name="Unit 1 external",
+        contact_email="support@example.com",
+        internal_ref="someunit",
+        safespring_endpoint=current_app.config.get("SAFESPRING_URL"),
+        safespring_name=current_app.config.get("DDS_SAFESPRING_PROJECT"),
+        safespring_access=current_app.config.get("DDS_SAFESPRING_ACCESS"),
+        safespring_secret=current_app.config.get("DDS_SAFESPRING_SECRET"),
+    )
+
+    unit_1.users.extend([unituser_1, unituser_2])
+
+    # Create first project - leave out foreign key
+    project_1 = models.Project(
+        public_id="project_1",
+        title="First Project",
+        description="This is a test project. You will be able to upload to but NOT download "
+        "from this project. Create a new project to test the entire system. ",
+        pi="PI Name",
+        bucket=f"testbucket",
+    )
+
+    project_1.project_statuses.append(
+        models.ProjectStatuses(
+            **{"status": "In Progress", "date_created": dds_web.utils.current_time()}
         )
-        #     User(first_name="FirstName", last_name="LastName",
-        #         username="username1",
-        #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
-        #                   "c27a8efd774bc5"),
-        #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-        #         email="user1@email.com", phone="070-000 00 01",
-        #         admin=False),
-        #     User(first_name="Han", last_name="Solo",
-        #         username="hanflysolo",
-        #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
-        #                   "c27a8efd774bc5"),
-        #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-        #         email="user2@email.com", phone="070-000 00 01",
-        #         admin=False),
-        #     User(first_name="Tony", last_name="Stark",
-        #         username="tonyistony",
-        #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
-        #                   "c27a8efd774bc5"),
-        #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-        #         email="user3@email.com", phone="070-000 00 01",
-        #         admin=False),
-        #     User(first_name="Katniss", last_name="Everdeen",
-        #         username="katever",
-        #         password=("9f247257e7d0ef00ad5eeeda7740233167d36b265a918536b8"
-        #                   "c27a8efd774bc5"),
-        #         settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-        #         email="user4@email.com", phone="070-000 00 01",
-        #         admin=False)
-    ]
+    )
 
-    facilities = [
-        Facility(
-            public_id="public_facility_id",
-            username="facility",
-            password="$argon2id$v=19$m=102400,t=2,p=8$mgkOMH/4B16suy5TMw+4KQ$7j5eT0zMOmdUj2q1A+dcgC9TM4QOl39GeHWdYh+QdEE",
-            name="Facility 1",
-            internal_ref="fac",
-            safespring=current_app.config.get("DDS_SAFE_SPRING_PROJECT"),
+    unituser_1.created_projects.append(project_1)
+
+    generate_project_key_pair(unituser_1, project_1)
+
+    # Create second project - leave out foreign key
+    project_2 = models.Project(
+        public_id="project_2",
+        title="Second Project",
+        description="This is a test project. You will be able to upload to but NOT download "
+        "from this project. Create a new project to test the entire system. ",
+        pi="PI Name",
+        bucket=f"secondproject-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+    )
+
+    project_2.project_statuses.append(
+        models.ProjectStatuses(
+            **{"status": "In Progress", "date_created": dds_web.utils.current_time()}
         )
-        # Facility(name="Facility1", internal_ref="fac1",
-        #          username="facility1",
-        #          password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
-        #                    "095735f5a395e9013d70ec"),
-        #          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-        #          email="supprt@fac.se", phone="08 000 00 00"),
-        # Facility(name="Genome facility", internal_ref="fac2",
-        #          username="genome_fac",
-        #          password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
-        #                    "095735f5a395e9013d70ec"),
-        #          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-        #          email="supprt@genome.se", phone="08 000 00 00"),
-        # Facility(name="Imaging facility", internal_ref="fac3",
-        #          username="image_fac",
-        #          password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
-        #                    "095735f5a395e9013d70ec"),
-        #          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-        #          email="supprt@imaging.se", phone="08 000 00 00"),
-        # Facility(name="Proteomics facility", internal_ref="fac4",
-        #          username="proteome_fac",
-        #          password=("b93be04bfdcdace50c5f5d8e88a3e08e2d6fdd1258"
-        #                    "095735f5a395e9013d70ec"),
-        #          settings="41ec11c65b21a72b0ef38c6cd343e62b$32$14$8$1",
-        #          email="supprt@proteome.se", phone="08 000 00 00")
-    ]
+    )
 
-    projects = [
-        Project(
-            id="ProjectID",
-            title="project_title",
-            category="Category",
-            date_created=timestamp(),
-            date_updated=timestamp(),
-            status="Ongoing",
-            pi="PI",
-            owner=users[0],
-            facility=facilities[0],
-            size=7357,
-            bucket=f"projectid-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-            public_key="08D0D813DD7DD2541DF58A7E5AB651D20299F741732B0DC8B297A2D4CB43626C",
-            private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
-            # privkey_passphrase="C1AE3F7066E0A8910214D1FBB96D98DC",
-            privkey_nonce="D652B8C4554B675FB780A6EE",
-            privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
-            description="This is a test project",
-        ),
-        Project(
-            id="ProjectID_2",
-            title="project_title_2",
-            category="Category_2",
-            date_created=timestamp(),
-            date_updated=timestamp(),
-            status="Ongoing",
-            pi="PI_2",
-            owner=users[0],
-            facility=facilities[0],
-            size=7357,
-            bucket=f"projectid2-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-            public_key="08D0D813DD7DD2541DF58A7E5AB651D20299F741732B0DC8B297A2D4CB43626C",
-            private_key="5F39E1650CC7592EF2A06FDD37FB576EFE19C1C0C4FBDF0C799EBE19FD4B731805C25213D9398B09A7F3A0CCADA71B7E",
-            # privkey_passphrase="FDA4855F77751951A78A4B8D016F594D",
-            privkey_nonce="D652B8C4554B675FB780A6EE",
-            privkey_salt="C2BB3FB2BBBA0DD01A6A2F5937C9D84C",
-            description="This is a test project",
-        )
-        # Project(id="ff27977db6f5334dd055eefad2248d61", title="Project1",
-        #         category="Category1",
-        #         order_date=timestamp(), delivery_date=None,
-        #         status="Ongoing", sensitive=True, description="test",
-        #         pi="", owner=users[0], facility=facilities[0], size=0,
-        #         size_enc=0, delivery_option="S3",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-        # Project(id="GEN001", title="RNA-seq study",
-        #         category="Genomics",
-        #         order_date="2020-06-27", delivery_date="2020-08-19",
-        #         status="Delivered", sensitive=True,
-        #         description="RNA-seq study on rats",
-        #         pi="", owner=users[1], facility=facilities[1], size=40000000000,
-        #         size_enc=25000000000, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"
-        #         ),
-        # Project(id="GEN002", title="Whole genome reseq",
-        #         category="Genomics",
-        #         order_date="2020-07-14", delivery_date="2020-10-09",
-        #         status="Delivered", sensitive=True,
-        #         description="Human whole genome requencing study",
-        #         pi="", owner=users[3], facility=facilities[1], size=150000000000,
-        #         size_enc=110000000000, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-        # Project(id="GEN003", title="Interspecific gene flow",
-        #         category="Genomics",
-        #         order_date="2020-09-18", delivery_date="2019-10-12",
-        #         status="Delivered", sensitive=False,
-        #         description="Evolution of specialisation in black and white rhinocereos",
-        #         pi="", owner=users[1], facility=facilities[1], size=2385738910,
-        #         size_enc=1678434812, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-        # Project(id="GEN004", title="Corona expression study",
-        #         category="Genomics",
-        #         order_date="2020-10-10", delivery_date=None,
-        #         status="Ongoing", sensitive=True,
-        #         description="Gene expressions of corono viurs",
-        #         pi="", owner=users[1], facility=facilities[1], size=0,
-        #         size_enc=0, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-        # Project(id="GEN005", title="Gastric microbiota",
-        #         category="Genomics",
-        #         order_date="2020-10-27", delivery_date=None,
-        #         status="Ongoing", sensitive=False,
-        #         description="General population and their associations with gastric lessons",
-        #         pi="", owner=users[3], facility=facilities[1], size=0,
-        #         size_enc=0, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-        # Project(id="IMG001", title="Mitochondrial translation",
-        #         category="Imaging",
-        #         order_date="2020-05-25", delivery_date="2020-07-12",
-        #         status="Delivered", sensitive=True,
-        #         description="Distinct pre-initiation steps in human translation",
-        #         pi="", owner=users[1], facility=facilities[2], size=8700000000,
-        #         size_enc=2900000000, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-        # Project(id="IMG002", title="DNA polymerases",
-        #         category="Imaging",
-        #         order_date="2020-06-18", delivery_date="2020-08-25",
-        #         status="Delivered", sensitive=True,
-        #         description="Structural basis for the increased processivity of D-family DNA polytmerases",
-        #         pi="", owner=users[3], facility=facilities[2], size=55000000000,
-        #         size_enc=32000000000, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-        # Project(id="IMG003", title="Type III ATP syntase",
-        #         category="Imaging",
-        #         order_date="2020-09-11", delivery_date="2020-10-05",
-        #         status="Delivered", sensitive=True,
-        #         description="Type III ATP synthase is a symmetry-deviated dimer that induces membrane",
-        #         pi="", owner=users[3], facility=facilities[2], size=8700000000,
-        #         size_enc=2900000000, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-        # Project(id="IMG004", title="Proton exchanger NHE9",
-        #         category="Imaging",
-        #         order_date="2020-11-09", delivery_date=None,
-        #         status="Ongoing", sensitive=False,
-        #         description="Distinct pre-initiation steps in human translation",
-        #         pi="", owner=users[1], facility=facilities[2], size=0,
-        #         size_enc=0, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937"),
-        # Project(id="IMG005", title="Mitochondrial translation",
-        #         category="Imaging",
-        #         order_date="2020-11-11", delivery_date=None,
-        #         status="Ongoing", sensitive=False,
-        #         description="Distinct pre-initiation steps in human translation",
-        #         pi="", owner=users[3], facility=facilities[2], size=0,
-        #         size_enc=0, delivery_option="DC_DDS",
-        #         public_key=("092C894633C31C3EF9E90A3EF2400E4AC4D2ADE8BF"
-        #                     "7EFECAB889829253136B33"),
-        #         private_key=("83B7C905A0C7AA9B95456440CBC80956CB53CABF19AE76B01A"
-        #                      "A5F7324FFA74CBAC1350DDF760BFDBDF94CD6314D3F7418E37"
-        #                      "064954751F7320B9CE83E1DDCE1CB1412564C536E3221D07F3"
-        #                      "A1BE27E07B9694061DADBD2B581E0AB0D8"),
-        #         salt="9A2694986A488E438DA998E73E93E9C4",
-        #         nonce="D55240DB506C2C22CF248F18",
-        #         passphrase="922d5b93f5455050e96b33a45f65a3e8c7d4f6198ed8473879c11e10711ed937")
-    ]
+    unituser_2.created_projects.append(project_2)
 
-    roles = [
-        Role(username=users[0].username, facility=False),
-        Role(username=users[1].username, facility=False),
-        Role(username=facilities[0].username, facility=True),
-    ]
+    generate_project_key_pair(unituser_2, project_2)
 
-    files = [
-        File(
-            name="notafile.txt",
-            name_in_bucket="testtesttest.txt",
-            subpath="subpath",
-            size=0,  # bytes
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            project_id=projects[0],
-            date_uploaded=timestamp(),
-        )
-    ]
+    # Connect project to unit. append (not =) due to many projects per unit
+    unit_1.projects.extend([project_1, project_2])
 
-    files_more = [
-        File(
-            name="description.txt",
-            name_in_bucket="description.txt",
-            subpath="",
-            size=254,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-        File(
-            name="Sample_1/data.txt",
-            name_in_bucket="Sample_1/data.txt",
-            subpath="Sample_1",
-            size=189,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-        File(
-            name="Sample_1/source.txt",
-            name_in_bucket="Sample_1/source.txt",
-            subpath="Sample_1",
-            size=754,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-        File(
-            name="Sample_1/meta/info.txt",
-            name_in_bucket="Sample_1/meta/info.txt",
-            subpath="Sample_1/meta",
-            size=65,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-        File(
-            name="Sample_2/data.txt",
-            name_in_bucket="Sample_2/data.txt",
-            subpath="Sample_2",
-            size=399,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-        File(
-            name="Sample_2/source.txt",
-            name_in_bucket="Sample_2/source.txt",
-            subpath="Sample_2",
-            size=420,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-        File(
-            name="Sample_2/meta/info.txt",
-            name_in_bucket="Sample_2/meta/info.txt",
-            subpath="Sample_2/meta",
-            size=241,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-        File(
-            name="sample_list.txt",
-            name_in_bucket="sample_list.txt",
-            subpath="",
-            size=97,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-        File(
-            name="Plates/Sample_1/layout.txt",
-            name_in_bucket="Sample_1/layout.txt",
-            subpath="Plates/Sample_1",
-            size=136,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-        File(
-            name="Plates/Sample_2/layout.txt",
-            name_in_bucket="Sample_2/layout.txt",
-            subpath="Plates/Sample_2",
-            size=125,
-            project_id=projects[1],
-            size_encrypted=0,
-            compressed=False,
-            public_key="test",
-            salt="test",
-            checksum="",
-            date_uploaded=timestamp(),
-        ),
-    ]
+    # Create an email
+    email_researchuser_1 = models.Email(email="researchuser1@mailtrap.io", primary=True)
+    # Create first research user
+    researchuser_1 = models.ResearchUser(
+        username="researchuser_1",
+        password=password,
+        name="First Research User",
+    )
+    email_researchuser_1.user = researchuser_1
+    # Create association with user - not owner of project
+    project_1_user_1_association = models.ProjectUsers(owner=False)
+    # Connect research user to association row. = (not append) due to one user per ass. row
+    project_1_user_1_association.researchuser = researchuser_1
+    # Connect project to association row. = (not append) due to one project per ass. row
+    project_1_user_1_association.project = project_1
 
-    # Foreign key/relationship updates
-    for x in projects:
-        users[0].user_projects.append(x)
-    # for ind in [1, 3, 4, 6, 9]:
-    #     users[1].user_projects.append(projects[ind])
-    # for ind in [2, 5, 7, 8, 10]:
-    #     users[3].user_projects.append(projects[ind])
+    researchuser_1.active = True
 
-    for x in projects:
-        facilities[0].user_projects.append(x)
-    # for ind in [1, 2, 3, 4, 5]:
-    #     facilities[1].fac_projects.append(projects[ind])
-    # for ind in [6, 7, 8, 9, 10]:
-    #     facilities[2].fac_projects.append(projects[ind])
+    email_researchuser_2 = models.Email(email="researchuser2@mailtrap.io", primary=True)
+    # Create second research user
+    researchuser_2 = models.ResearchUser(
+        username="researchuser_2",
+        password=password,
+        name="Second Research User",
+    )
+    email_researchuser_2.user = researchuser_2
+    # Create association with user - is owner of project
+    project_1_user_2_association = models.ProjectUsers(owner=True)
+    # Connect research user to association row. = (not append) due to one user per ass. row
+    project_1_user_2_association.researchuser = researchuser_2
+    # Connect project to association row. = (not append) due to one project per ass. row
+    project_1_user_2_association.project = project_1
 
-    for fl in files:
-        projects[0].project_files.append(fl)
-    # for prj in projects[1:]:
-    #     if prj.status == "Delivered":
-    #         create_files_for_project(prj)
+    researchuser_2.active = True
 
-    for fl in files_more:
-        projects[1].project_files.append(fl)
+    # Add unit to database - relationship will add the rest because of foreign key constraints
+    db.session.add(unit_1)
 
-    # Add user and facility, the rest is automatically added and commited
-    db.session.add_all(users)
-    db.session.add_all(facilities)
-    db.session.add_all(roles)
-    db.session.add_all(projects)
+    db.session.commit()
 
-    # Required for change in db
+    unituser_1_token = encrypted_jwt_token(
+        username=unituser_1.username,
+        sensitive_content=password,
+    )
+
+    share_project_private_key(
+        from_user=unituser_1,
+        to_another=researchuser_1,
+        from_user_token=unituser_1_token,
+        project=project_1,
+    )
+
+    share_project_private_key(
+        from_user=unituser_1,
+        to_another=researchuser_2,
+        from_user_token=unituser_1_token,
+        project=project_1,
+    )
+
     db.session.commit()

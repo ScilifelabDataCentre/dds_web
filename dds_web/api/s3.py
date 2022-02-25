@@ -1,47 +1,56 @@
 """S3 module"""
 
-###############################################################################
-# IMPORTS ########################################################### IMPORTS #
-###############################################################################
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
-import pathlib
 
 # Installed
 import flask_restful
 import flask
 import sqlalchemy
-import json
-import botocore
+import marshmallow
 
 # Own modules
-from dds_web.database import models
+from dds_web import auth
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import token_required, project_access_required
+from dds_web.api.dds_decorators import logging_bind_request, args_required, handle_validation_errors
+from dds_web.errors import (
+    S3ProjectNotFoundError,
+    DatabaseError,
+    DDSArgumentError,
+    MissingProjectIDError,
+)
+from dds_web.api.schemas import project_schemas
 
-###############################################################################
-# FUNCTIONS ####################################################### FUNCTIONS #
-###############################################################################
+####################################################################################################
+# ENDPOINTS ############################################################################ ENDPOINTS #
+####################################################################################################
 
 
 class S3Info(flask_restful.Resource):
     """Gets the projects S3 keys"""
 
-    method_decorators = [project_access_required, token_required]
+    @auth.login_required
+    @logging_bind_request
+    @handle_validation_errors
+    def get(self):
+        """Get the safespring project."""
+        # Verify project ID and access
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
-    def get(self, current_user, _):
-        """Get the safespring project"""
-
-        sfsp_proj, keys, url, bucketname, message = ApiS3Connector().get_s3_info()
+        try:
+            sfsp_proj, keys, url, bucketname = ApiS3Connector(project=project).get_s3_info()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError(message=str(sqlerr))
 
         if any(x is None for x in [url, keys, bucketname]):
-            return flask.make_response(f"No s3 info returned! {message}", 500)
+            raise S3ProjectNotFoundError("No s3 info returned!")
 
-        return flask.jsonify(
-            {
-                "safespring_project": sfsp_proj,
-                "url": url,
-                "keys": keys,
-                "bucket": bucketname,
-            }
-        )
+        return {
+            "safespring_project": sfsp_proj,
+            "url": url,
+            "keys": keys,
+            "bucket": bucketname,
+        }

@@ -1,0 +1,9 @@
+coverage:
+  status:
+    project:
+      default:
+        threshold: 5%
+    patch: off
+
+ignore:
+  - "dds_web/development/*"

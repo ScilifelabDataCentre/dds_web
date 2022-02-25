@@ -1,0 +1,47 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+<title>DDS Multi-Factor Authentication</title>
+
+<body>
+    <h1>Enter one-time authentication code</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class=flashes>
+        {% for category, message in messages %}
+        <div class="alert alert-{{category}}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    <p>Please complete the login by entering the one-time authentication code that was sent to you.
+        The one-time codes are valid for a short time (15 minutes) after they have been issued.
+    </p>
+    <form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}">
+        {{ form.csrf_token }}
+
+        <!-- Token -->
+        {{ form.hotp.label }}
+        {{ form.hotp }}
+        <ul>
+            {% for error in form.hotp.errors %}
+            <li style="color:red;">
+                {{ error }}
+            </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Submit button -->
+        {{ form.submit }}
+
+    </form>
+
+    <form method="POST" action="{{ url_for('auth_blueprint.cancel_2fa') }}">
+        {{ cancel_form.csrf_token }}
+        {{ cancel_form.cancel }}
+    </form>
+
+    {% endblock %}

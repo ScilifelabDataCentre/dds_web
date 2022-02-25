@@ -1,59 +1,506 @@
-"""Data models."""
+"""Database table models."""
 
-# IMPORTS ########################################################### IMPORTS #
+####################################################################################################
+# IMPORTS ################################################################################ IMPORTS #
+####################################################################################################
 
 # Standard library
-# import datetime
-# import pytz
+import datetime
+import os
 
 # Installed
-# from sqlalchemy import func, DDL, event
+import sqlalchemy
+import flask
+import argon2
+import flask_login
+import pathlib
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from cryptography.hazmat.primitives.twofactor import (
+    hotp as twofactor_hotp,
+    InvalidToken as twofactor_InvalidToken,
+)
+from cryptography.hazmat.primitives import hashes
 
 # Own modules
-from dds_web import db
-
-# CLASSES ########################################################### CLASSES #
-
-
-# class Tokens(db.Model):
-#     """Data model for access tokens."""
-
-#     # Table setup
-#     __tablename__ = 'tokens'
-#     __table_args__ = {'extend_existing': True}
-
-#     # Columns
-#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     token = db.Column(db.String(50), unique=True, nullable=False)
-#     created = db.Column(db.String(50), unique=False, nullable=False)
-#     expires = db.Column(db.String(50), unique=False, nullable=False)
-#     project_id = db.Column(db.String(32), db.ForeignKey('projects.id'),
-#                            unique=False, nullable=False)
+from dds_web import db, auth
+from dds_web.errors import AuthenticationError
+from dds_web.security.project_user_keys import generate_user_key_pair
+import dds_web.utils
 
 
-class User(db.Model):
-    """Data model for user accounts."""
+####################################################################################################
+# MODELS ################################################################################## MODELS #
+####################################################################################################
+
+####################################################################################################
+# Association objects ######################################################## Association objects #
+
+
+class ProjectUserKeys(db.Model):
+    """
+    Many-to-many association table between projects and users (all).
+
+    Primary key(s):
+    - project_id
+    - user_id
+
+    Foreign key(s):
+    - project_id
+    - user_id
+    """
+
+    # Table setup
+    __tablename__ = "projectuserkeys"
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    project = db.relationship("Project", back_populates="project_user_keys")
+    # ---
+    user_id = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
+    )
+    user = db.relationship("User", back_populates="project_user_keys")
+    # ---
+
+    # Additional columns
+    key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
+
+
+class ProjectInviteKeys(db.Model):
+    """
+    Many-to-many association table between projects and invites.
+
+    Primary key(s):
+    - project_id
+    - invite_id
+
+    Foreign key(s):
+    - project_id
+    - invite_id
+    """
+
+    # Table setup
+    __tablename__ = "projectinvitekeys"
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    project = db.relationship("Project", back_populates="project_invite_keys")
+    # ---
+    invite_id = db.Column(
+        db.Integer, db.ForeignKey("invites.id", ondelete="CASCADE"), primary_key=True
+    )
+    invite = db.relationship("Invite", back_populates="project_invite_keys")
+    # ---
+
+    # Additional columns
+    key = db.Column(db.LargeBinary(300), nullable=False, unique=True)
+    owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
+
+
+class ProjectUsers(db.Model):
+    """
+    Many-to-many association table between projects and research users.
+
+    Primary key(s):
+    - project_id
+    - user_id
+
+    Foreign key(s):
+    - project_id
+    - user_id
+    """
+
+    # Table setup
+    __tablename__ = "projectusers"
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    project = db.relationship("Project", back_populates="researchusers")
+    # ---
+    user_id = db.Column(
+        db.String(50), db.ForeignKey("researchusers.username", ondelete="CASCADE"), primary_key=True
+    )
+    researchuser = db.relationship("ResearchUser", back_populates="project_associations")
+    # ---
+
+    # Additional columns
+    owner = db.Column(db.Boolean, nullable=False, default=False, unique=False)
+
+
+class ProjectStatuses(db.Model):
+    """
+    One-to-many table between projects and statuses. Contains all project status history.
+
+    Primary key(s):
+    - project_id
+    - status
+
+    Foreign key(s):
+    - project_id
+    """
+
+    # Table setup
+    __tablename__ = "projectstatuses"
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    project = db.relationship("Project", back_populates="project_statuses")
+    # ---
+
+    # Additional columns
+    status = db.Column(db.String(50), unique=False, nullable=False, primary_key=True)
+    date_created = db.Column(db.DateTime(), nullable=False, primary_key=True)
+
+    # Columns
+    is_aborted = db.Column(db.Boolean, nullable=True, default=False, unique=False)
+    deadline = db.Column(db.DateTime(), nullable=True)
+
+
+####################################################################################################
+# Tables ################################################################################## Tables #
+
+
+class Unit(db.Model):
+    """
+    Data model for SciLifeLab Units.
+
+    Primary key(s):
+    - id
+    """
+
+    # Table setup
+    __tablename__ = "units"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    public_id = db.Column(db.String(255), unique=True, nullable=False)
+    name = db.Column(db.String(255), unique=True, nullable=False)
+    external_display_name = db.Column(db.String(255), unique=False, nullable=False)
+    contact_email = db.Column(db.String(255), unique=False, nullable=True)
+    internal_ref = db.Column(db.String(50), unique=True, nullable=False)
+    safespring_endpoint = db.Column(
+        db.String(255), unique=False, nullable=False
+    )  # unique=True later
+    safespring_name = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
+    safespring_access = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
+    safespring_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
+    days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
+    counter = db.Column(db.Integer, unique=False, nullable=True)
+    days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
+
+    # Relationships
+    users = db.relationship("UnitUser", back_populates="unit")
+    projects = db.relationship("Project", back_populates="responsible_unit")
+    invites = db.relationship(
+        "Invite", back_populates="unit", passive_deletes=True, cascade="all, delete"
+    )
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+        return f"<Unit {self.public_id}>"
+
+
+class Project(db.Model):
+    """
+    Data model for projects.
+
+    Primary key(s):
+    - id
+
+    Foreign key(s):
+    - unit_id
+    - created_by
+    """
+
+    # Table setup
+    __tablename__ = "projects"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    public_id = db.Column(db.String(255), unique=True, nullable=True)
+    title = db.Column(db.Text, unique=False, nullable=True)
+    date_created = db.Column(
+        db.DateTime(),
+        nullable=True,
+        default=dds_web.utils.current_time(),
+    )
+    date_updated = db.Column(db.DateTime(), nullable=True)
+    description = db.Column(db.Text)
+    pi = db.Column(db.String(255), unique=False, nullable=True)
+    bucket = db.Column(db.String(255), unique=True, nullable=False)
+    public_key = db.Column(db.LargeBinary(100), nullable=True)
+
+    non_sensitive = db.Column(db.Boolean, unique=False, default=False, nullable=False)
+    released = db.Column(db.DateTime(), nullable=True)
+    is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, index=True)
+
+    # Foreign keys & relationships
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="RESTRICT"), nullable=True)
+    responsible_unit = db.relationship("Unit", back_populates="projects")
+    # ---
+    created_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))
+    creator = db.relationship("User", backref="created_projects", foreign_keys=[created_by])
+    last_updated_by = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="SET NULL"))
+    updator = db.relationship("User", backref="updated_projects", foreign_keys=[last_updated_by])
+    # ---
+
+    # Additional relationships
+    files = db.relationship("File", back_populates="project")
+    file_versions = db.relationship("Version", back_populates="project")
+    project_statuses = db.relationship(
+        "ProjectStatuses", back_populates="project", passive_deletes=True, cascade="all, delete"
+    )
+    researchusers = db.relationship(
+        "ProjectUsers", back_populates="project", passive_deletes=True, cascade="all, delete"
+    )
+    project_user_keys = db.relationship(
+        "ProjectUserKeys", back_populates="project", passive_deletes=True
+    )
+    project_invite_keys = db.relationship(
+        "ProjectInviteKeys", back_populates="project", passive_deletes=True
+    )
+
+    @property
+    def current_status(self):
+        """Return the current status of the project"""
+        return max(self.project_statuses, key=lambda x: x.date_created).status
+
+    @property
+    def has_been_available(self):
+        """Return True if the project has ever been in the status Available"""
+        result = False
+        if len([x for x in self.project_statuses if "Available" in x.status]) > 0:
+            result = True
+        return result
+
+    @property
+    def times_expired(self):
+        return len([x for x in self.project_statuses if "Expired" in x.status])
+
+    @property
+    def current_deadline(self):
+        """Return deadline for statuses that have a deadline"""
+        deadline = None
+        if self.current_status in ["Available", "Expired"]:
+            deadline = max(self.project_statuses, key=lambda x: x.date_created).deadline
+        elif self.current_status in ["In Progress"]:
+            if self.has_been_available:
+                list_available = list(
+                    filter(lambda x: x.status == "Available", self.project_statuses)
+                )
+                latest_available = max(list_available, key=lambda x: x.date_created)
+                deadline = latest_available.deadline
+        return deadline
+
+    @property
+    def safespring_project(self):
+        """Get the safespring project name from responsible unit."""
+
+        return self.responsible_unit.safespring
+
+    @property
+    def size(self):
+        """Calculate size of project."""
+
+        return sum([f.size_stored for f in self.files])
+
+    @property
+    def num_files(self):
+        """Get number of files in project."""
+
+        return len(self.files)
+
+    def __str__(self):
+        """Called by str(), creates representation of object"""
+
+        return f"Project {self.public_id}"
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<Project {self.public_id}>"
+
+
+@sqlalchemy.event.listens_for(Project, "before_update")
+def add_before_project_update(mapper, connection, target):
+    """Listen for the 'before_update' event on Project and update certain of its fields"""
+    if auth.current_user():
+        target.date_updated = dds_web.utils.current_time()
+        target.last_updated_by = auth.current_user().username
+
+
+# Users #################################################################################### Users #
+
+
+class User(flask_login.UserMixin, db.Model):
+    """
+    Data model for user accounts - base user model for all user types.
+
+    Primary key(s):
+    - username
+    """
 
     # Table setup
     __tablename__ = "users"
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(50), unique=True, nullable=False)
-    # first_name = db.Column(db.String(50), unique=False, nullable=False)
-    # last_name = db.Column(db.String(50), unique=False, nullable=False)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    password = db.Column(db.String(120), unique=False, nullable=False)
-    # settings = db.Column(db.String(50), unique=False, nullable=False)
-    # email = db.Column(db.String(80), unique=True, nullable=False)
-    # phone = db.Column(db.String(20), unique=False, nullable=True)
-    admin = db.Column(db.Boolean, unique=False, nullable=False)
+    username = db.Column(db.String(50), primary_key=True, autoincrement=False)
+    name = db.Column(db.String(255), unique=False, nullable=True)
+    _password_hash = db.Column(db.String(98), unique=False, nullable=False)
+    hotp_secret = db.Column(db.LargeBinary(20), unique=False, nullable=False)
+    hotp_counter = db.Column(db.BigInteger, unique=False, nullable=False, default=0)
+    hotp_issue_time = db.Column(db.DateTime, unique=False, nullable=True)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    kd_salt = db.Column(db.LargeBinary(32), default=None)
+    nonce = db.Column(db.LargeBinary(12), default=None)
+    public_key = db.Column(db.LargeBinary(300), default=None)
+    private_key = db.Column(db.LargeBinary(300), default=None)
+
+    # Inheritance related, set automatically
+    type = db.Column(db.String(20), unique=False, nullable=False)
 
     # Relationships
-    user_projects = db.relationship(
-        "Project", backref="project_user", lazy=True, foreign_keys="Project.owner"
+    identifiers = db.relationship(
+        "Identifier", back_populates="user", passive_deletes=True, cascade="all, delete"
     )
+    emails = db.relationship(
+        "Email", back_populates="user", passive_deletes=True, cascade="all, delete"
+    )
+    project_user_keys = db.relationship(
+        "ProjectUserKeys", back_populates="user", passive_deletes=True
+    )
+
+    # Delete requests if User is deleted:
+    # User has requested self-deletion but is deleted by Admin before confirmation by the e-mail link.
+    deletion_request = db.relationship(
+        "DeletionRequest", back_populates="requester", cascade="all, delete"
+    )
+
+    __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
+
+    def __init__(self, **kwargs):
+        """Init all set and update hotp_secet."""
+        super(User, self).__init__(**kwargs)
+        if not self.hotp_secret:
+            self.hotp_secret = os.urandom(20)
+
+    def get_id(self):
+        """Get user id - in this case username. Used by flask_login."""
+        return self.username
+
+    # Password related
+    @property
+    def password(self):
+        """Raise error if trying to access password."""
+        raise AttributeError("Password is not a readable attribute.")
+
+    @password.setter
+    def password(self, plaintext_password):
+        """Generate the password hash and save in db."""
+        pw_hasher = argon2.PasswordHasher(hash_len=32)
+        self._password_hash = pw_hasher.hash(plaintext_password)
+
+        # User key pair should only be set from here if the password is lost
+        # and all the keys associated with the user should be cleaned up
+        # before setting the password.
+        # This should help the tests for setup as well.
+        if not self.public_key or not self.private_key:
+            self.kd_salt = os.urandom(32)
+            generate_user_key_pair(self, plaintext_password)
+
+    def verify_password(self, input_password):
+        """Verifies that the specified password matches the encoded password in the database."""
+        # Setup Argon2 hasher
+        password_hasher = argon2.PasswordHasher(hash_len=32)
+
+        # Verify the input password
+        try:
+            password_hasher.verify(self._password_hash, input_password)
+        except (
+            argon2.exceptions.VerifyMismatchError,
+            argon2.exceptions.VerificationError,
+            argon2.exceptions.InvalidHash,
+        ):
+            # Password hasher raises exceptions if not correct
+            return False
+
+        # Rehash password if needed, e.g. if parameters are not up to date
+        if password_hasher.check_needs_rehash(self._password_hash):
+            try:
+                self.password = input_password
+                db.session.commit()
+            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+                db.session.rollback()
+                flask.current_app.logger.exception(sqlerr)
+
+        # Password correct
+        return True
+
+    # 2FA related
+    def generate_HOTP_token(self):
+        """Generate a one-time authentication code, e.g. to be sent by email.
+
+        Counter is incremented before generating token which invalidates any previous token.
+        The time when it was issued is recorded to put an expiration time on the token.
+
+        """
+        self.hotp_counter += 1
+        self.hotp_issue_time = dds_web.utils.current_time()
+        db.session.commit()
+
+        hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        return hotp.generate(self.hotp_counter)
+
+    def verify_HOTP(self, token):
+        """Verify the HOTP token.
+
+        raises AuthenticationError if token is invalid or has expired (older than 1 hour).
+        If the token is valid, the counter is incremented, to prohibit re-use.
+        """
+        hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
+        if self.hotp_issue_time is None:
+            raise AuthenticationError("No one-time authentication code currently issued.")
+        timediff = dds_web.utils.current_time() - self.hotp_issue_time
+        if timediff > datetime.timedelta(minutes=15):
+            raise AuthenticationError("One-time authentication code has expired.")
+
+        try:
+            hotp.verify(token, self.hotp_counter)
+        except twofactor_InvalidToken:
+            raise AuthenticationError("Invalid one-time authentication code.")
+
+        # Token verified, increment counter to prohibit re-use
+        self.hotp_counter += 1
+        # Reset the hotp_issue_time to allow a new code to be issued
+        self.hotp_issue_time = None
+        db.session.commit()
+
+    # Email related
+    @property
+    def primary_email(self):
+        """Get users primary email."""
+        prims = [x.email for x in self.emails if x.primary]
+        return prims[0] if len(prims) > 0 else None
+
+    @property
+    def is_active(self):
+        return self.active
+
+    def __str__(self):
+        """Called by str(), creates representation of object"""
+
+        return f"User {self.username}"
 
     def __repr__(self):
         """Called by print, creates representation of object"""
@@ -61,213 +508,343 @@ class User(db.Model):
         return f"<User {self.username}>"
 
 
-class Facility(db.Model):
-    """Data model for facility accounts."""
+class ResearchUser(User):
+    """
+    Data model for research user accounts.
 
-    # Table setup
-    __tablename__ = "facilities"
-    __table_args__ = {"extend_existing": True}
+    Primary key(s):
+    - username
 
-    # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(50), unique=True, nullable=False)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    internal_ref = db.Column(db.String(10), unique=True, nullable=False)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    password = db.Column(db.String(120), unique=False, nullable=False)
-    # settings = db.Column(db.String(50), unique=False, nullable=False)
-    # email = db.Column(db.String(80), unique=True, nullable=False)
-    # phone = db.Column(db.String(20), unique=False, nullable=True)
-    safespring = db.Column(db.String(120), unique=False, nullable=False)  # unique=True later
+    Foreign key(s):
+    - username
+    """
+
+    __tablename__ = "researchusers"
+    __mapper_args__ = {"polymorphic_identity": "researchuser"}
+
+    # Foreign keys
+    username = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
+    )
 
     # Relationships
-    user_projects = db.relationship(
-        "Project",
-        backref="project_facility",
-        lazy=True,
-        foreign_keys="Project.facility",
+    project_associations = db.relationship(
+        "ProjectUsers", back_populates="researchuser", passive_deletes=True, cascade="all, delete"
     )
+
+    @property
+    def role(self):
+        """Get user role."""
+
+        return "Researcher"
+
+    @property
+    def projects(self):
+        """Return list of project items."""
+
+        return [proj.project for proj in self.project_associations]
+
+
+class UnitUser(User):
+    """
+    Data model for unit user accounts.
+
+    Primary key(s):
+    - username
+
+    Foreign key(s):
+    - username
+    - unit_id
+    """
+
+    __tablename__ = "unitusers"
+    __mapper_args__ = {"polymorphic_identity": "unituser"}
+
+    # Foreign keys & relationships
+    username = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
+    )
+    # ---
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="RESTRICT"), nullable=False)
+    unit = db.relationship("Unit", back_populates="users")
+
+    # Additional columns
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
+
+    @property
+    def role(self):
+        """User role is Unit Admin if the unit user has admin rights."""
+
+        if self.is_admin:
+            return "Unit Admin"
+
+        return "Unit Personnel"
+
+    @property
+    def projects(self):
+        """Get the unit projects."""
+
+        return self.unit.projects
+
+
+class SuperAdmin(User):
+    """
+    Data model for super admin user accounts (Data Centre).
+
+    Primary key(s):
+    - username
+
+    Foreign key(s):
+    - username
+    """
+
+    __tablename__ = "superadmins"
+    __mapper_args__ = {"polymorphic_identity": "superadmin"}
+
+    # Foreign keys & relationships
+    username = db.Column(db.String(50), db.ForeignKey("users.username"), primary_key=True)
+
+    @property
+    def role(self):
+        """Get user role."""
+
+        return "Super Admin"
+
+    @property
+    def projects(self):
+        """Get list of projects: Super admins can access all projects."""
+
+        return Project.query.all()
+
+
+####################################################################################################
+
+
+class Identifier(db.Model):
+    """
+    Data model for user identifiers for login.
+
+    Elixir identifiers consists of 58 characters (40 hex + "@elixir-europe.org").
+
+    Primary key(s):
+    - username
+    - identifier
+
+    Foreign key(s):
+    - username
+    """
+
+    # Table setup
+    __tablename__ = "identifiers"
+    __table_args__ = {"extend_existing": True}
+
+    # Foreign keys & relationships
+    username = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), primary_key=True
+    )
+    user = db.relationship("User", back_populates="identifiers")
+    # ---
+
+    # Additional columns
+    identifier = db.Column(db.String(58), primary_key=True, unique=True, nullable=False)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<Facility {self.username}>"
+        return f"<Identifier {self.identifier}>"
 
 
-class Role(db.Model):
-    """Data model for roles - used to find correct table."""
+class Email(db.Model):
+    """
+    Data model for user email addresses.
+
+    Primary key:
+    - id
+
+    Foreign key(s):
+    - user_id
+    """
 
     # Table setup
-    __tablename__ = "roles"
+    __tablename__ = "emails"
     __table_args__ = {"extend_existing": True}
 
-    # Columns
+    # Primary keys
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    facility = db.Column(db.Boolean, unique=False, nullable=False)
 
-
-class Project(db.Model):
-    """Data model for projects."""
-
-    # Table setup
-    __tablename__ = "projects"
-    __table_args__ = {"extend_existing": True}
-
-    # Columns
-    id = db.Column(db.String(32), primary_key=True)
-    title = db.Column(db.String(100), unique=False, nullable=False)
-    category = db.Column(db.String(40), unique=False, nullable=False)
-    date_created = db.Column(db.String(50), nullable=False)
-    date_updated = db.Column(db.String(50), nullable=True)
-    status = db.Column(db.String(20), nullable=False)
-    #    sensitive = db.Column(db.Boolean, nullable=False)
-    description = db.Column(db.Text)
-    pi = db.Column(db.String(50), unique=False, nullable=False)
-    owner = db.Column(db.String(50), db.ForeignKey("users.public_id"), unique=False, nullable=False)
-    facility = db.Column(
-        db.String(50),
-        db.ForeignKey("facilities.public_id"),
-        unique=False,
-        nullable=False,
+    # Foreign keys & relationships
+    user_id = db.Column(
+        db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"), nullable=False
     )
-    size = db.Column(db.BigInteger, unique=False, nullable=False)
-    #     size_enc = db.Column(db.BigInteger, unique=False, nullable=False)
-    #     delivery_option = db.Column(db.String(10), unique=False, nullable=False)
-    bucket = db.Column(db.String(100), unique=True, nullable=False)
-    public_key = db.Column(db.String(64), nullable=False)
-    private_key = db.Column(db.String(200), nullable=False)
-    # privkey_passphrase = db.Column(
-    #     db.String(64), nullable=False
-    # )  # TODO (senthil, ina): put somewhere else, sensitive info and should not be in same place as private key.
-    privkey_salt = db.Column(db.String(32), nullable=False)
-    privkey_nonce = db.Column(db.String(24), nullable=False)
+    user = db.relationship("User", back_populates="emails")
+    # ---
 
-    #     # Relationships
-    #     # project_s3 = db.relationship('S3Project', backref='s3_project', lazy=True,
-    #     #                              foreign_keys='S3Project.project_id')
-    project_files = db.relationship(
-        "File", backref="file_project", lazy=True, foreign_keys="File.project_id"
-    )
-    #     project_tokens = db.relationship('Tokens', backref='token_project',
-    #                                      lazy=True, foreign_keys='Tokens.project_id')
+    # Additional columns
+    email = db.Column(db.String(254), unique=True, nullable=False)
+    primary = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<Project {self.id}>"
+        return f"<Email {self.email}>"
 
 
-# class S3Project(db.Model):
-#     """Data model for S3 project info."""
+class Invite(db.Model):
+    """
+    Invites for users not yet confirmed in DDS.
 
-#     # Table setup
-#     __tablename__ = 'S3Projects'
-#     __table_args__ = {'extend_existing': True}
+    Primary key:
+    - id
 
-#     # Columns
-#     id = db.Column(db.String(10), primary_key=True)
-#     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'),
-#                            unique=False, nullable=False)
+    Foreign key(s):
+    - unit_id
+    """
 
-#     def __repr__(self):
-#         """Called by print, creates representation of object"""
+    # Table setup
+    __tablename__ = "invites"
+    __table_args__ = {"extend_existing": True}
 
-#         return f'<S3Project {self.id}>'
+    # Primary Key
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    # Foreign keys & relationships
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"))
+    unit = db.relationship("Unit", back_populates="invites")
+    project_invite_keys = db.relationship(
+        "ProjectInviteKeys", back_populates="invite", passive_deletes=True, cascade="all, delete"
+    )
+    # ---
+
+    # Additional columns
+    email = db.Column(db.String(254), unique=True, nullable=False)
+    role = db.Column(db.String(20), unique=False, nullable=False)
+    nonce = db.Column(db.LargeBinary(12), default=None)
+    public_key = db.Column(db.LargeBinary(300), default=None)
+    private_key = db.Column(db.LargeBinary(300), default=None)
+
+    @property
+    def projects(self):
+        """Return list of project items."""
+
+        return [proj.project for proj in self.project_associations]
+
+    def __str__(self):
+        """Called by str(), creates representation of object"""
+
+        return f"Pending invite for {self.email}"
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<Invite {self.email}>"
+
+
+class DeletionRequest(db.Model):
+    """Table to collect self-deletion requests by users"""
+
+    # Table setup
+    __tablename__ = "deletions"
+    __table_args__ = {"extend_existing": True}
+
+    # Primary Key
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    requester_id = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"))
+    requester = db.relationship("User", back_populates="deletion_request")
+    email = db.Column(db.String(254), unique=True, nullable=False)
+    issued = db.Column(db.DateTime(), unique=False, nullable=False)
+
+    def __repr__(self):
+        """Called by print, creates representation of object"""
+
+        return f"<DeletionRequest {self.email}>"
 
 
 class File(db.Model):
-    """Data model for files."""
+    """
+    Data model for files.
+
+    Primary key:
+    - id
+
+    Foreign key(s):
+    - project_id
+    """
 
     # Table setup
     __tablename__ = "files"
     __table_args__ = {"extend_existing": True}
 
-    #     # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(200), unique=False, nullable=False)
-    name_in_bucket = db.Column(db.String(200), unique=False, nullable=False)
-    subpath = db.Column(db.String(500), unique=False, nullable=False)
-    size = db.Column(db.BigInteger, unique=False, nullable=False)
-    size_encrypted = db.Column(db.BigInteger, unique=False, nullable=False)
-    #     extension = db.Column(db.String(15), unique=False, nullable=False)
+    # Columns
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    project = db.relationship("Project", back_populates="files")
+    # ---
+
+    # Additional columns
+    name = db.Column(db.Text, unique=False, nullable=False)
+    name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
+    subpath = db.Column(db.Text, unique=False, nullable=False)
+    size_original = db.Column(db.BigInteger, unique=False, nullable=False)
+    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     compressed = db.Column(db.Boolean, nullable=False)
     public_key = db.Column(db.String(64), unique=False, nullable=False)
-    salt = db.Column(db.String(50), unique=False, nullable=False)
+    salt = db.Column(db.String(32), unique=False, nullable=False)
     checksum = db.Column(db.String(64), unique=False, nullable=False)
-    project_id = db.Column(
-        db.String(32), db.ForeignKey("projects.id"), unique=False, nullable=False
-    )
-    date_uploaded = db.Column(db.String(50), unique=False, nullable=False)
-    latest_download = db.Column(db.String(50), unique=False, nullable=True)
+    time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
+
+    # Additional relationships
+    versions = db.relationship("Version", back_populates="file")
 
     def __repr__(self):
         """Called by print, creates representation of object"""
 
-        return f"<File {self.id}>"
+        return f"<File {pathlib.Path(self.name).name}>"
 
 
-# THE ISSUE IS HERE -------
-# TRIGGER_ProjectSize_Insert = DDL(
-#     """DELIMITER $$
+class Version(db.Model):
+    """
+    Data model for keeping track of all active and non active files. Used for invoicing.
 
-#     CREATE TRIGGER TRIGGER_ProjectSize_Insert
-#     AFTER INSERT ON files
-#     FOR EACH ROW
-#     BEGIN
-#         DECLARE tot_size INT;
+    Primary key:
+    - id
 
-#         SELECT SUM(size) INTO tot_size
-#         FROM files WHERE project_id=new.project_id;
+    Foreign key(s):
+    - project_id
+    - active_file
+    """
 
-#         UPDATE projects
-#         SET size = tot_size
-#         WHERE projects.id=new.project_id;
-#     END$$
+    # Table setup
+    __tablename__ = "versions"
+    __table_args__ = {"extend_existing": True}
 
-#     DELIMITER ;"""
-# )
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-# TRIGGER_ProjectSize_Update = DDL(
-#     """DELIMITER $$
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), nullable=False
+    )
+    project = db.relationship("Project", back_populates="file_versions")
+    # ---
+    active_file = db.Column(
+        db.BigInteger, db.ForeignKey("files.id", ondelete="SET NULL"), nullable=True
+    )
+    file = db.relationship("File", back_populates="versions")
+    # ---
 
-#     CREATE TRIGGER TRIGGER_ProjectSize_Update
-#     AFTER UPDATE ON files
-#     FOR EACH ROW
-#     BEGIN
-#         DECLARE tot_size INT;
+    # Additional columns
+    size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
+    time_uploaded = db.Column(
+        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time()
+    )
+    time_deleted = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
+    time_invoiced = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
 
-#         SELECT SUM(size) INTO tot_size
-#         FROM files WHERE project_id=new.project_id;
+    def __repr__(self):
+        """Called by print, creates representation of object"""
 
-#         UPDATE projects
-#         SET size = tot_size
-#         WHERE projects.id=new.project_id;
-#     END$$
-
-#     DELIMITER ;"""
-# )
-
-# TRIGGER_ProjectSize_Delete = DDL(
-#     """DELIMITER $$
-
-#     CREATE TRIGGER TRIGGER_ProjectSize_Delete
-#     AFTER DELETE ON files
-#     FOR EACH ROW
-#     BEGIN
-#         DECLARE tot_size INT;
-
-#         SELECT SUM(size) INTO tot_size
-#         FROM files WHERE project_id=old.project_id;
-
-#         UPDATE projects
-#         SET size = tot_size
-#         WHERE projects.id=old.project_id;
-#     END$$
-
-#     DELIMITER ;"""
-# )
-
-# event.listen(File, 'after_insert', TRIGGER_ProjectSize_Insert)
-# event.listen(File, 'after_update', TRIGGER_ProjectSize_Update)
-# event.listen(File, 'after_delete', TRIGGER_ProjectSize_Delete)
+        return f"<File Version {self.id}>"

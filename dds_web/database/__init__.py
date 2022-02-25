@@ -1,1 +1,1 @@
-""" place for DB related code """
+"""Database related code."""

@@ -1,0 +1,84 @@
+version: "3.8"
+# for persistent endpoint limiter, uncomment RATELIMIT_STORAGE_URI and the redis entry
+
+services:
+
+  db:
+    container_name: dds_database
+    image: mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
+      - MYSQL_USER=${DDS_MYSQL_USER}
+      - MYSQL_PASSWORD=${DDS_MYSQL_PASS}
+      - MYSQL_DATABASE=DeliverySystem
+    restart: on-failure
+    ports:
+      - 127.0.0.1:3306:3306
+    # Test to see if the database is accessible. Backend waits for this with 'condition: service_healthy'
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      # Config for encryption
+      - type: bind
+        source: ./Dockerfiles/mariadb/mariadb.conf
+        target: /etc/mysql/conf.d/encrypt.cnf
+
+      # Keys
+      - type: bind
+        source: ./Dockerfiles/mariadb/db-encrypt
+        target: /etc/mysql/encrypt
+
+  backend:
+    container_name: dds_backend
+    image: dds-backend-local:latest
+    build:
+      dockerfile: Dockerfiles/backend.Dockerfile
+      context: ./
+      target: base
+    working_dir: /code
+    command: bash -c "flask db upgrade && flask init-db $$DB_TYPE && flask run -h 0.0.0.0 -p 5000"
+    environment:
+      - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
+      - FLASK_ENV=development
+      - FLASK_APP=dds_web
+      - DB_TYPE=${DDS_DB_TYPE}
+      # - RATELIMIT_STORAGE_URI=redis://dds_redis
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+    ports:
+      - 127.0.0.1:5000:5000
+    volumes:
+
+      # Migrations
+      - type: bind
+        source: ./migrations
+        target: /code/migrations
+
+      # Main website files (so can edit locally)
+      - type: bind
+        source: ./dds_web
+        target: /code/dds_web
+
+      # Tests directory (so can edit locally)
+      - type: bind
+        source: ./tests
+        target: /code/tests
+
+      # Sensitive config file: dds_app.cfg
+      - type: bind
+        source: $DDS_SENSITIVE_FILES
+        target: /code/dds_web/sensitive
+
+      # Logging outputs
+      - type: bind
+        source: $DDS_LOG_DIR
+        target: /dds_web/logs
+
+#  redis:
+#    container_name: dds_redis
+#    image: redis:latest
