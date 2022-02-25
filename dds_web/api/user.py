@@ -63,6 +63,9 @@ class AddUser(flask_restful.Resource):
         if not dds_web.utils.valid_user_role(specified_role=role):
             raise ddserr.DDSArgumentError(message="Invalid user role.")
 
+        # Unit only changable for Super Admin invites
+        unit = json_info.get("unit") if auth.current_user().role == "Super Admin" else None
+
         # A project may or may not be specified
         project = args.get("project") if args else None
         if project:
@@ -99,13 +102,15 @@ class AddUser(flask_restful.Resource):
 
         else:
             # Send invite if the user doesn't exist
-            invite_user_result = self.invite_user(email=email, new_user_role=role, project=project)
+            invite_user_result = self.invite_user(
+                email=email, new_user_role=role, project=project, unit=unit
+            )
 
             return invite_user_result, invite_user_result["status"]
 
     @staticmethod
     @logging_bind_request
-    def invite_user(email, new_user_role, project=None):
+    def invite_user(email, new_user_role, project=None, unit=None):
         """Invite a new user"""
 
         current_user_role = get_user_roles_common(user=auth.current_user())
@@ -193,6 +198,17 @@ class AddUser(flask_restful.Resource):
 
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
+            # TODO Change / move this later. This is just so that we can add an initial unit admin.
+            if auth.current_user().role == "Super Admin":
+                if new_invite.role == "Unit Admin" and unit:
+                    unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
+                    if not unit_row:
+                        raise ddserr.DDSArgumentError(message="Invalid unit publid_id.")
+
+                    unit_row.invites.append(new_invite)
+                else:
+                    raise ddserr.DDSArgumentError(message="Cannot invite this user.")
+
             if "Unit" in auth.current_user().role:
                 # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
