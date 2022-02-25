@@ -33,6 +33,10 @@ def fill_db():
 
     password = "password"
 
+    # Super Admin
+    superadmin = models.SuperAdmin(username="superadmin", password=password, name="Super Admin")
+    db.session.add(superadmin)
+
     # Create first unit user
     unituser_1 = models.UnitUser(
         username="unituser_1",
