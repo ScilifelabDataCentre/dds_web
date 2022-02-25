@@ -263,7 +263,7 @@ class ProjectContentSchema(ProjectRequiredSchema):
         # Check if project has contents
         project_row = verify_project_exists(spec_proj=data.get("project"))
         if not project_row.files:
-            raise ddserr.EmptyProjectException
+            raise ddserr.EmptyProjectException(project=project_row.public_id)
 
         # Check if specific files have been requested or if requested all contents
         files, folder_contents, not_found = (None, None, None)
