@@ -6,6 +6,8 @@
 
 # Standard library
 import functools
+import sys
+import traceback
 
 # Installed
 import boto3
@@ -158,18 +160,19 @@ def logging_bind_request(func):
 
             try:
                 value = func(*args, **kwargs)
-            except Exception as err:
-                structlog.threadlocal.bind_threadlocal(exception=err)
-                action_logger.error("DDS encountered an uncaught exception!", stack_info=True)
-                raise
 
-            if hasattr(value, "status"):
-                structlog.threadlocal.bind_threadlocal(response=value.status)
+                if hasattr(value, "status"):
+                    structlog.threadlocal.bind_threadlocal(response=value.status)
 
-            action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
+                action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
+                # make sure the threadlocal state is pruned after the log was written.
+                structlog.threadlocal.clear_threadlocal()
+                return value
 
-            # make sure the threadlocal state is pruned after the log was written.
-            structlog.threadlocal.clear_threadlocal()
-            return value
+            except Exception:
+                action_logger.exception(
+                    f"Uncaught exception in {flask.request.endpoint}.{func.__name__}",
+                    stack_info=False,
+                )
 
     return wrapper_logging_bind_request
