@@ -23,6 +23,7 @@ import flask_login
 import flask_migrate
 
 # import flask_qrcode
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import sqlalchemy
@@ -217,6 +218,9 @@ def create_app(testing=False, database_uri=None):
     @login_manager.user_loader
     def load_user(user_id):
         return models.User.query.get(user_id)
+
+    if app.config["REVERSE_PROXY"]:
+        app.wsgi_app = ProxyFix(app.wsgi_app)
 
     # Initialize limiter
     limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")

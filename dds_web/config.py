@@ -70,3 +70,5 @@ class Config(object):
     SUPERADMIN_PASSWORD = os.environ.get("DDS_SUPERADMIN_PASSWORD", "password")
     SUPERADMIN_NAME = os.environ.get("DDS_SUPERADMIN_NAME", "superadmin")
     SUPERADMIN_EMAIL = os.environ.get("DDS_SUPERADMIN_EMAIL", "superadmin@example.com")
+
+    REVERSE_PROXY = False  # Behind a reverse proxy, use X_Forwarded-For to get the ip
