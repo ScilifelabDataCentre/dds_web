@@ -24,3 +24,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Add endpoint for health check (intended for readinessProbe)  ([#933](https://github.com/ScilifelabDataCentre/dds_web/pull/933))
 * Introduced a `--no-mail` flag in the CLI respectively a `send_email: True/False` json parameter to fix [#924](https://github.com/scilifelabdatacentre/dds_web/issues/924) ([#926](https://github.com/ScilifelabDataCentre/dds_web/pull/926))
 * Invite Unit Admin (temporary way) ([#938](https://github.com/ScilifelabDataCentre/dds_web/pull/938))
+* Add support for getting IPs from X-Forwarded-For ([#952](https://github.com/ScilifelabDataCentre/dds_web/pull/952))
