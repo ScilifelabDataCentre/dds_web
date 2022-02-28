@@ -33,6 +33,12 @@ def fill_db():
 
     password = "password"
 
+    # Super Admin
+    superadmin = models.SuperAdmin(username="superadmin", password=password, name="Super Admin")
+    superadmin_email = models.Email(email="superadmin@mailtrap.io", primary=True)
+    superadmin_email.user = superadmin
+    db.session.add(superadmin_email)
+
     # Create first unit user
     unituser_1 = models.UnitUser(
         username="unituser_1",

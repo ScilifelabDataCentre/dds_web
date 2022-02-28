@@ -20,6 +20,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Rearrangement and clean up of the token ([910](https://github.com/ScilifelabDataCentre/dds_web/pull/910))
 
 ## Sprint (2022-02-23 - 2022-03-09)
-* Add landing page after password reset ([931](https://github.com/ScilifelabDataCentre/dds_web/pull/931))
-* Add endpoint for health check (intended for readinessProbe)  ([933](https://github.com/ScilifelabDataCentre/dds_web/pull/933))
-* Introduced a `--no-mail` flag in the CLI respectively a `send_email: True/False` json parameter to fix [issue 924](https://github.com/scilifelabdatacentre/dds_web/issues/924) ([#926](https://github.com/ScilifelabDataCentre/dds_web/pull/926))
+* Add landing page after password reset ([#931](https://github.com/ScilifelabDataCentre/dds_web/pull/931))
+* Add endpoint for health check (intended for readinessProbe)  ([#933](https://github.com/ScilifelabDataCentre/dds_web/pull/933))
+* Introduced a `--no-mail` flag in the CLI respectively a `send_email: True/False` json parameter to fix [#924](https://github.com/scilifelabdatacentre/dds_web/issues/924) ([#926](https://github.com/ScilifelabDataCentre/dds_web/pull/926))
+* Invite Unit Admin (temporary way) ([#938](https://github.com/ScilifelabDataCentre/dds_web/pull/938))

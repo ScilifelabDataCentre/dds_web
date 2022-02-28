@@ -20,6 +20,8 @@ and/or projects resulting in the production of large amounts of data, e.g. seque
 
 The backend interface is built using [Flask](https://flask.palletsprojects.com/en/2.0.x/).
 
+See the [ADR] for information on the design decisions. 
+
 ---
 ## Development
 <br>
