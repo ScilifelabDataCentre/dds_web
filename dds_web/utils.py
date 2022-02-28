@@ -177,7 +177,7 @@ def email_taken_wtforms():
 
 def valid_chars_in_username(input):
     """Check if the username contains only valid characters."""
-    return re.search(r"^[a-zA-Z0-9_\.-]+$", input)
+    return False if re.search(r"^[a-zA-Z0-9_\.-]+$", input) == None else True
 
 
 def email_in_db(email):
