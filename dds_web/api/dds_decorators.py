@@ -6,8 +6,6 @@
 
 # Standard library
 import functools
-import sys
-import traceback
 
 # Installed
 import boto3
