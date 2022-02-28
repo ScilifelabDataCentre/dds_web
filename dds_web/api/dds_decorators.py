@@ -155,7 +155,13 @@ def logging_bind_request(func):
             project=flask.request.args.get("project") if flask.request.args else None,
             user=get_username_or_request_ip(),
         ):
-            value = func(*args, **kwargs)
+
+            try:
+                value = func(*args, **kwargs)
+            except Exception as err:
+                structlog.threadlocal.bind_threadlocal(exception=err)
+                action_logger.error("DDS encountered an uncaught exception!", stack_info=True)
+                raise
 
             if hasattr(value, "status"):
                 structlog.threadlocal.bind_threadlocal(response=value.status)
