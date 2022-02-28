@@ -172,5 +172,6 @@ def logging_bind_request(func):
                     f"Uncaught exception in {flask.request.endpoint}.{func.__name__}",
                     stack_info=False,
                 )
+                raise
 
     return wrapper_logging_bind_request
