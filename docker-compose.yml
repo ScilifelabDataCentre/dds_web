@@ -20,15 +20,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      # Config for encryption
-      - type: bind
-        source: ./Dockerfiles/mariadb/mariadb.conf
-        target: /etc/mysql/conf.d/encrypt.cnf
-      # Keys
-      - type: bind
-        source: ./Dockerfiles/mariadb/db-encrypt
-        target: /etc/mysql/encrypt
+    # volumes:
+    #   # Config for encryption
+    #   - type: bind
+    #     source: ./Dockerfiles/mariadb/mariadb.conf
+    #     target: /etc/mysql/conf.d/encrypt.cnf
+    #   # Keys
+    #   - type: bind
+    #     source: ./Dockerfiles/mariadb/db-encrypt
+    #     target: /etc/mysql/encrypt
 
   backend:
     container_name: dds_backend
