@@ -442,7 +442,10 @@ class CreateProject(flask_restful.Resource):
         with ApiS3Connector(project=new_project) as s3:
             try:
                 s3.resource.create_bucket(Bucket=new_project.bucket)
-            except botocore.exceptions.ClientError as err:
+            except (
+                botocore.exceptions.ClientError,
+                botocore.exceptions.ParamValidationError,
+            ) as err:
                 # For now just keeping the project row
                 raise S3ConnectionError(str(err))
 
