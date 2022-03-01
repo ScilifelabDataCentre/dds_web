@@ -12,6 +12,7 @@ import flask
 import sqlalchemy
 import datetime
 import botocore
+import marshmallow
 
 # Own modules
 import dds_web.utils
@@ -450,11 +451,11 @@ class CreateProject(flask_restful.Resource):
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise ddserr.DatabaseError(message="Server Error: Project was not created") from err
+            raise DatabaseError(message="Server Error: Project was not created") from err
         except (
             marshmallow.ValidationError,
-            ddserr.DDSArgumentError,
-            ddserr.AccessDeniedError,
+            DDSArgumentError,
+            AccessDeniedError,
         ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
