@@ -240,3 +240,11 @@ Argon2 is also available in two other versions. These are argon2d (strong GPU re
 The Data Delivery System will use [Argon2id](https://github.com/hynek/argon2-cffi) for password authentication.
 
 > The chosen parameters will be added here soon. 
+
+<br>
+<br>
+
+# 9. Requirements: No pinned versions
+
+## Decisions
+We will not pin the requirement versions. If at some point something stops working we will look into it then and update the requirements then. This will simplify the installation for the users which is one of our priorities.

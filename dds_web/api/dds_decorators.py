@@ -21,6 +21,7 @@ from dds_web.errors import (
     BucketNotFoundError,
     DatabaseError,
     DDSArgumentError,
+    LoggedHTTPException,
     NoSuchUserError,
     AccessDeniedError,
     MissingJsonError,
@@ -155,15 +156,25 @@ def logging_bind_request(func):
             project=flask.request.args.get("project") if flask.request.args else None,
             user=get_username_or_request_ip(),
         ):
-            value = func(*args, **kwargs)
 
-            if hasattr(value, "status"):
-                structlog.threadlocal.bind_threadlocal(response=value.status)
+            try:
+                value = func(*args, **kwargs)
 
-            action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
+                if hasattr(value, "status"):
+                    structlog.threadlocal.bind_threadlocal(response=value.status)
 
-            # make sure the threadlocal state is pruned after the log was written.
-            structlog.threadlocal.clear_threadlocal()
-            return value
+                action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
+                # make sure the threadlocal state is pruned after the log was written.
+                structlog.threadlocal.clear_threadlocal()
+                return value
+
+            except Exception as err:
+                if not isinstance(err, LoggedHTTPException):
+                    # HTTPExceptions are already logged as warnings, no need to log twice.
+                    action_logger.exception(
+                        f"Uncaught exception in {flask.request.endpoint}.{func.__name__}",
+                        stack_info=True,
+                    )
+                raise
 
     return wrapper_logging_bind_request

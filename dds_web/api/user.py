@@ -276,7 +276,7 @@ class AddUser(flask_restful.Resource):
                 ),
             }
 
-        owner = role == "Project Owner"
+        is_owner = role == "Project Owner"
         ownership_change = False
 
         if isinstance(whom, models.ResearchUser):
@@ -290,13 +290,13 @@ class AddUser(flask_restful.Resource):
 
         if project_user_row:
             send_email = False
-            if project_user_row.owner == owner:
+            if project_user_row.owner == is_owner:
                 return {
                     "status": ddserr.RoleException.code.value,
                     "message": f"{str(whom)} is already associated with the {str(project)} in this capacity. ",
                 }
             ownership_change = True
-            project_user_row.owner = owner
+            project_user_row.owner = is_owner
 
         if not ownership_change:
             if isinstance(whom, models.ResearchUser):
@@ -304,7 +304,7 @@ class AddUser(flask_restful.Resource):
                     models.ProjectUsers(
                         project_id=project.id,
                         user_id=whom.username,
-                        owner=owner,
+                        owner=is_owner,
                     )
                 )
 
@@ -313,7 +313,7 @@ class AddUser(flask_restful.Resource):
                 to_another=whom,
                 from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
                 project=project,
-                is_project_owner=owner,
+                is_project_owner=is_owner,
             )
 
         try:
@@ -326,18 +326,19 @@ class AddUser(flask_restful.Resource):
             )
 
         # If project is already released and not expired, send mail to user
-        if send_email and project.current_status == "Available":
+        send_email = send_email and project.current_status == "Available"
+        if send_email:
             AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
-            f"{str(whom)} was associated with {str(project)} as Owner={owner}."
+            f"{str(whom)} was associated with {str(project)} as Owner={is_owner}."
         )
 
         return {
             "status": http.HTTPStatus.OK,
             "message": (
                 f"{str(whom)} was associated with "
-                f"{str(project)} as Owner={owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
+                f"{str(project)} as Owner={is_owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
             ),
         }
 
