@@ -25,7 +25,7 @@ services:
     #   - type: bind
     #     source: ./Dockerfiles/mariadb/mariadb.conf
     #     target: /etc/mysql/conf.d/encrypt.cnf
-
+    
     #   # Keys
     #   - type: bind
     #     source: ./Dockerfiles/mariadb/db-encrypt
