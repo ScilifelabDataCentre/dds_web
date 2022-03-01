@@ -431,6 +431,7 @@ class CreateProject(flask_restful.Resource):
         # Add a new project to db
         p_info = flask.request.json
         new_project = project_schemas.CreateProjectSchema().load(p_info)
+        db.session.add(new_project)
 
         if not new_project:
             raise DDSArgumentError("Failed to create project.")
@@ -443,6 +444,21 @@ class CreateProject(flask_restful.Resource):
             except botocore.exceptions.ClientError as err:
                 # For now just keeping the project row
                 raise S3ConnectionError(str(err))
+
+        try:
+            db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise ddserr.DatabaseError(message="Server Error: Project was not created") from err
+        except (
+            marshmallow.ValidationError,
+            ddserr.DDSArgumentError,
+            ddserr.AccessDeniedError,
+        ) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise
 
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."
