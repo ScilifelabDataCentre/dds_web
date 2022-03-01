@@ -326,7 +326,8 @@ class AddUser(flask_restful.Resource):
             )
 
         # If project is already released and not expired, send mail to user
-        if send_email and project.current_status == "Available":
+        send_email = send_email and project.current_status == "Available"
+        if send_email:
             AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
