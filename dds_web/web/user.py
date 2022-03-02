@@ -95,10 +95,10 @@ def confirm_invite(token):
     # Prefill fields - unit readonly if filled, otherwise disabled
     # These should only be used for display to user and not when actually registering
     # the user, then the values should be fetched from the database again.
-    form.unit_name.render_kw = {"disabled": True}
-    if invite_row.unit:  # backref to unit
-        form.unit_name.data = invite_row.unit.name
-        form.unit_name.render_kw = {"readonly": True}
+    # form.unit_name.render_kw = {"disabled": True}
+    # if invite_row.unit:  # backref to unit
+    #     form.unit_name.data = invite_row.unit.name
+    #     form.unit_name.render_kw = {"readonly": True}
 
     form.email.data = email
     suggested_username = email.split("@")[0]
@@ -108,7 +108,11 @@ def confirm_invite(token):
     ) and not dds_web.utils.username_in_db(suggested_username):
         form.username.data = suggested_username
 
-    return flask.render_template("user/register.html", form=form)
+    return flask.render_template(
+        "user/register.html",
+        form=form,
+        unit=invite_row.unit.name if invite_row.unit else None,
+    )
 
 
 @auth_blueprint.route("/register", methods=["POST"])

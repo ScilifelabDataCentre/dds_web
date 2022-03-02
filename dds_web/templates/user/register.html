@@ -1,82 +1,83 @@
 <html>
 
-<head>
-    <title>Registration form</title>
-</head>
+    <head>
+        <title>Registration form</title>
+    </head>
 
-<body>
-    <h1>Create your DDS account</h1>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class=flashes>
-        {% for category, message in messages %}
-        <div class="alert alert-{{category}}" role="alert">
-            {{ message }}
+    <body>
+        <h1>Create your DDS account</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class=flashes>
+            {% for category, message in messages %}
+            <div class="alert alert-{{category}}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
-    <form method="POST" action="{{ url_for('auth_blueprint.register') }}">
-        {{ form.csrf_token }}
-
-        <!-- Name name -->
-        {{ form.name.label }}
-        {{ form.name }}
-        <ul>
-            {% for error in form.name.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
-
-        <!-- Email -->
-        {{ form.email.label }}
-        {{ form.email }}
-        <ul>
-            {% for error in form.email.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
-
-        <!-- Username -->
-        {{ form.username.label }}
-        {{ form.username }}
-        <ul>
-            {% for error in form.username.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
-
-        <!-- Password -->
-        {{ form.password.label }}
-        {{ form.password }}
-        {{ form.confirm.label }}
-        {{ form.confirm }}
-        <ul>
-            {% for error in form.password.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
-
-
-        <!-- Unit -->
-        {% if form.unit_name.data %}
-        Unit name:
-        {{ form.unit_name }}
         {% endif %}
-        <br>
-        <!-- Submit button -->
-        {{ form.submit }}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('auth_blueprint.register') }}"
+            novalidate>
+            {{ form.csrf_token }}
 
-    </form>
-</body>
+            <!-- Name name -->
+            {{ form.name.label }}
+            {{ form.name }}
+            <ul>
+                {% for error in form.name.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Email -->
+            {{ form.email.label }}
+            {{ form.email }}
+            <ul>
+                {% for error in form.email.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Username -->
+            {{ form.username.label }}
+            {{ form.username }}
+            <ul>
+                {% for error in form.username.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- Password -->
+            {{ form.password.label }}
+            {{ form.password }}
+            {{ form.confirm.label }}
+            {{ form.confirm }}
+            <ul>
+                {% for error in form.password.errors %}
+                <li style="color:red;">
+                    {{ error }}
+                </li>
+                {% endfor %}
+            </ul>
+
+
+            <!-- Unit -->
+            {% if unit %}
+            Unit name:
+            {{ unit }}
+            {% endif %}
+            <br>
+            <!-- Submit button -->
+            {{ form.submit }}
+
+        </form>
+    </body>
 
 </html>
