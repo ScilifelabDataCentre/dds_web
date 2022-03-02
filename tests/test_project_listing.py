@@ -142,11 +142,19 @@ def test_list_researchusers_in_proj_by_researchuser(client):
     proj = models.Project.query.filter_by(public_id=proj_query["project"]).one_or_none()
     actual_user_list = []
     for user in proj.researchusers:
-        info = {"User Name": "", "Primary email": ""}
+        info = {"User Name": "", "Primary email": "", "Role": ""}
         info["User Name"] = user.researchuser.username
+        info["Role"] = "Owner" if user.owner else "Researcher"
         for user_email in user.researchuser.emails:
             if user_email.primary:
                 info["Primary email"] = user_email.email
+        actual_user_list.append(info)
+    for invitee in proj.project_invite_keys:
+        info = {"User Name": "", "Primary email": "", "Role": ""}
+        role = "Owner" if invitee.owner else "Researcher"
+        info["User Name"] = "NA (Pending)"
+        info["Primary email"] = f"{invitee.invite.email} (Pending)"
+        info["Role"] = f"{role} (Pending)"
         actual_user_list.append(info)
 
     case = unittest.TestCase()
@@ -164,11 +172,19 @@ def test_list_researchusers_in_proj_by_unituser(client):
     proj = models.Project.query.filter_by(public_id=proj_query["project"]).one_or_none()
     actual_user_list = []
     for user in proj.researchusers:
-        info = {"User Name": "", "Primary email": ""}
+        info = {"User Name": "", "Primary email": "", "Role": ""}
         info["User Name"] = user.researchuser.username
+        info["Role"] = "Owner" if user.owner else "Researcher"
         for user_email in user.researchuser.emails:
             if user_email.primary:
                 info["Primary email"] = user_email.email
+        actual_user_list.append(info)
+    for invitee in proj.project_invite_keys:
+        info = {"User Name": "", "Primary email": "", "Role": ""}
+        role = "Owner" if invitee.owner else "Researcher"
+        info["User Name"] = "NA (Pending)"
+        info["Primary email"] = f"{invitee.invite.email} (Pending)"
+        info["Role"] = f"{role} (Pending)"
         actual_user_list.append(info)
 
     case = unittest.TestCase()
@@ -176,7 +192,7 @@ def test_list_researchusers_in_proj_by_unituser(client):
 
 
 def test_list_researchusers_not_in_proj_by_researchuser(client):
-    """Researchuser in not project should not be able to list researchusers"""
+    """Researchuser not in project should not be able to list researchusers"""
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser2"]).token(client)
     response = client.get(tests.DDSEndpoint.LIST_PROJ_USERS, query_string=proj_query, headers=token)

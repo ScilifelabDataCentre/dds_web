@@ -526,10 +526,20 @@ class ProjectUsers(flask_restful.Resource):
             user_info = {
                 "User Name": user.user_id,
                 "Primary email": "",
+                "Role": "Owner" if user.owner else "Researcher",
             }
             for user_email in user.researchuser.emails:
                 if user_email.primary:
                     user_info["Primary email"] = user_email.email
+            research_users.append(user_info)
+
+        for invitee in project.project_invite_keys:
+            role = "Owner" if invitee.owner else "Researcher"
+            user_info = {
+                "User Name": "NA (Pending)",
+                "Primary email": f"{invitee.invite.email} (Pending)",
+                "Role": f"{role} (Pending)",
+            }
             research_users.append(user_info)
 
         return {"research_users": research_users}
