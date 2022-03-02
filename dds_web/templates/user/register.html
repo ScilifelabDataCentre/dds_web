@@ -17,8 +17,7 @@
         </div>
         {% endif %}
         {% endwith %}
-        <form method="POST" action="{{ url_for('auth_blueprint.register') }}"
-            novalidate>
+        <form method="POST" action="{{ url_for('auth_blueprint.register') }}">
             {{ form.csrf_token }}
 
             <!-- Name name -->
