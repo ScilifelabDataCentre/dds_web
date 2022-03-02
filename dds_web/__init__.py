@@ -173,6 +173,7 @@ def create_app(testing=False, database_uri=None):
     app.config["REMEMBER_COOKIE_DURATION"] = datetime.timedelta(
         hours=app.config.get("REMEMBER_COOKIE_DURATION_HOURS", 1)
     )
+    app.config["REMEMBER_COOKIE_HTTPONLY"] = True
 
     # Test related configs
     if database_uri is not None:
