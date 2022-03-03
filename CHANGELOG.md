@@ -34,3 +34,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Increase the security of the session cookie using HTTPONLY and SECURE ([#972](https://github.com/ScilifelabDataCentre/dds_web/pull/972))
 * Add role when listing project users ([#974](https://github.com/ScilifelabDataCentre/dds_web/pull/974))
 * Add custom error messages to registration form ([#975](https://github.com/ScilifelabDataCentre/dds_web/pull/975))
+* Fix format of self deletion email ([#984](https://github.com/ScilifelabDataCentre/dds_web/pull/984))
