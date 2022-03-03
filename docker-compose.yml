@@ -1,8 +1,7 @@
-version: "3.8"
+version: "3.9"
 # for persistent endpoint limiter, uncomment RATELIMIT_STORAGE_URI and the redis entry
 
 services:
-
   db:
     container_name: dds_database
     image: mariadb:latest
@@ -53,7 +52,6 @@ services:
     ports:
       - 127.0.0.1:5000:5000
     volumes:
-
       # Migrations
       - type: bind
         source: ./migrations
@@ -81,6 +79,9 @@ services:
 
   minio:
     image: minio/minio:RELEASE.2022-02-24T22-12-01Z
+    profiles:
+      - dev
+      - full-dev
     command: server /data --console-address ":9001"
     ports:
       - 127.0.0.1:9000:9000
@@ -93,12 +94,16 @@ services:
     #     source: ./minio-data
     #     target: /data
 
-#  mailcatcher:
-#    image: sj26/mailcatcher:latest
-#    restart: on-failure
-#    ports:
-#      - 127.0.0.1:1080:1080    
+  mailcatcher:
+    image: sj26/mailcatcher:latest
+    profiles:
+      - dev
+      - full-dev
+    ports:
+      - 127.0.0.1:1080:1080    
 
-#  redis:
-#    container_name: dds_redis
-#    image: redis:latest
+  redis:
+    container_name: dds_redis
+    image: redis:latest
+    profiles:
+      - full-dev
