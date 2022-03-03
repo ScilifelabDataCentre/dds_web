@@ -1,5 +1,5 @@
 version: "3.9"
-# for persistent endpoint limiter, uncomment RATELIMIT_STORAGE_URI and the redis entry
+# Use --profile full-dev and uncomment RATELIMIT_STORAGE_URI to use redis
 
 services:
   db:
