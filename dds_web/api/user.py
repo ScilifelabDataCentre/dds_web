@@ -451,7 +451,9 @@ class DeleteUserSelf(flask_restful.Resource):
 
         username = current_user.username
 
-        proj_ids = [proj.public_id for proj in current_user.projects]
+        proj_ids = None
+        if current_user.role != "Super Admin":
+            proj_ids = [proj.public_id for proj in current_user.projects]
 
         # Create URL safe token for invitation link
         s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
@@ -487,7 +489,6 @@ class DeleteUserSelf(flask_restful.Resource):
         # Create link for deletion request email
         link = flask.url_for("auth_blueprint.confirm_self_deletion", token=token, _external=True)
         subject = f"Confirm deletion of your user account {username} in the SciLifeLab Data Delivery System"
-        projectnames = "; ".join(proj_ids)
 
         msg = flask_mail.Message(
             subject,
@@ -511,13 +512,13 @@ class DeleteUserSelf(flask_restful.Resource):
             "mail/deletion_request.txt",
             link=link,
             sender_name=current_user.name,
-            projects=projectnames,
+            projects=proj_ids,
         )
         msg.html = flask.render_template(
             "mail/deletion_request.html",
             link=link,
             sender_name=current_user.name,
-            projects=projectnames,
+            projects=proj_ids,
         )
 
         mail.send(msg)

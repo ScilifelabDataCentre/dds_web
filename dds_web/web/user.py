@@ -95,10 +95,10 @@ def confirm_invite(token):
     # Prefill fields - unit readonly if filled, otherwise disabled
     # These should only be used for display to user and not when actually registering
     # the user, then the values should be fetched from the database again.
-    form.unit_name.render_kw = {"disabled": True}
-    if invite_row.unit:  # backref to unit
-        form.unit_name.data = invite_row.unit.name
-        form.unit_name.render_kw = {"readonly": True}
+    # form.unit_name.render_kw = {"disabled": True}
+    # if invite_row.unit:  # backref to unit
+    #     form.unit_name.data = invite_row.unit.name
+    #     form.unit_name.render_kw = {"readonly": True}
 
     form.email.data = email
     suggested_username = email.split("@")[0]
@@ -108,7 +108,11 @@ def confirm_invite(token):
     ) and not dds_web.utils.username_in_db(suggested_username):
         form.username.data = suggested_username
 
-    return flask.render_template("user/register.html", form=form)
+    return flask.render_template(
+        "user/register.html",
+        form=form,
+        unit=invite_row.unit.name if invite_row.unit else None,
+    )
 
 
 @auth_blueprint.route("/register", methods=["POST"])
@@ -404,15 +408,17 @@ def password_reset_completed():
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     units_to_contact = {}
-    for project in user.projects:
-        if project.responsible_unit.external_display_name not in units_to_contact:
-            units_to_contact[
-                project.responsible_unit.external_display_name
-            ] = project.responsible_unit.contact_email
+    if user.role != "Super Admin":
+        for project in user.projects:
+            if project.responsible_unit.external_display_name not in units_to_contact:
+                units_to_contact[
+                    project.responsible_unit.external_display_name
+                ] = project.responsible_unit.contact_email
+        return flask.render_template(
+            "user/password_reset_completed.html", units_to_contact=units_to_contact
+        )
 
-    return flask.render_template(
-        "user/password_reset_completed.html", units_to_contact=units_to_contact
-    )
+    return flask.render_template("user/password_reset_completed.html")
 
 
 @auth_blueprint.route("/change_password", methods=["GET", "POST"])

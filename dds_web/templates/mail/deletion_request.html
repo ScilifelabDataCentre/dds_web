@@ -15,15 +15,22 @@
       </p>
       <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 10px;">
         We appreciate you using our services and hope that the received data as well as the collaboration as a whole has
-        met your expectations. 
-
-        {% if projectnames is not none %}
-        Currently, you are affiliated with those projects:
-        {{projectnames}}
-        {% endif %}
-        
+        met your expectations.
+      </p>
+      {% if projects is not none %}
+        <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 10px;">
+        Currently, you are affiliated with these projects:
+        <ul>
+        {% for project in projects %}
+        <li>{{ project }}</li>
+        {% endfor %}
+        </ul>
+        </p>
+      {% endif %}
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 10px;">
         Since your account in the SciLifeLab Data Delivery System (DDS) is not tied to specific
-        projects or platforms, you may also consider to keep it for prospective deliveries.</p>
+        projects or platforms, you may also consider to keep it for prospective deliveries.
+      </p>
       <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">
         Nonetheless, a reregistration is also possible at any time should you ever need to receive data from us again.
         To confirm the deletion of your account {{sender_name}}, please 'Confirm delete' button to create your account:

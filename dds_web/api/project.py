@@ -186,11 +186,15 @@ class ProjectStatus(flask_restful.Resource):
                     userobj=user.researchuser, mail_type="project_release", project=project
                 )
 
-        return {
-            "message": f"{project.public_id} updated to status {new_status}"
-            + delete_message
-            + f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
-        }
+        return_message = f"{project.public_id} updated to status {new_status}"
+
+        if new_status != "Available":
+            return_message += delete_message + "."
+        else:
+            return_message += (
+                f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
+            )
+        return {"message": return_message}
 
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""
@@ -214,7 +218,6 @@ class ProjectStatus(flask_restful.Resource):
 
     def delete_project_info(self, proj):
         """Delete certain metadata from proj on deletion/abort"""
-        proj.public_id = None
         proj.title = None
         proj.date_created = None
         proj.date_updated = None

@@ -39,6 +39,8 @@ class Config(object):
     # Use short-lived session cookies:
     PERMANENT_SESSION_LIFETIME = datetime.timedelta(hours=1)
 
+    SESSION_COOKIE_SECURE = False  # Should be True for any setup with support for https
+
     # Devel settings
     TEMPLATES_AUTO_RELOAD = True
 
@@ -59,9 +61,6 @@ class Config(object):
     RATELIMIT_STORAGE_URI = os.environ.get(
         "RATELIMIT_STORAGE_URI", "memory://"
     )  # Use in devel only! Use Redis or memcached in prod
-
-    REMEMBER_COOKIE_DURATION_HOURS = 1
-    REMEMBER_COOKIE_SECURE = False  # Should be True for anything reachable by non-local users
 
     INVITATION_EXPIRES_IN_HOURS = 7 * 24
 
