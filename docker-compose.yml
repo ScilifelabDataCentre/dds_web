@@ -79,6 +79,21 @@ services:
         source: $DDS_LOG_DIR
         target: /dds_web/logs
 
+  minio:
+    image: minio/minio:RELEASE.2022-02-24T22-12-01Z
+    command: server /data --console-address ":9001"
+    ports:
+      - 127.0.0.1:9000:9000
+      - 127.0.0.1:9001:9001
+    environment:
+      MINIO_ROOT_USER: minio  # access key
+      MINIO_ROOT_PASSWORD: minioPassword  # secret key
+    # volumes:
+    #   - type: bind
+    #     source: ./minio-data
+    #     target: /data
+
+
 #  redis:
 #    container_name: dds_redis
 #    image: redis:latest
