@@ -404,15 +404,17 @@ def password_reset_completed():
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     units_to_contact = {}
-    for project in user.projects:
-        if project.responsible_unit.external_display_name not in units_to_contact:
-            units_to_contact[
-                project.responsible_unit.external_display_name
-            ] = project.responsible_unit.contact_email
-
-    return flask.render_template(
-        "user/password_reset_completed.html", units_to_contact=units_to_contact
-    )
+    if user.role != "Super Admin":
+        for project in user.projects:
+            if project.responsible_unit.external_display_name not in units_to_contact:
+                units_to_contact[
+                    project.responsible_unit.external_display_name
+                ] = project.responsible_unit.contact_email
+        return flask.render_template(
+            "user/password_reset_completed.html", units_to_contact=units_to_contact
+        )
+    
+    return flask.render_template("user/password_reset_completed.html")
 
 
 @auth_blueprint.route("/change_password", methods=["GET", "POST"])
