@@ -13,12 +13,22 @@ import botocore
 import flask
 import structlog
 import sqlalchemy
+import marshmallow
 
 # Own modules
-from dds_web import db
-from dds_web.errors import BucketNotFoundError, DatabaseError
+from dds_web import db, auth
+from dds_web.errors import (
+    BucketNotFoundError,
+    DatabaseError,
+    DDSArgumentError,
+    LoggedHTTPException,
+    NoSuchUserError,
+    AccessDeniedError,
+    MissingJsonError,
+)
 from dds_web.utils import get_username_or_request_ip
-
+from dds_web.api.schemas import user_schemas, project_schemas
+from dds_web.database import models
 
 # initiate logging
 action_logger = structlog.getLogger("actions")
@@ -28,7 +38,46 @@ action_logger = structlog.getLogger("actions")
 # DECORATORS ########################################################################## DECORATORS #
 ####################################################################################################
 
-# S3 ########################################################################################## S3 #
+
+def handle_validation_errors(func):
+    @functools.wraps(func)
+    def handle_error(*args, **kwargs):
+
+        try:
+            result = func(*args, **kwargs)
+        except (marshmallow.exceptions.ValidationError) as valerr:
+            if "_schema" in valerr.messages:
+                return valerr.messages["_schema"][0], 400
+            else:
+                return valerr.messages, 400
+
+        return result
+
+    return handle_error
+
+
+def json_required(func):
+    @functools.wraps(func)
+    def verify_json(*args, **kwargs):
+
+        if not flask.request.json:
+            raise MissingJsonError(message="Required data missing from request!")
+
+        return func(*args, **kwargs)
+
+    return verify_json
+
+
+def args_required(func):
+    @functools.wraps(func)
+    def verify_args(*args, **kwargs):
+
+        if not flask.request.args:
+            raise DDSArgumentError(message="Required information missing from request!")
+
+        return func(*args, **kwargs)
+
+    return verify_args
 
 
 def dbsession(func):
@@ -51,6 +100,9 @@ def dbsession(func):
         return result
 
     return make_commit
+
+
+# S3 ########################################################################################## S3 #
 
 
 def connect_cloud(func):
@@ -101,18 +153,28 @@ def logging_bind_request(func):
     def wrapper_logging_bind_request(*args, **kwargs):
         with structlog.threadlocal.bound_threadlocal(
             resource=flask.request.path or "not applicable",
-            project=flask.request.args.get("project"),
+            project=flask.request.args.get("project") if flask.request.args else None,
             user=get_username_or_request_ip(),
         ):
-            value = func(*args, **kwargs)
 
-            if hasattr(value, "status"):
-                structlog.threadlocal.bind_threadlocal(response=value.status)
+            try:
+                value = func(*args, **kwargs)
 
-            action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
+                if hasattr(value, "status"):
+                    structlog.threadlocal.bind_threadlocal(response=value.status)
 
-            # make sure the threadlocal state is pruned after the log was written.
-            structlog.threadlocal.clear_threadlocal()
-            return value
+                action_logger.info(f"{flask.request.endpoint}.{func.__name__}")
+                # make sure the threadlocal state is pruned after the log was written.
+                structlog.threadlocal.clear_threadlocal()
+                return value
+
+            except Exception as err:
+                if not isinstance(err, LoggedHTTPException):
+                    # HTTPExceptions are already logged as warnings, no need to log twice.
+                    action_logger.exception(
+                        f"Uncaught exception in {flask.request.endpoint}.{func.__name__}",
+                        stack_info=True,
+                    )
+                raise
 
     return wrapper_logging_bind_request

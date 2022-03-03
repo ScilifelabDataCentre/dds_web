@@ -12,14 +12,22 @@ import flask
 import sqlalchemy
 import datetime
 import botocore
+import marshmallow
 
 # Own modules
 import dds_web.utils
 from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import logging_bind_request, dbsession
+from dds_web.api.dds_decorators import (
+    logging_bind_request,
+    dbsession,
+    args_required,
+    json_required,
+    handle_validation_errors,
+)
 from dds_web.errors import (
+    AccessDeniedError,
     DDSArgumentError,
     DatabaseError,
     EmptyProjectException,
@@ -27,11 +35,13 @@ from dds_web.errors import (
     BucketNotFoundError,
     KeyNotFoundError,
     S3ConnectionError,
+    NoSuchUserError,
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas, user_schemas
-from dds_web.security.project_user_keys import obtain_project_private_key
-
+from dds_web.security.project_user_keys import obtain_project_private_key, share_project_private_key
+from dds_web.security.auth import get_user_roles_common
+from dds_web.api.files import check_eligibility_for_deletion
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -41,16 +51,20 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-        extra_args = flask.request.json
-        return_info = {"current_status": project.current_status}
 
+        # Get current status and deadline
+        return_info = {"current_status": project.current_status}
         if project.current_deadline:
             return_info["current_deadline"] = project.current_deadline
 
-        if extra_args and extra_args.get("history") == True:
+        # Get status history
+        json_input = flask.request.json
+        if json_input and json_input.get("history"):
             history = []
             for pstatus in project.project_statuses:
                 history.append(tuple((pstatus.status, pstatus.date_created)))
@@ -61,15 +75,16 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
-        """Update Project Status"""
+        """Update Project Status."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-        public_id = project.public_id
-        extra_args = flask.request.json
-        if not extra_args:
-            raise DDSArgumentError(message="Missing new status")
 
-        new_status = extra_args.get("new_status")
+        # Check if valid status
+        json_input = flask.request.json
+        new_status = json_input.get("new_status")
         if new_status not in [
             "In Progress",
             "Deleted",
@@ -78,6 +93,8 @@ class ProjectStatus(flask_restful.Resource):
             "Archived",
         ]:
             raise DDSArgumentError("Invalid status")
+
+        send_email = json_input.get("send_email", True)
 
         curr_date = dds_web.utils.current_time()
         is_aborted = False
@@ -89,7 +106,7 @@ class ProjectStatus(flask_restful.Resource):
         # Moving to Available
         if new_status == "Available":
             # Optional int arg deadline in days
-            deadline = extra_args.get("deadline", project.responsible_unit.days_in_available)
+            deadline = json_input.get("deadline", project.responsible_unit.days_in_available)
             add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
                 days=deadline
             )
@@ -108,7 +125,7 @@ class ProjectStatus(flask_restful.Resource):
 
         # Moving to Expired
         if new_status == "Expired":
-            deadline = extra_args.get("deadline", project.responsible_unit.days_in_expired)
+            deadline = json_input.get("deadline", project.responsible_unit.days_in_expired)
             add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
                 days=deadline
             )
@@ -124,7 +141,7 @@ class ProjectStatus(flask_restful.Resource):
 
         # Moving to Archived
         if new_status == "Archived":
-            is_aborted = extra_args.get("is_aborted", False)
+            is_aborted = json_input.get("is_aborted", False)
             if project.current_status == "In Progress":
                 if not (project.has_been_available and is_aborted):
                     raise DDSArgumentError(
@@ -143,7 +160,7 @@ class ProjectStatus(flask_restful.Resource):
             if not project.is_active:
                 # Deletes files (also commits session in the function - possibly refactor later)
                 removed = RemoveContents().delete_project_contents(project=project)
-                delete_message = f"\nAll files in {public_id} deleted"
+                delete_message = f"\nAll files in {project.public_id} deleted"
                 if new_status in ["Deleted", "Archived"]:
                     self.rm_project_user_keys(project=project)
                     if new_status == "Deleted" or is_aborted:
@@ -163,13 +180,21 @@ class ProjectStatus(flask_restful.Resource):
             raise DatabaseError(message="Server Error: Status was not updated")
 
         # Mail users once project is made available
-        if new_status == "Available":
+        if new_status == "Available" and send_email:
             for user in project.researchusers:
                 AddUser.compose_and_send_email_to_user(
                     userobj=user.researchuser, mail_type="project_release", project=project
                 )
 
-        return {"message": f"{public_id} updated to status {new_status}" + delete_message}
+        return_message = f"{project.public_id} updated to status {new_status}"
+
+        if new_status != "Available":
+            return_message += delete_message + "."
+        else:
+            return_message += (
+                f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
+            )
+        return {"message": return_message}
 
     def is_transition_possible(self, current_status, new_status):
         """Check if the transition is valid"""
@@ -193,14 +218,12 @@ class ProjectStatus(flask_restful.Resource):
 
     def delete_project_info(self, proj):
         """Delete certain metadata from proj on deletion/abort"""
-        proj.public_id = None
         proj.title = None
         proj.date_created = None
         proj.date_updated = None
         proj.description = None
         proj.pi = None
         proj.public_key = None
-        proj.is_sensitive = None
         proj.unit_id = None
         proj.created_by = None
         # Delete User associations
@@ -214,9 +237,10 @@ class GetPublic(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
         """Get public key from database."""
-
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         flask.current_app.logger.debug("Getting the public key.")
@@ -232,15 +256,24 @@ class GetPrivate(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
-        """Get private key from database"""
-
+        """Get private key from database."""
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         flask.current_app.logger.debug("Getting the private key.")
 
         return flask.jsonify(
-            {"private": obtain_project_private_key(auth.current_user(), project).hex().upper()}
+            {
+                "private": obtain_project_private_key(
+                    user=auth.current_user(),
+                    project=project,
+                    token=dds_web.security.auth.obtain_current_encrypted_token(),
+                )
+                .hex()
+                .upper()
+            }
         )
 
 
@@ -261,7 +294,7 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        usage_arg = flask.request.json.get("usage") if flask.request.json else None
+        usage_arg = flask.request.json.get("usage") if flask.request.json else False
         usage = bool(usage_arg) and current_user.role in [
             "Super Admin",
             "Unit Admin",
@@ -285,7 +318,7 @@ class UserProjects(flask_restful.Resource):
             project_info["Size"] = proj_size
 
             if usage:
-                proj_bhours, proj_cost = self.project_usage(project=project)
+                proj_bhours, proj_cost = self.project_usage(project=p)
                 total_bhours_db += proj_bhours
                 total_cost_db += proj_cost
                 # return ByteHours
@@ -336,15 +369,24 @@ class RemoveContents(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @dbsession
+    @handle_validation_errors
     def delete(self):
         """Removes all project contents."""
-
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        # Verify project status ok for deletion
+        check_eligibility_for_deletion(
+            status=project.current_status, has_been_available=project.has_been_available
+        )
 
         # Check if project contains anything
         if not project.files:
-            raise EmptyProjectException("The are no project contents to delete.")
+            raise EmptyProjectException(
+                project=project, message="There are no project contents to delete."
+            )
 
+        # Delete project contents from db and cloud
         self.delete_project_contents(project=project)
 
         return {"removed": True}
@@ -386,11 +428,14 @@ class RemoveContents(flask_restful.Resource):
 class CreateProject(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
-        """Create a new project"""
+        """Create a new project."""
+        # Add a new project to db
         p_info = flask.request.json
-
         new_project = project_schemas.CreateProjectSchema().load(p_info)
+        db.session.add(new_project)
 
         if not new_project:
             raise DDSArgumentError("Failed to create project.")
@@ -400,9 +445,27 @@ class CreateProject(flask_restful.Resource):
         with ApiS3Connector(project=new_project) as s3:
             try:
                 s3.resource.create_bucket(Bucket=new_project.bucket)
-            except botocore.exceptions.ClientError as err:
+            except (
+                botocore.exceptions.ClientError,
+                botocore.exceptions.ParamValidationError,
+            ) as err:
                 # For now just keeping the project row
                 raise S3ConnectionError(str(err))
+
+        try:
+            db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise DatabaseError(message="Server Error: Project was not created") from err
+        except (
+            marshmallow.ValidationError,
+            DDSArgumentError,
+            AccessDeniedError,
+        ) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise
 
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."
@@ -414,10 +477,9 @@ class CreateProject(flask_restful.Resource):
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
-                        {
-                            "email": user.get("email"),
-                            "role": user.get("role"),
-                        }
+                        email=user.get("email"),
+                        new_user_role=user.get("role"),
+                        project=new_project,
                     )
                     if invite_user_result["status"] == 200:
                         invite_msg = (
@@ -431,9 +493,9 @@ class CreateProject(flask_restful.Resource):
                     # If it is an existing user, add them to project.
                     addition_status = ""
                     try:
-                        add_user_result = AddUser.add_user_to_project(
-                            existing_user=existing_user,
-                            project=new_project.public_id,
+                        add_user_result = AddUser.add_to_project(
+                            whom=existing_user,
+                            project=new_project,
                             role=user.get("role"),
                         )
                     except DatabaseError as err:
@@ -455,8 +517,9 @@ class ProjectUsers(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @handle_validation_errors
     def get(self):
-
+        # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Get info on research users
@@ -466,10 +529,118 @@ class ProjectUsers(flask_restful.Resource):
             user_info = {
                 "User Name": user.user_id,
                 "Primary email": "",
+                "Role": "Owner" if user.owner else "Researcher",
             }
             for user_email in user.researchuser.emails:
                 if user_email.primary:
                     user_info["Primary email"] = user_email.email
             research_users.append(user_info)
 
+        for invitee in project.project_invite_keys:
+            role = "Owner" if invitee.owner else "Researcher"
+            user_info = {
+                "User Name": "NA (Pending)",
+                "Primary email": f"{invitee.invite.email} (Pending)",
+                "Role": f"{role} (Pending)",
+            }
+            research_users.append(user_info)
+
         return {"research_users": research_users}
+
+
+class ProjectAccess(flask_restful.Resource):
+    """Renew project access for users."""
+
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
+    @logging_bind_request
+    @dbsession
+    @json_required
+    @handle_validation_errors
+    def post(self):
+        """Give access to user."""
+        # Verify that user specified
+        json_input = flask.request.json
+
+        if "email" not in json_input:
+            raise DDSArgumentError(message="User email missing.")
+
+        user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
+
+        if not user:
+            raise NoSuchUserError()
+
+        # Verify that project specified
+        project_info = flask.request.args
+        project = None
+        if project_info and project_info.get("project"):
+            project = project_schemas.ProjectRequiredSchema().load(project_info)
+
+        # Verify permission to give user access
+        self.verify_renew_access_permission(user=user, project=project)
+
+        # Give access to specific project or all active projects if no project specified
+        list_of_projects = None
+        if not project:
+            if user.role == "Researcher":
+                list_of_projects = [x.project for x in user.project_associations]
+            elif user.role in ["Unit Personnel", "Unit Admin"]:
+                list_of_projects = user.unit.projects
+        else:
+            list_of_projects = [project]
+
+        self.give_project_access(
+            project_list=list_of_projects, current_user=auth.current_user(), user=user
+        )
+
+        return {"message": f"Project access updated for user '{user.primary_email}'."}
+
+    @staticmethod
+    def verify_renew_access_permission(user, project):
+        """Check that user has permission to give access to another user in this project."""
+
+        if auth.current_user() == user:
+            raise AccessDeniedError(message="You cannot renew your own access.")
+
+        # Get roles
+        current_user_role = get_user_roles_common(user=auth.current_user())
+        other_user_role = get_user_roles_common(user=user)
+
+        # Check access
+        if not (
+            (
+                current_user_role == "Unit Admin"
+                and other_user_role
+                in ["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"]
+            )
+            or (
+                current_user_role == "Unit Personnel"
+                and other_user_role in ["Unit Personnel", "Project Owner", "Researcher"]
+            )
+            or (
+                current_user_role == "Project Owner"
+                and other_user_role in ["Project Owner", "Researcher"]
+            )
+        ):
+            raise AccessDeniedError(
+                message=(
+                    "You do not have the necessary permissions "
+                    "to shared project access with this user."
+                )
+            )
+
+    @staticmethod
+    def give_project_access(project_list, current_user, user):
+        """Give specific user project access."""
+        # Loop through and check that the project(s) is(are) active
+        for proj in project_list:
+            if proj.is_active:
+                project_keys_row = models.ProjectUserKeys.query.filter_by(
+                    project_id=proj.id, user_id=user.username
+                ).one_or_none()
+                if not project_keys_row:
+                    share_project_private_key(
+                        from_user=current_user,
+                        to_another=user,
+                        project=proj,
+                        from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                    )

@@ -122,16 +122,23 @@ class DDSEndpoint:
     # Base url - local or remote
     BASE_ENDPOINT = "/api/v1"
 
+    # status
+    STATUS = "/status"
+
     # Web
     INDEX = "/"
     LOGIN = "/login"
     CANCEL_2FA = "/cancel_2fa"
     CONFIRM_2FA = "/confirm_2fa"
+    CHANGE_PASSWORD = "/change_password"
 
     # User creation
     USER_ADD = BASE_ENDPOINT + "/user/add"
     USER_CONFIRM = "/confirm_invite/"
     USER_NEW = "/register"
+    REQUEST_RESET_PASSWORD = "/reset_password"
+    RESET_PASSWORD = "/reset_password/"
+    PASSWORD_RESET_COMPLETED = "/password_reset_completed"
 
     # User INFO
     USER_INFO = BASE_ENDPOINT + "/user/info"
@@ -164,6 +171,7 @@ class DDSEndpoint:
     # Project specific urls
     PROJECT_CREATE = BASE_ENDPOINT + "/proj/create"
     PROJECT_STATUS = BASE_ENDPOINT + "/proj/status"
+    PROJECT_ACCESS = BASE_ENDPOINT + "/proj/access"
 
     # Listing urls
     LIST_PROJ = BASE_ENDPOINT + "/proj/list"

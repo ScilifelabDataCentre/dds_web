@@ -14,7 +14,7 @@ import dds_web
 from dds_web import auth, db, utils
 from dds_web import errors as ddserr
 from dds_web.database import models
-from dds_web.security.project_user_keys import transfer_invite_private_key_to_user
+from dds_web.security.project_user_keys import verify_and_transfer_invite_to_user
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -24,7 +24,14 @@ from dds_web.security.project_user_keys import transfer_invite_private_key_to_us
 class UserSchema(marshmallow.Schema):
     """Schema for User class."""
 
-    email = marshmallow.fields.Email(required=True)
+    email = marshmallow.fields.Email(
+        required=True,
+        allow_none=False,
+        error_messages={
+            "required": {"message": "A user email is required."},
+            "null": {"message": "The user email cannot be null."},
+        },
+    )
 
     class Meta:
         unknown = marshmallow.EXCLUDE
@@ -40,61 +47,36 @@ class UserSchema(marshmallow.Schema):
         return email_row.user
 
 
-class InviteUserSchema(marshmallow.Schema):
-    """Schema for AddUser endpoint"""
+class UnansweredInvite(marshmallow.Schema):
+    """Schema to return an unanswered invite."""
 
-    email = marshmallow.fields.Email(required=True)  # Validator below
-    role = marshmallow.fields.String(
+    email = marshmallow.fields.Email(
         required=True,
-        validate=marshmallow.validate.OneOf(
-            choices=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner", "Researcher"],
-        ),
+        allow_none=False,
+        error_messages={
+            "required": {"message": "An email is required."},
+            "null": {"message": "The email cannot be null."},
+        },
     )
 
-    @marshmallow.validates("email")
-    def validate_email(self, value):
-        """Check that email is not used by anyone in db."""
-
-        if models.Invite.query.filter_by(email=value).first():
-            raise ddserr.InviteError(message=f"Email '{value}' already has a pending invitation.")
-        elif utils.email_in_db(email=value):
-            raise ddserr.InviteError(
-                message=f"The email '{value}' is already registered to an existing user."
-            )
-
-    @marshmallow.validates("role")
-    def validate_role(self, attempted_invite_role):
-        """Validate current users permission to invite specified role."""
-
-        curr_user_role = auth.current_user().role
-        if curr_user_role == "Unit Admin":
-            if attempted_invite_role == "Super Admin":
-                raise ddserr.AccessDeniedError
-        elif curr_user_role == "Unit Personnel":
-            if attempted_invite_role in ["Super Admin", "Unit Admin"]:
-                raise ddserr.AccessDeniedError
-        elif curr_user_role == "Researcher":
-            # research users can only invite in certain projects if they are set as the owner
-            # TODO: Add required project field for researchers to be able to invite (if
-            raise ddserr.AccessDeniedError(
-                message=(
-                    "Research users cannot invite at this time. "
-                    "Project owner invite config will be fixed."
-                )
-            )
+    class Meta:
+        unknown = marshmallow.EXCLUDE
 
     @marshmallow.post_load
-    def make_invite(self, data, **kwargs):
-        """Deserialize to an Invite object"""
+    def return_invite(self, data, **kwargs):
+        """Return the invite object."""
+        # returns the invite, if there is exactly one or raises an exception.
+        # returns none, if there is no invite
+        invite = models.Invite.query.filter_by(email=data.get("email")).one_or_none()
 
-        if data.get("role") == "Super Admin":
-            # TODO: here the unit needs to be specified
-            raise marshmallow.ValidationError("currently not creating invites for superadmins")
+        # double check if there is no existing user with this email
+        userexists = utils.email_in_db(email=data.get("email"))
 
-        # Create invite
-        new_invite = models.Invite(**{"email": data.get("email"), "role": data.get("role")})
+        if userexists and invite:
+            raise ddserr.DatabaseError(message="Email exists for user and invite at the same time")
 
-        return new_invite
+        # if the user exists already, the invite object must not be returned to prevent sign-up
+        return invite if not userexists else None
 
 
 class NewUserSchema(marshmallow.Schema):
@@ -103,24 +85,39 @@ class NewUserSchema(marshmallow.Schema):
     # TODO: Look through and match to db
     username = marshmallow.fields.String(
         required=True,
+        allow_none=False,
         validate=marshmallow.validate.And(
-            marshmallow.validate.Length(min=8, max=20),
+            marshmallow.validate.Length(min=3, max=30),
             utils.valid_chars_in_username,
             # Validation for "username not taken" below
         ),
+        error_messages={
+            "required": {"message": "A username is required."},
+            "null": {"message": "The username cannot be null."},
+        },
     )
     password = marshmallow.fields.String(
         required=True,
+        allow_none=False,
         validate=marshmallow.validate.And(
             marshmallow.validate.Length(min=10, max=64),
             utils.contains_digit_or_specialchar,
             utils.contains_lowercase,
             utils.contains_uppercase,
         ),
+        error_messages={
+            "required": {"message": "A password is required."},
+            "null": {"message": "The password cannot be null."},
+        },
     )
     email = marshmallow.fields.Email(
         required=True,
+        allow_none=False,
         validate=marshmallow.validate.And(marshmallow.validate.Email(), utils.email_not_taken),
+        error_messages={
+            "required": {"message": "An email is required."},
+            "null": {"message": "The email cannot be null."},
+        },
     )
     name = marshmallow.fields.String(required=True, validate=marshmallow.validate.Length(max=255))
 
@@ -175,18 +172,18 @@ class NewUserSchema(marshmallow.Schema):
         }
 
         # Create new user
+
         invite = data.get("invite")
-        if invite.role == "Researcher":
-            new_user = models.ResearchUser(**common_user_fields)
-            # Currently no project associations
+        if invite.role == "Super Admin":
+            new_user = models.SuperAdmin(**common_user_fields)
         elif invite.role in ["Unit Admin", "Unit Personnel"]:
             new_user = models.UnitUser(**common_user_fields)
 
             new_user.is_admin = invite.role == "Unit Admin"
 
             invite.unit.users.append(new_user)
-        elif invite.role == "Super Admin":
-            new_user = models.SuperAdmin(**common_user_fields)
+        elif invite.role == "Researcher":
+            new_user = models.ResearchUser(**common_user_fields)
 
         # Create new email and append to user relationship
         new_email = models.Email(email=data.get("email"), primary=True)
@@ -196,10 +193,14 @@ class NewUserSchema(marshmallow.Schema):
         db.session.add(new_user)
 
         # Verify and transfer invite keys to the new user
-        temporary_key = dds_web.security.auth.verify_invite_key(token)
-        if temporary_key:
-            transfer_invite_private_key_to_user(invite, temporary_key, new_user)
+        if verify_and_transfer_invite_to_user(token, new_user, data.get("password")):
             for project_invite_key in invite.project_invite_keys:
+                if isinstance(new_user, models.ResearchUser):
+                    project_user = models.ProjectUsers(
+                        project_id=project_invite_key.project_id, owner=project_invite_key.owner
+                    )
+                    new_user.project_associations.append(project_user)
+
                 project_user_key = models.ProjectUserKeys(
                     project_id=project_invite_key.project_id,
                     user_id=new_user.username,
@@ -207,9 +208,6 @@ class NewUserSchema(marshmallow.Schema):
                 )
                 db.session.add(project_user_key)
                 db.session.delete(project_invite_key)
-
-            # TODO decrypt the user private key using the temp key,
-            #  derive a key from the password and encrypt the user private key with the derived key
 
             flask.session.pop("invite_token", None)
 

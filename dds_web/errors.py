@@ -10,14 +10,12 @@ import logging
 # Installed
 from werkzeug import exceptions
 import flask
-import dds_web
-import flask_login
 import http
 import json
 import structlog
 
 # Own modules
-from dds_web import actions, auth
+from dds_web import auth
 
 ####################################################################################################
 # LOGGING ################################################################################ LOGGING #
@@ -39,7 +37,7 @@ class LoggedHTTPException(exceptions.HTTPException):
         with structlog.threadlocal.bound_threadlocal(
             message=message,
             resource=flask.request.path or "not applicable",
-            project=flask.request.args.get("project"),
+            project=flask.request.args.get("project") if flask.request.args else None,
             user=get_username_or_request_ip(),
         ):
             structlog.threadlocal.bind_threadlocal(response=f"{self.code.value} {self.code.phrase}")
@@ -73,6 +71,50 @@ class KeyLengthError(SystemExit):
         general_logger.error(message)
 
 
+class TokenMissingError(LoggedHTTPException):
+    """Errors due to missing token."""
+
+    code = http.HTTPStatus.BAD_REQUEST
+
+    def __init__(self, message="Token is missing"):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class SensitiveContentMissingError(LoggedHTTPException):
+    """Errors due to missing sensitive content in the encrypted token."""
+
+    code = http.HTTPStatus.BAD_REQUEST
+
+    def __init__(self, message="Sensitive content is missing in the encrypted token!"):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class KeySetupError(LoggedHTTPException):
+    """Errors due to missing keys."""
+
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    def __init__(self, message="Keys are not properly setup!"):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class KeyOperationError(LoggedHTTPException):
+    """Errors due to issues in key operations."""
+
+    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    def __init__(self, message="A key cannot be processed!"):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
 class AuthenticationError(LoggedHTTPException):
     """Base class for errors due to authentication failure."""
 
@@ -88,12 +130,13 @@ class AccessDeniedError(LoggedHTTPException):
     """Errors due to incorrect project permissions."""
 
     code = http.HTTPStatus.FORBIDDEN  # 403
+    description = "The user does not have the necessary permissions."
 
     def __init__(
         self,
         project=None,
         username=None,
-        message="The user does not have the necessary permissions.",
+        message=description,
     ):
         if username:
             structlog.threadlocal.bind_threadlocal(user=username)
@@ -243,7 +286,7 @@ class MissingProjectIDError(LoggedHTTPException):
 
     code = http.HTTPStatus.BAD_REQUEST
 
-    def __init__(self, message="Attempting to validate users project access without project ID"):
+    def __init__(self, message="Project ID missing!"):
         super().__init__(message)
 
         general_logger.warning(message)
@@ -251,6 +294,17 @@ class MissingProjectIDError(LoggedHTTPException):
 
 class DDSArgumentError(LoggedHTTPException):
     """Base class for errors occurring due to missing request arguments."""
+
+    code = http.HTTPStatus.BAD_REQUEST
+
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
+class MissingJsonError(LoggedHTTPException):
+    """Not enough data specified to the endpoint in the form of json."""
 
     code = http.HTTPStatus.BAD_REQUEST
 
@@ -317,7 +371,7 @@ class NoSuchUserError(LoggedHTTPException):
         general_logger.warning(message)
 
 
-class NoSuchFileError(Exception):
+class NoSuchFileError(LoggedHTTPException):
     """There is no such file found in the database."""
 
     code = http.HTTPStatus.BAD_REQUEST

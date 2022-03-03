@@ -7,6 +7,7 @@
 # Standard library
 import logging
 import datetime
+import pathlib
 
 # Installed
 import click
@@ -18,8 +19,10 @@ from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
+import flask_migrate
 
 # import flask_qrcode
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import sqlalchemy
@@ -56,6 +59,9 @@ actions = {}
 # Limiter
 limiter = Limiter(key_func=get_remote_address)
 
+# Migration
+migrate = flask_migrate.Migrate()
+
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -76,16 +82,19 @@ def setup_logging(app):
             "handlers": {
                 "general": {
                     "level": logging.DEBUG,
-                    "class": "dds_web.dds_rotating_file_handler.DDSRotatingFileHandler",
-                    "filename": "dds",
-                    "basedir": app.config.get("LOGS_DIR"),
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "filename": pathlib.Path(app.config.get("LOGS_DIR")) / pathlib.Path("dds.log"),
                     "formatter": "general",
+                    "maxBytes": 0x100000,
+                    "backupCount": 15,
                 },
                 "actions": {
                     "level": logging.INFO,
-                    "class": "dds_web.dds_rotating_file_handler.DDSRotatingFileHandler",
-                    "filename": "actions",
-                    "basedir": app.config.get("LOGS_DIR"),
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "maxBytes": 0x100000,
+                    "backupCount": 15,
+                    "filename": pathlib.Path(app.config.get("LOGS_DIR"))
+                    / pathlib.Path("actions.log"),
                     "formatter": "default",
                 },
                 "console": {
@@ -160,9 +169,6 @@ def create_app(testing=False, database_uri=None):
 
     # User config file, if e.g. using in production
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
-    app.config["REMEMBER_COOKIE_DURATION"] = datetime.timedelta(
-        hours=app.config.get("REMEMBER_COOKIE_DURATION_HOURS", 1)
-    )
 
     # Test related configs
     if database_uri is not None:
@@ -208,13 +214,18 @@ def create_app(testing=False, database_uri=None):
     def load_user(user_id):
         return models.User.query.get(user_id)
 
-    oauth.init_app(app)
+    if app.config["REVERSE_PROXY"]:
+        app.wsgi_app = ProxyFix(app.wsgi_app)
 
     # Initialize limiter
     limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
     limiter.init_app(app)
 
+    # Initialize migrations
+    migrate.init_app(app, db)
+
     # initialize OIDC
+    oauth.init_app(app)
     oauth.register(
         "default_login",
         client_secret=app.config.get("OIDC_CLIENT_SECRET"),
@@ -225,10 +236,14 @@ def create_app(testing=False, database_uri=None):
 
     app.cli.add_command(fill_db_wrapper)
 
+    @app.route("/status")
+    def get_status():
+        """Return a simple status message to confirm that the system is ready."""
+        return flask.jsonify({"status": "ready"})
+
     with app.app_context():  # Everything in here has access to sessions
-        db.create_all()  # TODO: remove this when we have migrations
-        from dds_web import routes  # Import routes
         from dds_web.database import models
+        from dds_web import routes  # Import routes
 
         # Need to import auth so that the modifications to the auth objects take place
         import dds_web.security.auth
@@ -259,8 +274,6 @@ def create_app(testing=False, database_uri=None):
 @flask.cli.with_appcontext
 def fill_db_wrapper(db_type):
 
-    db.create_all()
-
     if db_type == "production":
         from dds_web.database import models
 
@@ -268,15 +281,27 @@ def fill_db_wrapper(db_type):
         password = flask.current_app.config["SUPERADMIN_PASSWORD"]
         name = flask.current_app.config["SUPERADMIN_NAME"]
         existing_user = models.User.query.filter_by(username=username).one_or_none()
-        if existing_user:
+
+        email = flask.current_app.config["SUPERADMIN_EMAIL"]
+        existing_email = models.Email.query.filter_by(email=email).one_or_none()
+
+        if existing_email:
+            flask.current_app.logger.info(
+                f"User with email '{email}' already exists, not creating user."
+            )
+        elif existing_user:
             if isinstance(existing_user, models.SuperAdmin):
                 flask.current_app.logger.info(
                     f"Super admin with username '{username}' already exists, not creating user."
                 )
         else:
+            flask.current_app.logger.info(f"Adding Super Admin: {username} ({email})")
             new_super_admin = models.SuperAdmin(username=username, name=name, password=password)
-            db.session.add(new_super_admin)
+            new_email = models.Email(email=email, primary=True)
+            new_email.user = new_super_admin
+            db.session.add(new_email)
             db.session.commit()
+            flask.current_app.logger.info(f"Super Admin added: {username} ({email})")
     else:
         flask.current_app.logger.info("Initializing development db")
         assert flask.current_app.config["USE_LOCAL_DB"]

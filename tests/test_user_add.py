@@ -1,3 +1,5 @@
+import dds_web
+import flask_mail
 import http
 import json
 import sqlalchemy
@@ -5,10 +7,15 @@ from dds_web import db
 from dds_web.database import models
 import tests
 import pytest
+import unittest
 import marshmallow
 
+existing_project = "public_project_id"
+existing_project_2 = "second_public_project_id"
 first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
+first_new_owner = {**first_new_email, "role": "Project Owner"}
+first_new_user_existing_project = {**first_new_user, "project": "public_project_id"}
 first_new_user_extra_args = {**first_new_user, "extra": "test"}
 first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
 first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_new_user["role"]}
@@ -35,13 +42,12 @@ submit_with_same_ownership = {
     "project": "second_public_project_id",
 }
 
-
+# Inviting Users ################################################################# Inviting Users #
 def test_add_user_with_researcher(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        data=json.dumps(first_new_user),
-        content_type="application/json",
+        json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
@@ -52,8 +58,7 @@ def test_add_user_with_unituser_no_role(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(first_new_email),
-        content_type="application/json",
+        json=first_new_email,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
@@ -64,22 +69,20 @@ def test_add_user_with_unitadmin_with_extraargs(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(first_new_user_extra_args),
-        content_type="application/json",
+        json=first_new_user_extra_args,
     )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.status_code == http.HTTPStatus.OK
     invited_user = models.Invite.query.filter_by(
         email=first_new_user_extra_args["email"]
     ).one_or_none()
-    assert invited_user is None
+    assert invited_user
 
 
 def test_add_user_with_unitadmin_and_invalid_role(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(first_new_user_invalid_role),
-        content_type="application/json",
+        json=first_new_user_invalid_role,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     invited_user = models.Invite.query.filter_by(
@@ -89,13 +92,15 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
 
 
 def test_add_user_with_unitadmin_and_invalid_email(client):
-    with pytest.raises(marshmallow.ValidationError):
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            data=json.dumps(first_new_user_invalid_email),
-            content_type="application/json",
+            json=first_new_user_invalid_email,
         )
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        # An email is always sent when receiving the partial token
+        mock_mail_send.assert_called_once()
 
     invited_user = models.Invite.query.filter_by(
         email=first_new_user_invalid_email["email"]
@@ -104,12 +109,16 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
 
 
 def test_add_user_with_unitadmin(client):
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(first_new_user),
-        content_type="application/json",
-    )
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=token,
+            json=first_new_user,
+        )
+        # One mail sent for partial token and one for the invite
+        assert mock_mail_send.call_count == 2
+
     assert response.status_code == http.HTTPStatus.OK
 
     invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
@@ -122,14 +131,32 @@ def test_add_user_with_unitadmin(client):
     assert invited_user.private_key is not None
     assert invited_user.project_invite_keys == []
 
+    # Repeating the invite should not send a new invite:
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=token,
+            json=first_new_user,
+        )
+        # No new mail should be sent for the token and neither for an invite
+        assert mock_mail_send.call_count == 0
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    message = response.json.get("message")
+    assert "user was already added to the system" in message
+
 
 def test_add_unit_user_with_unitadmin(client):
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(new_unit_user),
-        content_type="application/json",
-    )
+
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=token,
+            json=new_unit_user,
+        )
+        # One mail sent for partial token and one for the invite
+        assert mock_mail_send.call_count == 2
+
     assert response.status_code == http.HTTPStatus.OK
 
     invited_user = models.Invite.query.filter_by(email=new_unit_user["email"]).one_or_none()
@@ -156,14 +183,32 @@ def test_add_unit_user_with_unitadmin(client):
     assert len(project_invite_keys) == len(invited_user.unit.projects)
     assert len(project_invite_keys) == 5
 
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=token,
+            json=new_unit_user,
+        )
+        # No new mail should be sent for the token and neither for an invite
+        assert mock_mail_send.call_count == 0
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    message = response.json.get("message")
+    assert "user was already added to the system" in message
+
 
 def test_add_user_with_superadmin(client):
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
-        data=json.dumps(first_new_user),
-        content_type="application/json",
-    )
+
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=token,
+            json=first_new_user,
+        )
+        # One mail sent for partial token and one for the invite
+        assert mock_mail_send.call_count == 2
+
     assert response.status_code == http.HTTPStatus.OK
 
     invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
@@ -171,8 +216,21 @@ def test_add_user_with_superadmin(client):
     assert invited_user.email == first_new_user["email"]
     assert invited_user.role == first_new_user["role"]
 
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=token,
+            json=first_new_user,
+        )
+        # No new mail should be sent for the token and neither for an invite
+        assert mock_mail_send.call_count == 0
 
-def test_add_user_existing_email(client):
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    message = response.json.get("message")
+    assert "user was already added to the system" in message
+
+
+def test_add_user_existing_email_no_project(client):
     invited_user = models.Invite.query.filter_by(
         email=existing_invite["email"], role=existing_invite["role"]
     ).one_or_none()
@@ -180,8 +238,7 @@ def test_add_user_existing_email(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        data=json.dumps(existing_invite),
-        content_type="application/json",
+        json=existing_invite,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -190,8 +247,7 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(new_unit_admin),
-        content_type="application/json",
+        json=new_unit_admin,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -199,12 +255,12 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
     assert invited_user is None
 
 
+# Add existing users to projects ################################# Add existing users to projects #
 def test_add_existing_user_without_project(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        data=json.dumps(existing_research_user),
-        content_type="application/json",
+        json=existing_research_user,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -229,8 +285,7 @@ def test_research_user_cannot_add_existing_user_to_existing_project(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -264,8 +319,7 @@ def test_project_owner_can_add_existing_user_to_existing_project(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -298,8 +352,7 @@ def test_add_existing_user_to_existing_project(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -310,6 +363,46 @@ def test_add_existing_user_to_existing_project(client):
         )
     ).one_or_none()
     assert project_user_after_addition
+
+
+def test_add_existing_user_to_existing_project_no_mail_flag(client):
+    "Test that an e-mail notification is not send when the --no-mail flag is used"
+
+    user_copy = existing_research_user_to_existing_project.copy()
+    project_id = user_copy.pop("project")
+    new_status = {"new_status": "Available"}
+    user_copy["send_email"] = False
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+
+    # make project available prior to test, otherwise an e-mail is never sent.
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=token,
+        query_string={"project": project_id},
+        data=json.dumps(new_status),
+        content_type="application/json",
+    )
+
+    # Test mail sending is suppressed
+
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        with unittest.mock.patch.object(
+            dds_web.api.user.AddUser, "compose_and_send_email_to_user"
+        ) as mock_mail_func:
+            print(user_copy)
+            response = client.post(
+                tests.DDSEndpoint.USER_ADD,
+                headers=token,
+                query_string={"project": project_id},
+                data=json.dumps(user_copy),
+                content_type="application/json",
+            )
+            # assert that no mail is being sent.
+            assert mock_mail_func.called == False
+    assert mock_mail_send.call_count == 0
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert "An e-mail notification has not been sent." in response.json["message"]
 
 
 def test_add_existing_user_to_existing_project_after_release(client):
@@ -333,8 +426,7 @@ def test_add_existing_user_to_existing_project_after_release(client):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps({"new_status": "Available"}),
-        content_type="application/json",
+        json={"new_status": "Available"},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Available"
@@ -343,8 +435,7 @@ def test_add_existing_user_to_existing_project_after_release(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project_id},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -364,8 +455,7 @@ def test_add_existing_user_to_nonexistent_proj(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(user_copy),
-        content_type="application/json",
+        json=user_copy,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
@@ -390,8 +480,7 @@ def test_existing_user_change_ownership(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(user_new_owner_status),
-        content_type="application/json",
+        json=user_new_owner_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -408,8 +497,7 @@ def test_existing_user_change_ownership_same_permissions(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(user_same_ownership),
-        content_type="application/json",
+        json=user_same_ownership,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -422,7 +510,197 @@ def test_add_existing_user_with_unsuitable_role(client):
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         query_string={"project": project},
-        data=json.dumps(user_with_unsuitable_role),
-        content_type="application/json",
+        json=user_with_unsuitable_role,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+# Invite to project ########################################################### Invite to project #
+
+
+def test_invite_with_project_by_unituser(client):
+    "Test that a new invite including a project can be created"
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+    assert invited_user.email == first_new_user["email"]
+    assert invited_user.role == first_new_user["role"]
+
+    assert invited_user.nonce is not None
+    assert invited_user.public_key is not None
+    assert invited_user.private_key is not None
+
+    project_invite_keys = invited_user.project_invite_keys
+    assert len(project_invite_keys) == 1
+    assert project_invite_keys[0].project.public_id == project
+    assert not project_invite_keys[0].owner
+
+
+def test_add_project_to_existing_invite_by_unituser(client):
+    "Test that a project can be associated with an existing invite"
+
+    # Create invite upfront
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+
+    # Check that the invite has no projects yet
+
+    assert invited_user
+    assert len(invited_user.project_invite_keys) == 0
+
+    # Add project to existing invite
+
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        json=first_new_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Check that the invite has now a project association
+    project_invite_keys = invited_user.project_invite_keys
+    assert len(project_invite_keys) == 1
+    assert project_invite_keys[0].project.public_id == project
+    assert not project_invite_keys[0].owner
+
+
+def test_update_project_to_existing_invite_by_unituser(client):
+    "Test that project ownership can be updated for an existing invite"
+
+    # Create Invite upfront
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_obj = models.Project.query.filter_by(public_id=existing_project).one_or_none()
+    invite_obj = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+
+    project_invite = models.ProjectInviteKeys.query.filter(
+        sqlalchemy.and_(
+            models.ProjectInviteKeys.invite_id == invite_obj.id,
+            models.ProjectUserKeys.project_id == project_obj.id,
+        )
+    ).one_or_none()
+
+    assert project_invite
+    assert not project_invite.owner
+
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        json=first_new_owner,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+
+    db.session.refresh(project_invite)
+
+    assert project_invite.owner
+
+
+def test_invited_as_owner_and_researcher_to_different_project(client):
+    "Test that an invite can be owner of one project and researcher of another"
+
+    # Create Invite upfront as owner
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project},
+        json=first_new_owner,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Perform second invite as researcher
+    project2 = existing_project_2
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project2},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_obj_owner = models.Project.query.filter_by(public_id=existing_project).one_or_none()
+    project_obj_not_owner = models.Project.query.filter_by(
+        public_id=existing_project_2
+    ).one_or_none()
+
+    invite_obj = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+
+    project_invite_owner = models.ProjectInviteKeys.query.filter(
+        sqlalchemy.and_(
+            models.ProjectInviteKeys.invite_id == invite_obj.id,
+            models.ProjectInviteKeys.project_id == project_obj_owner.id,
+        )
+    ).one_or_none()
+
+    assert project_invite_owner
+    assert project_invite_owner.owner
+
+    project_invite_not_owner = models.ProjectInviteKeys.query.filter(
+        sqlalchemy.and_(
+            models.ProjectInviteKeys.invite_id == invite_obj.id,
+            models.ProjectInviteKeys.project_id == project_obj_not_owner.id,
+        )
+    ).one_or_none()
+
+    assert project_invite_not_owner
+    assert not project_invite_not_owner.owner
+
+    # Owner or not should not be stored on the invite
+    assert invite_obj.role == "Researcher"
+
+
+def test_invite_to_project_by_project_owner(client):
+    "Test that a project owner can invite to its project"
+
+    project = existing_project
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
+        query_string={"project": project},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+    assert invited_user.email == first_new_user["email"]
+    assert invited_user.role == first_new_user["role"]
+
+    assert invited_user.nonce is not None
+    assert invited_user.public_key is not None
+    assert invited_user.private_key is not None
+
+    project_invite_keys = invited_user.project_invite_keys
+    assert len(project_invite_keys) == 1
+    assert project_invite_keys[0].project.public_id == project
+    assert not project_invite_keys[0].owner

@@ -28,12 +28,19 @@ import dds_web.utils
 import dds_web.forms
 import dds_web.errors as ddserr
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
-from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.api.dds_decorators import (
+    logging_bind_request,
+    args_required,
+    json_required,
+    handle_validation_errors,
+)
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
     share_project_private_key,
 )
 from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
+from dds_web.security.auth import get_user_roles_common
+
 
 # initiate bound logger
 action_logger = structlog.getLogger("actions")
@@ -44,55 +51,129 @@ action_logger = structlog.getLogger("actions")
 class AddUser(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
-        """Create an invite and send email."""
+        """Associate existing users or unanswered invites with projects or create invites"""
+        args = flask.request.args
+        json_info = flask.request.json
 
-        project = flask.request.args.get("project", None)
-        args = flask.request.json
+        # Verify valid role (should also catch None)
+        role = json_info.get("role")
+        if not dds_web.utils.valid_user_role(specified_role=role):
+            raise ddserr.DDSArgumentError(message="Invalid user role.")
+
+        # Unit only changable for Super Admin invites
+        unit = json_info.get("unit") if auth.current_user().role == "Super Admin" else None
+
+        # A project may or may not be specified
+        project = args.get("project") if args else None
+        if project:
+            project = project_schemas.ProjectRequiredSchema().load({"project": project})
+
+        # Verify email
+        email = json_info.get("email")
+        if not email:
+            raise ddserr.DDSArgumentError(message="Email address required to add or invite.")
+
+        # Notify the users about project additions? Invites are still being sent out.
+        send_email = json_info.get("send_email", True)
+
         # Check if email is registered to a user
-        existing_user = user_schemas.UserSchema().load(args)
+        existing_user = user_schemas.UserSchema().load({"email": email})
+        unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
 
-        if existing_user and not project:
-            raise ddserr.DDSArgumentError(
-                message="User exists! Specify a project if you want to add this user to a project."
+        if existing_user or unanswered_invite:
+            if not project:
+                raise ddserr.DDSArgumentError(
+                    message=(
+                        "This user was already added to the system. "
+                        "Specify the project you wish to give access to."
+                    )
+                )
+
+            add_user_result = self.add_to_project(
+                whom=existing_user or unanswered_invite,
+                project=project,
+                role=role,
+                send_email=send_email,
             )
-
-        if not existing_user:
-            # Send invite if the user doesn't exist
-            invite_user_result = self.invite_user(args)
-            return invite_user_result, invite_user_result["status"]
+            return add_user_result, add_user_result["status"]
 
         else:
-            # If there is an existing user, add them to project.
-            if project:
-                add_user_result = self.add_user_to_project(existing_user, project, args.get("role"))
-                flask.current_app.logger.debug(f"Add user result?: {add_user_result}")
-                return add_user_result, add_user_result["status"]
+            # Send invite if the user doesn't exist
+            invite_user_result = self.invite_user(
+                email=email, new_user_role=role, project=project, unit=unit
+            )
+
+            return invite_user_result, invite_user_result["status"]
 
     @staticmethod
     @logging_bind_request
-    def invite_user(args):
+    def invite_user(email, new_user_role, project=None, unit=None):
         """Invite a new user"""
 
-        try:
-            # Use schema to validate and check args, and create invite row
-            new_invite = user_schemas.InviteUserSchema().load(args)
+        current_user_role = get_user_roles_common(user=auth.current_user())
 
-        except ddserr.InviteError as invite_err:
+        if not project:
+            if current_user_role == "Project Owner":
+                return {
+                    "status": ddserr.InviteError.code.value,
+                    "message": "Project ID required to invite users to projects.",
+                }
+            if new_user_role == "Project Owner":
+                return {
+                    "status": ddserr.InviteError.code.value,
+                    "message": "Project ID required to invite a 'Project Owner'.",
+                }
+
+        # Verify role or current and new user
+        if current_user_role == "Super Admin" and project:
             return {
-                "message": invite_err.description,
                 "status": ddserr.InviteError.code.value,
+                "message": (
+                    "Super Admins do not have project data access and can therefore "
+                    "not invite users to specific projects."
+                ),
+            }
+        elif current_user_role == "Unit Admin" and new_user_role == "Super Admin":
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": ddserr.AccessDeniedError.description,
+            }
+        elif current_user_role == "Unit Personnel" and new_user_role in [
+            "Super Admin",
+            "Unit Admin",
+        ]:
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": ddserr.AccessDeniedError.description,
+            }
+        elif current_user_role == "Project Owner" and new_user_role in [
+            "Super Admin",
+            "Unit Admin",
+            "Unit Personnel",
+        ]:
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": ddserr.AccessDeniedError.description,
+            }
+        elif current_user_role == "Researcher":
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": ddserr.AccessDeniedError.description,
             }
 
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise ddserr.DatabaseError(message=str(sqlerr))
-        except marshmallow.ValidationError as valerr:
-            raise ddserr.InviteError(message=valerr.messages)
+        # Create invite row
+        new_invite = models.Invite(
+            email=email,
+            role=("Researcher" if new_user_role == "Project Owner" else new_user_role),
+        )
 
         # Create URL safe token for invitation link
         token = encrypted_jwt_token(
             username="",
-            sensitive_content=generate_invite_key_pair(new_invite).hex(),
+            sensitive_content=generate_invite_key_pair(invite=new_invite).hex(),
             expires_in=datetime.timedelta(
                 hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"]
             ),
@@ -113,24 +194,55 @@ class AddUser(flask_restful.Resource):
             }
 
         # Compose and send email
-        AddUser.compose_and_send_email_to_user(new_invite, "invite", link=link)
+        AddUser.compose_and_send_email_to_user(userobj=new_invite, mail_type="invite", link=link)
 
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
+            # TODO Change / move this later. This is just so that we can add an initial unit admin.
+            if auth.current_user().role == "Super Admin":
+                if unit:
+                    unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
+                    if not unit_row:
+                        raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
+
+                    unit_row.invites.append(new_invite)
+                else:
+                    raise ddserr.DDSArgumentError(message="Cannot invite this user.")
+
             if "Unit" in auth.current_user().role:
                 # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
-                for project in auth.current_user().unit.projects:
-                    if project.is_active:
-                        share_project_private_key(auth.current_user(), new_invite, project)
+                for unit_project in auth.current_user().unit.projects:
+                    if unit_project.is_active:
+                        share_project_private_key(
+                            from_user=auth.current_user(),
+                            to_another=new_invite,
+                            from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                            project=unit_project,
+                        )
+
+                if not project:  # specified project is disregarded for unituser invites
+                    msg = f"{str(new_invite)} was successful."
+                else:
+                    msg = f"{str(new_invite)} was successful, but specification for {str(project)} dropped. Unit Users have automatic access to projects of their unit."
+
         else:
             db.session.add(new_invite)
+            if project:
+                share_project_private_key(
+                    from_user=auth.current_user(),
+                    to_another=new_invite,
+                    project=project,
+                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                    is_project_owner=new_user_role == "Project Owner",
+                )
 
         db.session.commit()
+        msg = f"{str(new_invite)} was successful."
 
         return {
             "email": new_invite.email,
-            "message": "Invite successful!",
+            "message": msg,
             "status": http.HTTPStatus.OK,
         }
 
@@ -150,12 +262,12 @@ class AddUser(flask_restful.Resource):
 
     @staticmethod
     @logging_bind_request
-    def add_user_to_project(existing_user, project, role):
-        """Add existing user to a project"""
+    def add_to_project(whom, project, role, send_email=True):
+        """Add existing user or invite to a project"""
 
         allowed_roles = ["Project Owner", "Researcher"]
 
-        if role not in allowed_roles or existing_user.role not in allowed_roles:
+        if role not in allowed_roles or whom.role not in allowed_roles:
             return {
                 "status": ddserr.AccessDeniedError.code.value,
                 "message": (
@@ -164,31 +276,45 @@ class AddUser(flask_restful.Resource):
                 ),
             }
 
-        owner = role == "Project Owner"
-
-        project = project_schemas.ProjectRequiredSchema().load({"project": project})
+        is_owner = role == "Project Owner"
         ownership_change = False
-        for rusers in project.researchusers:
-            if rusers.researchuser is existing_user:
-                if rusers.owner == owner:
-                    return {
-                        "status": ddserr.RoleException.code.value,
-                        "message": "User is already associated with the project in this capacity. ",
-                    }
 
-                ownership_change = True
-                rusers.owner = owner
-                break
+        if isinstance(whom, models.ResearchUser):
+            project_user_row = models.ProjectUsers.query.filter_by(
+                project_id=project.id, user_id=whom.username
+            ).one_or_none()
+        else:
+            project_user_row = models.ProjectInviteKeys.query.filter_by(
+                project_id=project.id, invite_id=whom.id
+            ).one_or_none()
+
+        if project_user_row:
+            send_email = False
+            if project_user_row.owner == is_owner:
+                return {
+                    "status": ddserr.RoleException.code.value,
+                    "message": f"{str(whom)} is already associated with the {str(project)} in this capacity. ",
+                }
+            ownership_change = True
+            project_user_row.owner = is_owner
 
         if not ownership_change:
-            project.researchusers.append(
-                models.ProjectUsers(
-                    project_id=project.id,
-                    user_id=existing_user.username,
-                    owner=owner,
+            if isinstance(whom, models.ResearchUser):
+                project.researchusers.append(
+                    models.ProjectUsers(
+                        project_id=project.id,
+                        user_id=whom.username,
+                        owner=is_owner,
+                    )
                 )
+
+            share_project_private_key(
+                from_user=auth.current_user(),
+                to_another=whom,
+                from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                project=project,
+                is_project_owner=is_owner,
             )
-            share_project_private_key(auth.current_user(), existing_user, project)
 
         try:
             db.session.commit()
@@ -200,20 +326,19 @@ class AddUser(flask_restful.Resource):
             )
 
         # If project is already released and not expired, send mail to user
-        if project.current_status == "Available":
-            AddUser.compose_and_send_email_to_user(
-                existing_user, "project_release", project=project
-            )
+        send_email = send_email and project.current_status == "Available"
+        if send_email:
+            AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
-            f"User {existing_user.username} associated with project {project.public_id} as Owner={owner}."
+            f"{str(whom)} was associated with {str(project)} as Owner={is_owner}."
         )
 
         return {
             "status": http.HTTPStatus.OK,
             "message": (
-                f"User {existing_user.username} associated with project "
-                f"{project.public_id} as Owner={owner}."
+                f"{str(whom)} was associated with "
+                f"{str(project)} as Owner={is_owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
             ),
         }
 
@@ -319,14 +444,16 @@ class DeleteUserSelf(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
     def delete(self):
-
+        """Request deletion of own account."""
         current_user = auth.current_user()
 
         email_str = current_user.primary_email
 
         username = current_user.username
 
-        proj_ids = [proj.public_id for proj in current_user.projects]
+        proj_ids = None
+        if current_user.role != "Super Admin":
+            proj_ids = [proj.public_id for proj in current_user.projects]
 
         # Create URL safe token for invitation link
         s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
@@ -362,7 +489,6 @@ class DeleteUserSelf(flask_restful.Resource):
         # Create link for deletion request email
         link = flask.url_for("auth_blueprint.confirm_self_deletion", token=token, _external=True)
         subject = f"Confirm deletion of your user account {username} in the SciLifeLab Data Delivery System"
-        projectnames = "; ".join(proj_ids)
 
         msg = flask_mail.Message(
             subject,
@@ -386,13 +512,13 @@ class DeleteUserSelf(flask_restful.Resource):
             "mail/deletion_request.txt",
             link=link,
             sender_name=current_user.name,
-            projects=projectnames,
+            projects=proj_ids,
         )
         msg.html = flask.render_template(
             "mail/deletion_request.html",
             link=link,
             sender_name=current_user.name,
-            projects=projectnames,
+            projects=proj_ids,
         )
 
         mail.send(msg)
@@ -417,20 +543,26 @@ class UserActivation(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
-        user = user_schemas.UserSchema().load(flask.request.json)
-        action = flask.request.json.get("action")
+        # Verify that user specified
+        json_input = flask.request.json
+
+        if "email" not in json_input:
+            raise ddserr.DDSArgumentError(message="User email missing.")
+
+        user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
+        if not user:
+            raise ddserr.NoSuchUserError()
+
+        # Verify that the action is specified -- reactivate or deactivate
+        action = json_input.get("action")
         if action is None or action == "":
             raise ddserr.DDSArgumentError(
                 message="Please provide an action 'deactivate' or 'reactivate' for this request."
             )
-        if user is None:
-            raise ddserr.NoSuchUserError(
-                message=(
-                    "This e-mail address is not associated with a user in the DDS, "
-                    "make sure it is not misspelled."
-                )
-            )
+
         user_email_str = user.primary_email
         current_user = auth.current_user()
 
@@ -452,12 +584,30 @@ class UserActivation(flask_restful.Resource):
             raise ddserr.DDSArgumentError(message="User is already in desired state!")
 
         # TODO: Check if user has lost access to any projects and if so, grant access again.
+        if action == "reactivate":
+            user.active = True
+
+            # TODO: Super admins (current_user) don't have access to projects currently, how handle this?
+            list_of_projects = None
+            if user.role in ["Project Owner", "Researcher"]:
+                list_of_projects = [x.project for x in user.project_associations]
+            elif user.role in ["Unit Personnel", "Unit Admin"]:
+                list_of_projects = user.unit.projects
+
+            from dds_web.api.project import ProjectAccess  # Needs to be here because of circ.import
+
+            ProjectAccess.give_project_access(
+                project_list=list_of_projects, current_user=current_user, user=user
+            )
+
+        else:
+            user.active = False
+
         try:
-            user.active = action == "reactivate"
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            raise DatabaseError(message=str(err))
+            raise ddserr.DatabaseError(message=str(err))
         msg = (
             f"The user account {user.username} ({user_email_str}, {user.role}) "
             f" has been {action}d successfully been by {current_user.name} ({current_user.role})."
@@ -485,6 +635,7 @@ class DeleteUser(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
+    @handle_validation_errors
     def delete(self):
 
         user = user_schemas.UserSchema().load(flask.request.json)
@@ -542,23 +693,24 @@ class DeleteUser(flask_restful.Resource):
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
-            raise DatabaseError(message=str(err))
+            raise ddserr.DatabaseError(message=str(err))
 
 
 class RemoveUserAssociation(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
+    @json_required
+    @handle_validation_errors
     def post(self):
         """Remove a user from a project"""
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        json_input = flask.request.json
 
-        project_id = flask.request.args.get("project")
-
-        args = flask.request.json
-        user_email = args.pop("email")
+        if not (user_email := json_input.get("email")):
+            raise ddserr.DDSArgumentError(message="User email missing.")
 
         # Check if email is registered to a user
         existing_user = user_schemas.UserSchema().load({"email": user_email})
-        project = project_schemas.ProjectRequiredSchema().load({"project": project_id})
 
         if not existing_user:
             raise ddserr.NoSuchUserError(
@@ -598,7 +750,9 @@ class RemoveUserAssociation(flask_restful.Resource):
             f"User {existing_user.username} no longer associated with project {project.public_id}."
         )
 
-        return {"message": f"User with email {user_email} no longer associated with {project_id}."}
+        return {
+            "message": f"User with email {user_email} no longer associated with {project.public_id}."
+        }
 
 
 class EncryptedToken(flask_restful.Resource):
@@ -618,7 +772,8 @@ class EncryptedToken(flask_restful.Resource):
         return {
             "message": "Please take this token to /user/second_factor to authenticate with MFA!",
             "token": encrypted_jwt_token(
-                username=auth.current_user().username, sensitive_content=None
+                username=auth.current_user().username,
+                sensitive_content=flask.request.authorization.get("password"),
             ),
         }
 
@@ -627,15 +782,12 @@ class SecondFactor(flask_restful.Resource):
     """Take in and verify an authentication one-time code entered by an authenticated user with basic credentials"""
 
     @auth.login_required
+    @handle_validation_errors
     def get(self):
 
-        args = flask.request.json or {}
+        token_schemas.TokenSchema().load(flask.request.json)
 
-        token_schemas.TokenSchema().load(args)
-
-        token_claims = dds_web.security.auth.decrypt_and_verify_token_signature(
-            flask.request.headers["Authorization"].split()[1]
-        )
+        token_claims = dds_web.security.auth.obtain_current_encrypted_token_claims()
 
         return {"token": update_token_with_mfa(token_claims)}
 

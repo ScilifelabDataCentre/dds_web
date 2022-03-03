@@ -16,8 +16,7 @@ def test_deactivate_self_as_superadmin(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(module_client),
-        data=json.dumps({"email": "superadmin@mailtrap.io", "action": "deactivate"}),
-        content_type="application/json",
+        json={"email": "superadmin@mailtrap.io", "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert f"You cannot deactivate your own account!" in response.json["message"]
@@ -28,14 +27,10 @@ def test_deactivate_nouser_as_superadmin(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(module_client),
-        data=json.dumps({"email": "nossuchemail@mailtrap.io", "action": "deactivate"}),
-        content_type="application/json",
+        json={"email": "nossuchemail@mailtrap.io", "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert (
-        f"This e-mail address is not associated with a user in the DDS, make sure it is not misspelled."
-        in response.json["message"]
-    )
+    assert "User not found" in response.json["message"]
 
 
 def test_deactivate_user_as_superadmin(module_client):
@@ -51,8 +46,7 @@ def test_deactivate_user_as_superadmin(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(module_client),
-        data=json.dumps({**user, "action": "deactivate"}),
-        content_type="application/json",
+        json={**user, "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert (
@@ -74,8 +68,7 @@ def test_deactivate_deactivated_user_as_superadmin(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(module_client),
-        data=json.dumps({**user, "action": "deactivate"}),
-        content_type="application/json",
+        json={**user, "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "User is already in desired state!" in response.json["message"]
@@ -94,8 +87,7 @@ def test_reactivate_user_as_superadmin(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(module_client),
-        data=json.dumps({**user, "action": "reactivate"}),
-        content_type="application/json",
+        json={**user, "action": "reactivate"},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert (
@@ -124,8 +116,7 @@ def test_deactivate_user_as_unitadmin(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        data=json.dumps({**user, "action": "deactivate"}),
-        content_type="application/json",
+        json={**user, "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert (
@@ -147,8 +138,7 @@ def test_deactivate_unituser_as_unitadmin(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        data=json.dumps({**unituser}),
-        content_type="application/json",
+        json={**unituser},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert (
@@ -160,8 +150,7 @@ def test_deactivate_unituser_as_unitadmin(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        data=json.dumps({**unituser, "action": "deactivate"}),
-        content_type="application/json",
+        json={**unituser, "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert (
@@ -190,8 +179,7 @@ def test_reactivate_unituser_as_unitadmin(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        data=json.dumps({**unituser, "action": "reactivate"}),
-        content_type="application/json",
+        json={**unituser, "action": "reactivate"},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert (
@@ -220,8 +208,7 @@ def test_deactivate_user_as_unituser(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        data=json.dumps({**user, "action": "deactivate"}),
-        content_type="application/json",
+        json={**user, "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert "Insufficient credentials" in response.json["message"]
@@ -240,8 +227,7 @@ def test_deactivate_user_as_researchuser(module_client):
     response = module_client.post(
         tests.DDSEndpoint.USER_ACTIVATION,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(module_client),
-        data=json.dumps({**user, "action": "deactivate"}),
-        content_type="application/json",
+        json={**user, "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert "Insufficient credentials" in response.json["message"]

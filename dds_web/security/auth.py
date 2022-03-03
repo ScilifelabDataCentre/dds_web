@@ -18,9 +18,8 @@ import structlog
 
 # Own modules
 from dds_web import basic_auth, auth, mail
-from dds_web.errors import AuthenticationError, AccessDeniedError, InviteError
+from dds_web.errors import AuthenticationError, AccessDeniedError, InviteError, TokenMissingError
 from dds_web.database import models
-from dds_web.security.project_user_keys import verify_invite_temporary_key
 import dds_web.utils
 
 action_logger = structlog.getLogger("actions")
@@ -80,7 +79,8 @@ def get_user_roles_common(user):
     For all other users, return the value of the role set in the database table.
     """
     if user.role == "Researcher":
-        project_public_id = flask.request.args.get("project")
+        request_args = flask.request.args
+        project_public_id = request_args.get("project") if request_args else None
         if project_public_id:
             project = models.Project.query.filter_by(public_id=project_public_id).first()
             if project:
@@ -104,6 +104,18 @@ def verify_token_no_data(token):
     gc.collect()
 
     return user
+
+
+def verify_password_reset_token(token):
+    claims = __verify_general_token(token)
+    user = __user_from_subject(claims.get("sub"))
+    if user:
+        rst = claims.get("rst")
+        del claims
+        gc.collect()
+        if rst and rst == "pwd":
+            return user
+    raise AuthenticationError(message="Invalid token")
 
 
 def __base_verify_token_for_invite(token):
@@ -135,8 +147,11 @@ def matching_email_with_invite(token, email):
     return claims.get("inv") == email
 
 
-def verify_invite_key(token):
-    """Verify token, email, invite and temporary key."""
+def extract_token_invite_key(token):
+    """Verify token, email and invite.
+
+    Return invite and temporary key.
+    """
     claims = __base_verify_token_for_invite(token=token)
 
     # Verify email in token
@@ -149,19 +164,36 @@ def verify_invite_key(token):
     if not invite:
         raise InviteError(message="Invite could not be found!")
 
-    # Verify temporary key from token claims
-    temporary_key = bytes.fromhex(claims.get("sen_con"))
-    if verify_invite_temporary_key(invite=invite, temporary_key=temporary_key):
-        return temporary_key
+    try:
+        return invite, bytes.fromhex(claims.get("sen_con"))
+    except ValueError:
+        raise ValueError("Temporary key is expected be in hexadecimal digits for a byte string.")
+
+
+def obtain_current_encrypted_token():
+    try:
+        return flask.request.headers["Authorization"].split()[1]
+    except KeyError:
+        raise TokenMissingError("Encrypted token is required but missing!")
+
+
+def obtain_current_encrypted_token_claims():
+    token = obtain_current_encrypted_token()
+    if token:
+        return decrypt_and_verify_token_signature(token)
 
 
 @auth.verify_token
 def verify_token(token):
-    """Verify token used in token authencation."""
+    """Verify token used in token authentication."""
     claims = __verify_general_token(token=token)
+
+    if claims.get("rst"):
+        raise AuthenticationError(message="Invalid token")
+
     user = __user_from_subject(subject=claims.get("sub"))
 
-    return handle_multi_factor_authentication(
+    return __handle_multi_factor_authentication(
         user=user, mfa_auth_time_string=claims.get("mfa_auth_time")
     )
 
@@ -209,7 +241,7 @@ def __user_from_subject(subject):
             return user
 
 
-def handle_multi_factor_authentication(user, mfa_auth_time_string):
+def __handle_multi_factor_authentication(user, mfa_auth_time_string):
     """Verify multifactor authentication time frame."""
     if user:
         if mfa_auth_time_string:
@@ -245,8 +277,10 @@ def send_hotp_email(user):
     return False
 
 
-def extract_encrypted_token_content(token, username):
+def extract_encrypted_token_sensitive_content(token, username):
     """Extract the sensitive content from inside the encrypted token."""
+    if token is None:
+        raise TokenMissingError(message="There is no token to extract sensitive content from.")
     content = decrypt_and_verify_token_signature(token=token)
     if content.get("sub") == username:
         return content.get("sen_con")
@@ -265,7 +299,12 @@ def decrypt_token(token):
     # Get key used for encryption
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
     # Decrypt token
-    decrypted_token = jwt.JWT(key=key, jwt=token)
+    try:
+        decrypted_token = jwt.JWT(key=key, jwt=token)
+    except ValueError as exc:
+        # "Token format unrecognized"
+        raise AuthenticationError(message="Invalid token") from exc
+
     return decrypted_token.claims
 
 
@@ -285,6 +324,9 @@ def verify_token_signature(token):
         # jwt dependency uses a 60 seconds leeway to check exp
         # it also prints out a stack trace for it, so we handle it here
         raise AuthenticationError(message="Expired token")
+    except ValueError as exc:
+        # "Token format unrecognized"
+        raise AuthenticationError(message="Invalid token") from exc
 
 
 @basic_auth.verify_password

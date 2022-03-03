@@ -20,16 +20,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      # Config for encryption
-      - type: bind
-        source: ./Dockerfiles/mariadb/mariadb.conf
-        target: /etc/mysql/conf.d/encrypt.cnf
-
-      # Keys
-      - type: bind
-        source: ./Dockerfiles/mariadb/db-encrypt
-        target: /etc/mysql/encrypt
+    # volumes:
+    #   # Config for encryption
+    #   - type: bind
+    #     source: ./Dockerfiles/mariadb/mariadb.conf
+    #     target: /etc/mysql/conf.d/encrypt.cnf
+    
+    #   # Keys
+    #   - type: bind
+    #     source: ./Dockerfiles/mariadb/db-encrypt
+    #     target: /etc/mysql/encrypt
 
   # Development service to watch for changes to SCSS files and recompile static CSS
   node_builder:
@@ -50,7 +50,7 @@ services:
       context: ./
       target: base
     working_dir: /code
-    command: bash -c "flask init-db $$DB_TYPE && flask run -h 0.0.0.0 -p 5000"
+    command: bash -c "flask db upgrade && flask init-db $$DB_TYPE && flask run -h 0.0.0.0 -p 5000"
     environment:
       - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
       - FLASK_ENV=development
@@ -64,6 +64,11 @@ services:
     ports:
       - 127.0.0.1:5000:5000
     volumes:
+
+      # Migrations
+      - type: bind
+        source: ./migrations
+        target: /code/migrations
 
       # Main website files (so can edit locally)
       - type: bind

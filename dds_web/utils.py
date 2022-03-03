@@ -31,6 +31,7 @@ import wtforms
 # Own modules
 from dds_web.database import models
 from dds_web import auth, db, mail
+import dds_web.errors as ddserr
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -87,6 +88,17 @@ def username_not_taken(input):
         raise marshmallow.validate.ValidationError(
             "That username is taken. Please choose a different one."
         )
+
+
+def valid_user_role(specified_role):
+    """Returns whether or not a role is valid in the DDS."""
+    return specified_role in [
+        "Super Admin",
+        "Unit Admin",
+        "Unit Personnel",
+        "Project Owner",
+        "Researcher",
+    ]
 
 
 # wtforms ################################################################################ wtforms #
@@ -165,16 +177,7 @@ def email_taken_wtforms():
 
 def valid_chars_in_username(input):
     """Check if the username contains only valid characters."""
-    pattern = re.compile("^[a-zA-Z0-9_]+$")
-    return string_contains_only(input=input, pattern=pattern)
-
-
-def string_contains_only(input, pattern):
-    """Check if string only contains specific characters."""
-    if re.search(pattern, input):
-        return True
-
-    return False
+    return False if re.search(r"^[a-zA-Z0-9_\.-]+$", input) == None else True
 
 
 def email_in_db(email):
@@ -223,22 +226,29 @@ def delrequest_exists(email):
     return False
 
 
-def send_reset_email(email_row):
+def send_reset_email(email_row, token):
     """Generate password reset email."""
-    # Generate token
-    token = email_row.user.get_reset_token()
-
-    # Create and send email
-    message = flask_mail.Message(
-        "Password Reset Request",
+    msg = flask_mail.Message(
+        "WARNING! Password Reset Request for SciLifeLab Data Delivery System",
         recipients=[email_row.email],
     )
-    message.body = (
-        "To reset your password, visit the following link:\n"
-        f"{flask.url_for('auth_blueprint.reset_password', token=token, _external=True)}"
-        "\n\nIf you did not make this request then simply ignore this email and no changes will be made."
+
+    # Need to attach the image to be able to use it
+    msg.attach(
+        "scilifelab_logo.png",
+        "image/png",
+        open(os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb").read(),
+        "inline",
+        headers=[
+            ["Content-ID", "<Logo>"],
+        ],
     )
-    mail.send(message)
+
+    link = flask.url_for("auth_blueprint.reset_password", token=token, _external=True)
+    msg.body = flask.render_template("mail/password_reset.txt", link=link)
+    msg.html = flask.render_template("mail/password_reset.html", link=link)
+
+    mail.send(msg)
 
 
 def is_safe_url(target):

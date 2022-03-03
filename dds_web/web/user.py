@@ -15,7 +15,6 @@ from dds_web.api import db_tools
 import flask_login
 import itsdangerous
 import sqlalchemy
-import marshmallow
 
 # Own Modules
 from dds_web import forms
@@ -27,7 +26,7 @@ from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
 import dds_web.security
 from dds_web.api.user import DeleteUser
-
+from dds_web.security.project_user_keys import update_user_keys_for_password_change
 
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 
@@ -96,10 +95,10 @@ def confirm_invite(token):
     # Prefill fields - unit readonly if filled, otherwise disabled
     # These should only be used for display to user and not when actually registering
     # the user, then the values should be fetched from the database again.
-    form.unit_name.render_kw = {"disabled": True}
-    if invite_row.unit:  # backref to unit
-        form.unit_name.data = invite_row.unit.name
-        form.unit_name.render_kw = {"readonly": True}
+    # form.unit_name.render_kw = {"disabled": True}
+    # if invite_row.unit:  # backref to unit
+    #     form.unit_name.data = invite_row.unit.name
+    #     form.unit_name.render_kw = {"readonly": True}
 
     form.email.data = email
     suggested_username = email.split("@")[0]
@@ -109,7 +108,11 @@ def confirm_invite(token):
     ) and not dds_web.utils.username_in_db(suggested_username):
         form.username.data = suggested_username
 
-    return flask.render_template("user/register.html", form=form)
+    return flask.render_template(
+        "user/register.html",
+        form=form,
+        unit=invite_row.unit.name if invite_row.unit else None,
+    )
 
 
 @auth_blueprint.route("/register", methods=["POST"])
@@ -202,10 +205,11 @@ def confirm_2fa():
         )
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
-    # Valid 2fa initiated token, but user does not exist (should never happen)
+    # Valid 2fa initiated token, but user does not exist (not never happen) or is inactive (could happen)
+    # Currently same error for both, not vital, they get message to contact us
     if not user:
         flask.session.pop("2fa_initiated_token", None)
-        flask.flash("Error: Internal error.", "danger")
+        flask.flash("Your account is not active. Contact Data Centre.", "danger")
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
     if form.validate_on_submit():
@@ -319,9 +323,20 @@ def request_reset_password():
     form = forms.RequestResetForm()
     if form.validate_on_submit():
         email = models.Email.query.filter_by(email=form.email.data).first()
-        dds_web.utils.send_reset_email(email_row=email)
-        flask.flash("An email has been sent with instructions to reset your password.", "info")
-        return flask.redirect(flask.url_for("auth_blueprint.login"))
+        if email.user.is_active:
+            token = dds_web.security.tokens.encrypted_jwt_token(
+                username=email.user.username,
+                sensitive_content=None,
+                expires_in=datetime.timedelta(
+                    seconds=3600,
+                ),
+                additional_claims={"rst": "pwd"},
+            )
+            dds_web.utils.send_reset_email(email_row=email, token=token)
+            flask.flash("An email has been sent with instructions to reset your password.", "info")
+            return flask.redirect(flask.url_for("auth_blueprint.login"))
+
+        flask.flash("Your account is deactivated. You cannot reset your password.", "warning")
 
     # Show form
     return flask.render_template("user/request_reset_password.html", form=form)
@@ -339,23 +354,71 @@ def reset_password(token):
         return flask.redirect(flask.url_for("home"))
 
     # Verify that the token is valid and contains enough info
-    user = models.User.verify_reset_token(token=token)
-    if not user:
+    try:
+        user = dds_web.security.auth.verify_password_reset_token(token=token)
+        if not user.is_active:
+            flask.flash("Your account is not active. You cannot reset your password.", "warning")
+            return flask.redirect(flask.url_for("auth_blueprint.index"))
+    except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
-        return flask.redirect(flask.url_for("auth_blueprint.request_reset_password"))
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     # Get form for reseting password
     form = forms.ResetPasswordForm()
 
     # Validate form
     if form.validate_on_submit():
+        # Delete project user keys for user
+        for project_user_key in user.project_user_keys:
+            db.session.delete(project_user_key)
+        db.session.commit()
+
+        # Reset user keys, will be regenerated on setting new password
+        user.kd_salt = None
+        user.nonce = None
+        user.public_key = None
+        user.private_key = None
+
+        # Update user password
         user.password = form.password.data
         db.session.commit()
+
         flask.flash("Your password has been updated! You are now able to log in.", "success")
-        return flask.redirect(flask.url_for("auth_blueprint.login"))
+        flask.session["reset_token"] = token
+        return flask.redirect(flask.url_for("auth_blueprint.password_reset_completed"))
 
     # Go to form
     return flask.render_template("user/reset_password.html", form=form)
+
+
+@auth_blueprint.route("/password_reset_completed", methods=["GET"])
+@logging_bind_request
+def password_reset_completed():
+    """Landing page after password reset"""
+
+    token = flask.session["reset_token"]
+    flask.session.pop("reset_token", None)
+    try:
+        user = dds_web.security.auth.verify_password_reset_token(token=token)
+        if not user.is_active:
+            flask.flash("Your account is not active.", "warning")
+            return flask.redirect(flask.url_for("auth_blueprint.index"))
+    except ddserr.AuthenticationError:
+        flask.flash("That is an invalid or expired token", "warning")
+        return flask.redirect(flask.url_for("auth_blueprint.index"))
+
+    units_to_contact = {}
+    if user.role != "Super Admin":
+        for project in user.projects:
+            if project.responsible_unit.external_display_name not in units_to_contact:
+                units_to_contact[
+                    project.responsible_unit.external_display_name
+                ] = project.responsible_unit.contact_email
+        return flask.render_template(
+            "user/password_reset_completed.html", units_to_contact=units_to_contact
+        )
+
+    return flask.render_template("user/password_reset_completed.html")
 
 
 @auth_blueprint.route("/change_password", methods=["GET", "POST"])
@@ -368,6 +431,11 @@ def change_password():
     if form.validate_on_submit():
         # Change password
         flask_login.current_user.password = form.new_password.data
+        update_user_keys_for_password_change(
+            user=flask_login.current_user,
+            current_password=form.current_password.data,
+            new_password=form.new_password.data,
+        )
         db.session.commit()
 
         flask_login.logout_user()
