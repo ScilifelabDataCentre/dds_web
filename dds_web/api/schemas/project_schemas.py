@@ -131,56 +131,37 @@ class CreateProjectSchema(marshmallow.Schema):
     def create_project(self, data, **kwargs):
         """Create project row in db."""
 
-        try:
-            # Lock db, get unit row and update counter
-            unit_row = (
-                models.Unit.query.filter_by(id=auth.current_user().unit_id)
-                .with_for_update()
-                .one_or_none()
+        # Lock db, get unit row and update counter
+        unit_row = (
+            models.Unit.query.filter_by(id=auth.current_user().unit_id)
+            .with_for_update()
+            .one_or_none()
+        )
+        if not unit_row:
+            raise ddserr.AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
+
+        unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
+        data["public_id"] = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)
+
+        # Generate bucket name
+        data["bucket"] = self.generate_bucketname(
+            public_id=data["public_id"], created_time=data["date_created"]
+        )
+
+        # Create project
+        current_user = auth.current_user()
+        new_project = models.Project(
+            **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
+        )
+        new_project.project_statuses.append(
+            models.ProjectStatuses(
+                **{
+                    "status": "In Progress",
+                    "date_created": data["date_created"],
+                }
             )
-            if not unit_row:
-                raise ddserr.AccessDeniedError(
-                    message=f"Error: Your user is not associated to a unit."
-                )
-
-            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
-            data["public_id"] = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)
-
-            # Generate bucket name
-            data["bucket"] = self.generate_bucketname(
-                public_id=data["public_id"], created_time=data["date_created"]
-            )
-
-            # Create project
-            current_user = auth.current_user()
-            new_project = models.Project(
-                **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
-            )
-            new_project.project_statuses.append(
-                models.ProjectStatuses(
-                    **{
-                        "status": "In Progress",
-                        "date_created": data["date_created"],
-                    }
-                )
-            )
-
-            generate_project_key_pair(current_user, new_project)
-
-            db.session.add(new_project)
-            db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise ddserr.DatabaseError(message="Server Error: Project was not created")
-        except (
-            marshmallow.ValidationError,
-            ddserr.DDSArgumentError,
-            ddserr.AccessDeniedError,
-        ) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise
+        )
+        generate_project_key_pair(current_user, new_project)
 
         return new_project
 
@@ -263,7 +244,7 @@ class ProjectContentSchema(ProjectRequiredSchema):
         # Check if project has contents
         project_row = verify_project_exists(spec_proj=data.get("project"))
         if not project_row.files:
-            raise ddserr.EmptyProjectException
+            raise ddserr.EmptyProjectException(project=project_row.public_id)
 
         # Check if specific files have been requested or if requested all contents
         files, folder_contents, not_found = (None, None, None)

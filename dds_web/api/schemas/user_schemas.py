@@ -87,7 +87,7 @@ class NewUserSchema(marshmallow.Schema):
         required=True,
         allow_none=False,
         validate=marshmallow.validate.And(
-            marshmallow.validate.Length(min=8, max=20),
+            marshmallow.validate.Length(min=3, max=30),
             utils.valid_chars_in_username,
             # Validation for "username not taken" below
         ),

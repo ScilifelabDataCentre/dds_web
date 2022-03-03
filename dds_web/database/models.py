@@ -367,8 +367,9 @@ class User(flask_login.UserMixin, db.Model):
     totp_enabled = db.Column(db.Boolean, unique=False, nullable=False, default=False)
     _totp_secret = db.Column(db.LargeBinary(64), unique=False, nullable=True)
     totp_last_verified = db.Column(db.DateTime, unique=False, nullable=True)
-
-    active = db.Column(db.Boolean)
+    
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    
     kd_salt = db.Column(db.LargeBinary(32), default=None)
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)

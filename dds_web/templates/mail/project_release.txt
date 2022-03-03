@@ -9,6 +9,6 @@ You were added to this project by {{sender_name}} on behalf of {{unit_name}}{% i
 
 The DDS CLI command 'dds ls -p {{project_id}}' can be used to list the files in this project.
 
-The DDS CLI command 'dds data get -p {{project_id}}' can be used to download the files in this project to your current directory.
+The DDS CLI command 'dds data get -p {{project_id}} -a' can be used to download all the files in this project to your current directory.
 
 Your access to this project will expire on {{deadline}}

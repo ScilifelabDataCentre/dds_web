@@ -6,6 +6,13 @@
 
 <body>
     <h1>Login to DDS</h1>
+    <div>
+        <p>
+            For information on how to use the Data Delivery System, as well as
+            see a test protocol, go <a
+                href="https://github.com/ScilifelabDataCentre/dds_cli/blob/master/docs/_build/latex/datadeliverysystem.pdf">here</a>.
+        </p>
+    </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class=flashes>
@@ -17,7 +24,8 @@
     </div>
     {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('auth_blueprint.login', next=next) }}">
+    <form method="POST" action="{{ url_for('auth_blueprint.login', next=next)
+        }}">
         {{ form.csrf_token }}
 
         <!-- Username -->

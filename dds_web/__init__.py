@@ -23,6 +23,7 @@ import flask_login
 import flask_migrate
 
 # import flask_qrcode
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import sqlalchemy
@@ -169,9 +170,6 @@ def create_app(testing=False, database_uri=None):
 
     # User config file, if e.g. using in production
     app.config.from_envvar("DDS_APP_CONFIG", silent=True)
-    app.config["REMEMBER_COOKIE_DURATION"] = datetime.timedelta(
-        hours=app.config.get("REMEMBER_COOKIE_DURATION_HOURS", 1)
-    )
 
     # Test related configs
     if database_uri is not None:
@@ -217,6 +215,9 @@ def create_app(testing=False, database_uri=None):
     @login_manager.user_loader
     def load_user(user_id):
         return models.User.query.get(user_id)
+
+    if app.config["REVERSE_PROXY"]:
+        app.wsgi_app = ProxyFix(app.wsgi_app)
 
     # Initialize limiter
     limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
@@ -281,15 +282,27 @@ def fill_db_wrapper(db_type):
         password = flask.current_app.config["SUPERADMIN_PASSWORD"]
         name = flask.current_app.config["SUPERADMIN_NAME"]
         existing_user = models.User.query.filter_by(username=username).one_or_none()
-        if existing_user:
+
+        email = flask.current_app.config["SUPERADMIN_EMAIL"]
+        existing_email = models.Email.query.filter_by(email=email).one_or_none()
+
+        if existing_email:
+            flask.current_app.logger.info(
+                f"User with email '{email}' already exists, not creating user."
+            )
+        elif existing_user:
             if isinstance(existing_user, models.SuperAdmin):
                 flask.current_app.logger.info(
                     f"Super admin with username '{username}' already exists, not creating user."
                 )
         else:
+            flask.current_app.logger.info(f"Adding Super Admin: {username} ({email})")
             new_super_admin = models.SuperAdmin(username=username, name=name, password=password)
-            db.session.add(new_super_admin)
+            new_email = models.Email(email=email, primary=True)
+            new_email.user = new_super_admin
+            db.session.add(new_email)
             db.session.commit()
+            flask.current_app.logger.info(f"Super Admin added: {username} ({email})")
     else:
         flask.current_app.logger.info("Initializing development db")
         assert flask.current_app.config["USE_LOCAL_DB"]

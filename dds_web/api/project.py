@@ -12,6 +12,7 @@ import flask
 import sqlalchemy
 import datetime
 import botocore
+import marshmallow
 
 # Own modules
 import dds_web.utils
@@ -431,6 +432,7 @@ class CreateProject(flask_restful.Resource):
         # Add a new project to db
         p_info = flask.request.json
         new_project = project_schemas.CreateProjectSchema().load(p_info)
+        db.session.add(new_project)
 
         if not new_project:
             raise DDSArgumentError("Failed to create project.")
@@ -440,9 +442,27 @@ class CreateProject(flask_restful.Resource):
         with ApiS3Connector(project=new_project) as s3:
             try:
                 s3.resource.create_bucket(Bucket=new_project.bucket)
-            except botocore.exceptions.ClientError as err:
+            except (
+                botocore.exceptions.ClientError,
+                botocore.exceptions.ParamValidationError,
+            ) as err:
                 # For now just keeping the project row
                 raise S3ConnectionError(str(err))
+
+        try:
+            db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise DatabaseError(message="Server Error: Project was not created") from err
+        except (
+            marshmallow.ValidationError,
+            DDSArgumentError,
+            AccessDeniedError,
+        ) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise
 
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."
@@ -506,10 +526,20 @@ class ProjectUsers(flask_restful.Resource):
             user_info = {
                 "User Name": user.user_id,
                 "Primary email": "",
+                "Role": "Owner" if user.owner else "Researcher",
             }
             for user_email in user.researchuser.emails:
                 if user_email.primary:
                     user_info["Primary email"] = user_email.email
+            research_users.append(user_info)
+
+        for invitee in project.project_invite_keys:
+            role = "Owner" if invitee.owner else "Researcher"
+            user_info = {
+                "User Name": "NA (Pending)",
+                "Primary email": f"{invitee.invite.email} (Pending)",
+                "Role": f"{role} (Pending)",
+            }
             research_users.append(user_info)
 
         return {"research_users": research_users}

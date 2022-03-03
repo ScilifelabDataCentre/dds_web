@@ -63,6 +63,9 @@ class AddUser(flask_restful.Resource):
         if not dds_web.utils.valid_user_role(specified_role=role):
             raise ddserr.DDSArgumentError(message="Invalid user role.")
 
+        # Unit only changable for Super Admin invites
+        unit = json_info.get("unit") if auth.current_user().role == "Super Admin" else None
+
         # A project may or may not be specified
         project = args.get("project") if args else None
         if project:
@@ -99,13 +102,15 @@ class AddUser(flask_restful.Resource):
 
         else:
             # Send invite if the user doesn't exist
-            invite_user_result = self.invite_user(email=email, new_user_role=role, project=project)
+            invite_user_result = self.invite_user(
+                email=email, new_user_role=role, project=project, unit=unit
+            )
 
             return invite_user_result, invite_user_result["status"]
 
     @staticmethod
     @logging_bind_request
-    def invite_user(email, new_user_role, project=None):
+    def invite_user(email, new_user_role, project=None, unit=None):
         """Invite a new user"""
 
         current_user_role = get_user_roles_common(user=auth.current_user())
@@ -193,6 +198,17 @@ class AddUser(flask_restful.Resource):
 
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
+            # TODO Change / move this later. This is just so that we can add an initial unit admin.
+            if auth.current_user().role == "Super Admin":
+                if unit:
+                    unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
+                    if not unit_row:
+                        raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
+
+                    unit_row.invites.append(new_invite)
+                else:
+                    raise ddserr.DDSArgumentError(message="Cannot invite this user.")
+
             if "Unit" in auth.current_user().role:
                 # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
@@ -260,7 +276,7 @@ class AddUser(flask_restful.Resource):
                 ),
             }
 
-        owner = role == "Project Owner"
+        is_owner = role == "Project Owner"
         ownership_change = False
 
         if isinstance(whom, models.ResearchUser):
@@ -274,13 +290,13 @@ class AddUser(flask_restful.Resource):
 
         if project_user_row:
             send_email = False
-            if project_user_row.owner == owner:
+            if project_user_row.owner == is_owner:
                 return {
                     "status": ddserr.RoleException.code.value,
                     "message": f"{str(whom)} is already associated with the {str(project)} in this capacity. ",
                 }
             ownership_change = True
-            project_user_row.owner = owner
+            project_user_row.owner = is_owner
 
         if not ownership_change:
             if isinstance(whom, models.ResearchUser):
@@ -288,7 +304,7 @@ class AddUser(flask_restful.Resource):
                     models.ProjectUsers(
                         project_id=project.id,
                         user_id=whom.username,
-                        owner=owner,
+                        owner=is_owner,
                     )
                 )
 
@@ -297,7 +313,7 @@ class AddUser(flask_restful.Resource):
                 to_another=whom,
                 from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
                 project=project,
-                is_project_owner=owner,
+                is_project_owner=is_owner,
             )
 
         try:
@@ -310,18 +326,19 @@ class AddUser(flask_restful.Resource):
             )
 
         # If project is already released and not expired, send mail to user
-        if send_email and project.current_status == "Available":
+        send_email = send_email and project.current_status == "Available"
+        if send_email:
             AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
-            f"{str(whom)} was associated with {str(project)} as Owner={owner}."
+            f"{str(whom)} was associated with {str(project)} as Owner={is_owner}."
         )
 
         return {
             "status": http.HTTPStatus.OK,
             "message": (
                 f"{str(whom)} was associated with "
-                f"{str(project)} as Owner={owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
+                f"{str(project)} as Owner={is_owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
             ),
         }
 

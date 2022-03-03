@@ -283,10 +283,11 @@ def confirm_2fa():
 
     cancel_form = forms.Cancel2FAForm()
 
-    # Valid 2fa initiated token, but user does not exist (should never happen)
+    # Valid 2fa initiated token, but user does not exist (should never happen) or is inactive (could happen)
+    # Currently same error for both, not vital, they get message to contact us
     if not user:
         flask.session.pop("2fa_initiated_token", None)
-        flask.flash("Error: Internal error.", "danger")
+        flask.flash("Your account is not active. Contact Data Centre.", "danger")
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
     if form.validate_on_submit():
