@@ -34,12 +34,25 @@ You can download Docker here: <https://docs.docker.com/get-docker/>
 Then, fork this repository and clone to your local system.
 In the root folder of the repo, run the server as follows:
 
+There are multiple profiles prepared depending on your needs:
+
 ```bash
 docker-compose up
 ```
+This command will orchestrate the building and running of two containers: one for the SQL database (`mariadb`) and one for the application.
 
-This command will orchestrate the building and running of two containers:
-one for the SQL database (`mariadb`) and one for the application.
+```bash
+docker-compose --profile dev up
+```
+
+This will give you the above two containers, but also `minio` to enable uploads to S3 storage and `mailcatcher` that will allow you to
+read any sent emails by going to `localhost:1080` in a web browser.
+
+```bash
+docker-compose --profile full-dev up
+```
+
+Apart from the above four containers, you will also get redis to enable a persistent limiter for the API. You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to enable redis.
 
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
 If using this method, you can stop the web server with the command `docker-compose down`.
