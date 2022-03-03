@@ -9,8 +9,9 @@
 // Based on bootstrap-night.scss with fixed import paths
 //
 
-// Configuration: bootstrap-dark-5
+// Configuration
 @import "bootstrap/scss/functions";
+@import "bootstrap-dark-5/scss/dark/functions";
 @import "bootstrap/scss/variables";  // defaults are here
 @import "bootstrap-dark-5/scss/variables-alt";  // dark color set is here
 @import "bootstrap-dark-5/scss/dark/variables-map-alt-to-core";  // map the `-alt`'s back to core colors
@@ -18,10 +19,7 @@
 @import "bootstrap/scss/utilities";
 @import "bootstrap-dark-5/scss/dark/patch";  // missing from BS, unsupported patch/hack
 
-
 :root { color-scheme: dark; }  // TODO: this should be code based.
-
-// stylelint-disable no-invalid-position-at-import-rule
 
 // Layout & components
 @import "bootstrap/scss/root";
@@ -54,6 +52,7 @@
 @import "bootstrap/scss/carousel";
 @import "bootstrap/scss/spinners";
 @import "bootstrap/scss/offcanvas";
+@import "bootstrap/scss/placeholders";
 
 // Helpers
 @import "bootstrap/scss/helpers";
