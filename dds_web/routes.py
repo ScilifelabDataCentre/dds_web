@@ -12,10 +12,12 @@ def home():
     """Home page."""
     return render_template("home.html")
 
+
 @app.route("/status")
 def get_status():
     """Return a simple status message to confirm that the system is ready."""
     return jsonify({"status": "ready"})
+
 
 @app.errorhandler(404)
 def page_not_found(e):
