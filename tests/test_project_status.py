@@ -27,7 +27,6 @@ proj_data = {
     "users_to_add": [{"email": "researchuser2@mailtrap.io", "role": "Project Owner"}],
 }
 fields_set_to_null = [
-    "public_id",
     "title",
     "date_created",
     "description",
