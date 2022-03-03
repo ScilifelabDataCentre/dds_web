@@ -451,7 +451,9 @@ class DeleteUserSelf(flask_restful.Resource):
 
         username = current_user.username
 
-        proj_ids = [proj.public_id for proj in current_user.projects]
+        proj_ids = None
+        if current_user.role != "Super Admin":
+            proj_ids = [proj.public_id for proj in current_user.projects]
 
         # Create URL safe token for invitation link
         s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
