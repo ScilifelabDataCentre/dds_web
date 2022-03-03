@@ -59,6 +59,26 @@ If you prefer, you can run the web servers in 'detached' mode with the `-d` flag
 If using this method, you can stop the web server with the command `docker-compose down`.
 <br><br>
 
+#### CLI development against local environment
+
+```bash
+docker-compose --profile cli up
+```
+Will start database, backend, minio, and mailcatcher. Will also start an extra container prepared for working with the CLI.
+
+Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume path in `docker-compose.yml`).
+
+1. Start docker-compose with the `cli` profile
+2. Inject into the `dds_cli` container:
+
+```bash
+docker exec -it dds_cli /bin/bash
+```
+
+3. pip install -e .
+
+Then you can freely use the dds cli component against the local development setup in the active CLI.
+
 ### Python debugger inside docker
 It's possible to use the interactive debugging tool `pdb` inside Docker with this method:
 1. Edit the `docker-compose.yml` and for the `backend` service, add:
