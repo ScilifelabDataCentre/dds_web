@@ -413,7 +413,7 @@ def password_reset_completed():
         return flask.render_template(
             "user/password_reset_completed.html", units_to_contact=units_to_contact
         )
-    
+
     return flask.render_template("user/password_reset_completed.html")
 
 
