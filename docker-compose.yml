@@ -93,6 +93,11 @@ services:
     #     source: ./minio-data
     #     target: /data
 
+#  mailcatcher:
+#    image: sj26/mailcatcher:latest
+#    restart: on-failure
+#    ports:
+#      - 127.0.0.1:1080:1080    
 
 #  redis:
 #    container_name: dds_redis
