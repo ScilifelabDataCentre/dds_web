@@ -7,7 +7,7 @@ from flask import render_template, jsonify
 from flask import current_app as app
 
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def home():
     """Home page."""
     return render_template("home.html")
