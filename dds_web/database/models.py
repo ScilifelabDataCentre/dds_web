@@ -499,6 +499,12 @@ class User(flask_login.UserMixin, db.Model):
         with user.totp_enabled, that indicates if TOTP is successfully enabled for the user."""
         return self._totp_secret is not None
 
+    def totp_object(self):
+        """Google Authenticator seems to only be able to handle SHA1 and 6 digit codes"""
+        if self.totp_initiated:
+            return twofactor_totp.TOTP(self._totp_secret, 6, hashes.SHA1(), 30)
+        return None
+
     def setup_totp_secret(self):
         """Generate random 160 bit as the new totp secret and return provisioning URI
         We're using SHA1 (Google Authenticator seems to only use SHA1 and 6 digit codes)
@@ -513,7 +519,7 @@ class User(flask_login.UserMixin, db.Model):
         if self.totp_enabled:
             # Can not be fetched again after it has been enabled
             raise AuthenticationError("TOTP secret already enabled.")
-        totp = twofactor_totp.TOTP(self._totp_secret, 6, hashes.SHA1(), 30)
+        totp = self.totp_object()
 
         return self._totp_secret, totp.get_provisioning_uri(
             account_name=self.username,
@@ -546,7 +552,7 @@ class User(flask_login.UserMixin, db.Model):
             )
 
         # construct object
-        totp = twofactor_totp.TOTP(self._totp_secret, 6, hashes.SHA1(), 30)
+        totp = self.totp_object()
 
         # attempt to verify the token using epoch time
         # Allow for clock drift of 1 frame before or after

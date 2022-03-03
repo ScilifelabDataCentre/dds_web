@@ -3,11 +3,13 @@
 # Standard library
 import http
 import datetime
+import time
 import unittest
 
 # Installed
 import flask
 import flask_mail
+import pytest
 
 # Own
 import tests
@@ -83,7 +85,7 @@ def test_auth_correct_credentials(client):
         assert mock_mail_send.call_count == 0
 
 
-# Second Factor #################################################################### Second Factor #
+# Second Factor ################################################################### Second Factor #
 
 
 def test_auth_second_factor_empty(client):
@@ -97,6 +99,9 @@ def test_auth_second_factor_empty(client):
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert "Invalid token" == response_json.get("message")
+
+
+# HOTP ##################################################################################### HOTP #
 
 
 def test_auth_second_factor_incorrect_token(client):
@@ -227,7 +232,39 @@ def test_auth_second_factor_correctauth_reused_hotp_401_unauthorized(client):
     assert "Invalid one-time authentication code." == response_json.get("message")
 
 
-# Token Authentication ###################################################### Token Authentication #
+# TOTP ##################################################################################### TOTP #
+
+
+@pytest.fixture()
+def totp_for_user(client):
+    """Create a user with TOTP enabled and return TOTP object"""
+    user = dds_web.database.models.User.query.filter_by(username="researchuser").first()
+    user.setup_totp_secret()
+    user.activate_totp()
+    return user.totp_object()
+
+
+def test_auth_second_factor_TOTP_incorrect_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with incorrect partial token returns 401/UNAUTHORIZED
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    totp_token = totp_for_user.generate(time.time())
+
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers={"Authorization": f"Bearer made.up.token.long.version"},
+        json={"TOTP": totp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Invalid token" == response_json.get("message")
+
+
+# Token Authentication ##################################################### Token Authentication #
 
 
 def test_auth_incorrect_token_without_periods(client):
