@@ -20,7 +20,11 @@
       {% if projects is not none %}
         <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 10px;">
         Currently, you are affiliated with these projects:
-        {{ projects }}
+        <ul>
+        {% for project in projects %}
+        <li>{{ project }}</li>
+        {% endfor %}
+        </ul>
         </p>
       {% endif %}
       <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 10px;">

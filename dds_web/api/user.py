@@ -487,7 +487,6 @@ class DeleteUserSelf(flask_restful.Resource):
         # Create link for deletion request email
         link = flask.url_for("auth_blueprint.confirm_self_deletion", token=token, _external=True)
         subject = f"Confirm deletion of your user account {username} in the SciLifeLab Data Delivery System"
-        projectnames = ", ".join(proj_ids)
 
         msg = flask_mail.Message(
             subject,
@@ -511,13 +510,13 @@ class DeleteUserSelf(flask_restful.Resource):
             "mail/deletion_request.txt",
             link=link,
             sender_name=current_user.name,
-            projects=projectnames,
+            projects=proj_ids,
         )
         msg.html = flask.render_template(
             "mail/deletion_request.html",
             link=link,
             sender_name=current_user.name,
-            projects=projectnames,
+            projects=proj_ids,
         )
 
         mail.send(msg)

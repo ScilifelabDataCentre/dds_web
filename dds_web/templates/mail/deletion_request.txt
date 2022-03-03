@@ -3,7 +3,9 @@ You have requested the deletion of your user account {{sender_name}} from the Sc
 We appreciate you using our services and hope that the received data as well as the collaboration as a whole has met your expectations.
 {% if projects is not none %}
 Currently, you are affiliated with these projects:
-{{ projects }}
+{% for project in projects %}
+  {{ project }}
+{% endfor %}
 {% endif %}
 
 Since your account in the SciLifeLab Data Delivery System (DDS) is not tied to specific projects or platforms, you may also consider to
