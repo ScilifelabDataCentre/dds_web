@@ -236,14 +236,9 @@ def create_app(testing=False, database_uri=None):
 
     app.cli.add_command(fill_db_wrapper)
 
-    @app.route("/status")
-    def get_status():
-        """Return a simple status message to confirm that the system is ready."""
-        return flask.jsonify({"status": "ready"})
-
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
-        from dds_web import routes  # Import routes
+        from dds_web import routes
 
         # Need to import auth so that the modifications to the auth objects take place
         import dds_web.security.auth
