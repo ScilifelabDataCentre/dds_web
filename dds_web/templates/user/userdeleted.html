@@ -1,5 +1,9 @@
-{% extends 'user/userbase.html' %}
+{% extends "base.html" %}
+
+{% block page_title %}Account deletion{% endblock %}
+
 {% block body %}
+
 {% if initial %}
 <h1>Account deletion completed</h1>
 {% else %}
@@ -9,4 +13,5 @@
         System</span>. Thank you for using our services. Feel free to sign up again, should you ever need to receive
     data from us in the future!</p>
 <h3>Lycka till!</h3>
+
 {% endblock %}

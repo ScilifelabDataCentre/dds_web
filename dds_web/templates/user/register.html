@@ -1,10 +1,9 @@
-<html>
+{% extends "base.html" %}
 
-    <head>
-        <title>Registration form</title>
-    </head>
+{% block page_title %}Create account{% endblock %}
 
-    <body>
+{% block body %}
+
         <h1>Create your DDS account</h1>
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -77,6 +76,5 @@
             {{ form.submit }}
 
         </form>
-    </body>
 
-</html>
+{% endblock %}

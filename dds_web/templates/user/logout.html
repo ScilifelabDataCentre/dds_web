@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
+{% block page_title %}Log out{% endblock %}
 
-{% block content %}
+{% block body %}
 This page will have something on it later.
 <form method="POST" action="{{ url_for('auth_blueprint.logout') }}">
     {{ form.csrf_token }}

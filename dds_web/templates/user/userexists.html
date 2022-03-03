@@ -1,4 +1,7 @@
-{% extends 'user/userbase.html' %}
+{% extends "base.html" %}
+
+{% block page_title %}Registration complete{% endblock %}
+
 {% block body %}
 <h1>Registration completed!</h1>
 <p>You have successfully created your account at the <span>SciLifeLab Data Delivery
@@ -7,4 +10,5 @@
 <p>
         Instructions how to access and manage your data can be found in the system's <a
                 href="https://github.com/ScilifelabDataCentre/dds_web">documentation.</a></p>
+
 {% endblock %}

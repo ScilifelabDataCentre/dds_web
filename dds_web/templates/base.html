@@ -11,7 +11,7 @@
             else request.cookies.get('ddstheme'))) }}"
             rel="stylesheet" id="dds-stylesheet">
         <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.png') }}" type="png">
-        <title>Data Delivery System</title>
+        <title>{% block page_title %}Data Delivery System{% endblock %}</title>
     </head>
 
     <body>

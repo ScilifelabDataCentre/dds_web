@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 
+{% block page_title %}DDS Multi-Factor Authentication{% endblock %}
 
-{% block content %}
-<title>DDS Multi-Factor Authentication</title>
+{% block body %}
 
-<body>
     <h1>Enter one-time authentication code</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -44,4 +43,4 @@
         {{ cancel_form.cancel }}
     </form>
 
-    {% endblock %}
+{% endblock %}
