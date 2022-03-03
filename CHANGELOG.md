@@ -35,3 +35,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 * Add role when listing project users ([#974](https://github.com/ScilifelabDataCentre/dds_web/pull/974))
 * Add custom error messages to registration form ([#975](https://github.com/ScilifelabDataCentre/dds_web/pull/975))
 * Fix format of self deletion email ([#984](https://github.com/ScilifelabDataCentre/dds_web/pull/984))
+* Add a full zero-conf development environment ([#993](https://github.com/ScilifelabDataCentre/dds_web/pull/993))
