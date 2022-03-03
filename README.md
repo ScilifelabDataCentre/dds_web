@@ -45,14 +45,15 @@ This command will orchestrate the building and running of two containers: one fo
 docker-compose --profile dev up
 ```
 
-This will give you the above two containers, but also `minio` to enable uploads to S3 storage and `mailcatcher` that will allow you to
-read any sent emails by going to `localhost:1080` in a web browser.
+This will give you the above two containers, but also `mailcatcher` that will allow you to read
+any sent emails by going to `localhost:1080` in a web browser.
 
 ```bash
 docker-compose --profile full-dev up
 ```
 
-Apart from the above four containers, you will also get redis to enable a persistent limiter for the API. You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to enable redis.
+Will also activate minio for s3 storage (clearly not functional with cli) and redis to enable a persistent limiter for the API.
+You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to enable redis.
 
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
 If using this method, you can stop the web server with the command `docker-compose down`.
