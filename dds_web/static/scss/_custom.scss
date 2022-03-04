@@ -1,36 +1,36 @@
 // Override bootstrap styles
 .form-floating > label {
-  opacity: .65;
+  opacity: 0.65;
 }
 
 // New custom styles
 .filesize_badge {
-    @extend .badge, .border, .fw-light, .font-monospace;
-    background-color: $light;
-    color: $text-muted;
+  @extend .badge, .border, .fw-light, .font-monospace;
+  background-color: $light;
+  color: $text-muted;
 }
 .toobig {
-    background-color: $danger;
-    color: $white;
+  background-color: $danger;
+  color: $white;
 }
 .upload_file {
-    span {
-        @extend .filesize_badge;
-    }
+  span {
+    @extend .filesize_badge;
+  }
 }
 .upload_file_toobig {
-    @extend .upload_file;
-    code {
-        @extend .text-muted;
-        text-decoration: line-through;
-    }
-    span {
-        @extend .toobig;
-    }
+  @extend .upload_file;
+  code {
+    @extend .text-muted;
+    text-decoration: line-through;
+  }
+  span {
+    @extend .toobig;
+  }
 }
 
 // The default flask flash message category is "message"
 // This seems difficult to change, so we just make .alert-message
 .alert-message {
-    @extend .alert-info;
+  @extend .alert-info;
 }
