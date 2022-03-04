@@ -129,6 +129,7 @@ services:
   
   cli:
     container_name: dds_cli
+    command: bash -c "pip install --upgrade -e . && tail -f /dev/null"
     build:
       dockerfile: Dockerfiles/cli.Dockerfile
       context: ./
