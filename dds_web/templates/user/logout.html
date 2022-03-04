@@ -4,7 +4,7 @@
 
 {% block body %}
 This page will have something on it later.
-<form method="POST" action="{{ url_for('auth_blueprint.logout') }}">
+<form method="POST" action="{{ url_for('auth_blueprint.logout_post') }}">
     {{ form.csrf_token }}
     {{ form.logout }}
 </form>
