@@ -179,6 +179,19 @@ Then in a new terminal, shell into the container and run pytest:
 docker exec -it dds_backend /bin/bash
 ```
 
+```bash
+pytest
+```
+
+If you want to run tests quickly, without rebuilding the database each time, set the `SAVE_DB` environment variable:
+
+```bash
+SAVE_DB=1 pytest
+```
+
+Note that this stops the database from being deleted, so it will speed up the _next_ run.
+Equally, if you want to tear down you need to run pytest _twice_ without it, as it only affects the tear down.
+
 ---
 
 
