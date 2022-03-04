@@ -1,8 +1,7 @@
-version: "3.8"
-# for persistent endpoint limiter, uncomment RATELIMIT_STORAGE_URI and the redis entry
+version: "3.9"
+# Use --profile full-dev and uncomment RATELIMIT_STORAGE_URI to use redis
 
 services:
-
   db:
     container_name: dds_database
     image: mariadb:latest
@@ -53,7 +52,6 @@ services:
     ports:
       - 127.0.0.1:5000:5000
     volumes:
-
       # Migrations
       - type: bind
         source: ./migrations
@@ -79,6 +77,57 @@ services:
         source: $DDS_LOG_DIR
         target: /dds_web/logs
 
-#  redis:
-#    container_name: dds_redis
-#    image: redis:latest
+  minio:
+    container_name: dds_minio
+    image: minio/minio:RELEASE.2022-02-24T22-12-01Z
+    profiles:
+      - s3
+      - full-dev
+      - cli
+    command: server /data --console-address ":9001"
+    ports:
+      - 127.0.0.1:9000:9000
+      - 127.0.0.1:9001:9001
+    environment:
+      MINIO_ROOT_USER: minio  # access key
+      MINIO_ROOT_PASSWORD: minioPassword  # secret key
+    # NOTE: Uncomment if you want to keep your data.
+    #             Mounts a folder into the container to make uploaded data persistent.
+    # volumes:
+    #   - type: bind
+    #     source: ./minio-data
+    #     target: /data
+
+  mailcatcher:
+    container_name: dds_mailcatcher
+    image: sj26/mailcatcher:latest
+    profiles:
+      - dev
+      - mail
+      - full-dev
+      - cli
+    ports:
+      - 127.0.0.1:1080:1080    
+
+  redis:
+    container_name: dds_redis
+    image: redis:latest
+    profiles:
+      - full-dev
+      - redis
+  
+  cli:
+    container_name: dds_cli
+    build:
+      dockerfile: Dockerfiles/cli.Dockerfile
+      context: ./
+      target: base
+    profiles:
+      - cli
+      - full-dev
+    environment:
+      - DDS_CLI_ENV=docker-dev
+    volumes:
+      - type: bind
+        source: ../dds_cli
+        target: /code
