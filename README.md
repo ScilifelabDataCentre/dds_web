@@ -34,16 +34,50 @@ You can download Docker here: <https://docs.docker.com/get-docker/>
 Then, fork this repository and clone to your local system.
 In the root folder of the repo, run the server as follows:
 
+There are multiple profiles prepared depending on your needs:
+
 ```bash
 docker-compose up
 ```
+This command will orchestrate the building and running of two containers: one for the SQL database (`mariadb`) and one for the application.
 
-This command will orchestrate the building and running of two containers:
-one for the SQL database (`mariadb`) and one for the application.
+```bash
+docker-compose --profile dev up
+```
+
+This will give you the above two containers, but also `mailcatcher` that will allow you to read
+any sent emails by going to `localhost:1080` in a web browser.
+
+```bash
+docker-compose --profile full-dev up
+```
+
+Will also activate minio for s3 storage (clearly not functional with cli) and redis to enable a persistent limiter for the API.
+You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to enable redis.
 
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
 If using this method, you can stop the web server with the command `docker-compose down`.
 <br><br>
+
+#### CLI development against local environment
+
+```bash
+docker-compose --profile cli up
+```
+Will start database, backend, minio, and mailcatcher. Will also start an extra container prepared for working with the CLI.
+
+Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume path in `docker-compose.yml`).
+
+1. Start docker-compose with the `cli` profile
+2. Inject into the `dds_cli` container:
+
+```bash
+docker exec -it dds_cli /bin/bash
+```
+
+3. pip install -e .
+
+Then you can freely use the dds cli component against the local development setup in the active CLI.
 
 ### Python debugger inside docker
 It's possible to use the interactive debugging tool `pdb` inside Docker with this method:
