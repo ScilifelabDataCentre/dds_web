@@ -26,8 +26,6 @@ See the [ADR] for information on the design decisions.
 
 ## Development
 
-<br>
-
 ### Running with Docker
 
 When developing this software, we recommend that you run the web server locally using Docker.
@@ -60,9 +58,8 @@ You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to en
 
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
 If using this method, you can stop the web server with the command `docker-compose down`.
-<br><br>
 
-#### CLI development against local environment
+### CLI development against local environment
 
 ```bash
 docker-compose --profile cli up
@@ -75,11 +72,11 @@ Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume
 1. Start docker-compose with the `cli` profile
 2. Inject into the `dds_cli` container:
 
-```bash
-docker exec -it dds_cli /bin/bash
-```
+   ```bash
+   docker exec -it dds_cli /bin/bash
+   ```
 
-3. pip install -e .
+3. Run `pip install -e .`
 
 Then you can freely use the dds cli component against the local development setup in the active CLI.
 
@@ -89,42 +86,39 @@ It's possible to use the interactive debugging tool `pdb` inside Docker with thi
 
 1. Edit the `docker-compose.yml` and for the `backend` service, add:
 
-```
-  tty: true
-  stdin_open: true
-```
+   ```yaml
+   tty: true
+   stdin_open: true
+   ```
 
-just under
+   just under
 
-```
-  ports:
-    - 127.0.0.1:5000:5000
-```
+   ```yaml
+   ports:
+     - 127.0.0.1:5000:5000
+   ```
 
 2. Put `import pdb; pdb.set_trace()` in the python code where you would like to activate the debugger.
 3. Run with docker-compose as normal.
 4. Find out the id of the container running the `backend`.
 
-```
-docker container ls
-```
+   ```bash
+   docker container ls
+   ```
 
 5. Attach to the running backend container:
 
-```
-docker container attach <container_id/name>
-```
-
-<br>
+   ```bash
+   docker container attach <container_id/name>
+   ```
 
 ### Config settings
 
 When run from the cloned repo, all settings are set to default values.
 These values are publicly visible on GitHub and **should not be used in production!**
-<br><br>
 
-> :exclamation: <br>
-> At the time of writing, upload within projects created in the development database will most likely not work. <br>
+> ❗️
+> **At the time of writing, upload within projects created in the development database will most likely not work.**
 > To use the upload functionality with the `CLI`, first create a project.
 
 The following test usernames ship in the development setup:
@@ -161,13 +155,13 @@ docker exec dds_backend flask db upgrade
 
 Finally, confirm that the database looks correct after running the migration and commit the migration file to git. Note that you need to run `black` on the generated migration file.
 
-> :leftwards_arrow_with_hook: If you want to start over, restore the content of `migrations/versions` (remove new files, run `git restore` on the folder) and start from autogeneration method 2.
+> ↩️ If you want to start over, restore the content of `migrations/versions` (remove new files, run `git restore` on the folder) and start from autogeneration method 2.
 
 ### Database issues while running `docker-compose up`
 
 If you run into issues with complaints about the db while running `docker-compose up` you can try to reset the containers by running `docker-compose down` before trying again. If you still have issues, try cleaning up containers and volumes manually.
 
-> :warning: These commands will remove _all_ containers and volumes!
+> ⚠️ These commands will remove _all_ containers and volumes!
 > If you are working on other projects please be more selective.
 
 ```bash
@@ -233,12 +227,12 @@ Use `docker-compose.yml` as a reference for the required environment.
 
 The environment variable `DDS_APP_CONFIG` defines the location of the config file, e.g. `/code/dds_web/dds_app.cfg`. The config values are listed in `dds_web/config.py`. Add them to the file in the format:
 
-```
+```python
 MAX_CONTENT_LENGTH = 0x1000000
 MAX_DOWNLOAD_LIMIT = 1000000000
 ```
 
-> :heavy_exclamation_mark: It is recommended that you redefine all values in `config.py` in your config file to avoid using default values by mistake.
+> ❗ It is recommended that you redefine all values in `config.py` in your config file to avoid using default values by mistake.
 
 ### Initialise the database
 
