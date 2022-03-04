@@ -76,8 +76,6 @@ Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume
    docker exec -it dds_cli /bin/bash
    ```
 
-3. Run `pip install -e .`
-
 Then you can freely use the dds cli component against the local development setup in the active CLI.
 
 ### Python debugger inside docker
