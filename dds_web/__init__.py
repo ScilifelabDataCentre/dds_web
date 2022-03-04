@@ -238,16 +238,17 @@ def create_app(testing=False, database_uri=None):
 
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
-        from dds_web import routes
 
         # Need to import auth so that the modifications to the auth objects take place
         import dds_web.security.auth
 
         # Register blueprints
         from dds_web.api import api_blueprint
+        from dds_web.web.root import pages
         from dds_web.web.user import auth_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+        app.register_blueprint(pages, url_prefix="")
         app.register_blueprint(auth_blueprint, url_prefix="")
 
         # Set-up the schedulers
