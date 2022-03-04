@@ -114,7 +114,7 @@ def test_register_no_token_in_session(registry_form_data, client):
         follow_redirects=True,
     )
     assert response.status == "200 OK"
-    assert flask.request.path == tests.DDSEndpoint.LOGIN
+    assert flask.request.path == tests.DDSEndpoint.INDEX
 
     # Invite should be kept and user should not be created
     invite = models.Invite.query.filter_by(
