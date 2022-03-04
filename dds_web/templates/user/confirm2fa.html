@@ -1,21 +1,12 @@
 {% extends "base.html" %}
 
-{% block page_title %}DDS Multi-Factor Authentication{% endblock %}
+{% block page_title -%}
+DDS Multi-Factor Authentication
+{%- endblock %}
 
 {% block body %}
 
-    <h1>Enter one-time authentication code</h1>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class=flashes>
-        {% for category, message in messages %}
-        <div class="alert alert-{{category}}" role="alert">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+    <p class="lead">Please enter your one-time authentication code.</p>
     <p>Please complete the login by entering the one-time authentication code that was sent to you.
         The one-time codes are valid for a short time (15 minutes) after they have been issued.
     </p>

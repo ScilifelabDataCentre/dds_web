@@ -61,17 +61,17 @@ def confirm_invite(token):
     try:
         email, invite_row = dds_web.security.auth.verify_invite_token(token)
     except ddserr.AuthenticationError as err:
-        flask.flash("This invitation link has expired or is invalid.", "danger")
+        flask.flash("This invitation link has expired or is invalid.", "warning")
         return flask.redirect(flask.url_for("pages.home"))
 
     # Check the invite exists
     if not invite_row:
         if email and dds_web.utils.email_in_db(email=email):
-            flask.flash("Registration has already been completed.")
+            flask.flash("Registration has already been completed.", "warning")
             return flask.make_response(flask.render_template("user/userexists.html"))
         else:
             # Perhaps the invite has been cancelled by an admin
-            flask.flash("This invitation link is invalid.", "danger")
+            flask.flash("This invitation link is invalid.", "warning")
             return flask.redirect(flask.url_for("pages.home"))
 
     # Save encrypted token to be reused at registration
@@ -122,7 +122,8 @@ def register():
             "No token has been found in session when posting to register."
         )
         flask.flash(
-            "Error in registration process, please go back and use the link in the invitation email again."
+            "Error in registration process, please go back and use the link in the invitation email again.",
+            "danger",
         )
         return flask.redirect(flask.url_for("pages.home"))
 
@@ -135,10 +136,10 @@ def register():
             # This should never happen since the form is validated
             # Any error catched here is likely a bug/issue
             flask.current_app.logger.warning(err)
-            flask.flash("Error in registration process, please try again.")
+            flask.flash("Error in registration process, please try again.", "danger")
             return flask.redirect(flask.url_for("pages.home"))
 
-        flask.flash("Registration successful!")
+        flask.flash("Registration successful!", "success")
         return flask.make_response(flask.render_template("user/userexists.html"))
 
     # Go to registration form
@@ -184,7 +185,8 @@ def confirm_2fa():
         user = dds_web.security.auth.verify_token_no_data(token)
     except ddserr.AuthenticationError:
         flask.flash(
-            f"Error: Please initiate a log in before entering the one-time authentication code."
+            f"Error: Please initiate a log in before entering the one-time authentication code.",
+            "warning",
         )
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
     except Exception as e:
@@ -199,7 +201,7 @@ def confirm_2fa():
     # Currently same error for both, not vital, they get message to contact us
     if not user:
         flask.session.pop("2fa_initiated_token", None)
-        flask.flash("Your account is not active. Contact Data Centre.", "danger")
+        flask.flash("Your account is not active. Contact Data Centre.", "warning")
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
     if form.validate_on_submit():
@@ -210,7 +212,7 @@ def confirm_2fa():
         try:
             user.verify_HOTP(hotp_value.encode())
         except ddserr.AuthenticationError:
-            flask.flash("Invalid one-time code.")
+            flask.flash("Invalid one-time code.", "warning")
             return flask.redirect(
                 flask.url_for(
                     "auth_blueprint.confirm_2fa", form=form, cancel_form=cancel_form, next=next
@@ -219,7 +221,7 @@ def confirm_2fa():
 
         # Correct username, password and hotp code --> log user in
         flask_login.login_user(user)
-        flask.flash("Logged in successfully.")
+        flask.flash("Logged in successfully.", "success")
         # Remove token from session
         flask.session.pop("2fa_initiated_token", None)
         # Next is assured to be url_safe above
@@ -261,7 +263,7 @@ def login():
 
         # Unsuccessful login
         if not user or not user.verify_password(input_password=form.password.data):
-            flask.flash("Invalid username or password.")
+            flask.flash("Invalid username or password.", "warning")
             return flask.redirect(
                 flask.url_for("auth_blueprint.login", next=next)
             )  # Try login again
@@ -331,7 +333,7 @@ def request_reset_password():
                 additional_claims={"rst": "pwd"},
             )
             dds_web.utils.send_reset_email(email_row=email, token=token)
-            flask.flash("An email has been sent with instructions to reset your password.", "info")
+            flask.flash("An email has been sent with instructions to reset your password.")
             return flask.redirect(flask.url_for("auth_blueprint.login"))
 
         flask.flash("Your account is deactivated. You cannot reset your password.", "warning")

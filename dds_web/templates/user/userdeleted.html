@@ -1,13 +1,16 @@
 {% extends "base.html" %}
 
-{% block page_title %}Account deletion{% endblock %}
+{% block page_title -%}
+Account deletion
+{%- endblock %}
 
 {% block body %}
 
 {% if initial %}
-<h1>Account deletion completed</h1>
+<!-- TODO: Move to a flash message instead -->
+<h2>Account deletion completed</h2>
 {% else %}
-<h1>Your account is already deleted!</h1>
+<h2>Your account is already deleted!</h2>
 {% endif %}
 <p>You have successfully deleted your account <strong>{{username}}</strong> at the <span>SciLifeLab Data Delivery
         System</span>. Thank you for using our services. Feel free to sign up again, should you ever need to receive

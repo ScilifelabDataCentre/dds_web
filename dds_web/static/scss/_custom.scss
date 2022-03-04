@@ -28,3 +28,9 @@
         @extend .toobig;
     }
 }
+
+// The default flask flash message category is "message"
+// This seems difficult to change, so we just make .alert-message
+.alert-message {
+    @extend .alert-info;
+}

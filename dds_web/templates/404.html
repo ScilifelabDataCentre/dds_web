@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
+
+{% block page_title -%}
+404: Page not found
+{%- endblock %}
+
 {% block body %}
 
-<h1>
-    <i class="fad fa-map-marker-question fa-5x float-end text-primary d-none d-md-inline" style="opacity: 0.2;"></i>
-    404: Page not found
-</h1>
+<span class="h1"><i class="fad fa-map-marker-question fa-5x float-end text-primary d-none d-md-inline" style="opacity: 0.2;"></i></span>
 
 <p class="lead">Sorry, that page cannot be found: <code class="ms-2">{{ request.base_url }}</code></p>
 
