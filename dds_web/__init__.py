@@ -181,8 +181,7 @@ def create_app(testing=False, database_uri=None):
 
     @app.before_request
     def prepare():
-        """Populate flask globals for template rendering
-        """
+        """Populate flask globals for template rendering"""
         flask.g.current_user = None
         if auth.current_user():
             flask.g.current_user = auth.current_user().username
