@@ -439,7 +439,10 @@ def change_password():
         db.session.commit()
 
         flask_login.logout_user()
-        flask.flash("You have successfully changed your password.", "success")
+        flask.flash(
+            "You have successfully changed your password. Please log in again with your new password.",
+            "success",
+        )
         return flask.redirect(flask.url_for("auth_blueprint.login"))
 
     # Show form
@@ -506,3 +509,12 @@ def confirm_self_deletion(token):
         return flask.make_response(
             flask.render_template("user/userdeleted.html", username=email, initial=False)
         )
+
+
+@auth_blueprint.route("/account", methods=["GET"])
+@flask_login.login_required
+@logging_bind_request
+def account_info():
+    """User account page"""
+
+    return flask.render_template("user/account.html", account_info={}, enumerate=enumerate)
