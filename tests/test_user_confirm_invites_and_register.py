@@ -32,7 +32,7 @@ def test_confirm_invite_invalid_token(client):
 
     assert response.status == "200 OK"
     # index redirects to login
-    assert flask.request.path == flask.url_for("auth_blueprint.login")
+    assert flask.request.path == flask.url_for("pages.home")
 
 
 def test_confirm_invite_expired_token(client):
@@ -52,7 +52,7 @@ def test_confirm_invite_expired_token(client):
     )
     assert response.status == "200 OK"
     # index redirects to login
-    assert flask.request.path == flask.url_for("auth_blueprint.login")
+    assert flask.request.path == flask.url_for("pages.home")
 
 
 def test_confirm_invite_valid_token(client):

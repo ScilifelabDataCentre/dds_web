@@ -160,7 +160,7 @@ def test_reset_password_expired_token_get(client):
 
     assert response.status_code == http.HTTPStatus.OK
     # Incorrect token should redirect and not lead to form
-    assert flask.request.path == tests.DDSEndpoint.LOGIN
+    assert flask.request.path == tests.DDSEndpoint.INDEX
 
 
 def test_reset_password_expired_token_post(client):
