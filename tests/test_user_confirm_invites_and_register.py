@@ -66,7 +66,7 @@ def test_confirm_invite_valid_token(client):
 
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
     assert response.status == "200 OK"
-    assert b"Registration form" in response.data
+    assert b"Create account" in response.data
 
 
 # Registration ##################################################################### Registration #
@@ -89,7 +89,7 @@ def registry_form_data(client):
 
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
     assert response.status == "200 OK"
-    assert b"Registration form" in response.data
+    assert b"Create account" in response.data
 
     form_token = flask.g.csrf_token
 
@@ -220,7 +220,7 @@ def test_invite_key_verification_fails_with_no_setup(client):
 
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
     assert response.status == "200 OK"
-    assert b"Registration form" in response.data
+    assert b"Create account" in response.data
 
     form_token = flask.g.csrf_token
 
@@ -272,7 +272,7 @@ def test_invite_key_verification_fails_with_wrong_valid_key(client):
 
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
     assert response.status == "200 OK"
-    assert b"Registration form" in response.data
+    assert b"Create account" in response.data
 
     form_token = flask.g.csrf_token
 
@@ -324,7 +324,7 @@ def test_invite_key_verification_fails_with_wrong_invalid_key(client):
 
     response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
     assert response.status == "200 OK"
-    assert b"Registration form" in response.data
+    assert b"Create account" in response.data
 
     form_token = flask.g.csrf_token
 

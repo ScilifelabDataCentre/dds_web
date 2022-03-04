@@ -99,7 +99,7 @@ def test_reset_password_invalid_token_get(client):
     # Redirection status code
     assert response.status_code == http.HTTPStatus.OK
     # Incorrect token should redirect and not lead to form
-    assert flask.request.path == tests.DDSEndpoint.LOGIN
+    assert flask.request.path == tests.DDSEndpoint.INDEX
 
 
 def get_valid_reset_token(username, expires_in=3600):
@@ -142,7 +142,7 @@ def test_reset_password_invalid_token_post(client):
         tests.DDSEndpoint.RESET_PASSWORD + invalid_token, json=form_data, follow_redirects=True
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.LOGIN
+    assert flask.request.path == tests.DDSEndpoint.INDEX
 
     # Just make sure no project user keys has been removed
     nr_proj_user_keys_after = models.ProjectUserKeys.query.count()
@@ -191,7 +191,7 @@ def test_reset_password_expired_token_post(client):
         tests.DDSEndpoint.RESET_PASSWORD + expired_token, json=form_data, follow_redirects=True
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.LOGIN
+    assert flask.request.path == tests.DDSEndpoint.INDEX
 
     # Just make sure no project user keys has been removed
     nr_proj_user_keys_after = models.ProjectUserKeys.query.count()
