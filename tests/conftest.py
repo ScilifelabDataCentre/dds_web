@@ -447,8 +447,9 @@ def setup_database():
         yield None
     finally:
         # Drop database to save container space
-        drop_database(DATABASE_URI)
-        drop_database(DATABASE_URI_BASE)
+        if not os.environ.get("SAVE_DB", False):
+            drop_database(DATABASE_URI)
+            drop_database(DATABASE_URI_BASE)
 
 
 @pytest.fixture(scope="function")

@@ -1,0 +1,53 @@
+{
+  "name": "dds_web",
+  "version": "1.0.0",
+  "description": "A a single cloud-based system for all SciLifeLab facilities, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way.",
+  "private": true,
+  "author": "SciLifeLab Data Centre",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ScilifelabDataCentre/dds_web.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ScilifelabDataCentre/dds_web/issues"
+  },
+  "homepage": "https://github.com/ScilifelabDataCentre/dds_web#readme",
+  "scripts": {
+    "build": "npm run css",
+    "css-compile": "node-sass --include-path node_modules --output-style compressed --source-map true --source-map-contents true --precision 6 scss -o css/",
+    "css-lint": "stylelint scss/",
+    "css-prefix-light": "postcss --replace css/dds_light.css --use autoprefixer --map",
+    "css-prefix-dark": "postcss --replace css/dds_dark.css --use autoprefixer --map",
+    "css-purge-light": "purgecss --keyframes --css css/dds_light.css --content index.html \"node_modules/bootstrap/js/dist/{util,modal}.js\" --output css/",
+    "css-purge-dark": "purgecss --keyframes --css css/dds_dark.css --content index.html \"node_modules/bootstrap/js/dist/{util,modal}.js\" --output css/",
+    "css": "npm-run-all css-compile css-prefix-light css-prefix-dark",
+    "server": "serve --listen 3000",
+    "start": "npm-run-all --parallel watch server",
+    "watch": "nodemon -e html,scss -x \"npm run css\"",
+    "test": "npm run css-lint && npm run css"
+  },
+  "keywords": [
+    "SciLifeLab"
+  ],
+  "dependencies": {
+    "@popperjs/core": "^2.11.2",
+    "bootstrap": "5.1.3",
+    "bootstrap-dark-5": "1.1.3",
+    "datatables.net": "^1.11.5",
+    "datatables.net-bs5": "^1.11.5",
+    "jquery": "^3.6.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.2",
+    "node-sass": "^7.0.1",
+    "nodemon": "^2.0.15",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.4.7",
+    "postcss-cli": "^9.1.0",
+    "purgecss": "^4.1.3",
+    "serve": "^13.0.2",
+    "stylelint": "^14.5.3",
+    "stylelint-config-twbs-bootstrap": "^3.0.1"
+  }
+}
