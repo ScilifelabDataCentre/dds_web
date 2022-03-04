@@ -356,10 +356,10 @@ def reset_password(token):
         user = dds_web.security.auth.verify_password_reset_token(token=token)
         if not user.is_active:
             flask.flash("Your account is not active. You cannot reset your password.", "warning")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+            return flask.redirect(flask.url_for("pages.home"))
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Get form for reseting password
     form = forms.ResetPasswordForm()

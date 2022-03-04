@@ -40,7 +40,7 @@ def successful_web_login(client, user_auth):
     )
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.INDEX
-    assert flask.request.path == flask.url_for("auth_blueprint.index")
+    assert flask.request.path == flask.url_for("pages.home")
 
     return flask.g.csrf_token
 
