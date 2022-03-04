@@ -8,12 +8,12 @@
         <div class="row">
             <div class="col-xxl-8 offset-xxl-2 bg-light p-3">
                 {% if g.current_user %}
-                <a class="btn btn-primary w-100 mb-2" href="#">
-                    View projects
-                </a>
-                <a class="btn btn-success w-100" href="{{ url_for('auth_blueprint.logout_get') }}">
-                    Log out
-                </a>
+                    <a class="btn btn-primary w-100 mb-2" href="#">
+                        View projects
+                    </a>
+                    <a class="btn btn-success w-100" href="{{ url_for('auth_blueprint.logout_get') }}">
+                        Log out
+                    </a>
                 {% else %}
                     {% include "components/login_form.html" %}
                 {% endif %}

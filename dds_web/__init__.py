@@ -179,6 +179,18 @@ def create_app(testing=False, database_uri=None):
         # Simplifies testing as we don't test the session protection anyway
         login_manager.session_protection = "basic"
 
+    @app.before_request
+    def prepare():
+        """Populate flask globals for template rendering
+        """
+        flask.g.current_user = None
+        if auth.current_user():
+            flask.g.current_user = auth.current_user().username
+        elif flask_login.current_user.is_authenticated:
+            flask.g.current_user = flask_login.current_user.username
+        elif flask.request.authorization:
+            flask.g.current_user = flask.request.authorization.get("username")
+
     # Setup logging handlers
     setup_logging(app)
 
