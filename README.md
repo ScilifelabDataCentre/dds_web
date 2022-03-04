@@ -114,6 +114,16 @@ These values are publicly visible on GitHub and **should not be used in producti
 > At the time of writing, upload within projects created in the development database will most likely not work. <br>
 > To use the upload functionality with the `CLI`, first create a project.
 
+The following test usernames ship in the development setup:
+
+* `superadmin`
+* `unituser_1`
+* `unituser_2`
+* `researchuser_1`
+* `researchuser_2`
+
+All have the password: `password`
+
 ### Database changes
 
 If you modify the database models (e.g. tables or indexes), you must create a migration for the changes. We use `Alembic` (via `flask-migrate`) which compares our database models with the running database to generate a suggested migration.
