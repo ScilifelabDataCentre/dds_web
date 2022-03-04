@@ -40,8 +40,6 @@
 ## Decision
 
 Since Flask is flexible and simple, extensions provide a large variety of functionalities including REST API support, it has an integrated testing system and there is more online support than for Tornado, **Flask** was chosen as the better option for the Data Delivery System framework. The built-in asynchronicity in Tornado is not an important feature since the system will not be used by thousands of users at a given time.
-<br>
-<br>
 
 # 2. Database: MariaDB
 
@@ -74,9 +72,6 @@ The main motivation behind choosing a **relational database** is that we are for
 
 **MariaDB** was chosen (rather than e.g. MySQL) as the relational database because of it’s query performance and that it provides many useful features not available in other relational databases.
 
-<br>
-<br>
-
 # 3. Compression algorithm: ZStandard
 
 GNU zip (Gzip) is the most popular compression algorithm and is suitable for compression of data streams, is supported by all browsers and comes as a standard in all major web servers. However, while gzip provides a good compression ratio (original/compressed size), it is very slow compared to other algorithms.
@@ -86,9 +81,6 @@ The encryption speed using ChaCha20-Poly1305 (in this case tested on a 109 MB fi
 ## Decision
 
 Since Zstandard gave approximately the same compression ratio in a fraction of the time, **Zstandard** was chosen as the algorithm to be implemented within the Data Delivery System.
-
-<br>
-<br>
 
 # 4. In-transit vs local encryption: Local (for now, looking at options)
 
@@ -100,9 +92,6 @@ On further investigation and contact with Safespring, we learned:
 - Most of the S3- and Boto clients that Safespring uses, e.g. the bash cli s3cmd, goes through GPG (Gnu Privacy Guard, based off of OpenPGP where PGP stands for Pretty Good Privacy) which performs the encryption before uploading the files. GPG/PGP makes it possible to encrypt using one key and decrypt using one or more other keys. This enables a more automated process but does not simplify for us or contribute with anything useful to the delivery system.
 - All users of the Safespring backup service perform encryption on their own and handle the keys themselves.
 - Due to this, the encryption will be performed locally before upload to the S3 storage.
-
-<br>
-<br>
 
 # 5. Encryption Algorithm: ChaCha20-Poly1305
 
@@ -214,9 +203,6 @@ Files larger than 256 GiB will need to be partitioned, however the number of par
 
 Due to this, **ChaCha20-Poly1305** was chosen as the encryption algorithm within the Data Delivery System.
 
-<br>
-<br>
-
 # 6. File chunk size: 64 KiB
 
 Compression and encryption is performed in a streamed manner to avoid reading large files completely in memory. This is done by reading the file in chunks, and the size of the chunks affect the speed of the algorithms, their memory usage, and the final size of the compressed and encrypted files.
@@ -229,9 +215,6 @@ To find the optimal chunk size, a 33 GB file was compressed and encrypted using 
 
 The Data Delivery System will read the files in 64 KiB chunks.
 
-<br>
-<br>
-
 # 7. File integrity guarantee: Nonce incrementation
 
 As described in section 5. above, the Crypt4GH format encrypts the files in blocks of 64 KiB, after which each data blocks unique nonce, ciphertext and MAC are saved to the c4gh file. This guarantees the integrity of the data blocks, however it does not guarantee the integrity of the entire file, and it is therefore possible that some blocks are rearranged, duplicated or missing, without the recipient knowing. Although we have chosen to not use the Crypt4GH format within the delivery system, we do use the same encryption algorithm – ChaCha20-Poly1305 – and (since we cannot read huge files in memory) we have chosen to read the files in equally sized chunks. Therefore the integrity issue can potentially give huge problems for the delivery system.
@@ -240,7 +223,7 @@ As described in section 5. above, the Crypt4GH format encrypts the files in bloc
 
 One solution to the integrity guarantee issue is to generate an additional MAC, representing the entire file, but for security reasons it is recommended to let the MAC generation be handled by (and in connection to) the encryption algorithm. Another solution (as mentioned here) is to generate a random nonce, and increment it for each block – decryption only needs to know the first blocks nonce, and then increments it in the same way as the encryption until the end of the file. If the decryption of a block fails - the file has been altered.
 
-Since the nonces are regarded as public knowledge, the incrementation of the nonces do not decrease security - it may on the other hand increase the security: unique nonces for each data block is vital to the cryptographic security and generating a random nonce for each data block increases the risk of nonce reuse. Incrementing the nonces however mean that 296 (for 96 bit nonces as used in ChaCha20-Poly1305) data blocks can be encrypted before nonce reuse – 296 _ 64 _ 1024 \* 8 bits (5.19229686 × 1021 terabytes). This number may even be higher, since ChaCha20 itself adds and increments 4 bytes to the user-specified nonce. None the less, it’s safe to say that files of this size will not exist. An extra advantage to the nonce incrementation option is that only the first nonce needs to be saved, reducing the encryption overhead by 128 bits per data block.
+Since the nonces are regarded as public knowledge, the incrementation of the nonces do not decrease security - it may on the other hand increase the security: unique nonces for each data block is vital to the cryptographic security and generating a random nonce for each data block increases the risk of nonce reuse. Incrementing the nonces however mean that 296 (for 96 bit nonces as used in ChaCha20-Poly1305) data blocks can be encrypted before nonce reuse – 296 _64_ 1024 \* 8 bits (5.19229686 × 1021 terabytes). This number may even be higher, since ChaCha20 itself adds and increments 4 bytes to the user-specified nonce. None the less, it’s safe to say that files of this size will not exist. An extra advantage to the nonce incrementation option is that only the first nonce needs to be saved, reducing the encryption overhead by 128 bits per data block.
 
 One problem with this solution is that, although we guarantee the order of the data blocks, we don’t know if all the data blocks are present – blocks at the end of the file may be missing without us knowing. Due to this, we also save the last nonce to the file. If decryption reaches the last nonce, the files integrity is proven, if not something has gone wrong.
 
@@ -260,9 +243,6 @@ Due to this, no checksum verification is used during the upload. However, the fi
 
 Nonce incrementation will be used and no checksum verification will be performed during upload.
 
-<br>
-<br>
-
 # 8. Password Authentication: Argon2id
 
 Argon2 is also available in two other versions. These are argon2d (strong GPU resistance) and argon2i (resistant to side-channel attacks). Argon2id is a combination of the two and is the recommended mode.
@@ -272,9 +252,6 @@ Argon2 is also available in two other versions. These are argon2d (strong GPU re
 The Data Delivery System will use [Argon2id](https://github.com/hynek/argon2-cffi) for password authentication.
 
 > The chosen parameters will be added here soon.
-
-<br>
-<br>
 
 # 9. Requirements: No pinned versions
 
