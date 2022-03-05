@@ -1,9 +1,0 @@
-{
-    "endpoint_url": "https://s3.YOUR_STORAGE.COM",
-    "sfsp_keys": {
-        "YOUR-PROJECT-ID": {
-            "access_key": "ACCESS_KEY",
-            "secret_key": "SECRET"
-        }
-    }
-}

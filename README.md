@@ -12,19 +12,19 @@
 
 The Delivery Portal consists of two components:
 
-* The _backend api_ handling the requests and the logic behind the scenes.
-  * <https://github.com/ScilifelabDataCentre/dds_web> (this repository)
-* The _command line interface (CLI)_. This will be used for data delivery within larger projects
-and/or projects resulting in the production of large amounts of data, e.g. sequence data.
-  * <https://github.com/ScilifelabDataCentre/dds_cli>
+- The _backend api_ handling the requests and the logic behind the scenes.
+  - <https://github.com/ScilifelabDataCentre/dds_web> (this repository)
+- The _command line interface (CLI)_. This will be used for data delivery within larger projects
+  and/or projects resulting in the production of large amounts of data, e.g. sequence data.
+  - <https://github.com/ScilifelabDataCentre/dds_cli>
 
 The backend interface is built using [Flask](https://flask.palletsprojects.com/en/2.0.x/).
 
 See the [ADR] for information on the design decisions.
 
 ---
+
 ## Development
-<br>
 
 ### Running with Docker
 
@@ -39,6 +39,7 @@ There are multiple profiles prepared depending on your needs:
 ```bash
 docker-compose up
 ```
+
 This command will orchestrate the building and running of two containers: one for the SQL database (`mariadb`) and one for the application.
 
 ```bash
@@ -57,13 +58,13 @@ You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to en
 
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
 If using this method, you can stop the web server with the command `docker-compose down`.
-<br><br>
 
-#### CLI development against local environment
+### CLI development against local environment
 
 ```bash
 docker-compose --profile cli up
 ```
+
 Will start database, backend, minio, and mailcatcher. Will also start an extra container prepared for working with the CLI.
 
 Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume path in `docker-compose.yml`).
@@ -71,54 +72,60 @@ Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume
 1. Start docker-compose with the `cli` profile
 2. Inject into the `dds_cli` container:
 
-```bash
-docker exec -it dds_cli /bin/bash
-```
+   ```bash
+   docker exec -it dds_cli /bin/bash
+   ```
 
 Then you can freely use the dds cli component against the local development setup in the active CLI.
 
 ### Python debugger inside docker
+
 It's possible to use the interactive debugging tool `pdb` inside Docker with this method:
+
 1. Edit the `docker-compose.yml` and for the `backend` service, add:
-```
-  tty: true
-  stdin_open: true
-```
-just under
-```
-  ports:
-    - 127.0.0.1:5000:5000
-```
+
+   ```yaml
+   tty: true
+   stdin_open: true
+   ```
+
+   just under
+
+   ```yaml
+   ports:
+     - 127.0.0.1:5000:5000
+   ```
 
 2. Put `import pdb; pdb.set_trace()` in the python code where you would like to activate the debugger.
 3. Run with docker-compose as normal.
 4. Find out the id of the container running the `backend`.
-```
-docker container ls
-```
+
+   ```bash
+   docker container ls
+   ```
+
 5. Attach to the running backend container:
-```
-docker container attach <container_id/name>
-```
-<br>
+
+   ```bash
+   docker container attach <container_id/name>
+   ```
 
 ### Config settings
 
 When run from the cloned repo, all settings are set to default values.
 These values are publicly visible on GitHub and **should not be used in production!**
-<br><br>
 
-> :exclamation: <br>
-> At the time of writing, upload within projects created in the development database will most likely not work. <br>
+> ❗️
+> **At the time of writing, upload within projects created in the development database will most likely not work.**
 > To use the upload functionality with the `CLI`, first create a project.
 
 The following test usernames ship in the development setup:
 
-* `superadmin`
-* `unituser_1`
-* `unituser_2`
-* `researchuser_1`
-* `researchuser_2`
+- `superadmin`
+- `unituser_1`
+- `unituser_2`
+- `researchuser_1`
+- `researchuser_2`
 
 All have the password: `password`
 
@@ -146,14 +153,13 @@ docker exec dds_backend flask db upgrade
 
 Finally, confirm that the database looks correct after running the migration and commit the migration file to git. Note that you need to run `black` on the generated migration file.
 
-> :leftwards_arrow_with_hook: If you want to start over, restore the content of `migrations/versions` (remove new files, run `git restore` on the folder) and start from autogeneration method 2.
-
+> ↩️ If you want to start over, restore the content of `migrations/versions` (remove new files, run `git restore` on the folder) and start from autogeneration method 2.
 
 ### Database issues while running `docker-compose up`
 
 If you run into issues with complaints about the db while running `docker-compose up` you can try to reset the containers by running `docker-compose down` before trying again. If you still have issues, try cleaning up containers and volumes manually.
 
-> :warning: These commands will remove _all_ containers and volumes!
+> ⚠️ These commands will remove _all_ containers and volumes!
 > If you are working on other projects please be more selective.
 
 ```bash
@@ -166,10 +172,13 @@ Then run `docker-compose up` as normal. The images will be rebuilt from scratch 
 If there are still issues, try deleting the `pycache` folders and repeat the above steps.
 
 ### Run tests
+
 Tests run on github actions on every pull request and push against master and dev. To run the tests locally, use this command:
+
 ```bash
 docker-compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build --exit-code-from backend
 ```
+
 This will create a test database in the mariadb container called `DeliverySystemTest` which will be populated before a test and emptied after a test has finished.
 
 It's possible to supply arguments to pytest via the environment variable `$DDS_PYTEST_ARGS`.
@@ -202,7 +211,6 @@ Equally, if you want to tear down you need to run pytest _twice_ without it, as 
 
 ---
 
-
 ## Production
 
 The production version of the backend image is published at [Dockerhub](https://hub.docker.com/repository/docker/scilifelabdatacentre/dds-backend). It can also be built by running:
@@ -213,23 +221,20 @@ docker build --target production -f Dockerfiles/backend.Dockerfile .
 
 Use `docker-compose.yml` as a reference for the required environment.
 
-
 ### Configuration
 
 The environment variable `DDS_APP_CONFIG` defines the location of the config file, e.g. `/code/dds_web/dds_app.cfg`. The config values are listed in `dds_web/config.py`. Add them to the file in the format:
 
-```
+```python
 MAX_CONTENT_LENGTH = 0x1000000
 MAX_DOWNLOAD_LIMIT = 1000000000
 ```
 
-> :heavy_exclamation_mark: It is recommended that you redefine all values in `config.py` in your config file to avoid using default values by mistake.
-
+> ❗ It is recommended that you redefine all values in `config.py` in your config file to avoid using default values by mistake.
 
 ### Initialise the database
 
 Before you can use the system, you must run `flask db upgrade` to initialise the database schema and prepare for future database migrations. You can also add a superuser by running `flask init-db production`. In order to customize the user, make sure to set the `SUPERADMIN*` config options.
-
 
 ### Upgrades
 

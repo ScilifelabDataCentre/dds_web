@@ -1,5 +1,5 @@
 // Import Google Fonts - Lato
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap");
 
 // Import our variables - stuff like colours etc
 @import "variables";
@@ -12,14 +12,16 @@
 // Configuration
 @import "bootstrap/scss/functions";
 @import "bootstrap-dark-5/scss/dark/functions";
-@import "bootstrap/scss/variables";  // defaults are here
-@import "bootstrap-dark-5/scss/variables-alt";  // dark color set is here
-@import "bootstrap-dark-5/scss/dark/variables-map-alt-to-core";  // map the `-alt`'s back to core colors
+@import "bootstrap/scss/variables"; // defaults are here
+@import "bootstrap-dark-5/scss/variables-alt"; // dark color set is here
+@import "bootstrap-dark-5/scss/dark/variables-map-alt-to-core"; // map the `-alt`'s back to core colors
 @import "bootstrap/scss/mixins";
 @import "bootstrap/scss/utilities";
-@import "bootstrap-dark-5/scss/dark/patch";  // missing from BS, unsupported patch/hack
+@import "bootstrap-dark-5/scss/dark/patch"; // missing from BS, unsupported patch/hack
 
-:root { color-scheme: dark; }  // TODO: this should be code based.
+:root {
+  color-scheme: dark;
+} // TODO: this should be code based.
 
 // Layout & components
 @import "bootstrap/scss/root";
@@ -62,7 +64,6 @@
 
 // Unique to dark-mode
 @import "bootstrap-dark-5/scss/dark/dark";
-
 
 //
 // Import custom styling for DDS
