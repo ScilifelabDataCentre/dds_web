@@ -9,9 +9,7 @@ services:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./
       target: test
-    command: bash -c "COVERAGE_FILE=./coverage/.coverage pytest --color=yes $DDS_PYTEST_ARGS --cov=./dds_web --cov-report=xml:coverage/report.xml"
+    command: bash
     restart: "no"
-    volumes:
-      - type: bind
-        source: ./coverage
-        target: /code/coverage
+    stdin_open: true
+    tty: true

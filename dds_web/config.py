@@ -31,10 +31,10 @@ class Config(object):
     # Expected paths - these are the bind paths *inside* the container
     USE_LOCAL_DB = True
     LOGS_DIR = "/dds_web/logs"
-    SAFESPRING_URL = os.environ.get("DDS_SAFESPRING_URL", "https://example.endpoint.net")
+    SAFESPRING_URL = os.environ.get("DDS_SAFESPRING_URL", "http://minio:9000")
     DDS_SAFESPRING_PROJECT = os.environ.get("DDS_SAFESPRING_PROJECT", "project-name.example.se")
-    DDS_SAFESPRING_ACCESS = os.environ.get("DDS_SAFESPRING_ACCESS", "SAFESPRINGACCESSKEY")
-    DDS_SAFESPRING_SECRET = os.environ.get("DDS_SAFESPRING_SECRET", "SAFESPRINGSECRETKEY")
+    DDS_SAFESPRING_ACCESS = os.environ.get("DDS_SAFESPRING_ACCESS", "minio")
+    DDS_SAFESPRING_SECRET = os.environ.get("DDS_SAFESPRING_SECRET", "minioPassword")
 
     # Use short-lived session cookies:
     PERMANENT_SESSION_LIFETIME = datetime.timedelta(hours=1)
@@ -49,11 +49,11 @@ class Config(object):
     OIDC_CLIENT_SECRET = ""
     OIDC_ACCESS_TOKEN_URL = ""
 
-    MAIL_SERVER = "smtp.mailtrap.io"
-    MAIL_PORT = 2525
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "mailtrap_username")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "mailtrap_password")
-    MAIL_USE_TLS = True
+    MAIL_SERVER = "mailcatcher"
+    MAIL_PORT = 1025
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    MAIL_USE_TLS = False
     MAIL_USE_SSL = False
     MAIL_DEFAULT_SENDER = "dds@noreply.se"
 

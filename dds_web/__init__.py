@@ -18,7 +18,6 @@ from logging.config import dictConfig
 from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
-import flask_bootstrap
 import flask_login
 import flask_migrate
 
@@ -180,7 +179,17 @@ def create_app(testing=False, database_uri=None):
         # Simplifies testing as we don't test the session protection anyway
         login_manager.session_protection = "basic"
 
-    flask_bootstrap.Bootstrap(app)
+    @app.before_request
+    def prepare():
+        """Populate flask globals for template rendering"""
+        flask.g.current_user = None
+        if auth.current_user():
+            flask.g.current_user = auth.current_user().username
+        elif flask_login.current_user.is_authenticated:
+            flask.g.current_user = flask_login.current_user.username
+        elif flask.request.authorization:
+            flask.g.current_user = flask.request.authorization.get("username")
+
     # Setup logging handlers
     setup_logging(app)
 
@@ -238,11 +247,6 @@ def create_app(testing=False, database_uri=None):
 
     app.cli.add_command(fill_db_wrapper)
 
-    @app.route("/status")
-    def get_status():
-        """Return a simple status message to confirm that the system is ready."""
-        return flask.jsonify({"status": "ready"})
-
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
 
@@ -251,9 +255,11 @@ def create_app(testing=False, database_uri=None):
 
         # Register blueprints
         from dds_web.api import api_blueprint
+        from dds_web.web.root import pages
         from dds_web.web.user import auth_blueprint
 
         app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+        app.register_blueprint(pages, url_prefix="")
         app.register_blueprint(auth_blueprint, url_prefix="")
 
         # Set-up the schedulers

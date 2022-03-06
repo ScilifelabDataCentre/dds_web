@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [ dev, master ]
+    branches: [dev, master]
   pull_request:
   workflow_dispatch:
 
@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-    - name: Run tests against database container
-      run: docker-compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build --exit-code-from backend
+      - name: Run tests against database container
+        run: docker-compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build --exit-code-from backend
 
-    - uses: codecov/codecov-action@v2
-      with:
-        files: ./coverage/report.xml
+      - uses: codecov/codecov-action@v2
+        with:
+          files: ./coverage/report.xml

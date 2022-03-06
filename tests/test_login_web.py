@@ -40,9 +40,16 @@ def successful_web_login(client, user_auth):
     )
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.INDEX
-    assert flask.request.path == flask.url_for("auth_blueprint.index")
+    assert flask.request.path == flask.url_for("pages.home")
 
     return flask.g.csrf_token
+
+
+def test_load_login_page(client):
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    response = client.get(tests.DDSEndpoint.LOGIN)
+    assert response.status == "200 OK"
 
 
 def test_cancel_2fa(client):
