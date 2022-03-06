@@ -27,7 +27,9 @@ FROM base as test
 RUN pip3 install -r /code/tests/requirements-test.txt
 RUN apt-get install -y mariadb-client
 
-# Build frontend
+###################
+## BUILD FRONTEND
+###################
 FROM node:16 as nodebuilder
 COPY ./dds_web/static /build
 WORKDIR /build
@@ -49,8 +51,7 @@ ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class
 WORKDIR /code/dds_web
 
 # Get the built frontend
-RUN mkdir ./static/css
-COPY --from=nodebuilder /build/css ./static/css
+COPY --from=nodebuilder /build ./static
 
 # Run app -- needs to be in WORKDIR
 CMD ["gunicorn", "run_app:app_obj"]
