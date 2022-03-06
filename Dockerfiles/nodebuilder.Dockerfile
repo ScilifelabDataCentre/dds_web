@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:16
 RUN mkdir /build
 WORKDIR /build
 RUN npm install -g npm@latest --quiet
