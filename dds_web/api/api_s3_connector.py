@@ -9,6 +9,7 @@ import logging
 import traceback
 import pathlib
 import json
+import gc
 
 # Installed
 import botocore
@@ -94,6 +95,10 @@ class ApiS3Connector:
 
         # Delete bucket
         bucket.delete()
+
+        # Clean up
+        del bucket
+        gc.collect()
 
     @bucket_must_exists
     def remove_multiple(self, items, *args, **kwargs):
