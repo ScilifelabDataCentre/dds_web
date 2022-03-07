@@ -460,7 +460,7 @@ class CreateProject(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(message="Server Error: Project was not created") from err
         except (
-            marshmallow.ValidationError,
+            marshmallow.exceptions.ValidationError,
             DDSArgumentError,
             AccessDeniedError,
         ) as err:
