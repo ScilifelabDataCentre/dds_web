@@ -37,3 +37,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Fix format of self deletion email ([#984](https://github.com/ScilifelabDataCentre/dds_web/pull/984))
 - Add a full zero-conf development environment ([#993](https://github.com/ScilifelabDataCentre/dds_web/pull/993))
 - Include frontend build in the backend production target ([#1011](https://github.com/ScilifelabDataCentre/dds_web/pull/1011))
+- Correct response about project being created when email validation fails for users ([#1014](https://github.com/ScilifelabDataCentre/dds_web/pull/1014))
