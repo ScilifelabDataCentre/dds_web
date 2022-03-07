@@ -128,7 +128,6 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
         """Create file object."""
         new_file = models.File(
             name=data.get("name"),
-            name_in_bucket=data.get("name_in_bucket"),
             subpath=data.get("subpath"),
             size_original=data.get("size"),
             size_stored=data.get("size_processed"),
@@ -138,6 +137,8 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
             checksum=data.get("checksum"),
         )
 
+        new_item = models.BucketItem(part=1, name_in_bucket=data.get("name_in_bucket"))
+
         new_version = models.Version(
             size_stored=new_file.size_stored, time_uploaded=dds_web.utils.current_time()
         )
@@ -146,6 +147,7 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
         # Update foreign keys
         project.file_versions.append(new_version)
         project.files.append(new_file)
+        new_file.bucket_items.append(new_item)
         new_file.versions.append(new_version)
 
         return new_file

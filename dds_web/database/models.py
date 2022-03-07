@@ -786,7 +786,6 @@ class File(db.Model):
 
     # Additional columns
     name = db.Column(db.Text, unique=False, nullable=False)
-    name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
     subpath = db.Column(db.Text, unique=False, nullable=False)
     size_original = db.Column(db.BigInteger, unique=False, nullable=False)
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
@@ -797,6 +796,7 @@ class File(db.Model):
     time_latest_download = db.Column(db.DateTime(), unique=False, nullable=True)
 
     # Additional relationships
+    bucket_items = db.relationship("BucketItem", back_populates="file")
     versions = db.relationship("Version", back_populates="file")
 
     def __repr__(self):
@@ -848,3 +848,22 @@ class Version(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<File Version {self.id}>"
+
+
+class BucketItem(db.Model):
+    """Model for keeping track of multiple objects corresponding to the same file."""
+
+    # Table setup
+    __tablename__ = "bucketitems"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    part = db.Column(db.Integer, unique=False, nullable=False)
+    name_in_bucket = db.Column(db.Text, unique=False, nullable=False)
+
+    # Foreign keys & relationships
+    active_file = db.Column(
+        db.BigInteger, db.ForeignKey("files.id", ondelete="CASCADE"), nullable=False
+    )
+    file = db.relationship("File", back_populates="bucket_items")

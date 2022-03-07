@@ -212,7 +212,7 @@ class MatchFiles(flask_restful.Resource):
         if not matching_files or matching_files is None:
             return {"files": None}
 
-        return {"files": {x.name: x.name_in_bucket for x in matching_files}}
+        return {"files": {x.name: x.bucket_items[0].name_in_bucket for x in matching_files}}
 
 
 class ListFiles(flask_restful.Resource):
@@ -441,7 +441,7 @@ class RemoveFile(flask_restful.Resource):
         if not file:
             raise FileNotFoundError("Could not find the specified file.")
 
-        name_in_bucket = file.name_in_bucket
+        name_in_bucket = file.bucket_items[0].name_in_bucket
 
         # get current version
         current_file_version = models.Version.query.filter(
@@ -548,7 +548,7 @@ class RemoveDir(flask_restful.Resource):
                 current_file_version.time_deleted = dds_web.utils.current_time()
 
                 # Delete file and update project size
-                names_in_bucket.append(x.name_in_bucket)
+                names_in_bucket.append(x.bucket_items[0].name_in_bucket)
                 db.session.delete(x)
             project.date_updated = dds_web.utils.current_time()
 
