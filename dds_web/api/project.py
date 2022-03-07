@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Standard Library
+import http
 
 # Installed
 import flask_restful
@@ -470,6 +471,7 @@ class CreateProject(flask_restful.Resource):
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."
         )
+
         user_addition_statuses = []
         if "users_to_add" in p_info:
             for user in p_info["users_to_add"]:
@@ -481,7 +483,7 @@ class CreateProject(flask_restful.Resource):
                         new_user_role=user.get("role"),
                         project=new_project,
                     )
-                    if invite_user_result["status"] == 200:
+                    if invite_user_result["status"] == http.HTTPStatus.OK:
                         invite_msg = (
                             f"Invitation sent to {user['email']}. "
                             "The user should have a valid account to be added to a project"
@@ -505,7 +507,7 @@ class CreateProject(flask_restful.Resource):
                     user_addition_statuses.append(addition_status)
 
         return {
-            "status": 200,
+            "status": http.HTTPStatus.OK,
             "message": f"Added new project '{new_project.title}'",
             "project_id": new_project.public_id,
             "user_addition_statuses": user_addition_statuses,
