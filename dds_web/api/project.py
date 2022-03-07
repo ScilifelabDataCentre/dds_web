@@ -475,7 +475,13 @@ class CreateProject(flask_restful.Resource):
         user_addition_statuses = []
         if "users_to_add" in p_info:
             for user in p_info["users_to_add"]:
-                existing_user = user_schemas.UserSchema().load(user)
+                try:
+                    existing_user = user_schemas.UserSchema().load(user)
+                except marshmallow.exceptions.ValidationError as err:
+                    addition_status = f"Error for {user.get('email')}: {err}"
+                    user_addition_statuses.append(addition_status)
+                    continue
+
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
@@ -483,6 +489,7 @@ class CreateProject(flask_restful.Resource):
                         new_user_role=user.get("role"),
                         project=new_project,
                     )
+
                     if invite_user_result["status"] == http.HTTPStatus.OK:
                         invite_msg = (
                             f"Invitation sent to {user['email']}. "
