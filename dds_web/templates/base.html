@@ -47,10 +47,12 @@
                             <input class="form-check-input" type="checkbox" id="theme-switcher-check"
                                 {{ 'checked' if request.cookies.get('ddstheme', 'light') == 'dark' }}>
                             <label class="form-check-label" for="theme-switcher-check">
-                                <i class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'dark' }} fas
-                                    fa-sun fa-fw me-2"></i>
-                                <i class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'light' }} fas
-                                    fa-moon fa-fw me-2"></i>
+                                <span id="theme-switcher-sun" class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'dark' }}">
+                                    <i class="fas fa-sun fa-fw me-2"></i>
+                                </span>
+                                <span id="theme-switcher-moon" class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'light' }} ">
+                                    <i class="fas fa-moon fa-fw me-2"></i>
+                                </span>
                             </label>
                         </div>
                     </div>
