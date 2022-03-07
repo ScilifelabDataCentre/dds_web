@@ -427,7 +427,7 @@ class RemoveContents(flask_restful.Resource):
 
 
 class CreateProject(flask_restful.Resource):
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
