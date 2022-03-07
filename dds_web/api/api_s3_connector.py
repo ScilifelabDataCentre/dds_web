@@ -84,10 +84,16 @@ class ApiS3Connector:
         )
 
     @bucket_must_exists
-    def remove_all(self, *args, **kwargs):
+    def remove_bucket(self, *args, **kwargs):
         """Removes all contents from the project specific s3 bucket."""
+        # Get bucket object
         bucket = self.resource.Bucket(self.project.bucket)
+
+        # Delete objects first
         bucket.objects.all().delete()
+
+        # Delete bucket
+        bucket.delete()
 
     @bucket_must_exists
     def remove_multiple(self, items, *args, **kwargs):
