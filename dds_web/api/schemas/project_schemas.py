@@ -66,7 +66,9 @@ class CreateProjectSchema(marshmallow.Schema):
     title = marshmallow.fields.String(
         required=True,
         allow_none=False,
-        validate=marshmallow.validate.Length(min=1),
+        validate=marshmallow.validate.And(
+            marshmallow.validate.Length(min=1), dds_web.utils.contains_disallowed_characters
+        ),
         error_messages={
             "required": {"message": "Title is required."},
             "null": {"message": "Title is required."},
@@ -75,7 +77,9 @@ class CreateProjectSchema(marshmallow.Schema):
     description = marshmallow.fields.String(
         required=True,
         allow_none=False,
-        validate=marshmallow.validate.Length(min=1),
+        validate=marshmallow.validate.And(
+            marshmallow.validate.Length(min=1), dds_web.utils.contains_disallowed_characters
+        ),
         error_messages={
             "required": {"message": "A project description is required."},
             "null": {"message": "A project description is required."},
@@ -84,7 +88,10 @@ class CreateProjectSchema(marshmallow.Schema):
     pi = marshmallow.fields.String(
         required=True,
         allow_none=False,
-        validate=marshmallow.validate.Length(min=1, max=255),
+        validate=marshmallow.validate.And(
+            marshmallow.validate.Length(min=1, max=255),
+            dds_web.utils.contains_disallowed_characters,
+        ),
         error_messages={
             "required": {"message": "A principal investigator is required."},
             "null": {"message": "A principal investigator is required."},
