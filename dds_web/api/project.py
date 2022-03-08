@@ -310,13 +310,15 @@ class UserProjects(flask_restful.Resource):
                 "PI": p.pi,
                 "Status": p.current_status,
                 "Last updated": p.date_updated if p.date_updated else p.date_created,
-                "Size": p.size,
             }
 
-            # Get proj size and update total size
-            proj_size = p.size
-            total_size += proj_size
-            project_info["Size"] = proj_size
+            if (
+                current_user.role == "Researcher" and p.current_status == "Available"
+            ) or current_user.role != "Researcher":
+                # Get proj size and update total size
+                proj_size = p.size
+                total_size += proj_size
+                project_info["Size"] = proj_size
 
             if usage:
                 proj_bhours, proj_cost = self.project_usage(project=p)
@@ -334,8 +336,12 @@ class UserProjects(flask_restful.Resource):
                 "usage": total_bhours_db,
                 "cost": total_cost_db,
             },
-            "total_size": total_size,
         }
+
+        if (
+            current_user.role == "Researcher" and p.current_status == "Available"
+        ) or current_user.role != "Researcher":
+            return_info["total_size"] = total_size
 
         return return_info
 
