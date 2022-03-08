@@ -641,7 +641,7 @@ class UserActivation(flask_restful.Resource):
 class DeleteUser(flask_restful.Resource):
     """Endpoint to remove users from the system
 
-    Unit admins can delete unitusers. Super admins can delete any user."""
+    Unit admins can delete Unit Admins. Super admins can delete any user."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
@@ -661,11 +661,15 @@ class DeleteUser(flask_restful.Resource):
         current_user = auth.current_user()
 
         if current_user.role == "Unit Admin":
-            if user.role not in ["Unit Admin", "Unit Personnel"] or current_user.unit != user.unit:
+            if user.role not in ["Unit Admin", "Unit Personnel"]:
+                raise ddserr.UserDeletionError(
+                    message="You can only delete users with the role Unit Admin or Unit Personnel."
+                )
+            if current_user.unit != user.unit:
                 raise ddserr.UserDeletionError(
                     message=(
-                        "You are not allowed to delete this user. As a unit admin, "
-                        "you're only allowed to delete users in your unit."
+                        "As a unit admin, you're only allowed to delete Unit Admins "
+                        "and Unit Personnel within your specific unit."
                     )
                 )
 
