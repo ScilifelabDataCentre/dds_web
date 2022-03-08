@@ -668,7 +668,7 @@ class DeleteUser(flask_restful.Resource):
             if current_user.unit != user.unit:
                 raise ddserr.UserDeletionError(
                     message=(
-                        "As a unit admin, you're only allowed to delete Unit Admins "
+                        "As a unit admin, you're can only delete Unit Admins "
                         "and Unit Personnel within your specific unit."
                     )
                 )
