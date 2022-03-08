@@ -398,7 +398,7 @@ class RemoveContents(flask_restful.Resource):
         # Delete from cloud
         with ApiS3Connector(project=project) as s3conn:
             try:
-                s3conn.remove_all()
+                s3conn.remove_bucket()
             except botocore.client.ClientError as err:
                 raise DeletionError(message=str(err), project=project.public_id)
 
