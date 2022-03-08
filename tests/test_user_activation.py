@@ -71,7 +71,7 @@ def test_deactivate_deactivated_user_as_superadmin(module_client):
         json={**user, "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "User is already in deactivated!" in response.json["message"]
+    assert "User is already deactivated!" in response.json["message"]
 
 
 def test_reactivate_user_as_superadmin(module_client):
