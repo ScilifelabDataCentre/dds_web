@@ -527,11 +527,12 @@ class RemoveDir(flask_restful.Resource):
                 .filter(
                     sqlalchemy.or_(
                         models.File.subpath == sqlalchemy.func.binary(folder),
-                        models.File.subpath.regexp_match(rf"^{folder}(/[^/]+)*$"),
+                        models.File.subpath.regexp_match(rf"^{folder}(\/[^\/]+)*$"),
                     )
                 )
                 .all()
             )
+
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError(message=str(err))
 
