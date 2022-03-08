@@ -5,7 +5,7 @@
         <div class="col">
             <div class="form-floating">
                 {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "") + " rounded-0 shadow-none", **{"placeholder": form.username.label.text, "autocomplete": "off"}) }}
-                <label for="username">{{ form.username.label }}</label>
+                {{ form.username.label }}
                 {% if form.username.errors %}
                     {% for error in form.username.errors %}
                         <div class="invalid-feedback">{{ error }}</div>
@@ -19,7 +19,7 @@
         <div class="col">
             <div class="form-floating">
                 {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "") + " rounded-0 shadow-none", **{"placeholder": form.password.label.text, "autocomplete": "off"}) }}
-                <label for="password">{{ form.password.label }}</label>
+                {{ form.password.label }}
                 {% if form.password.errors %}
                     {% for error in form.password.errors %}
                         <div class="invalid-feedback">{{ error }}</div>
