@@ -71,7 +71,7 @@ def test_deactivate_deactivated_user_as_superadmin(module_client):
         json={**user, "action": "deactivate"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "User is already in desired state!" in response.json["message"]
+    assert "User is already in deactivated!" in response.json["message"]
 
 
 def test_reactivate_user_as_superadmin(module_client):
@@ -120,7 +120,7 @@ def test_deactivate_user_as_unitadmin(module_client):
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert (
-        "You are not allowed to deactivate this user. As a unit admin, you're only allowed to deactivate users in your unit."
+        "You can only activate/deactivate users with the role Unit Admin or Unit Personnel"
         in response.json["message"]
     )
 
