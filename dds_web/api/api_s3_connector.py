@@ -95,10 +95,7 @@ class ApiS3Connector:
 
         # Delete bucket
         bucket.delete()
-
-        # Clean up
-        del bucket
-        gc.collect()
+        bucket = None
 
     @bucket_must_exists
     def remove_multiple(self, items, *args, **kwargs):
