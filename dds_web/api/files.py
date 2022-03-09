@@ -6,6 +6,7 @@
 
 # Standard library
 import os
+import re
 
 # Installed
 import flask_restful
@@ -340,8 +341,9 @@ class ListFiles(flask_restful.Resource):
             else:
                 # Get distinct sub folders in specific folder with regex
                 # Match /<something that is not /> x number of times
+                re_folder = re.escape(folder)
                 distinct_folders = (
-                    files.filter(models.File.subpath.regexp_match(rf"^{folder}(/[^/]+)+$"))
+                    files.filter(models.File.subpath.regexp_match(rf"^{re_folder}(/[^/]+)+$"))
                     .with_entities(models.File.subpath)
                     .distinct()
                     .all()
@@ -518,6 +520,7 @@ class RemoveDir(flask_restful.Resource):
         """Delete all items in folder"""
         exists = False
         names_in_bucket = []
+        folder = re.escape(folder)
         try:
             # File names in root
             files = (
@@ -527,7 +530,7 @@ class RemoveDir(flask_restful.Resource):
                 .filter(
                     sqlalchemy.or_(
                         models.File.subpath == sqlalchemy.func.binary(folder),
-                        models.File.subpath.regexp_match(rf"^{folder}(\/[^\/]+)*$"),
+                        models.File.subpath.regexp_match(rf"^{folder}(/[^/]+)*$"),
                     )
                 )
                 .all()
