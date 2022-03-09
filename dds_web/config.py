@@ -57,7 +57,7 @@ class Config(object):
     MAIL_USE_SSL = False
     MAIL_DEFAULT_SENDER = "dds@noreply.se"
 
-    TOKEN_ENDPOINT_ACCESS_LIMIT = "10/hour"
+    TOKEN_ENDPOINT_ACCESS_LIMIT = "1/hour"
     RATELIMIT_STORAGE_URI = os.environ.get(
         "RATELIMIT_STORAGE_URI", "memory://"
     )  # Use in devel only! Use Redis or memcached in prod

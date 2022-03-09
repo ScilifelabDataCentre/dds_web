@@ -539,7 +539,7 @@ class DeleteUserSelf(flask_restful.Resource):
 class UserActivation(flask_restful.Resource):
     """Endpoint to reactivate/deactivate users in the system
 
-    Unit admins can reactivate/deactivate unitusers. Super admins can reactivate/deactivate any user.
+    Unit Admins can reactivate/deactivate unitusers. Super admins can reactivate/deactivate any user.
     """
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
@@ -568,7 +568,7 @@ class UserActivation(flask_restful.Resource):
         current_user = auth.current_user()
 
         if current_user.role == "Unit Admin":
-            # Unit Admin can only activate/deactivate Unit admins and personnel
+            # Unit Admin can only activate/deactivate Unit Admins and personnel
             if user.role not in ["Unit Admin", "Unit Personnel"]:
                 raise ddserr.AccessDeniedError(
                     message=(
@@ -641,7 +641,7 @@ class UserActivation(flask_restful.Resource):
 class DeleteUser(flask_restful.Resource):
     """Endpoint to remove users from the system
 
-    Unit admins can delete Unit Admins. Super admins can delete any user."""
+    Unit Admins can delete Unit Admins. Super admins can delete any user."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
