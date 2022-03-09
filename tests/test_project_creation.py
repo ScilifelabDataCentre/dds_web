@@ -470,4 +470,4 @@ def test_create_project_with_unsuitable_roles(client, boto3_session):
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
-        assert "User Role should be either 'Project Owner' or 'Researcher'" in x
+        assert "Role should be either 'Project Owner' or 'Researcher'" in x
