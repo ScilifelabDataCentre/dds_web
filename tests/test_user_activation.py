@@ -104,7 +104,7 @@ def test_reactivate_user_as_superadmin(module_client):
 
 
 def test_deactivate_user_as_unitadmin(module_client):
-    """Deactivate researchuser as unit admin"""
+    """Deactivate researchuser as Unit Admin"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
@@ -126,7 +126,7 @@ def test_deactivate_user_as_unitadmin(module_client):
 
 
 def test_deactivate_unituser_as_unitadmin(module_client):
-    """Deactivate unit user as unit admin"""
+    """Deactivate unit user as Unit Admin"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
@@ -167,7 +167,7 @@ def test_deactivate_unituser_as_unitadmin(module_client):
 
 
 def test_reactivate_unituser_as_unitadmin(module_client):
-    """Reactivate unituser as unit admin"""
+    """Reactivate unituser as Unit Admin"""
     # Try to get token as user that is to be deactivated
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,

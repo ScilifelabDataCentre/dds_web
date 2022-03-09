@@ -271,7 +271,7 @@ def test_del_request_others_success(client):
 
 
 def test_del_request_others_superaction(client):
-    """Super admin deletes unit admin"""
+    """Super admin deletes Unit Admin"""
 
     email_to_delete = "delete_me_unitadmin@mailtrap.io"
 

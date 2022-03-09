@@ -198,7 +198,7 @@ class AddUser(flask_restful.Resource):
 
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
-            # TODO Change / move this later. This is just so that we can add an initial unit admin.
+            # TODO Change / move this later. This is just so that we can add an initial Unit Admin.
             if auth.current_user().role == "Super Admin":
                 if unit:
                     unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
@@ -668,7 +668,7 @@ class DeleteUser(flask_restful.Resource):
             if current_user.unit != user.unit:
                 raise ddserr.UserDeletionError(
                     message=(
-                        "As a unit admin, you're can only delete Unit Admins "
+                        "As a Unit Admin, you're can only delete Unit Admins "
                         "and Unit Personnel within your specific unit."
                     )
                 )
