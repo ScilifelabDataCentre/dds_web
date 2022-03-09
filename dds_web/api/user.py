@@ -641,7 +641,7 @@ class UserActivation(flask_restful.Resource):
 class DeleteUser(flask_restful.Resource):
     """Endpoint to remove users from the system
 
-    Unit Admins can delete Unit Admins. Super admins can delete any user."""
+    Unit Admins can delete Unit Admins and Unit Personnel. Super admins can delete any user."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
