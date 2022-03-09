@@ -338,9 +338,7 @@ class UserProjects(flask_restful.Resource):
             },
         }
 
-        if (
-            current_user.role == "Researcher" and p.current_status == "Available"
-        ) or current_user.role != "Researcher":
+        if total_size:
             return_info["total_size"] = total_size
 
         return return_info
