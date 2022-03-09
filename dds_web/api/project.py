@@ -338,7 +338,7 @@ class UserProjects(flask_restful.Resource):
             },
         }
 
-        if total_size:
+        if total_size or current_user.role in ["Unit Admin", "Unit Personnel"]:
             return_info["total_size"] = total_size
 
         return return_info
