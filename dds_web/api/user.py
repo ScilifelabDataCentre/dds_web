@@ -568,7 +568,7 @@ class UserActivation(flask_restful.Resource):
         current_user = auth.current_user()
 
         if current_user.role == "Unit Admin":
-            # Unit admin can only activate/deactivate Unit admins and personnel
+            # Unit Admin can only activate/deactivate Unit admins and personnel
             if user.role not in ["Unit Admin", "Unit Personnel"]:
                 raise ddserr.AccessDeniedError(
                     message=(

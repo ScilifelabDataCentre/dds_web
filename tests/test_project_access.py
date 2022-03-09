@@ -309,7 +309,7 @@ def test_fix_access_unitpersonnel_valid_email_unitpersonnel(client):
 
 
 def test_fix_access_unitadmin_valid_email_researcher(client):
-    """Unit admin giving access to researcher - ok."""
+    """Unit Admin giving access to researcher - ok."""
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     assert project
 
@@ -345,7 +345,7 @@ def test_fix_access_unitadmin_valid_email_researcher(client):
 
 
 def test_fix_access_unitadmin_valid_email_projectowner(client):
-    """Unit admin giving access to project owner - ok."""
+    """Unit Admin giving access to project owner - ok."""
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     assert project
 
@@ -381,7 +381,7 @@ def test_fix_access_unitadmin_valid_email_projectowner(client):
 
 
 def test_fix_access_unitadmin_valid_email_unituser(client):
-    """Unit admin giving access to unituser - ok."""
+    """Unit Admin giving access to unituser - ok."""
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     assert project
 
