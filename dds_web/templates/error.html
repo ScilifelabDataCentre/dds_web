@@ -8,8 +8,12 @@ Error
 {% block body %}
 
 <p>
+{% if error_code == 429 %}
+    API returned an error: Too many authentication requests in one hour
+{% else %}
     An error occurred when processing your request.
     {{message}}
+{% endif %}
 </p>
 <p><a href="{{ url_for('pages.home') }}">Back to first page</a></p>
 
