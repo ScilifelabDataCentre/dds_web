@@ -311,6 +311,8 @@ class ListFiles(flask_restful.Resource):
         # Files have subpath "." and folders do not have child folders
         # Get everything in folder:
         # Files have subpath == folder and folders have child folders (regexp)
+        if folder[-1] == '/':
+            folder = folder[:-1]
         try:
             # All files in project
             files = models.File.query.filter(
@@ -520,6 +522,8 @@ class RemoveDir(flask_restful.Resource):
         """Delete all items in folder"""
         exists = False
         names_in_bucket = []
+        if folder[-1] == '/':
+            folder = folder[:-1]
         re_folder = re.escape(folder)
         try:
             # File names in root
