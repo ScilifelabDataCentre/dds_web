@@ -520,7 +520,7 @@ class RemoveDir(flask_restful.Resource):
         """Delete all items in folder"""
         exists = False
         names_in_bucket = []
-        folder = re.escape(folder)
+        re_folder = re.escape(folder)
         try:
             # File names in root
             files = (
@@ -530,7 +530,7 @@ class RemoveDir(flask_restful.Resource):
                 .filter(
                     sqlalchemy.or_(
                         models.File.subpath == sqlalchemy.func.binary(folder),
-                        models.File.subpath.regexp_match(rf"^{folder}(/[^/]+)*$"),
+                        models.File.subpath.regexp_match(rf"^{re_folder}(/[^/]+)*$"),
                     )
                 )
                 .all()
