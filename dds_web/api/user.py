@@ -271,7 +271,7 @@ class AddUser(flask_restful.Resource):
             return {
                 "status": ddserr.AccessDeniedError.code.value,
                 "message": (
-                    f"This user is already registered with an incompatible role. Role should be either 'Project Owner' or 'Researcher' to be added to a project."
+                    "This user is already registered with an incompatible role. Role should be either 'Project Owner' or 'Researcher' to be added to a project."
                 ),
             }
 
