@@ -271,8 +271,7 @@ class AddUser(flask_restful.Resource):
             return {
                 "status": ddserr.AccessDeniedError.code.value,
                 "message": (
-                    "User Role should be either 'Project Owner' or "
-                    "'Researcher' to be added to a project"
+                    f"This user is registered as a '{role}'. Role should be either 'Project Owner' or 'Researcher' to be added to a project."
                 ),
             }
 
