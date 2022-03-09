@@ -267,12 +267,20 @@ class AddUser(flask_restful.Resource):
 
         allowed_roles = ["Project Owner", "Researcher"]
 
-        if role not in allowed_roles or whom.role not in allowed_roles:
+        if role not in allowed_roles:
             return {
                 "status": ddserr.AccessDeniedError.code.value,
                 "message": (
                     "User Role should be either 'Project Owner' or "
                     "'Researcher' to be added to a project"
+                ),
+            }
+
+        if whom.role not in allowed_roles:
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": (
+                    "Users affiliated with units can not be added to projects individually."
                 ),
             }
 
