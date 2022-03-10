@@ -196,46 +196,52 @@ class AddUser(flask_restful.Resource):
         # Compose and send email
         AddUser.compose_and_send_email_to_user(userobj=new_invite, mail_type="invite", link=link)
 
-        # Append invite to unit if applicable
-        if new_invite.role in ["Unit Admin", "Unit Personnel"]:
-            # TODO Change / move this later. This is just so that we can add an initial Unit Admin.
-            if auth.current_user().role == "Super Admin":
-                if unit:
-                    unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
-                    if not unit_row:
-                        raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
+        try:
+            # Append invite to unit if applicable
+            if new_invite.role in ["Unit Admin", "Unit Personnel"]:
+                # TODO Change / move this later. This is just so that we can add an initial Unit Admin.
+                if auth.current_user().role == "Super Admin":
+                    if unit:
+                        unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
+                        if not unit_row:
+                            raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
 
-                    unit_row.invites.append(new_invite)
-                else:
-                    raise ddserr.DDSArgumentError(message="Cannot invite this user.")
+                        unit_row.invites.append(new_invite)
+                    else:
+                        raise ddserr.DDSArgumentError(message="Cannot invite this user.")
 
-            if "Unit" in auth.current_user().role:
-                # Give new unit user access to all projects of the unit
-                auth.current_user().unit.invites.append(new_invite)
-                for unit_project in auth.current_user().unit.projects:
-                    if unit_project.is_active:
-                        share_project_private_key(
-                            from_user=auth.current_user(),
-                            to_another=new_invite,
-                            from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                            project=unit_project,
-                        )
+                if "Unit" in auth.current_user().role:
+                    # Give new unit user access to all projects of the unit
+                    auth.current_user().unit.invites.append(new_invite)
+                    for unit_project in auth.current_user().unit.projects:
+                        if unit_project.is_active:
+                            share_project_private_key(
+                                from_user=auth.current_user(),
+                                to_another=new_invite,
+                                from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                                project=unit_project,
+                            )
 
-                if not project:  # specified project is disregarded for unituser invites
-                    msg = f"{str(new_invite)} was successful."
-                else:
-                    msg = f"{str(new_invite)} was successful, but specification for {str(project)} dropped. Unit Users have automatic access to projects of their unit."
+                    if not project:  # specified project is disregarded for unituser invites
+                        msg = f"{str(new_invite)} was successful."
+                    else:
+                        msg = f"{str(new_invite)} was successful, but specification for {str(project)} dropped. Unit Users have automatic access to projects of their unit."
 
-        else:
-            db.session.add(new_invite)
-            if project:
-                share_project_private_key(
-                    from_user=auth.current_user(),
-                    to_another=new_invite,
-                    project=project,
-                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                    is_project_owner=new_user_role == "Project Owner",
-                )
+            else:
+                db.session.add(new_invite)
+                if project:
+                    share_project_private_key(
+                        from_user=auth.current_user(),
+                        to_another=new_invite,
+                        project=project,
+                        from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                        is_project_owner=new_user_role == "Project Owner",
+                    )
+        except ddserr.KeyNotFoundError as keyerr:
+            return {
+                "message": "You do not have access to the specified project.",
+                "status": ddserr.AccessDeniedError.code.value,
+            }
 
         db.session.commit()
         msg = f"{str(new_invite)} was successful."
@@ -316,13 +322,22 @@ class AddUser(flask_restful.Resource):
                     )
                 )
 
-            share_project_private_key(
-                from_user=auth.current_user(),
-                to_another=whom,
-                from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                project=project,
-                is_project_owner=is_owner,
-            )
+            try:
+                share_project_private_key(
+                    from_user=auth.current_user(),
+                    to_another=whom,
+                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                    project=project,
+                    is_project_owner=is_owner,
+                )
+            except ddserr.KeyNotFoundError as keyerr:
+                return {
+                    "message": (
+                        "You do not have access to the current project. To get access, "
+                        "ask the a user within the responsible unit to grant you access."
+                    ),
+                    "status": ddserr.AccessDeniedError.code.value,
+                }
 
         try:
             db.session.commit()
