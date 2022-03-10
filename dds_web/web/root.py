@@ -5,6 +5,7 @@ Here we have the routes that are not specific to a user.
 """
 from flask import Blueprint, render_template, jsonify
 from flask import current_app as app
+from dds_web import forms
 
 
 pages = Blueprint("pages", __name__)
@@ -13,7 +14,8 @@ pages = Blueprint("pages", __name__)
 @pages.route("/", methods=["GET"])
 def home():
     """Home page."""
-    return render_template("home.html")
+    form = forms.LoginForm()
+    return render_template("home.html", form=form)
 
 
 @pages.route("/status")
