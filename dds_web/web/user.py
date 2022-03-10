@@ -214,7 +214,10 @@ def confirm_2fa():
             flask.flash("Invalid one-time code.", "warning")
             return flask.redirect(
                 flask.url_for(
-                    "auth_blueprint.confirm_2fa", form=form, cancel_form=cancel_form, next=next_target
+                    "auth_blueprint.confirm_2fa",
+                    form=form,
+                    cancel_form=cancel_form,
+                    next=next_target,
                 )
             )
 

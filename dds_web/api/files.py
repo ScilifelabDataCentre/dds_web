@@ -248,9 +248,7 @@ class ListFiles(flask_restful.Resource):
             return {"num_items": 0, "message": f"The project {project.public_id} is empty."}
 
         # Get files and folders
-        distinct_files, distinct_folders = self.items_in_subpath(
-            project=project, folder=subpath
-        )
+        distinct_files, distinct_folders = self.items_in_subpath(project=project, folder=subpath)
 
         # Collect file and folder info to return to CLI
         if distinct_files:

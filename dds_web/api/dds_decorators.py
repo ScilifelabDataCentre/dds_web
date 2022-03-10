@@ -92,7 +92,9 @@ def dbsession(func):
         try:
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(message=str(sqlerr), alt_message="Saving database changes failed.") from sqlerr
+            raise DatabaseError(
+                message=str(sqlerr), alt_message="Saving database changes failed."
+            ) from sqlerr
 
         return result
 

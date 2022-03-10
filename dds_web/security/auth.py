@@ -167,7 +167,9 @@ def extract_token_invite_key(token):
     try:
         return invite, bytes.fromhex(claims.get("sen_con"))
     except ValueError as exc:
-        raise ValueError("Temporary key is expected be in hexadecimal digits for a byte string.") from exc
+        raise ValueError(
+            "Temporary key is expected be in hexadecimal digits for a byte string."
+        ) from exc
 
 
 def obtain_current_encrypted_token():
