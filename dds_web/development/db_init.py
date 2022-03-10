@@ -85,7 +85,7 @@ def fill_db():
         description="This is a test project. You will be able to upload to but NOT download "
         "from this project. Create a new project to test the entire system. ",
         pi="PI Name",
-        bucket=f"testbucket",
+        bucket="testbucket",
     )
 
     project_1.project_statuses.append(
