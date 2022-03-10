@@ -45,4 +45,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-03-09 - 2022-03-23)
 
 - Introduce a separate error message if someone tried to add an unit user to projects individually. ([#1039](https://github.com/ScilifelabDataCentre/dds_web/pull/1039))
-- Catch KeyNotFoundError when user tries to give access to a project they themselves do not have access to 
+- Catch KeyNotFoundError when user tries to give access to a project they themselves do not have access to ([#1045](https://github.com/ScilifelabDataCentre/dds_web/pull/1045))
