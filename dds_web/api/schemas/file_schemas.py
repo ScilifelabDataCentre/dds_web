@@ -106,19 +106,16 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
         """Check that the file does not match anything already in the database."""
         # Check that there is no such file in the database
         project = data.get("project_row")
-        try:
-            file = (
-                models.File.query.filter(
-                    sqlalchemy.and_(
-                        models.File.name == sqlalchemy.func.binary(data.get("name")),
-                        models.File.project_id == sqlalchemy.func.binary(project.id),
-                    )
+        file = (
+            models.File.query.filter(
+                sqlalchemy.and_(
+                    models.File.name == sqlalchemy.func.binary(data.get("name")),
+                    models.File.project_id == sqlalchemy.func.binary(project.id),
                 )
-                .with_entities(models.File.id)
-                .one_or_none()
             )
-        except sqlalchemy.exc.SQLAlchemyError:
-            raise
+            .with_entities(models.File.id)
+            .one_or_none()
+        )
 
         if file:
             raise FileExistsError
