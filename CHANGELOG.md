@@ -29,7 +29,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Add support for getting IPs from X-Forwarded-For ([#952](https://github.com/ScilifelabDataCentre/dds_web/pull/952))
 - Relax requirements for usernames (wider length range, `.` and `-`) ([#943](https://github.com/ScilifelabDataCentre/dds_web/pull/943))
 - Delay committing project to db until after the bucket has been created ([#967](https://github.com/ScilifelabDataCentre/dds_web/pull/967))
-- Fix logic for notification about sent email ([#963])(<https://github.com/ScilifelabDataCentre/dds_web/pull/963>))
+- Fix logic for notification about sent email ([#963](https://github.com/ScilifelabDataCentre/dds_web/pull/963))
 - Extended the `dds_web.api.dds_decorators.logging_bind_request` decorator to catch all not yet caught exceptions and make sure they will be logged ([#958](https://github.com/ScilifelabDataCentre/dds_web/pull/958)).
 - Increase the security of the session cookie using HTTPONLY and SECURE ([#972](https://github.com/ScilifelabDataCentre/dds_web/pull/972))
 - Add role when listing project users ([#974](https://github.com/ScilifelabDataCentre/dds_web/pull/974))
