@@ -10,7 +10,6 @@
 
 # Own modules
 from dds_web import create_app
-from dds_web import auth
 
 
 ####################################################################################################
