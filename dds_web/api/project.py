@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Standard Library
+import http
 
 # Installed
 import flask_restful
@@ -309,13 +310,15 @@ class UserProjects(flask_restful.Resource):
                 "PI": p.pi,
                 "Status": p.current_status,
                 "Last updated": p.date_updated if p.date_updated else p.date_created,
-                "Size": p.size,
             }
 
-            # Get proj size and update total size
-            proj_size = p.size
-            total_size += proj_size
-            project_info["Size"] = proj_size
+            if (
+                current_user.role == "Researcher" and p.current_status == "Available"
+            ) or current_user.role != "Researcher":
+                # Get proj size and update total size
+                proj_size = p.size
+                total_size += proj_size
+                project_info["Size"] = proj_size
 
             if usage:
                 proj_bhours, proj_cost = self.project_usage(project=p)
@@ -333,8 +336,10 @@ class UserProjects(flask_restful.Resource):
                 "usage": total_bhours_db,
                 "cost": total_cost_db,
             },
-            "total_size": total_size,
         }
+
+        if total_size or current_user.role in ["Unit Admin", "Unit Personnel"]:
+            return_info["total_size"] = total_size
 
         return return_info
 
@@ -397,7 +402,7 @@ class RemoveContents(flask_restful.Resource):
         # Delete from cloud
         with ApiS3Connector(project=project) as s3conn:
             try:
-                s3conn.remove_all()
+                s3conn.remove_bucket()
             except botocore.client.ClientError as err:
                 raise DeletionError(message=str(err), project=project.public_id)
 
@@ -426,7 +431,7 @@ class RemoveContents(flask_restful.Resource):
 
 
 class CreateProject(flask_restful.Resource):
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -459,7 +464,7 @@ class CreateProject(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(message="Server Error: Project was not created") from err
         except (
-            marshmallow.ValidationError,
+            marshmallow.exceptions.ValidationError,
             DDSArgumentError,
             AccessDeniedError,
         ) as err:
@@ -470,10 +475,17 @@ class CreateProject(flask_restful.Resource):
         flask.current_app.logger.debug(
             f"Project {new_project.public_id} created by user {auth.current_user().username}."
         )
+
         user_addition_statuses = []
         if "users_to_add" in p_info:
             for user in p_info["users_to_add"]:
-                existing_user = user_schemas.UserSchema().load(user)
+                try:
+                    existing_user = user_schemas.UserSchema().load(user)
+                except marshmallow.exceptions.ValidationError as err:
+                    addition_status = f"Error for {user.get('email')}: {err}"
+                    user_addition_statuses.append(addition_status)
+                    continue
+
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
@@ -481,7 +493,8 @@ class CreateProject(flask_restful.Resource):
                         new_user_role=user.get("role"),
                         project=new_project,
                     )
-                    if invite_user_result["status"] == 200:
+
+                    if invite_user_result["status"] == http.HTTPStatus.OK:
                         invite_msg = (
                             f"Invitation sent to {user['email']}. "
                             "The user should have a valid account to be added to a project"
@@ -505,7 +518,7 @@ class CreateProject(flask_restful.Resource):
                     user_addition_statuses.append(addition_status)
 
         return {
-            "status": 200,
+            "status": http.HTTPStatus.OK,
             "message": f"Added new project '{new_project.title}'",
             "project_id": new_project.public_id,
             "user_addition_statuses": user_addition_statuses,

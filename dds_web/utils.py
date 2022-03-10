@@ -60,6 +60,17 @@ def contains_digit_or_specialchar(input):
         )
 
 
+def contains_disallowed_characters(input):
+    """Inputs like <f0><9f><98><80> cause issues in Project names etc."""
+    disallowed = re.findall(r"[^\w\s]+", input)
+    if disallowed:
+        disallowed = set(disallowed)  # unique values
+        chars = "characters"
+        raise marshmallow.ValidationError(
+            f"The {chars if len(disallowed) > 1 else chars[:-1]} '{' '.join(disallowed)}' within '[italic]{input}[/italic]' {'are' if len(disallowed) > 1 else 'is'} not allowed."
+        )
+
+
 def email_not_taken(input):
     """Validator - verify that email is not taken.
 

@@ -70,3 +70,11 @@
 //
 @import "custom";
 @import "homepage";
+
+// Dark-mode specific overwrites
+
+// Custom opacity, not set in cookies-dark-mode, not sure why
+.bg-light {
+  --bs-bg-opacity: 0.2;
+  background-color: rgba(var(--bs-light-rgb), var(--bs-bg-opacity)) !important;
+}

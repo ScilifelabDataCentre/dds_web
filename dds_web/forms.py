@@ -75,7 +75,7 @@ class LoginForm(flask_wtf.FlaskForm):
         validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(1, 64)],
     )
     password = wtforms.PasswordField("Password", validators=[wtforms.validators.InputRequired()])
-    submit = wtforms.SubmitField("Login")
+    submit = wtforms.SubmitField("Log in")
 
 
 class LogoutForm(flask_wtf.FlaskForm):
