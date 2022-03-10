@@ -40,3 +40,8 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Correct response about project being created when email validation fails for users ([#1014](https://github.com/ScilifelabDataCentre/dds_web/pull/1014))
 - Introduced an additional validator `dds_web.utils.contains_disallowed_characters` to fix issue [#1007](https://github.com/scilifelabdatacentre/dds_web/issues/1007) ([#1021](https://github.com/ScilifelabDataCentre/dds_web/pull/1021)).
 - Fix regex for listing and deleting files [#1029](https://github.com/scilifelabdatacentre/dds_web/issues/1029)
+- Hides the "Size" and "total_size" variables according to the role and project status ([#1032](https://github.com/ScilifelabDataCentre/dds_web/pull/1032)).
+
+## Sprint (2022-03-09 - 2022-03-23)
+
+- Introduce a separate error message if someone tried to add an unit user to projects individually. ([#1039](https://github.com/ScilifelabDataCentre/dds_web/pull/1039))

@@ -8,7 +8,7 @@ from tests.test_user_delete import user_from_email
 
 
 def test_get_info_unit_user(client):
-    """Get info for unit user/unit admin"""
+    """Get info for unit user/Unit Admin"""
 
     response = client.get(
         tests.DDSEndpoint.USER_INFO,

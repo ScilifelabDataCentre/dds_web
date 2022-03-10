@@ -254,7 +254,7 @@ def test_project_key_sharing(client):
 
 
 def test_delete_user_deletes_project_user_keys(client):
-    """Unit admin deletes unit user"""
+    """Unit Admin deletes unit user"""
 
     email_to_delete = "unituser2@mailtrap.io"
 

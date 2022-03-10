@@ -119,7 +119,7 @@ def test_fix_access_projectowner_valid_email_invalid_otheruser(client):
 
 
 def test_fix_access_unituser_valid_email_invalid_otheruser(client):
-    """Unit user giving access to unit admin - no permissions."""
+    """Unit user giving access to Unit Admin - no permissions."""
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     response = client.post(
         tests.DDSEndpoint.PROJECT_ACCESS,
@@ -132,7 +132,7 @@ def test_fix_access_unituser_valid_email_invalid_otheruser(client):
 
 
 def test_fix_access_user_trying_themselves(client):
-    """Unit user giving access to unit admin - no permissions."""
+    """Unit user giving access to Unit Admin - no permissions."""
     token = tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client)
     response = client.post(
         tests.DDSEndpoint.PROJECT_ACCESS,
@@ -309,7 +309,7 @@ def test_fix_access_unitpersonnel_valid_email_unitpersonnel(client):
 
 
 def test_fix_access_unitadmin_valid_email_researcher(client):
-    """Unit admin giving access to researcher - ok."""
+    """Unit Admin giving access to researcher - ok."""
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     assert project
 
@@ -345,7 +345,7 @@ def test_fix_access_unitadmin_valid_email_researcher(client):
 
 
 def test_fix_access_unitadmin_valid_email_projectowner(client):
-    """Unit admin giving access to project owner - ok."""
+    """Unit Admin giving access to project owner - ok."""
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     assert project
 
@@ -381,7 +381,7 @@ def test_fix_access_unitadmin_valid_email_projectowner(client):
 
 
 def test_fix_access_unitadmin_valid_email_unituser(client):
-    """Unit admin giving access to unituser - ok."""
+    """Unit Admin giving access to unituser - ok."""
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     assert project
 
