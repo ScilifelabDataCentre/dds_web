@@ -9,21 +9,20 @@ import re
 # Installed
 import flask
 import werkzeug
-from dds_web.api import db_tools
 import flask_login
 import itsdangerous
 import sqlalchemy
 
 # Own Modules
-from dds_web import forms
-from dds_web.database import models
 import dds_web.utils
-from dds_web import db, limiter
 import dds_web.errors as ddserr
+import dds_web.security
+from dds_web import forms, db, limiter
+from dds_web.api import db_tools
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
-import dds_web.security
 from dds_web.api.user import DeleteUser
+from dds_web.database import models
 from dds_web.security.project_user_keys import update_user_keys_for_password_change
 
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
@@ -174,9 +173,9 @@ def confirm_2fa():
 
     cancel_form = forms.Cancel2FAForm()
 
-    next = flask.request.args.get("next")
+    next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
-    if next and not dds_web.utils.is_safe_url(next):
+    if next_target and not dds_web.utils.is_safe_url(next_target):
         return flask.abort(400)
 
     # Check user has initiated 2FA
@@ -185,24 +184,24 @@ def confirm_2fa():
         user = dds_web.security.auth.verify_token_no_data(token)
     except ddserr.AuthenticationError:
         flask.flash(
-            f"Error: Please initiate a log in before entering the one-time authentication code.",
+            "Error: Please initiate a log in before entering the one-time authentication code.",
             "warning",
         )
-        return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+        return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
     except Exception as e:
         flask.current_app.logger.exception(e)
         flask.flash(
             "Error: Second factor could not be validated due to an internal server error.",
             "danger",
         )
-        return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+        return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
 
     # Valid 2fa initiated token, but user does not exist (not never happen) or is inactive (could happen)
     # Currently same error for both, not vital, they get message to contact us
     if not user:
         flask.session.pop("2fa_initiated_token", None)
         flask.flash("Your account is not active. Contact Data Centre.", "warning")
-        return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
+        return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
 
     if form.validate_on_submit():
 
@@ -215,7 +214,7 @@ def confirm_2fa():
             flask.flash("Invalid one-time code.", "warning")
             return flask.redirect(
                 flask.url_for(
-                    "auth_blueprint.confirm_2fa", form=form, cancel_form=cancel_form, next=next
+                    "auth_blueprint.confirm_2fa", form=form, cancel_form=cancel_form, next=next_target
                 )
             )
 
@@ -225,11 +224,11 @@ def confirm_2fa():
         # Remove token from session
         flask.session.pop("2fa_initiated_token", None)
         # Next is assured to be url_safe above
-        return flask.redirect(next or flask.url_for("pages.home"))
+        return flask.redirect(next_target or flask.url_for("pages.home"))
 
     else:
         return flask.render_template(
-            "user/confirm2fa.html", form=form, cancel_form=cancel_form, next=next
+            "user/confirm2fa.html", form=form, cancel_form=cancel_form, next=next_target
         )
 
 
@@ -242,17 +241,17 @@ def confirm_2fa():
 def login():
     """Initiate a login by validating username password and sending a authentication one-time code"""
 
-    next = flask.request.args.get("next")
+    next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
-    if next and not dds_web.utils.is_safe_url(next):
+    if next_target and not dds_web.utils.is_safe_url(next_target):
         return flask.abort(400)
 
     # Redirect to next or index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(next or flask.url_for("pages.home"))
+        return flask.redirect(next_target or flask.url_for("pages.home"))
 
     # Display greeting message, if applicable
-    if next and re.search("confirm_deletion", next):
+    if next_target and re.search("confirm_deletion", next_target):
         flask.flash("Please log in to confirm your account deletion.", "warning")
 
     # Check if for is filled in and correctly (post)
@@ -265,7 +264,7 @@ def login():
         if not user or not user.verify_password(input_password=form.password.data):
             flask.flash("Invalid username or password.", "warning")
             return flask.redirect(
-                flask.url_for("auth_blueprint.login", next=next)
+                flask.url_for("auth_blueprint.login", next=next_target)
             )  # Try login again
 
         # Correct credentials still needs 2fa
@@ -280,10 +279,10 @@ def login():
         )
 
         flask.session["2fa_initiated_token"] = token_2fa_initiated
-        return flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next))
+        return flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next_target))
 
     # Go to login form (get)
-    return flask.render_template("user/login.html", form=form, next=next)
+    return flask.render_template("user/login.html", form=form, next=next_target)
 
 
 @auth_blueprint.route("/logout", methods=["GET"])
@@ -463,7 +462,7 @@ def confirm_self_deletion(token):
 
         # Check that the email is registered on the current user:
         if email not in [email.email for email in flask_login.current_user.emails]:
-            msg = f"The email for user to be deleted is not registered on your account."
+            msg = "The email for user to be deleted is not registered on your account."
             flask.current_app.logger.warning(
                 f"{msg} email: {email}: user: {flask_login.current_user}"
             )
@@ -474,18 +473,18 @@ def confirm_self_deletion(token):
             models.DeletionRequest.email == email
         ).first()
 
-    except itsdangerous.exc.SignatureExpired:
+    except itsdangerous.exc.SignatureExpired as exc:
 
         email = db_tools.remove_user_self_deletion_request(flask_login.current_user)
         raise ddserr.UserDeletionError(
             message=f"Deletion request for {email} has expired. Please login to the DDS and request deletion anew."
-        )
-    except (itsdangerous.exc.BadSignature, itsdangerous.exc.BadTimeSignature):
+        ) from exc
+    except (itsdangerous.exc.BadSignature, itsdangerous.exc.BadTimeSignature) as exc:
         raise ddserr.UserDeletionError(
-            message=f"Confirmation link is invalid. No action has been performed."
-        )
+            message="Confirmation link is invalid. No action has been performed."
+        ) from exc
     except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-        raise ddserr.DatabaseError(message=sqlerr)
+        raise ddserr.DatabaseError(message=sqlerr) from sqlerr
 
     # Check if the user and the deletion request exists
     if deletion_request_row:
