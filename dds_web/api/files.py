@@ -28,7 +28,7 @@ from dds_web.api.dds_decorators import (
 )
 from dds_web.errors import (
     AccessDeniedError,
-    BucketNotFoundError
+    BucketNotFoundError,
     DatabaseError,
     DDSArgumentError,
     NoSuchFileError,
