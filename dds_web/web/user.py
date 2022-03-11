@@ -41,7 +41,9 @@ def bad_request(error):
     except AttributeError:
         message = ""
     flask.current_app.logger.error(f"{error.code}: {message}")
-    return flask.make_response(flask.render_template("error.html", message=message), error.code)
+    return flask.make_response(
+        flask.render_template("error.html", message=message, error_code=error.code), error.code
+    )
 
 
 ####################################################################################################
