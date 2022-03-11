@@ -255,6 +255,7 @@ class AddUser(flask_restful.Resource):
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise ddserr.DatabaseError(message=str(sqlerr))
+
         # Compose and send email
         if goahead:
             AddUser.compose_and_send_email_to_user(
