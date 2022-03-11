@@ -109,8 +109,8 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
 
 
 def test_add_user_with_unitadmin(client):
-    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=token,
@@ -198,9 +198,8 @@ def test_add_unit_user_with_unitadmin(client):
 
 
 def test_add_user_with_superadmin(client):
-
-    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=token,
