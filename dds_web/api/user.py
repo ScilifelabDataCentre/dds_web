@@ -194,7 +194,7 @@ class AddUser(flask_restful.Resource):
             }
 
         projects_not_shared = {}
-        goahead = True
+        goahead = False
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
             # TODO Change / move this later. This is just so that we can add an initial Unit Admin.
@@ -205,6 +205,7 @@ class AddUser(flask_restful.Resource):
                         raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
 
                     unit_row.invites.append(new_invite)
+                    goahead = True
                 else:
                     raise ddserr.DDSArgumentError(message="Cannot invite this user.")
 
@@ -224,9 +225,8 @@ class AddUser(flask_restful.Resource):
                             projects_not_shared[
                                 unit_project.public_id
                             ] = "You do not have access to the specified project."
-
-                # Check if any succeeded
-                goahead = len(projects_not_shared) == len(auth.current_user().unit.projects)
+                        else:
+                            goahead = True
 
                 if not project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
@@ -248,7 +248,8 @@ class AddUser(flask_restful.Resource):
                     projects_not_shared[
                         unit_project.public_id
                     ] = "You do not have access to the specified project."
-                    goahead = False
+                else:
+                    goahead = True
 
         try:
             db.session.commit()
