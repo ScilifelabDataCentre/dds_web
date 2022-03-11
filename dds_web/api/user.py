@@ -6,9 +6,11 @@
 
 # Standard library
 import os
+from re import T
 import smtplib
 import time
 import datetime
+from tkinter.tix import Tree
 
 # Installed
 import flask
@@ -207,7 +209,9 @@ class AddUser(flask_restful.Resource):
                     unit_row.invites.append(new_invite)
                     goahead = True
                 else:
-                    raise ddserr.DDSArgumentError(message="Cannot invite this user.")
+                    raise ddserr.DDSArgumentError(
+                        message="You need to specify a unit to invite a Unit Personnel or Unit Admin."
+                    )
 
             if "Unit" in auth.current_user().role:
                 # Give new unit user access to all projects of the unit
