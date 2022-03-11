@@ -246,29 +246,37 @@ class AddUser(flask_restful.Resource):
                     )
                 except ddserr.KeyNotFoundError as keyerr:
                     projects_not_shared[
-                        unit_project.public_id
+                        project.public_id
                     ] = "You do not have access to the specified project."
                 else:
                     goahead = True
-
-        try:
-            db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise ddserr.DatabaseError(message=str(sqlerr))
+            else:
+                goahead = True
 
         # Compose and send email
+        status_code = http.HTTPStatus.OK
         if goahead:
+            try:
+                db.session.commit()
+            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+                raise ddserr.DatabaseError(message=str(sqlerr))
+
             AddUser.compose_and_send_email_to_user(
                 userobj=new_invite, mail_type="invite", link=link
             )
             msg = f"{str(new_invite)} was successful."
         else:
-            msg = f"The user could not be added to at least one project."
+            msg = (
+                f"The user could not be added to the project(s)."
+                if projects_not_shared
+                else "Unknown error!"
+            ) + " The invite did not succeed."
+            status_code = ddserr.InviteError.code.value
 
         return {
             "email": new_invite.email,
             "message": msg,
-            "status": http.HTTPStatus.OK,
+            "status": status_code,
             "errors": projects_not_shared,
         }
 
