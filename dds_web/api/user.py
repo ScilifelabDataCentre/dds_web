@@ -193,10 +193,8 @@ class AddUser(flask_restful.Resource):
                 "status": http.HTTPStatus.INTERNAL_SERVER_ERROR,
             }
 
-        # Compose and send email
-        AddUser.compose_and_send_email_to_user(userobj=new_invite, mail_type="invite", link=link)
-
         projects_not_shared = {}
+        goahead = True
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
             # TODO Change / move this later. This is just so that we can add an initial Unit Admin.
@@ -227,6 +225,9 @@ class AddUser(flask_restful.Resource):
                                 unit_project.public_id
                             ] = "You do not have access to the specified project."
 
+                # Check if any succeeded
+                goahead = len(projects_not_shared) == len(auth.current_user().unit.projects)
+
                 if not project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
                 else:
@@ -247,10 +248,18 @@ class AddUser(flask_restful.Resource):
                     projects_not_shared[
                         unit_project.public_id
                     ] = "You do not have access to the specified project."
+                    goahead = False
 
         db.session.commit()
-        msg = f"{str(new_invite)} was successful."
 
+        # Compose and send email
+        if goahead:
+            AddUser.compose_and_send_email_to_user(
+                userobj=new_invite, mail_type="invite", link=link
+            )
+            msg = f"{str(new_invite)} was successful."
+        else:
+            msg = f"The user could not be added to at least one project."
         return {
             "email": new_invite.email,
             "message": msg,
