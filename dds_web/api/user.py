@@ -250,8 +250,10 @@ class AddUser(flask_restful.Resource):
                     ] = "You do not have access to the specified project."
                     goahead = False
 
-        db.session.commit()
-
+        try:
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise ddserr.DatabaseError(message=str(sqlerr))
         # Compose and send email
         if goahead:
             AddUser.compose_and_send_email_to_user(
@@ -260,6 +262,7 @@ class AddUser(flask_restful.Resource):
             msg = f"{str(new_invite)} was successful."
         else:
             msg = f"The user could not be added to at least one project."
+
         return {
             "email": new_invite.email,
             "message": msg,
