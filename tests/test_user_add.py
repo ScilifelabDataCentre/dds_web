@@ -729,8 +729,8 @@ def test_add_unituser_and_admin_no_unit_with_superadmin(client):
             headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
             json=x,
         )
-        # assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
         assert "You need to specify a unit" in response.json["message"]
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
         invited_user = models.Invite.query.filter_by(email=x["email"]).one_or_none()
         assert not invited_user
