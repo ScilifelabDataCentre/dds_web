@@ -21,7 +21,7 @@ first_new_user_extra_args = {**first_new_user, "extra": "test"}
 first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
 first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_new_user["role"]}
 existing_invite = {"email": "existing_invite_email@mailtrap.io", "role": "Researcher"}
-new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Super Admin"}
+new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Unit Admin"}
 new_unit_user = {"email": "new_unit_user@mailtrap.io", "role": "Unit Personnel"}
 existing_research_user = {"email": "researchuser2@mailtrap.io", "role": "Researcher"}
 existing_research_user_owner = {"email": "researchuser2@mailtrap.io", "role": "Project Owner"}
@@ -734,3 +734,83 @@ def test_add_unituser_and_admin_no_unit_with_superadmin(client):
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         invited_user = models.Invite.query.filter_by(email=x["email"]).one_or_none()
         assert not invited_user
+
+
+def test_add_researchuser_project_no_access_unit_admin(client):
+    project = models.Project.query.filter_by(public_id=existing_project).one_or_none()
+    assert project
+
+    project_user_key = models.ProjectUserKeys.query.filter_by(
+        user_id="unitadmin", project_id=project.id
+    ).one_or_none()
+    assert project_user_key
+
+    db.session.delete(project_user_key)
+    project_user_key = models.ProjectUserKeys.query.filter_by(
+        user_id="unitadmin", project_id=project.id
+    ).one_or_none()
+    assert not project_user_key
+
+    for x in [first_new_user, first_new_owner]:
+
+        invited_user = models.Invite.query.filter_by(email=x["email"]).one_or_none()
+        print(invited_user)
+        assert not invited_user
+
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            json=x,
+            query_string={"project": project.public_id},
+        )
+
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert "The user could not be added to the project(s)" in response.json["message"]
+
+        assert "errors" in response.json
+        assert project.public_id in response.json["errors"]
+        assert (
+            "You do not have access to the specified project."
+            in response.json["errors"][project.public_id]
+        )
+
+        invited_user = models.Invite.query.filter_by(email=x["email"]).one_or_none()
+        assert invited_user
+
+
+# def test_add_unituser_project_no_access_unit_admin(client):
+#     project = models.Project.query.filter_by(public_id=existing_project).one_or_none()
+#     assert project
+
+#     project_user_key = models.ProjectUserKeys.query.filter_by(
+#         user_id="unitadmin", project_id=project.id
+#     ).one_or_none()
+#     assert project_user_key
+
+#     db.session.delete(project_user_key)
+#     project_user_key = models.ProjectUserKeys.query.filter_by(
+#         user_id="unitadmin", project_id=project.id
+#     ).one_or_none()
+#     assert not project_user_key
+
+#     for x in [first_new_user, first_new_owner]:
+
+#         response = client.post(
+#             tests.DDSEndpoint.USER_ADD,
+#             headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+#             json=x,
+#             query_string={"project": project.public_id},
+#         )
+
+#         assert response.status_code == http.HTTPStatus.BAD_REQUEST
+#         assert "The user could not be added to the project(s)" in response.json["message"]
+
+#         assert "errors" in response.json
+#         assert project.public_id in response.json["errors"]
+#         assert (
+#             "You do not have access to the specified project."
+#             in response.json["errors"][project.public_id]
+#         )
+
+#         invited_user = models.Invite.query.filter_by(email=x["email"]).one_or_none()
+#         assert not invited_user

@@ -6,6 +6,7 @@
 
 # Standard library
 import os
+from pyexpat import model
 from re import T
 import smtplib
 import time
@@ -263,6 +264,7 @@ class AddUser(flask_restful.Resource):
             try:
                 db.session.commit()
             except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+                db.session.rollback()
                 raise ddserr.DatabaseError(message=str(sqlerr))
 
             AddUser.compose_and_send_email_to_user(
