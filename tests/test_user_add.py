@@ -880,3 +880,25 @@ def test_invite_unituser_as_superadmin_incorrect_unit(client):
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert "Invalid unit publid id." in response.json["message"]
+
+
+def test_invite_unituser_with_valid_unit_as_superadmin(client):
+    """A unit user should be invited if the super admin provides a valid unit."""
+    for invitee in [new_unit_admin, new_unit_user]:
+        valid_unit = models.Unit.query.filter_by(name="Unit 1").one_or_none()
+        assert valid_unit
+
+        invite_with_valid_unit = invitee.copy()
+        invite_with_valid_unit["unit"] = valid_unit.public_id
+
+        # Attempt invite
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=invite_with_valid_unit,
+        )
+
+        new_invite = models.Invite.query.filter_by(
+            email=invite_with_valid_unit["email"]
+        ).one_or_none()
+        assert new_invite
