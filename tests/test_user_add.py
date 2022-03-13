@@ -865,23 +865,18 @@ def test_invite_superadmin_and_unitadmin_and_unitpersonnel_as_projectowner(clien
         assert "The user does not have the necessary permissions." in response.json["message"]
 
 
-# Invite as researcher
-def test_invite_as_researcher(client):
-    """A researcher cannot invite."""
-    for invitee in [
-        new_super_admin,
-        new_unit_admin,
-        new_unit_user,
-        first_new_owner,
-        first_new_user,
-    ]:
+def test_invite_unituser_as_superadmin_incorrect_unit(client):
+    """A valid unit is required for super admins to invite unit users."""
+    for invitee in [new_unit_admin, new_unit_user]:
+        invite_with_invalid_unit = invitee.copy()
+        invite_with_invalid_unit["unit"] = "invalidunit"
+
         # Attempt invite
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
-            json=invitee,
-            query_string={"project": existing_project},
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=invite_with_invalid_unit,
         )
 
-        assert response.status_code == http.HTTPStatus.FORBIDDEN
-        assert "The user does not have the necessary permissions." in response.json["message"]
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert "Invalid unit publid id." in response.json["message"]
