@@ -6,9 +6,7 @@
 
 # Standard library
 import datetime
-import json
 import os
-import pathlib
 import re
 import urllib.parse
 
@@ -17,21 +15,18 @@ from contextlib import contextmanager
 import flask
 import flask_mail
 import flask_login
-import sqlalchemy
 
 # # imports related to scheduling
 import atexit
 import werkzeug
 from apscheduler.schedulers import background
 import marshmallow
-import flask_mail
 import wtforms
 
 
 # Own modules
 from dds_web.database import models
 from dds_web import auth, db, mail
-import dds_web.errors as ddserr
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -40,62 +35,62 @@ import dds_web.errors as ddserr
 # General ################################################################################ General #
 
 
-def contains_uppercase(input):
+def contains_uppercase(indata):
     """Verify that string contains at least one upper case letter."""
-    if not re.search("[A-Z]", input):
+    if not re.search("[A-Z]", indata):
         raise marshmallow.ValidationError("Required: at least one upper case letter.")
 
 
-def contains_lowercase(input):
+def contains_lowercase(indata):
     """Verify that string contains at least one lower case letter."""
-    if not re.search("[a-z]", input):
+    if not re.search("[a-z]", indata):
         raise marshmallow.ValidationError("Required: at least one lower case letter.")
 
 
-def contains_digit_or_specialchar(input):
+def contains_digit_or_specialchar(indata):
     """Verify that string contains at least one special character OR digit."""
-    if not any(re.search(x, input) for x in ["[0-9]", "[#?!@$%^&*-]"]):
+    if not any(re.search(x, indata) for x in ["[0-9]", "[#?!@$%^&*-]"]):
         raise marshmallow.ValidationError(
             "Required: at least one digit OR a special character (#?!@$%^&*-)."
         )
 
 
-def contains_disallowed_characters(input):
-    """Inputs like <f0><9f><98><80> cause issues in Project names etc."""
-    disallowed = re.findall(r"[^\w\s]+", input)
+def contains_disallowed_characters(indata):
+    """Indatas like <f0><9f><98><80> cause issues in Project names etc."""
+    disallowed = re.findall(r"[^\w\s]+", indata)
     if disallowed:
         disallowed = set(disallowed)  # unique values
         chars = "characters"
         raise marshmallow.ValidationError(
-            f"The {chars if len(disallowed) > 1 else chars[:-1]} '{' '.join(disallowed)}' within '[italic]{input}[/italic]' {'are' if len(disallowed) > 1 else 'is'} not allowed."
+            f"The {chars if len(disallowed) > 1 else chars[:-1]} '{' '.join(disallowed)}' within '[italic]{indata}[/italic]' {'are' if len(disallowed) > 1 else 'is'} not allowed."
         )
 
 
-def email_not_taken(input):
+def email_not_taken(indata):
     """Validator - verify that email is not taken.
 
     If used by marshmallow Schema, this validator should never raise an error since the email
     field should not be changable and if it is the form validator should catch it.
     """
-    if email_in_db(email=input):
+    if email_in_db(email=indata):
         raise marshmallow.validate.ValidationError("The email is already taken by another user.")
 
 
-def email_taken(input):
+def email_taken(indata):
     """Validator - verify that email is taken."""
-    if not email_in_db(email=input):
+    if not email_in_db(email=indata):
         raise marshmallow.validate.ValidationError(
             "There is no account with that email. To get an account, you need an invitation."
         )
 
 
-def username_not_taken(input):
+def username_not_taken(indata):
     """Validate that username is not taken.
 
     If used by marshmallow Schema, this validator should never raise an error since
     the form validator should catch it.
     """
-    if username_in_db(username=input):
+    if username_in_db(username=indata):
         raise marshmallow.validate.ValidationError(
             "That username is taken. Please choose a different one."
         )
@@ -118,7 +113,7 @@ def valid_user_role(specified_role):
 def username_contains_valid_characters():
     def _username_contains_valid_characters(form, field):
         """Validate that the username contains valid characters."""
-        if not valid_chars_in_username(input=field.data):
+        if not valid_chars_in_username(indata=field.data):
             raise wtforms.validators.ValidationError(
                 "The username contains invalid characters. "
                 "Usernames can only contain letters, digits and underscores (_)."
@@ -138,7 +133,7 @@ def password_contains_valid_characters():
         ]
         for val in validators:
             try:
-                val(input=field.data)
+                val(indata=field.data)
             except marshmallow.ValidationError as valerr:
                 errors.append(str(valerr).strip("."))
 
@@ -152,7 +147,7 @@ def username_not_taken_wtforms():
     def _username_not_taken(form, field):
         """Validate that the username is not taken already."""
         try:
-            username_not_taken(input=field.data)
+            username_not_taken(indata=field.data)
         except marshmallow.validate.ValidationError as valerr:
             raise wtforms.validators.ValidationError(valerr)
 
@@ -163,7 +158,7 @@ def email_not_taken_wtforms():
     def _email_not_taken(form, field):
         """Validate that the email is not taken already."""
         try:
-            email_not_taken(input=field.data)
+            email_not_taken(indata=field.data)
         except marshmallow.validate.ValidationError as valerr:
             raise wtforms.validators.ValidationError(valerr)
 
@@ -174,7 +169,7 @@ def email_taken_wtforms():
     def _email_taken(form, field):
         """Validate that the email exists."""
         try:
-            email_taken(input=field.data)
+            email_taken(indata=field.data)
         except marshmallow.validate.ValidationError as valerr:
             raise wtforms.validators.ValidationError(valerr)
 
@@ -186,9 +181,9 @@ def email_taken_wtforms():
 ####################################################################################################
 
 
-def valid_chars_in_username(input):
+def valid_chars_in_username(indata):
     """Check if the username contains only valid characters."""
-    return False if re.search(r"^[a-zA-Z0-9_\.-]+$", input) == None else True
+    return bool(re.search(r"^[a-zA-Z0-9_\.-]+$", indata))
 
 
 def email_in_db(email):
@@ -302,7 +297,7 @@ def rate_limit_from_config():
 
 
 @contextmanager
-def working_directory(path, cleanup_after=False):
+def working_directory(path):
     """Contexter for changing working directory"""
     current_path = os.getcwd()
     try:
@@ -402,11 +397,11 @@ def scheduler_wrapper():
     joblist = scheduler.get_jobs()
     jobid = []
     for job in joblist:
-        id = getattr(job, "id")
-        jobid.append(id)
+        job_id = getattr(job, "id")
+        jobid.append(job_id)
 
     # Shut down the scheduler when exiting the app
-    atexit.register(lambda: scheduler.shutdown())
+    atexit.register(scheduler.shutdown)
 
     # Print the currently scheduled jobs as verification:
     joblist = scheduler.get_jobs()

@@ -8,13 +8,14 @@
 import os
 
 # Installed
+import botocore.client
 import flask
 import marshmallow
 import sqlalchemy
 
 # Own modules
 from dds_web import errors as ddserr
-from dds_web import auth, db
+from dds_web import auth
 from dds_web.database import models
 from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
@@ -145,7 +146,7 @@ class CreateProjectSchema(marshmallow.Schema):
             .one_or_none()
         )
         if not unit_row:
-            raise ddserr.AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
+            raise ddserr.AccessDeniedError(message="Error: Your user is not associated to a unit.")
 
         unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
         data["public_id"] = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)

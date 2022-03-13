@@ -23,7 +23,6 @@ from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
     logging_bind_request,
     dbsession,
-    args_required,
     json_required,
     handle_validation_errors,
 )
@@ -160,7 +159,7 @@ class ProjectStatus(flask_restful.Resource):
             project.project_statuses.append(add_status)
             if not project.is_active:
                 # Deletes files (also commits session in the function - possibly refactor later)
-                removed = RemoveContents().delete_project_contents(project=project)
+                RemoveContents().delete_project_contents(project=project)
                 delete_message = f"\nAll files in {project.public_id} deleted"
                 if new_status in ["Deleted", "Archived"]:
                     self.rm_project_user_keys(project=project)
@@ -178,7 +177,7 @@ class ProjectStatus(flask_restful.Resource):
         ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Status was not updated")
+            raise DatabaseError(message="Server Error: Status was not updated") from err
 
         # Mail users once project is made available
         if new_status == "Available" and send_email:
@@ -404,7 +403,7 @@ class RemoveContents(flask_restful.Resource):
             try:
                 s3conn.remove_bucket()
             except botocore.client.ClientError as err:
-                raise DeletionError(message=str(err), project=project.public_id)
+                raise DeletionError(message=str(err), project=project.public_id) from err
 
         # If ok delete from database
         try:
@@ -427,7 +426,7 @@ class RemoveContents(flask_restful.Resource):
                     "Project bucket contents were deleted, but they were not deleted from the "
                     "database. Please contact SciLifeLab Data Centre."
                 ),
-            )
+            ) from sqlerr
 
 
 class CreateProject(flask_restful.Resource):
@@ -455,7 +454,7 @@ class CreateProject(flask_restful.Resource):
                 botocore.exceptions.ParamValidationError,
             ) as err:
                 # For now just keeping the project row
-                raise S3ConnectionError(str(err))
+                raise S3ConnectionError(str(err)) from err
 
         try:
             db.session.commit()

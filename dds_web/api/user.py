@@ -15,7 +15,6 @@ import flask
 import flask_restful
 import flask_mail
 import itsdangerous
-import marshmallow
 import structlog
 import sqlalchemy
 import http
@@ -30,7 +29,6 @@ import dds_web.errors as ddserr
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 from dds_web.api.dds_decorators import (
     logging_bind_request,
-    args_required,
     json_required,
     handle_validation_errors,
 )
@@ -330,7 +328,7 @@ class AddUser(flask_restful.Resource):
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise ddserr.DatabaseError(
-                message=f"Server Error: User was not associated with the project"
+                message="Server Error: User was not associated with the project"
             )
 
         # If project is already released and not expired, send mail to user
