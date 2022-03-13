@@ -834,7 +834,7 @@ def test_invite_superadmin_as_unitadmin(client):
     assert "The user does not have the necessary permissions." in response.json["message"]
 
 
-# Invite super admin with unit admin
+# Invite super admin and unit admin with unit personnel
 def test_invite_superadmin_and_unitadmin_as_unitpersonnel(client):
     """A unit personnel cannot invite a superadmin or unit admin"""
     for invitee in ["superadmin", "unitadmin"]:
@@ -843,6 +843,22 @@ def test_invite_superadmin_and_unitadmin_as_unitpersonnel(client):
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
             json=new_super_admin,
+        )
+
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+        assert "The user does not have the necessary permissions." in response.json["message"]
+
+
+# Invite super admin, unit admin or unit personnel
+def test_invite_superadmin_and_unitadmin_and_unitpersonnel_as_projectowner(client):
+    """A project owner cannot invite a superadmin or unit admin or unit personnel."""
+    for invitee in ["superadmin", "unitadmin", "unituser"]:
+        # Attempt invite
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
+            json=new_super_admin,
+            query_string={"project": existing_project},
         )
 
         assert response.status_code == http.HTTPStatus.FORBIDDEN
