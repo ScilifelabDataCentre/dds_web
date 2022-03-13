@@ -837,12 +837,12 @@ def test_invite_superadmin_as_unitadmin(client):
 # Invite super admin and unit admin with unit personnel
 def test_invite_superadmin_and_unitadmin_as_unitpersonnel(client):
     """A unit personnel cannot invite a superadmin or unit admin"""
-    for invitee in ["superadmin", "unitadmin"]:
+    for invitee in [new_super_admin, new_unit_admin]:
         # Attempt invite
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-            json=new_super_admin,
+            json=invitee,
         )
 
         assert response.status_code == http.HTTPStatus.FORBIDDEN
@@ -852,12 +852,34 @@ def test_invite_superadmin_and_unitadmin_as_unitpersonnel(client):
 # Invite super admin, unit admin or unit personnel
 def test_invite_superadmin_and_unitadmin_and_unitpersonnel_as_projectowner(client):
     """A project owner cannot invite a superadmin or unit admin or unit personnel."""
-    for invitee in ["superadmin", "unitadmin", "unituser"]:
+    for invitee in [new_super_admin, new_unit_admin, new_unit_user]:
         # Attempt invite
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
-            json=new_super_admin,
+            json=invitee,
+            query_string={"project": existing_project},
+        )
+
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+        assert "The user does not have the necessary permissions." in response.json["message"]
+
+
+# Invite as researcher
+def test_invite_as_researcher(client):
+    """A researcher cannot invite."""
+    for invitee in [
+        new_super_admin,
+        new_unit_admin,
+        new_unit_user,
+        first_new_owner,
+        first_new_user,
+    ]:
+        # Attempt invite
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
+            json=invitee,
             query_string={"project": existing_project},
         )
 
