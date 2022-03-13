@@ -884,3 +884,35 @@ class ShowUsage(flask_restful.Resource):
             },
             "project_usage": usage,
         }
+
+
+class UnitUsers(flask_restful.Resource):
+    """List unit users."""
+
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    @logging_bind_request
+    def get(self):
+        """Get and return unit users within the unit the current user is connected to."""
+        unit_users = {}
+
+        if not auth.current_user().is_active:
+            raise ddserr.AccessDeniedError(
+                message=(
+                    "Your account has been deactivated. "
+                    "You cannot list the users within your unit."
+                )
+            )
+
+        keys = ["Name", "Username", "Email", "Role", "Active"]
+        unit_users = [
+            {
+                "Name": user.name,
+                "Username": user.username,
+                "Email": user.primary_email,
+                "Role": user.role,
+                "Active": user.is_active,
+            }
+            for user in auth.current_user().unit.users
+        ]
+
+        return {"users": unit_users, "keys": keys, "unit": auth.current_user().unit.name}
