@@ -123,7 +123,7 @@ def connect_cloud(func):
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
             raise DatabaseError(message=str(sqlerr)) from sqlerr
         except botocore.client.ClientError as clierr:
-            raise S3ConnectionError(message=str(clierr)) from sqlerr
+            raise S3ConnectionError(message=str(clierr)) from clierr
 
         return func(self, *args, **kwargs)
 
