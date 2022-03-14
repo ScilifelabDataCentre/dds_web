@@ -606,9 +606,11 @@ class ProjectAccess(flask_restful.Resource):
         else:
             list_of_projects = [project]
 
-        self.give_project_access(
+        errors = self.give_project_access(
             project_list=list_of_projects, current_user=auth.current_user(), user=user
         )
+        if errors:
+            return {"errors": errors}
 
         return {"message": f"Project access updated for user '{user.primary_email}'."}
 
@@ -650,15 +652,23 @@ class ProjectAccess(flask_restful.Resource):
     def give_project_access(project_list, current_user, user):
         """Give specific user project access."""
         # Loop through and check that the project(s) is(are) active
+        fix_errors = {}
         for proj in project_list:
-            if proj.is_active:
-                project_keys_row = models.ProjectUserKeys.query.filter_by(
-                    project_id=proj.id, user_id=user.username
-                ).one_or_none()
-                if not project_keys_row:
-                    share_project_private_key(
-                        from_user=current_user,
-                        to_another=user,
-                        project=proj,
-                        from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                    )
+            try:
+                if proj.is_active:
+                    project_keys_row = models.ProjectUserKeys.query.filter_by(
+                        project_id=proj.id, user_id=user.username
+                    ).one_or_none()
+                    if not project_keys_row:
+                        share_project_private_key(
+                            from_user=current_user,
+                            to_another=user,
+                            project=proj,
+                            from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                        )
+            except KeyNotFoundError as keyerr:
+                fix_errors[
+                    proj.public_id
+                ] = "You do not have access to this project. Please contact the responsible unit."
+
+        return fix_errors

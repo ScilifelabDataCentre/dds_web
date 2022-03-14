@@ -1,3 +1,4 @@
+from urllib import response
 import dds_web
 import flask_mail
 import http
@@ -20,7 +21,8 @@ first_new_user_extra_args = {**first_new_user, "extra": "test"}
 first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
 first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_new_user["role"]}
 existing_invite = {"email": "existing_invite_email@mailtrap.io", "role": "Researcher"}
-new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Super Admin"}
+new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Unit Admin"}
+new_super_admin = {"email": "new_super_admin@mailtrap.io", "role": "Super Admin"}
 new_unit_user = {"email": "new_unit_user@mailtrap.io", "role": "Unit Personnel"}
 existing_research_user = {"email": "researchuser2@mailtrap.io", "role": "Researcher"}
 existing_research_user_owner = {"email": "researchuser2@mailtrap.io", "role": "Project Owner"}
@@ -198,7 +200,6 @@ def test_add_unit_user_with_unitadmin(client):
 
 
 def test_add_user_with_superadmin(client):
-
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
         response = client.post(
@@ -704,3 +705,200 @@ def test_invite_to_project_by_project_owner(client):
     assert len(project_invite_keys) == 1
     assert project_invite_keys[0].project.public_id == project
     assert not project_invite_keys[0].owner
+
+
+def test_add_anyuser_to_project_with_superadmin(client):
+    """Super admins cannot invite to project."""
+    project = existing_project
+    for x in [first_new_user, first_new_owner, new_unit_user, new_unit_admin]:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            query_string={"project": project},
+            json=x,
+        )
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+        # An invite should not have been created
+        invited_user = models.Invite.query.filter_by(email=x["email"]).one_or_none()
+        assert not invited_user
+
+
+def test_add_unituser_and_admin_no_unit_with_superadmin(client):
+    """A super admin needs to specify a unit to be able to invite unit users."""
+    project = existing_project
+    for x in [new_unit_user, new_unit_admin]:
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=x,
+        )
+
+        assert "You need to specify a unit" in response.json["message"]
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+        invited_user = models.Invite.query.filter_by(email=x["email"]).one_or_none()
+        assert not invited_user
+
+
+def test_add_researchuser_project_no_access_unit_admin_and_personnel(client):
+    """A unit admin and personnel should not be able to give access to a project
+    which they themselves have lost access to."""
+    # Make sure the project exists
+    project = models.Project.query.filter_by(public_id=existing_project).one_or_none()
+    assert project
+
+    for inviter in ["unitadmin", "unituser", "projectowner"]:
+        # Check that the unit admin has access to the project first
+        project_user_key = models.ProjectUserKeys.query.filter_by(
+            user_id=inviter, project_id=project.id
+        ).one_or_none()
+        assert project_user_key
+
+        # Remove the project access (for test)
+        db.session.delete(project_user_key)
+
+        # Make sure the project access does not exist now
+        project_user_key = models.ProjectUserKeys.query.filter_by(
+            user_id=inviter, project_id=project.id
+        ).one_or_none()
+        assert not project_user_key
+
+        for x in [first_new_user, first_new_owner]:
+            # Make sure there is no ongoing invite
+            invited_user_before = models.Invite.query.filter_by(email=x["email"]).one_or_none()
+            if invited_user_before:
+                db.session.delete(invited_user_before)
+            invited_user_before = models.Invite.query.filter_by(email=x["email"]).one_or_none()
+            assert not invited_user_before
+
+            # Attempt invite
+            response = client.post(
+                tests.DDSEndpoint.USER_ADD,
+                headers=tests.UserAuth(tests.USER_CREDENTIALS[inviter]).token(client),
+                json=x,
+                query_string={"project": project.public_id},
+            )
+
+            # The invite should still be done, but they can't invite to a project
+            invited_user = models.Invite.query.filter_by(email=x["email"]).one_or_none()
+            assert invited_user
+
+            # Make sure there are no project v
+            assert not invited_user.project_invite_keys
+
+            # There should be an error message
+            assert response.status_code == http.HTTPStatus.BAD_REQUEST
+            assert "The user could not be added to the project(s)" in response.json["message"]
+
+            # Verify ok error messages
+            assert "errors" in response.json
+            assert project.public_id in response.json["errors"]
+            assert (
+                "You do not have access to the specified project."
+                in response.json["errors"][project.public_id]
+            )
+
+
+# Invite without email
+def test_invite_without_email(client):
+    """The email is required."""
+    user_no_email = first_new_user.copy()
+    user_no_email.pop("email")
+
+    for inviter in ["superadmin", "unitadmin", "unituser"]:
+        # Attempt invite
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS[inviter]).token(client),
+            json=user_no_email,
+            # query_string={"project": existing_project},
+        )
+
+        # There should be an error message
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert "Email address required to add or invite." in response.json["message"]
+
+
+# Invite super admin with unit admin
+def test_invite_superadmin_as_unitadmin(client):
+    """A unit admin cannt invie a superadmin"""
+    # Attempt invite
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=new_super_admin,
+    )
+
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    assert "The user does not have the necessary permissions." in response.json["message"]
+
+
+# Invite super admin and unit admin with unit personnel
+def test_invite_superadmin_and_unitadmin_as_unitpersonnel(client):
+    """A unit personnel cannot invite a superadmin or unit admin"""
+    for invitee in [new_super_admin, new_unit_admin]:
+        # Attempt invite
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+            json=invitee,
+        )
+
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+        assert "The user does not have the necessary permissions." in response.json["message"]
+
+
+# Invite super admin, unit admin or unit personnel
+def test_invite_superadmin_and_unitadmin_and_unitpersonnel_as_projectowner(client):
+    """A project owner cannot invite a superadmin or unit admin or unit personnel."""
+    for invitee in [new_super_admin, new_unit_admin, new_unit_user]:
+        # Attempt invite
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
+            json=invitee,
+            query_string={"project": existing_project},
+        )
+
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+        assert "The user does not have the necessary permissions." in response.json["message"]
+
+
+def test_invite_unituser_as_superadmin_incorrect_unit(client):
+    """A valid unit is required for super admins to invite unit users."""
+    for invitee in [new_unit_admin, new_unit_user]:
+        invite_with_invalid_unit = invitee.copy()
+        invite_with_invalid_unit["unit"] = "invalidunit"
+
+        # Attempt invite
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=invite_with_invalid_unit,
+        )
+
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert "Invalid unit publid id." in response.json["message"]
+
+
+def test_invite_unituser_with_valid_unit_as_superadmin(client):
+    """A unit user should be invited if the super admin provides a valid unit."""
+    for invitee in [new_unit_admin, new_unit_user]:
+        valid_unit = models.Unit.query.filter_by(name="Unit 1").one_or_none()
+        assert valid_unit
+
+        invite_with_valid_unit = invitee.copy()
+        invite_with_valid_unit["unit"] = valid_unit.public_id
+
+        # Attempt invite
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=invite_with_valid_unit,
+        )
+
+        new_invite = models.Invite.query.filter_by(
+            email=invite_with_valid_unit["email"]
+        ).one_or_none()
+        assert new_invite
