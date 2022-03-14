@@ -20,6 +20,7 @@ from dds_web.errors import (
     DatabaseError,
 )
 from dds_web.api.schemas import project_schemas
+from dds_web.api.files import check_eligibility_for_upload
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -36,6 +37,8 @@ class S3Info(flask_restful.Resource):
         """Get the safespring project."""
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        check_eligibility_for_upload(status=project.current_status)
 
         try:
             sfsp_proj, keys, url, bucketname = ApiS3Connector(project=project).get_s3_info()
