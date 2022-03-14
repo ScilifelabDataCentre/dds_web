@@ -30,7 +30,7 @@ services:
     #     source: ./Dockerfiles/mariadb/db-encrypt
     #     target: /etc/mysql/encrypt
 
-  # Development service to watch for changes to SCSS files and recompile static CSS
+    # Development service to watch for changes to SCSS files and recompile static CSS
   node_builder:
     container_name: dds_nodebuilder
     build:

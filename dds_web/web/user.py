@@ -336,6 +336,20 @@ def request_reset_password():
                 ),
                 additional_claims={"rst": "pwd"},
             )
+
+            # Create row in password reset table
+            ongoing_password_reset = models.PasswordReset.query.filter_by(
+                email=email.email
+            ).one_or_none()
+            if ongoing_password_reset:
+                ongoing_password_reset.issued = dds_web.utils.current_time()
+            else:
+                new_password_reset = models.PasswordReset(
+                    user=email.user, email=email.email, issued=dds_web.utils.current_time()
+                )
+                db.session.add(new_password_reset)
+            db.session.commit()
+
             dds_web.utils.send_reset_email(email_row=email, token=token)
             flask.flash("An email has been sent with instructions to reset your password.")
             return flask.redirect(flask.url_for("auth_blueprint.login"))
@@ -363,6 +377,20 @@ def reset_password(token):
         if not user.is_active:
             flask.flash("Your account is not active. You cannot reset your password.", "warning")
             return flask.redirect(flask.url_for("pages.home"))
+
+        password_reset_row = models.PasswordReset.query.filter_by(
+            user_id=user.username
+        ).one_or_none()
+        if not password_reset_row:
+            flask.flash("No information on requested password reset.")
+            return flask.redirect(flask.url_for("pages.home"))
+        if not password_reset_row.valid:
+            flask.flash(
+                "You have already used this link to change your password. "
+                "Please request a new password reset if you wish to continue."
+            )
+            return flask.redirect(flask.url_for("pages.home"))
+
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
         return flask.redirect(flask.url_for("pages.home"))
@@ -388,6 +416,9 @@ def reset_password(token):
 
         # Update user password
         user.password = form.password.data
+
+        # Set password reset row as invalid
+        password_reset_row.valid = False
         db.session.commit()
 
         flask.flash("Your password has been updated! You are now able to log in.", "success")
