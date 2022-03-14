@@ -1,6 +1,7 @@
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import datetime
 import http
+import dds_cli
 import flask
 import flask_mail
 import pytest
@@ -11,6 +12,8 @@ from dds_web import db
 from dds_web.database import models
 from dds_web.security.project_user_keys import generate_invite_key_pair
 from dds_web.security.tokens import encrypted_jwt_token
+
+researcher = {"username": "researchuser", "email": "researchuser@mailtrap.io"}
 
 
 def test_request_reset_password_no_form(client):
@@ -115,11 +118,18 @@ def get_valid_reset_token(username, expires_in=3600):
 
 def test_reset_password_invalid_token_post(client):
     nr_proj_user_keys_before = models.ProjectUserKeys.query.count()
-    researchuser_pw_hash_before = (
-        models.User.query.filter_by(username="researchuser").first()._password_hash
+    user = models.User.query.filter_by(username=researcher["username"]).first()
+    researchuser_pw_hash_before = user._password_hash
+
+    # Add new row to password reset
+    new_reset_row = models.PasswordReset(
+        user=user.username, email=user.primary_email, issued=dds_cli.utils.timestamp()
     )
+    db.session.add(new_reset_row)
+    db.session.commit()
+
     # Need to use a valid token for the get request to get the form token
-    valid_reset_token = get_valid_reset_token("researchuser")
+    valid_reset_token = get_valid_reset_token(researcher["username"])
     response = client.get(
         tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True
     )
