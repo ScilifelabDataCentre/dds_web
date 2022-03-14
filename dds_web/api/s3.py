@@ -38,6 +38,8 @@ class S3Info(flask_restful.Resource):
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
+        check_eligibility_for_upload(status=project.current_status)
+
         try:
             sfsp_proj, keys, url, bucketname = ApiS3Connector(project=project).get_s3_info()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
