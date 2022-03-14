@@ -461,6 +461,11 @@ class User(flask_login.UserMixin, db.Model):
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         return hotp.generate(self.hotp_counter)
 
+    def reset_current_HOTP(self):
+        """Make the previous HOTP as invalid by nulling issue time and increasing counter."""
+        self.hotp_issue_time = None
+        self.hotp_counter += 1
+
     def verify_HOTP(self, token):
         """Verify the HOTP token.
 
