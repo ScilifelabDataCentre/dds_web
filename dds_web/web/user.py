@@ -372,6 +372,9 @@ def reset_password(token):
 
     # Validate form
     if form.validate_on_submit():
+        # Clear out hotp
+        user.reset_current_HOTP()
+
         # Delete project user keys for user
         for project_user_key in user.project_user_keys:
             db.session.delete(project_user_key)
