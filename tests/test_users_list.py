@@ -2,8 +2,6 @@
 
 # Standard library
 import http
-import json
-from urllib import response
 
 # Own
 from dds_web import db
