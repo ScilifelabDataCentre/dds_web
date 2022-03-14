@@ -6,7 +6,6 @@
 
 # Standard library
 import os
-from re import T
 import smtplib
 import time
 import datetime
