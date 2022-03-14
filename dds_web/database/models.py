@@ -6,7 +6,6 @@
 
 # Standard library
 import datetime
-from enum import unique
 import os
 
 # Installed

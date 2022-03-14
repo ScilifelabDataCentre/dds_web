@@ -49,4 +49,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Display an error message when the user makes too many authentication requests. ([#1034](https://github.com/ScilifelabDataCentre/dds_web/pull/1034))
 - New endpoint for Unit Personnel and Admins to list the other Unit Personnel / Admins within their project ([#1050](https://github.com/ScilifelabDataCentre/dds_web/pull/1050))
 - Make previous HOTP invalid at password reset ([#1054](https://github.com/ScilifelabDataCentre/dds_web/pull/1054))
-- New PasswordReset table to keep track of when a user has requested a password reset ()
+- New PasswordReset table to keep track of when a user has requested a password reset ([#1058](https://github.com/ScilifelabDataCentre/dds_web/pull/1058))
