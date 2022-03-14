@@ -6,7 +6,6 @@
 
 # Standard library
 import os
-from pyexpat import model
 from re import T
 import smtplib
 import time
