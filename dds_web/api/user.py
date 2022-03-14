@@ -191,9 +191,8 @@ class AddUser(flask_restful.Resource):
                 "status": http.HTTPStatus.INTERNAL_SERVER_ERROR,
             }
 
-        # Compose and send email
-        AddUser.compose_and_send_email_to_user(userobj=new_invite, mail_type="invite", link=link)
-
+        projects_not_shared = {}
+        goahead = False
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
             # TODO Change / move this later. This is just so that we can add an initial Unit Admin.
@@ -204,20 +203,30 @@ class AddUser(flask_restful.Resource):
                         raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
 
                     unit_row.invites.append(new_invite)
+                    goahead = True
                 else:
-                    raise ddserr.DDSArgumentError(message="Cannot invite this user.")
+                    raise ddserr.DDSArgumentError(
+                        message="You need to specify a unit to invite a Unit Personnel or Unit Admin."
+                    )
 
             if "Unit" in auth.current_user().role:
                 # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
                 for unit_project in auth.current_user().unit.projects:
                     if unit_project.is_active:
-                        share_project_private_key(
-                            from_user=auth.current_user(),
-                            to_another=new_invite,
-                            from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                            project=unit_project,
-                        )
+                        try:
+                            share_project_private_key(
+                                from_user=auth.current_user(),
+                                to_another=new_invite,
+                                from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                                project=unit_project,
+                            )
+                        except ddserr.KeyNotFoundError as keyerr:
+                            projects_not_shared[
+                                unit_project.public_id
+                            ] = "You do not have access to the project(s)"
+                        else:
+                            goahead = True
 
                 if not project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
@@ -227,21 +236,49 @@ class AddUser(flask_restful.Resource):
         else:
             db.session.add(new_invite)
             if project:
-                share_project_private_key(
-                    from_user=auth.current_user(),
-                    to_another=new_invite,
-                    project=project,
-                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                    is_project_owner=new_user_role == "Project Owner",
-                )
+                try:
+                    share_project_private_key(
+                        from_user=auth.current_user(),
+                        to_another=new_invite,
+                        project=project,
+                        from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                        is_project_owner=new_user_role == "Project Owner",
+                    )
+                except ddserr.KeyNotFoundError as keyerr:
+                    projects_not_shared[
+                        project.public_id
+                    ] = "You do not have access to the specified project."
+                else:
+                    goahead = True
+            else:
+                goahead = True
 
-        db.session.commit()
-        msg = f"{str(new_invite)} was successful."
+        # Compose and send email
+        status_code = http.HTTPStatus.OK
+        if goahead:
+            try:
+                db.session.commit()
+            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+                db.session.rollback()
+                raise ddserr.DatabaseError(message=str(sqlerr))
+
+            AddUser.compose_and_send_email_to_user(
+                userobj=new_invite, mail_type="invite", link=link
+            )
+            msg = f"{str(new_invite)} was successful."
+        else:
+            msg = (
+                f"The user could not be added to the project(s)."
+                if projects_not_shared
+                else "Unknown error!"
+            ) + " The invite did not succeed."
+            status_code = ddserr.InviteError.code.value
 
         return {
             "email": new_invite.email,
             "message": msg,
-            "status": http.HTTPStatus.OK,
+            "status": status_code,
+            "errors": projects_not_shared,
         }
 
     @staticmethod
@@ -314,13 +351,22 @@ class AddUser(flask_restful.Resource):
                     )
                 )
 
-            share_project_private_key(
-                from_user=auth.current_user(),
-                to_another=whom,
-                from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                project=project,
-                is_project_owner=is_owner,
-            )
+            try:
+                share_project_private_key(
+                    from_user=auth.current_user(),
+                    to_another=whom,
+                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                    project=project,
+                    is_project_owner=is_owner,
+                )
+            except ddserr.KeyNotFoundError as keyerr:
+                return {
+                    "message": (
+                        "You do not have access to the current project. To get access, "
+                        "ask the a user within the responsible unit to grant you access."
+                    ),
+                    "status": ddserr.AccessDeniedError.code.value,
+                }
 
         try:
             db.session.commit()
