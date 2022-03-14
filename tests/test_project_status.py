@@ -32,7 +32,7 @@ fields_set_to_null = [
     "description",
     "pi",
     "public_key",
-    "unit_id",
+    # "unit_id",
     "created_by",
     # "is_active",
     # "date_updated",
