@@ -116,10 +116,10 @@ def test_list_unitusers_with_super_admin_correct_unit(client):
     unit_row = models.Unit.query.filter_by(name="Unit 1").one_or_none()
     assert unit_row
 
-    token = get_token(
-        username=users["Super Admin"], json={"unit": unit_row.public_id}, client=client
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.get(
+        tests.DDSEndpoint.LIST_UNIT_USERS, json={"unit": unit_row.public_id}, headers=token
     )
-    response = client.get(tests.DDSEndpoint.LIST_UNIT_USERS, headers=token)
     assert response.status_code == http.HTTPStatus.OK
 
     assert all(x in response.json for x in ["users", "keys", "unit"])
