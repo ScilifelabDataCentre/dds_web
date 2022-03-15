@@ -966,10 +966,6 @@ class UnitUsers(flask_restful.Resource):
         else:
             unit_row = auth.current_user().unit
 
-        return self.get_unit_users(unit=unit_row)
-
-    def get_unit_users(self, unit):
-        """Get users within a specific unit."""
         keys = ["Name", "Username", "Email", "Role", "Active"]
         unit_users = [
             {
@@ -979,7 +975,7 @@ class UnitUsers(flask_restful.Resource):
                 "Role": user.role,
                 "Active": user.is_active,
             }
-            for user in unit.users
+            for user in unit_row.users
         ]
 
-        return {"users": unit_users, "keys": keys, "unit": unit.name}
+        return {"users": unit_users, "keys": keys, "unit": unit_row.name}
