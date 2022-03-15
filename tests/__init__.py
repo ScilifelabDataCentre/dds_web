@@ -194,4 +194,7 @@ class DDSEndpoint:
     USAGE = BASE_ENDPOINT + "/usage"
     INVOICE = BASE_ENDPOINT + "/invoice"
 
+    # Units
+    LIST_UNITS_ALL = BASE_ENDPOINT + "/unit/info/all"
+
     TIMEOUT = 5
