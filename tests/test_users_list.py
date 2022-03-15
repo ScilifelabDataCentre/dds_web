@@ -131,7 +131,7 @@ def test_list_unitusers_with_super_admin_correct_unit(client):
     assert returned_users and returned_keys and returned_unit
     assert returned_keys == ["Name", "Username", "Email", "Role", "Active"]
     assert returned_unit == unit_row.name
-    assert len(unit_users) == len(unit_row.users)
+    assert len(returned_users) == len(unit_row.users)
 
     unit_users = [x["Username"] for x in returned_users]
     for x in unit_row.users:
