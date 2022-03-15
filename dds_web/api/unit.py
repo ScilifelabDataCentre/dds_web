@@ -5,39 +5,15 @@
 ####################################################################################################
 
 # Standard library
-import os
-import smtplib
-import time
-import datetime
 
 # Installed
-import flask
 import flask_restful
-import flask_mail
-import itsdangerous
 import structlog
-import sqlalchemy
-import http
-
 
 # Own modules
-from dds_web import auth, mail, db, basic_auth, limiter
+from dds_web import auth
 from dds_web.database import models
-import dds_web.utils
-import dds_web.forms
-import dds_web.errors as ddserr
-from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
-from dds_web.api.dds_decorators import (
-    logging_bind_request,
-    json_required,
-    handle_validation_errors,
-)
-from dds_web.security.project_user_keys import (
-    generate_invite_key_pair,
-    share_project_private_key,
-)
-from dds_web.security.tokens import encrypted_jwt_token, update_token_with_mfa
-from dds_web.security.auth import get_user_roles_common
+from dds_web.api.dds_decorators import logging_bind_request
 
 
 # initiate bound logger
