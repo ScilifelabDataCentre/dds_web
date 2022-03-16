@@ -941,14 +941,6 @@ class UnitUsers(flask_restful.Resource):
         """Get and return unit users within the unit the current user is connected to."""
         unit_users = {}
 
-        if not auth.current_user().is_active:
-            raise ddserr.AccessDeniedError(
-                message=(
-                    "Your account has been deactivated. "
-                    "You cannot list the users within your unit."
-                )
-            )
-
         keys = ["Name", "Username", "Email", "Role", "Active"]
         unit_users = [
             {
