@@ -31,6 +31,7 @@ from dds_web.api.dds_decorators import (
     logging_bind_request,
     json_required,
     handle_validation_errors,
+    handle_db_error,
 )
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
@@ -937,11 +938,12 @@ class UnitUsers(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @handle_db_error
     def get(self):
         """Get and return unit users within the unit the current user is connected to."""
         unit_users = {}
-
         keys = ["Name", "Username", "Email", "Role", "Active"]
+
         unit_users = [
             {
                 "Name": user.name,
