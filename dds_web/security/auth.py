@@ -26,7 +26,7 @@ action_logger = structlog.getLogger("actions")
 
 # VARIABLES ############################################################################ VARIABLES #
 
-MFA_EXPIRES_IN = datetime.timedelta(hours=48)
+MFA_EXPIRES_IN = datetime.timedelta(hours=168)
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
