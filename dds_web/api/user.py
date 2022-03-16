@@ -938,7 +938,7 @@ class UnitUsers(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
     def get(self):
-        """Get and return unit users within the unit the current user is connected to."""
+        """List unit users within the unit the current user is connected to, or the one defined by a superadmin."""
         unit_users = {}
 
         if not auth.current_user().is_active:
