@@ -943,14 +943,6 @@ class UnitUsers(flask_restful.Resource):
         """List unit users within the unit the current user is connected to, or the one defined by a superadmin."""
         unit_users = {}
 
-        if not auth.current_user().is_active:
-            raise ddserr.AccessDeniedError(
-                message=(
-                    "Your account has been deactivated. "
-                    "You cannot list the users within your unit."
-                )
-            )
-
         if auth.current_user().role == "Super Admin":
             json_input = flask.request.json
             if not json_input:
