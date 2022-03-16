@@ -36,7 +36,7 @@ def test_list_units_as_not_superadmin(client):
         assert response.status_code == http.HTTPStatus.UNAUTHORIZED
 
 
-def list_units_as_super_admin(client):
+def test_list_units_as_super_admin(client):
     """List units as Super Admin."""
     all_units = models.Unit.query.all()
 
