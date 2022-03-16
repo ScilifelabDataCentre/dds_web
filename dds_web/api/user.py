@@ -951,7 +951,11 @@ class UnitUsers(flask_restful.Resource):
 
         if auth.current_user().role == "Super Admin":
             json_input = flask.request.json
-            if not json_input or not (unit := json_input.get("unit")):
+            if not json_input:
+                raise ddserr.DDSArgumentError(message="Unit public id missing.")
+
+            unit = json_input.get("unit")
+            if not unit:
                 raise ddserr.DDSArgumentError(message="Unit public id missing.")
 
             unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
