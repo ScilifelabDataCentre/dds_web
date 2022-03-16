@@ -383,14 +383,14 @@ class AddUser(flask_restful.Resource):
             AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
-            f"{str(whom)} was associated to the {str(project)} as a Researcher={is_owner}."
+            f"{str(whom)} was given access to the {str(project)} as a {'Product Owner' if is_owner else 'Researcher'}."
         )
 
         return {
             "status": http.HTTPStatus.OK,
             "message": (
-                f"{str(whom)} was associated to the "
-                f"{str(project)} as a Researcher={is_owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
+                f"{str(whom)} was given access to the "
+                f"{str(project)} as a {'Product Owner' if is_owner else 'Researcher'}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
             ),
         }
 

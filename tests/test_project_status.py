@@ -379,7 +379,7 @@ def test_set_project_to_available_no_mail(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
-        assert "associated to the Project" in x
+        assert "given access to the Project" in x
 
     public_project_id = response.json.get("project_id")
 
