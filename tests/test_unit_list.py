@@ -33,7 +33,7 @@ def test_list_units_as_not_superadmin(client):
     for u in no_access_users:
         token = get_token(username=users[u], client=client)
         response = client.get(tests.DDSEndpoint.LIST_UNITS_ALL, headers=token)
-        assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
 def test_list_units_as_super_admin(client):
