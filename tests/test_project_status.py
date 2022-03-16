@@ -33,7 +33,7 @@ fields_set_to_null = [
     "pi",
     "public_key",
     # "unit_id",
-    "created_by",
+    # "created_by",
     # "is_active",
     # "date_updated",
 ]
@@ -173,7 +173,7 @@ def test_aborted_project(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "In Progress"
     assert (
-        "Project cannot be archived from this status but can be aborted if it has ever been made available"
+        "You cannot archive a project that has been made available previously"
         in response.json["message"]
     )
 
@@ -320,7 +320,10 @@ def test_check_invalid_transitions_from_in_progress(module_client, test_project)
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "In Progress"
-    assert "Invalid status transition" in response.json["message"]
+    assert (
+        "You cannot expire a project that has the current status 'In Progress'."
+        in response.json["message"]
+    )
 
     # In Progress to Archived
     new_status["new_status"] = "Archived"
@@ -334,7 +337,7 @@ def test_check_invalid_transitions_from_in_progress(module_client, test_project)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "In Progress"
     assert (
-        "Project cannot be archived from this status but can be aborted if it has ever been made available"
+        "You cannot archive a project that has been made available previously"
         in response.json["message"]
     )
 
@@ -584,7 +587,10 @@ def test_invalid_transitions_from_expired(module_client, test_project):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Expired"
-    assert "Invalid status transition" in response.json["message"]
+    assert (
+        "You cannot retract a project that has the current status 'Expired'"
+        in response.json["message"]
+    )
 
     # Expired to Deleted
     new_status["new_status"] = "Deleted"
@@ -596,7 +602,10 @@ def test_invalid_transitions_from_expired(module_client, test_project):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Expired"
-    assert "Invalid status transition" in response.json["message"]
+    assert (
+        "You cannot delete a project that has the current status 'Expired'"
+        in response.json["message"]
+    )
 
 
 def test_set_project_to_archived(module_client, test_project, boto3_session):
@@ -639,7 +648,7 @@ def test_invalid_transitions_from_archived(module_client, test_project):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"
-    assert "Invalid status transition" in response.json["message"]
+    assert "Cannot change status for a project" in response.json["message"]
 
     # Archived to Deleted
     new_status["new_status"] = "Deleted"
@@ -651,7 +660,7 @@ def test_invalid_transitions_from_archived(module_client, test_project):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"
-    assert "Invalid status transition" in response.json["message"]
+    assert "Cannot change status for a project" in response.json["message"]
 
     # Archived to Available
     new_status["new_status"] = "Available"
@@ -663,7 +672,7 @@ def test_invalid_transitions_from_archived(module_client, test_project):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"
-    assert "Invalid status transition" in response.json["message"]
+    assert "Cannot change status for a project" in response.json["message"]
 
     # Archived to Expired
     new_status["new_status"] = "Expired"
@@ -675,4 +684,4 @@ def test_invalid_transitions_from_archived(module_client, test_project):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"
-    assert "Invalid status transition" in response.json["message"]
+    assert "Cannot change status for a project" in response.json["message"]

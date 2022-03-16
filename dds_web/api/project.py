@@ -88,18 +88,8 @@ class ProjectStatus(flask_restful.Resource):
         # Check if valid status
         json_input = flask.request.json
         new_status = json_input.get("new_status")
-        if new_status not in [
-            "In Progress",
-            "Deleted",
-            "Available",
-            "Expired",
-            "Archived",
-        ]:
-            raise DDSArgumentError("Invalid status")
-
-        # Check if valid status transition
-        if not self.is_transition_possible(project.current_status, new_status):
-            raise DDSArgumentError("Invalid status transition")
+        if not new_status:
+            raise DDSArgumentError(message="No status transition provided. Specify the new status.")
 
         # Override default to send email
         send_email = json_input.get("send_email", True)
@@ -107,6 +97,7 @@ class ProjectStatus(flask_restful.Resource):
         # Initial variable definition
         curr_date = dds_web.utils.current_time()
         is_aborted = False
+        delete_message = ""
 
         # Moving to Available
         if new_status == "Available":
@@ -130,6 +121,8 @@ class ProjectStatus(flask_restful.Resource):
             new_status_row, delete_message = self.archive_project(
                 project=project, current_time=curr_date, aborted=is_aborted
             )
+        else:
+            raise DDSArgumentError(message="Invalid status")
 
         try:
             project.project_statuses.append(new_status_row)
@@ -156,20 +149,37 @@ class ProjectStatus(flask_restful.Resource):
             )
         return {"message": return_message}
 
-    def is_transition_possible(self, current_status, new_status):
-        """Check if the transition is valid"""
-        possible_transitions = [
-            ("In Progress", ["Available", "Deleted", "Archived"]),
-            ("Available", ["In Progress", "Expired", "Archived"]),
-            ("Expired", ["Available", "Archived"]),
-        ]
-        result = False
+    def check_transition_possible(self, current_status, new_status):
+        """Check if the transition is valid."""
+        valid_statuses = {
+            "In Progress": "retract",
+            "Available": "release",
+            "Deleted": "delete",
+            "Expired": "expire",
+            "Archived": "archive",
+        }
+        if new_status not in valid_statuses:
+            raise DDSArgumentError("Invalid status")
 
-        for transition in possible_transitions:
-            if current_status == transition[0] and new_status in transition[1]:
-                result = True
-                break
-        return result
+        possible_transitions = {
+            "In Progress": ["Available", "Deleted", "Archived"],
+            "Available": ["In Progress", "Expired", "Archived"],
+            "Expired": ["Available", "Archived"],
+        }
+
+        current_transition = possible_transitions.get(current_status)
+        if not current_transition:
+            raise DDSArgumentError(
+                message=f"Cannot change status for a project that has the status '{current_status}'."
+            )
+
+        if new_status not in current_transition:
+            raise DDSArgumentError(
+                message=(
+                    f"You cannot {valid_statuses[new_status]} a "
+                    f"project that has the current status '{current_status}'."
+                )
+            )
 
     def release_project(
         self, project: models.Project, current_time: datetime.datetime, deadline_in: int
@@ -178,6 +188,11 @@ class ProjectStatus(flask_restful.Resource):
 
         Only allowed from In Progress and Expired.
         """
+        # Check if valid status transition
+        self.check_transition_possible(
+            current_status=project.current_status, new_status="Available"
+        )
+
         if deadline_in > 90:
             raise DDSArgumentError(
                 message="The deadline needs to be less than (or equal to) 90 days."
@@ -205,11 +220,15 @@ class ProjectStatus(flask_restful.Resource):
             status="Available", date_created=current_time, deadline=deadline
         )
 
-    def retract_project(project: models.Project, current_time: datetime.datetime):
+    def retract_project(self, project: models.Project, current_time: datetime.datetime):
         """Retract project: Make status In Progress.
 
         Only possible from Available.
         """
+        # Check if valid status transition
+        self.check_transition_possible(
+            current_status=project.current_status, new_status="In Progress"
+        )
 
         return models.ProjectStatuses(status="In Progress", date_created=current_time)
 
@@ -220,6 +239,9 @@ class ProjectStatus(flask_restful.Resource):
 
         Only possible Available.
         """
+        # Check if valid status transition
+        self.check_transition_possible(current_status=project.current_status, new_status="Expired")
+
         if deadline_in > 30:
             raise DDSArgumentError(
                 message="The deadline needs to be less than (or equal to) 30 days."
@@ -237,6 +259,9 @@ class ProjectStatus(flask_restful.Resource):
 
         Only possible from In Progress.
         """
+        # Check if valid status transition
+        self.check_transition_possible(current_status=project.current_status, new_status="Deleted")
+
         # Can only be Deleted if never made Available
         if project.has_been_available:
             raise DDSArgumentError(
@@ -251,7 +276,7 @@ class ProjectStatus(flask_restful.Resource):
         # Delete metadata from project row
         self.delete_project_info(proj=project)
         delete_message = (
-            f"\nAll files in project '{project.public_id}' deleted and project info cleared."
+            f"\nAll files in project '{project.public_id}' deleted and project info cleared"
         )
 
         return models.ProjectStatuses(status="Deleted", date_created=current_time), delete_message
@@ -263,10 +288,14 @@ class ProjectStatus(flask_restful.Resource):
 
         Only possible from Available and Expired.
         """
-        if project.current_status == "In Progress":
+        # Check if valid status transition
+        self.check_transition_possible(current_status=project.current_status, new_status="Archived")
+
+        if not aborted and project.current_status == "In Progress":
             if not (project.has_been_available and aborted):
                 raise DDSArgumentError(
-                    "Project cannot be archived from this status but can be aborted if it has ever been made available"
+                    f"You cannot archive a project that has been made available previously. "
+                    "Abort the project if you wish to proceed."
                 )
         project.is_active = False
 
@@ -300,7 +329,6 @@ class ProjectStatus(flask_restful.Resource):
         proj.description = None
         proj.pi = None
         proj.public_key = None
-        proj.created_by = None
         # Delete User associations
         for user in proj.researchusers:
             db.session.delete(user)
