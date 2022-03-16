@@ -16,19 +16,16 @@ import sqlalchemy
 import marshmallow
 
 # Own modules
-from dds_web import db, auth
+from dds_web import db
 from dds_web.errors import (
     BucketNotFoundError,
     DatabaseError,
     DDSArgumentError,
     LoggedHTTPException,
-    NoSuchUserError,
-    AccessDeniedError,
     MissingJsonError,
+    S3ConnectionError,
 )
 from dds_web.utils import get_username_or_request_ip
-from dds_web.api.schemas import user_schemas, project_schemas
-from dds_web.database import models
 
 # initiate logging
 action_logger = structlog.getLogger("actions")
@@ -95,11 +92,28 @@ def dbsession(func):
         try:
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(message=str(sqlerr), alt_message="Saving database changes failed.")
+            raise DatabaseError(
+                message=str(sqlerr), alt_message="Saving database changes failed."
+            ) from sqlerr
 
         return result
 
     return make_commit
+
+
+def handle_db_error(func):
+    @functools.wraps(func)
+    def perform_get(*args, **kwargs):
+
+        # Run function, catch errors
+        try:
+            result = func(*args, **kwargs)
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError(message=str(sqlerr)) from sqlerr
+
+        return result
+
+    return perform_get
 
 
 # S3 ########################################################################################## S3 #
@@ -122,9 +136,9 @@ def connect_cloud(func):
                 aws_secret_access_key=self.keys["secret_key"],
             )
         except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(message=str(sqlerr))
+            raise DatabaseError(message=str(sqlerr)) from sqlerr
         except botocore.client.ClientError as clierr:
-            raise S3ConnectionError(message=str(clierr))
+            raise S3ConnectionError(message=str(clierr)) from clierr
 
         return func(self, *args, **kwargs)
 
@@ -139,7 +153,7 @@ def bucket_must_exists(func):
         try:
             self.resource.meta.client.head_bucket(Bucket=self.bucketname)
         except botocore.client.ClientError as err:
-            raise BucketNotFoundError(message=str(err))
+            raise BucketNotFoundError(message=str(err)) from err
 
         return func(self, *args, **kwargs)
 

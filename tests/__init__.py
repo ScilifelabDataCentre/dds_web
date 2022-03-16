@@ -148,6 +148,9 @@ class DDSEndpoint:
     USER_DELETE_SELF = BASE_ENDPOINT + "/user/delete_self"
     USER_CONFIRM_DELETE = "/confirm_deletion/"
 
+    # List users
+    LIST_UNIT_USERS = BASE_ENDPOINT + "/unit/users"
+
     # Authentication - user and project
     ENCRYPTED_TOKEN = BASE_ENDPOINT + "/user/encrypted_token"
     SECOND_FACTOR = BASE_ENDPOINT + "/user/second_factor"
@@ -190,5 +193,8 @@ class DDSEndpoint:
     # Display facility usage
     USAGE = BASE_ENDPOINT + "/usage"
     INVOICE = BASE_ENDPOINT + "/invoice"
+
+    # Units
+    LIST_UNITS_ALL = BASE_ENDPOINT + "/unit/info/all"
 
     TIMEOUT = 5

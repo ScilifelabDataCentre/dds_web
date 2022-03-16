@@ -36,6 +36,6 @@ def remove_user_self_deletion_request(user):
         db.session.commit()
     except sqlalchemy.exc.SQLAlchemyError as err:
         db.session.rollback()
-        raise DatabaseError(message=str(err))
+        raise DatabaseError(message=str(err)) from err
 
     return email

@@ -14,7 +14,6 @@ import flask
 import argon2
 import flask_login
 import pathlib
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from cryptography.hazmat.primitives.twofactor import (
     hotp as twofactor_hotp,
     InvalidToken as twofactor_InvalidToken,
@@ -462,6 +461,11 @@ class User(flask_login.UserMixin, db.Model):
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         return hotp.generate(self.hotp_counter)
 
+    def reset_current_HOTP(self):
+        """Make the previous HOTP as invalid by nulling issue time and increasing counter."""
+        self.hotp_issue_time = None
+        self.hotp_counter += 1
+
     def verify_HOTP(self, token):
         """Verify the HOTP token.
 
@@ -477,8 +481,8 @@ class User(flask_login.UserMixin, db.Model):
 
         try:
             hotp.verify(token, self.hotp_counter)
-        except twofactor_InvalidToken:
-            raise AuthenticationError("Invalid one-time authentication code.")
+        except twofactor_InvalidToken as exc:
+            raise AuthenticationError("Invalid one-time authentication code.") from exc
 
         # Token verified, increment counter to prohibit re-use
         self.hotp_counter += 1

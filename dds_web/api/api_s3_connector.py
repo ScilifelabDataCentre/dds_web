@@ -7,28 +7,15 @@
 # Standard library
 import logging
 import traceback
-import pathlib
-import json
-import gc
 
 # Installed
-import botocore
-import flask
-import sqlalchemy
 
 # Own modules
 from dds_web.api.dds_decorators import (
     connect_cloud,
     bucket_must_exists,
 )
-from dds_web.errors import (
-    BucketNotFoundError,
-    DatabaseError,
-    DeletionError,
-    S3ProjectNotFoundError,
-    S3InfoNotFoundError,
-    KeyNotFoundError,
-)
+
 from dds_web.database import models
 
 

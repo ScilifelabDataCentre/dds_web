@@ -23,7 +23,6 @@ from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
     logging_bind_request,
     dbsession,
-    args_required,
     json_required,
     handle_validation_errors,
 )
@@ -160,7 +159,7 @@ class ProjectStatus(flask_restful.Resource):
             project.project_statuses.append(add_status)
             if not project.is_active:
                 # Deletes files (also commits session in the function - possibly refactor later)
-                removed = RemoveContents().delete_project_contents(project=project)
+                RemoveContents().delete_project_contents(project=project)
                 delete_message = f"\nAll files in {project.public_id} deleted"
                 if new_status in ["Deleted", "Archived"]:
                     self.rm_project_user_keys(project=project)
@@ -178,7 +177,7 @@ class ProjectStatus(flask_restful.Resource):
         ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Status was not updated")
+            raise DatabaseError(message="Server Error: Status was not updated") from err
 
         # Mail users once project is made available
         if new_status == "Available" and send_email:
@@ -225,7 +224,6 @@ class ProjectStatus(flask_restful.Resource):
         proj.description = None
         proj.pi = None
         proj.public_key = None
-        proj.unit_id = None
         proj.created_by = None
         # Delete User associations
         for user in proj.researchusers:
@@ -327,6 +325,12 @@ class UserProjects(flask_restful.Resource):
                 # return ByteHours
                 project_info.update({"Usage": proj_bhours, "Cost": proj_cost})
 
+            project_info["Access"] = (
+                models.ProjectUserKeys.query.filter_by(
+                    project_id=p.id, user_id=current_user.username
+                ).count()
+                > 0
+            )
             all_projects.append(project_info)
 
         return_info = {
@@ -404,7 +408,7 @@ class RemoveContents(flask_restful.Resource):
             try:
                 s3conn.remove_bucket()
             except botocore.client.ClientError as err:
-                raise DeletionError(message=str(err), project=project.public_id)
+                raise DeletionError(message=str(err), project=project.public_id) from err
 
         # If ok delete from database
         try:
@@ -427,7 +431,7 @@ class RemoveContents(flask_restful.Resource):
                     "Project bucket contents were deleted, but they were not deleted from the "
                     "database. Please contact SciLifeLab Data Centre."
                 ),
-            )
+            ) from sqlerr
 
 
 class CreateProject(flask_restful.Resource):
@@ -455,7 +459,7 @@ class CreateProject(flask_restful.Resource):
                 botocore.exceptions.ParamValidationError,
             ) as err:
                 # For now just keeping the project row
-                raise S3ConnectionError(str(err))
+                raise S3ConnectionError(str(err)) from err
 
         try:
             db.session.commit()
@@ -601,9 +605,11 @@ class ProjectAccess(flask_restful.Resource):
         else:
             list_of_projects = [project]
 
-        self.give_project_access(
+        errors = self.give_project_access(
             project_list=list_of_projects, current_user=auth.current_user(), user=user
         )
+        if errors:
+            return {"errors": errors}
 
         return {"message": f"Project access updated for user '{user.primary_email}'."}
 
@@ -645,15 +651,23 @@ class ProjectAccess(flask_restful.Resource):
     def give_project_access(project_list, current_user, user):
         """Give specific user project access."""
         # Loop through and check that the project(s) is(are) active
+        fix_errors = {}
         for proj in project_list:
-            if proj.is_active:
-                project_keys_row = models.ProjectUserKeys.query.filter_by(
-                    project_id=proj.id, user_id=user.username
-                ).one_or_none()
-                if not project_keys_row:
-                    share_project_private_key(
-                        from_user=current_user,
-                        to_another=user,
-                        project=proj,
-                        from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                    )
+            try:
+                if proj.is_active:
+                    project_keys_row = models.ProjectUserKeys.query.filter_by(
+                        project_id=proj.id, user_id=user.username
+                    ).one_or_none()
+                    if not project_keys_row:
+                        share_project_private_key(
+                            from_user=current_user,
+                            to_another=user,
+                            project=proj,
+                            from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                        )
+            except KeyNotFoundError as keyerr:
+                fix_errors[
+                    proj.public_id
+                ] = "You do not have access to this project. Please contact the responsible unit."
+
+        return fix_errors
