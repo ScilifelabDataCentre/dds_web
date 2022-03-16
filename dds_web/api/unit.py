@@ -13,7 +13,7 @@ import structlog
 # Own modules
 from dds_web import auth
 from dds_web.database import models
-from dds_web.api.dds_decorators import logging_bind_request
+from dds_web.api.dds_decorators import logging_bind_request, handle_db_error
 
 
 # initiate bound logger
@@ -29,6 +29,7 @@ class AllUnits(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin"])
     @logging_bind_request
+    @handle_db_error
     def get(self):
         """Return info about unit to super admin."""
         all_units = models.Unit.query.all()
