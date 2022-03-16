@@ -239,7 +239,11 @@ def __user_from_subject(subject):
     """Get user row from username."""
     if subject:
         user = models.User.query.get(subject)
-        if user and user.is_active:
+        if user:
+            if not user.is_active:
+                raise AccessDeniedError(
+                    message=("Your account has been deactivated. You cannot use the DDS.")
+                )
             return user
 
 
