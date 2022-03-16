@@ -198,7 +198,7 @@ class AddUser(flask_restful.Resource):
 
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
-            # TODO Change / move this later. This is just so that we can add an initial unit admin.
+            # TODO Change / move this later. This is just so that we can add an initial Unit Admin.
             if auth.current_user().role == "Super Admin":
                 if unit:
                     unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
@@ -267,12 +267,20 @@ class AddUser(flask_restful.Resource):
 
         allowed_roles = ["Project Owner", "Researcher"]
 
-        if role not in allowed_roles or whom.role not in allowed_roles:
+        if role not in allowed_roles:
             return {
                 "status": ddserr.AccessDeniedError.code.value,
                 "message": (
                     "User Role should be either 'Project Owner' or "
                     "'Researcher' to be added to a project"
+                ),
+            }
+
+        if whom.role not in allowed_roles:
+            return {
+                "status": ddserr.AccessDeniedError.code.value,
+                "message": (
+                    "Users affiliated with units can not be added to projects individually."
                 ),
             }
 
@@ -451,7 +459,9 @@ class DeleteUserSelf(flask_restful.Resource):
 
         username = current_user.username
 
-        proj_ids = [proj.public_id for proj in current_user.projects]
+        proj_ids = None
+        if current_user.role != "Super Admin":
+            proj_ids = [proj.public_id for proj in current_user.projects]
 
         # Create URL safe token for invitation link
         s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
@@ -487,7 +497,6 @@ class DeleteUserSelf(flask_restful.Resource):
         # Create link for deletion request email
         link = flask.url_for("auth_blueprint.confirm_self_deletion", token=token, _external=True)
         subject = f"Confirm deletion of your user account {username} in the SciLifeLab Data Delivery System"
-        projectnames = "; ".join(proj_ids)
 
         msg = flask_mail.Message(
             subject,
@@ -511,13 +520,13 @@ class DeleteUserSelf(flask_restful.Resource):
             "mail/deletion_request.txt",
             link=link,
             sender_name=current_user.name,
-            projects=projectnames,
+            projects=proj_ids,
         )
         msg.html = flask.render_template(
             "mail/deletion_request.html",
             link=link,
             sender_name=current_user.name,
-            projects=projectnames,
+            projects=proj_ids,
         )
 
         mail.send(msg)
@@ -538,7 +547,8 @@ class DeleteUserSelf(flask_restful.Resource):
 class UserActivation(flask_restful.Resource):
     """Endpoint to reactivate/deactivate users in the system
 
-    Unit admins can reactivate/deactivate unitusers. Super admins can reactivate/deactivate any user."""
+    Unit Admins can reactivate/deactivate unitusers. Super admins can reactivate/deactivate any user.
+    """
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
@@ -557,7 +567,7 @@ class UserActivation(flask_restful.Resource):
 
         # Verify that the action is specified -- reactivate or deactivate
         action = json_input.get("action")
-        if action is None or action == "":
+        if not action:
             raise ddserr.DDSArgumentError(
                 message="Please provide an action 'deactivate' or 'reactivate' for this request."
             )
@@ -566,11 +576,20 @@ class UserActivation(flask_restful.Resource):
         current_user = auth.current_user()
 
         if current_user.role == "Unit Admin":
-            if user.role not in ["Unit Admin", "Unit Personnel"] or current_user.unit != user.unit:
+            # Unit Admin can only activate/deactivate Unit Admins and personnel
+            if user.role not in ["Unit Admin", "Unit Personnel"]:
                 raise ddserr.AccessDeniedError(
                     message=(
-                        f"You are not allowed to {action} this user. As a unit admin, "
-                        f"you're only allowed to {action} users in your unit."
+                        "You can only activate/deactivate users with "
+                        "the role Unit Admin or Unit Personnel."
+                    )
+                )
+
+            if current_user.unit != user.unit:
+                raise ddserr.AccessDeniedError(
+                    message=(
+                        "As a Unit Admin, you can only activate/deactivate other Unit Admins or "
+                        "Unit Personnel within your specific unit."
                     )
                 )
 
@@ -580,7 +599,7 @@ class UserActivation(flask_restful.Resource):
         if (action == "reactivate" and user.is_active) or (
             action == "deactivate" and not user.is_active
         ):
-            raise ddserr.DDSArgumentError(message="User is already in desired state!")
+            raise ddserr.DDSArgumentError(message=f"User is already {action}d!")
 
         # TODO: Check if user has lost access to any projects and if so, grant access again.
         if action == "reactivate":
@@ -630,7 +649,7 @@ class UserActivation(flask_restful.Resource):
 class DeleteUser(flask_restful.Resource):
     """Endpoint to remove users from the system
 
-    Unit admins can delete unitusers. Super admins can delete any user."""
+    Unit Admins can delete Unit Admins and Unit Personnel. Super admins can delete any user."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
@@ -650,11 +669,15 @@ class DeleteUser(flask_restful.Resource):
         current_user = auth.current_user()
 
         if current_user.role == "Unit Admin":
-            if user.role not in ["Unit Admin", "Unit Personnel"] or current_user.unit != user.unit:
+            if user.role not in ["Unit Admin", "Unit Personnel"]:
+                raise ddserr.UserDeletionError(
+                    message="You can only delete users with the role Unit Admin or Unit Personnel."
+                )
+            if current_user.unit != user.unit:
                 raise ddserr.UserDeletionError(
                     message=(
-                        "You are not allowed to delete this user. As a unit admin, "
-                        "you're only allowed to delete users in your unit."
+                        "As a Unit Admin, you're can only delete Unit Admins "
+                        "and Unit Personnel within your specific unit."
                     )
                 )
 

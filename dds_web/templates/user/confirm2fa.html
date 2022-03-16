@@ -1,64 +1,54 @@
-{% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
+{% extends "base.html" %}
 
-{% block content %}
-<title>DDS Multi-Factor Authentication</title>
+{% block page_title -%}
+DDS Multi-Factor Authentication
+{%- endblock %}
 
-<body>
-    <h1>Enter one-time authentication code</h1>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class=flashes>
-        {% for category, message in messages %}
-        <div class="alert alert-{{category}}" role="alert">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+{% block body %}
+
+<p class="lead">Please enter your one-time authentication code.</p>
+{% if using_totp %}
+<p>Please complete the login by entering the one-time authentication code displayed in your authenticator app.</p>
+{% else %}
+<p>Please complete the login by entering the one-time authentication code that was sent to you.
+    The one-time codes are valid for a short time (15 minutes) after they have been issued.
+</p>
+{% endif %}
+<form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}" autocomplete="off">
+    {{ form.csrf_token }}
+
+    <!-- Token -->
     {% if using_totp %}
-    <p>Please complete the login by entering the one-time authentication code displayed in your authenticator app.</p>
+    {{ form.totp.label }}
+    {{ form.totp }}
+    <ul>
+        {% for error in form.totp.errors %}
+        <li style="color:red;">
+            {{ error }}
+        </li>
+        {% endfor %}
+    </ul>
     {% else %}
-    <p>Please complete the login by entering the one-time authentication code that was sent to you.
-        The one-time codes are valid for a short time (15 minutes) after they have been issued.
-    </p>
+    {{ form.hotp.label }}
+    {{ form.hotp }}
+    <ul>
+        {% for error in form.hotp.errors %}
+        <li style="color:red;">
+            {{ error }}
+        </li>
+        {% endfor %}
+    </ul>
     {% endif %}
-    <form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}" autocomplete="off">
-        {{ form.csrf_token }}
-
-        <!-- Token -->
-        {% if using_totp %}
-        {{ form.totp.label }}
-        {{ form.totp }}
-        <ul>
-            {% for error in form.totp.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        {{ form.hotp.label }}
-        {{ form.hotp }}
-        <ul>
-            {% for error in form.hotp.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
-        {% endif %}
 
 
-        <!-- Submit button -->
-        {{ form.submit }}
+    <!-- Submit button -->
+    {{ form.submit }}
 
-    </form>
+</form>
 
-    <form method="POST" action="{{ url_for('auth_blueprint.cancel_2fa') }}">
-        {{ cancel_form.csrf_token }}
-        {{ cancel_form.cancel }}
-    </form>
+<form method="POST" action="{{ url_for('auth_blueprint.cancel_2fa') }}">
+    {{ cancel_form.csrf_token }}
+    {{ cancel_form.cancel }}
+</form>
 
-    {% endblock %}
+{% endblock %}

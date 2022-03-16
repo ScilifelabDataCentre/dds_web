@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-
   backend:
     environment:
       - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}

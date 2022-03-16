@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- TODO - can this be imported into the SCSS? -->
+        <link href="{{ url_for('static', filename='node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css')
+            }}" rel="stylesheet">
+        <meta name="color-scheme" content="light dark">
+        <link href="{{ url_for('static', filename='css/dds_{}.css'.format('auto' if not request.cookies.get('ddstheme')
+            else request.cookies.get('ddstheme'))) }}"
+            rel="stylesheet" id="dds-stylesheet">
+        <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.png') }}" type="png">
+        <title>{% block page_title %}Data Delivery System{% endblock %}</title>
+    </head>
+
+    <body>
+        {% include 'navbar.html' %}
+
+        <div class="container content pt-2">
+
+            {%if self.page_title() != "Data Delivery System" %}<h1>{{ self.page_title() }}</h1>{%endif%}
+
+            {% block content %}{% endblock %}
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flashes">
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{category}}" role="alert">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block body %}{% endblock body %}
+        </div>
+
+        <div class="footer border-top bg-light text-muted py-5 mt-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-6">
+                        <p class="small mb-0">Dark mode</p>
+                        <div class="form-check form-switch theme-switcher">
+                            <input class="form-check-input" type="checkbox" id="theme-switcher-check"
+                                {{ 'checked' if request.cookies.get('ddstheme', 'light') == 'dark' }}>
+                            <label class="form-check-label" for="theme-switcher-check">
+                                <span id="theme-switcher-sun" class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'dark' }}">
+                                    <i class="fas fa-sun fa-fw me-2"></i>
+                                </span>
+                                <span id="theme-switcher-moon" class="{{ 'd-none' if request.cookies.get('ddstheme', 'light') == 'light' }} ">
+                                    <i class="fas fa-moon fa-fw me-2"></i>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6 text-end small">
+                        <p>
+                            The DDS web source code is available on GitHub:<br>
+                            <a href="https://github.com/ScilifelabDataCentre/dds_web" class="text-muted">https://github.com/ScilifelabDataCentre/dds_web</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Javascript -->
+        <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='node_modules/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='node_modules/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js')
+            }}"></script>
+        <!-- We could use FontAwesome through npm, but then we need configure secrets to access the Pro kit which is a hassle -->
+        <script src="https://kit.fontawesome.com/8cd1f5d753.js" crossorigin="anonymous"></script>
+        <script src="{{ url_for('static', filename='js/dds.js') }}"></script>
+        {% block javascript %}{% endblock javascript %}
+    </body>
+</html>

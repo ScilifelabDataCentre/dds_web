@@ -1,5 +1,3 @@
-""""""
-
 ####################################################################################################
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
@@ -55,14 +53,6 @@ def bad_request(error):
 ####################################################################################################
 
 
-@auth_blueprint.route("/", methods=["GET"])
-@flask_login.login_required
-def index():
-    """DDS start page."""
-    form = forms.LogoutForm()
-    return flask.render_template("index.html", form=form)
-
-
 @auth_blueprint.route("/confirm_invite/<token>", methods=["GET"])
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
@@ -75,18 +65,18 @@ def confirm_invite(token):
     try:
         email, invite_row = dds_web.security.auth.verify_invite_token(token)
     except ddserr.AuthenticationError as err:
-        flask.flash("This invitation link has expired or is invalid.", "danger")
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        flask.flash("This invitation link has expired or is invalid.", "warning")
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Check the invite exists
     if not invite_row:
         if email and dds_web.utils.email_in_db(email=email):
-            flask.flash("Registration has already been completed.")
+            flask.flash("Registration has already been completed.", "warning")
             return flask.make_response(flask.render_template("user/userexists.html"))
         else:
             # Perhaps the invite has been cancelled by an admin
-            flask.flash("This invitation link is invalid.", "danger")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+            flask.flash("This invitation link is invalid.", "warning")
+            return flask.redirect(flask.url_for("pages.home"))
 
     # Save encrypted token to be reused at registration
     # token is in the session already if the user refreshes the page
@@ -99,10 +89,10 @@ def confirm_invite(token):
     # Prefill fields - unit readonly if filled, otherwise disabled
     # These should only be used for display to user and not when actually registering
     # the user, then the values should be fetched from the database again.
-    form.unit_name.render_kw = {"disabled": True}
-    if invite_row.unit:  # backref to unit
-        form.unit_name.data = invite_row.unit.name
-        form.unit_name.render_kw = {"readonly": True}
+    # form.unit_name.render_kw = {"disabled": True}
+    # if invite_row.unit:  # backref to unit
+    #     form.unit_name.data = invite_row.unit.name
+    #     form.unit_name.render_kw = {"readonly": True}
 
     form.email.data = email
     suggested_username = email.split("@")[0]
@@ -112,7 +102,11 @@ def confirm_invite(token):
     ) and not dds_web.utils.username_in_db(suggested_username):
         form.username.data = suggested_username
 
-    return flask.render_template("user/register.html", form=form)
+    return flask.render_template(
+        "user/register.html",
+        form=form,
+        unit=invite_row.unit.name if invite_row.unit else None,
+    )
 
 
 @auth_blueprint.route("/register", methods=["POST"])
@@ -132,9 +126,10 @@ def register():
             "No token has been found in session when posting to register."
         )
         flask.flash(
-            "Error in registration process, please go back and use the link in the invitation email again."
+            "Error in registration process, please go back and use the link in the invitation email again.",
+            "danger",
         )
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Validate form - validators defined in form class
     if form.validate_on_submit():
@@ -145,10 +140,10 @@ def register():
             # This should never happen since the form is validated
             # Any error catched here is likely a bug/issue
             flask.current_app.logger.warning(err)
-            flask.flash("Error in registration process, please try again.")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+            flask.flash("Error in registration process, please try again.", "danger")
+            return flask.redirect(flask.url_for("pages.home"))
 
-        flask.flash("Registration successful!")
+        flask.flash("Registration successful!", "success")
         return flask.make_response(flask.render_template("user/userexists.html"))
 
     # Go to registration form
@@ -252,7 +247,7 @@ def confirm_2fa():
 
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     next = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
@@ -265,7 +260,8 @@ def confirm_2fa():
         user = dds_web.security.auth.verify_token_no_data(token)
     except ddserr.AuthenticationError:
         flask.flash(
-            f"Error: Please initiate a log in before entering the one-time authentication code."
+            f"Error: Please initiate a log in before entering the one-time authentication code.",
+            "warning",
         )
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
     except Exception as e:
@@ -287,7 +283,7 @@ def confirm_2fa():
     # Currently same error for both, not vital, they get message to contact us
     if not user:
         flask.session.pop("2fa_initiated_token", None)
-        flask.flash("Your account is not active. Contact Data Centre.", "danger")
+        flask.flash("Your account is not active. Contact Data Centre.", "warning")
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next))
 
     if form.validate_on_submit():
@@ -302,8 +298,8 @@ def confirm_2fa():
         # Raises authenticationerror if invalid
         try:
             twofactor_verify(twofactor_value.encode())
-        except ddserr.AuthenticationError as err:
-            flask.flash(f"Invalid one-time code: {err.description}")
+        except ddserr.AuthenticationError:
+            flask.flash("Invalid one-time code.", "warning")
             return flask.redirect(
                 flask.url_for(
                     "auth_blueprint.confirm_2fa",
@@ -316,11 +312,11 @@ def confirm_2fa():
 
         # Correct username, password and twofactor code --> log user in
         flask_login.login_user(user)
-        flask.flash("Logged in successfully.")
+        flask.flash("Logged in successfully.", "success")
         # Remove token from session
         flask.session.pop("2fa_initiated_token", None)
         # Next is assured to be url_safe above
-        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
+        return flask.redirect(next or flask.url_for("pages.home"))
 
     else:
         return flask.render_template(
@@ -348,7 +344,7 @@ def login():
 
     # Redirect to next or index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(next or flask.url_for("auth_blueprint.index"))
+        return flask.redirect(next or flask.url_for("pages.home"))
 
     # Display greeting message, if applicable
     if next and re.search("confirm_deletion", next):
@@ -362,7 +358,7 @@ def login():
 
         # Unsuccessful login
         if not user or not user.verify_password(input_password=form.password.data):
-            flask.flash("Invalid username or password.")
+            flask.flash("Invalid username or password.", "warning")
             return flask.redirect(
                 flask.url_for("auth_blueprint.login", next=next)
             )  # Try login again
@@ -385,16 +381,24 @@ def login():
     return flask.render_template("user/login.html", form=form, next=next)
 
 
+@auth_blueprint.route("/logout", methods=["GET"])
+@flask_login.login_required
+def logout_get():
+    """DDS log out page."""
+    form = forms.LogoutForm()
+    return flask.render_template("user/logout.html", form=form)
+
+
 @auth_blueprint.route("/logout", methods=["POST"])
 @flask_login.login_required
 @logging_bind_request
-def logout():
+def logout_post():
     """Logout user."""
 
     if flask_login.current_user.is_authenticated:
         flask_login.logout_user()
 
-    return flask.redirect(flask.url_for("auth_blueprint.index"))
+    return flask.redirect(flask.url_for("pages.home"))
 
 
 @auth_blueprint.route("/reset_password", methods=["GET", "POST"])
@@ -408,7 +412,7 @@ def request_reset_password():
     """Request to reset password when password is lost."""
     # Reset forgotten password only allowed if logged out
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Validate form
     form = forms.RequestResetForm()
@@ -424,7 +428,7 @@ def request_reset_password():
                 additional_claims={"rst": "pwd"},
             )
             dds_web.utils.send_reset_email(email_row=email, token=token)
-            flask.flash("An email has been sent with instructions to reset your password.", "info")
+            flask.flash("An email has been sent with instructions to reset your password.")
             return flask.redirect(flask.url_for("auth_blueprint.login"))
 
         flask.flash("Your account is deactivated. You cannot reset your password.", "warning")
@@ -442,17 +446,17 @@ def reset_password(token):
     """Perform the password reset when password is lost."""
     # Go to index page if already logged in
     if flask_login.current_user.is_authenticated:
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Verify that the token is valid and contains enough info
     try:
         user = dds_web.security.auth.verify_password_reset_token(token=token)
         if not user.is_active:
             flask.flash("Your account is not active. You cannot reset your password.", "warning")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+            return flask.redirect(flask.url_for("pages.home"))
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Get form for reseting password
     form = forms.ResetPasswordForm()
@@ -499,15 +503,17 @@ def password_reset_completed():
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     units_to_contact = {}
-    for project in user.projects:
-        if project.responsible_unit.external_display_name not in units_to_contact:
-            units_to_contact[
-                project.responsible_unit.external_display_name
-            ] = project.responsible_unit.contact_email
+    if user.role != "Super Admin":
+        for project in user.projects:
+            if project.responsible_unit.external_display_name not in units_to_contact:
+                units_to_contact[
+                    project.responsible_unit.external_display_name
+                ] = project.responsible_unit.contact_email
+        return flask.render_template(
+            "user/password_reset_completed.html", units_to_contact=units_to_contact
+        )
 
-    return flask.render_template(
-        "user/password_reset_completed.html", units_to_contact=units_to_contact
-    )
+    return flask.render_template("user/password_reset_completed.html")
 
 
 @auth_blueprint.route("/change_password", methods=["GET", "POST"])
@@ -528,7 +534,10 @@ def change_password():
         db.session.commit()
 
         flask_login.logout_user()
-        flask.flash("You have successfully changed your password.", "success")
+        flask.flash(
+            "You have successfully changed your password. Please log in again with your new password.",
+            "success",
+        )
         return flask.redirect(flask.url_for("auth_blueprint.login"))
 
     # Show form
@@ -595,3 +604,12 @@ def confirm_self_deletion(token):
         return flask.make_response(
             flask.render_template("user/userdeleted.html", username=email, initial=False)
         )
+
+
+@auth_blueprint.route("/account", methods=["GET"])
+@flask_login.login_required
+@logging_bind_request
+def account_info():
+    """User account page"""
+
+    return flask.render_template("user/account.html", account_info={}, enumerate=enumerate)

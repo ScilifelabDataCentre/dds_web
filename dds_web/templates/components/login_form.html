@@ -1,0 +1,39 @@
+<form method="POST" action="{{ url_for('auth_blueprint.login', next=next) }}" class="mt-2">
+    {{ form.csrf_token }}
+    <div class="input-group mb-3">
+        <span class="input-group-text bg-success text-black"><i class="fas fa-user mx-1"></i></span>
+        <div class="col">
+            <div class="form-floating">
+                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "") + " rounded-0 shadow-none", **{"placeholder": form.username.label.text, "autocomplete": "off"}) }}
+                {{ form.username.label }}
+                {% if form.username.errors %}
+                    {% for error in form.username.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text bg-success text-black"><i class="fas fa-key mx-1"></i></span>
+        <div class="col">
+            <div class="form-floating">
+                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "") + " rounded-0 shadow-none", **{"placeholder": form.password.label.text, "autocomplete": "off"}) }}
+                {{ form.password.label }}
+                {% if form.password.errors %}
+                    {% for error in form.password.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+    <button type="submit" class="btn btn-success w-100 mb-2">
+        <i class="fas fa-envelope me-2"></i>
+        Log in
+    </button>
+    <p class="text-center mb-1 small"><a class="text-muted text-decoration-none" href="{{ url_for('auth_blueprint.request_reset_password') }}">Forgot your password?</a></p>
+</form>

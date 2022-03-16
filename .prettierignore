@@ -1,0 +1,3 @@
+*.html
+dds_web/static/css
+dds_web/static/node_modules

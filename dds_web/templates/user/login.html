@@ -1,66 +1,19 @@
-{% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
+{% extends "base.html" %}
 
-{% block content %}
-<title>Login</title>
+{% block page_title -%}
+Log in to DDS
+{%- endblock %}
 
-<body>
-    <h1>Login to DDS</h1>
-    <div>
-        <p>
-            For information on how to use the Data Delivery System, as well as
-            see a test protocol, go <a
-                href="https://github.com/ScilifelabDataCentre/dds_cli/blob/master/docs/_build/latex/datadeliverysystem.pdf">here</a>.
-        </p>
+{% block body %}
+
+<p class="lead">Please use the form below to log in to the SciLifeLab Data Delivery System.</p>
+<div class="row">
+    <div class="col-lg-6">
+        {% include "components/login_form.html" %}
     </div>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class=flashes>
-        {% for category, message in messages %}
-        <div class="alert alert-{{category}}" role="alert">
-            {{ message }}
-        </div>
-        {% endfor %}
+    <div class="col-lg-6">
+        <p>In order to get a DDS account you need an invitation from one of the SciLifeLab units that use the DDS for data delivery.
+            Once you have received the invitation, you can register an account and log in to the system.</p>
     </div>
-    {% endif %}
-    {% endwith %}
-    <form method="POST" action="{{ url_for('auth_blueprint.login', next=next)
-        }}">
-        {{ form.csrf_token }}
-
-        <!-- Username -->
-        {{ form.username.label }}
-        {{ form.username }}
-        <ul>
-            {% for error in form.username.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
-
-        <!-- Password -->
-        {{ form.password.label }}
-        {{ form.password }}
-        <ul>
-            {% for error in form.password.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
-
-
-        <!-- Submit button -->
-        {{ form.submit }}
-
-        <small class="text-muted ml-2">
-            <a href="{{ url_for('auth_blueprint.request_reset_password')
-                }}">
-                Forgot Password?
-            </a>
-        </small>
-
-    </form>
-
-    {% endblock %}
+</div>
+{% endblock %}

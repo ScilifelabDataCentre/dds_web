@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  backend:
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
+      - DDS_PYTEST_ARGS=${DDS_PYTEST_ARGS}
+    build:
+      dockerfile: Dockerfiles/backend.Dockerfile
+      context: ./
+      target: test
+    command: bash
+    restart: "no"
+    stdin_open: true
+    tty: true

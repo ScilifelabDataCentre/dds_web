@@ -193,7 +193,7 @@ def test_del_request_others_unprivileged(client):
 
 
 def test_del_request_others_researcher(client):
-    """Unit admin tries to delete research user"""
+    """Unit Admin tries to delete research user"""
 
     email_to_delete = "researchuser@mailtrap.io"
 
@@ -213,7 +213,7 @@ def test_del_request_others_researcher(client):
 
 
 def test_del_request_others_researcher(client):
-    """Unit admin tries to delete unit user from different unit"""
+    """Unit Admin tries to delete unit user from different unit"""
 
     email_to_delete = "unituser1@mailtrap.io"
 
@@ -233,7 +233,7 @@ def test_del_request_others_researcher(client):
 
 
 def test_del_request_others_self(client):
-    """Unit admin tries to instantly self-delete via this endpoint"""
+    """Unit Admin tries to instantly self-delete via this endpoint"""
 
     email_to_delete = "delete_me_unitadmin@mailtrap.io"
 
@@ -253,7 +253,7 @@ def test_del_request_others_self(client):
 
 
 def test_del_request_others_success(client):
-    """Unit admin deletes unit user"""
+    """Unit Admin deletes unit user"""
 
     email_to_delete = "delete_me_unituser@mailtrap.io"
 
@@ -271,7 +271,7 @@ def test_del_request_others_success(client):
 
 
 def test_del_request_others_superaction(client):
-    """Super admin deletes unit admin"""
+    """Super admin deletes Unit Admin"""
 
     email_to_delete = "delete_me_unitadmin@mailtrap.io"
 

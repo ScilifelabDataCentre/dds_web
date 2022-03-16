@@ -18,12 +18,20 @@ from dds_web import utils
 class RegistrationForm(flask_wtf.FlaskForm):
     """User registration form."""
 
-    name = wtforms.StringField("name", validators=[wtforms.validators.InputRequired()])
+    name = wtforms.StringField(
+        "name",
+        validators=[
+            wtforms.validators.Length(
+                min=2, message="The name must be at least 2 characters long."
+            ),
+            wtforms.validators.InputRequired(message="Please enter your full name."),
+        ],
+    )
     email = wtforms.StringField(
         "email",
         validators=[
-            wtforms.validators.DataRequired(),
-            wtforms.validators.Email(),
+            wtforms.validators.DataRequired(message="You need to provide an email address."),
+            wtforms.validators.Email(message="Please provide a valid email (the one invited)."),
             utils.email_not_taken_wtforms(),
         ],
         render_kw={"readonly": True},
@@ -31,8 +39,10 @@ class RegistrationForm(flask_wtf.FlaskForm):
     username = wtforms.StringField(
         "username",
         validators=[
-            wtforms.validators.InputRequired(),
-            wtforms.validators.Length(min=3, max=30),
+            wtforms.validators.InputRequired(message="Please enter a username."),
+            wtforms.validators.Length(
+                min=3, max=30, message="The username must be between 3 and 30 characters long."
+            ),
             utils.username_contains_valid_characters(),
             utils.username_not_taken_wtforms(),
         ],
@@ -40,19 +50,20 @@ class RegistrationForm(flask_wtf.FlaskForm):
     password = wtforms.PasswordField(
         "password",
         validators=[
-            wtforms.validators.DataRequired(),
-            wtforms.validators.EqualTo("confirm", message="Passwords must match!"),
-            wtforms.validators.Length(min=10, max=64),
+            wtforms.validators.DataRequired(message="You need to provide a password."),
+            wtforms.validators.EqualTo("confirm", message="The passwords do not match."),
+            wtforms.validators.Length(
+                min=10, max=64, message="The password must be between 10 and 64 characters long."
+            ),
             utils.password_contains_valid_characters(),
         ],
     )
-    unit_name = wtforms.StringField("unit name")
 
     confirm = wtforms.PasswordField(
         "Repeat Password",
         validators=[
-            wtforms.validators.DataRequired(),
-            wtforms.validators.EqualTo("password", message="The passwords don't match."),
+            wtforms.validators.DataRequired(message="Please repeat the password."),
+            wtforms.validators.EqualTo("password", message="The passwords do not match."),
         ],
     )
     submit = wtforms.SubmitField("submit")
@@ -64,7 +75,7 @@ class LoginForm(flask_wtf.FlaskForm):
         validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(1, 64)],
     )
     password = wtforms.PasswordField("Password", validators=[wtforms.validators.InputRequired()])
-    submit = wtforms.SubmitField("Login")
+    submit = wtforms.SubmitField("Log in")
 
 
 class LogoutForm(flask_wtf.FlaskForm):

@@ -335,7 +335,7 @@ def test_invite_to_register_researcher_with_project_as_owner_by_project_owner(cl
     assert user.project_user_keys[0].project_id == project.id
 
 
-# Unituser invited by unit admin ################################# Unituser invited by unit admin #
+# Unituser invited by Unit Admin ################################# Unituser invited by Unit Admin #
 
 
 def test_invite_to_register_unituser_by_unitadmin(client):
