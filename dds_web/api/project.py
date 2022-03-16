@@ -6,6 +6,9 @@
 
 # Standard Library
 import http
+from os import abort
+from pyexpat import model
+from dds_web import database
 
 # Installed
 import flask_restful
@@ -94,87 +97,44 @@ class ProjectStatus(flask_restful.Resource):
         ]:
             raise DDSArgumentError("Invalid status")
 
-        send_email = json_input.get("send_email", True)
-
-        curr_date = dds_web.utils.current_time()
-        is_aborted = False
-        add_deadline = None
-
+        # Check if valid status transition
         if not self.is_transition_possible(project.current_status, new_status):
             raise DDSArgumentError("Invalid status transition")
 
+        # Override default to send email
+        send_email = json_input.get("send_email", True)
+
+        # Initial variable definition
+        curr_date = dds_web.utils.current_time()
+        is_aborted = False
+
         # Moving to Available
         if new_status == "Available":
-            # Optional int arg deadline in days
-            deadline = json_input.get("deadline", project.responsible_unit.days_in_available)
-            add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
-                days=deadline
+            deadline_in = json_input.get("deadline", project.responsible_unit.days_in_available)
+            new_status_row = self.release_project(
+                project=project, current_time=curr_date, deadline_in=deadline_in
             )
-            if project.current_status == "Expired":
-                # Project can only move from Expired 2 times
-                if project.times_expired > 2:
-                    raise DDSArgumentError(
-                        "Project availability limit: Project cannot be made Available any more times"
-                    )
-            else:  # current status is in progress
-                if project.has_been_available:
-                    # No change in deadline if made available before
-                    add_deadline = project.current_deadline
-                else:
-                    project.released = curr_date
-
-        # Moving to Expired
-        if new_status == "Expired":
-            deadline = json_input.get("deadline", project.responsible_unit.days_in_expired)
-            add_deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
-                days=deadline
+        elif new_status == "In Progress":
+            new_status_row = self.retract_project(project=project, current_time=curr_date)
+        elif new_status == "Expired":
+            deadline_in = json_input.get("deadline", project.responsible_unit.days_in_expired)
+            new_status_row = self.expire_project(
+                project=project, current_time=curr_date, deadline_in=deadline_in
             )
-
-        # Moving to Deleted
-        if new_status == "Deleted":
-            # Can only be Deleted if never made Available
-            if project.has_been_available:
-                raise DDSArgumentError(
-                    "Project cannot be deleted if it has ever been made available, abort it instead"
-                )
-            project.is_active = False
-
-        # Moving to Archived
-        if new_status == "Archived":
+        elif new_status == "Deleted":
+            new_status_row, delete_message = self.delete_project(
+                project=project, current_time=curr_date
+            )
+        elif new_status == "Archived":
             is_aborted = json_input.get("is_aborted", False)
-            if project.current_status == "In Progress":
-                if not (project.has_been_available and is_aborted):
-                    raise DDSArgumentError(
-                        "Project cannot be archived from this status but can be aborted if it has ever been made available"
-                    )
-            project.is_active = False
+            new_status_row, delete_message = self.archive_project(
+                project=project, current_time=curr_date, aborted=is_aborted
+            )
 
-        add_status = models.ProjectStatuses(
-            **{"project_id": project.id, "status": new_status, "date_created": curr_date},
-            deadline=add_deadline,
-            is_aborted=is_aborted,
-        )
-        delete_message = ""
         try:
-            project.project_statuses.append(add_status)
-            if not project.is_active:
-                # Deletes files (also commits session in the function - possibly refactor later)
-                RemoveContents().delete_project_contents(project=project)
-                delete_message = f"\nAll files in {project.public_id} deleted"
-                if new_status in ["Deleted", "Archived"]:
-                    self.rm_project_user_keys(project=project)
-                    if new_status == "Deleted" or is_aborted:
-                        # Delete metadata from project row
-                        project = self.delete_project_info(project)
-                        delete_message += " and project info cleared"
+            project.project_statuses.append(new_status_row)
             db.session.commit()
-        except (
-            sqlalchemy.exc.SQLAlchemyError,
-            TypeError,
-            DatabaseError,
-            DeletionError,
-            BucketNotFoundError,
-        ) as err:
+        except (sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DatabaseError(message="Server Error: Status was not updated") from err
@@ -211,6 +171,122 @@ class ProjectStatus(flask_restful.Resource):
                 break
         return result
 
+    def release_project(
+        self, project: models.Project, current_time: datetime.datetime, deadline_in: int
+    ) -> models.ProjectStatuses:
+        """Release project: Make status Available.
+
+        Only allowed from In Progress and Expired.
+        """
+        if deadline_in > 90:
+            raise DDSArgumentError(
+                message="The deadline needs to be less than (or equal to) 90 days."
+            )
+
+        deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
+            days=deadline_in
+        )
+
+        # Project can only move from Expired 2 times
+        if project.current_status == "Expired":
+            if project.times_expired > 2:
+                raise DDSArgumentError(
+                    "Project availability limit: Project cannot be made Available any more times"
+                )
+        else:  # current status is in progress
+            if project.has_been_available:
+                # No change in deadline if made available before
+                deadline = project.current_deadline
+            else:
+                project.released = current_time
+
+        # Create row in ProjectStatuses
+        return models.ProjectStatuses(
+            status="Available", date_created=current_time, deadline=deadline
+        )
+
+    def retract_project(project: models.Project, current_time: datetime.datetime):
+        """Retract project: Make status In Progress.
+
+        Only possible from Available.
+        """
+
+        return models.ProjectStatuses(status="In Progress", date_created=current_time)
+
+    def expire_project(
+        self, project: models.Project, current_time: datetime.datetime, deadline_in: int
+    ) -> models.ProjectStatuses:
+        """Expire project: Make status Expired.
+
+        Only possible Available.
+        """
+        if deadline_in > 30:
+            raise DDSArgumentError(
+                message="The deadline needs to be less than (or equal to) 30 days."
+            )
+
+        deadline = dds_web.utils.current_time(to_midnight=True) + datetime.timedelta(
+            days=deadline_in
+        )
+        return models.ProjectStatuses(
+            status="Expired", date_created=current_time, deadline=deadline
+        )
+
+    def delete_project(self, project: models.Project, current_time: datetime.datetime):
+        """Delete project: Make status Deleted.
+
+        Only possible from In Progress.
+        """
+        # Can only be Deleted if never made Available
+        if project.has_been_available:
+            raise DDSArgumentError(
+                "Project cannot be deleted if it has ever been made available, abort it instead."
+            )
+        project.is_active = False
+
+        # Deletes files (also commits session in the function - possibly refactor later)
+        RemoveContents().delete_project_contents(project=project)
+        self.rm_project_user_keys(project=project)
+
+        # Delete metadata from project row
+        self.delete_project_info(proj=project)
+        delete_message = (
+            f"\nAll files in project '{project.public_id}' deleted and project info cleared."
+        )
+
+        return models.ProjectStatuses(status="Deleted", date_created=current_time), delete_message
+
+    def archive_project(
+        self, project: models.Project, current_time: datetime.datetime, aborted: bool = False
+    ):
+        """Archive project: Make status Archived.
+
+        Only possible from Available and Expired.
+        """
+        if project.current_status == "In Progress":
+            if not (project.has_been_available and aborted):
+                raise DDSArgumentError(
+                    "Project cannot be archived from this status but can be aborted if it has ever been made available"
+                )
+        project.is_active = False
+
+        # Deletes files (also commits session in the function - possibly refactor later)
+        RemoveContents().delete_project_contents(project=project)
+        delete_message = f"\nAll files in {project.public_id} deleted"
+        self.rm_project_user_keys(project=project)
+
+        # Delete metadata from project row
+        if aborted:
+            project = self.delete_project_info(project)
+            delete_message += " and project info cleared"
+
+        return (
+            models.ProjectStatuses(
+                status="Archived", date_created=current_time, is_aborted=aborted
+            ),
+            delete_message,
+        )
+
     def rm_project_user_keys(self, project):
         """Remove ProjectUserKey rows for specified project."""
         for project_key in project.project_user_keys:
@@ -228,7 +304,6 @@ class ProjectStatus(flask_restful.Resource):
         # Delete User associations
         for user in proj.researchusers:
             db.session.delete(user)
-        return proj
 
 
 class GetPublic(flask_restful.Resource):
