@@ -25,7 +25,7 @@ def get_token(username, client):
     return tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
 
 
-def list_units_as_not_superadmin(client):
+def test_list_units_as_not_superadmin(client):
     """Only Super Admin can list users."""
     no_access_users = users.copy()
     no_access_users.pop("Super Admin")
