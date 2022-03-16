@@ -45,9 +45,7 @@ def test_list_unitusers_with_unit_personnel_and_admin_deactivated(client):
 
         # Try to list users - should only work if active - not now
         response = client.get(tests.DDSEndpoint.LIST_UNIT_USERS, headers=token)
-
-        # Unauth and not forbidden because the user object is not returned from the token
-        assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
 def test_list_unitusers_with_unit_personnel_and_admin_ok(client):

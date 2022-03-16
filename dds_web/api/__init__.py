@@ -13,6 +13,7 @@ from dds_web.api import user
 from dds_web.api import project
 from dds_web.api import s3
 from dds_web.api import files
+from dds_web.api import unit
 
 ####################################################################################################
 # BLUEPRINTS ########################################################################## BLUEPRINTS #
@@ -68,6 +69,10 @@ api.add_resource(user.DeleteUserSelf, "/user/delete_self", endpoint="delete_user
 api.add_resource(user.RemoveUserAssociation, "/user/access/revoke", endpoint="revoke_from_project")
 api.add_resource(user.UserActivation, "/user/activation", endpoint="user_activation")
 api.add_resource(user.UnitUsers, "/unit/users", endpoint="unit_users")
+
+# Units #################################################################################### Units #
+
+api.add_resource(unit.AllUnits, "/unit/info/all", endpoint="all_units")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")

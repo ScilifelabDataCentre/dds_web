@@ -31,6 +31,7 @@ from dds_web.api.dds_decorators import (
     logging_bind_request,
     json_required,
     handle_validation_errors,
+    handle_db_error,
 )
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
@@ -937,17 +938,10 @@ class UnitUsers(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @handle_db_error
     def get(self):
         """List unit users within the unit the current user is connected to, or the one defined by a superadmin."""
         unit_users = {}
-
-        if not auth.current_user().is_active:
-            raise ddserr.AccessDeniedError(
-                message=(
-                    "Your account has been deactivated. "
-                    "You cannot list the users within your unit."
-                )
-            )
 
         if auth.current_user().role == "Super Admin":
             json_input = flask.request.json
@@ -967,6 +961,7 @@ class UnitUsers(flask_restful.Resource):
             unit_row = auth.current_user().unit
 
         keys = ["Name", "Username", "Email", "Role", "Active"]
+
         unit_users = [
             {
                 "Name": user.name,
