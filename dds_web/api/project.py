@@ -288,6 +288,11 @@ class ProjectStatus(flask_restful.Resource):
         """
         # Check if valid status transition
         self.check_transition_possible(current_status=project.current_status, new_status="Archived")
+        if project.current_status == "In Progress":
+            if not (project.has_been_available and aborted):
+                raise DDSArgumentError(
+                    "Project cannot be archived from this status but can be aborted if it has ever been made available"
+                )
         project.is_active = False
 
         # Deletes files (also commits session in the function - possibly refactor later)
