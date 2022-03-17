@@ -124,6 +124,32 @@ def test_create_project_two_unit_admins_force(client):
     assert created_proj
 
 
+def test_create_project_two_unit_admins_force(client):
+    """The force option (not in cli) can be used to create a project even if there are
+    less than 3 Unit Admins."""
+    create_unit_admins(num_admins=1)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 2
+
+    # Use force
+    updated_proj_data = proj_data.copy()
+    updated_proj_data["force"] = "not correct"
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=updated_proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    created_proj = models.Project.query.filter_by(
+        created_by="unitadmin",
+        title=updated_proj_data["title"],
+        pi=updated_proj_data["pi"],
+        description=updated_proj_data["description"],
+    ).one_or_none()
+    assert not created_proj
+
+
 def test_create_project_empty(client):
     """Make empty request."""
     response = client.post(
