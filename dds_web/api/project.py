@@ -291,7 +291,7 @@ class ProjectStatus(flask_restful.Resource):
         # Check if valid status transition
         self.check_transition_possible(current_status=project.current_status, new_status="Archived")
 
-        if not aborted and project.current_status == "In Progress":
+        if project.current_status == "In Progress":
             if not (project.has_been_available and aborted):
                 raise DDSArgumentError(
                     f"You cannot archive a project that has been made available previously. "
