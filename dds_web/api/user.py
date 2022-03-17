@@ -31,6 +31,7 @@ from dds_web.api.dds_decorators import (
     logging_bind_request,
     json_required,
     handle_validation_errors,
+    handle_db_error,
 )
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
@@ -383,14 +384,14 @@ class AddUser(flask_restful.Resource):
             AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
-            f"{str(whom)} was associated with {str(project)} as Owner={is_owner}."
+            f"{str(whom)} was given access to the {str(project)} as a {'Product Owner' if is_owner else 'Researcher'}."
         )
 
         return {
             "status": http.HTTPStatus.OK,
             "message": (
-                f"{str(whom)} was associated with "
-                f"{str(project)} as Owner={is_owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
+                f"{str(whom)} was given access to the "
+                f"{str(project)} as a {'Product Owner' if is_owner else 'Researcher'}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
             ),
         }
 
@@ -935,21 +936,32 @@ class ShowUsage(flask_restful.Resource):
 class UnitUsers(flask_restful.Resource):
     """List unit users."""
 
-    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @handle_db_error
     def get(self):
-        """Get and return unit users within the unit the current user is connected to."""
+        """List unit users within the unit the current user is connected to, or the one defined by a superadmin."""
         unit_users = {}
 
-        if not auth.current_user().is_active:
-            raise ddserr.AccessDeniedError(
-                message=(
-                    "Your account has been deactivated. "
-                    "You cannot list the users within your unit."
+        if auth.current_user().role == "Super Admin":
+            json_input = flask.request.json
+            if not json_input:
+                raise ddserr.DDSArgumentError(message="Unit public id missing.")
+
+            unit = json_input.get("unit")
+            if not unit:
+                raise ddserr.DDSArgumentError(message="Unit public id missing.")
+
+            unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
+            if not unit_row:
+                raise ddserr.DDSArgumentError(
+                    message=f"There is no unit with the public id '{unit}'."
                 )
-            )
+        else:
+            unit_row = auth.current_user().unit
 
         keys = ["Name", "Username", "Email", "Role", "Active"]
+
         unit_users = [
             {
                 "Name": user.name,
@@ -958,7 +970,7 @@ class UnitUsers(flask_restful.Resource):
                 "Role": user.role,
                 "Active": user.is_active,
             }
-            for user in auth.current_user().unit.users
+            for user in unit_row.users
         ]
 
-        return {"users": unit_users, "keys": keys, "unit": auth.current_user().unit.name}
+        return {"users": unit_users, "keys": keys, "unit": unit_row.name}

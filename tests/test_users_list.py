@@ -32,13 +32,6 @@ def test_list_unitusers_with_researcher(client):
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
-def test_list_unitusers_with_super_admin(client):
-    """Super admins will be able to list unit users, but not right now."""
-    token = get_token(username=users["Super Admin"], client=client)
-    response = client.get(tests.DDSEndpoint.LIST_UNIT_USERS, headers=token)
-    assert response.status_code == http.HTTPStatus.FORBIDDEN
-
-
 def test_list_unitusers_with_unit_personnel_and_admin_deactivated(client):
     """Unit Personnel should be able to list the users within a unit."""
     # Deactivate user
@@ -52,9 +45,7 @@ def test_list_unitusers_with_unit_personnel_and_admin_deactivated(client):
 
         # Try to list users - should only work if active - not now
         response = client.get(tests.DDSEndpoint.LIST_UNIT_USERS, headers=token)
-
-        # Unauth and not forbidden because the user object is not returned from the token
-        assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
 def test_list_unitusers_with_unit_personnel_and_admin_ok(client):
@@ -88,3 +79,58 @@ def test_list_unitusers_with_unit_personnel_and_admin_ok(client):
                 "Active": dbrow.is_active,
             }
             assert expected in users_in_response
+
+
+def test_list_unitusers_with_super_admin_no_unit(client):
+    """Super admins need to specify a unit."""
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.get(tests.DDSEndpoint.LIST_UNIT_USERS, headers=token)
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Unit public id missing" in response.json.get("message")
+
+
+def test_list_unitusers_with_super_admin_unit_empty(client):
+    """Super admins need to specify a unit."""
+    token = get_token(username=users["Super Admin"], client=client)
+    for x in [None, ""]:
+        response = client.get(tests.DDSEndpoint.LIST_UNIT_USERS, json={"unit": x}, headers=token)
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert "Unit public id missing" in response.json.get("message")
+
+
+def test_list_unitusers_with_super_admin_nonexistent_unit(client):
+    """Super admins need to specify a correct unit."""
+    incorrect_unit = "incorrect_unit"
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.get(
+        tests.DDSEndpoint.LIST_UNIT_USERS, json={"unit": incorrect_unit}, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert f"There is no unit with the public id '{incorrect_unit}'" in response.json.get("message")
+
+
+def test_list_unitusers_with_super_admin_correct_unit(client):
+    """Super admins can list users in a specific unit."""
+    unit_row = models.Unit.query.filter_by(name="Unit 1").one_or_none()
+    assert unit_row
+
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.get(
+        tests.DDSEndpoint.LIST_UNIT_USERS, json={"unit": unit_row.public_id}, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    assert all(x in response.json for x in ["users", "keys", "unit"])
+
+    returned_users = response.json.get("users")
+    returned_keys = response.json.get("keys")
+    returned_unit = response.json.get("unit")
+
+    assert returned_users and returned_keys and returned_unit
+    assert returned_keys == ["Name", "Username", "Email", "Role", "Active"]
+    assert returned_unit == unit_row.name
+    assert len(returned_users) == len(unit_row.users)
+
+    unit_users = [x["Username"] for x in returned_users]
+    for x in unit_row.users:
+        assert x.username in unit_users
