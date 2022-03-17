@@ -43,18 +43,13 @@ fields_set_to_null = [
 @pytest.fixture(scope="module")
 def test_project(module_client):
     """Create a shared test project"""
-    create_unit_admins(num_admins=2)
-
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
-
     with unittest.mock.patch.object(boto3.session.Session, "resource") as mock_session:
         response = module_client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
             json=proj_data,
         )
-    project_id = response.json.get("project_id")
+        project_id = response.json.get("project_id")
     # add a file
     response = module_client.post(
         tests.DDSEndpoint.FILE_NEW,
@@ -66,10 +61,21 @@ def test_project(module_client):
     return project_id
 
 
-def test_submit_request_with_invalid_args(module_client, test_project):
+def test_submit_request_with_invalid_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
+    create_unit_admins(num_admins=2)
 
-    project_id = test_project
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
 
     response = module_client.post(
@@ -94,10 +100,12 @@ def test_submit_request_with_invalid_args(module_client, test_project):
 
 def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     """Create project and set status to deleted"""
-    create_unit_admins(num_admins=2)
-
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
+    # create_unit_admins(num_admins=2)
+
+    # current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    # assert current_unit_admins == 3
 
     new_status = {"new_status": "Deleted"}
     response = module_client.post(
@@ -151,9 +159,6 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
 
 def test_archived_project(module_client, boto3_session):
     """Create a project and archive it"""
-
-    create_unit_admins(num_admins=2)
-
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
 
@@ -200,6 +205,8 @@ def test_archived_project(module_client, boto3_session):
 
 def test_aborted_project(module_client, boto3_session):
     """Create a project and try to abort it"""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -250,8 +257,6 @@ def test_aborted_project(module_client, boto3_session):
 
 def test_abort_from_in_progress_once_made_available(module_client, boto3_session):
     """Create project and abort it from In Progress after it has been made available"""
-    create_unit_admins(num_admins=2)
-
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
 
@@ -339,6 +344,8 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
 
 def test_check_invalid_transitions_from_in_progress(module_client, boto3_session):
     """Check all invalid transitions from In Progress"""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -408,9 +415,6 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
 
 def test_set_project_to_available_no_mail(module_client, boto3_session):
     """Set status to Available for test project, but skip sending mails"""
-
-    create_unit_admins(num_admins=2)
-
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
 

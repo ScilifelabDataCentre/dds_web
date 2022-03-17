@@ -8,6 +8,7 @@ from tokenize import Triple
 from turtle import update
 import unittest
 import time
+import os
 
 # Installed
 import pytest
@@ -51,7 +52,7 @@ def create_unit_admins(num_admins, unit_id=1):
         new_admins.append(
             models.UnitUser(
                 **{
-                    "username": "unit_admin_" + str(i),
+                    "username": "unit_admin_" + os.urandom(4).hex(),
                     "name": "Unit Admin " + str(i),
                     "password": "password",
                     "is_admin": True,
