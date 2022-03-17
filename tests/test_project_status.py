@@ -16,7 +16,8 @@ import flask_mail
 import dds_web
 import tests
 from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
-from tests.test_project_creation import proj_data_with_existing_users
+from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
+from dds_web.database import models
 
 # CONFIG ################################################################################## CONFIG #
 
@@ -42,6 +43,11 @@ fields_set_to_null = [
 @pytest.fixture(scope="module")
 def test_project(module_client):
     """Create a shared test project"""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     with unittest.mock.patch.object(boto3.session.Session, "resource") as mock_session:
         response = module_client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
@@ -88,6 +94,10 @@ def test_submit_request_with_invalid_args(module_client, test_project):
 
 def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     """Create project and set status to deleted"""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
 
     new_status = {"new_status": "Deleted"}
     response = module_client.post(
@@ -141,6 +151,11 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
 
 def test_aborted_project(module_client, boto3_session):
     """Create a project and try to abort it"""
+
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -221,6 +236,11 @@ def test_aborted_project(module_client, boto3_session):
 
 def test_abort_from_in_progress_once_made_available(module_client, boto3_session):
     """Create project and abort it from In Progress after it has been made available"""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
@@ -368,6 +388,11 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
 
 def test_set_project_to_available_no_mail(module_client, boto3_session):
     """Set status to Available for test project, but skip sending mails"""
+
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
 

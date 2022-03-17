@@ -5,11 +5,17 @@ import copy
 
 # Own
 import tests
-from tests.test_project_creation import proj_data_with_existing_users
+from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
+from dds_web.database import models
 
 
 def test_remove_user_from_project(client, boto3_session):
     """Remove an associated user from a project"""
+
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
 
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -36,6 +42,11 @@ def test_remove_user_from_project(client, boto3_session):
 
 def test_remove_not_associated_user_from_project(client, boto3_session):
     """Try to remove a user that exists in db but is not associated to a project"""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data = copy.deepcopy(proj_data_with_existing_users)
     proj_data["users_to_add"].pop(1)
 
@@ -62,6 +73,11 @@ def test_remove_not_associated_user_from_project(client, boto3_session):
 
 def test_remove_nonexistent_user_from_project(client, boto3_session):
     """Try to remove an nonexistent user from a project"""
+
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
 
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
