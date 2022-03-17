@@ -161,23 +161,9 @@ def test_aborted_project(module_client, boto3_session):
     project = project_row(project_id=project_id)
 
     assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
-
-    new_status = {"new_status": "Archived"}
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=new_status,
-    )
-
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "In Progress"
-    assert (
-        "You cannot archive a project that has been made available previously"
-        in response.json["message"]
-    )
 
-    new_status["new_status"] = "Available"
+    new_status = {"new_status": "Available"}
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         response = module_client.post(
             tests.DDSEndpoint.PROJECT_STATUS,
