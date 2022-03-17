@@ -5,6 +5,7 @@
 ####################################################################################################
 
 # Standard Library
+from email import message
 import http
 
 # Installed
@@ -445,6 +446,9 @@ class CreateProject(flask_restful.Resource):
 
         # Verify enough number of Unit Admins or return message
         force_create = p_info.get("force", False)
+        if not isinstance(force_create, bool):
+            raise DDSArgumentError(message="`force` is a boolean value: True or False.")
+
         warning_message = dds_web.utils.verify_enough_unit_admins(
             unit_id=auth.current_user().unit.id, force_create=force_create
         )

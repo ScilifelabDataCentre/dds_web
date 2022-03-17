@@ -4,6 +4,8 @@
 import http
 import datetime
 import json
+from tokenize import Triple
+from turtle import update
 import unittest
 import time
 
@@ -42,7 +44,84 @@ proj_data_with_unsuitable_user_roles = {
     ],
 }
 
+
+def create_unit_admins(num_admins, unit_id=1):
+    new_admins = []
+    for i in range(1, num_admins + 1):
+        new_admins.append(
+            models.UnitUser(
+                **{
+                    "username": "unit_admin_" + str(i),
+                    "name": "Unit Admin " + str(i),
+                    "password": "password",
+                    "is_admin": True,
+                    "unit_id": unit_id,
+                }
+            )
+        )
+
+    db.session.add_all(new_admins)
+    db.session.commit()
+
+
 # TESTS #################################################################################### TESTS #
+
+
+def test_create_project_too_few_unit_admins(client):
+    """There needs to be at least 2 Unit Admins."""
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    response_json = response.json
+    assert response_json
+    assert "Your unit does not have enough Unit Admins" in response_json.get("message")
+
+
+def test_create_project_two_unit_admins(client):
+    """There needs to be at least 2 Unit Admins."""
+    create_unit_admins(num_admins=1)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 2
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json
+    assert "Your unit only has 2 Unit Admins" in response_json.get("warning")
+
+
+def test_create_project_two_unit_admins_force(client):
+    """The force option (not in cli) can be used to create a project even if there are
+    less than 3 Unit Admins."""
+    create_unit_admins(num_admins=1)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 2
+
+    # Use force
+    updated_proj_data = proj_data.copy()
+    updated_proj_data["force"] = True
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=updated_proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    created_proj = models.Project.query.filter_by(
+        created_by="unitadmin",
+        title=updated_proj_data["title"],
+        pi=updated_proj_data["pi"],
+        description=updated_proj_data["description"],
+    ).one_or_none()
+    assert created_proj
 
 
 def test_create_project_empty(client):
@@ -59,6 +138,13 @@ def test_create_project_empty(client):
 
 def test_create_project_unknown_field(client):
     """Make request with unknown field passed."""
+    # Make sure there's 3 unit admins for unit
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    # Attempt creating project
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -75,6 +161,11 @@ def test_create_project_unknown_field(client):
 
 def test_create_project_missing_title(client):
     """Make request with missing title."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_no_title = proj_data.copy()
     proj_data_no_title.pop("title")
 
@@ -92,6 +183,11 @@ def test_create_project_missing_title(client):
 
 def test_create_project_none_title(client):
     """Make request with missing title."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_none_title = proj_data.copy()
     proj_data_none_title["title"] = None
 
@@ -109,6 +205,11 @@ def test_create_project_none_title(client):
 
 def test_create_project_no_description(client):
     """Make request with missing title."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_no_description = proj_data.copy()
     proj_data_no_description.pop("description")
 
@@ -127,6 +228,11 @@ def test_create_project_no_description(client):
 
 def test_create_project_none_description(client):
     """Make request with missing title."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_none_description = proj_data.copy()
     proj_data_none_description["description"] = None
 
@@ -145,6 +251,11 @@ def test_create_project_none_description(client):
 
 def test_create_project_no_pi(client):
     """Make request with missing title."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_no_pi = proj_data.copy()
     proj_data_no_pi.pop("pi")
 
@@ -163,6 +274,11 @@ def test_create_project_no_pi(client):
 
 def test_create_project_none_pi(client):
     """Make request with missing title."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_none_pi = proj_data.copy()
     proj_data_none_pi["pi"] = None
 
@@ -181,6 +297,11 @@ def test_create_project_none_pi(client):
 
 def test_create_project_without_credentials(client):
     """Create project without valid user credentials."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
@@ -198,6 +319,11 @@ def test_create_project_without_credentials(client):
 
 def test_create_project_with_credentials(client, boto3_session):
     """Create project with correct credentials."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     time_before_run = datetime.datetime.utcnow()
     time.sleep(1)
     response = client.post(
@@ -221,6 +347,11 @@ def test_create_project_with_credentials(client, boto3_session):
 
 def test_create_project_no_title(client):
     """Create project without a title specified."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
@@ -237,6 +368,11 @@ def test_create_project_no_title(client):
 
 def test_create_project_title_too_short(client):
     """Create a project with too short title."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_short_title = proj_data.copy()
     proj_data_short_title["title"] = ""
     response = client.post(
@@ -257,6 +393,11 @@ def test_create_project_title_too_short(client):
 
 def test_create_project_with_malformed_json(client):
     """Create a project with malformed project info."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
@@ -274,6 +415,11 @@ def test_create_project_with_malformed_json(client):
 
 def test_create_project_sensitive(client, boto3_session):
     """Create a sensitive project."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     p_data = proj_data
     p_data["non_sensitive"] = False
     response = client.post(
@@ -293,6 +439,11 @@ def test_create_project_sensitive(client, boto3_session):
 
 def test_create_project_description_too_short(client):
     """Create a project with too short description."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_short_description = proj_data.copy()
     proj_data_short_description["description"] = ""
     response = client.post(
@@ -313,6 +464,11 @@ def test_create_project_description_too_short(client):
 
 def test_create_project_pi_too_short(client):
     """Create a project with too short PI."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_short_pi = proj_data.copy()
     proj_data_short_pi["pi"] = ""
     response = client.post(
@@ -333,6 +489,11 @@ def test_create_project_pi_too_short(client):
 
 def test_create_project_pi_too_long(client):
     """Create a project with too long PI."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_long_pi = proj_data.copy()
     proj_data_long_pi["pi"] = "pi" * 128
     response = client.post(
@@ -353,6 +514,11 @@ def test_create_project_pi_too_long(client):
 
 def test_create_project_wrong_status(client, boto3_session):
     """Create a project with own status, should be overridden."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_wrong_status = proj_data.copy()
     proj_data_wrong_status["status"] = "Incorrect Status"
     response = client.post(
@@ -373,6 +539,11 @@ def test_create_project_wrong_status(client, boto3_session):
 
 def test_create_project_sensitive_not_boolean(client):
     """Create project with incorrect non_sensitive format."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_sensitive_not_boolean = proj_data.copy()
     proj_data_sensitive_not_boolean["non_sensitive"] = "test"
     response = client.post(
@@ -393,6 +564,11 @@ def test_create_project_sensitive_not_boolean(client):
 
 def test_create_project_date_created_overridden(client, boto3_session):
     """Create project with own date_created, should be overridden."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     proj_data_date_created_own = proj_data.copy()
     proj_data_date_created_own["date_created"] = "test"
     response = client.post(
@@ -413,6 +589,11 @@ def test_create_project_date_created_overridden(client, boto3_session):
 
 def test_create_project_with_users(client, boto3_session):
     """Create project and add users to the project."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
@@ -448,6 +629,10 @@ def test_create_project_with_users(client, boto3_session):
 
 def test_create_project_with_invited_users(client, boto3_session):
     """Create project and invite users to the project."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
 
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -462,6 +647,11 @@ def test_create_project_with_invited_users(client, boto3_session):
 
 def test_create_project_with_unsuitable_roles(client, boto3_session):
     """Create project and add users with unsuitable roles to the project."""
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
