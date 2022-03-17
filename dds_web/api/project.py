@@ -441,8 +441,18 @@ class CreateProject(flask_restful.Resource):
     @handle_validation_errors
     def post(self):
         """Create a new project."""
-        # Add a new project to db
         p_info = flask.request.json
+
+        # Verify enough number of Unit Admins or return message
+        force_create = p_info.get("force", False)
+        warning_message = dds_web.utils.verify_enough_unit_admins(
+            unit_id=auth.current_user().unit.id, force_create=force_create
+        )
+        if warning_message:
+            return {"warning": warning_message}
+
+        # Add a new project to db
+
         new_project = project_schemas.CreateProjectSchema().load(p_info)
         db.session.add(new_project)
 

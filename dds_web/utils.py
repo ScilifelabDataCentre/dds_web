@@ -13,6 +13,7 @@ import urllib.parse
 # Installed
 from contextlib import contextmanager
 import flask
+from dds_web.errors import AccessDeniedError
 import flask_mail
 import flask_login
 
@@ -179,6 +180,25 @@ def email_taken_wtforms():
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+def verify_enough_unit_admins(unit_id: str, force_create: bool = False):
+    """Verify that the unit has enough Unit Admins."""
+    num_admins = models.UnitUser.query.filter_by(is_admin=True, unit_id=unit_id).count()
+    if num_admins < 2:
+        raise AccessDeniedError(
+            message=(
+                "Your unit does not have enough Unit Admins. "
+                "At least two Unit Admins are required for a project to be created."
+            )
+        )
+
+    if num_admins < 3 and not force_create:
+        return (
+            f"Your unit only has {num_admins} Unit Admins. This poses a high risk of data loss. "
+            "We HIGHLY recommend that you do not create this project until there are more Unit "
+            "Admins connected to your unit."
+        )
 
 
 def valid_chars_in_username(indata):
