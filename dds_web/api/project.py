@@ -445,7 +445,7 @@ class CreateProject(flask_restful.Resource):
         p_info = flask.request.json
 
         # Verify enough number of Unit Admins or return message
-        force_create = p_info.get("force", False)
+        force_create = p_info.pop("force", False)
         if not isinstance(force_create, bool):
             raise DDSArgumentError(message="`force` is a boolean value: True or False.")
 
