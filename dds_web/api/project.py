@@ -6,8 +6,6 @@
 
 # Standard Library
 import http
-from os import abort
-from pyexpat import model
 from dds_web import database
 
 # Installed
