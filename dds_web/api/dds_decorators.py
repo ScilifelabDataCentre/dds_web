@@ -101,6 +101,21 @@ def dbsession(func):
     return make_commit
 
 
+def handle_db_error(func):
+    @functools.wraps(func)
+    def perform_get(*args, **kwargs):
+
+        # Run function, catch errors
+        try:
+            result = func(*args, **kwargs)
+        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            raise DatabaseError(message=str(sqlerr)) from sqlerr
+
+        return result
+
+    return perform_get
+
+
 # S3 ########################################################################################## S3 #
 
 
