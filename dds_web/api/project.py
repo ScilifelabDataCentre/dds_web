@@ -291,7 +291,8 @@ class ProjectStatus(flask_restful.Resource):
         if project.current_status == "In Progress":
             if not (project.has_been_available and aborted):
                 raise DDSArgumentError(
-                    "Project cannot be archived from this status but can be aborted if it has ever been made available"
+                    "You cannot archive a project that has been made available previously. "
+                    "Please abort the project if you wish to proceed."
                 )
         project.is_active = False
 

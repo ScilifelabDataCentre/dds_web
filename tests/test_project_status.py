@@ -173,7 +173,7 @@ def test_aborted_project(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "In Progress"
     assert (
-        "Project cannot be archived from this status but can be aborted if it has ever been made available"
+        "You cannot archive a project that has been made available previously"
         in response.json["message"]
     )
 
