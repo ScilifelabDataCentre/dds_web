@@ -91,7 +91,7 @@ class ApiS3Connector:
         for i in range(0, len(items), 1000):
             _ = self.resource.meta.client.delete_objects(
                 Bucket=self.project.bucket,
-                Delete={"Objects": [{"Key": x} for x in items[i:i+1000]]},
+                Delete={"Objects": [{"Key": x} for x in items[i : i + 1000]]},
             )
 
     @bucket_must_exists

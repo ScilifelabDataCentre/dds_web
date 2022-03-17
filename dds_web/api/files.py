@@ -414,6 +414,7 @@ class RemoveFile(flask_restful.Resource):
                 try:
                     s3conn.remove_one(file=name_in_bucket)
                 except (BucketNotFoundError, botocore.client.ClientError) as err:
+                    print(err)
                     db.session.rollback()
                     not_removed_dict[x] = str(err)
                     continue
@@ -467,7 +468,6 @@ class RemoveDir(flask_restful.Resource):
         """Delete folder(s)."""
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-
         # Verify project status ok for deletion
         check_eligibility_for_deletion(
             status=project.current_status, has_been_available=project.has_been_available
@@ -476,42 +476,47 @@ class RemoveDir(flask_restful.Resource):
         # Remove folder(s)
         not_removed_dict, not_exist_list = ({}, [])
         with ApiS3Connector(project=project) as s3conn:
-            for x in flask.request.json:
+            for folder_name in flask.request.json:
                 # Get all files in the folder
                 try:
-                    in_db, objects_to_delete = self.delete_folder(project=project, folder=x)
-                    if not in_db:
-                        not_exist_list.append(x)
+                    files = self.get_files_for_deletion(project=project, folder=folder_name)
+                    if not files:
+                        not_exist_list.append(folder_name)
                         raise FileNotFoundError(
                             "Could not find the specified folder in the database."
                         )
                 except (sqlalchemy.exc.SQLAlchemyError, FileNotFoundError) as err:
-                    db.session.rollback()
-                    not_removed_dict[x] = str(err)
+                    not_removed_dict[folder_name] = str(err)
                     continue
 
-                # Delete from s3
-                try:
-                    s3conn.remove_multiple(items=objects_to_delete)
-                except botocore.client.ClientError as err:
-                    db.session.rollback()
-                    not_removed_dict[x] = str(err)
-                    continue
+                # S3 can only delete 1000 files per request
+                # The deletion will thus be divided into parts of at most 1000 files
+                for i in range(0, len(files), 1000):
+                    # Delete from s3
+                    bucket_names = tuple(entry.name_in_bucket for entry in files[i : i + 1000])
+                    try:
+                        s3conn.remove_multiple(items=bucket_names)
+                    except botocore.client.ClientError as err:
+                        not_removed_dict[folder_name] = str(err)
+                        break
 
-                # Commit to db if no error so far
-                try:
-                    db.session.commit()
-                except sqlalchemy.exc.SQLAlchemyError as err:
-                    db.session.rollback()
-                    not_removed_dict[x] = str(err)
-                    continue
+                    self.delete_files(files[i : i + 1000])
+                    project.date_updated = dds_web.utils.current_time()
+                    # Commit to db if no error so far
+                    try:
+                        db.session.commit()
+                    except sqlalchemy.exc.SQLAlchemyError as err:
+                        db.session.rollback()
+                        flask.current_app.logger.error(
+                            "Files deleted in S3 but not in db. The entries must be synchronised!"
+                        )
+                        not_removed_dict[folder_name] = str(err)
+                        break
 
         return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
 
-    def delete_folder(self, project, folder):
-        """Delete all items in folder"""
-        exists = False
-        names_in_bucket = []
+    def get_files_for_deletion(self, project: str, folder: str):
+        """Get all file entries from db"""
         if folder[-1] == "/":
             folder = folder[:-1]
         re_folder = re.escape(folder)
@@ -529,28 +534,23 @@ class RemoveDir(flask_restful.Resource):
                 )
                 .all()
             )
-
         except sqlalchemy.exc.SQLAlchemyError as err:
             raise DatabaseError(message=str(err)) from err
 
-        if files:
-            exists = True
-            for x in files:
-                # get current version
-                current_file_version = models.Version.query.filter(
-                    sqlalchemy.and_(
-                        models.Version.active_file == sqlalchemy.func.binary(x.id),
-                        models.Version.time_deleted.is_(None),
-                    )
-                ).first()
-                current_file_version.time_deleted = dds_web.utils.current_time()
+        return files
 
-                # Delete file and update project size
-                names_in_bucket.append(x.name_in_bucket)
-                db.session.delete(x)
-            project.date_updated = dds_web.utils.current_time()
-
-        return exists, names_in_bucket
+    def delete_files(self, files: list):
+        """Prepare queries in the db session for deletion of files in the database."""
+        for entry in files:
+            # get current version
+            current_file_version = models.Version.query.filter(
+                sqlalchemy.and_(
+                    models.Version.active_file == sqlalchemy.func.binary(entry.id),
+                    models.Version.time_deleted.is_(None),
+                )
+            ).first()
+            current_file_version.time_deleted = dds_web.utils.current_time()
+            db.session.delete(entry)
 
 
 class FileInfo(flask_restful.Resource):
