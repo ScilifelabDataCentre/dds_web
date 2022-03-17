@@ -454,7 +454,7 @@ def test_check_deadline_remains_same_when_made_available_again_after_going_to_in
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert (
-        "Project cannot be deleted if it has ever been made available, abort it instead"
+        "You cannot delete a project that has been made available previously"
         in response.json["message"]
     )
     assert project.current_status == "In Progress"
