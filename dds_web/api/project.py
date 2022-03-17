@@ -234,7 +234,7 @@ class ProjectStatus(flask_restful.Resource):
     ) -> models.ProjectStatuses:
         """Expire project: Make status Expired.
 
-        Only possible Available.
+        Only possible from Available.
         """
         # Check if valid status transition
         self.check_transition_possible(current_status=project.current_status, new_status="Expired")
