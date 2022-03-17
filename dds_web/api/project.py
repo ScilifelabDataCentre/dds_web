@@ -95,6 +95,7 @@ class ProjectStatus(flask_restful.Resource):
         # Initial variable definition
         curr_date = dds_web.utils.current_time()
         delete_message = ""
+        is_aborted = False
 
         # Moving to Available
         if new_status == "Available":
@@ -136,7 +137,9 @@ class ProjectStatus(flask_restful.Resource):
                     userobj=user.researchuser, mail_type="project_release", project=project
                 )
 
-        return_message = f"{project.public_id} updated to status {new_status}"
+        return_message = f"{project.public_id} updated to status {new_status}" + (
+            " (aborted)" if new_status == "Archived" and is_aborted else ""
+        )
 
         if new_status != "Available":
             return_message += delete_message + "."
