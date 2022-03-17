@@ -139,8 +139,8 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     assert not project.project_user_keys
 
 
-def test_aborted_project(module_client, boto3_session):
-    """Create a project and try to abort it"""
+def test_archived_project(module_client, boto3_session):
+    """Create a project and archive it"""
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -170,26 +170,41 @@ def test_aborted_project(module_client, boto3_session):
         json=new_status,
     )
 
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert project.current_status == "In Progress"
-    assert (
-        "You cannot archive a project that has been made available previously"
-        in response.json["message"]
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Archived"
+
+    assert not max(project.project_statuses, key=lambda x: x.date_created).is_aborted
+    assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
+    assert not project.project_user_keys
+
+    for field, value in vars(project).items():
+        if field in fields_set_to_null:
+            assert value
+    assert project.researchusers
+
+
+def test_aborted_project(module_client, boto3_session):
+    """Create a project and try to abort it"""
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_id = response.json.get("project_id")
+    # add a file
+    response = module_client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json=FIRST_NEW_FILE,
     )
 
-    new_status["new_status"] = "Available"
-    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        response = module_client.post(
-            tests.DDSEndpoint.PROJECT_STATUS,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-            query_string={"project": project_id},
-            json=new_status,
-        )
-        # One mail sent for the partial token and one for project release
-        assert mock_mail_send.call_count == 2
+    project = project_row(project_id=project_id)
 
-    assert response.status_code == http.HTTPStatus.OK
-    assert project.current_status == "Available"
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
     for field, value in vars(project).items():
         if field in fields_set_to_null:
@@ -198,8 +213,7 @@ def test_aborted_project(module_client, boto3_session):
     assert project.project_user_keys
 
     time.sleep(1)
-    new_status["new_status"] = "Archived"
-    new_status["is_aborted"] = True
+    new_status = {"new_status": "Archived", "is_aborted": True}
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
@@ -303,10 +317,17 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
     assert not project.project_user_keys
 
 
-def test_check_invalid_transitions_from_in_progress(module_client, test_project):
+def test_check_invalid_transitions_from_in_progress(module_client, boto3_session):
     """Check all invalid transitions from In Progress"""
 
-    project_id = test_project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
 
     # In Progress to Expired
@@ -334,12 +355,8 @@ def test_check_invalid_transitions_from_in_progress(module_client, test_project)
         json=new_status,
     )
 
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert project.current_status == "In Progress"
-    assert (
-        "You cannot archive a project that has been made available previously"
-        in response.json["message"]
-    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Archived"
 
 
 def test_set_project_to_available_valid_transition(module_client, test_project):
