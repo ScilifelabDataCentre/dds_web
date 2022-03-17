@@ -265,8 +265,8 @@ class ProjectStatus(flask_restful.Resource):
         # Can only be Deleted if never made Available
         if project.has_been_available:
             raise DDSArgumentError(
-                    "You cannot delete a project that has been made available previously. "
-                    "Please abort the project if you wish to proceed."
+                "You cannot delete a project that has been made available previously. "
+                "Please abort the project if you wish to proceed."
             )
         project.is_active = False
 
