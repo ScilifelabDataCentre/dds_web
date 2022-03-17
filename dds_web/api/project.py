@@ -6,7 +6,6 @@
 
 # Standard Library
 import http
-from dds_web import database
 
 # Installed
 import flask_restful
