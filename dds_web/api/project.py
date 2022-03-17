@@ -270,12 +270,18 @@ class ProjectStatus(flask_restful.Resource):
             )
         project.is_active = False
 
-        # Deletes files (also commits session in the function - possibly refactor later)
-        RemoveContents().delete_project_contents(project=project)
-        self.rm_project_user_keys(project=project)
+        try:
+            # Deletes files (also commits session in the function - possibly refactor later)
+            RemoveContents().delete_project_contents(project=project)
+            self.rm_project_user_keys(project=project)
 
-        # Delete metadata from project row
-        self.delete_project_info(proj=project)
+            # Delete metadata from project row
+            self.delete_project_info(proj=project)
+        except (TypeError, DatabaseError, DeletionError, BucketNotFoundError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise DeletionError(message="Server Error: Status was not updated") from err
+
         delete_message = (
             f"\nAll files in project '{project.public_id}' deleted and project info cleared"
         )
@@ -300,15 +306,20 @@ class ProjectStatus(flask_restful.Resource):
                 )
         project.is_active = False
 
-        # Deletes files (also commits session in the function - possibly refactor later)
-        RemoveContents().delete_project_contents(project=project)
-        delete_message = f"\nAll files in {project.public_id} deleted"
-        self.rm_project_user_keys(project=project)
+        try:
+            # Deletes files (also commits session in the function - possibly refactor later)
+            RemoveContents().delete_project_contents(project=project)
+            delete_message = f"\nAll files in {project.public_id} deleted"
+            self.rm_project_user_keys(project=project)
 
-        # Delete metadata from project row
-        if aborted:
-            project = self.delete_project_info(project)
-            delete_message += " and project info cleared"
+            # Delete metadata from project row
+            if aborted:
+                project = self.delete_project_info(project)
+                delete_message += " and project info cleared"
+        except (TypeError, DatabaseError, DeletionError, BucketNotFoundError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise DeletionError(message="Server Error: Status was not updated") from err
 
         return (
             models.ProjectStatuses(
