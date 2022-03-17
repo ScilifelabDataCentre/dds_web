@@ -285,7 +285,8 @@ class ProjectStatus(flask_restful.Resource):
     ):
         """Archive project: Make status Archived.
 
-        Only possible from Available and Expired.
+        Only possible from In Progress, Available and Expired. Optional aborted flag if something
+        has gone wrong.
         """
         # Check if valid status transition
         self.check_transition_possible(current_status=project.current_status, new_status="Archived")
