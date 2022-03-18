@@ -9,11 +9,12 @@ import os
 import re
 
 # Installed
-import flask_restful
+import botocore
 import flask
+import flask_restful
+import pymysql
 import sqlalchemy
 import werkzeug
-import botocore
 
 # Own modules
 import dds_web.utils
@@ -483,7 +484,7 @@ class RemoveDir(flask_restful.Resource):
                     continue
 
                 # S3 can only delete 1000 files per request
-                # The deletion will thus be divided into parts of at most 1000 files
+                # The deletion will thus be divided into batches of at most 1000 files
                 for i in range(0, len(files), 1000):
                     # Delete from s3
                     bucket_names = tuple(entry.name_in_bucket for entry in files[i : i + 1000])
@@ -498,13 +499,19 @@ class RemoveDir(flask_restful.Resource):
                     project.date_updated = dds_web.utils.current_time()
                     # Commit to db if no error so far
                     try:
+                        self.queue_file_entry_deletion(files[i : i + 1000])
+                        project.date_updated = dds_web.utils.current_time()
                         db.session.commit()
-                    except sqlalchemy.exc.SQLAlchemyError as err:
+                    except (sqlalchemy.exc.SQLAlchemyError, pymysql.err.OperationalError) as err:
                         db.session.rollback()
                         flask.current_app.logger.error(
                             "Files deleted in S3 but not in db. The entries must be synchronised!"
                         )
-                        not_removed[folder_name] = str(err)
+                        if type(err) == pymysql.err.OperationalError:
+                            err_msg = "Database malfunction."
+                        else:
+                            err_msg = str(err)
+                        not_removed[folder_name] = err_msg
                         fail_type = "db"
                         break
 
@@ -537,7 +544,7 @@ class RemoveDir(flask_restful.Resource):
 
         return files
 
-    def delete_files(self, files: list):
+    def queue_file_entry_deletion(self, files: list):
         """Prepare queries in the db session for deletion of files in the database."""
         for entry in files:
             # get current version
