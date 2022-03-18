@@ -1,6 +1,6 @@
 """Files module."""
 
-####################################################################################################
+###################################################################################################
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
@@ -480,9 +480,7 @@ class RemoveDir(flask_restful.Resource):
                 files = self.get_files_for_deletion(project=project, folder=folder_name)
                 if not files:
                     not_exist.append(folder_name)
-                    raise FileNotFoundError(
-                        "Could not find the specified folder in the database."
-                    )
+                    continue
 
                 # S3 can only delete 1000 files per request
                 # The deletion will thus be divided into parts of at most 1000 files
