@@ -5,7 +5,6 @@
 ####################################################################################################
 
 # Standard Library
-from email import message
 import http
 
 # Installed
