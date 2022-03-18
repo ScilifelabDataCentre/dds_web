@@ -487,7 +487,9 @@ class RemoveDir(flask_restful.Resource):
                 batch_size: int = 1000
                 for i in range(0, len(files), batch_size):
                     # Delete from s3
-                    bucket_names = tuple(entry.name_in_bucket for entry in files[i : i + batch_size])
+                    bucket_names = tuple(
+                        entry.name_in_bucket for entry in files[i : i + batch_size]
+                    )
                     try:
                         s3conn.remove_multiple(items=bucket_names)
                     except botocore.client.ClientError as err:
@@ -513,10 +515,12 @@ class RemoveDir(flask_restful.Resource):
                         fail_type = "db"
                         break
 
-        return {"not_removed": not_removed,
-                "fail_type": fail_type,
-                "not_exists": not_exist,
-                "nr_deleted": len(files) if not not_removed else i}
+        return {
+            "not_removed": not_removed,
+            "fail_type": fail_type,
+            "not_exists": not_exist,
+            "nr_deleted": len(files) if not not_removed else i,
+        }
 
     def get_files_for_deletion(self, project: str, folder: str):
         """Get all file entries from db"""
