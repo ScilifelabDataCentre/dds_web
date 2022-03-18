@@ -472,20 +472,17 @@ class RemoveDir(flask_restful.Resource):
         )
 
         # Remove folder(s)
-        not_removed_dict, not_exist_list = ({}, [])
+        not_removed, not_exist = ({}, [])
+        fail_type = None
         with ApiS3Connector(project=project) as s3conn:
             for folder_name in flask.request.json:
                 # Get all files in the folder
-                try:
-                    files = self.get_files_for_deletion(project=project, folder=folder_name)
-                    if not files:
-                        not_exist_list.append(folder_name)
-                        raise FileNotFoundError(
-                            "Could not find the specified folder in the database."
-                        )
-                except (sqlalchemy.exc.SQLAlchemyError, FileNotFoundError) as err:
-                    not_removed_dict[folder_name] = str(err)
-                    continue
+                files = self.get_files_for_deletion(project=project, folder=folder_name)
+                if not files:
+                    not_exist.append(folder_name)
+                    raise FileNotFoundError(
+                        "Could not find the specified folder in the database."
+                    )
 
                 # S3 can only delete 1000 files per request
                 # The deletion will thus be divided into parts of at most 1000 files
@@ -495,7 +492,8 @@ class RemoveDir(flask_restful.Resource):
                     try:
                         s3conn.remove_multiple(items=bucket_names)
                     except botocore.client.ClientError as err:
-                        not_removed_dict[folder_name] = str(err)
+                        not_removed[folder_name] = str(err)
+                        fail_type = "s3"
                         break
 
                     self.delete_files(files[i : i + 1000])
@@ -508,10 +506,14 @@ class RemoveDir(flask_restful.Resource):
                         flask.current_app.logger.error(
                             "Files deleted in S3 but not in db. The entries must be synchronised!"
                         )
-                        not_removed_dict[folder_name] = str(err)
+                        not_removed[folder_name] = str(err)
+                        fail_type = "db"
                         break
 
-        return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
+        return {"not_removed": not_removed,
+                "fail_type": fail_type,
+                "not_exists": not_exist,
+                "nr_deleted": len(files) if not not_removed else i}
 
     def get_files_for_deletion(self, project: str, folder: str):
         """Get all file entries from db"""
