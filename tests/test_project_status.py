@@ -102,10 +102,6 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     """Create project and set status to deleted"""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
-    # create_unit_admins(num_admins=2)
-
-    # current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    # assert current_unit_admins == 3
 
     new_status = {"new_status": "Deleted"}
     response = module_client.post(
