@@ -4,8 +4,6 @@
 import http
 import datetime
 import json
-from tokenize import Triple
-from turtle import update
 import unittest
 import time
 import os
