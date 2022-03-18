@@ -391,32 +391,30 @@ class RemoveFile(flask_restful.Resource):
         not_removed_dict, not_exist_list = ({}, [])
 
         with ApiS3Connector(project=project) as s3conn:
-
             # Delete each file
-            for x in files:
+            for entry in files:
                 # Delete from db
                 try:
-                    name_in_bucket = self.delete_one(project=project, filename=x)
+                    name_in_bucket = self.delete_one(project=project, filename=entry)
                     if not name_in_bucket:
                         raise DatabaseError(
                             message="Remote file name not found.", pass_message=True
                         )
                 except FileNotFoundError:
                     db.session.rollback()
-                    not_exist_list.append(x)
+                    not_exist_list.append(entry)
                     continue
                 except (sqlalchemy.exc.SQLAlchemyError, DatabaseError) as err:
                     db.session.rollback()
-                    not_removed_dict[x] = str(err)
+                    not_removed_dict[entry] = str(err)
                     continue
 
                 # Remove from s3 bucket
                 try:
                     s3conn.remove_one(file=name_in_bucket)
                 except (BucketNotFoundError, botocore.client.ClientError) as err:
-                    print(err)
                     db.session.rollback()
-                    not_removed_dict[x] = str(err)
+                    not_removed_dict[entry] = str(err)
                     continue
 
                 # Commit to db if ok
@@ -424,7 +422,7 @@ class RemoveFile(flask_restful.Resource):
                     db.session.commit()
                 except sqlalchemy.exc.SQLAlchemyError as err:
                     db.session.rollback()
-                    not_removed_dict[x] = str(err)
+                    not_removed_dict[entry] = str(err)
                     continue
 
         return not_removed_dict, not_exist_list
