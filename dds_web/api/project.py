@@ -446,14 +446,15 @@ class UserProjects(flask_restful.Resource):
 
         return_info = {
             "project_info": all_projects,
-            "total_usage": {
-                # return ByteHours
-                "usage": total_bhours_db,
-                "cost": total_cost_db,
-            },
             "total_size": total_size,
             "always_show": current_user.role in ["Super Admin", "Unit Admin", "Unit Personnel"],
         }
+        if current_user.role in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+            return_info["total_usage"] = {
+                # return ByteHours
+                "usage": total_bhours_db,
+                "cost": total_cost_db,
+            }
 
         return return_info
 
