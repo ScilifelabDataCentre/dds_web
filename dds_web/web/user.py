@@ -343,6 +343,7 @@ def request_reset_password():
             ).one_or_none()
             if ongoing_password_reset:
                 ongoing_password_reset.issued = dds_web.utils.current_time()
+                ongoing_password_reset.valid = True
             else:
                 new_password_reset = models.PasswordReset(
                     user=email.user, email=email.email, issued=dds_web.utils.current_time()
