@@ -73,7 +73,7 @@ class ProjectStatus(flask_restful.Resource):
 
         return return_info
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -348,7 +348,7 @@ class ProjectStatus(flask_restful.Resource):
 class GetPublic(flask_restful.Resource):
     """Gets the public key beloning to the current project."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
@@ -367,7 +367,7 @@ class GetPublic(flask_restful.Resource):
 class GetPrivate(flask_restful.Resource):
     """Gets the private key belonging to the current project."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
@@ -486,7 +486,7 @@ class UserProjects(flask_restful.Resource):
 class RemoveContents(flask_restful.Resource):
     """Removes all project contents."""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @dbsession
     @handle_validation_errors
