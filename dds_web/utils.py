@@ -81,7 +81,7 @@ def email_taken(indata):
     """Validator - verify that email is taken."""
     if not email_in_db(email=indata):
         raise marshmallow.validate.ValidationError(
-            "There is no account with that email. To get an account, you need an invitation."
+            "If the email is connected to a user within the DDS, you should receive an email with the password reset instructions."
         )
 
 
