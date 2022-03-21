@@ -195,6 +195,17 @@ def verify_token(token):
 
     user = __user_from_subject(subject=claims.get("sub"))
 
+    if user.password_reset:
+        token_expired = claims.get("exp")
+        token_issued = datetime.datetime.fromtimestamp(token_expired) - MFA_EXPIRES_IN
+        password_reset_row = user.password_reset[0]
+        if not password_reset_row.valid and password_reset_row.changed > token_issued:
+            raise AuthenticationError(
+                message=(
+                    "Password reset performed after last authentication. "
+                    "Start a new authenticated session to proceed."
+                )
+            )
     return __handle_multi_factor_authentication(
         user=user, mfa_auth_time_string=claims.get("mfa_auth_time")
     )
