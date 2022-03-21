@@ -491,7 +491,7 @@ class RemoveDir(flask_restful.Resource):
                         entry.name_in_bucket for entry in files[i : i + batch_size]
                     )
                     try:
-                        s3conn.remove_multiple(items=bucket_names)
+                        s3conn.remove_multiple(items=bucket_names, batch_size=batch_size)
                     except botocore.client.ClientError as err:
                         not_removed[folder_name] = str(err)
                         fail_type = "s3"
