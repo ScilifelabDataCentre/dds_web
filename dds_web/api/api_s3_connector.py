@@ -85,12 +85,14 @@ class ApiS3Connector:
         bucket = None
 
     @bucket_must_exists
-    def remove_multiple(self, items, *args, **kwargs):
+    def remove_multiple(self, items, batch_size: int = 1000, *args, **kwargs):
         """Removes all with prefix."""
-        _ = self.resource.meta.client.delete_objects(
-            Bucket=self.project.bucket,
-            Delete={"Objects": [{"Key": x} for x in items]},
-        )
+        # s3 can only delete 1000 objects per request
+        for i in range(0, len(items), batch_size):
+            _ = self.resource.meta.client.delete_objects(
+                Bucket=self.project.bucket,
+                Delete={"Objects": [{"Key": x} for x in items[i : i + batch_size]]},
+            )
 
     @bucket_must_exists
     def remove_one(self, file, *args, **kwargs):

@@ -54,4 +54,5 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - New endpoint for listing Units as Super Admin ([1060](https://github.com/ScilifelabDataCentre/dds_web/pull/1060))
 - New endpoint for listing unit users as Super Admin ([#1059](https://github.com/ScilifelabDataCentre/dds_web/pull/1059))
 - Return int instead of string from files listing and only return usage info if right role ([#1070](https://github.com/ScilifelabDataCentre/dds_web/pull/1070))
+- Batch deletion of files (breaking atomicity) ([#1067](https://github.com/ScilifelabDataCentre/dds_web/pull/1067))
 - Change token expiration time to 7 days (168 hours) ([#1061](https://github.com/ScilifelabDataCentre/dds_web/pull/1061))
