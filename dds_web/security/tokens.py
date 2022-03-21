@@ -19,7 +19,7 @@ import dds_web.forms
 def encrypted_jwt_token(
     username,
     sensitive_content,
-    expires_in=datetime.timedelta(hours=48),
+    expires_in=datetime.timedelta(hours=168),
     additional_claims=None,
     fully_authenticated=False,
 ):
@@ -76,7 +76,7 @@ def update_token_with_mfa(token_claims):
 def __signed_jwt_token(
     username,
     sensitive_content=None,
-    expires_in=datetime.timedelta(hours=48),
+    expires_in=datetime.timedelta(hours=168),
     additional_claims=None,
 ):
     """
@@ -104,7 +104,7 @@ def __signed_jwt_token(
     return token.serialize()
 
 
-def jwt_token(username, expires_in=datetime.timedelta(hours=48), additional_claims=None):
+def jwt_token(username, expires_in=datetime.timedelta(hours=168), additional_claims=None):
     """
     Generates a signed JWT token. This is to be used for general purpose signed token.
     :param str username: Username must be obtained through authentication
