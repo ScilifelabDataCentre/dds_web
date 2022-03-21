@@ -25,7 +25,7 @@ def upgrade():
         sa.Column("email", sa.String(length=254), nullable=False),
         sa.Column("issued", sa.DateTime(), nullable=False),
         sa.Column("changed", sa.DateTime(), nullable=True),
-        sa.Column("valid", sa.Boolean(), nullable=False),
+        sa.Column("valid", mysql.TINYINT(display_width=1), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.username"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email"),
