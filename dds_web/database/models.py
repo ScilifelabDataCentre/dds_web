@@ -779,6 +779,7 @@ class PasswordReset(db.Model):
 
     email = db.Column(db.String(254), unique=True, nullable=False)
     issued = db.Column(db.DateTime(), unique=False, nullable=False)
+    changed = db.Column(db.DateTime(), unique=False, nullable=True)
 
     valid = db.Column(db.Boolean, unique=False, nullable=False, default=True)
 

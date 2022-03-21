@@ -24,6 +24,7 @@ def upgrade():
         sa.Column("user_id", sa.String(length=50), nullable=True),
         sa.Column("email", sa.String(length=254), nullable=False),
         sa.Column("issued", sa.DateTime(), nullable=False),
+        sa.Column("changed", sa.DateTime(), nullable=True),
         sa.Column("valid", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.username"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),

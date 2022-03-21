@@ -420,6 +420,7 @@ def reset_password(token):
 
         # Set password reset row as invalid
         password_reset_row.valid = False
+        password_reset_row.changed = dds_web.utils.current_time()
         db.session.commit()
 
         flask.flash("Your password has been updated! You are now able to log in.", "success")
