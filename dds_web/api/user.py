@@ -779,10 +779,9 @@ class DeleteUser(flask_restful.Resource):
         try:
             unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
             if unanswered_invite:
-                if (
-                    current_user_role == "Super Admin"
-                    and unanswered_invite.role not in ["Super Admin", "Unit Admin"]
-                ) or (current_user_role == "Unit Admin" and unanswered_invite.role != "Unit Admin"):
+                if not current_user_role == "Super Admin" or (
+                    current_user_role == "Unit Admin" and unanswered_invite.role == "Super Admin"
+                ):
                     raise ddserr.AccessDeniedError(
                         "You do not have the correct permissions to delete this invite."
                     )
