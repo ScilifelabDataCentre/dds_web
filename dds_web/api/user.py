@@ -779,14 +779,16 @@ class DeleteUser(flask_restful.Resource):
         try:
             unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
             if unanswered_invite:
-                if not current_user_role == "Super Admin" or (
-                    current_user_role == "Unit Admin" and unanswered_invite.role == "Super Admin"
+                if current_user_role == "Super Admin" or (
+                    current_user_role == "Unit Admin"
+                    and unanswered_invite.role in ["Unit Admin", "Unit Personnel", "Researcher"]
                 ):
+                    db.session.delete(unanswered_invite)
+                    db.session.commit()
+                else:
                     raise ddserr.AccessDeniedError(
-                        "You do not have the correct permissions to delete this invite."
+                        message="You do not have the correct permissions to delete this invite."
                     )
-                db.session.delete(unanswered_invite)
-                db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             db.session.rollback()
             flask.current_app.logger.error(
@@ -799,7 +801,7 @@ class DeleteUser(flask_restful.Resource):
                 err_msg = str(err)
             raise ddserr.DatabaseError(message=err_msg) from err
 
-        return unanswered_invite.email
+        return email
 
 
 class RemoveUserAssociation(flask_restful.Resource):
