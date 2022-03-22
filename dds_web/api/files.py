@@ -74,7 +74,7 @@ def check_eligibility_for_deletion(status, has_been_available):
 class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -100,7 +100,7 @@ class NewFile(flask_restful.Resource):
 
         return {"message": f"File '{new_file.name}' added to db."}
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @handle_validation_errors
     def put(self):
@@ -186,7 +186,7 @@ class NewFile(flask_restful.Resource):
 class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -218,7 +218,7 @@ class MatchFiles(flask_restful.Resource):
 class ListFiles(flask_restful.Resource):
     """Lists files within a project"""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
@@ -363,7 +363,7 @@ class ListFiles(flask_restful.Resource):
 class RemoveFile(flask_restful.Resource):
     """Removes files from the database and s3 with boto3."""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -458,7 +458,7 @@ class RemoveFile(flask_restful.Resource):
 class RemoveDir(flask_restful.Resource):
     """Removes one or more full directories from the database and s3."""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -563,7 +563,7 @@ class RemoveDir(flask_restful.Resource):
 class FileInfo(flask_restful.Resource):
     """Get file info on files to download."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -597,7 +597,7 @@ class FileInfo(flask_restful.Resource):
 class FileInfoAll(flask_restful.Resource):
     """Get info on all project files."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
@@ -619,7 +619,7 @@ class FileInfoAll(flask_restful.Resource):
 class UpdateFile(flask_restful.Resource):
     """Update file info after download"""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
