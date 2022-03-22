@@ -86,7 +86,6 @@ class AddUser(flask_restful.Resource):
         except (pymysql.err.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
-        flask.current_app.logger.debug("Here")
         if existing_user or unanswered_invite:
             if not project:
                 raise ddserr.DDSArgumentError(
