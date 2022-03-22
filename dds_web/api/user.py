@@ -494,7 +494,7 @@ class DeleteUserSelf(flask_restful.Resource):
     Every user can self-delete the own account with an e-mail confirmation.
     """
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     def delete(self):
         """Request deletion of own account."""
@@ -507,6 +507,19 @@ class DeleteUserSelf(flask_restful.Resource):
         proj_ids = None
         if current_user.role != "Super Admin":
             proj_ids = [proj.public_id for proj in current_user.projects]
+
+        if current_user.role == "Unit Admin":
+            num_admins = models.UnitUser.query.filter_by(
+                unit_id=current_user.unit.id, is_admin=True
+            ).count()
+            if num_admins <= 3:
+                raise ddserr.AccessDeniedError(
+                    message=(
+                        f"Your unit only has {num_admins} Unit Admins. "
+                        "You cannot delete your account. "
+                        "Invite a new Unit Admin first if you wish to proceed."
+                    )
+                )
 
         # Create URL safe token for invitation link
         s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
@@ -805,7 +818,7 @@ class DeleteUser(flask_restful.Resource):
 
 
 class RemoveUserAssociation(flask_restful.Resource):
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
     @handle_validation_errors

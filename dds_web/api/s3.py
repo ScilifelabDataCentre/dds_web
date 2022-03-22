@@ -30,7 +30,7 @@ from dds_web.api.files import check_eligibility_for_upload
 class S3Info(flask_restful.Resource):
     """Gets the projects S3 keys"""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
