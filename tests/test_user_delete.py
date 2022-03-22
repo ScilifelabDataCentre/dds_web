@@ -316,6 +316,17 @@ def test_del_invite_no_email(client):
     assert response.json.get("email").get("message") == "The email cannot be null."
 
 
+def test_del_invite_null_email(client):
+    """Super admin deletes invite without specifying email."""
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+        json={"email": None, "is_invite": True},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.json.get("email").get("message") == "The email cannot be null."
+
+
 def test_del_invite_superadmin_as_superadmin(client):
     """Super Admin invites super admin and deletes user."""
     invited_user = {"email": "test_user@mailtrap.io", "role": "Super Admin"}
