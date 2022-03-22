@@ -80,7 +80,6 @@ class AddUser(flask_restful.Resource):
         send_email = json_info.get("send_email", True)
 
         # Check if email is registered to a user
-        flask.current_app.logger.debug("Here")
         try:
             existing_user = user_schemas.UserSchema().load({"email": email})
             unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
