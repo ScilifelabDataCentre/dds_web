@@ -701,15 +701,16 @@ class DeleteUser(flask_restful.Resource):
     @handle_validation_errors
     def delete(self):
         """Delete user or invite in the DDS."""
+        current_user = auth.current_user()
+
         json_info = flask.request.json
         if json_info:
             is_invite = json_info.pop("is_invite", False)
             if is_invite:
-                unanswered_invite = user_schemas.UnansweredInvite().load(json_info)
-                if unanswered_invite:
-                    db.session.delete(unanswered_invite)
-                    db.session.commit()
-                return {"message": "The invite has been deleted."}
+                email = self.delete_invite(email=json_info.get("email"))
+                return {
+                    "message": ("The invite connected to email " f"'{email}' has been deleted.")
+                }
 
         user = user_schemas.UserSchema().load(json_info)
         if not user:
@@ -771,6 +772,35 @@ class DeleteUser(flask_restful.Resource):
         except sqlalchemy.exc.SQLAlchemyError as err:
             db.session.rollback()
             raise ddserr.DatabaseError(message=str(err))
+
+    @staticmethod
+    def delete_invite(email):
+        current_user_role = auth.current_user().role
+        try:
+            unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
+            if unanswered_invite:
+                if (
+                    current_user_role == "Super Admin"
+                    and unanswered_invite.role not in ["Super Admin", "Unit Admin"]
+                ) or (current_user_role == "Unit Admin" and unanswered_invite.role != "Unit Admin"):
+                    raise ddserr.AccessDeniedError(
+                        "You do not have the correct permissions to delete this invite."
+                    )
+                db.session.delete(unanswered_invite)
+                db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            db.session.rollback()
+            flask.current_app.logger.error(
+                "The invite connected to the email "
+                f"{email or '[no email provided]'} was not deleted."
+            )
+            if isinstance(err, sqlalchemy.exc.OperationalError):
+                err_msg = "Database malfunction."
+            else:
+                err_msg = str(err)
+            raise ddserr.DatabaseError(message=err_msg) from err
+
+        return unanswered_invite.email
 
 
 class RemoveUserAssociation(flask_restful.Resource):
