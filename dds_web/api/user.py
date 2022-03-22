@@ -700,8 +700,18 @@ class DeleteUser(flask_restful.Resource):
     @logging_bind_request
     @handle_validation_errors
     def delete(self):
+        """Delete user or invite in the DDS."""
+        json_info = flask.request.json
+        if json_info:
+            is_invite = json_info.pop("is_invite", False)
+            if is_invite:
+                unanswered_invite = user_schemas.UnansweredInvite().load(json_info)
+                if unanswered_invite:
+                    db.session.delete(unanswered_invite)
+                    db.session.commit()
+                return {"message": "The invite has been deleted."}
 
-        user = user_schemas.UserSchema().load(flask.request.json)
+        user = user_schemas.UserSchema().load(json_info)
         if not user:
             raise ddserr.UserDeletionError(
                 message=(
