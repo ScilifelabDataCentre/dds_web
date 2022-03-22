@@ -323,3 +323,33 @@ def fill_db_wrapper(db_type):
             dds_web.development.factories.create_all()
 
         flask.current_app.logger.info("DB filled")
+
+
+@click.command("create-unit")
+@click.option("name", type=str, required=True)
+@click.option("public_id", type=str, required=True)
+@click.option("external_display_name", type=str, required=True)
+@click.option("contact_email", type=str, required=True)
+@click.option("internal_ref", type=str, required=False)
+@click.option("safespring_endpoint", type=str, required=True)
+@click.option("safespring_name", type=str, required=True)
+@click.option("safespring_access", type=str, required=True)
+@click.option("safespring_secret", type=str, required=True)
+@click.option("days_in_available", type=int, required=False, default=90)
+@click.option("days_in_expired", type=int, required=False, default=30)
+@flask.cli.with_appcontext
+def create_new_unit(
+    name,
+    public_id,
+    external_display_name,
+    contact_email,
+    internal_ref,
+    safespring_endpoint,
+    safespring_name,
+    safespring_access,
+    safespring_secret,
+    days_in_available,
+    days_in_expired,
+):
+    """Create a new unit."""
+    from dds_web.database import models
