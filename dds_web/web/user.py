@@ -12,6 +12,7 @@ import werkzeug
 import flask_login
 import itsdangerous
 import sqlalchemy
+import pymysql
 
 # Own Modules
 import dds_web.utils
@@ -539,6 +540,8 @@ def confirm_self_deletion(token):
                 message=f"User deletion request for {user.username} / {user.primary_email.email} failed due to database error: {sqlerr}",
                 alt_message=f"Deletion request for user {user.username} registered with {user.primary_email.email} failed for technical reasons. Please contact the unit for technical support!",
             )
+        except pymysql.err.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         flask.session.clear()
 

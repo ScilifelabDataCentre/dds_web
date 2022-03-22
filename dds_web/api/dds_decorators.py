@@ -14,6 +14,7 @@ import flask
 import structlog
 import sqlalchemy
 import marshmallow
+import pymysql
 
 # Own modules
 from dds_web import db
@@ -84,6 +85,8 @@ def dbsession(func):
         # Run function, catch errors
         try:
             result = func(*args, **kwargs)
+        except pymysql.err.OperationalError as err:
+            raise DatabaseError(message=str(err), alt_message="Unexpected database error.")
         except:
             db.session.rollback()
             raise

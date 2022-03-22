@@ -31,7 +31,6 @@ class UserSchema(marshmallow.Schema):
             "required": {"message": "A user email is required."},
             "null": {"message": "The user email cannot be null."},
         },
-        validate=marshmallow.validate.Email(),
     )
 
     class Meta:
@@ -58,7 +57,6 @@ class UnansweredInvite(marshmallow.Schema):
             "required": {"message": "An email is required."},
             "null": {"message": "The email cannot be null."},
         },
-        validate=marshmallow.validate.Email(),
     )
 
     class Meta:

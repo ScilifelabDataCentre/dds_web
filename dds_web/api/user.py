@@ -18,6 +18,7 @@ import itsdangerous
 import structlog
 import sqlalchemy
 import http
+import pymysql
 
 
 # Own modules
@@ -79,8 +80,11 @@ class AddUser(flask_restful.Resource):
         send_email = json_info.get("send_email", True)
 
         # Check if email is registered to a user
-        existing_user = user_schemas.UserSchema().load({"email": email})
-        unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
+        try:
+            existing_user = user_schemas.UserSchema().load({"email": email})
+            unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
+        except pymysql.err.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if existing_user or unanswered_invite:
             if not project:
@@ -619,7 +623,11 @@ class UserActivation(flask_restful.Resource):
         if "email" not in json_input:
             raise ddserr.DDSArgumentError(message="User email missing.")
 
-        user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
+        try:
+            user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
+        except pymysql.err.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
+
         if not user:
             raise ddserr.NoSuchUserError()
 
@@ -714,7 +722,11 @@ class DeleteUser(flask_restful.Resource):
     @handle_validation_errors
     def delete(self):
 
-        user = user_schemas.UserSchema().load(flask.request.json)
+        try:
+            user = user_schemas.UserSchema().load(flask.request.json)
+        except pymysql.err.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
+
         if not user:
             raise ddserr.UserDeletionError(
                 message=(
@@ -790,7 +802,10 @@ class RemoveUserAssociation(flask_restful.Resource):
             raise ddserr.DDSArgumentError(message="User email missing.")
 
         # Check if email is registered to a user
-        existing_user = user_schemas.UserSchema().load({"email": user_email})
+        try:
+            existing_user = user_schemas.UserSchema().load({"email": user_email})
+        except pymysql.err.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not existing_user:
             raise ddserr.NoSuchUserError(

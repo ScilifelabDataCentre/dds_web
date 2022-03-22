@@ -14,6 +14,7 @@ import sqlalchemy
 import datetime
 import botocore
 import marshmallow
+import pymysql
 
 # Own modules
 import dds_web.utils
@@ -609,8 +610,15 @@ class CreateProject(flask_restful.Resource):
             for user in p_info["users_to_add"]:
                 try:
                     existing_user = user_schemas.UserSchema().load(user)
-                except marshmallow.exceptions.ValidationError as err:
-                    addition_status = f"Error for {user.get('email')}: {err}"
+                except (
+                    marshmallow.exceptions.ValidationError,
+                    pymysql.err.OperationalError,
+                ) as err:
+                    if isinstance(err, pymysql.err.OperationalError):
+                        flask.current_app.logger.error(err)
+                        addition_status = "Unexpected database error."
+                    else:
+                        addition_status = f"Error for {user.get('email')}: {err}"
                     user_addition_statuses.append(addition_status)
                     continue
 
