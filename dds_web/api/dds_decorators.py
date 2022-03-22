@@ -85,7 +85,7 @@ def dbsession(func):
         # Run function, catch errors
         try:
             result = func(*args, **kwargs)
-        except pymysql.err.OperationalError as err:
+        except (pymysql.err.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             raise DatabaseError(message=str(err), alt_message="Unexpected database error.")
         except:
             db.session.rollback()

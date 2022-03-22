@@ -613,8 +613,11 @@ class CreateProject(flask_restful.Resource):
                 except (
                     marshmallow.exceptions.ValidationError,
                     pymysql.err.OperationalError,
+                    sqlalchemy.exc.SQLAlchemyError,
                 ) as err:
-                    if isinstance(err, pymysql.err.OperationalError):
+                    if isinstance(err, pymysql.err.OperationalError) or isinstance(
+                        err, sqlalchemy.exc.SQLAlchemyError
+                    ):
                         flask.current_app.logger.error(err)
                         addition_status = "Unexpected database error."
                     else:
