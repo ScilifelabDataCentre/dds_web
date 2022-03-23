@@ -58,3 +58,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Change token expiration time to 7 days (168 hours) ([#1061](https://github.com/ScilifelabDataCentre/dds_web/pull/1061))
 - Add possibility of deleting invites (temporary fix in delete user endpoint) ([#1075](https://github.com/ScilifelabDataCentre/dds_web/pull/1075))
 - Flask command `create-unit` to create unit without having to interact with database directly ([#1075](https://github.com/ScilifelabDataCentre/dds_web/pull/1075))
+- Let project description include . and , ([#1080](https://github.com/ScilifelabDataCentre/dds_web/pull/1080))
