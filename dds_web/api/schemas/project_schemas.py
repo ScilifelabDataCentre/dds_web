@@ -78,9 +78,7 @@ class CreateProjectSchema(marshmallow.Schema):
     description = marshmallow.fields.String(
         required=True,
         allow_none=False,
-        validate=marshmallow.validate.And(
-            marshmallow.validate.Length(min=1), dds_web.utils.contains_disallowed_characters
-        ),
+        validate=marshmallow.validate.Length(min=1),
         error_messages={
             "required": {"message": "A project description is required."},
             "null": {"message": "A project description is required."},
