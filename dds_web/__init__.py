@@ -403,26 +403,27 @@ def update_uploaded_file_with_log(project, path_to_log_file):
 
         with ApiS3Connector(project=proj_in_db) as s3conn:
             try:
-                _ = s3conn.resource.Object(s3conn.project.bucket, vals["path_remote"])
-                # head_object(Bucket=s3conn.project.bucket, Key=vals["path_remote"])
+                _ = s3conn.resource.meta.client.head_object(
+                    Bucket=s3conn.project.bucket, Key=vals["path_remote"]
+                )
             except botocore.client.ClientError as err:
                 if err.response["Error"]["Code"] == "404":
                     errors[file] = {"error": "File not found in S3", "traceback": err.__traceback__}
             else:
-                file = models.File.query.filter(
+                file_object = models.File.query.filter(
                     sqlalchemy.and_(
                         models.File.name == sqlalchemy.func.binary(file),
                         models.File.project_id == proj_in_db.id,
                     )
                 ).first()
-                if file:
+                if file_object:
                     errors[file] = {"error": "File already in database."}
                 else:
                     new_file = models.File(
                         name=file,
                         name_in_bucket=vals["path_remote"],
                         subpath=vals["subpath"],
-                        project_id=proj_in_db.public_id,
+                        project_id=proj_in_db.id,
                         size_original=vals["size_raw"],
                         size_stored=vals["size_processed"],
                         compressed=vals["compressed"],
@@ -432,7 +433,7 @@ def update_uploaded_file_with_log(project, path_to_log_file):
                     )
                     db.session.add(new_file)
                     files_added.append(new_file)
+                db.session.commit()
 
-    db.session.commit()
-    flask.current_app.logger.info(f"Files added: {files_added}")
-    flask.current_app.logger.info(f"Errors while adding files: {errors}")
+        flask.current_app.logger.info(f"Files added: {files_added}")
+        flask.current_app.logger.info(f"Errors while adding files: {errors}")

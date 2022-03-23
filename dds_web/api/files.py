@@ -92,7 +92,6 @@ class NewFile(flask_restful.Resource):
         )
 
         try:
-            raise sqlalchemy.exc.SQLAlchemyError("test")
             db.session.commit()
         except sqlalchemy.exc.SQLAlchemyError as err:
             flask.current_app.logger.debug(err)
