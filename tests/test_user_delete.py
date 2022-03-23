@@ -286,3 +286,135 @@ def test_del_request_others_superaction(client):
     exists = user_from_email(email_to_delete)
     assert exists is None
     assert dds_web.utils.email_in_db(email_to_delete) is False
+
+
+# Test delete invite
+def test_del_invite_non_existent(client):
+    """Super admin deletes non existent invite."""
+    email_to_delete = "incorrect@mailtrap.io"
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+        json={"email": email_to_delete, "is_invite": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    assert (
+        f"The invite connected to email '{email_to_delete}' has been deleted."
+        in response.json.get("message")
+    )
+
+
+def test_del_invite_no_email(client):
+    """Super admin deletes invite without specifying email."""
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+        json={"is_invite": True},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.json.get("email").get("message") == "The email cannot be null."
+
+
+def test_del_invite_null_email(client):
+    """Super admin deletes invite without specifying email."""
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+        json={"email": None, "is_invite": True},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.json.get("email").get("message") == "The email cannot be null."
+
+
+def test_del_invite_superadmin_as_superadmin(client):
+    """Super Admin invites super admin and deletes user."""
+    invited_user = {"email": "test_user@mailtrap.io", "role": "Super Admin"}
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+        json=invited_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    invited_user_row = models.Invite.query.filter_by(email=invited_user["email"]).one_or_none()
+    assert invited_user_row and invited_user_row.role == "Super Admin"
+
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+        json={"email": invited_user_row.email, "is_invite": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert (
+        response.json.get("message")
+        == f"The invite connected to email '{invited_user_row.email}' has been deleted."
+    )
+
+    invited_user_row = models.Invite.query.filter_by(email=invited_user["email"]).one_or_none()
+    assert not invited_user_row
+
+
+def test_del_invite_superadmin_as_unit_admin(client):
+    invited_user = {"email": "test_user@mailtrap.io", "role": "Super Admin"}
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+        json=invited_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    invited_user_row = models.Invite.query.filter_by(email=invited_user["email"]).one_or_none()
+    assert invited_user_row and invited_user_row.role == "Super Admin"
+
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json={"email": invited_user_row.email, "is_invite": True},
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    assert (
+        response.json.get("message")
+        == "You do not have the correct permissions to delete this invite."
+    )
+
+    invited_user_row = models.Invite.query.filter_by(email=invited_user["email"]).one_or_none()
+    assert invited_user_row and invited_user_row.role == "Super Admin"
+
+
+def test_del_invite_unit_admin_and_personnel_and_researcher_as_unit_admin(client):
+    unit = models.Unit.query.filter_by(name="Unit 1").one_or_none()
+    invited_users = [
+        {"email": "unitadmin_invite@mailtrap.io", "role": "Unit Admin", "unit": unit.public_id},
+        {
+            "email": "unitpersonnel_invite@mailtrap.io",
+            "role": "Unit Personnel",
+            "unit": unit.public_id,
+        },
+        {"email": "researcher_invite@mailtrap.io", "role": "Researcher"},
+    ]
+    for user in invited_users:
+        print(f"Inviting user: {user}")
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=user,
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        invited_user_row = models.Invite.query.filter_by(email=user["email"]).one_or_none()
+        assert invited_user_row and invited_user_row.role == user["role"]
+
+        print(
+            f"Deleting invited user: {invited_user_row.email} ({invited_user_row.role}) as {tests}"
+        )
+        response = client.delete(
+            tests.DDSEndpoint.USER_DELETE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            json={"email": invited_user_row.email, "is_invite": True},
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        assert (
+            response.json.get("message")
+            == f"The invite connected to email '{invited_user_row.email}' has been deleted."
+        )
+
+        invited_user_row = models.Invite.query.filter_by(email=user["email"]).one_or_none()
+        assert not invited_user_row
