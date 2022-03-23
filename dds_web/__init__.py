@@ -247,6 +247,7 @@ def create_app(testing=False, database_uri=None):
 
     app.cli.add_command(fill_db_wrapper)
     app.cli.add_command(create_new_unit)
+    app.cli.add_command(update_uploaded_file_with_log)
 
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
@@ -372,3 +373,65 @@ def create_new_unit(
     db.session.commit()
 
     flask.current_app.logger.info(f"Unit '{name}' created")
+
+
+@click.command("update-uploaded-file")
+@click.option("--project", "-p", type=str, required=True)
+@click.option("--path-to-log-file", "-fp", type=str, required=True)
+@flask.cli.with_appcontext
+def update_uploaded_file_with_log(project, path_to_log_file):
+    """Update file details that weren't properly uploaded to db from cli log"""
+    import botocore
+    from dds_web.database import models
+    from dds_web import db
+    from dds_web.api.api_s3_connector import ApiS3Connector
+    import json
+
+    proj_in_db = models.Project.query.filter_by(public_id=project).one_or_none()
+    assert proj_in_db
+
+    with open(path_to_log_file, "r") as f:
+        log = json.load(f)
+    errors = {}
+    files_added = []
+    for file, vals in log.items():
+        status = vals.get("status")
+        if not status or not status.get("failed_op") == "add_file_db":
+            continue
+
+        with ApiS3Connector(project=proj_in_db) as s3conn:
+            try:
+                _ = s3conn.resource.meta.client.head_object(
+                    Bucket=s3conn.project.bucket, Key=vals["path_remote"]
+                )
+            except botocore.client.ClientError as err:
+                if err.response["Error"]["Code"] == "404":
+                    errors[file] = {"error": "File not found in S3", "traceback": err.__traceback__}
+            else:
+                file_object = models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name == sqlalchemy.func.binary(file),
+                        models.File.project_id == proj_in_db.id,
+                    )
+                ).first()
+                if file_object:
+                    errors[file] = {"error": "File already in database."}
+                else:
+                    new_file = models.File(
+                        name=file,
+                        name_in_bucket=vals["path_remote"],
+                        subpath=vals["subpath"],
+                        project_id=proj_in_db.id,
+                        size_original=vals["size_raw"],
+                        size_stored=vals["size_processed"],
+                        compressed=vals["compressed"],
+                        public_key=vals["public_key"],
+                        salt=vals["salt"],
+                        checksum=vals["checksum"],
+                    )
+                    db.session.add(new_file)
+                    files_added.append(new_file)
+                db.session.commit()
+
+        flask.current_app.logger.info(f"Files added: {files_added}")
+        flask.current_app.logger.info(f"Errors while adding files: {errors}")
