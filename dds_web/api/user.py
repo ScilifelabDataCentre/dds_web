@@ -18,7 +18,6 @@ import itsdangerous
 import structlog
 import sqlalchemy
 import http
-import pymysql
 
 
 # Own modules
@@ -83,7 +82,7 @@ class AddUser(flask_restful.Resource):
         try:
             existing_user = user_schemas.UserSchema().load({"email": email})
             unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
-        except (pymysql.err.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        except sqlalchemy.exc.OperationalError as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if existing_user or unanswered_invite:
@@ -625,7 +624,7 @@ class UserActivation(flask_restful.Resource):
 
         try:
             user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
-        except (pymysql.err.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        except sqlalchemy.exc.OperationalError as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not user:
@@ -724,7 +723,7 @@ class DeleteUser(flask_restful.Resource):
 
         try:
             user = user_schemas.UserSchema().load(flask.request.json)
-        except (pymysql.err.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        except sqlalchemy.exc.OperationalError as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not user:
@@ -804,7 +803,7 @@ class RemoveUserAssociation(flask_restful.Resource):
         # Check if email is registered to a user
         try:
             existing_user = user_schemas.UserSchema().load({"email": user_email})
-        except (pymysql.err.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        except sqlalchemy.exc.OperationalError as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not existing_user:
