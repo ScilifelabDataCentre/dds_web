@@ -247,6 +247,7 @@ def create_app(testing=False, database_uri=None):
 
     app.cli.add_command(fill_db_wrapper)
     app.cli.add_command(create_new_unit)
+    app.cli.add_command(update_uploaded_file_with_log)
 
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
@@ -372,3 +373,68 @@ def create_new_unit(
     db.session.commit()
 
     flask.current_app.logger.info(f"Unit '{name}' created")
+
+
+@click.command("update-uploaded-file")
+@click.option("--project", "-p", type=str, required=True)
+@click.option("--path-to-log-file", "-fp", type=str, required=True)
+@flask.cli.with_appcontext
+def update_uploaded_file_with_log(project, path_to_log_file):
+    """Update file details that weren't properly uploaded to db from cli log"""
+    import botocore
+    from dds_web.database import models
+    from dds_web.api.project_schemas import verify_project_exists
+    from dds_web import db
+    from dds_web.api.api_s3_connector import ApiS3Connector
+    from dds_web.api.schemas import file_schemas
+
+    proj_in_db = verify_project_exists(project)
+    with open(path_to_log_file, "r") as f:
+        log = json.load(f)
+    errors = {}
+    files_added = []
+    for file in log:
+        with ApiS3Connector(project=proj_in_db) as s3conn:
+            try:
+                _ = s3conn.resource.meta.client.head_object(
+                    Bucket=s3conn.project.bucket, Key=log["path_remote"]
+                )
+            except botocore.client.ClientError as err:
+                if err.response["Error"]["Code"] == "404":
+                    errors[file] = {"error": "File not found in S3", "traceback": err.__traceback__}
+            else:
+                file = models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name == sqlalchemy.func.binary(file),
+                        models.File.project_id == proj_in_db.id,
+                    )
+                ).first()
+                if file:
+                    file.name_in_bucket = log["path_remote"]
+                    file.subpath = log["subpath"]
+                    file.project = proj_in_db.public_id
+                    file.size_original = log["size_raw"]
+                    file.size_stored = log["size_processed"]
+                    file.compressed = log["compressed"]
+                    file.public_key = log["public_key"]
+                    file.salt = log["salt"]
+                    file.checksum = log["checksum"]
+                else:
+                    new_file = file_schemas.NewFileSchema().load(
+                        {
+                            "name": file,
+                            "name_in_bucket": log["path_remote"],
+                            "subpath": log["subpath"],
+                            "project": proj_in_db.public_id,
+                            "size_original": log["size_raw"],
+                            "size_stored": log["size_processed"],
+                            "compressed": log["compressed"],
+                            "public_key": log["public_key"],
+                            "salt": log["salt"],
+                            "checksum": log["checksum"],
+                        }
+                    )
+                files_added.append(file)
+    db.session.commit()
+    flask.current_app.logger.info(f"Files added: {files_added}")
+    flask.current_app.logger.info(f"Errors while adding files: {errors}")
