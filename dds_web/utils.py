@@ -58,7 +58,7 @@ def contains_digit_or_specialchar(indata):
 
 def contains_disallowed_characters(indata):
     """Indatas like <f0><9f><98><80> cause issues in Project names etc."""
-    disallowed = re.findall(r"[^\w\s]+", indata)
+    disallowed = re.findall(r"[^(\w\s)]+", indata)
     if disallowed:
         disallowed = set(disallowed)  # unique values
         chars = "characters"
