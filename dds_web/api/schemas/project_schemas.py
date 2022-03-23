@@ -6,6 +6,7 @@
 
 # Standard Library
 import os
+import re
 
 # Installed
 import botocore.client
@@ -124,6 +125,15 @@ class CreateProjectSchema(marshmallow.Schema):
             ]
         ):
             raise marshmallow.ValidationError("Missing fields!")
+
+    @marshmallow.validates("description")
+    def validate_description(self, value):
+        """Verify that description only has words, spaces and . / ,."""
+        disallowed = re.findall(r"[^(\w\s.,)]+", value)
+        if disallowed:
+            raise marshmallow.ValidationError(
+                message="The description can only contain letters, spaces, period and commas."
+            )
 
     def generate_bucketname(self, public_id, created_time):
         """Create bucket name for the given project."""
