@@ -246,6 +246,7 @@ def create_app(testing=False, database_uri=None):
     )
 
     app.cli.add_command(fill_db_wrapper)
+    app.cli.add_command(create_new_unit)
 
     with app.app_context():  # Everything in here has access to sessions
         from dds_web.database import models
@@ -323,3 +324,51 @@ def fill_db_wrapper(db_type):
             dds_web.development.factories.create_all()
 
         flask.current_app.logger.info("DB filled")
+
+
+@click.command("create-unit")
+@click.option("--name", "-n", type=str, required=True)
+@click.option("--public_id", "-p", type=str, required=True)
+@click.option("--external_display_name", "-e", type=str, required=True)
+@click.option("--contact_email", "-c", type=str, required=True)
+@click.option("--internal_ref", "-ref", type=str, required=False)
+@click.option("--safespring_endpoint", "-se", type=str, required=True)
+@click.option("--safespring_name", "-sn", type=str, required=True)
+@click.option("--safespring_access", "-sa", type=str, required=True)
+@click.option("--safespring_secret", "-ss", type=str, required=True)
+@click.option("--days_in_available", "-da", type=int, required=False, default=90)
+@click.option("--days_in_expired", "-de", type=int, required=False, default=30)
+@flask.cli.with_appcontext
+def create_new_unit(
+    name,
+    public_id,
+    external_display_name,
+    contact_email,
+    internal_ref,
+    safespring_endpoint,
+    safespring_name,
+    safespring_access,
+    safespring_secret,
+    days_in_available,
+    days_in_expired,
+):
+    """Create a new unit."""
+    from dds_web.database import models
+
+    new_unit = models.Unit(
+        name=name,
+        public_id=public_id,
+        external_display_name=external_display_name,
+        contact_email=contact_email,
+        internal_ref=internal_ref or public_id,
+        safespring_endpoint=safespring_endpoint,
+        safespring_name=safespring_name,
+        safespring_access=safespring_access,
+        safespring_secret=safespring_secret,
+        days_in_available=days_in_available,
+        days_in_expired=days_in_expired,
+    )
+    db.session.add(new_unit)
+    db.session.commit()
+
+    flask.current_app.logger.info(f"Unit '{name}' created")

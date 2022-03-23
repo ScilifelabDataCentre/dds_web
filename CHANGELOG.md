@@ -57,3 +57,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Batch deletion of files (breaking atomicity) ([#1067](https://github.com/ScilifelabDataCentre/dds_web/pull/1067))
 - Change token expiration time to 7 days (168 hours) ([#1061](https://github.com/ScilifelabDataCentre/dds_web/pull/1061))
 - Add possibility of deleting invites (temporary fix in delete user endpoint) ([#1075](https://github.com/ScilifelabDataCentre/dds_web/pull/1075))
+- Flask command `create-unit` to create unit without having to interact with database directly ([#1075](https://github.com/ScilifelabDataCentre/dds_web/pull/1075))
