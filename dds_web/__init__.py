@@ -417,7 +417,6 @@ def update_uploaded_file_with_log(project, path_to_log_file):
                 if file_object:
                     errors[file] = {"error": "File already in database."}
                 else:
-                    print(f"compressed: {vals['compressed']}")
                     new_file = models.File(
                         name=file,
                         name_in_bucket=vals["path_remote"],
