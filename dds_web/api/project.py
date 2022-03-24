@@ -124,13 +124,10 @@ class ProjectStatus(flask_restful.Resource):
         try:
             project.project_statuses.append(new_status_row)
             db.session.commit()
-        except (sqlalchemy.exc.OperationalError) as err:
-            # flask.current_app.logger.exception(err)
-            raise DatabaseError(message=str(err), alt_message="Database seems to be down.")
-        except (sqlalchemy.exc.SQLAlchemyError) as err:
+        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Status was not updated") from err
+            raise DatabaseError(message=str(err), alt_message="Database seems to be down." if isinstance(err, sqlalchemy.exc.OperationalError) else "Server Error: Status was not updated")
 
         # Mail users once project is made available
         if new_status == "Available" and send_email:
