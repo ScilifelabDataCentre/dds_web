@@ -124,6 +124,9 @@ class ProjectStatus(flask_restful.Resource):
         try:
             project.project_statuses.append(new_status_row)
             db.session.commit()
+        except (sqlalchemy.exc.OperationalError) as err:
+            # flask.current_app.logger.exception(err)
+            raise DatabaseError(message=str(err), alt_message="Database seems to be down.")
         except (sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
@@ -436,12 +439,17 @@ class UserProjects(flask_restful.Resource):
                 # return ByteHours
                 project_info.update({"Usage": proj_bhours, "Cost": proj_cost})
 
-            project_info["Access"] = (
-                models.ProjectUserKeys.query.filter_by(
-                    project_id=p.id, user_id=current_user.username
-                ).count()
-                > 0
-            )
+
+            try:
+               project_info["Access"] = (
+                   models.ProjectUserKeys.query.filter_by(
+                       project_id=p.id, user_id=current_user.username
+                   ).count()
+                   > 0
+               )
+            except sqlalchemy.exc.OperationalError as err:
+               raise DatabaseError(message=str(err), alt_message="Database seems to be down.")
+
             all_projects.append(project_info)
 
         return_info = {
