@@ -417,6 +417,7 @@ def update_uploaded_file_with_log(project, path_to_log_file):
                 if file_object:
                     errors[file] = {"error": "File already in database."}
                 else:
+                    print(f"compressed: {vals['compressed']}")
                     new_file = models.File(
                         name=file,
                         name_in_bucket=vals["path_remote"],
@@ -424,11 +425,18 @@ def update_uploaded_file_with_log(project, path_to_log_file):
                         project_id=proj_in_db.id,
                         size_original=vals["size_raw"],
                         size_stored=vals["size_processed"],
-                        compressed=vals["compressed"],
+                        compressed=not vals["compressed"],
                         public_key=vals["public_key"],
                         salt=vals["salt"],
                         checksum=vals["checksum"],
                     )
+                    new_version = models.Version(
+                        size_stored=new_file.size_stored, time_uploaded=datetime.datetime.utcnow()
+                    )
+                    proj_in_db.file_versions.append(new_version)
+                    proj_in_db.files.append(new_file)
+                    new_file.versions.append(new_version)
+
                     db.session.add(new_file)
                     files_added.append(new_file)
                 db.session.commit()
