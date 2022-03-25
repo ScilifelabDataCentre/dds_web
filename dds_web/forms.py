@@ -84,7 +84,7 @@ class LogoutForm(flask_wtf.FlaskForm):
 
 class Confirm2FACodeForm(flask_wtf.FlaskForm):
     hotp = wtforms.StringField(
-        "hotp",
+        "Multi-factor authentication code",
         validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=8, max=8)],
     )
     submit = wtforms.SubmitField("Authenticate")
