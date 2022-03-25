@@ -132,7 +132,7 @@ class ProjectStatus(flask_restful.Resource):
                 alt_message=(
                     "Status was not updated"
                     + (
-                        "Database malfunction."
+                        ": Database malfunction."
                         if isinstance(err, sqlalchemy.exc.OperationalError)
                         else ": Server Error."
                     )
