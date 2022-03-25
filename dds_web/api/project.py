@@ -597,10 +597,15 @@ class CreateProject(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Project was not created") from err
+            raise DatabaseError(
+                message=str(err),
+                alt_message="Server Error: Project was not created" + (": Database malfunction.")
+                if isinstance(err, sqlalchemy.exc.OperationalError)
+                else ".",
+            ) from err
         except (
             marshmallow.exceptions.ValidationError,
             DDSArgumentError,
