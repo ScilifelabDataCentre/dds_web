@@ -134,7 +134,7 @@ class ProjectStatus(flask_restful.Resource):
                     + (
                         "Database malfunction."
                         if isinstance(err, sqlalchemy.exc.OperationalError)
-                        else "Server Error: Status was not updated"
+                        else ": Server Error."
                     )
                 ),
             ) from err
