@@ -612,9 +612,12 @@ class CreateProject(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(
                 message=str(err),
-                alt_message="Server Error: Project was not created" + (": Database malfunction.")
-                if isinstance(err, sqlalchemy.exc.OperationalError)
-                else ".",
+                alt_message=(
+                    "Project was not created" 
+                    + (": Database malfunction." 
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else ": Server error."),
+                 )
             ) from err
         except (
             marshmallow.exceptions.ValidationError,
