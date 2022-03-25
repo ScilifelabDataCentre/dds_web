@@ -127,7 +127,12 @@ class ProjectStatus(flask_restful.Resource):
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message=str(err), alt_message="Database seems to be down." if isinstance(err, sqlalchemy.exc.OperationalError) else "Server Error: Status was not updated")
+            raise DatabaseError(
+                message=str(err),
+                alt_message="Database seems to be down."
+                if isinstance(err, sqlalchemy.exc.OperationalError)
+                else "Server Error: Status was not updated",
+            )
 
         # Mail users once project is made available
         if new_status == "Available" and send_email:
@@ -436,16 +441,15 @@ class UserProjects(flask_restful.Resource):
                 # return ByteHours
                 project_info.update({"Usage": proj_bhours, "Cost": proj_cost})
 
-
             try:
-               project_info["Access"] = (
-                   models.ProjectUserKeys.query.filter_by(
-                       project_id=p.id, user_id=current_user.username
-                   ).count()
-                   > 0
-               )
+                project_info["Access"] = (
+                    models.ProjectUserKeys.query.filter_by(
+                        project_id=p.id, user_id=current_user.username
+                    ).count()
+                    > 0
+                )
             except sqlalchemy.exc.OperationalError as err:
-               raise DatabaseError(message=str(err), alt_message="Database seems to be down.")
+                raise DatabaseError(message=str(err), alt_message="Database seems to be down.")
 
             all_projects.append(project_info)
 
