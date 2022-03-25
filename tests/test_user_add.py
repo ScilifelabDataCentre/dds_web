@@ -831,7 +831,7 @@ def test_invite_superadmin_as_unitadmin(client):
     )
 
     assert response.status_code == http.HTTPStatus.FORBIDDEN
-    assert "The user does not have the necessary permissions." in response.json["message"]
+    assert "You do not have the necessary permissions." in response.json["message"]
 
 
 # Invite super admin and unit admin with unit personnel
@@ -846,7 +846,7 @@ def test_invite_superadmin_and_unitadmin_as_unitpersonnel(client):
         )
 
         assert response.status_code == http.HTTPStatus.FORBIDDEN
-        assert "The user does not have the necessary permissions." in response.json["message"]
+        assert "You do not have the necessary permissions." in response.json["message"]
 
 
 # Invite super admin, unit admin or unit personnel
@@ -862,7 +862,7 @@ def test_invite_superadmin_and_unitadmin_and_unitpersonnel_as_projectowner(clien
         )
 
         assert response.status_code == http.HTTPStatus.FORBIDDEN
-        assert "The user does not have the necessary permissions." in response.json["message"]
+        assert "You do not have the necessary permissions." in response.json["message"]
 
 
 def test_invite_unituser_as_superadmin_incorrect_unit(client):
