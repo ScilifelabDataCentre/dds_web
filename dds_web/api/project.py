@@ -124,10 +124,20 @@ class ProjectStatus(flask_restful.Resource):
         try:
             project.project_statuses.append(new_status_row)
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError) as err:
+        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Status was not updated") from err
+            raise DatabaseError(
+                message=str(err),
+                alt_message=(
+                    "Status was not updated"
+                    + (
+                        ": Database malfunction."
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else ": Server Error."
+                    )
+                ),
+            ) from err
 
         # Mail users once project is made available
         if new_status == "Available" and send_email:
@@ -436,12 +446,26 @@ class UserProjects(flask_restful.Resource):
                 # return ByteHours
                 project_info.update({"Usage": proj_bhours, "Cost": proj_cost})
 
-            project_info["Access"] = (
-                models.ProjectUserKeys.query.filter_by(
-                    project_id=p.id, user_id=current_user.username
-                ).count()
-                > 0
-            )
+            try:
+                project_info["Access"] = (
+                    models.ProjectUserKeys.query.filter_by(
+                        project_id=p.id, user_id=current_user.username
+                    ).count()
+                    > 0
+                )
+            except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+                raise DatabaseError(
+                    message=str(err),
+                    alt_message=(
+                        "Could not get users project access information."
+                        + (
+                            ": Database malfunction."
+                            if isinstance(err, sqlalchemy.exc.OperationalError)
+                            else "."
+                        ),
+                    ),
+                ) from err
+
             all_projects.append(project_info)
 
         return_info = {
@@ -534,13 +558,22 @@ class RemoveContents(flask_restful.Resource):
                     models.Version.time_deleted.is_(None),
                 )
             ).update({"time_deleted": dds_web.utils.current_time()})
-        except (sqlalchemy.exc.SQLAlchemyError, AttributeError) as sqlerr:
+        except (
+            sqlalchemy.exc.SQLAlchemyError,
+            sqlalchemy.exc.OperationalError,
+            AttributeError,
+        ) as sqlerr:
             raise DeletionError(
                 project=project.public_id,
                 message=str(sqlerr),
                 alt_message=(
                     "Project bucket contents were deleted, but they were not deleted from the "
                     "database. Please contact SciLifeLab Data Centre."
+                    + (
+                        "Database malfunction."
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else "."
+                    )
                 ),
             ) from sqlerr
 
@@ -591,10 +624,20 @@ class CreateProject(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Project was not created") from err
+            raise DatabaseError(
+                message=str(err),
+                alt_message=(
+                    "Project was not created"
+                    + (
+                        ": Database malfunction."
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else ": Server error."
+                    ),
+                ),
+            ) from err
         except (
             marshmallow.exceptions.ValidationError,
             DDSArgumentError,
