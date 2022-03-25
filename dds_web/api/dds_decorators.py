@@ -145,8 +145,18 @@ def connect_cloud(func):
                 aws_access_key_id=self.keys["access_key"],
                 aws_secret_access_key=self.keys["secret_key"],
             )
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(message=str(sqlerr)) from sqlerr
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
+            raise DatabaseError(
+                message=str(sqlerr),
+                alt_message=(
+                    "Could not connect to cloud"
+                    + (
+                        ": Database malfunction."
+                        if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                        else "."
+                    ),
+                ),
+            ) from sqlerr
         except botocore.client.ClientError as clierr:
             raise S3ConnectionError(message=str(clierr)) from clierr
 
