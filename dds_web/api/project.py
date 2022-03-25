@@ -456,9 +456,14 @@ class UserProjects(flask_restful.Resource):
             except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
                 raise DatabaseError(
                     message=str(err),
-                    alt_message="Database seems to be down."
-                    if isinstance(err, sqlalchemy.exc.OperationalError)
-                    else ".",
+                    alt_message=(
+                        "Could not get users project access information."
+                        + (
+                            ": Database malfunction."
+                            if isinstance(err, sqlalchemy.exc.OperationalError)
+                            else "."
+                        ),
+                    ),
                 ) from err
 
             all_projects.append(project_info)
@@ -613,11 +618,13 @@ class CreateProject(flask_restful.Resource):
             raise DatabaseError(
                 message=str(err),
                 alt_message=(
-                    "Project was not created" 
-                    + (": Database malfunction." 
+                    "Project was not created"
+                    + (
+                        ": Database malfunction."
                         if isinstance(err, sqlalchemy.exc.OperationalError)
-                        else ": Server error."),
-                 )
+                        else ": Server error."
+                    ),
+                ),
             ) from err
         except (
             marshmallow.exceptions.ValidationError,
