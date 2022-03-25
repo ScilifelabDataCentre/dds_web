@@ -455,7 +455,7 @@ class RemoveFile(flask_restful.Resource):
                         str(err)
                         if isinstance(err, DatabaseError)
                         else (
-                            "Could not collect the remote item name"
+                            "Could not collect the remote file name"
                             + (
                                 ": Database malfunction."
                                 if isinstance(err, sqlalchemy.exc.OperationalError)
