@@ -279,8 +279,8 @@ def create_app(testing=False, database_uri=None):
 
             return app
     except sqlalchemy.exc.OperationalError as err:
-        app.logger.exception("The database seems to be down. bla bla")
-        sys.exit(1) 
+        app.logger.exception("The database seems to be down.")
+        sys.exit(1)
 
 
 @click.command("init-db")
