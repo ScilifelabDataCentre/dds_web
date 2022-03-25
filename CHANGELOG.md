@@ -60,3 +60,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Flask command `create-unit` to create unit without having to interact with database directly ([#1075](https://github.com/ScilifelabDataCentre/dds_web/pull/1075))
 - Let project description include . and , ([#1080](https://github.com/ScilifelabDataCentre/dds_web/pull/1080))
 - Catch OperationalError if there is a database malfunction in `files.py` ([#1089](https://github.com/ScilifelabDataCentre/dds_web/pull/1089))
+- Switched the validation for the principal investigator from string to email ([#1084](https://github.com/ScilifelabDataCentre/dds_web/pull/1084)).

@@ -20,7 +20,11 @@ import tests
 
 # CONFIG ################################################################################## CONFIG #
 
-proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
+proj_data = {
+    "pi": "researchuser@mailtrap.io",
+    "title": "Test proj",
+    "description": "A longer project description",
+}
 proj_data_with_existing_users = {
     **proj_data,
     "users_to_add": [

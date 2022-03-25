@@ -568,8 +568,11 @@ class CreateProject(flask_restful.Resource):
         # Add a new project to db
         import pymysql
 
-        new_project = project_schemas.CreateProjectSchema().load(p_info)
-        db.session.add(new_project)
+        try:
+            new_project = project_schemas.CreateProjectSchema().load(p_info)
+            db.session.add(new_project)
+        except sqlalchemy.exc.OperationalError as err:
+            raise DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not new_project:
             raise DDSArgumentError("Failed to create project.")

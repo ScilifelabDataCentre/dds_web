@@ -22,7 +22,7 @@ from dds_web.database import models
 # CONFIG ################################################################################## CONFIG #
 
 proj_data = {
-    "pi": "piName",
+    "pi": "researchuser@mailtrap.io",
     "title": "Test proj",
     "description": "A longer project description",
     "users_to_add": [{"email": "researchuser2@mailtrap.io", "role": "Project Owner"}],
