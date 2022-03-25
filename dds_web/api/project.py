@@ -129,10 +129,15 @@ class ProjectStatus(flask_restful.Resource):
             db.session.rollback()
             raise DatabaseError(
                 message=str(err),
-                alt_message="Database seems to be down."
-                if isinstance(err, sqlalchemy.exc.OperationalError)
-                else "Server Error: Status was not updated",
-            ) from err
+                alt_message=(
+                    "Status not updated" + 
+                    (
+                        "Database malfunction." 
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else "Server Error: Status was not updated"
+                     )
+                )
+             ) from err
 
         # Mail users once project is made available
         if new_status == "Available" and send_email:
