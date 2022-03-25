@@ -93,10 +93,18 @@ class NewFile(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             flask.current_app.logger.debug(err)
             db.session.rollback()
-            raise DatabaseError("Failed to add new file to database.") from err
+            raise DatabaseError(
+                message=str(err),
+                alt_message="Failed to add new file to database"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         return {"message": f"File '{new_file.name}' added to db."}
 
@@ -176,9 +184,17 @@ class NewFile(flask_restful.Resource):
 
             db.session.add(new_version)
             db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             db.session.rollback()
-            raise DatabaseError(f"Failed updating file information: {err}") from err
+            raise DatabaseError(
+                message=str(err),
+                alt_message=f"Failed updating file information"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         return {"message": f"File '{file_info.get('name')}' updated in db."}
 
@@ -205,8 +221,16 @@ class MatchFiles(flask_restful.Resource):
                 .filter(models.File.project_id == sqlalchemy.func.binary(project.id))
                 .all()
             )
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(f"Failed to get matching files in db: {err}") from err
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            raise DatabaseError(
+                message=str(err),
+                alt_message=f"Failed to get matching files in db"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         # The files checked are not in the db
         if not matching_files or matching_files is None:
@@ -291,8 +315,16 @@ class ListFiles(flask_restful.Resource):
                 .first()
             )
 
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err)) from err
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            raise DatabaseError(
+                message=str(err),
+                alt_message=f"Could not get size of folder '{folder_name}'"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         return file_info.sizeSum
 
@@ -354,8 +386,16 @@ class ListFiles(flask_restful.Resource):
                 )
                 distinct_folders = list(split_paths)
 
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err)) from err
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            raise DatabaseError(
+                message=str(err),
+                alt_message=f"Could not get items in {f'folder {folder}' if folder != '.' else 'root'}"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
         else:
             return distinct_files, distinct_folders
 
@@ -404,9 +444,25 @@ class RemoveFile(flask_restful.Resource):
                     db.session.rollback()
                     not_exist_list.append(entry)
                     continue
-                except (sqlalchemy.exc.SQLAlchemyError, DatabaseError) as err:
+                except (
+                    sqlalchemy.exc.SQLAlchemyError,
+                    DatabaseError,
+                    sqlalchemy.exc.OperationalError,
+                ) as err:
                     db.session.rollback()
-                    not_removed_dict[entry] = str(err)
+                    flask.current_app.logger.exception(err)
+                    not_removed_dict[entry] = (
+                        str(err)
+                        if isinstance(err, DatabaseError)
+                        else (
+                            "Could not collect the remote file name"
+                            + (
+                                ": Database malfunction."
+                                if isinstance(err, sqlalchemy.exc.OperationalError)
+                                else "."
+                            )
+                        )
+                    )
                     continue
 
                 # Remove from s3 bucket
@@ -420,9 +476,14 @@ class RemoveFile(flask_restful.Resource):
                 # Commit to db if ok
                 try:
                     db.session.commit()
-                except sqlalchemy.exc.SQLAlchemyError as err:
+                except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
                     db.session.rollback()
-                    not_removed_dict[entry] = str(err)
+                    flask.current_app.logger.exception(err)
+                    not_removed_dict[entry] = "Could not remove data" + (
+                        ": Database malfunction."
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else "."
+                    )
                     continue
 
         return not_removed_dict, not_exist_list
@@ -505,13 +566,14 @@ class RemoveDir(flask_restful.Resource):
                     except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
                         db.session.rollback()
                         flask.current_app.logger.error(
-                            "Files deleted in S3 but not in db. The entries must be synchronised!"
+                            "Files deleted in S3 but not in db. The entries must be synchronised! "
+                            f"Error: {str(err)}"
                         )
-                        if isinstance(err, sqlalchemy.exc.OperationalError):
-                            err_msg = "Database malfunction."
-                        else:
-                            err_msg = str(err)
-                        not_removed[folder_name] = err_msg
+                        not_removed[folder_name] = "Could not remove files in folder" + (
+                            ": Database malfunction."
+                            if isinstance(err, sqlalchemy.exc.OperationalError)
+                            else "."
+                        )
                         fail_type = "db"
                         break
 
@@ -541,8 +603,16 @@ class RemoveDir(flask_restful.Resource):
                 )
                 .all()
             )
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err)) from err
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            raise DatabaseError(
+                message=str(err),
+                alt_message="Could not collect files for deletion"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         return files
 
@@ -651,10 +721,18 @@ class UpdateFile(flask_restful.Resource):
                 raise NoSuchFileError()
 
             file.time_latest_download = dds_web.utils.current_time()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             db.session.rollback()
             flask.current_app.logger.exception(str(err))
-            raise DatabaseError("Update of file info failed.") from err
+            raise DatabaseError(
+                message=str(err),
+                alt_message="Update of file info failed"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
         else:
             # flask.current_app.logger.debug("File %s updated", file_name)
             db.session.commit()
