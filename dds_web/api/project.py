@@ -453,7 +453,7 @@ class UserProjects(flask_restful.Resource):
                     ).count()
                     > 0
                 )
-            except sqlalchemy.exc.OperationalError as err:
+            except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
                 raise DatabaseError(
                     message=str(err),
                     alt_message="Database seems to be down."
