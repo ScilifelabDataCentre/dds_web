@@ -8,6 +8,7 @@
 import logging
 import datetime
 import pathlib
+import sys
 
 # Installed
 import click
@@ -160,122 +161,126 @@ def setup_logging(app):
 
 
 def create_app(testing=False, database_uri=None):
-    """Construct the core application."""
-    # Initiate app object
-    app = flask.Flask(__name__, instance_relative_config=False)
+    try:
+        """Construct the core application."""
+        # Initiate app object
+        app = flask.Flask(__name__, instance_relative_config=False)
 
-    # Default development config
-    app.config.from_object("dds_web.config.Config")
+        # Default development config
+        app.config.from_object("dds_web.config.Config")
 
-    # User config file, if e.g. using in production
-    app.config.from_envvar("DDS_APP_CONFIG", silent=True)
+        # User config file, if e.g. using in production
+        app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
-    # Test related configs
-    if database_uri is not None:
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
-    # Disables error catching during request handling
-    app.config["TESTING"] = testing
-    if testing:
-        # Simplifies testing as we don't test the session protection anyway
-        login_manager.session_protection = "basic"
+        # Test related configs
+        if database_uri is not None:
+            app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
+        # Disables error catching during request handling
+        app.config["TESTING"] = testing
+        if testing:
+            # Simplifies testing as we don't test the session protection anyway
+            login_manager.session_protection = "basic"
 
-    @app.before_request
-    def prepare():
-        """Populate flask globals for template rendering"""
-        flask.g.current_user = None
-        if auth.current_user():
-            flask.g.current_user = auth.current_user().username
-        elif flask_login.current_user.is_authenticated:
-            flask.g.current_user = flask_login.current_user.username
-        elif flask.request.authorization:
-            flask.g.current_user = flask.request.authorization.get("username")
+        @app.before_request
+        def prepare():
+            """Populate flask globals for template rendering"""
+            flask.g.current_user = None
+            if auth.current_user():
+                flask.g.current_user = auth.current_user().username
+            elif flask_login.current_user.is_authenticated:
+                flask.g.current_user = flask_login.current_user.username
+            elif flask.request.authorization:
+                flask.g.current_user = flask.request.authorization.get("username")
 
-    # Setup logging handlers
-    setup_logging(app)
+        # Setup logging handlers
+        setup_logging(app)
 
-    # Adding limiter logging
-    for handler in app.logger.handlers:
-        limiter.logger.addHandler(handler)
+        # Adding limiter logging
+        for handler in app.logger.handlers:
+            limiter.logger.addHandler(handler)
 
-    # Set app.logger as the general logger
-    app.logger = logging.getLogger("general")
-    app.logger.info("Logging initiated.")
+        # Set app.logger as the general logger
+        app.logger = logging.getLogger("general")
+        app.logger.info("Logging initiated.")
 
-    # Initialize database
-    db.init_app(app)
+        # Initialize database
+        db.init_app(app)
 
-    # Initialize mail setup
-    mail.init_app(app)
+        # Initialize mail setup
+        mail.init_app(app)
 
-    # Avoid very extensive logging when sending emails
-    app.extensions["mail"].debug = 0
+        # Avoid very extensive logging when sending emails
+        app.extensions["mail"].debug = 0
 
-    # Initialize marshmallows
-    ma.init_app(app)
+        # Initialize marshmallows
+        ma.init_app(app)
 
-    # Errors, TODO: Move somewhere else?
-    @app.errorhandler(sqlalchemy.exc.SQLAlchemyError)
-    def handle_sqlalchemyerror(e):
-        return f"SQLAlchemyError: {e}", 500  # TODO: Fix logging and a page
+        # Errors, TODO: Move somewhere else?
+        @app.errorhandler(sqlalchemy.exc.SQLAlchemyError)
+        def handle_sqlalchemyerror(e):
+            return f"SQLAlchemyError: {e}", 500  # TODO: Fix logging and a page
 
-    # Initialize login manager
-    login_manager.init_app(app)
+        # Initialize login manager
+        login_manager.init_app(app)
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        return models.User.query.get(user_id)
+        @login_manager.user_loader
+        def load_user(user_id):
+            return models.User.query.get(user_id)
 
-    if app.config["REVERSE_PROXY"]:
-        app.wsgi_app = ProxyFix(app.wsgi_app)
+        if app.config["REVERSE_PROXY"]:
+            app.wsgi_app = ProxyFix(app.wsgi_app)
 
-    # Initialize limiter
-    limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
-    limiter.init_app(app)
+        # Initialize limiter
+        limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
+        limiter.init_app(app)
 
-    # Initialize migrations
-    migrate.init_app(app, db)
+        # Initialize migrations
+        migrate.init_app(app, db)
 
-    # initialize OIDC
-    oauth.init_app(app)
-    oauth.register(
-        "default_login",
-        client_secret=app.config.get("OIDC_CLIENT_SECRET"),
-        client_id=app.config.get("OIDC_CLIENT_ID"),
-        server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
-        client_kwargs={"scope": "openid profile email"},
-    )
+        # initialize OIDC
+        oauth.init_app(app)
+        oauth.register(
+            "default_login",
+            client_secret=app.config.get("OIDC_CLIENT_SECRET"),
+            client_id=app.config.get("OIDC_CLIENT_ID"),
+            server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
+            client_kwargs={"scope": "openid profile email"},
+        )
 
-    app.cli.add_command(fill_db_wrapper)
-    app.cli.add_command(create_new_unit)
-    app.cli.add_command(update_uploaded_file_with_log)
+        app.cli.add_command(fill_db_wrapper)
+        app.cli.add_command(create_new_unit)
+        app.cli.add_command(update_uploaded_file_with_log)
 
-    with app.app_context():  # Everything in here has access to sessions
-        from dds_web.database import models
+        with app.app_context():  # Everything in here has access to sessions
+            from dds_web.database import models
 
-        # Need to import auth so that the modifications to the auth objects take place
-        import dds_web.security.auth
+            # Need to import auth so that the modifications to the auth objects take place
+            import dds_web.security.auth
 
-        # Register blueprints
-        from dds_web.api import api_blueprint
-        from dds_web.web.root import pages
-        from dds_web.web.user import auth_blueprint
+            # Register blueprints
+            from dds_web.api import api_blueprint
+            from dds_web.web.root import pages
+            from dds_web.web.user import auth_blueprint
 
-        app.register_blueprint(api_blueprint, url_prefix="/api/v1")
-        app.register_blueprint(pages, url_prefix="")
-        app.register_blueprint(auth_blueprint, url_prefix="")
+            app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+            app.register_blueprint(pages, url_prefix="")
+            app.register_blueprint(auth_blueprint, url_prefix="")
 
-        # Set-up the schedulers
-        dds_web.utils.scheduler_wrapper()
+            # Set-up the schedulers
+            dds_web.utils.scheduler_wrapper()
 
-        ENCRYPTION_KEY_BIT_LENGTH = 256
-        ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
+            ENCRYPTION_KEY_BIT_LENGTH = 256
+            ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 
-        if len(app.config.get("SECRET_KEY")) != ENCRYPTION_KEY_CHAR_LENGTH:
-            from dds_web.errors import KeyLengthError
+            if len(app.config.get("SECRET_KEY")) != ENCRYPTION_KEY_CHAR_LENGTH:
+                from dds_web.errors import KeyLengthError
 
-            raise KeyLengthError(ENCRYPTION_KEY_CHAR_LENGTH)
+                raise KeyLengthError(ENCRYPTION_KEY_CHAR_LENGTH)
 
-        return app
+            return app
+    except sqlalchemy.exc.OperationalError as err:
+        app.logger.exception("The database seems to be down.")
+        sys.exit(1)
 
 
 @click.command("init-db")
