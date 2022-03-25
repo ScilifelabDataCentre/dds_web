@@ -110,8 +110,16 @@ def handle_db_error(func):
         # Run function, catch errors
         try:
             result = func(*args, **kwargs)
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(message=str(sqlerr)) from sqlerr
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
+            flask.current_app.logger.exception(sqlerr)
+            raise DatabaseError(
+                message=str(sqlerr),
+                alt_message=(
+                    "Database malfunction!"
+                    if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                    else None
+                ),
+            ) from sqlerr
 
         return result
 
