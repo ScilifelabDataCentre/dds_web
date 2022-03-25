@@ -262,9 +262,17 @@ class AddUser(flask_restful.Resource):
         if goahead:
             try:
                 db.session.commit()
-            except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+            except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
                 db.session.rollback()
-                raise ddserr.DatabaseError(message=str(sqlerr))
+                raise ddserr.DatabaseError(
+                    message=str(sqlerr),
+                    alt_message=f"Invitation failed"
+                    + (
+                        ": Database malfunction."
+                        if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                        else "."
+                    ),
+                ) from sqlerr
 
             AddUser.compose_and_send_email_to_user(
                 userobj=new_invite, mail_type="invite", link=link
@@ -374,12 +382,22 @@ class AddUser(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
+        except (
+            sqlalchemy.exc.SQLAlchemyError,
+            sqlalchemy.exc.IntegrityError,
+            sqlalchemy.exc.OperationalError,
+        ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise ddserr.DatabaseError(
-                message="Server Error: User was not associated with the project"
-            )
+                message=str(err),
+                alt_message=f"Server Error: User was not associated with the project"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         # If project is already released and not expired, send mail to user
         send_email = send_email and project.current_status == "Available"
@@ -549,11 +567,17 @@ class DeleteUserSelf(flask_restful.Resource):
                     "status": http.HTTPStatus.OK,
                 }
 
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
             db.session.rollback()
             raise ddserr.DatabaseError(
-                message=f"Creation of self-deletion request failed due to database error: {sqlerr}",
-            )
+                message=str(sqlerr),
+                alt_message=f"Creation of self-deletion request failed"
+                + (
+                    ": Database malfunction."
+                    if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from sqlerr
 
         # Create link for deletion request email
         link = flask.url_for("auth_blueprint.confirm_self_deletion", token=token, _external=True)
@@ -688,9 +712,17 @@ class UserActivation(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             db.session.rollback()
-            raise ddserr.DatabaseError(message=str(err))
+            raise ddserr.DatabaseError(
+                message=str(err),
+                alt_message=f"Unexpected database error"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
         msg = (
             f"The user account {user.username} ({user_email_str}, {user.role}) "
             f" has been {action}d successfully been by {current_user.name} ({current_user.role})."
@@ -793,9 +825,17 @@ class DeleteUser(flask_restful.Resource):
             parent_user = models.User.query.get(user.username)
             db.session.delete(parent_user)
             db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             db.session.rollback()
-            raise ddserr.DatabaseError(message=str(err))
+            raise ddserr.DatabaseError(
+                message=str(err),
+                alt_message=f"Failed to delete user"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
     @staticmethod
     def delete_invite(email):
@@ -819,11 +859,15 @@ class DeleteUser(flask_restful.Resource):
                 "The invite connected to the email "
                 f"{email or '[no email provided]'} was not deleted."
             )
-            if isinstance(err, sqlalchemy.exc.OperationalError):
-                err_msg = "Database malfunction."
-            else:
-                err_msg = str(err)
-            raise ddserr.DatabaseError(message=err_msg) from err
+            raise ddserr.DatabaseError(
+                message=str(err),
+                alt_message=f"Failed to delete invite"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         return email
 
@@ -872,14 +916,22 @@ class RemoveUserAssociation(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
+        except (
+            sqlalchemy.exc.SQLAlchemyError,
+            sqlalchemy.exc.IntegrityError,
+            sqlalchemy.exc.OperationalError,
+        ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise ddserr.DatabaseError(
-                message=(
-                    "Server Error: Removing user association with the project has not succeeded"
-                )
-            )
+                message=str(err),
+                alt_message=f"Server Error: Removing user association with the project has not succeeded"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         flask.current_app.logger.debug(
             f"User {existing_user.username} no longer associated with project {project.public_id}."
@@ -946,9 +998,17 @@ class ShowUsage(flask_restful.Resource):
             unit_info = models.Unit.query.filter(
                 models.Unit.id == sqlalchemy.func.binary(current_user.unit_id)
             ).first()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             flask.current_app.logger.exception(err)
-            raise ddserr.DatabaseError("Failed getting unit information.")
+            raise ddserr.DatabaseError(
+                message=str(err),
+                alt_message=f"Failed to get unit information."
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         # Total number of GB hours and cost saved in the db for the specific unit
         total_gbhours_db = 0.0
