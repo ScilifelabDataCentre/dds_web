@@ -2,8 +2,8 @@
 # based on https://github.com/gitpod-io/template-docker-compose
 
 tasks:
-  - init: docker-compose pull
-  - command: chmod a+x /workspace/dds_web && docker-compose up
+  - init: docker compose build --pull && git clone https://github.com/ScilifelabDataCentre/dds_cli.git ../dds_cli
+  - command: chmod a+x /workspace/dds_web && docker compose --profile cli up
 
 ports:
   - port: 5000
