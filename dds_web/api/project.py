@@ -132,7 +132,7 @@ class ProjectStatus(flask_restful.Resource):
                 alt_message="Database seems to be down."
                 if isinstance(err, sqlalchemy.exc.OperationalError)
                 else "Server Error: Status was not updated",
-            )
+            ) from err
 
         # Mail users once project is made available
         if new_status == "Available" and send_email:
@@ -449,7 +449,12 @@ class UserProjects(flask_restful.Resource):
                     > 0
                 )
             except sqlalchemy.exc.OperationalError as err:
-                raise DatabaseError(message=str(err), alt_message="Database seems to be down.")
+                raise DatabaseError(
+                    message=str(err),
+                    alt_message="Database seems to be down."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else ".",
+                ) from err
 
             all_projects.append(project_info)
 
