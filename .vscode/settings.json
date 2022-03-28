@@ -1,5 +1,12 @@
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
-  "workbench.startupEditor": "none"
+  "workbench.startupEditor": "none",
+  "remote.SSH.defaultForwardedPorts": [
+    {
+      "localPort": 5000,
+      "name": "ddsweb",
+      "remotePort": 5000
+    }
+  ]
 }

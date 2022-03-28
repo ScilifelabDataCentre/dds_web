@@ -16,14 +16,19 @@ tasks:
 ports:
   - port: 5000 # backend
     onOpen: open-preview
+    visibility: public
   - port: 1080 # mailcatcher
     onOpen: open-preview
+    visibility: public
   - port: 9000 # minio
     onOpen: ignore
+    visibility: public
   - port: 9001 # minio
     onOpen: ignore
+    visibility: public
   - port: 3306 # db
     onOpen: ignore
+    visibility: public
 
 vscode:
   extensions:
