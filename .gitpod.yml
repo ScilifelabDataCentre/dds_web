@@ -15,9 +15,9 @@ tasks:
 
 ports:
   - port: 5000 # backend
-    onOpen: open-browser
+    onOpen: open-preview
   - port: 1080 # mailcatcher
-    onOpen: open-browser
+    onOpen: open-preview
   - port: 9000 # minio
     onOpen: ignore
   - port: 9001 # minio
