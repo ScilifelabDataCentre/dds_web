@@ -15,7 +15,7 @@ tasks:
 
 ports:
   - port: 5000 # backend
-    onOpen: open-preview
+    onOpen: open-browser
     visibility: public
   - port: 1080 # mailcatcher
     onOpen: open-preview
