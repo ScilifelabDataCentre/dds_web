@@ -7,22 +7,22 @@ additionalRepositories:
     checkoutLocation: dds_cli
 
 tasks:
-  - name: Build backend and run server  
+  - name: Build backend and run server
     init: >
       chmod a+x /workspace/ &&
       docker compose build --pull
     command: docker compose --profile cli up
 
 ports:
-  - port: 5000  # backend
+  - port: 5000 # backend
     onOpen: open-browser
-  - port: 1080  # mailcatcher
+  - port: 1080 # mailcatcher
     onOpen: open-browser
-  - port: 9000  # minio
+  - port: 9000 # minio
     onOpen: ignore
-  - port: 9001  # minio
+  - port: 9001 # minio
     onOpen: ignore
-  - port: 3306  # db
+  - port: 3306 # db
     onOpen: ignore
 
 vscode:
