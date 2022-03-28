@@ -568,7 +568,7 @@ def account_info():
 @logging_bind_request
 def projects_info():
     """User projects page"""
-    projects = UserProjects()
+    projects_obj = UserProjects()
+    projects = projects_obj.format_project_dict(flask_login.current_user)
 
-
-    return flask.render_template("user/projects.html", projects = projects.get(), enumerate=enumerate)
+    return flask.render_template("user/projects.html", projects=projects, enumerate=enumerate)

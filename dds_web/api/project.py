@@ -408,6 +408,12 @@ class UserProjects(flask_restful.Resource):
     def get(self):
         """Get info regarding all projects which user is involved in."""
         current_user = auth.current_user()
+        return self.format_project_dict(current_user)
+
+    def format_project_dict(self, current_user):
+        """Given a logged in user, fetch projects and return as dict.
+
+        Also used by web/user.py projects_info()"""
 
         # TODO: Return different things depending on if unit or not
         all_projects = list()
