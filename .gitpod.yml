@@ -41,7 +41,10 @@ ports:
 vscode:
   extensions:
     - ms-azuretools.vscode-docker
-    - esbenp.prettier-vscode
+    - ms-python.python
+    - esbenp.prettier-vscode # Linting and style checking
+    - eamodio.gitlens # Quickly glimpse into whom, why, and when a line or code block was changed
+    - Gruntfuggly.todo-tree # Display TODO and FIXME in a tree view in the activity bar
 
 github:
   prebuilds:
