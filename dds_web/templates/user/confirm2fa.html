@@ -6,32 +6,42 @@ DDS Multi-Factor Authentication
 
 {% block body %}
 
-    <p class="lead">Please enter your one-time authentication code.</p>
-    <p>Please complete the login by entering the one-time authentication code that was sent to you.
-        The one-time codes are valid for a short time (15 minutes) after they have been issued.
-    </p>
-    <form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}">
-        {{ form.csrf_token }}
+<p class="lead">Please enter your one-time authentication code.</p>
+<p>Please complete the login by entering the one-time authentication code that was sent to you.
+    The one-time codes are valid for a short time (15 minutes) after they have been issued.
+</p>
+<form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}">
+    {{ form.csrf_token }}
+
+    <div class="row mb-3">
 
         <!-- Token -->
-        {{ form.hotp.label }}
-        {{ form.hotp }}
-        <ul>
-            {% for error in form.hotp.errors %}
-            <li style="color:red;">
-                {{ error }}
-            </li>
-            {% endfor %}
-        </ul>
+        {{ form.hotp.label(class="col-md-auto col-form-label") }}
+        <div class="col-md-3">
+            {{ form.hotp(class="form-control mb-2") }}
+        </div>
 
         <!-- Submit button -->
-        {{ form.submit }}
+        <div class="col">
+            <button type="submit" class="btn btn-success mb-2">
+                <i class="fas fa-key me-2"></i>
+                Authenticate
+            </button>
+        </div>
 
-    </form>
+        {% if form.hotp.errors %}
+            {% for error in form.hotp.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
 
-    <form method="POST" action="{{ url_for('auth_blueprint.cancel_2fa') }}">
-        {{ cancel_form.csrf_token }}
-        {{ cancel_form.cancel }}
-    </form>
+    </div>
+
+</form>
+
+<form method="POST" action="{{ url_for('auth_blueprint.cancel_2fa') }}">
+    {{ cancel_form.csrf_token }}
+    {{ cancel_form.cancel(class="btn btn-link ps-0") }}
+</form>
 
 {% endblock %}
