@@ -560,3 +560,12 @@ def account_info():
     """User account page"""
 
     return flask.render_template("user/account.html", account_info={}, enumerate=enumerate)
+
+
+@auth_blueprint.route("/projects", methods=["GET"])
+@flask_login.login_required
+@logging_bind_request
+def projects_info():
+    """User projects page"""
+
+    return flask.render_template("user/projects.html", enumerate=enumerate)
