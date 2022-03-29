@@ -369,7 +369,7 @@ def create_one_time_password_email(user, hotp_value):
 
 def set_status_expired():
     """Change staus for expired projects."""
-    flask.current_app.logger.debgu("projects_for_archiving")
+    flask.current_app.logger.debug("projects_for_archiving")
 
     with flask.current_app.app_context():
         for project in page_query(
