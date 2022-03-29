@@ -366,12 +366,15 @@ def create_one_time_password_email(user, hotp_value):
 
     return msg
 
+
 def set_status_expired():
     """Change staus for expired projects."""
     flask.current_app.logger.debgu("projects_for_archiving")
 
     with flask.current_app.app_context():
-        for project in page_query(models.ProjectStatuses.query.filter(models.ProjectStatuses.deadline <= current_time())):
+        for project in page_query(
+            models.ProjectStatuses.query.filter(models.ProjectStatuses.deadline <= current_time())
+        ):
 
             flask.current_app.logger.debug("Project: %s - Expires: %s", project, project.expires)
 
@@ -418,11 +421,8 @@ def scheduler_wrapper():
 
     if not "test_job1" in jobid:
         scheduler.add_job(
-            set_status_expired,
-            "interval",
-            id="test_job1",
-            replace_existing=False,
-            minutes=1)
+            set_status_expired, "interval", id="test_job1", replace_existing=False, minutes=1
+        )
 
     # Shut down the scheduler when exiting the app
     atexit.register(scheduler.shutdown)
