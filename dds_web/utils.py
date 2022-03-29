@@ -28,7 +28,6 @@ import wtforms
 # Own modules
 from dds_web.database import models
 from dds_web import auth, db, mail
-import dds_web
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -367,15 +366,14 @@ def create_one_time_password_email(user, hotp_value):
 
     return msg
 
-def test_job():
-        # projects_for_archiving = models.ProjectStatuses.query.filter_by(deadline=datetime.date)
-    # models.ProjectStatuses(
-        # project_id="1", status="Expired", date_created=current_time, deadline=current_time
-    # )
-    # projects_for_archiving = models.ProjectStatuses.query
-    flask.current_app.logger.info("projects_for_archiving")
-    # print("blah")
-        # print(projects_for_archiving)
+def set_status_expired():
+    """Change staus for expired projects."""
+    flask.current_app.logger.debgu("projects_for_archiving")
+
+    with flask.current_app.app_context():
+        for project in page_query(models.ProjectStatuses.query.filter(models.ProjectStatuses.deadline <= current_time())):
+
+            flask.current_app.logger.debug("Project: %s - Expires: %s", project, project.expires)
 
 
 ####################################################################################################
@@ -396,9 +394,6 @@ def scheduler_wrapper():
 
     if flask.helpers.get_debug_flag() and not werkzeug.serving.is_running_from_reloader():
         return
-
-    # def test_job():
-    #     flask.current_app.logger.info("projects_for_archiving")
 
     scheduler = background.BackgroundScheduler(
         {
@@ -421,9 +416,14 @@ def scheduler_wrapper():
         job_id = getattr(job, "id")
         jobid.append(job_id)
 
-    if "test_job1" not in jobid:
-        scheduler.add_job(dds_web.utils.test_job,"interval", id="test_job1", minutes=2)
-        # scheduler.add_job(test_job,"interval", id="test_job1", minutes=2)
+    if not "test_job1" in jobid:
+        scheduler.add_job(
+            set_status_expired,
+            "interval",
+            id="test_job1",
+            replace_existing=False,
+            minutes=1)
+
     # Shut down the scheduler when exiting the app
     atexit.register(scheduler.shutdown)
 
