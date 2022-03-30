@@ -412,8 +412,8 @@ class UserProjects(flask_restful.Resource):
     def format_project_dict(self, current_user):
         """Given a logged in user, fetch projects and return as dict.
 
-        Also used by web/user.py projects_info()"""
-
+        Also used by web/user.py projects_info()
+        """
         # TODO: Return different things depending on if unit or not
         all_projects = list()
 
