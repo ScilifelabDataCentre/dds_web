@@ -11,10 +11,13 @@ scheduler = flask_apscheduler.APScheduler()
 def task1():
     print("task 1 executed", flush=True)
     from dds_web.database import models
+    # from dds_web.utils import current_time, page_query
     with scheduler.app.app_context():
         scheduler.app.logger.debug("testing")
         test = models.Project.query.all()
         print(test, flush=True)
-        # scheduler.
-    #     # test = models.Projects.query.all()
-    # app.logger.debug("testing")
+        # for project in page_query(
+        #     models.ProjectStatuses.query.filter(models.ProjectStatuses.deadline <= current_time())
+        # ):
+
+        #     flask.current_app.logger.debug("Project: %s - Expires: %s", project, project.expires)
