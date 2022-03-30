@@ -277,6 +277,30 @@ def send_reset_email(email_row, token):
     mail.send(msg)
 
 
+def send_project_access_reset_email(email_row, email, token):
+    """Generate password reset email."""
+    msg = flask_mail.Message(
+        "WARNING! A Unit Admin has lost access",
+        recipients=[email_row.email],
+    )
+
+    # Need to attach the image to be able to use it
+    msg.attach(
+        "scilifelab_logo.png",
+        "image/png",
+        open(os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb").read(),
+        "inline",
+        headers=[
+            ["Content-ID", "<Logo>"],
+        ],
+    )
+
+    msg.body = flask.render_template("mail/project_access_reset.txt", email=email)
+    msg.html = flask.render_template("mail/project_access_reset.html", email=email)
+
+    mail.send(msg)
+
+
 def is_safe_url(target):
     """Check if the url is safe for redirects."""
     ref_url = urllib.parse.urlparse(flask.request.host_url)

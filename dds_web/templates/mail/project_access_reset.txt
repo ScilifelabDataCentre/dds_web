@@ -1,0 +1,5 @@
+Important! The Unit Admin, {{email}}, has recently reset their password and therefore
+lost access to all projects within your unit. To reduce the risk of future data loss,
+please grant them access again with the following command:
+
+    dds project access fix {{email}}
