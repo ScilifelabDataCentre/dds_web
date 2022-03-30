@@ -21,6 +21,7 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
 import flask_migrate
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 
 # import flask_qrcode
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -29,6 +30,8 @@ from flask_limiter.util import get_remote_address
 import sqlalchemy
 import structlog
 import werkzeug
+
+from dds_web.scheduled_tasks import scheduler
 
 
 ####################################################################################################
@@ -270,8 +273,10 @@ def create_app(testing=False, database_uri=None):
             app.register_blueprint(pages, url_prefix="")
             app.register_blueprint(auth_blueprint, url_prefix="")
 
-            # Set-up the schedulers
-            dds_web.utils.scheduler_wrapper()
+            # Set-up the scheduler
+            app.config["SCHEDULER_JOBSTORES"] = {"default": SQLAlchemyJobStore(engine=db.engine)}
+            scheduler.init_app(app)
+            scheduler.start()
 
             ENCRYPTION_KEY_BIT_LENGTH = 256
             ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
