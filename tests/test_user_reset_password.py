@@ -477,3 +477,64 @@ def test_reset_password_unituser(client):
     # Check that public key has changed
     user_public_key_after = user.public_key
     assert user_public_key_before != user_public_key_after
+
+
+def test_reset_password_unitadmin(client):
+    user = models.User.query.filter_by(username="unitadmin").first()
+    nr_proj_user_keys_total_before = models.ProjectUserKeys.query.count()
+    assert nr_proj_user_keys_total_before > 0
+
+    nr_proj_user_keys_before = len(user.project_user_keys)
+    assert nr_proj_user_keys_before > 0
+
+    user_pw_hash_before = user._password_hash
+    user_public_key_before = user.public_key
+
+    # Add new row to password reset
+    new_reset_row = models.PasswordReset(
+        user=user, email=user.primary_email, issued=utils.timestamp()
+    )
+    db.session.add(new_reset_row)
+    db.session.commit()
+
+    # Need to use a valid token for the get request to get the form token
+    valid_reset_token = get_valid_reset_token("unitadmin")
+    response = client.get(
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert flask.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
+
+    form_token = flask.g.csrf_token
+    form_data = {
+        "csrf_token": form_token,
+        "password": "NewPassword123",
+        "confirm_password": "NewPassword123",
+        "submit": "Reset Password",
+    }
+
+    response = client.post(
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, json=form_data, follow_redirects=True
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
+
+    user = models.User.query.filter_by(username="unitadmin").first()
+
+    # All users project keys should have been removed
+    nr_proj_user_keys_after = len(user.project_user_keys)
+    assert nr_proj_user_keys_after == 0
+
+    # Total nr of project user keys should be decreased
+    nr_proj_user_keys_total_after = models.ProjectUserKeys.query.count()
+    assert nr_proj_user_keys_total_after < nr_proj_user_keys_total_before
+    assert nr_proj_user_keys_total_after != nr_proj_user_keys_total_before
+
+    # Password should have changed
+    user_pw_hash_after = user._password_hash
+    assert user_pw_hash_before != user_pw_hash_after
+
+    # Check that public key has changed
+    user_public_key_after = user.public_key
+    assert user_public_key_before != user_public_key_after

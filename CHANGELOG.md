@@ -61,3 +61,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Let project description include . and , ([#1080](https://github.com/ScilifelabDataCentre/dds_web/pull/1080))
 - Catch OperationalError if there is a database malfunction in `files.py` ([#1089](https://github.com/ScilifelabDataCentre/dds_web/pull/1089))
 - Switched the validation for the principal investigator from string to email ([#1084](https://github.com/ScilifelabDataCentre/dds_web/pull/1084)).
+
+## Sprint (2022-03-23 - 2022-04-06)
+
+- Send an email to all Unit Admins when a Unit Admin has reset their password ([#1110](https://github.com/ScilifelabDataCentre/dds_web/pull/1110)).
