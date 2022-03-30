@@ -449,17 +449,48 @@ def password_reset_completed():
         return flask.redirect(flask.url_for("auth_blueprint.index"))
 
     units_to_contact = {}
+    unit_admins_to_contact = {}
+
     if user.role != "Super Admin":
         for project in user.projects:
-            if project.responsible_unit.external_display_name not in units_to_contact:
-                units_to_contact[
-                    project.responsible_unit.external_display_name
-                ] = project.responsible_unit.contact_email
-        return flask.render_template(
-            "user/password_reset_completed.html", units_to_contact=units_to_contact
-        )
+            if user.role == "Unit Admin":
+                users = (
+                    db.session.query(models.User)
+                    .join(models.UnitUser)
+                    .join(models.Email)
+                    .with_entities(
+                        models.User.username,
+                        models.User.name,
+                        models.UnitUser.unit_id,
+                        models.UnitUser.is_admin,
+                        models.Email.email,
+                    )
+                    .filter(models.UnitUser.unit_id == user.unit_id)
+                    .filter(models.UnitUser.is_admin == True)
+                    .filter(models.User.username != user.username)
+                    .all()
+                )
+                email = (
+                    db.session.query(models.Email)
+                    .with_entities(models.Email.email)
+                    .filter(models.Email.user_id == user.username)
+                    .first()
+                )
 
-    return flask.render_template("user/password_reset_completed.html")
+                unit_admins_to_contact = users
+            else:
+                if project.responsible_unit.external_display_name not in units_to_contact:
+                    units_to_contact[
+                        project.responsible_unit.external_display_name
+                    ] = project.responsible_unit.contact_email
+
+        if len(unit_admins_to_contact) > 0:
+            for unit_admin in unit_admins_to_contact:
+                dds_web.utils.send_project_access_reset_email(unit_admin, email[0], token)
+
+    return flask.render_template(
+        "user/password_reset_completed.html", units_to_contact=units_to_contact
+    )
 
 
 @auth_blueprint.route("/change_password", methods=["GET", "POST"])
