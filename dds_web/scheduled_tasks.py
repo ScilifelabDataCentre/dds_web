@@ -45,7 +45,7 @@ def set_expired_to_archived():
 
         archive = ProjectStatus()
         for proj_status in expired_projs:
-            new_status_row = archive.expire_project(
+            new_status_row = archive.archive_project(
                 project=proj_status.project,
                 current_time=current_time(),
             )
