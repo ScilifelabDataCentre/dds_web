@@ -21,6 +21,7 @@ from dds_web import forms, db, limiter
 from dds_web.api import db_tools
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
+from dds_web.api.project import UserProjects
 from dds_web.api.user import DeleteUser
 from dds_web.database import models
 from dds_web.security.project_user_keys import update_user_keys_for_password_change
@@ -591,3 +592,14 @@ def account_info():
     """User account page"""
 
     return flask.render_template("user/account.html", enumerate=enumerate)
+
+
+@auth_blueprint.route("/projects", methods=["GET"])
+@flask_login.login_required
+@logging_bind_request
+def projects_info():
+    """User projects page"""
+    projects_obj = UserProjects()
+    projects = projects_obj.format_project_dict(flask_login.current_user)
+
+    return flask.render_template("user/projects.html", projects=projects, enumerate=enumerate)

@@ -64,4 +64,5 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 ## Sprint (2022-03-23 - 2022-04-06)
 
+- Add link in navbar to the installation documentation ([#1112](https://github.com/ScilifelabDataCentre/dds_web/pull/1112))
 - Send an email to all Unit Admins when a Unit Admin has reset their password ([#1110](https://github.com/ScilifelabDataCentre/dds_web/pull/1110)).
