@@ -8,6 +8,7 @@
 import logging
 import datetime
 import pathlib
+import sys
 
 # Installed
 import click
@@ -160,120 +161,130 @@ def setup_logging(app):
 
 
 def create_app(testing=False, database_uri=None):
-    """Construct the core application."""
-    # Initiate app object
-    app = flask.Flask(__name__, instance_relative_config=False)
+    try:
+        """Construct the core application."""
+        # Initiate app object
+        app = flask.Flask(__name__, instance_relative_config=False)
 
-    # Default development config
-    app.config.from_object("dds_web.config.Config")
+        # Default development config
+        app.config.from_object("dds_web.config.Config")
 
-    # User config file, if e.g. using in production
-    app.config.from_envvar("DDS_APP_CONFIG", silent=True)
+        # User config file, if e.g. using in production
+        app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
-    # Test related configs
-    if database_uri is not None:
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
-    # Disables error catching during request handling
-    app.config["TESTING"] = testing
-    if testing:
-        # Simplifies testing as we don't test the session protection anyway
-        login_manager.session_protection = "basic"
+        # Test related configs
+        if database_uri is not None:
+            app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
+        # Disables error catching during request handling
+        app.config["TESTING"] = testing
+        if testing:
+            # Simplifies testing as we don't test the session protection anyway
+            login_manager.session_protection = "basic"
 
-    @app.before_request
-    def prepare():
-        """Populate flask globals for template rendering"""
-        flask.g.current_user = None
-        if auth.current_user():
-            flask.g.current_user = auth.current_user().username
-        elif flask_login.current_user.is_authenticated:
-            flask.g.current_user = flask_login.current_user.username
-        elif flask.request.authorization:
-            flask.g.current_user = flask.request.authorization.get("username")
+        @app.before_request
+        def prepare():
+            """Populate flask globals for template rendering"""
+            flask.g.current_user = None
+            flask.g.current_user_emails = None
+            if auth.current_user():
+                flask.g.current_user = auth.current_user().username
+                flask.g.current_user_emails = auth.current_user().emails
+            elif flask_login.current_user.is_authenticated:
+                flask.g.current_user = flask_login.current_user.username
+                flask.g.current_user_emails = flask_login.current_user.emails
+            elif flask.request.authorization:
+                flask.g.current_user = flask.request.authorization.get("username")
+                flask.g.current_user_emails = flask.request.authorization.get("emails")
 
-    # Setup logging handlers
-    setup_logging(app)
+        # Setup logging handlers
+        setup_logging(app)
 
-    # Adding limiter logging
-    for handler in app.logger.handlers:
-        limiter.logger.addHandler(handler)
+        # Adding limiter logging
+        for handler in app.logger.handlers:
+            limiter.logger.addHandler(handler)
 
-    # Set app.logger as the general logger
-    app.logger = logging.getLogger("general")
-    app.logger.info("Logging initiated.")
+        # Set app.logger as the general logger
+        app.logger = logging.getLogger("general")
+        app.logger.info("Logging initiated.")
 
-    # Initialize database
-    db.init_app(app)
+        # Initialize database
+        db.init_app(app)
 
-    # Initialize mail setup
-    mail.init_app(app)
+        # Initialize mail setup
+        mail.init_app(app)
 
-    # Avoid very extensive logging when sending emails
-    app.extensions["mail"].debug = 0
+        # Avoid very extensive logging when sending emails
+        app.extensions["mail"].debug = 0
 
-    # Initialize marshmallows
-    ma.init_app(app)
+        # Initialize marshmallows
+        ma.init_app(app)
 
-    # Errors, TODO: Move somewhere else?
-    @app.errorhandler(sqlalchemy.exc.SQLAlchemyError)
-    def handle_sqlalchemyerror(e):
-        return f"SQLAlchemyError: {e}", 500  # TODO: Fix logging and a page
+        # Errors, TODO: Move somewhere else?
+        @app.errorhandler(sqlalchemy.exc.SQLAlchemyError)
+        def handle_sqlalchemyerror(e):
+            return f"SQLAlchemyError: {e}", 500  # TODO: Fix logging and a page
 
-    # Initialize login manager
-    login_manager.init_app(app)
+        # Initialize login manager
+        login_manager.init_app(app)
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        return models.User.query.get(user_id)
+        @login_manager.user_loader
+        def load_user(user_id):
+            return models.User.query.get(user_id)
 
-    if app.config["REVERSE_PROXY"]:
-        app.wsgi_app = ProxyFix(app.wsgi_app)
+        if app.config["REVERSE_PROXY"]:
+            app.wsgi_app = ProxyFix(app.wsgi_app)
 
-    # Initialize limiter
-    limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
-    limiter.init_app(app)
+        # Initialize limiter
+        limiter._storage_uri = app.config.get("RATELIMIT_STORAGE_URL")
+        limiter.init_app(app)
 
-    # Initialize migrations
-    migrate.init_app(app, db)
+        # Initialize migrations
+        migrate.init_app(app, db)
 
-    # initialize OIDC
-    oauth.init_app(app)
-    oauth.register(
-        "default_login",
-        client_secret=app.config.get("OIDC_CLIENT_SECRET"),
-        client_id=app.config.get("OIDC_CLIENT_ID"),
-        server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
-        client_kwargs={"scope": "openid profile email"},
-    )
+        # initialize OIDC
+        oauth.init_app(app)
+        oauth.register(
+            "default_login",
+            client_secret=app.config.get("OIDC_CLIENT_SECRET"),
+            client_id=app.config.get("OIDC_CLIENT_ID"),
+            server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
+            client_kwargs={"scope": "openid profile email"},
+        )
 
-    app.cli.add_command(fill_db_wrapper)
+        app.cli.add_command(fill_db_wrapper)
+        app.cli.add_command(create_new_unit)
+        app.cli.add_command(update_uploaded_file_with_log)
 
-    with app.app_context():  # Everything in here has access to sessions
-        from dds_web.database import models
+        with app.app_context():  # Everything in here has access to sessions
+            from dds_web.database import models
 
-        # Need to import auth so that the modifications to the auth objects take place
-        import dds_web.security.auth
+            # Need to import auth so that the modifications to the auth objects take place
+            import dds_web.security.auth
 
-        # Register blueprints
-        from dds_web.api import api_blueprint
-        from dds_web.web.root import pages
-        from dds_web.web.user import auth_blueprint
+            # Register blueprints
+            from dds_web.api import api_blueprint
+            from dds_web.web.root import pages
+            from dds_web.web.user import auth_blueprint
 
-        app.register_blueprint(api_blueprint, url_prefix="/api/v1")
-        app.register_blueprint(pages, url_prefix="")
-        app.register_blueprint(auth_blueprint, url_prefix="")
+            app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+            app.register_blueprint(pages, url_prefix="")
+            app.register_blueprint(auth_blueprint, url_prefix="")
 
-        # Set-up the schedulers
-        dds_web.utils.scheduler_wrapper()
+            # Set-up the schedulers
+            dds_web.utils.scheduler_wrapper()
 
-        ENCRYPTION_KEY_BIT_LENGTH = 256
-        ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
+            ENCRYPTION_KEY_BIT_LENGTH = 256
+            ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
 
-        if len(app.config.get("SECRET_KEY")) != ENCRYPTION_KEY_CHAR_LENGTH:
-            from dds_web.errors import KeyLengthError
+            if len(app.config.get("SECRET_KEY")) != ENCRYPTION_KEY_CHAR_LENGTH:
+                from dds_web.errors import KeyLengthError
 
-            raise KeyLengthError(ENCRYPTION_KEY_CHAR_LENGTH)
+                raise KeyLengthError(ENCRYPTION_KEY_CHAR_LENGTH)
 
-        return app
+            return app
+    except sqlalchemy.exc.OperationalError as err:
+        app.logger.exception("The database seems to be down.")
+        sys.exit(1)
 
 
 @click.command("init-db")
@@ -323,3 +334,120 @@ def fill_db_wrapper(db_type):
             dds_web.development.factories.create_all()
 
         flask.current_app.logger.info("DB filled")
+
+
+@click.command("create-unit")
+@click.option("--name", "-n", type=str, required=True)
+@click.option("--public_id", "-p", type=str, required=True)
+@click.option("--external_display_name", "-e", type=str, required=True)
+@click.option("--contact_email", "-c", type=str, required=True)
+@click.option("--internal_ref", "-ref", type=str, required=False)
+@click.option("--safespring_endpoint", "-se", type=str, required=True)
+@click.option("--safespring_name", "-sn", type=str, required=True)
+@click.option("--safespring_access", "-sa", type=str, required=True)
+@click.option("--safespring_secret", "-ss", type=str, required=True)
+@click.option("--days_in_available", "-da", type=int, required=False, default=90)
+@click.option("--days_in_expired", "-de", type=int, required=False, default=30)
+@flask.cli.with_appcontext
+def create_new_unit(
+    name,
+    public_id,
+    external_display_name,
+    contact_email,
+    internal_ref,
+    safespring_endpoint,
+    safespring_name,
+    safespring_access,
+    safespring_secret,
+    days_in_available,
+    days_in_expired,
+):
+    """Create a new unit."""
+    from dds_web.database import models
+
+    new_unit = models.Unit(
+        name=name,
+        public_id=public_id,
+        external_display_name=external_display_name,
+        contact_email=contact_email,
+        internal_ref=internal_ref or public_id,
+        safespring_endpoint=safespring_endpoint,
+        safespring_name=safespring_name,
+        safespring_access=safespring_access,
+        safespring_secret=safespring_secret,
+        days_in_available=days_in_available,
+        days_in_expired=days_in_expired,
+    )
+    db.session.add(new_unit)
+    db.session.commit()
+
+    flask.current_app.logger.info(f"Unit '{name}' created")
+
+
+@click.command("update-uploaded-file")
+@click.option("--project", "-p", type=str, required=True)
+@click.option("--path-to-log-file", "-fp", type=str, required=True)
+@flask.cli.with_appcontext
+def update_uploaded_file_with_log(project, path_to_log_file):
+    """Update file details that weren't properly uploaded to db from cli log"""
+    import botocore
+    from dds_web.database import models
+    from dds_web import db
+    from dds_web.api.api_s3_connector import ApiS3Connector
+    import json
+
+    proj_in_db = models.Project.query.filter_by(public_id=project).one_or_none()
+    assert proj_in_db
+
+    with open(path_to_log_file, "r") as f:
+        log = json.load(f)
+    errors = {}
+    files_added = []
+    for file, vals in log.items():
+        status = vals.get("status")
+        if not status or not status.get("failed_op") == "add_file_db":
+            continue
+
+        with ApiS3Connector(project=proj_in_db) as s3conn:
+            try:
+                _ = s3conn.resource.meta.client.head_object(
+                    Bucket=s3conn.project.bucket, Key=vals["path_remote"]
+                )
+            except botocore.client.ClientError as err:
+                if err.response["Error"]["Code"] == "404":
+                    errors[file] = {"error": "File not found in S3", "traceback": err.__traceback__}
+            else:
+                file_object = models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name == sqlalchemy.func.binary(file),
+                        models.File.project_id == proj_in_db.id,
+                    )
+                ).first()
+                if file_object:
+                    errors[file] = {"error": "File already in database."}
+                else:
+                    new_file = models.File(
+                        name=file,
+                        name_in_bucket=vals["path_remote"],
+                        subpath=vals["subpath"],
+                        project_id=proj_in_db.id,
+                        size_original=vals["size_raw"],
+                        size_stored=vals["size_processed"],
+                        compressed=not vals["compressed"],
+                        public_key=vals["public_key"],
+                        salt=vals["salt"],
+                        checksum=vals["checksum"],
+                    )
+                    new_version = models.Version(
+                        size_stored=new_file.size_stored, time_uploaded=datetime.datetime.utcnow()
+                    )
+                    proj_in_db.file_versions.append(new_version)
+                    proj_in_db.files.append(new_file)
+                    new_file.versions.append(new_version)
+
+                    db.session.add(new_file)
+                    files_added.append(new_file)
+                db.session.commit()
+
+        flask.current_app.logger.info(f"Files added: {files_added}")
+        flask.current_app.logger.info(f"Errors while adding files: {errors}")

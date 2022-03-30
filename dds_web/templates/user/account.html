@@ -8,51 +8,37 @@ Your account
 
 <div class="container w-75 mx-auto bg-light my-4 px-3 py-1">
     <div class="row my-3">
-        <div class="col-sm">
-            <b>Username</b>
+        <div class="col-sm fw-bold">
+            Username
         </div>
         <div class="col-sm">
             {{ g.current_user }}
         </div>
     </div>
     <div class="row my-3">
-        <div class="col-sm">
-            <b>Password</b>
+        <div class="col-sm fw-bold">
+            Password
         </div>
         <div class="col-sm">
             <a href="{{ url_for('auth_blueprint.change_password') }}">Change password</a>
         </div>
     </div>
-    <div class="row my-3">
-        <div class="col-sm">
-            <b>Name</b>
-        </div>
-        <div class="col-sm">
-            {{ account_info.first_name }} {{ account_info.last_name }}
-        </div>
-    </div>
-    <div class="row my-3">
-        <div class="col-sm">
-            <b>Permissions</b>
-        </div>
-        <div class="col-sm">
-            {{ account_info.permissions }}
-        </div>
-    </div>
-    {% for i, email in enumerate(account_info.emails) %}
+
+    {% for i, email in enumerate(g.current_user_emails) %}
         <div class="row my-2">
-            <div class="col-sm">
+            <div class="col-sm fw-bold">
                 {% if i == 0 %}
-                    <b> Email </b>
+                    Email address
                 {% endif %}
             </div>
             <div class="col-sm">
-                {{ email.address }}
-                {% if email.primary == true and len(account_info.emails) > 1 %}
-                    <span class="badge bg-info mx-2 px-1 me-2 "> Primary </span>
+                {{ email.email }}
+                {% if email.primary == true %}
+                    <span class="badge bg-info ms-3 px-1"> Primary </span>
                 {% endif %}
             </div>
         </div>
     {% endfor %}
+
 </div>
 {% endblock %}

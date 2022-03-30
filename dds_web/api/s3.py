@@ -30,7 +30,7 @@ from dds_web.api.files import check_eligibility_for_upload
 class S3Info(flask_restful.Resource):
     """Gets the projects S3 keys"""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
@@ -42,8 +42,16 @@ class S3Info(flask_restful.Resource):
 
         try:
             sfsp_proj, keys, url, bucketname = ApiS3Connector(project=project).get_s3_info()
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(message=str(sqlerr)) from sqlerr
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
+            raise DatabaseError(
+                message=str(sqlerr),
+                alt_message="Could not get cloud information"
+                + (
+                    ": Database malfunction."
+                    if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from sqlerr
 
         if any(x is None for x in [url, keys, bucketname]):
             raise S3ProjectNotFoundError("No s3 info returned!")

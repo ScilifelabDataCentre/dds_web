@@ -84,7 +84,7 @@ def fill_db():
         title="First Project",
         description="This is a test project. You will be able to upload to but NOT download "
         "from this project. Create a new project to test the entire system. ",
-        pi="PI Name",
+        pi="support@example.com",
         bucket="testbucket",
     )
 
@@ -104,7 +104,7 @@ def fill_db():
         title="Second Project",
         description="This is a test project. You will be able to upload to but NOT download "
         "from this project. Create a new project to test the entire system. ",
-        pi="PI Name",
+        pi="support@example.com",
         bucket=f"secondproject-{str(dds_web.utils.timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
     )
 

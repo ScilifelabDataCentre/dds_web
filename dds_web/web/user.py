@@ -21,6 +21,7 @@ from dds_web import forms, db, limiter
 from dds_web.api import db_tools
 from dds_web.api.dds_decorators import logging_bind_request
 from dds_web.api.schemas import user_schemas
+from dds_web.api.project import UserProjects
 from dds_web.api.user import DeleteUser
 from dds_web.database import models
 from dds_web.security.project_user_keys import update_user_keys_for_password_change
@@ -539,6 +540,8 @@ def confirm_self_deletion(token):
                 message=f"User deletion request for {user.username} / {user.primary_email.email} failed due to database error: {sqlerr}",
                 alt_message=f"Deletion request for user {user.username} registered with {user.primary_email.email} failed for technical reasons. Please contact the unit for technical support!",
             )
+        except sqlalchemy.exc.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         flask.session.clear()
 
@@ -557,4 +560,15 @@ def confirm_self_deletion(token):
 def account_info():
     """User account page"""
 
-    return flask.render_template("user/account.html", account_info={}, enumerate=enumerate)
+    return flask.render_template("user/account.html", enumerate=enumerate)
+
+
+@auth_blueprint.route("/projects", methods=["GET"])
+@flask_login.login_required
+@logging_bind_request
+def projects_info():
+    """User projects page"""
+    projects_obj = UserProjects()
+    projects = projects_obj.format_project_dict(flask_login.current_user)
+
+    return flask.render_template("user/projects.html", projects=projects, enumerate=enumerate)

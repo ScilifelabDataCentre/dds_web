@@ -1,6 +1,10 @@
 # Architecture Decision Record (ADR)
 
+---
+
 # 1. Framework: Flask
+
+**Date/year:** 2019/2020
 
 ## Alternatives and comparisons
 
@@ -41,7 +45,11 @@
 
 Since Flask is flexible and simple, extensions provide a large variety of functionalities including REST API support, it has an integrated testing system and there is more online support than for Tornado, **Flask** was chosen as the better option for the Data Delivery System framework. The built-in asynchronicity in Tornado is not an important feature since the system will not be used by thousands of users at a given time.
 
+---
+
 # 2. Database: MariaDB
+
+**Date/year:** 2019/2020
 
 The initial database used under development was the non-relational CouchDB. As development progressed, it became of interest to investigate whether this was the best approach or whether a relational database was better for the systems purposes.
 
@@ -72,7 +80,11 @@ The main motivation behind choosing a **relational database** is that we are for
 
 **MariaDB** was chosen (rather than e.g. MySQL) as the relational database because of it’s query performance and that it provides many useful features not available in other relational databases.
 
+---
+
 # 3. Compression algorithm: ZStandard
+
+**Date/year:** 2019/2020
 
 GNU zip (Gzip) is the most popular compression algorithm and is suitable for compression of data streams, is supported by all browsers and comes as a standard in all major web servers. However, while gzip provides a good compression ratio (original/compressed size), it is very slow compared to other algorithms.
 
@@ -82,7 +94,11 @@ The encryption speed using ChaCha20-Poly1305 (in this case tested on a 109 MB fi
 
 Since Zstandard gave approximately the same compression ratio in a fraction of the time, **Zstandard** was chosen as the algorithm to be implemented within the Data Delivery System.
 
+---
+
 # 4. In-transit vs local encryption: Local (for now, looking at options)
+
+**Date/year:** 2019/2020
 
 The most efficient way of delivering the data to the owners would be to perform encryption- and decryption in-transit, thereby decreasing the amount of memory required locally and possibly the total delivery time. However, there have been some difficulties finding a working solution for this, including that the `crypt4gh` Python package used in the beginning of the development did not support it.
 
@@ -93,7 +109,11 @@ On further investigation and contact with Safespring, we learned:
 - All users of the Safespring backup service perform encryption on their own and handle the keys themselves.
 - Due to this, the encryption will be performed locally before upload to the S3 storage.
 
+---
+
 # 5. Encryption Algorithm: ChaCha20-Poly1305
+
+**Date/year:** 2019/2020
 
 The new encryption format standard for genomics and health related data is Crypt4GH, developed by the Global Alliance for Genomics and Health and first released in 2019. The general encryption standard, however, is AES of which AES-GCM is an authenticated encryption mode. AES is currently (since 2001) the block cipher Rijndael. ChaCha20 is a stream cipher and is used within the Crypt4GH format. The most secure, efficient and generally appropriate format and algorithm should be implemented within the Data Delivery System.
 
@@ -203,7 +223,11 @@ Files larger than 256 GiB will need to be partitioned, however the number of par
 
 Due to this, **ChaCha20-Poly1305** was chosen as the encryption algorithm within the Data Delivery System.
 
+---
+
 # 6. File chunk size: 64 KiB
+
+**Date/year:** 2019/2020
 
 Compression and encryption is performed in a streamed manner to avoid reading large files completely in memory. This is done by reading the file in chunks, and the size of the chunks affect the speed of the algorithms, their memory usage, and the final size of the compressed and encrypted files.
 
@@ -215,7 +239,11 @@ To find the optimal chunk size, a 33 GB file was compressed and encrypted using 
 
 The Data Delivery System will read the files in 64 KiB chunks.
 
+---
+
 # 7. File integrity guarantee: Nonce incrementation
+
+**Date/year:** 2019/2020
 
 As described in section 5. above, the Crypt4GH format encrypts the files in blocks of 64 KiB, after which each data blocks unique nonce, ciphertext and MAC are saved to the c4gh file. This guarantees the integrity of the data blocks, however it does not guarantee the integrity of the entire file, and it is therefore possible that some blocks are rearranged, duplicated or missing, without the recipient knowing. Although we have chosen to not use the Crypt4GH format within the delivery system, we do use the same encryption algorithm – ChaCha20-Poly1305 – and (since we cannot read huge files in memory) we have chosen to read the files in equally sized chunks. Therefore the integrity issue can potentially give huge problems for the delivery system.
 
@@ -243,7 +271,11 @@ Due to this, no checksum verification is used during the upload. However, the fi
 
 Nonce incrementation will be used and no checksum verification will be performed during upload.
 
+---
+
 # 8. Password Authentication: Argon2id
+
+**Date/year:** 2021
 
 Argon2 is also available in two other versions. These are argon2d (strong GPU resistance) and argon2i (resistant to side-channel attacks). Argon2id is a combination of the two and is the recommended mode.
 
@@ -253,8 +285,92 @@ The Data Delivery System will use [Argon2id](https://github.com/hynek/argon2-cff
 
 > The chosen parameters will be added here soon.
 
-# 9. Requirements: No pinned versions
+---
+
+# 9. User roles: Super Admin, Unit Admin, Unit Personnel, Researcher
+
+**Date:** September 14th 2021
+
+## Decision
+
+### Super Admin (DC)
+
+- Manage: Add, Remove, Edit
+  - Unit (instances)
+  - Users
+
+### Unit Admin
+
+- Unit Personnel Permissions
+- Manage: Add, Add to project, Remove from project, Remove account, Change permissions
+  - Unit Admin
+  - Unit User
+
+### Unit Personnel
+
+- Project Owner Permissons
+- Upload
+- Delete
+
+### Project Owner
+
+- Research User Permissions
+- Manage: Invite, Add to project, Remove from project, Remove account, Change permissions
+  - Project Owners
+  - Research Users
+
+### Research Account
+
+- Remove own account
+- List
+- Download
+
+---
+
+# 10. HOTP as default
+
+**Date:** December 1st 2022
+
+Initially, TOTP was implemented as the Two Factor Authentication. Authentication apps such as Authy or Google Authenticator could be set up and used to identify a user. However, due to some technical difficulties for some users, it was decided that we need to allow 2FA via mail as a default.
+
+## Decision
+
+Use email 2FA (using HOTP) as a default. 2FA with authenticator apps (with TOTP) will be implemented _at some point_ and the users will be able to choose which method they want to use.
+
+---
+
+# 11. Structured logging for action log
+
+**Date:** January 12th 2022
+
+Example: https://newrelic.com/blog/how-to-relic/python-structured-logging
+
+## Decision
+
+Structured logging should be implemented on the action logging first - the logging which saves when a user tries to perform a specific action e.g. upload/download/list/auth/rm etc.
+
+The information required to be logged: username, action, result (failed/successful), time, project in which the action was attempted.
+
+When the action logs have been fixed we will discuss whether or not this will be implemented in the general logging as well, such as debugging and general system info.
+
+---
+
+# 12. Requirements: No pinned versions
+
+**Date:** March 1st 2022
 
 ## Decisions
 
 We will not pin the requirement versions. If at some point something stops working we will look into it then and update the requirements then. This will simplify the installation for the users which is one of our priorities.
+
+---
+
+# 13. No `--username` option
+
+**Date:** March 2nd 2022
+
+Previously there was a `--username` option for all commands where the user could specify the username.
+
+## Decision
+
+We will not have the `--username` option. When using `dds auth login` command, either the existing encrypted token will be used or the user will be prompted to fill in the username and password.

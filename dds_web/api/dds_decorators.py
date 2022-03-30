@@ -84,6 +84,8 @@ def dbsession(func):
         # Run function, catch errors
         try:
             result = func(*args, **kwargs)
+        except sqlalchemy.exc.OperationalError as err:
+            raise DatabaseError(message=str(err), alt_message="Unexpected database error.")
         except:
             db.session.rollback()
             raise
@@ -108,8 +110,16 @@ def handle_db_error(func):
         # Run function, catch errors
         try:
             result = func(*args, **kwargs)
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(message=str(sqlerr)) from sqlerr
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
+            flask.current_app.logger.exception(sqlerr)
+            raise DatabaseError(
+                message=str(sqlerr),
+                alt_message=(
+                    "Database malfunction!"
+                    if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                    else None
+                ),
+            ) from sqlerr
 
         return result
 
@@ -135,8 +145,18 @@ def connect_cloud(func):
                 aws_access_key_id=self.keys["access_key"],
                 aws_secret_access_key=self.keys["secret_key"],
             )
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
-            raise DatabaseError(message=str(sqlerr)) from sqlerr
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
+            raise DatabaseError(
+                message=str(sqlerr),
+                alt_message=(
+                    "Could not connect to cloud"
+                    + (
+                        ": Database malfunction."
+                        if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                        else "."
+                    ),
+                ),
+            ) from sqlerr
         except botocore.client.ClientError as clierr:
             raise S3ConnectionError(message=str(clierr)) from clierr
 

@@ -73,7 +73,7 @@ class ProjectStatus(flask_restful.Resource):
 
         return return_info
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -124,10 +124,20 @@ class ProjectStatus(flask_restful.Resource):
         try:
             project.project_statuses.append(new_status_row)
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError) as err:
+        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Status was not updated") from err
+            raise DatabaseError(
+                message=str(err),
+                alt_message=(
+                    "Status was not updated"
+                    + (
+                        ": Database malfunction."
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else ": Server Error."
+                    )
+                ),
+            ) from err
 
         # Mail users once project is made available
         if new_status == "Available" and send_email:
@@ -348,7 +358,7 @@ class ProjectStatus(flask_restful.Resource):
 class GetPublic(flask_restful.Resource):
     """Gets the public key beloning to the current project."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
@@ -367,7 +377,7 @@ class GetPublic(flask_restful.Resource):
 class GetPrivate(flask_restful.Resource):
     """Gets the private key belonging to the current project."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
@@ -397,8 +407,13 @@ class UserProjects(flask_restful.Resource):
     @logging_bind_request
     def get(self):
         """Get info regarding all projects which user is involved in."""
-        current_user = auth.current_user()
+        return self.format_project_dict(current_user=auth.current_user())
 
+    def format_project_dict(self, current_user):
+        """Given a logged in user, fetch projects and return as dict.
+
+        Also used by web/user.py projects_info()
+        """
         # TODO: Return different things depending on if unit or not
         all_projects = list()
 
@@ -436,12 +451,26 @@ class UserProjects(flask_restful.Resource):
                 # return ByteHours
                 project_info.update({"Usage": proj_bhours, "Cost": proj_cost})
 
-            project_info["Access"] = (
-                models.ProjectUserKeys.query.filter_by(
-                    project_id=p.id, user_id=current_user.username
-                ).count()
-                > 0
-            )
+            try:
+                project_info["Access"] = (
+                    models.ProjectUserKeys.query.filter_by(
+                        project_id=p.id, user_id=current_user.username
+                    ).count()
+                    > 0
+                )
+            except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+                raise DatabaseError(
+                    message=str(err),
+                    alt_message=(
+                        "Could not get users project access information."
+                        + (
+                            ": Database malfunction."
+                            if isinstance(err, sqlalchemy.exc.OperationalError)
+                            else "."
+                        ),
+                    ),
+                ) from err
+
             all_projects.append(project_info)
 
         return_info = {
@@ -486,7 +515,7 @@ class UserProjects(flask_restful.Resource):
 class RemoveContents(flask_restful.Resource):
     """Removes all project contents."""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @dbsession
     @handle_validation_errors
@@ -534,13 +563,22 @@ class RemoveContents(flask_restful.Resource):
                     models.Version.time_deleted.is_(None),
                 )
             ).update({"time_deleted": dds_web.utils.current_time()})
-        except (sqlalchemy.exc.SQLAlchemyError, AttributeError) as sqlerr:
+        except (
+            sqlalchemy.exc.SQLAlchemyError,
+            sqlalchemy.exc.OperationalError,
+            AttributeError,
+        ) as sqlerr:
             raise DeletionError(
                 project=project.public_id,
                 message=str(sqlerr),
                 alt_message=(
                     "Project bucket contents were deleted, but they were not deleted from the "
                     "database. Please contact SciLifeLab Data Centre."
+                    + (
+                        "Database malfunction."
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else "."
+                    )
                 ),
             ) from sqlerr
 
@@ -566,9 +604,13 @@ class CreateProject(flask_restful.Resource):
             return {"warning": warning_message}
 
         # Add a new project to db
+        import pymysql
 
-        new_project = project_schemas.CreateProjectSchema().load(p_info)
-        db.session.add(new_project)
+        try:
+            new_project = project_schemas.CreateProjectSchema().load(p_info)
+            db.session.add(new_project)
+        except sqlalchemy.exc.OperationalError as err:
+            raise DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not new_project:
             raise DDSArgumentError("Failed to create project.")
@@ -587,10 +629,20 @@ class CreateProject(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError, TypeError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(message="Server Error: Project was not created") from err
+            raise DatabaseError(
+                message=str(err),
+                alt_message=(
+                    "Project was not created"
+                    + (
+                        ": Database malfunction."
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else ": Server error."
+                    ),
+                ),
+            ) from err
         except (
             marshmallow.exceptions.ValidationError,
             DDSArgumentError,
@@ -609,8 +661,15 @@ class CreateProject(flask_restful.Resource):
             for user in p_info["users_to_add"]:
                 try:
                     existing_user = user_schemas.UserSchema().load(user)
-                except marshmallow.exceptions.ValidationError as err:
-                    addition_status = f"Error for {user.get('email')}: {err}"
+                except (
+                    marshmallow.exceptions.ValidationError,
+                    sqlalchemy.exc.OperationalError,
+                ) as err:
+                    if isinstance(err, sqlalchemy.exc.OperationalError):
+                        flask.current_app.logger.error(err)
+                        addition_status = "Unexpected database error."
+                    else:
+                        addition_status = f"Error for {user.get('email')}: {err}"
                     user_addition_statuses.append(addition_status)
                     continue
 

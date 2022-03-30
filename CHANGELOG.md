@@ -57,3 +57,12 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Return int instead of string from files listing and only return usage info if right role ([#1070](https://github.com/ScilifelabDataCentre/dds_web/pull/1070))
 - Batch deletion of files (breaking atomicity) ([#1067](https://github.com/ScilifelabDataCentre/dds_web/pull/1067))
 - Change token expiration time to 7 days (168 hours) ([#1061](https://github.com/ScilifelabDataCentre/dds_web/pull/1061))
+- Add possibility of deleting invites (temporary fix in delete user endpoint) ([#1075](https://github.com/ScilifelabDataCentre/dds_web/pull/1075))
+- Flask command `create-unit` to create unit without having to interact with database directly ([#1075](https://github.com/ScilifelabDataCentre/dds_web/pull/1075))
+- Let project description include . and , ([#1080](https://github.com/ScilifelabDataCentre/dds_web/pull/1080))
+- Catch OperationalError if there is a database malfunction in `files.py` ([#1089](https://github.com/ScilifelabDataCentre/dds_web/pull/1089))
+- Switched the validation for the principal investigator from string to email ([#1084](https://github.com/ScilifelabDataCentre/dds_web/pull/1084)).
+
+## Sprint (2022-03-22 - 2022-04-06)
+
+- Add link in navbar to the installation documentation ([#1112](https://github.com/ScilifelabDataCentre/dds_web/pull/1112))
