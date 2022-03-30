@@ -21,6 +21,8 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
 import flask_migrate
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+
 
 # import flask_qrcode
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -30,6 +32,7 @@ import sqlalchemy
 import structlog
 import werkzeug
 
+from dds_web.scheduled_tasks import scheduler
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -62,6 +65,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 # Migration
 migrate = flask_migrate.Migrate()
+
 
 
 ####################################################################################################
@@ -249,7 +253,7 @@ def create_app(testing=False, database_uri=None):
             client_id=app.config.get("OIDC_CLIENT_ID"),
             server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
             client_kwargs={"scope": "openid profile email"},
-        )
+        )        
 
         app.cli.add_command(fill_db_wrapper)
         app.cli.add_command(create_new_unit)
@@ -271,7 +275,10 @@ def create_app(testing=False, database_uri=None):
             app.register_blueprint(auth_blueprint, url_prefix="")
 
             # Set-up the schedulers
-            dds_web.utils.scheduler_wrapper()
+            # dds_web.utils.scheduler_wrapper()
+            app.config["SCHEDULER_JOBSTORES"] = {"default": SQLAlchemyJobStore(engine=db.engine)}
+            scheduler.init_app(app)
+            scheduler.start()
 
             ENCRYPTION_KEY_BIT_LENGTH = 256
             ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
