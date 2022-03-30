@@ -365,5 +365,3 @@ def create_one_time_password_email(user, hotp_value):
     )
 
     return msg
-
-
