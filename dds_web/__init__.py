@@ -274,8 +274,7 @@ def create_app(testing=False, database_uri=None):
             app.register_blueprint(pages, url_prefix="")
             app.register_blueprint(auth_blueprint, url_prefix="")
 
-            # Set-up the schedulers
-            # dds_web.utils.scheduler_wrapper()
+            # Set-up the scheduler
             app.config["SCHEDULER_JOBSTORES"] = {"default": SQLAlchemyJobStore(engine=db.engine)}
             scheduler.init_app(app)
             scheduler.start()
