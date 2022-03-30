@@ -102,10 +102,7 @@ def test_new_file_project_none(client):
 
 def test_new_file_unknown_field(client):
     """Make request with unknown field passed."""
-    args = {
-        "json": FIRST_NEW_FILE,
-        "query_string": {"test": "project_id"},
-    }
+    args = {"json": FIRST_NEW_FILE, "query_string": {"test": "project_id"}}
     response_json = post_file_new_json(client, args)
 
     assert response_json

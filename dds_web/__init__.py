@@ -67,7 +67,6 @@ limiter = Limiter(key_func=get_remote_address)
 migrate = flask_migrate.Migrate()
 
 
-
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
@@ -114,11 +113,7 @@ def setup_logging(app):
                     "level": logging.DEBUG,
                     "propagate": False,
                 },
-                "actions": {
-                    "handlers": ["actions"],
-                    "level": logging.INFO,
-                    "propagate": False,
-                },
+                "actions": {"handlers": ["actions"], "level": logging.INFO, "propagate": False},
             },
         }
     )
@@ -253,7 +248,7 @@ def create_app(testing=False, database_uri=None):
             client_id=app.config.get("OIDC_CLIENT_ID"),
             server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
             client_kwargs={"scope": "openid profile email"},
-        )        
+        )
 
         app.cli.add_command(fill_db_wrapper)
         app.cli.add_command(create_new_unit)

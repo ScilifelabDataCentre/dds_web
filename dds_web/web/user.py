@@ -52,8 +52,7 @@ def bad_request(error):
 
 @auth_blueprint.route("/confirm_invite/<token>", methods=["GET"])
 @limiter.limit(
-    dds_web.utils.rate_limit_from_config,
-    error_message=ddserr.TooManyRequestsError.description,
+    dds_web.utils.rate_limit_from_config, error_message=ddserr.TooManyRequestsError.description
 )
 @logging_bind_request
 def confirm_invite(token):
@@ -100,16 +99,13 @@ def confirm_invite(token):
         form.username.data = suggested_username
 
     return flask.render_template(
-        "user/register.html",
-        form=form,
-        unit=invite_row.unit.name if invite_row.unit else None,
+        "user/register.html", form=form, unit=invite_row.unit.name if invite_row.unit else None
     )
 
 
 @auth_blueprint.route("/register", methods=["POST"])
 @limiter.limit(
-    dds_web.utils.rate_limit_from_config,
-    error_message=ddserr.TooManyRequestsError.description,
+    dds_web.utils.rate_limit_from_config, error_message=ddserr.TooManyRequestsError.description
 )
 def register():
     """Handles the creation of a new user"""
@@ -193,8 +189,7 @@ def confirm_2fa():
     except Exception as e:
         flask.current_app.logger.exception(e)
         flask.flash(
-            "Error: Second factor could not be validated due to an internal server error.",
-            "danger",
+            "Error: Second factor could not be validated due to an internal server error.", "danger"
         )
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
 
@@ -331,9 +326,7 @@ def request_reset_password():
             token = dds_web.security.tokens.encrypted_jwt_token(
                 username=email.user.username,
                 sensitive_content=None,
-                expires_in=datetime.timedelta(
-                    seconds=3600,
-                ),
+                expires_in=datetime.timedelta(seconds=3600),
                 additional_claims={"rst": "pwd"},
             )
 
@@ -363,8 +356,7 @@ def request_reset_password():
 
 @auth_blueprint.route("/reset_password/<token>", methods=["GET", "POST"])
 @limiter.limit(
-    dds_web.utils.rate_limit_from_config,
-    error_message=ddserr.TooManyRequestsError.description,
+    dds_web.utils.rate_limit_from_config, error_message=ddserr.TooManyRequestsError.description
 )
 def reset_password(token):
     """Perform the password reset when password is lost."""

@@ -132,12 +132,7 @@ class AccessDeniedError(LoggedHTTPException):
     code = http.HTTPStatus.FORBIDDEN  # 403
     description = "You do not have the necessary permissions."
 
-    def __init__(
-        self,
-        project=None,
-        username=None,
-        message=description,
-    ):
+    def __init__(self, project=None, username=None, message=description):
         if username:
             structlog.threadlocal.bind_threadlocal(user=username)
         if project:
@@ -152,13 +147,7 @@ class DatabaseError(LoggedHTTPException):
 
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-    def __init__(
-        self,
-        message,
-        alt_message=None,
-        pass_message=False,
-        project=None,
-    ):
+    def __init__(self, message, alt_message=None, pass_message=False, project=None):
 
         general_logger.error(message)
 

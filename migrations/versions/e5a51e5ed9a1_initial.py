@@ -129,10 +129,7 @@ def upgrade():
     op.create_table(
         "superadmins",
         sa.Column("username", sa.String(length=50), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["username"],
-            ["users.username"],
-        ),
+        sa.ForeignKeyConstraint(["username"], ["users.username"]),
         sa.PrimaryKeyConstraint("username"),
     )
     op.create_table(

@@ -43,27 +43,18 @@ def test_fix_access_no_args(client):
     """User required to update access."""
     # Project Owner requires project info
     token = tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client)
-    response = client.post(
-        tests.DDSEndpoint.PROJECT_ACCESS,
-        headers=token,
-    )
+    response = client.post(tests.DDSEndpoint.PROJECT_ACCESS, headers=token)
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     # Unit Personnel
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
-    response = client.post(
-        tests.DDSEndpoint.PROJECT_ACCESS,
-        headers=token,
-    )
+    response = client.post(tests.DDSEndpoint.PROJECT_ACCESS, headers=token)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Required data missing" in response.json.get("message")
 
     # Unit Personnel
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
-    response = client.post(
-        tests.DDSEndpoint.PROJECT_ACCESS,
-        headers=token,
-    )
+    response = client.post(tests.DDSEndpoint.PROJECT_ACCESS, headers=token)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Required data missing" in response.json.get("message")
 

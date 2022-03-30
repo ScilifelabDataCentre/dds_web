@@ -134,8 +134,7 @@ class ChangePasswordForm(flask_wtf.FlaskForm):
     """Form for setting a new password using the old password."""
 
     current_password = wtforms.PasswordField(
-        "Current Password",
-        validators=[wtforms.validators.DataRequired()],
+        "Current Password", validators=[wtforms.validators.DataRequired()]
     )
     new_password = wtforms.PasswordField(
         "New Password",

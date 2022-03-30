@@ -39,10 +39,7 @@ change_owner_existing_user = {
     "role": "Project Owner",
     "project": "public_project_id",
 }
-submit_with_same_ownership = {
-    **existing_research_user_owner,
-    "project": "second_public_project_id",
-}
+submit_with_same_ownership = {**existing_research_user_owner, "project": "second_public_project_id"}
 
 # Inviting Users ################################################################# Inviting Users #
 def test_add_user_with_researcher(client):
@@ -113,11 +110,7 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
 def test_add_user_with_unitadmin(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
-        response = client.post(
-            tests.DDSEndpoint.USER_ADD,
-            headers=token,
-            json=first_new_user,
-        )
+        response = client.post(tests.DDSEndpoint.USER_ADD, headers=token, json=first_new_user)
         # One mail sent for partial token and one for the invite
         assert mock_mail_send.call_count == 2
 
@@ -135,11 +128,7 @@ def test_add_user_with_unitadmin(client):
 
     # Repeating the invite should not send a new invite:
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        response = client.post(
-            tests.DDSEndpoint.USER_ADD,
-            headers=token,
-            json=first_new_user,
-        )
+        response = client.post(tests.DDSEndpoint.USER_ADD, headers=token, json=first_new_user)
         # No new mail should be sent for the token and neither for an invite
         assert mock_mail_send.call_count == 0
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -151,11 +140,7 @@ def test_add_unit_user_with_unitadmin(client):
 
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
-        response = client.post(
-            tests.DDSEndpoint.USER_ADD,
-            headers=token,
-            json=new_unit_user,
-        )
+        response = client.post(tests.DDSEndpoint.USER_ADD, headers=token, json=new_unit_user)
         # One mail sent for partial token and one for the invite
         assert mock_mail_send.call_count == 2
 
@@ -186,11 +171,7 @@ def test_add_unit_user_with_unitadmin(client):
     assert len(project_invite_keys) == 5
 
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        response = client.post(
-            tests.DDSEndpoint.USER_ADD,
-            headers=token,
-            json=new_unit_user,
-        )
+        response = client.post(tests.DDSEndpoint.USER_ADD, headers=token, json=new_unit_user)
         # No new mail should be sent for the token and neither for an invite
         assert mock_mail_send.call_count == 0
 
@@ -202,11 +183,7 @@ def test_add_unit_user_with_unitadmin(client):
 def test_add_user_with_superadmin(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
-        response = client.post(
-            tests.DDSEndpoint.USER_ADD,
-            headers=token,
-            json=first_new_user,
-        )
+        response = client.post(tests.DDSEndpoint.USER_ADD, headers=token, json=first_new_user)
         # One mail sent for partial token and one for the invite
         assert mock_mail_send.call_count == 2
 
@@ -218,11 +195,7 @@ def test_add_user_with_superadmin(client):
     assert invited_user.role == first_new_user["role"]
 
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        response = client.post(
-            tests.DDSEndpoint.USER_ADD,
-            headers=token,
-            json=first_new_user,
-        )
+        response = client.post(tests.DDSEndpoint.USER_ADD, headers=token, json=first_new_user)
         # No new mail should be sent for the token and neither for an invite
         assert mock_mail_send.call_count == 0
 

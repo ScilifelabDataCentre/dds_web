@@ -417,9 +417,7 @@ def test_set_project_to_available_no_mail(module_client, boto3_session):
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
 
     response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=token,
-        json=proj_data_with_existing_users,
+        tests.DDSEndpoint.PROJECT_CREATE, headers=token, json=proj_data_with_existing_users
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("user_addition_statuses")

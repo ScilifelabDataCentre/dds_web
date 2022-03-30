@@ -107,9 +107,7 @@ def get_valid_reset_token(username, expires_in=3600):
     return encrypted_jwt_token(
         username=username,
         sensitive_content=None,
-        expires_in=datetime.timedelta(
-            seconds=expires_in,
-        ),
+        expires_in=datetime.timedelta(seconds=expires_in),
         additional_claims={"rst": "pwd"},
     )
 

@@ -10,11 +10,7 @@ import flask_login
 
 # Copied from dds_cli __init__.py:
 
-__all__ = [
-    "USER_CREDENTIALS",
-    "UserAuth",
-    "DDSEndpoint",
-]
+__all__ = ["USER_CREDENTIALS", "UserAuth", "DDSEndpoint"]
 
 
 ###############################################################################
@@ -84,9 +80,7 @@ class UserAuth:
         hotp_token = self.fetch_hotp()
 
         response = client.get(
-            DDSEndpoint.SECOND_FACTOR,
-            headers=temp_token,
-            json={"HOTP": hotp_token.decode()},
+            DDSEndpoint.SECOND_FACTOR, headers=temp_token, json={"HOTP": hotp_token.decode()}
         )
 
         response_json = response.json

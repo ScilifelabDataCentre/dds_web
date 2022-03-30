@@ -11,10 +11,7 @@ import traceback
 # Installed
 
 # Own modules
-from dds_web.api.dds_decorators import (
-    connect_cloud,
-    bucket_must_exists,
-)
+from dds_web.api.dds_decorators import connect_cloud, bucket_must_exists
 
 from dds_web.database import models
 
@@ -64,12 +61,7 @@ class ApiS3Connector:
         )
         bucket = self.project.bucket
 
-        return (
-            name,
-            {"access_key": accesskey, "secret_key": secretkey},
-            endpoint,
-            bucket,
-        )
+        return (name, {"access_key": accesskey, "secret_key": secretkey}, endpoint, bucket)
 
     @bucket_must_exists
     def remove_bucket(self, *args, **kwargs):

@@ -110,11 +110,7 @@ def invite_confirm_register_and_get_private(
 
     form_data = {**REGISTRATION_DATA, "csrf_token": form_token, "email": email}
 
-    response = client.post(
-        tests.DDSEndpoint.USER_NEW,
-        json=form_data,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.USER_NEW, json=form_data, follow_redirects=True)
     assert response.status == "200 OK"
 
     user = models.User.query.filter_by(username=form_data["username"]).one_or_none()

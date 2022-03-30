@@ -13,10 +13,7 @@ from flask import current_app
 # Own modules
 from dds_web import db
 from dds_web.database import models
-from dds_web.security.project_user_keys import (
-    generate_project_key_pair,
-    share_project_private_key,
-)
+from dds_web.security.project_user_keys import generate_project_key_pair, share_project_private_key
 from dds_web.security.tokens import encrypted_jwt_token
 import dds_web.utils
 
@@ -40,18 +37,10 @@ def fill_db():
     db.session.add(superadmin_email)
 
     # Create first unit user
-    unituser_1 = models.UnitUser(
-        username="unituser_1",
-        password=password,
-        name="First Unit User",
-    )
+    unituser_1 = models.UnitUser(username="unituser_1", password=password, name="First Unit User")
 
     # Create second unit user
-    unituser_2 = models.UnitUser(
-        username="unituser_2",
-        password=password,
-        name="Second Unit User",
-    )
+    unituser_2 = models.UnitUser(username="unituser_2", password=password, name="Second Unit User")
 
     # create a few e-mail addresses
     email_unituser_1 = models.Email(email="unituser1@mailtrap.io", primary=True)
@@ -125,9 +114,7 @@ def fill_db():
     email_researchuser_1 = models.Email(email="researchuser1@mailtrap.io", primary=True)
     # Create first research user
     researchuser_1 = models.ResearchUser(
-        username="researchuser_1",
-        password=password,
-        name="First Research User",
+        username="researchuser_1", password=password, name="First Research User"
     )
     email_researchuser_1.user = researchuser_1
     # Create association with user - not owner of project
@@ -142,9 +129,7 @@ def fill_db():
     email_researchuser_2 = models.Email(email="researchuser2@mailtrap.io", primary=True)
     # Create second research user
     researchuser_2 = models.ResearchUser(
-        username="researchuser_2",
-        password=password,
-        name="Second Research User",
+        username="researchuser_2", password=password, name="Second Research User"
     )
     email_researchuser_2.user = researchuser_2
     # Create association with user - is owner of project
@@ -161,10 +146,7 @@ def fill_db():
 
     db.session.commit()
 
-    unituser_1_token = encrypted_jwt_token(
-        username=unituser_1.username,
-        sensitive_content=password,
-    )
+    unituser_1_token = encrypted_jwt_token(username=unituser_1.username, sensitive_content=password)
 
     share_project_private_key(
         from_user=unituser_1,

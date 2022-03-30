@@ -228,11 +228,7 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     public_id = db.Column(db.String(255), unique=True, nullable=True)
     title = db.Column(db.Text, unique=False, nullable=True)
-    date_created = db.Column(
-        db.DateTime(),
-        nullable=True,
-        default=dds_web.utils.current_time(),
-    )
+    date_created = db.Column(db.DateTime(), nullable=True, default=dds_web.utils.current_time())
     date_updated = db.Column(db.DateTime(), nullable=True)
     description = db.Column(db.Text)
     pi = db.Column(db.String(255), unique=False, nullable=True)

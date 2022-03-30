@@ -79,9 +79,7 @@ def test_invalid_invite_token_without_an_email(client):
     with pytest.raises(AuthenticationError) as error:
         verify_invite_token(
             encrypted_jwt_token(
-                username="",
-                sensitive_content="bogus",
-                expires_in=datetime.timedelta(hours=1),
+                username="", sensitive_content="bogus", expires_in=datetime.timedelta(hours=1)
             )
         )
     assert "Invalid token" in str(error.value)
@@ -262,9 +260,7 @@ def test_exp_for_cli_not_in_protected_header_of_reset_password_token(client):
     token = encrypted_jwt_token(
         username="unitadmin",
         sensitive_content=None,
-        expires_in=datetime.timedelta(
-            seconds=3600,
-        ),
+        expires_in=datetime.timedelta(seconds=3600),
         additional_claims={"rst": "pwd"},
     )
     token = jwt.JWT(jwt=token)

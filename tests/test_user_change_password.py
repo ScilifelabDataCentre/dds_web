@@ -9,9 +9,7 @@ from tests.test_login_web import successful_web_login
 
 def test_get_user_change_password_without_login(client):
     response = client.get(
-        tests.DDSEndpoint.CHANGE_PASSWORD,
-        content_type="application/json",
-        follow_redirects=True,
+        tests.DDSEndpoint.CHANGE_PASSWORD, content_type="application/json", follow_redirects=True
     )
 
     # Because it redirects to login
@@ -45,11 +43,7 @@ def test_successful_user_change_password_with_login(client):
         "submit": "Change Password",
     }
 
-    response = client.post(
-        tests.DDSEndpoint.CHANGE_PASSWORD,
-        json=form_data,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.CHANGE_PASSWORD, json=form_data, follow_redirects=True)
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.LOGIN
 

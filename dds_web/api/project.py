@@ -554,8 +554,7 @@ class RemoveContents(flask_restful.Resource):
             # Update all versions associated with project
             models.Version.query.filter(
                 sqlalchemy.and_(
-                    models.Version.project_id == project.id,
-                    models.Version.time_deleted.is_(None),
+                    models.Version.project_id == project.id, models.Version.time_deleted.is_(None)
                 )
             ).update({"time_deleted": dds_web.utils.current_time()})
         except (
@@ -638,11 +637,7 @@ class CreateProject(flask_restful.Resource):
                     ),
                 ),
             ) from err
-        except (
-            marshmallow.exceptions.ValidationError,
-            DDSArgumentError,
-            AccessDeniedError,
-        ) as err:
+        except (marshmallow.exceptions.ValidationError, DDSArgumentError, AccessDeniedError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise
@@ -671,9 +666,7 @@ class CreateProject(flask_restful.Resource):
                 if not existing_user:
                     # Send invite if the user doesn't exist
                     invite_user_result = AddUser.invite_user(
-                        email=user.get("email"),
-                        new_user_role=user.get("role"),
-                        project=new_project,
+                        email=user.get("email"), new_user_role=user.get("role"), project=new_project
                     )
 
                     if invite_user_result["status"] == http.HTTPStatus.OK:
@@ -689,9 +682,7 @@ class CreateProject(flask_restful.Resource):
                     addition_status = ""
                     try:
                         add_user_result = AddUser.add_to_project(
-                            whom=existing_user,
-                            project=new_project,
-                            role=user.get("role"),
+                            whom=existing_user, project=new_project, role=user.get("role")
                         )
                     except DatabaseError as err:
                         addition_status = f"Error for {user['email']}: {err.description}"

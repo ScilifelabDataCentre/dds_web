@@ -17,11 +17,7 @@ def successful_web_login(client, user_auth):
         "submit": "Login",
     }
 
-    response = client.post(
-        tests.DDSEndpoint.LOGIN,
-        json=form_data,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.LOGIN, json=form_data, follow_redirects=True)
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.CONFIRM_2FA
 
@@ -33,11 +29,7 @@ def successful_web_login(client, user_auth):
         "submit": "Authenticate",
     }
 
-    response = client.post(
-        tests.DDSEndpoint.CONFIRM_2FA,
-        json=form_data,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.CONFIRM_2FA, json=form_data, follow_redirects=True)
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.INDEX
     assert flask.request.path == flask.url_for("pages.home")
@@ -67,21 +59,14 @@ def test_cancel_2fa(client):
         "submit": "Login",
     }
 
-    response = client.post(
-        tests.DDSEndpoint.LOGIN,
-        json=form_data,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.LOGIN, json=form_data, follow_redirects=True)
     assert response.status == "200 OK"
     assert flask.request.path == tests.DDSEndpoint.CONFIRM_2FA
 
     second_factor_token = flask.session.get("2fa_initiated_token")
     assert second_factor_token is not None
 
-    response = client.post(
-        tests.DDSEndpoint.CANCEL_2FA,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.CANCEL_2FA, follow_redirects=True)
 
     assert response.status == "200 OK"
     assert flask.request.path == tests.DDSEndpoint.LOGIN

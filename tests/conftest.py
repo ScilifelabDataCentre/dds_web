@@ -29,10 +29,7 @@ from dds_web.database.models import (
 )
 import dds_web.utils
 from dds_web import create_app, db
-from dds_web.security.project_user_keys import (
-    generate_project_key_pair,
-    share_project_private_key,
-)
+from dds_web.security.project_user_keys import generate_project_key_pair, share_project_private_key
 from dds_web.security.tokens import encrypted_jwt_token
 
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
@@ -60,32 +57,17 @@ def fill_basic_db(db):
 
     db.session.commit()
 
-    user2_token = encrypted_jwt_token(
-        username=users[2].username,
-        sensitive_content="password",
+    user2_token = encrypted_jwt_token(username=users[2].username, sensitive_content="password")
+    share_project_private_key(
+        from_user=users[2], to_another=users[0], from_user_token=user2_token, project=projects[0]
     )
     share_project_private_key(
-        from_user=users[2],
-        to_another=users[0],
-        from_user_token=user2_token,
-        project=projects[0],
-    )
-    share_project_private_key(
-        from_user=users[2],
-        to_another=users[1],
-        from_user_token=user2_token,
-        project=projects[0],
+        from_user=users[2], to_another=users[1], from_user_token=user2_token, project=projects[0]
     )
 
-    user3_token = encrypted_jwt_token(
-        username=users[3].username,
-        sensitive_content="password",
-    )
+    user3_token = encrypted_jwt_token(username=users[3].username, sensitive_content="password")
     share_project_private_key(
-        from_user=users[3],
-        to_another=users[6],
-        from_user_token=user3_token,
-        project=projects[3],
+        from_user=users[3], to_another=users[6], from_user_token=user3_token, project=projects[3]
     )
 
     db.session.commit()
@@ -130,44 +112,13 @@ def demo_data():
     ]
 
     users = [
-        ResearchUser(
-            username="researchuser",
-            password="password",
-            name="Research User",
-        ),
-        ResearchUser(
-            username="projectowner",
-            password="password",
-            name="Project Owner",
-        ),
-        UnitUser(
-            username="unituser",
-            password="password",
-            name="Unit User",
-            is_admin=False,
-        ),
-        UnitUser(
-            username="unituser2",
-            password="password",
-            name="Unit User 2",
-            is_admin=False,
-        ),
-        UnitUser(
-            username="unitadmin",
-            password="password",
-            name="Unit Admin",
-            is_admin=True,
-        ),
-        SuperAdmin(
-            username="superadmin",
-            password="password",
-            name="Super Admin",
-        ),
-        ResearchUser(
-            username="researchuser2",
-            password="password",
-            name="Research User 2",
-        ),
+        ResearchUser(username="researchuser", password="password", name="Research User"),
+        ResearchUser(username="projectowner", password="password", name="Project Owner"),
+        UnitUser(username="unituser", password="password", name="Unit User", is_admin=False),
+        UnitUser(username="unituser2", password="password", name="Unit User 2", is_admin=False),
+        UnitUser(username="unitadmin", password="password", name="Unit Admin", is_admin=True),
+        SuperAdmin(username="superadmin", password="password", name="Super Admin"),
+        ResearchUser(username="researchuser2", password="password", name="Research User 2"),
         ResearchUser(
             username="delete_me_researcher",
             password="password",
@@ -240,10 +191,7 @@ def demo_data():
                 checksum="C" * 64,
             ),
             [
-                Version(
-                    size_stored=10000,
-                    time_uploaded=dds_web.utils.current_time(),
-                ),
+                Version(size_stored=10000, time_uploaded=dds_web.utils.current_time()),
                 Version(
                     size_stored=30000,
                     time_uploaded=dds_web.utils.current_time() - datetime.timedelta(days=1),
@@ -262,12 +210,7 @@ def demo_data():
                 public_key="E" * 64,
                 checksum="F" * 64,
             ),
-            [
-                Version(
-                    size_stored=10000,
-                    time_uploaded=dds_web.utils.current_time(),
-                )
-            ],
+            [Version(size_stored=10000, time_uploaded=dds_web.utils.current_time())],
         ),
     ]
 
@@ -292,7 +235,7 @@ def demo_data():
                     )
                     for j in range(i + 1)
                 ],
-            ),
+            )
         )
 
     for i in range(5):
@@ -316,7 +259,7 @@ def demo_data():
                     )
                     for j in range(i + 1)
                 ],
-            ),
+            )
         )
 
     invites = [Invite(**{"email": "existing_invite_email@mailtrap.io", "role": "Researcher"})]

@@ -37,11 +37,7 @@ def user_from_email(email):
 def create_delete_request(email_str):
     user = user_from_email(email_str)
     new_delrequest = models.DeletionRequest(
-        **{
-            "requester": user,
-            "email": email_str,
-            "issued": dds_web.utils.current_time(),
-        }
+        **{"requester": user, "email": email_str, "issued": dds_web.utils.current_time()}
     )
     db.session.add(new_delrequest)
     db.session.commit()
@@ -53,11 +49,7 @@ def create_delete_request(email_str):
 def test_del_self_nouser(client):
     """Request self deletion without user"""
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        response = client.delete(
-            tests.DDSEndpoint.USER_DELETE_SELF,
-            headers=None,
-            json=None,
-        )
+        response = client.delete(tests.DDSEndpoint.USER_DELETE_SELF, headers=None, json=None)
         # No token email and none for deletion confirmation
         assert mock_mail_send.call_count == 0
         assert response.status_code == http.HTTPStatus.UNAUTHORIZED

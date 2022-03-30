@@ -31,11 +31,7 @@ from tests.test_user_delete import user_from_email
 
 
 def __padding():
-    return OAEP(
-        mgf=MGF1(algorithm=SHA256()),
-        algorithm=SHA256(),
-        label=None,
-    )
+    return OAEP(mgf=MGF1(algorithm=SHA256()), algorithm=SHA256(), label=None)
 
 
 def test_user_key_setup_error_with_salt(client):
@@ -50,10 +46,7 @@ def test_user_key_setup_error_with_salt(client):
 def test_user_key_setup_error_with_private_key(client):
     invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
     unituser = models.User.query.filter_by(username="unituser").first()
-    unituser_token = encrypted_jwt_token(
-        username=unituser.username,
-        sensitive_content="password",
-    )
+    unituser_token = encrypted_jwt_token(username=unituser.username, sensitive_content="password")
 
     # Somehow private key has disappeared
     unituser.private_key = None
@@ -72,10 +65,7 @@ def test_user_key_setup_error_with_private_key(client):
 def test_user_key_setup_error_with_nonce(client):
     invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
     unituser = models.User.query.filter_by(username="unituser").first()
-    unituser_token = encrypted_jwt_token(
-        username=unituser.username,
-        sensitive_content="password",
-    )
+    unituser_token = encrypted_jwt_token(username=unituser.username, sensitive_content="password")
 
     # Somehow nonce has disappeared
     unituser.nonce = None
@@ -97,10 +87,7 @@ def test_user_key_setup_error_with_public_key(client):
     # Somehow the key pair for the invite has not taken place or disappeared
 
     unituser = models.User.query.filter_by(username="unituser").first()
-    unituser_token = encrypted_jwt_token(
-        username=unituser.username,
-        sensitive_content="password",
-    )
+    unituser_token = encrypted_jwt_token(username=unituser.username, sensitive_content="password")
     with pytest.raises(KeySetupError) as error:
         share_project_private_key(
             from_user=unituser,
@@ -116,10 +103,7 @@ def test_user_key_operation_error_with_load_user_public_key(client):
     invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
     generate_invite_key_pair(invite1)
     unituser = models.User.query.filter_by(username="unituser").first()
-    unituser_token = encrypted_jwt_token(
-        username=unituser.username,
-        sensitive_content="password",
-    )
+    unituser_token = encrypted_jwt_token(username=unituser.username, sensitive_content="password")
 
     # Somehow the public key of the invite is not the expected public key
     invite1.public_key = b"useless_bytes"
@@ -140,10 +124,7 @@ def test_user_key_operation_error_with_decrypt_user_private_key(client):
     unituser = models.User.query.filter_by(username="unituser").first()
 
     # Somehow a wrong password has ended up in the encrypted token
-    unituser_token = encrypted_jwt_token(
-        username=unituser.username,
-        sensitive_content="passwor",
-    )
+    unituser_token = encrypted_jwt_token(username=unituser.username, sensitive_content="passwor")
     with pytest.raises(KeyOperationError) as error:
         share_project_private_key(
             from_user=unituser,
@@ -160,10 +141,7 @@ def test_sensitive_content_missing_error(client):
     unituser = models.User.query.filter_by(username="unituser").first()
 
     # Somehow the password is missing in the encrypted token
-    unituser_token = encrypted_jwt_token(
-        username=unituser.username,
-        sensitive_content=None,
-    )
+    unituser_token = encrypted_jwt_token(username=unituser.username, sensitive_content=None)
     with pytest.raises(SensitiveContentMissingError) as error:
         share_project_private_key(
             from_user=unituser,
@@ -190,10 +168,7 @@ def test_user_key_not_found_error_for_project(client):
     unituser = models.User.query.filter_by(username="unituser").first()
     unituser.unit.projects.append(project_without_keys)
     dds_web.db.session.commit()
-    unituser_token = encrypted_jwt_token(
-        username=unituser.username,
-        sensitive_content="password",
-    )
+    unituser_token = encrypted_jwt_token(username=unituser.username, sensitive_content="password")
     with pytest.raises(KeyNotFoundError) as error:
         share_project_private_key(
             from_user=unituser,
@@ -321,22 +296,14 @@ def test_share_project_keys_via_two_invites(client):
     invite1 = models.Invite(email="new_unit_user@mailtrap.io", role="Unit Personnel")
     temporary_key = generate_invite_key_pair(invite1)
     invite_token1 = encrypted_jwt_token(
-        username="",
-        sensitive_content=temporary_key.hex(),
-        additional_claims={"inv": invite1.email},
+        username="", sensitive_content=temporary_key.hex(), additional_claims={"inv": invite1.email}
     )
     unituser = models.User.query.filter_by(username="unituser").first()
     unituser.unit.invites.append(invite1)
-    unituser_token = encrypted_jwt_token(
-        username=unituser.username,
-        sensitive_content="password",
-    )
+    unituser_token = encrypted_jwt_token(username=unituser.username, sensitive_content="password")
     for project in unituser.unit.projects:
         share_project_private_key(
-            from_user=unituser,
-            to_another=invite1,
-            from_user_token=unituser_token,
-            project=project,
+            from_user=unituser, to_another=invite1, from_user_token=unituser_token, project=project
         )
     dds_web.db.session.commit()
 
@@ -383,15 +350,11 @@ def test_share_project_keys_via_two_invites(client):
     unituser = models.User.query.filter_by(username="user_not_existing").first()
     unituser.unit.invites.append(invite2)
     unituser_token = encrypted_jwt_token(
-        username=unituser.username,
-        sensitive_content=common_user_fields["password"],
+        username=unituser.username, sensitive_content=common_user_fields["password"]
     )
     for project in unituser.unit.projects:
         share_project_private_key(
-            from_user=unituser,
-            to_another=invite2,
-            from_user_token=unituser_token,
-            project=project,
+            from_user=unituser, to_another=invite2, from_user_token=unituser_token, project=project
         )
     dds_web.db.session.commit()
 

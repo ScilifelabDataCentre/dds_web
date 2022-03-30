@@ -158,8 +158,7 @@ def generate_project_key_pair(user, project):
         encryption_algorithm=serialization.NoEncryption(),
     )
     public_key_bytes = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.Raw,
-        format=serialization.PublicFormat.Raw,
+        encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
     )
     project.public_key = public_key_bytes
     for unit_user in user.unit.users:
@@ -222,10 +221,7 @@ def __encrypt_owner_private_key(owner, private_key, owner_key=None):
 def __decrypt_user_private_key(user, user_key):
     if user.private_key and user.nonce:
         return __decrypt_with_aes(
-            user_key,
-            user.private_key,
-            user.nonce,
-            aad=b"private key for " + user.username.encode(),
+            user_key, user.private_key, user.nonce, aad=b"private key for " + user.username.encode()
         )
     raise KeySetupError(message="User keys are not properly setup!")
 

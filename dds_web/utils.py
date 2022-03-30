@@ -127,11 +127,7 @@ def password_contains_valid_characters():
     def _password_contains_valid_characters(form, field):
         """Validate that the password contains valid characters and raise ValidationError."""
         errors = []
-        validators = [
-            contains_uppercase,
-            contains_lowercase,
-            contains_digit_or_specialchar,
-        ]
+        validators = [contains_uppercase, contains_lowercase, contains_digit_or_specialchar]
         for val in validators:
             try:
                 val(indata=field.data)
@@ -265,9 +261,7 @@ def send_reset_email(email_row, token):
         "image/png",
         open(os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb").read(),
         "inline",
-        headers=[
-            ["Content-ID", "<Logo>"],
-        ],
+        headers=[["Content-ID", "<Logo>"]],
     )
 
     link = flask.url_for("auth_blueprint.reset_password", token=token, _external=True)
@@ -343,19 +337,14 @@ def page_query(q):
 
 def create_one_time_password_email(user, hotp_value):
     """Create HOTP email."""
-    msg = flask_mail.Message(
-        "DDS One-Time Authentication Code",
-        recipients=[user.primary_email],
-    )
+    msg = flask_mail.Message("DDS One-Time Authentication Code", recipients=[user.primary_email])
 
     msg.attach(
         "scilifelab_logo.png",
         "image/png",
         open(os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb").read(),
         "inline",
-        headers=[
-            ["Content-ID", "<Logo>"],
-        ],
+        headers=[["Content-ID", "<Logo>"]],
     )
     msg.body = flask.render_template(
         "mail/authenticate.txt", one_time_value=hotp_value.decode("utf-8")

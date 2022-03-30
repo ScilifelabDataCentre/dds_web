@@ -389,8 +389,7 @@ def test_create_project_no_title(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     created_proj = models.Project.query.filter_by(
-        created_by="unituser",
-        pi=proj_data["pi"],
+        created_by="unituser", pi=proj_data["pi"]
     ).one_or_none()
     assert created_proj is None
 
@@ -434,10 +433,7 @@ def test_create_project_with_malformed_json(client):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     created_proj = models.Project.query.filter_by(
-        created_by="unituser",
-        title="",
-        pi="",
-        description="",
+        created_by="unituser", title="", pi="", description=""
     ).one_or_none()
     assert created_proj is None
 

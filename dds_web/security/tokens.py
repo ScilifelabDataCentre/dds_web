@@ -34,10 +34,7 @@ def encrypted_jwt_token(
     :param Boolean fully_authenticated: set to True only after successful 2fa which means that all authentication
         steps have succeeded and this final token can be used for normal operation by the cli (default False)
     """
-    jwe_protected_header = {
-        "alg": "A256KW",
-        "enc": "A256GCM",
-    }
+    jwe_protected_header = {"alg": "A256KW", "enc": "A256GCM"}
     if fully_authenticated:
         # exp claim in this (integrity) protected JWE header is provided only to let the
         # cli know the precise expiration time of the encrypted token. It has no impact

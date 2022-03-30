@@ -112,15 +112,7 @@ class CreateProjectSchema(marshmallow.Schema):
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def validate_all_fields(self, data, **kwargs):
         """Validate that all fields are present."""
-        if not all(
-            field in data
-            for field in [
-                "title",
-                "date_created",
-                "description",
-                "pi",
-            ]
-        ):
+        if not all(field in data for field in ["title", "date_created", "description", "pi"]):
             raise marshmallow.ValidationError("Missing fields!")
 
     @marshmallow.validates("description")
@@ -168,10 +160,7 @@ class CreateProjectSchema(marshmallow.Schema):
         )
         new_project.project_statuses.append(
             models.ProjectStatuses(
-                **{
-                    "status": "In Progress",
-                    "date_created": data["date_created"],
-                }
+                **{"status": "In Progress", "date_created": data["date_created"]}
             )
         )
         generate_project_key_pair(current_user, new_project)

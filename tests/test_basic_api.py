@@ -149,9 +149,7 @@ def test_auth_second_factor_incorrect_token(client):
     reset_token = encrypted_jwt_token(
         username="researchuser",
         sensitive_content=None,
-        expires_in=datetime.timedelta(
-            seconds=3600,
-        ),
+        expires_in=datetime.timedelta(seconds=3600),
         additional_claims={"rst": "pwd"},
     )
 

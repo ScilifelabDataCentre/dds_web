@@ -12,10 +12,7 @@ import sqlalchemy
 # Own modules
 from dds_web.database import models
 from dds_web import db
-from dds_web.errors import (
-    DatabaseError,
-    UserDeletionError,
-)
+from dds_web.errors import DatabaseError, UserDeletionError
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #

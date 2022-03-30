@@ -109,9 +109,7 @@ def test_register_no_token_in_session(registry_form_data, client):
         client_session.pop("invite_token", None)
 
     response = client.post(
-        tests.DDSEndpoint.USER_NEW,
-        json=registry_form_data,
-        follow_redirects=True,
+        tests.DDSEndpoint.USER_NEW, json=registry_form_data, follow_redirects=True
     )
     assert response.status == "200 OK"
     assert flask.request.path == tests.DDSEndpoint.INDEX
@@ -132,11 +130,7 @@ def test_register_weak_password(registry_form_data, client):
     form_data["password"] = "password"
     form_data["confirm"] = "password"
 
-    response = client.post(
-        tests.DDSEndpoint.USER_NEW,
-        json=form_data,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.USER_NEW, json=form_data, follow_redirects=True)
     assert response.status == "200 OK"
     assert flask.request.path == tests.DDSEndpoint.USER_NEW
 
@@ -153,9 +147,7 @@ def test_register_weak_password(registry_form_data, client):
 
 def test_successful_registration(registry_form_data, client):
     response = client.post(
-        tests.DDSEndpoint.USER_NEW,
-        json=registry_form_data,
-        follow_redirects=True,
+        tests.DDSEndpoint.USER_NEW, json=registry_form_data, follow_redirects=True
     )
     assert response.status == "200 OK"
 
@@ -184,9 +176,7 @@ def test_successful_registration_should_transfer_keys(registry_form_data, client
     assert invite_public_key
 
     response = client.post(
-        tests.DDSEndpoint.USER_NEW,
-        json=registry_form_data,
-        follow_redirects=True,
+        tests.DDSEndpoint.USER_NEW, json=registry_form_data, follow_redirects=True
     )
     assert response.status == "200 OK"
 
@@ -234,11 +224,7 @@ def test_invite_key_verification_fails_with_no_setup(client):
         "submit": "submit",
     }
 
-    response = client.post(
-        tests.DDSEndpoint.USER_NEW,
-        json=form_data,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.USER_NEW, json=form_data, follow_redirects=True)
     assert response.status == "200 OK"
 
     invite = models.Invite.query.filter_by(
@@ -286,11 +272,7 @@ def test_invite_key_verification_fails_with_wrong_valid_key(client):
         "submit": "submit",
     }
 
-    response = client.post(
-        tests.DDSEndpoint.USER_NEW,
-        json=form_data,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.USER_NEW, json=form_data, follow_redirects=True)
     assert response.status == "200 OK"
 
     invite = models.Invite.query.filter_by(
@@ -338,11 +320,7 @@ def test_invite_key_verification_fails_with_wrong_invalid_key(client):
         "submit": "submit",
     }
 
-    response = client.post(
-        tests.DDSEndpoint.USER_NEW,
-        json=form_data,
-        follow_redirects=True,
-    )
+    response = client.post(tests.DDSEndpoint.USER_NEW, json=form_data, follow_redirects=True)
     assert response.status == "200 OK"
 
     invite = models.Invite.query.filter_by(

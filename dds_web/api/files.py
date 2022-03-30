@@ -21,11 +21,7 @@ from dds_web import auth
 from dds_web.database import models
 from dds_web import db
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import (
-    logging_bind_request,
-    json_required,
-    handle_validation_errors,
-)
+from dds_web.api.dds_decorators import logging_bind_request, json_required, handle_validation_errors
 from dds_web.errors import (
     AccessDeniedError,
     BucketNotFoundError,
@@ -277,19 +273,13 @@ class ListFiles(flask_restful.Resource):
         # Collect file and folder info to return to CLI
         if distinct_files:
             for x in distinct_files:
-                info = {
-                    "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
-                    "folder": False,
-                }
+                info = {"name": x[0] if subpath == "." else x[0].split(os.sep)[-1], "folder": False}
                 if show_size:
                     info.update({"size": x[1]})
                 files_folders.append(info)
         if distinct_folders:
             for x in distinct_folders:
-                info = {
-                    "name": x if subpath == "." else x.split(os.sep)[-1],
-                    "folder": True,
-                }
+                info = {"name": x if subpath == "." else x.split(os.sep)[-1], "folder": True}
 
                 if show_size:
                     folder_size = self.get_folder_size(project=project, folder_name=x)
