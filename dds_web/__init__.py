@@ -185,12 +185,16 @@ def create_app(testing=False, database_uri=None):
         def prepare():
             """Populate flask globals for template rendering"""
             flask.g.current_user = None
+            flask.g.current_user_emails = None
             if auth.current_user():
                 flask.g.current_user = auth.current_user().username
+                flask.g.current_user_emails = auth.current_user().emails
             elif flask_login.current_user.is_authenticated:
                 flask.g.current_user = flask_login.current_user.username
+                flask.g.current_user_emails = flask_login.current_user.emails
             elif flask.request.authorization:
                 flask.g.current_user = flask.request.authorization.get("username")
+                flask.g.current_user_emails = flask.request.authorization.get("emails")
 
         # Setup logging handlers
         setup_logging(app)

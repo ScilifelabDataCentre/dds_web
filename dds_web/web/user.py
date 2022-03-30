@@ -560,7 +560,7 @@ def confirm_self_deletion(token):
 def account_info():
     """User account page"""
 
-    return flask.render_template("user/account.html", account_info={}, enumerate=enumerate)
+    return flask.render_template("user/account.html", enumerate=enumerate)
 
 
 @auth_blueprint.route("/projects", methods=["GET"])
