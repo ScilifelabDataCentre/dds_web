@@ -166,8 +166,7 @@ def cancel_2fa():
     error_message=ddserr.TooManyRequestsError.description,
 )
 def confirm_2fa():
-    """Finalize login by validating the authentication one-time token"""
-
+    """Finalize login by validating the authentication one-time token."""
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for("pages.home"))
