@@ -43,7 +43,6 @@ vscode:
     - ms-azuretools.vscode-docker
     - ms-python.python
     - esbenp.prettier-vscode # Linting and style checking
-    - eamodio.gitlens # Quickly glimpse into whom, why, and when a line or code block was changed
     - Gruntfuggly.todo-tree # Display TODO and FIXME in a tree view in the activity bar
 
 github:
