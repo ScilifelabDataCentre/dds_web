@@ -24,7 +24,7 @@ def change_status_to_expired():
         #     flask.current_app.logger.debug("Project: %s - Expires: %s", project, project.expires)
 
 
-@scheduler.task("interval", id="expired_to_archived", seconds=30, misfire_grace_time=1)
+@scheduler.task("cron", id="expired_to_archived", minute=1, hour=0, misfire_grace_time=1)
 def set_expired_to_archived():
     import sqlalchemy
     from dds_web import db

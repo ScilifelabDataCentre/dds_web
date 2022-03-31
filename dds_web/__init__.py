@@ -22,6 +22,7 @@ import flask_mail
 import flask_login
 import flask_migrate
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from pytz import utc
 
 # import flask_qrcode
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -275,6 +276,7 @@ def create_app(testing=False, database_uri=None):
 
             # Set-up the scheduler
             app.config["SCHEDULER_JOBSTORES"] = {"default": SQLAlchemyJobStore(engine=db.engine)}
+            app.config["SCHEDULER_TIMEZONE"] = utc
             scheduler.init_app(app)
             scheduler.start()
 
