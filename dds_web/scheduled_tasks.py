@@ -14,15 +14,12 @@ def set_available_to_expired():
     from dds_web.database import models
     from dds_web.errors import DatabaseError
     from dds_web.api.project import ProjectStatus
-
     from dds_web.utils import current_time, page_query
 
     with scheduler.app.app_context():
 
-        for project in page_query(
-            models.Project.query.filter(models.Project.is_active == 1)
-        ):
-      
+        for project in page_query(models.Project.query.filter(models.Project.is_active == 1)):
+
             if "Available" in project.current_status and project.current_deadline <= current_time():
                 scheduler.app.logger.debug("Handling expiring project")
                 scheduler.app.logger.debug(
