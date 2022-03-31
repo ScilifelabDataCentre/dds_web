@@ -7,7 +7,7 @@ scheduler = flask_apscheduler.APScheduler()
 
 @scheduler.task("interval", id="available_to_expired", seconds=5, misfire_grace_time=1)
 def set_available_to_expired():
-    # print("Task: Change project status from Available to expired.", flush=True)
+    scheduler.app.logger.debug("Task: Checking for Expiring projects.")
     import sqlalchemy
 
     from dds_web import db
@@ -18,36 +18,15 @@ def set_available_to_expired():
     from dds_web.utils import current_time, page_query
 
     with scheduler.app.app_context():
-        scheduler.app.logger.debug("Handling expiring projects")
-
-        # expired_projs = (
-        #     db.session.query(models.ProjectStatuses.project_id)
-        #     .filter(models.ProjectStatuses.status == "Expired")
-        #     .all()
-        # )
-        # for p in expired_projs:
-        #     scheduler.app.logger.debug("Expired: %s", expired_projs)
-
-        available_projs = db.session.query(models.Project).filter(
-            models.Project.current_status == "Available"
-        )
-
-        # expiring_projs = db.session.query()
-
-        # scheduler.app.logger.debug(type(available_projs))
-        for p in available_projs:
-            scheduler.app.logger.debug("Available: %s", p)
 
         for project in page_query(
-            # for project in available_projs:
-            # (
-            #     # models.ProjectStatuses.query.filter(models.ProjectStatuses.is_active >= current_time())
             models.Project.query.filter(models.Project.is_active == 1)
         ):
       
-            if "Available" in project.current_status and project.current_deadline >= current_time():
+            if "Available" in project.current_status and project.current_deadline <= current_time():
+                scheduler.app.logger.debug("Handling expiring project")
                 scheduler.app.logger.debug(
-                    "Project: %s has status %s - Expires: %s",
+                    "Project: %s has status %s and expires on: %s",
                     project.id,
                     project.current_status,
                     project.current_deadline,
@@ -75,12 +54,6 @@ def set_available_to_expired():
                             )
                         ),
                     ) from err
-            #     change = status.expire_project(
-            #         project=project, current_time=current_time, deadline_in=30
-            #     )
-            #     # change.query.all()
-            #     scheduler.app.logger.debug(change.query.all())
-            #     # status.expire_project(status="Expired", date_created=current_time, deadline=current_time)
-            #     # models.ProjectStatuses.query.
-            # # else:
-            #     scheduler.app.logger.debug("Nothing to do for Project: %s", project.title)
+                scheduler.app.logger.debug("Project: %s has status Archived now!", project.title)
+            else:
+                scheduler.app.logger.debug("Nothing to do for Project: %s", project.title)
