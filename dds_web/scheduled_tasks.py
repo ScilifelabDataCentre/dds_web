@@ -45,11 +45,12 @@ def set_expired_to_archived():
 
         archive = ProjectStatus()
         for proj_status in expired_projs:
-            new_status_row = archive.archive_project(
+            new_status_row, delete_message = archive.archive_project(
                 project=proj_status.project,
                 current_time=current_time(),
             )
             proj_status.project.project_statuses.append(new_status_row)
+            flask.current_app.logger.debug(delete_message)
 
         try:
             db.session.commit()
