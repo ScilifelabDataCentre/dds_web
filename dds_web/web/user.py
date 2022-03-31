@@ -168,7 +168,7 @@ def activate_totp(token):
 
     if user.totp_enabled:
         flask.flash("Two-factor authentication via TOTP is already enabled.")
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Don't change secret on page reload
     if not user.totp_initiated:
@@ -207,7 +207,7 @@ def activate_totp(token):
         user.activate_totp()
 
         flask.flash("Two-factor authentication via TOTP has been enabled.")
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     return (
         flask.render_template(
@@ -249,10 +249,6 @@ def confirm_2fa():
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for("pages.home"))
-
-    form = forms.Confirm2FACodeForm()
-
-    cancel_form = forms.Cancel2FAForm()
 
     next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
@@ -534,10 +530,10 @@ def password_reset_completed():
         user = dds_web.security.auth.verify_password_reset_token(token=token)
         if not user.is_active:
             flask.flash("Your account is not active.", "warning")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+            return flask.redirect(flask.url_for("pages.home"))
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     units_to_contact = {}
     unit_admins_to_contact = {}

@@ -1,7 +1,8 @@
-{% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
-
-{% block content %}
+{% extends "base.html" %}
+{% block page_title -%}
+Activate TOTP
+{% endblock %}
+{% block body %}
 
 <div class="container">
     {% with messages = get_flashed_messages(with_categories=true) %}
