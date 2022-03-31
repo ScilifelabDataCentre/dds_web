@@ -13,6 +13,7 @@ from dds_web.api import user
 from dds_web.api import project
 from dds_web.api import s3
 from dds_web.api import files
+from dds_web.api import unit
 
 ####################################################################################################
 # BLUEPRINTS ########################################################################## BLUEPRINTS #
@@ -70,6 +71,11 @@ api.add_resource(user.UserActivation, "/user/activation", endpoint="user_activat
 api.add_resource(
     user.RequestTOTPActivation, "/user/request_activate_totp", endpoint="request_totp_activation"
 )
+api.add_resource(user.UnitUsers, "/unit/users", endpoint="unit_users")
+
+# Units #################################################################################### Units #
+
+api.add_resource(unit.AllUnits, "/unit/info/all", endpoint="all_units")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")

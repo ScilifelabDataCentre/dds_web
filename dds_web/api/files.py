@@ -9,11 +9,11 @@ import os
 import re
 
 # Installed
-import flask_restful
+import botocore
 import flask
+import flask_restful
 import sqlalchemy
 import werkzeug
-import botocore
 
 # Own modules
 import dds_web.utils
@@ -28,11 +28,10 @@ from dds_web.api.dds_decorators import (
 )
 from dds_web.errors import (
     AccessDeniedError,
+    BucketNotFoundError,
     DatabaseError,
     DDSArgumentError,
-    EmptyProjectException,
     NoSuchFileError,
-    S3ConnectionError,
 )
 from dds_web.api.schemas import file_schemas
 from dds_web.api.schemas import project_schemas
@@ -75,7 +74,7 @@ def check_eligibility_for_deletion(status, has_been_available):
 class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -94,14 +93,22 @@ class NewFile(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             flask.current_app.logger.debug(err)
             db.session.rollback()
-            raise DatabaseError(f"Failed to add new file to database.")
+            raise DatabaseError(
+                message=str(err),
+                alt_message="Failed to add new file to database"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         return {"message": f"File '{new_file.name}' added to db."}
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @handle_validation_errors
     def put(self):
@@ -177,9 +184,17 @@ class NewFile(flask_restful.Resource):
 
             db.session.add(new_version)
             db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             db.session.rollback()
-            raise DatabaseError(f"Failed updating file information: {err}")
+            raise DatabaseError(
+                message=str(err),
+                alt_message=f"Failed updating file information"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         return {"message": f"File '{file_info.get('name')}' updated in db."}
 
@@ -187,7 +202,7 @@ class NewFile(flask_restful.Resource):
 class MatchFiles(flask_restful.Resource):
     """Checks for matching files in database"""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -206,8 +221,16 @@ class MatchFiles(flask_restful.Resource):
                 .filter(models.File.project_id == sqlalchemy.func.binary(project.id))
                 .all()
             )
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(f"Failed to get matching files in db: {err}")
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            raise DatabaseError(
+                message=str(err),
+                alt_message=f"Failed to get matching files in db"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         # The files checked are not in the db
         if not matching_files or matching_files is None:
@@ -219,7 +242,7 @@ class MatchFiles(flask_restful.Resource):
 class ListFiles(flask_restful.Resource):
     """Lists files within a project"""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
@@ -249,12 +272,7 @@ class ListFiles(flask_restful.Resource):
             return {"num_items": 0, "message": f"The project {project.public_id} is empty."}
 
         # Get files and folders
-        try:
-            distinct_files, distinct_folders = self.items_in_subpath(
-                project=project, folder=subpath
-            )
-        except DatabaseError:
-            raise
+        distinct_files, distinct_folders = self.items_in_subpath(project=project, folder=subpath)
 
         # Collect file and folder info to return to CLI
         if distinct_files:
@@ -264,7 +282,7 @@ class ListFiles(flask_restful.Resource):
                     "folder": False,
                 }
                 if show_size:
-                    info.update({"size": dds_web.utils.format_byte_size(x[1])})
+                    info.update({"size": x[1]})
                 files_folders.append(info)
         if distinct_folders:
             for x in distinct_folders:
@@ -275,7 +293,7 @@ class ListFiles(flask_restful.Resource):
 
                 if show_size:
                     folder_size = self.get_folder_size(project=project, folder_name=x)
-                    info.update({"size": dds_web.utils.format_byte_size(folder_size)})
+                    info.update({"size": folder_size})
                 files_folders.append(info)
 
         return {"files_folders": files_folders}
@@ -297,8 +315,16 @@ class ListFiles(flask_restful.Resource):
                 .first()
             )
 
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            raise DatabaseError(
+                message=str(err),
+                alt_message=f"Could not get size of folder '{folder_name}'"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         return file_info.sizeSum
 
@@ -360,8 +386,16 @@ class ListFiles(flask_restful.Resource):
                 )
                 distinct_folders = list(split_paths)
 
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            raise DatabaseError(
+                message=str(err),
+                alt_message=f"Could not get items in {f'folder {folder}' if folder != '.' else 'root'}"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
         else:
             return distinct_files, distinct_folders
 
@@ -369,7 +403,7 @@ class ListFiles(flask_restful.Resource):
 class RemoveFile(flask_restful.Resource):
     """Removes files from the database and s3 with boto3."""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -397,23 +431,38 @@ class RemoveFile(flask_restful.Resource):
         not_removed_dict, not_exist_list = ({}, [])
 
         with ApiS3Connector(project=project) as s3conn:
-
             # Delete each file
-            for x in files:
+            for entry in files:
                 # Delete from db
                 try:
-                    name_in_bucket = self.delete_one(project=project, filename=x)
+                    name_in_bucket = self.delete_one(project=project, filename=entry)
                     if not name_in_bucket:
                         raise DatabaseError(
                             message="Remote file name not found.", pass_message=True
                         )
                 except FileNotFoundError:
                     db.session.rollback()
-                    not_exist_list.append(x)
+                    not_exist_list.append(entry)
                     continue
-                except (sqlalchemy.exc.SQLAlchemyError, DatabaseError) as err:
+                except (
+                    sqlalchemy.exc.SQLAlchemyError,
+                    DatabaseError,
+                    sqlalchemy.exc.OperationalError,
+                ) as err:
                     db.session.rollback()
-                    not_removed_dict[x] = str(err)
+                    flask.current_app.logger.exception(err)
+                    not_removed_dict[entry] = (
+                        str(err)
+                        if isinstance(err, DatabaseError)
+                        else (
+                            "Could not collect the remote file name"
+                            + (
+                                ": Database malfunction."
+                                if isinstance(err, sqlalchemy.exc.OperationalError)
+                                else "."
+                            )
+                        )
+                    )
                     continue
 
                 # Remove from s3 bucket
@@ -421,15 +470,20 @@ class RemoveFile(flask_restful.Resource):
                     s3conn.remove_one(file=name_in_bucket)
                 except (BucketNotFoundError, botocore.client.ClientError) as err:
                     db.session.rollback()
-                    not_removed_dict[x] = str(err)
+                    not_removed_dict[entry] = str(err)
                     continue
 
                 # Commit to db if ok
                 try:
                     db.session.commit()
-                except sqlalchemy.exc.SQLAlchemyError as err:
+                except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
                     db.session.rollback()
-                    not_removed_dict[x] = str(err)
+                    flask.current_app.logger.exception(err)
+                    not_removed_dict[entry] = "Could not remove data" + (
+                        ": Database malfunction."
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else "."
+                    )
                     continue
 
         return not_removed_dict, not_exist_list
@@ -465,7 +519,7 @@ class RemoveFile(flask_restful.Resource):
 class RemoveDir(flask_restful.Resource):
     """Removes one or more full directories from the database and s3."""
 
-    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -473,55 +527,65 @@ class RemoveDir(flask_restful.Resource):
         """Delete folder(s)."""
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-
         # Verify project status ok for deletion
         check_eligibility_for_deletion(
             status=project.current_status, has_been_available=project.has_been_available
         )
 
         # Remove folder(s)
-        not_removed_dict, not_exist_list = ({}, [])
-        try:
+        not_removed, not_exist = ({}, [])
+        fail_type = None
+        with ApiS3Connector(project=project) as s3conn:
+            for folder_name in flask.request.json:
+                # Get all files in the folder
+                files = self.get_files_for_deletion(project=project, folder=folder_name)
+                if not files:
+                    not_exist.append(folder_name)
+                    continue
 
-            with ApiS3Connector(project=project) as s3conn:
-
-                for x in flask.request.json:
-                    # Get all files in the folder
-                    try:
-                        in_db, objects_to_delete = self.delete_folder(project=project, folder=x)
-                        if not in_db:
-                            not_exist_list.append(x)
-                            raise FileNotFoundError(
-                                "Could not find the specified folder in the database."
-                            )
-                    except (sqlalchemy.exc.SQLAlchemyError, FileNotFoundError) as err:
-                        db.session.rollback()
-                        not_removed_dict[x] = str(err)
-                        continue
-
+                # S3 can only delete 1000 files per request
+                # The deletion will thus be divided into batches of at most 1000 files
+                batch_size: int = 1000
+                for i in range(0, len(files), batch_size):
                     # Delete from s3
+                    bucket_names = tuple(
+                        entry.name_in_bucket for entry in files[i : i + batch_size]
+                    )
                     try:
-                        s3conn.remove_multiple(items=objects_to_delete)
+                        s3conn.remove_multiple(items=bucket_names, batch_size=batch_size)
                     except botocore.client.ClientError as err:
-                        db.session.rollback()
-                        not_removed_dict[x] = str(err)
-                        continue
+                        not_removed[folder_name] = str(err)
+                        fail_type = "s3"
+                        break
 
                     # Commit to db if no error so far
                     try:
+                        self.queue_file_entry_deletion(files[i : i + batch_size])
+                        project.date_updated = dds_web.utils.current_time()
                         db.session.commit()
-                    except sqlalchemy.exc.SQLAlchemyError as err:
+                    except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
                         db.session.rollback()
-                        not_removed_dict[x] = str(err)
-                        continue
-        except (ValueError,):
-            raise
-        return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
+                        flask.current_app.logger.error(
+                            "Files deleted in S3 but not in db. The entries must be synchronised! "
+                            f"Error: {str(err)}"
+                        )
+                        not_removed[folder_name] = "Could not remove files in folder" + (
+                            ": Database malfunction."
+                            if isinstance(err, sqlalchemy.exc.OperationalError)
+                            else "."
+                        )
+                        fail_type = "db"
+                        break
 
-    def delete_folder(self, project, folder):
-        """Delete all items in folder"""
-        exists = False
-        names_in_bucket = []
+        return {
+            "not_removed": not_removed,
+            "fail_type": fail_type,
+            "not_exists": not_exist,
+            "nr_deleted": len(files) if not not_removed else i,
+        }
+
+    def get_files_for_deletion(self, project: str, folder: str):
+        """Get all file entries from db"""
         if folder[-1] == "/":
             folder = folder[:-1]
         re_folder = re.escape(folder)
@@ -539,34 +603,37 @@ class RemoveDir(flask_restful.Resource):
                 )
                 .all()
             )
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            raise DatabaseError(
+                message=str(err),
+                alt_message="Could not collect files for deletion"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
-        except sqlalchemy.exc.SQLAlchemyError as err:
-            raise DatabaseError(message=str(err))
+        return files
 
-        if files:
-            exists = True
-            for x in files:
-                # get current version
-                current_file_version = models.Version.query.filter(
-                    sqlalchemy.and_(
-                        models.Version.active_file == sqlalchemy.func.binary(x.id),
-                        models.Version.time_deleted.is_(None),
-                    )
-                ).first()
-                current_file_version.time_deleted = dds_web.utils.current_time()
-
-                # Delete file and update project size
-                names_in_bucket.append(x.name_in_bucket)
-                db.session.delete(x)
-            project.date_updated = dds_web.utils.current_time()
-
-        return exists, names_in_bucket
+    def queue_file_entry_deletion(self, files: list):
+        """Prepare queries in the db session for deletion of files in the database."""
+        for entry in files:
+            # get current version
+            current_file_version = models.Version.query.filter(
+                sqlalchemy.and_(
+                    models.Version.active_file == sqlalchemy.func.binary(entry.id),
+                    models.Version.time_deleted.is_(None),
+                )
+            ).first()
+            current_file_version.time_deleted = dds_web.utils.current_time()
+            db.session.delete(entry)
 
 
 class FileInfo(flask_restful.Resource):
     """Get file info on files to download."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -600,7 +667,7 @@ class FileInfo(flask_restful.Resource):
 class FileInfoAll(flask_restful.Resource):
     """Get info on all project files."""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @handle_validation_errors
     def get(self):
@@ -622,7 +689,7 @@ class FileInfoAll(flask_restful.Resource):
 class UpdateFile(flask_restful.Resource):
     """Update file info after download"""
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -654,10 +721,18 @@ class UpdateFile(flask_restful.Resource):
                 raise NoSuchFileError()
 
             file.time_latest_download = dds_web.utils.current_time()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             db.session.rollback()
             flask.current_app.logger.exception(str(err))
-            raise DatabaseError("Update of file info failed.")
+            raise DatabaseError(
+                message=str(err),
+                alt_message="Update of file info failed"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
         else:
             # flask.current_app.logger.debug("File %s updated", file_name)
             db.session.commit()

@@ -8,47 +8,58 @@ DDS Multi-Factor Authentication
 
 <p class="lead">Please enter your one-time authentication code.</p>
 {% if using_totp %}
-<p>Please complete the login by entering the one-time authentication code displayed in your authenticator app.</p>
+    <p>Please complete the login by entering the one-time authentication code displayed in your authenticator app.</p>
 {% else %}
-<p>Please complete the login by entering the one-time authentication code that was sent to you.
-    The one-time codes are valid for a short time (15 minutes) after they have been issued.
-</p>
+    <p>Please complete the login by entering the one-time authentication code that was sent to you.
+        The one-time codes are valid for a short time (15 minutes) after they have been issued.</p>
 {% endif %}
-<form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}" autocomplete="off">
+<form method="POST" action="{{ url_for('auth_blueprint.confirm_2fa', next=next) }}">
     {{ form.csrf_token }}
 
-    <!-- Token -->
-    {% if using_totp %}
-    {{ form.totp.label }}
-    {{ form.totp }}
-    <ul>
-        {% for error in form.totp.errors %}
-        <li style="color:red;">
-            {{ error }}
-        </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    {{ form.hotp.label }}
-    {{ form.hotp }}
-    <ul>
-        {% for error in form.hotp.errors %}
-        <li style="color:red;">
-            {{ error }}
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+    <div class="row mb-3">
 
+        <!-- Token -->
+        {% if using_totp %}
+            {{ form.totp.label(class="col-md-auto col-form-label") }}
+            <div class="col-md-3">
+                {{ form.totp(class="form-control mb-2") }}
+            </div>
+        {% else %}
+            {{ form.hotp.label(class="col-md-auto col-form-label") }}
+            <div class="col-md-3">
+                {{ form.hotp(class="form-control mb-2") }}
+            </div>
+        {% endif %}
 
-    <!-- Submit button -->
-    {{ form.submit }}
+        <!-- Submit button -->
+        <div class="col">
+            <button type="submit" class="btn btn-success mb-2">
+                <i class="fas fa-key me-2"></i>
+                Authenticate
+            </button>
+        </div>
+
+        {% if using_totp %}
+            {% if form.totp.errors %}
+                {% for error in form.totp.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        {% else %}
+            {% if form.hotp.errors %}
+                {% for error in form.hotp.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+
+    </div>
 
 </form>
 
 <form method="POST" action="{{ url_for('auth_blueprint.cancel_2fa') }}">
     {{ cancel_form.csrf_token }}
-    {{ cancel_form.cancel }}
+    {{ cancel_form.cancel(class="btn btn-link ps-0") }}
 </form>
 
 {% endblock %}

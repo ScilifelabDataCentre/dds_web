@@ -15,7 +15,6 @@ import flask
 import flask_restful
 import flask_mail
 import itsdangerous
-import marshmallow
 import structlog
 import sqlalchemy
 import http
@@ -30,9 +29,9 @@ import dds_web.errors as ddserr
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 from dds_web.api.dds_decorators import (
     logging_bind_request,
-    args_required,
     json_required,
     handle_validation_errors,
+    handle_db_error,
 )
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
@@ -80,8 +79,11 @@ class AddUser(flask_restful.Resource):
         send_email = json_info.get("send_email", True)
 
         # Check if email is registered to a user
-        existing_user = user_schemas.UserSchema().load({"email": email})
-        unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
+        try:
+            existing_user = user_schemas.UserSchema().load({"email": email})
+            unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
+        except sqlalchemy.exc.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if existing_user or unanswered_invite:
             if not project:
@@ -193,9 +195,8 @@ class AddUser(flask_restful.Resource):
                 "status": http.HTTPStatus.INTERNAL_SERVER_ERROR,
             }
 
-        # Compose and send email
-        AddUser.compose_and_send_email_to_user(userobj=new_invite, mail_type="invite", link=link)
-
+        projects_not_shared = {}
+        goahead = False
         # Append invite to unit if applicable
         if new_invite.role in ["Unit Admin", "Unit Personnel"]:
             # TODO Change / move this later. This is just so that we can add an initial Unit Admin.
@@ -206,20 +207,30 @@ class AddUser(flask_restful.Resource):
                         raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
 
                     unit_row.invites.append(new_invite)
+                    goahead = True
                 else:
-                    raise ddserr.DDSArgumentError(message="Cannot invite this user.")
+                    raise ddserr.DDSArgumentError(
+                        message="You need to specify a unit to invite a Unit Personnel or Unit Admin."
+                    )
 
             if "Unit" in auth.current_user().role:
                 # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
                 for unit_project in auth.current_user().unit.projects:
                     if unit_project.is_active:
-                        share_project_private_key(
-                            from_user=auth.current_user(),
-                            to_another=new_invite,
-                            from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                            project=unit_project,
-                        )
+                        try:
+                            share_project_private_key(
+                                from_user=auth.current_user(),
+                                to_another=new_invite,
+                                from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                                project=unit_project,
+                            )
+                        except ddserr.KeyNotFoundError as keyerr:
+                            projects_not_shared[
+                                unit_project.public_id
+                            ] = "You do not have access to the project(s)"
+                        else:
+                            goahead = True
 
                 if not project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
@@ -229,21 +240,57 @@ class AddUser(flask_restful.Resource):
         else:
             db.session.add(new_invite)
             if project:
-                share_project_private_key(
-                    from_user=auth.current_user(),
-                    to_another=new_invite,
-                    project=project,
-                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                    is_project_owner=new_user_role == "Project Owner",
-                )
+                try:
+                    share_project_private_key(
+                        from_user=auth.current_user(),
+                        to_another=new_invite,
+                        project=project,
+                        from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                        is_project_owner=new_user_role == "Project Owner",
+                    )
+                except ddserr.KeyNotFoundError as keyerr:
+                    projects_not_shared[
+                        project.public_id
+                    ] = "You do not have access to the specified project."
+                else:
+                    goahead = True
+            else:
+                goahead = True
 
-        db.session.commit()
-        msg = f"{str(new_invite)} was successful."
+        # Compose and send email
+        status_code = http.HTTPStatus.OK
+        if goahead:
+            try:
+                db.session.commit()
+            except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
+                db.session.rollback()
+                raise ddserr.DatabaseError(
+                    message=str(sqlerr),
+                    alt_message=f"Invitation failed"
+                    + (
+                        ": Database malfunction."
+                        if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                        else "."
+                    ),
+                ) from sqlerr
+
+            AddUser.compose_and_send_email_to_user(
+                userobj=new_invite, mail_type="invite", link=link
+            )
+            msg = f"{str(new_invite)} was successful."
+        else:
+            msg = (
+                f"The user could not be added to the project(s)."
+                if projects_not_shared
+                else "Unknown error!"
+            ) + " The invite did not succeed."
+            status_code = ddserr.InviteError.code.value
 
         return {
             "email": new_invite.email,
             "message": msg,
-            "status": http.HTTPStatus.OK,
+            "status": status_code,
+            "errors": projects_not_shared,
         }
 
     @staticmethod
@@ -316,22 +363,41 @@ class AddUser(flask_restful.Resource):
                     )
                 )
 
-            share_project_private_key(
-                from_user=auth.current_user(),
-                to_another=whom,
-                from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                project=project,
-                is_project_owner=is_owner,
-            )
+            try:
+                share_project_private_key(
+                    from_user=auth.current_user(),
+                    to_another=whom,
+                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                    project=project,
+                    is_project_owner=is_owner,
+                )
+            except ddserr.KeyNotFoundError as keyerr:
+                return {
+                    "message": (
+                        "You do not have access to the current project. To get access, "
+                        "ask the a user within the responsible unit to grant you access."
+                    ),
+                    "status": ddserr.AccessDeniedError.code.value,
+                }
 
         try:
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
+        except (
+            sqlalchemy.exc.SQLAlchemyError,
+            sqlalchemy.exc.IntegrityError,
+            sqlalchemy.exc.OperationalError,
+        ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise ddserr.DatabaseError(
-                message=f"Server Error: User was not associated with the project"
-            )
+                message=str(err),
+                alt_message=f"Server Error: User was not associated with the project"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         # If project is already released and not expired, send mail to user
         send_email = send_email and project.current_status == "Available"
@@ -339,14 +405,14 @@ class AddUser(flask_restful.Resource):
             AddUser.compose_and_send_email_to_user(whom, "project_release", project=project)
 
         flask.current_app.logger.debug(
-            f"{str(whom)} was associated with {str(project)} as Owner={is_owner}."
+            f"{str(whom)} was given access to the {str(project)} as a {'Project Owner' if is_owner else 'Researcher'}."
         )
 
         return {
             "status": http.HTTPStatus.OK,
             "message": (
-                f"{str(whom)} was associated with "
-                f"{str(project)} as Owner={is_owner}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
+                f"{str(whom)} was given access to the "
+                f"{str(project)} as a {'Project Owner' if is_owner else 'Researcher'}. An e-mail notification has{' not ' if not send_email else ' '}been sent."
             ),
         }
 
@@ -449,7 +515,7 @@ class DeleteUserSelf(flask_restful.Resource):
     Every user can self-delete the own account with an e-mail confirmation.
     """
 
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     def delete(self):
         """Request deletion of own account."""
@@ -462,6 +528,19 @@ class DeleteUserSelf(flask_restful.Resource):
         proj_ids = None
         if current_user.role != "Super Admin":
             proj_ids = [proj.public_id for proj in current_user.projects]
+
+        if current_user.role == "Unit Admin":
+            num_admins = models.UnitUser.query.filter_by(
+                unit_id=current_user.unit.id, is_admin=True
+            ).count()
+            if num_admins <= 3:
+                raise ddserr.AccessDeniedError(
+                    message=(
+                        f"Your unit only has {num_admins} Unit Admins. "
+                        "You cannot delete your account. "
+                        "Invite a new Unit Admin first if you wish to proceed."
+                    )
+                )
 
         # Create URL safe token for invitation link
         s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config["SECRET_KEY"])
@@ -488,11 +567,17 @@ class DeleteUserSelf(flask_restful.Resource):
                     "status": http.HTTPStatus.OK,
                 }
 
-        except sqlalchemy.exc.SQLAlchemyError as sqlerr:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
             db.session.rollback()
             raise ddserr.DatabaseError(
-                message=f"Creation of self-deletion request failed due to database error: {sqlerr}",
-            )
+                message=str(sqlerr),
+                alt_message=f"Creation of self-deletion request failed"
+                + (
+                    ": Database malfunction."
+                    if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from sqlerr
 
         # Create link for deletion request email
         link = flask.url_for("auth_blueprint.confirm_self_deletion", token=token, _external=True)
@@ -561,7 +646,11 @@ class UserActivation(flask_restful.Resource):
         if "email" not in json_input:
             raise ddserr.DDSArgumentError(message="User email missing.")
 
-        user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
+        try:
+            user = user_schemas.UserSchema().load({"email": json_input.pop("email")})
+        except sqlalchemy.exc.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
+
         if not user:
             raise ddserr.NoSuchUserError()
 
@@ -623,9 +712,17 @@ class UserActivation(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             db.session.rollback()
-            raise ddserr.DatabaseError(message=str(err))
+            raise ddserr.DatabaseError(
+                message=str(err),
+                alt_message=f"Unexpected database error"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
         msg = (
             f"The user account {user.username} ({user_email_str}, {user.role}) "
             f" has been {action}d successfully been by {current_user.name} ({current_user.role})."
@@ -655,8 +752,23 @@ class DeleteUser(flask_restful.Resource):
     @logging_bind_request
     @handle_validation_errors
     def delete(self):
+        """Delete user or invite in the DDS."""
+        current_user = auth.current_user()
 
-        user = user_schemas.UserSchema().load(flask.request.json)
+        json_info = flask.request.json
+        if json_info:
+            is_invite = json_info.pop("is_invite", False)
+            if is_invite:
+                email = self.delete_invite(email=json_info.get("email"))
+                return {
+                    "message": ("The invite connected to email " f"'{email}' has been deleted.")
+                }
+
+        try:
+            user = user_schemas.UserSchema().load(json_info)
+        except sqlalchemy.exc.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
+
         if not user:
             raise ddserr.UserDeletionError(
                 message=(
@@ -713,13 +825,55 @@ class DeleteUser(flask_restful.Resource):
             parent_user = models.User.query.get(user.username)
             db.session.delete(parent_user)
             db.session.commit()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             db.session.rollback()
-            raise ddserr.DatabaseError(message=str(err))
+            raise ddserr.DatabaseError(
+                message=str(err),
+                alt_message=f"Failed to delete user"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
+
+    @staticmethod
+    def delete_invite(email):
+        current_user_role = auth.current_user().role
+        try:
+            unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
+            if unanswered_invite:
+                if current_user_role == "Super Admin" or (
+                    current_user_role == "Unit Admin"
+                    and unanswered_invite.role in ["Unit Admin", "Unit Personnel", "Researcher"]
+                ):
+                    db.session.delete(unanswered_invite)
+                    db.session.commit()
+                else:
+                    raise ddserr.AccessDeniedError(
+                        message="You do not have the correct permissions to delete this invite."
+                    )
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            db.session.rollback()
+            flask.current_app.logger.error(
+                "The invite connected to the email "
+                f"{email or '[no email provided]'} was not deleted."
+            )
+            raise ddserr.DatabaseError(
+                message=str(err),
+                alt_message=f"Failed to delete invite"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
+
+        return email
 
 
 class RemoveUserAssociation(flask_restful.Resource):
-    @auth.login_required
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -732,7 +886,10 @@ class RemoveUserAssociation(flask_restful.Resource):
             raise ddserr.DDSArgumentError(message="User email missing.")
 
         # Check if email is registered to a user
-        existing_user = user_schemas.UserSchema().load({"email": user_email})
+        try:
+            existing_user = user_schemas.UserSchema().load({"email": user_email})
+        except sqlalchemy.exc.OperationalError as err:
+            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not existing_user:
             raise ddserr.NoSuchUserError(
@@ -759,14 +916,22 @@ class RemoveUserAssociation(flask_restful.Resource):
 
         try:
             db.session.commit()
-        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.IntegrityError) as err:
+        except (
+            sqlalchemy.exc.SQLAlchemyError,
+            sqlalchemy.exc.IntegrityError,
+            sqlalchemy.exc.OperationalError,
+        ) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise ddserr.DatabaseError(
-                message=(
-                    "Server Error: Removing user association with the project has not succeeded"
-                )
-            )
+                message=str(err),
+                alt_message=f"Server Error: Removing user association with the project has not succeeded"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         flask.current_app.logger.debug(
             f"User {existing_user.username} no longer associated with project {project.public_id}."
@@ -895,9 +1060,17 @@ class ShowUsage(flask_restful.Resource):
             unit_info = models.Unit.query.filter(
                 models.Unit.id == sqlalchemy.func.binary(current_user.unit_id)
             ).first()
-        except sqlalchemy.exc.SQLAlchemyError as err:
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             flask.current_app.logger.exception(err)
-            raise ddserr.DatabaseError("Failed getting unit information.")
+            raise ddserr.DatabaseError(
+                message=str(err),
+                alt_message=f"Failed to get unit information."
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
 
         # Total number of GB hours and cost saved in the db for the specific unit
         total_gbhours_db = 0.0
@@ -948,3 +1121,46 @@ class ShowUsage(flask_restful.Resource):
             },
             "project_usage": usage,
         }
+
+
+class UnitUsers(flask_restful.Resource):
+    """List unit users."""
+
+    @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        """List unit users within the unit the current user is connected to, or the one defined by a superadmin."""
+        unit_users = {}
+
+        if auth.current_user().role == "Super Admin":
+            json_input = flask.request.json
+            if not json_input:
+                raise ddserr.DDSArgumentError(message="Unit public id missing.")
+
+            unit = json_input.get("unit")
+            if not unit:
+                raise ddserr.DDSArgumentError(message="Unit public id missing.")
+
+            unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
+            if not unit_row:
+                raise ddserr.DDSArgumentError(
+                    message=f"There is no unit with the public id '{unit}'."
+                )
+        else:
+            unit_row = auth.current_user().unit
+
+        keys = ["Name", "Username", "Email", "Role", "Active"]
+
+        unit_users = [
+            {
+                "Name": user.name,
+                "Username": user.username,
+                "Email": user.primary_email,
+                "Role": user.role,
+                "Active": user.is_active,
+            }
+            for user in unit_row.users
+        ]
+
+        return {"users": unit_users, "keys": keys, "unit": unit_row.name}

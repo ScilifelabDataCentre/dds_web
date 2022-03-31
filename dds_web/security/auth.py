@@ -26,7 +26,7 @@ action_logger = structlog.getLogger("actions")
 
 # VARIABLES ############################################################################ VARIABLES #
 
-MFA_EXPIRES_IN = datetime.timedelta(hours=48)
+MFA_EXPIRES_IN = datetime.timedelta(hours=168)
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -178,15 +178,17 @@ def extract_token_invite_key(token):
 
     try:
         return invite, bytes.fromhex(claims.get("sen_con"))
-    except ValueError:
-        raise ValueError("Temporary key is expected be in hexadecimal digits for a byte string.")
+    except ValueError as exc:
+        raise ValueError(
+            "Temporary key is expected be in hexadecimal digits for a byte string."
+        ) from exc
 
 
 def obtain_current_encrypted_token():
     try:
         return flask.request.headers["Authorization"].split()[1]
-    except KeyError:
-        raise TokenMissingError("Encrypted token is required but missing!")
+    except KeyError as exc:
+        raise TokenMissingError("Encrypted token is required but missing!") from exc
 
 
 def obtain_current_encrypted_token_claims():
@@ -205,6 +207,17 @@ def verify_token(token):
 
     user = __user_from_subject(subject=claims.get("sub"))
 
+    if user.password_reset:
+        token_expired = claims.get("exp")
+        token_issued = datetime.datetime.fromtimestamp(token_expired) - MFA_EXPIRES_IN
+        password_reset_row = user.password_reset[0]
+        if not password_reset_row.valid and password_reset_row.changed > token_issued:
+            raise AuthenticationError(
+                message=(
+                    "Password reset performed after last authentication. "
+                    "Start a new authenticated session to proceed."
+                )
+            )
     return __handle_multi_factor_authentication(
         user=user, mfa_auth_time_string=claims.get("mfa_auth_time")
     )
@@ -232,7 +245,7 @@ def __verify_general_token(token):
         # jwcryopto.common.JWException is the base exception raised by jwcrypto,
         # and is raised when the token is malformed or invalid.
         flask.current_app.logger.exception(e)
-        raise AuthenticationError(message="Invalid token")
+        raise AuthenticationError(message="Invalid token") from e
 
     expiration_time = data.get("exp")
     # Use a hard check on top of the one from the dependency
@@ -249,7 +262,11 @@ def __user_from_subject(subject):
     """Get user row from username."""
     if subject:
         user = models.User.query.get(subject)
-        if user and user.is_active:
+        if user:
+            if not user.is_active:
+                raise AccessDeniedError(
+                    message=("Your account has been deactivated. You cannot use the DDS.")
+                )
             return user
 
 
@@ -333,10 +350,10 @@ def verify_token_signature(token):
     try:
         jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
         return json.loads(jwttoken.claims)
-    except jwt.JWTExpired:
+    except jwt.JWTExpired as exc:
         # jwt dependency uses a 60 seconds leeway to check exp
         # it also prints out a stack trace for it, so we handle it here
-        raise AuthenticationError(message="Expired token")
+        raise AuthenticationError(message="Expired token") from exc
     except ValueError as exc:
         # "Token format unrecognized"
         raise AuthenticationError(message="Invalid token") from exc

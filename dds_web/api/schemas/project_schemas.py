@@ -6,15 +6,17 @@
 
 # Standard Library
 import os
+import re
 
 # Installed
+import botocore.client
 import flask
 import marshmallow
 import sqlalchemy
 
 # Own modules
 from dds_web import errors as ddserr
-from dds_web import auth, db
+from dds_web import auth
 from dds_web.database import models
 from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
@@ -77,9 +79,7 @@ class CreateProjectSchema(marshmallow.Schema):
     description = marshmallow.fields.String(
         required=True,
         allow_none=False,
-        validate=marshmallow.validate.And(
-            marshmallow.validate.Length(min=1), dds_web.utils.contains_disallowed_characters
-        ),
+        validate=marshmallow.validate.Length(min=1),
         error_messages={
             "required": {"message": "A project description is required."},
             "null": {"message": "A project description is required."},
@@ -88,10 +88,7 @@ class CreateProjectSchema(marshmallow.Schema):
     pi = marshmallow.fields.String(
         required=True,
         allow_none=False,
-        validate=marshmallow.validate.And(
-            marshmallow.validate.Length(min=1, max=255),
-            dds_web.utils.contains_disallowed_characters,
-        ),
+        validate=marshmallow.validate.Email(),
         error_messages={
             "required": {"message": "A principal investigator is required."},
             "null": {"message": "A principal investigator is required."},
@@ -126,6 +123,15 @@ class CreateProjectSchema(marshmallow.Schema):
         ):
             raise marshmallow.ValidationError("Missing fields!")
 
+    @marshmallow.validates("description")
+    def validate_description(self, value):
+        """Verify that description only has words, spaces and . / ,."""
+        disallowed = re.findall(r"[^(\w\s.,)]+", value)
+        if disallowed:
+            raise marshmallow.ValidationError(
+                message="The description can only contain letters, spaces, period and commas."
+            )
+
     def generate_bucketname(self, public_id, created_time):
         """Create bucket name for the given project."""
         return "{pid}-{tstamp}-{rstring}".format(
@@ -145,7 +151,7 @@ class CreateProjectSchema(marshmallow.Schema):
             .one_or_none()
         )
         if not unit_row:
-            raise ddserr.AccessDeniedError(message=f"Error: Your user is not associated to a unit.")
+            raise ddserr.AccessDeniedError(message="Error: Your user is not associated to a unit.")
 
         unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
         data["public_id"] = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)

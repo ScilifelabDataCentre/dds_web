@@ -15,7 +15,6 @@ import flask
 import argon2
 import flask_login
 import pathlib
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from cryptography.hazmat.primitives.twofactor import (
     hotp as twofactor_hotp,
     totp as twofactor_totp,
@@ -394,6 +393,7 @@ class User(flask_login.UserMixin, db.Model):
     deletion_request = db.relationship(
         "DeletionRequest", back_populates="requester", cascade="all, delete"
     )
+    password_reset = db.relationship("PasswordReset", back_populates="user", cascade="all, delete")
 
     __mapper_args__ = {"polymorphic_on": type}  # No polymorphic identity --> no create only user
 
@@ -470,6 +470,11 @@ class User(flask_login.UserMixin, db.Model):
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         return hotp.generate(self.hotp_counter)
 
+    def reset_current_HOTP(self):
+        """Make the previous HOTP as invalid by nulling issue time and increasing counter."""
+        self.hotp_issue_time = None
+        self.hotp_counter += 1
+
     def verify_HOTP(self, token):
         """Verify the HOTP token.
 
@@ -485,8 +490,8 @@ class User(flask_login.UserMixin, db.Model):
 
         try:
             hotp.verify(token, self.hotp_counter)
-        except twofactor_InvalidToken:
-            raise AuthenticationError("Invalid one-time authentication code.")
+        except twofactor_InvalidToken as exc:
+            raise AuthenticationError("Invalid one-time authentication code.") from exc
 
         # Token verified, increment counter to prohibit re-use
         self.hotp_counter += 1
@@ -845,6 +850,26 @@ class DeletionRequest(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<DeletionRequest {self.email}>"
+
+
+class PasswordReset(db.Model):
+    """Keep track of password resets."""
+
+    # Table setup
+    __tablename__ = "password_resets"
+    __table_args__ = {"extend_existing": True}
+
+    # Primary Key
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    user_id = db.Column(db.String(50), db.ForeignKey("users.username", ondelete="CASCADE"))
+    user = db.relationship("User", back_populates="password_reset")
+
+    email = db.Column(db.String(254), unique=True, nullable=False)
+    issued = db.Column(db.DateTime(), unique=False, nullable=False)
+    changed = db.Column(db.DateTime(), unique=False, nullable=True)
+
+    valid = db.Column(db.Boolean, unique=False, nullable=False, default=True)
 
 
 class File(db.Model):
