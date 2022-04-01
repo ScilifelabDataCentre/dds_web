@@ -5,7 +5,8 @@ import flask
 scheduler = flask_apscheduler.APScheduler()
 
 
-@scheduler.task("cron", id="available_to_expired", minute=5, hour=2, misfire_grace_time=1)
+# @scheduler.task("cron", id="available_to_expired", minute=5, hour=2, misfire_grace_time=1)
+@scheduler.task("interval", id="available_to_expired", seconds=5, misfire_grace_time=1)
 def set_available_to_expired():
     scheduler.app.logger.debug("Task: Checking for Expiring projects.")
     import sqlalchemy
@@ -17,40 +18,71 @@ def set_available_to_expired():
     from dds_web.utils import current_time, page_query
 
     with scheduler.app.app_context():
+        expire = ProjectStatus()
 
-        for project in page_query(models.Project.query.filter(models.Project.is_active == 1)):
+        errors = {}
 
-            if "Available" in project.current_status and project.current_deadline <= current_time():
-                scheduler.app.logger.debug("Handling expiring project")
-                scheduler.app.logger.debug(
-                    "Project: %s has status %s and expires on: %s",
-                    project.id,
-                    project.current_status,
-                    project.current_deadline,
+        for unit in models.Unit.query.all():
+            errors[unit.name] = {}
+
+            days_in_expired = unit.days_in_expired
+
+            for project in page_query(
+                models.Project.query.filter(
+                    sqlalchemy.and_(
+                        models.Project.is_active == 1, models.Project.unit_id == unit.id
+                    )
                 )
-                expire = ProjectStatus()
-                new_status_row = expire.expire_project(
-                    project=project, current_time=current_time(), deadline_in=30
+            ):
+
+                if (
+                    project.current_status == "Available"
+                    and project.current_deadline <= current_time()
+                ):
+                    scheduler.app.logger.debug("Handling expiring project")
+                    scheduler.app.logger.debug(
+                        "Project: %s has status %s and expires on: %s",
+                        project.id,
+                        project.current_status,
+                        project.current_deadline,
+                    )
+                    new_status_row = expire.expire_project(
+                        project=project, current_time=current_time(), deadline_in=days_in_expired
+                    )
+
+                    project.project_statuses.append(new_status_row)
+
+                    try:
+                        db.session.commit()
+                    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+                        flask.current_app.logger.exception("blah" + err)
+                        db.session.rollback()
+                        errors[unit.name][project.public_id] = {
+                            "message": str(err),
+                            "alt_message": "Status was not updated",
+                        }
+                    continue
+                        # raise DatabaseError(
+                        #     message=str(err),
+                        #     alt_message=(
+                        #         "Status was not updated"
+                        #         + (
+                        #             ": Database malfunction."
+                        #             if isinstance(err, sqlalchemy.exc.OperationalError)
+                        #             else ": Server Error."
+                        #         )
+                        #     ),
+                        # ) from err
+                    scheduler.app.logger.debug(
+                        "Project: %s has status Archived now!", project.public_id
+                    )
+                else:
+                    scheduler.app.logger.debug("Nothing to do for Project: %s", project.public_id)
+
+        for unit, projects in errors.items():
+            if projects:
+                scheduler.app.logger.error(
+                    f"Following projects of Unit '{unit}' encountered issues during expiration process:"
                 )
-
-                project.project_statuses.append(new_status_row)
-
-                try:
-                    db.session.commit()
-                except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-                    flask.current_app.logger.exception(err)
-                    db.session.rollback()
-                    raise DatabaseError(
-                        message=str(err),
-                        alt_message=(
-                            "Status was not updated"
-                            + (
-                                ": Database malfunction."
-                                if isinstance(err, sqlalchemy.exc.OperationalError)
-                                else ": Server Error."
-                            )
-                        ),
-                    ) from err
-                scheduler.app.logger.debug("Project: %s has status Archived now!", project.title)
-            else:
-                scheduler.app.logger.debug("Nothing to do for Project: %s", project.title)
+                for proj in errors[unit].keys():
+                    scheduler.app.logger.error(f"Error for project '{proj}': {errors[unit][proj]} ")
