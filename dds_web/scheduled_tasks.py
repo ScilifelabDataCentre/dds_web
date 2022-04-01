@@ -26,6 +26,7 @@ def change_status_to_expired():
 
 @scheduler.task("cron", id="expired_to_archived", minute=1, hour=0, misfire_grace_time=3600)
 def set_expired_to_archived():
+    """Search for expired projects whose deadlines are past and archive them"""
     import sqlalchemy
     from dds_web import db
     from dds_web.database import models
@@ -52,19 +53,19 @@ def set_expired_to_archived():
             proj_status.project.project_statuses.append(new_status_row)
             flask.current_app.logger.debug(delete_message)
 
-        try:
-            db.session.commit()
-        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise DatabaseError(
-                message=str(err),
-                alt_message=(
-                    "Status was not updated"
-                    + (
-                        ": Database malfunction."
-                        if isinstance(err, sqlalchemy.exc.OperationalError)
-                        else ": Server Error."
-                    )
-                ),
-            ) from err
+            try:
+                db.session.commit()
+            except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+                flask.current_app.logger.exception(err)
+                db.session.rollback()
+                raise DatabaseError(
+                    message=str(err),
+                    alt_message=(
+                        "Status was not updated"
+                        + (
+                            ": Database malfunction."
+                            if isinstance(err, sqlalchemy.exc.OperationalError)
+                            else ": Server Error."
+                        )
+                    ),
+                ) from err
