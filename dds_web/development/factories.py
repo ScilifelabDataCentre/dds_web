@@ -3,7 +3,7 @@ import itertools
 import random
 import flask
 
-import dds_web.database.models as models
+from dds_web.database import models
 from dds_web import db
 
 STATUSES_PER_PROJECT = 5
@@ -20,7 +20,7 @@ class UnitFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = db.session
 
     id = factory.Sequence(lambda n: n)
-    name = factory.Sequence(lambda n: "Unit {}".format(n))
+    name = factory.Sequence(lambda n: f"Unit {n}")
     public_id = factory.Faker("uuid4")
     external_display_name = "Display Name"
     contact_email = "support@example.com"

@@ -1,0 +1,63 @@
+---
+# based on https://github.com/gitpod-io/template-docker-compose
+
+# multi-repo
+additionalRepositories:
+  - url: https://github.com/ScilifelabDataCentre/dds_cli
+    checkoutLocation: dds_cli
+
+tasks:
+  - name: Build backend and run server
+    init: >
+      chmod a+x /workspace/ &&
+      docker compose build --pull
+    command: docker compose --profile cli up
+  - name: Open dds cli
+    openMode: split-right
+    command: >
+      gp await-port 5000 &&
+      echo -e "\033[1;31mUse the dds cli in this terminal window\033[0m\n\033[0;33me.g.: dds auth login\033[0m" &&
+      docker exec -it dds_cli bash
+
+ports:
+  - port: 5000 # backend
+    onOpen: open-preview
+    visibility: public
+  - port: 1080 # mailcatcher
+    # Can't have more than one preview at once currently :(
+    # open-browser is blocked by Chrome pop-up blocker
+    onOpen: ignore
+    visibility: public
+  - port: 9000 # minio
+    onOpen: ignore
+    visibility: public
+  - port: 9001 # minio
+    onOpen: ignore
+    visibility: public
+  - port: 3306 # db
+    onOpen: ignore
+    visibility: public
+
+vscode:
+  extensions:
+    - ms-azuretools.vscode-docker
+    - ms-python.python
+    - esbenp.prettier-vscode # Linting and style checking
+    - Gruntfuggly.todo-tree # Display TODO and FIXME in a tree view in the activity bar
+
+github:
+  prebuilds:
+    # enable for the default branch (defaults to true)
+    master: true
+    # enable for all branches in this repo (defaults to false)
+    branches: false
+    # enable for pull requests coming from this repo (defaults to true)
+    pullRequests: true
+    # enable for pull requests coming from forks (defaults to false)
+    pullRequestsFromForks: true
+    # add a check to pull requests (defaults to true)
+    addCheck: true
+    # add a "Review in Gitpod" button as a comment to pull requests (defaults to false)
+    addComment: false
+    # add a "Review in Gitpod" button to the pull request's description (defaults to false)
+    addBadge: true

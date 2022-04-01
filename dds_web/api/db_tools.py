@@ -34,8 +34,18 @@ def remove_user_self_deletion_request(user):
         email = request_row.email
         db.session.delete(request_row)
         db.session.commit()
-    except sqlalchemy.exc.SQLAlchemyError as err:
+    except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
         db.session.rollback()
-        raise DatabaseError(message=str(err))
+        raise DatabaseError(
+            message=str(err),
+            alt_message=(
+                "Failed to remove deletion request"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                )
+            ),
+        ) from err
 
     return email

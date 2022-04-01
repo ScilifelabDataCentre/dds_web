@@ -78,8 +78,8 @@ def __encrypt_project_private_key(owner, project_private_key):
         owner_public_key = serialization.load_der_public_key(owner.public_key)
         if isinstance(owner_public_key, asymmetric.rsa.RSAPublicKey):
             return __encrypt_with_rsa(project_private_key, owner_public_key)
-    except ValueError:
-        raise KeyOperationError(message="User public key could not be loaded!")
+    except ValueError as exc:
+        raise KeyOperationError(message="User public key could not be loaded!") from exc
 
 
 def __decrypt_project_private_key(user, token, encrypted_project_private_key):
@@ -91,8 +91,8 @@ def __decrypt_project_private_key(user, token, encrypted_project_private_key):
         user_private_key = serialization.load_der_private_key(private_key_bytes, password=None)
         if isinstance(user_private_key, asymmetric.rsa.RSAPrivateKey):
             return __decrypt_with_rsa(encrypted_project_private_key, user_private_key)
-    except ValueError:
-        raise KeyOperationError(message="User private key could not be loaded!")
+    except ValueError as exc:
+        raise KeyOperationError(message="User private key could not be loaded!") from exc
 
 
 def obtain_project_private_key(user, project, token):

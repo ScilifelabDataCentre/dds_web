@@ -7,28 +7,15 @@
 # Standard library
 import logging
 import traceback
-import pathlib
-import json
-import gc
 
 # Installed
-import botocore
-import flask
-import sqlalchemy
 
 # Own modules
 from dds_web.api.dds_decorators import (
     connect_cloud,
     bucket_must_exists,
 )
-from dds_web.errors import (
-    BucketNotFoundError,
-    DatabaseError,
-    DeletionError,
-    S3ProjectNotFoundError,
-    S3InfoNotFoundError,
-    KeyNotFoundError,
-)
+
 from dds_web.database import models
 
 
@@ -98,12 +85,14 @@ class ApiS3Connector:
         bucket = None
 
     @bucket_must_exists
-    def remove_multiple(self, items, *args, **kwargs):
+    def remove_multiple(self, items, batch_size: int = 1000, *args, **kwargs):
         """Removes all with prefix."""
-        _ = self.resource.meta.client.delete_objects(
-            Bucket=self.project.bucket,
-            Delete={"Objects": [{"Key": x} for x in items]},
-        )
+        # s3 can only delete 1000 objects per request
+        for i in range(0, len(items), batch_size):
+            _ = self.resource.meta.client.delete_objects(
+                Bucket=self.project.bucket,
+                Delete={"Objects": [{"Key": x} for x in items[i : i + batch_size]]},
+            )
 
     @bucket_must_exists
     def remove_one(self, file, *args, **kwargs):
@@ -118,6 +107,6 @@ class ApiS3Connector:
         url = self.resource.meta.client.generate_presigned_url(
             "get_object",
             Params={"Bucket": self.project.bucket, "Key": key},
-            ExpiresIn=3 * 24 * 60 * 60,
+            ExpiresIn=604800,  # 7 days in seconds
         )
         return url
