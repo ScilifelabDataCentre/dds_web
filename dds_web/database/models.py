@@ -873,3 +873,19 @@ class Version(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<File Version {self.id}>"
+
+
+class MOTD(db.Model):
+    """
+    Data model for keeping track of MOTD (message of the day).
+
+    Primary key:
+    - message
+    """
+
+    # Table setup
+    __tablename__ = "motd"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    message = db.Column(db.Text, primary_key=True)
