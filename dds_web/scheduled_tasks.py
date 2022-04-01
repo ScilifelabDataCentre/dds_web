@@ -38,7 +38,7 @@ def set_expired_to_archived():
             models.ProjectStatuses.status == "Archived"
         )
         expired_projs = models.ProjectStatuses.query.filter(
-            models.ProjectStatuses.project_id.notin_(archived_projs),
+            models.ProjectStatuses.project_id.not_in(archived_projs),
             models.ProjectStatuses.status == "Expired",
             models.ProjectStatuses.deadline <= current_time(),
         ).all()

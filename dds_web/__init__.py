@@ -276,7 +276,6 @@ def create_app(testing=False, database_uri=None):
 
             # Set-up the scheduler
             app.config["SCHEDULER_JOBSTORES"] = {"default": SQLAlchemyJobStore(engine=db.engine)}
-            app.config["SCHEDULER_TIMEZONE"] = utc
             scheduler.init_app(app)
             scheduler.start()
 
