@@ -6,7 +6,7 @@ scheduler = flask_apscheduler.APScheduler()
 
 
 # @scheduler.task("cron", id="available_to_expired", minute=5, hour=2, misfire_grace_time=1)
-@scheduler.task("interval", id="available_to_expired", seconds=5, misfire_grace_time=1)
+@scheduler.task("interval", id="available_to_expired", seconds=10, misfire_grace_time=1)
 def set_available_to_expired():
     scheduler.app.logger.debug("Task: Checking for Expiring projects.")
     import sqlalchemy
@@ -37,7 +37,7 @@ def set_available_to_expired():
 
                 if (
                     project.current_status == "Available"
-                    and project.current_deadline <= current_time()
+                    and project.current_deadline >= current_time()
                 ):
                     scheduler.app.logger.debug("Handling expiring project")
                     scheduler.app.logger.debug(
@@ -54,28 +54,14 @@ def set_available_to_expired():
 
                     try:
                         db.session.commit()
+                        scheduler.app.logger.debug(
+                            "Project: %s has status Archived now!", project.public_id
+                        )
                     except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-                        flask.current_app.logger.exception("blah" + err)
+                        flask.current_app.logger.exception(err)
                         db.session.rollback()
-                        errors[unit.name][project.public_id] = {
-                            "message": str(err),
-                            "alt_message": "Status was not updated",
-                        }
+                        errors[unit.name][project.public_id] = str(err)
                     continue
-                        # raise DatabaseError(
-                        #     message=str(err),
-                        #     alt_message=(
-                        #         "Status was not updated"
-                        #         + (
-                        #             ": Database malfunction."
-                        #             if isinstance(err, sqlalchemy.exc.OperationalError)
-                        #             else ": Server Error."
-                        #         )
-                        #     ),
-                        # ) from err
-                    scheduler.app.logger.debug(
-                        "Project: %s has status Archived now!", project.public_id
-                    )
                 else:
                     scheduler.app.logger.debug("Nothing to do for Project: %s", project.public_id)
 
