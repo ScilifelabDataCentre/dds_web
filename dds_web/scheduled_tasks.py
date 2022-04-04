@@ -28,11 +28,11 @@ def set_available_to_expired():
             days_in_expired = unit.days_in_expired
 
             for project in page_query(
-                models.Project.query.filter(
-                    sqlalchemy.and_(
+                db.session.query(models.Project).filter(
+                    sqlalchemy.and(
                         models.Project.is_active == 1, models.Project.unit_id == unit.id
                     )
-                )
+                ).with_for_update()
             ):
 
                 if (
