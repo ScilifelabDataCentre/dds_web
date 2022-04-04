@@ -123,12 +123,12 @@ def set_expired_to_archived():
                 current_time=current_time(),
             )
             proj_status.project.project_statuses.append(new_status_row)
-            flask.current_app.logger.debug(delete_message)
+            scheduler.app.logger.debug(delete_message)
 
             try:
                 db.session.commit()
             except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-                flask.current_app.logger.exception(err)
+                scheduler.app.logger.exception(err)
                 db.session.rollback()
                 raise DatabaseError(
                     message=str(err),
