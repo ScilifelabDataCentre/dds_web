@@ -22,7 +22,7 @@ def set_available_to_expired():
 
         errors = {}
 
-        for unit in models.Unit.query.all():
+        for unit in db.session.query(models.Unit).with_for_update().all():
             errors[unit.name] = {}
 
             days_in_expired = unit.days_in_expired
