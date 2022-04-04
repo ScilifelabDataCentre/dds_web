@@ -77,15 +77,7 @@ def set_available_to_expired():
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DatabaseError(
-                message=str(err),
-                alt_message=f"Status update failed"
-                + (
-                    ": Database malfunction."
-                    if isinstance(err, sqlalchemy.exc.OperationalError)
-                    else "."
-                ),
-            ) from err
+            raise
 
         for unit, projects in errors.items():
             if projects:
