@@ -96,7 +96,7 @@ def set_available_to_expired():
                     scheduler.app.logger.error(f"Error for project '{proj}': {errors[unit][proj]} ")
 
 
-@scheduler.task("cron", id="expired_to_archived", minute=1, hour=0, misfire_grace_time=3600)
+@scheduler.task("cron", id="expired_to_archived", hour=0, minute=1, misfire_grace_time=3600)
 def set_expired_to_archived():
     """Search for expired projects whose deadlines are past and archive them"""
     import sqlalchemy
