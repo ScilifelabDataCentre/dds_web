@@ -55,7 +55,7 @@ class Config(object):
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_USE_TLS = False
     MAIL_USE_SSL = False
-    MAIL_DEFAULT_SENDER = "dds@noreply.se"
+    MAIL_DEFAULT_SENDER = ("SciLifeLab DDS", "dds@example.com")
 
     TOKEN_ENDPOINT_ACCESS_LIMIT = "10/hour"
     RATELIMIT_STORAGE_URI = os.environ.get(
