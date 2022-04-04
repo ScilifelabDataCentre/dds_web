@@ -5,7 +5,7 @@ import flask
 scheduler = flask_apscheduler.APScheduler()
 
 
-# @scheduler.task("cron", id="available_to_expired", minute=5, hour=2, misfire_grace_time=1)
+# @scheduler.task("cron", id="available_to_expired", hour=0, minute=1, misfire_grace_time=3600)
 @scheduler.task("interval", id="available_to_expired", seconds=10, misfire_grace_time=1)
 def set_available_to_expired():
     scheduler.app.logger.debug("Task: Checking for Expiring projects.")
