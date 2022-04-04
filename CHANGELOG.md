@@ -70,3 +70,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Send an email to all Unit Admins when a Unit Admin has reset their password ([#1110](https://github.com/ScilifelabDataCentre/dds_web/pull/1110)).
 - Patch: Add check for unanswered invite when creating project and adding user who is already invited ([#1117](https://github.com/ScilifelabDataCentre/dds_web/pull/1117))
 - Add a Flask command for finding and deleting "lost files" (files that exist only in db or s3) ([#1124](https://github.com/ScilifelabDataCentre/dds_web/pull/1124))
+- Cronjob: Scheduled task for changing project status to Expired ([#1116](https://github.com/ScilifelabDataCentre/dds_web/pull/1116))
