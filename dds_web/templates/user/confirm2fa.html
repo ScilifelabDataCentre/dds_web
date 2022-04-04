@@ -17,7 +17,12 @@ DDS Multi-Factor Authentication
         <!-- Token -->
         {{ form.hotp.label(class="col-md-auto col-form-label") }}
         <div class="col-md-3">
-            {{ form.hotp(class="form-control mb-2") }}
+            {{ form.hotp(class="form-control mb-2"+(" is-invalid" if form.hotp.errors else "")) }}
+            {% if form.hotp.errors %}
+                {% for error in form.hotp.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
         </div>
 
         <!-- Submit button -->
@@ -27,12 +32,6 @@ DDS Multi-Factor Authentication
                 Authenticate
             </button>
         </div>
-
-        {% if form.hotp.errors %}
-            {% for error in form.hotp.errors %}
-                <div class="invalid-feedback">{{ error }}</div>
-            {% endfor %}
-        {% endif %}
 
     </div>
 
