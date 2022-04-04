@@ -88,7 +88,7 @@ def set_available_to_expired():
                     scheduler.app.logger.error(f"Error for project '{proj}': {errors[unit][proj]} ")
 
 
-@scheduler.task("cron", id="expired_to_archived", minute=1, hour=0, misfire_grace_time=3600)
+@scheduler.task("cron", id="expired_to_archived", hour=0, minute=1, misfire_grace_time=3600)
 def set_expired_to_archived():
     """Search for expired projects whose deadlines are past and archive them"""
     import sqlalchemy
@@ -115,12 +115,12 @@ def set_expired_to_archived():
                 current_time=current_time(),
             )
             proj_status.project.project_statuses.append(new_status_row)
-            flask.current_app.logger.debug(delete_message)
+            scheduler.app.logger.debug(delete_message)
 
             try:
                 db.session.commit()
             except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-                flask.current_app.logger.exception(err)
+                scheduler.app.logger.exception(err)
                 db.session.rollback()
                 raise DatabaseError(
                     message=str(err),
