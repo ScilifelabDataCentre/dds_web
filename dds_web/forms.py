@@ -19,7 +19,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
     """User registration form."""
 
     name = wtforms.StringField(
-        "name",
+        "Name",
         validators=[
             wtforms.validators.Length(
                 min=2, message="The name must be at least 2 characters long."
@@ -28,7 +28,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
         ],
     )
     email = wtforms.StringField(
-        "email",
+        "Email",
         validators=[
             wtforms.validators.DataRequired(message="You need to provide an email address."),
             wtforms.validators.Email(message="Please provide a valid email (the one invited)."),
@@ -37,7 +37,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
         render_kw={"readonly": True},
     )
     username = wtforms.StringField(
-        "username",
+        "Username",
         validators=[
             wtforms.validators.InputRequired(message="Please enter a username."),
             wtforms.validators.Length(
@@ -48,7 +48,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
         ],
     )
     password = wtforms.PasswordField(
-        "password",
+        "Password",
         validators=[
             wtforms.validators.DataRequired(message="You need to provide a password."),
             wtforms.validators.EqualTo("confirm", message="The passwords do not match."),
