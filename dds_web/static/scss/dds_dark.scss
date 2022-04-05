@@ -79,7 +79,9 @@
   background-color: rgba(var(--bs-light-rgb), var(--bs-bg-opacity)) !important;
 }
 
-.show-light,
 .hide-dark {
-  display: none;
+  display: none !important;
+}
+.hide-light {
+  display: block !important;
 }
