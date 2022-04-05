@@ -21,7 +21,7 @@
     "css-prefix-dark": "postcss --replace css/dds_dark.css --use autoprefixer --map",
     "css-purge-light": "purgecss --keyframes --css css/dds_light.css --content index.html \"node_modules/bootstrap/js/dist/{util,modal}.js\" --output css/",
     "css-purge-dark": "purgecss --keyframes --css css/dds_dark.css --content index.html \"node_modules/bootstrap/js/dist/{util,modal}.js\" --output css/",
-    "css": "npm-run-all css-compile css-prefix-light css-prefix-dark",
+    "css": "npm run css-compile; npm run css-prefix-light; npm run css-prefix-dark",
     "server": "serve --listen 3000",
     "start": "npm-run-all --parallel watch server",
     "watch": "nodemon -e html,scss -x \"npm run css\"",
