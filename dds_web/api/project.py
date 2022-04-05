@@ -328,7 +328,9 @@ class ProjectStatus(flask_restful.Resource):
         except (TypeError, DatabaseError, DeletionError, BucketNotFoundError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
-            raise DeletionError(message="Server Error: Status was not updated") from err
+            raise DeletionError(
+                project=project, message="Server Error: Status was not updated"
+            ) from err
 
         return (
             models.ProjectStatuses(
