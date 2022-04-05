@@ -22,7 +22,7 @@ The backend interface is built using [Flask](https://flask.palletsprojects.com/e
 
 See the [ADR](https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR) for information on the design decisions.
 
----
+***
 
 ## Development
 
@@ -209,7 +209,7 @@ SAVE_DB=1 pytest
 Note that this stops the database from being deleted, so it will speed up the _next_ run.
 Equally, if you want to tear down you need to run pytest _twice_ without it, as it only affects the tear down.
 
----
+***
 
 ## Production
 
