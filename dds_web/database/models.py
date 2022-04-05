@@ -888,4 +888,6 @@ class MOTD(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    message = db.Column(db.Text, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    message = db.Column(db.Text(4294000000), nullable=False, default=None)
+    date_created = db.Column(db.DateTime(), nullable=False, default=None)

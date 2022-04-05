@@ -12,7 +12,7 @@ import flask
 import structlog
 
 # Own modules
-from dds_web import auth,db
+from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.dds_decorators import logging_bind_request, handle_db_error
 from dds_web import utils
@@ -63,6 +63,7 @@ class AllUnits(flask_restful.Resource):
             ],
         }
 
+
 class MOTD(flask_restful.Resource):
     """Add a new MOTD message."""
 
@@ -72,9 +73,10 @@ class MOTD(flask_restful.Resource):
     def post(self):
         """Add a MOTD."""
 
+        curr_date = utils.current_time()
         motd = flask.request.json
 
         flask.current_app.logger.debug(motd["message"])
-        new_motd = models.MOTD(message=motd["message"])
+        new_motd = models.MOTD(message=motd["message"], date_created=curr_date)
         db.session.add(new_motd)
         db.session.commit()
