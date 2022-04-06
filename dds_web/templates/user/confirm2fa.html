@@ -22,12 +22,22 @@ DDS Multi-Factor Authentication
         {% if using_totp %}
             {{ form.totp.label(class="col-md-auto col-form-label") }}
             <div class="col-md-3">
-                {{ form.totp(class="form-control mb-2") }}
+                {{ form.totp(class="form-control mb-2"+(" is-invalid" if form.totp.errors else "")) }}
+                {% if form.totp.errors %}
+                    {% for error in form.totp.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
             </div>
         {% else %}
             {{ form.hotp.label(class="col-md-auto col-form-label") }}
             <div class="col-md-3">
-                {{ form.hotp(class="form-control mb-2") }}
+                {{ form.hotp(class="form-control mb-2"+(" is-invalid" if form.hotp.errors else "")) }}
+                {% if form.hotp.errors %}
+                    {% for error in form.hotp.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
             </div>
         {% endif %}
 
@@ -38,20 +48,6 @@ DDS Multi-Factor Authentication
                 Authenticate
             </button>
         </div>
-
-        {% if using_totp %}
-            {% if form.totp.errors %}
-                {% for error in form.totp.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-        {% else %}
-            {% if form.hotp.errors %}
-                {% for error in form.hotp.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endif %}
 
     </div>
 
