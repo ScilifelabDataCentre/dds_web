@@ -14,7 +14,7 @@ import structlog
 # Own modules
 from dds_web import auth, db
 from dds_web.database import models
-from dds_web.api.dds_decorators import logging_bind_request, handle_db_error
+from dds_web.api.dds_decorators import json_required, logging_bind_request, handle_db_error
 from dds_web import utils
 import dds_web.errors as ddserr
 
@@ -69,14 +69,18 @@ class MOTD(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin"])
     @logging_bind_request
+    @json_required
     @handle_db_error
     def post(self):
         """Add a MOTD."""
 
         curr_date = utils.current_time()
-        motd = flask.request.json
+        json_input = flask.request.json
+        motd = json_input.get("message")
+        if not motd:
+            raise ddserr.DDSArgumentError(message="No MOTD specified.")
 
-        flask.current_app.logger.debug(motd["message"])
-        new_motd = models.MOTD(message=motd["message"], date_created=curr_date)
+        flask.current_app.logger.debug(motd)
+        new_motd = models.MOTD(message=motd, date_created=curr_date)
         db.session.add(new_motd)
         db.session.commit()
