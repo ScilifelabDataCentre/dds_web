@@ -13,3 +13,11 @@
 .alert-message {
   @extend .alert-info;
 }
+
+.footer img {
+  opacity: 0.75;
+  transition: opacity 0.2s ease-in-out;
+  &:hover {
+    opacity: 1;
+  }
+}
