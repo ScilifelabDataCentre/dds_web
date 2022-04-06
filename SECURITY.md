@@ -11,6 +11,6 @@ currently being supported with security updates.
 
 ## Reporting security issues
 
-Please send us your report privately via: __email comming__
+Please send us your report privately via: **email comming**
 
-DO NOT file a public issue. 
+DO NOT file a public issue.
