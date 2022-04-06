@@ -78,6 +78,7 @@ class MOTD(flask_restful.Resource):
         json_input = flask.request.json
         motd = json_input.get("message")
         if not motd:
+
             raise ddserr.DDSArgumentError(message="No MOTD specified.")
 
         flask.current_app.logger.debug(motd)
