@@ -1,4 +1,5 @@
-name: Publish Docker image
+---
+name: Publish Docker Image
 on:
   push:
     branches:
@@ -35,10 +36,10 @@ jobs:
       - name: Push backend to Docker Hub
         uses: docker/build-push-action@v2
         with:
-          file: 
+          file:
           context: .
           push: true
-          tags: 
+          tags:
       - name: Publish image
         uses: docker/build-push-action@v2
         with:
