@@ -956,12 +956,14 @@ class EncryptedToken(flask_restful.Resource):
     @basic_auth.login_required
     @logging_bind_request
     def get(self):
+        secondfactor_method = "TOTP" if auth.current_user().totp_enabled else "HOTP"
         return {
             "message": "Please take this token to /user/second_factor to authenticate with MFA!",
             "token": encrypted_jwt_token(
                 username=auth.current_user().username,
                 sensitive_content=flask.request.authorization.get("password"),
             ),
+            "secondfactor_method": secondfactor_method,
         }
 
 
