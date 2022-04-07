@@ -76,7 +76,25 @@ def fill_db():
         safespring_secret=current_app.config.get("DDS_SAFESPRING_SECRET"),
     )
 
-    unit_1.users.extend([unituser_1, unituser_2])
+    unitadmin_1 = models.UnitUser(username="unitadmin_1", password=password, name="Unit Admin 1")
+    email_unitadmin_1 = models.Email(email="unitadmin1@mailtrap.io", primary=True)
+    email_unitadmin_1.user = unitadmin_1
+    unitadmin_1.active = True
+    unitadmin_1.is_admin = True
+
+    unitadmin_2 = models.UnitUser(username="unitadmin_2", password=password, name="Unit Admin 2")
+    email_unitadmin_2 = models.Email(email="unitadmin2@mailtrap.io", primary=True)
+    email_unitadmin_2.user = unitadmin_2
+    unitadmin_2.active = True
+    unitadmin_2.is_admin = True
+
+    unitadmin_3 = models.UnitUser(username="unitadmin_3", password=password, name="Unit Admin 3")
+    email_unitadmin_3 = models.Email(email="unitadmin3@mailtrap.io", primary=True)
+    email_unitadmin_3.user = unitadmin_3
+    unitadmin_3.active = True
+    unitadmin_3.is_admin = True
+
+    unit_1.users.extend([unituser_1, unituser_2, unitadmin_1, unitadmin_2, unitadmin_3])
 
     # Create first project - leave out foreign key
     project_1 = models.Project(
