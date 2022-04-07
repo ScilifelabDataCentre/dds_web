@@ -10,3 +10,10 @@
 // Import custom styling
 @import "custom";
 @import "homepage";
+
+.hide-dark {
+  display: inline-block !important;
+}
+.hide-light {
+  display: none !important;
+}
