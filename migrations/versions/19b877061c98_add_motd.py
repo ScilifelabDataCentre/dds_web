@@ -21,7 +21,7 @@ def upgrade():
     op.create_table(
         "motd",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("message", sa.Text(length=4294000000), nullable=False),
+        sa.Column("message", sa.Text(), nullable=False),
         sa.Column("date_created", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
