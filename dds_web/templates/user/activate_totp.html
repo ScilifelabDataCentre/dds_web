@@ -5,17 +5,6 @@ Activate TOTP
 {% block body %}
 
 <div class="container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class=flashes>
-        {% for category, message in messages %}
-        <div class="alert alert-{{category}}" role="alert">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
     <div>
         <h4>Activate one-time authentication using TOTP </h4>
         <h5>Instructions:</h5>
