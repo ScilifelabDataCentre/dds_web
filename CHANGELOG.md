@@ -76,3 +76,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-04-06 - 2022-04-20)
 
 - New endpoint for adding a message of the day to the database ([#1136](https://github.com/ScilifelabDataCentre/dds_web/pull/1136))
+- Patch: Custom error for PI email validation ([]())
