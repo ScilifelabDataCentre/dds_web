@@ -608,8 +608,6 @@ class CreateProject(flask_restful.Resource):
             return {"warning": warning_message}
 
         # Add a new project to db
-        import pymysql
-
         try:
             new_project = project_schemas.CreateProjectSchema().load(p_info)
             db.session.add(new_project)
@@ -674,7 +672,7 @@ class CreateProject(flask_restful.Resource):
                         flask.current_app.logger.error(err)
                         addition_status = "Unexpected database error."
                     else:
-                        addition_status = f"Error for {user.get('email')}: {err}"
+                        addition_status = f"Error for '{user.get('email')}': {err}"
                     user_addition_statuses.append(addition_status)
                     continue
 
@@ -704,7 +702,7 @@ class CreateProject(flask_restful.Resource):
                             role=user.get("role"),
                         )
                     except DatabaseError as err:
-                        addition_status = f"Error for {user['email']}: {err.description}"
+                        addition_status = f"Error for '{user['email']}': {err.description}"
                     else:
                         addition_status = add_user_result["message"]
                     user_addition_statuses.append(addition_status)
