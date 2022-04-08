@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import flask_apscheduler
 import flask
 
@@ -167,3 +169,32 @@ def set_expired_to_archived():
                 )
                 for proj in errors[unit].keys():
                     scheduler.app.logger.error(f"Error for project '{proj}': {errors[unit][proj]} ")
+
+
+@scheduler.task("cron", id="delete_invite", hour=0, minute=1, misfire_grace_time=3600)
+def delete_invite():
+    """Delete invite older than a week"""
+
+    scheduler.app.logger.debug("Task: Checking for invites to delete.")
+
+    from sqlalchemy.exc import OperationalError, SQLAlchemyError
+    from dds_web import db
+    from dds_web.database import models
+    from dds_web.errors import DatabaseError
+    from dds_web.utils import current_time
+
+    with scheduler.app.app_context():
+        expiration: datetime.datetime = current_time() - timedelta(weeks=1)
+
+        try:
+            invites: list = db.session.query(models.Invite).all()
+            for invite in invites:
+                if invite.created_at < expiration:
+                    models.Invite.query.filter_by(id=invite.id).delete()
+                    models.ProjectInviteKeys.query.filter_by(invite_id=invite.id).delete()
+                    db.session.commit()
+                    scheduler.app.logger.debug("Invite deleted.")
+        except (OperationalError, SQLAlchemyError) as err:
+            scheduler.app.logger.exception(err)
+            db.session.rollback()
+            raise
