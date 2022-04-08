@@ -26,8 +26,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Docker meta - backend
-        id: meta-backend
+      - name: Docker metadata
+        id: meta
         uses: docker/metadata-action@v3
         with:
           images: |
