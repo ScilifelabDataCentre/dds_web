@@ -44,6 +44,7 @@ def fill_db():
         username="unituser_1",
         password=password,
         name="First Unit User",
+        active=True,
     )
 
     # Create second unit user
@@ -51,17 +52,33 @@ def fill_db():
         username="unituser_2",
         password=password,
         name="Second Unit User",
+        active=True,
+    )
+
+    unitadmin_1 = models.UnitUser(
+        username="unitadmin_1", password=password, name="Unit Admin 1", active=True, is_admin=True
+    )
+    unitadmin_2 = models.UnitUser(
+        username="unitadmin_2", password=password, name="Unit Admin 2", active=True, is_admin=True
+    )
+    unitadmin_3 = models.UnitUser(
+        username="unitadmin_3", password=password, name="Unit Admin 3", active=True, is_admin=True
     )
 
     # create a few e-mail addresses
     email_unituser_1 = models.Email(email="unituser1@mailtrap.io", primary=True)
     email_unituser_1b = models.Email(email="unituser1@somewhereelse.se", primary=False)
     email_unituser_2 = models.Email(email="unituser2@mailtrap.io", primary=True)
+    email_unitadmin_1 = models.Email(email="unitadmin1@mailtrap.io", primary=True)
+    email_unitadmin_2 = models.Email(email="unitadmin2@mailtrap.io", primary=True)
+    email_unitadmin_3 = models.Email(email="unitadmin3@mailtrap.io", primary=True)
+
     email_unituser_1.user = unituser_1
     email_unituser_1b.user = unituser_1
     email_unituser_2.user = unituser_2
-    unituser_1.active = True
-    unituser_2.active = True
+    email_unitadmin_1.user = unitadmin_1
+    email_unitadmin_2.user = unitadmin_2
+    email_unitadmin_3.user = unitadmin_3
 
     # Create first unit
     unit_1 = models.Unit(
@@ -76,7 +93,7 @@ def fill_db():
         safespring_secret=current_app.config.get("DDS_SAFESPRING_SECRET"),
     )
 
-    unit_1.users.extend([unituser_1, unituser_2])
+    unit_1.users.extend([unituser_1, unituser_2, unitadmin_1, unitadmin_2, unitadmin_3])
 
     # Create first project - leave out foreign key
     project_1 = models.Project(
