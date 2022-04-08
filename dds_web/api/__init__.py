@@ -76,6 +76,7 @@ api.add_resource(user.UnitUsers, "/unit/users", endpoint="unit_users")
 # Units #################################################################################### Units #
 
 api.add_resource(unit.AllUnits, "/unit/info/all", endpoint="all_units")
+api.add_resource(unit.MOTD, "/unit/motd", endpoint="motd")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")

@@ -72,3 +72,8 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Cronjob: Scheduled task for changing project status from Available to Expired ([#1116](https://github.com/ScilifelabDataCentre/dds_web/pull/1116))
 - Cronjob: Scheduled task for changing project status from Expired to Archived ([#1115](https://github.com/ScilifelabDataCentre/dds_web/pull/1115))
 - Add a Flask command for finding and deleting "lost files" (files that exist only in db or s3) ([#1124](https://github.com/ScilifelabDataCentre/dds_web/pull/1124))
+
+## Sprint (2022-04-06 - 2022-04-20)
+
+- New endpoint for adding a message of the day to the database ([#1136](https://github.com/ScilifelabDataCentre/dds_web/pull/1136))
+- Patch: Custom error for PI email validation ([#1146](https://github.com/ScilifelabDataCentre/dds_web/pull/1146))

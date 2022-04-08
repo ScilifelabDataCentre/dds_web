@@ -78,3 +78,10 @@
   --bs-bg-opacity: 0.2;
   background-color: rgba(var(--bs-light-rgb), var(--bs-bg-opacity)) !important;
 }
+
+.hide-dark {
+  display: none !important;
+}
+.hide-light {
+  display: inline-block !important;
+}
