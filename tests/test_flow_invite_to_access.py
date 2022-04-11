@@ -137,7 +137,9 @@ def invite_confirm_register_and_get_private(
 
         user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
 
-        auth_token = tests.UserAuth(f"{form_data['username']}:{form_data['password']}").token(client)
+        auth_token = tests.UserAuth(f"{form_data['username']}:{form_data['password']}").token(
+            client
+        )
 
         if projects is not None:
             for project in projects:
@@ -165,6 +167,7 @@ def test_invite_to_register_researcher_without_checkbox_by_unitadmin(client):
         no_checkbox=True,
     )
     assert not user
+
 
 def test_invite_to_register_researcher_without_project_by_unitadmin(client):
     "Test that a user without a project can be created by unitadmin"
