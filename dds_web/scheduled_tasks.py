@@ -184,7 +184,7 @@ def delete_invite():
     from dds_web.utils import current_time
 
     with scheduler.app.app_context():
-        expiration: datetime.datetime = current_time() - timedelta(weeks=1)
+        expiration: datetime.datetime = current_time()
         errors: Dict = {}
 
         try:
