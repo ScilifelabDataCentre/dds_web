@@ -3,10 +3,10 @@
 
 <div class="row mb-5 pb-3">
     <div class="col-lg-6">
-        <h1 class="display-4">Welcome to the SciLifeLab Data Delivery System</h1>
-        <p class="lead">A cloud-based system for the delivery of data from SciLifeLab Facilities to their users.</p>
+        <p class="lead" style="justify-content: start;">The Data Delivery System (DDS) is a cloud-based system for the delivery of data from SciLifeLab platforms to their users. It consists of a command line interface (CLI) and a currently minimal web interface. The web interface will be improved on as soon as possible.</p>
+        <br>
         <div class="row">
-            <div class="col-xxl-8 offset-xxl-2 bg-light p-3">
+            <div class="col-xxl-8 offset-xxl-2 bg-light p-3" style="display: flex; flex-direction: column;">
                 {% if g.current_user %}
                     <a class="btn btn-primary w-100 mb-2" href="{{ url_for('auth_blueprint.projects_info') }}">
                         View projects
@@ -35,7 +35,7 @@
     When a <a href="https://www.scilifelab.se/services" target="_blank">service or platform</a> processes a project
     for a research group, large quantities of data can be generated.
     The Data Delivery System (DDS) is a system designed for the simple and secure delivery of this data from SciLifeLab
-    facilities to their users.
+    platforms to their users.
 </p>
 
 <h2>How it works</h2>
