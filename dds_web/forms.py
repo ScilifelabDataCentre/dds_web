@@ -71,7 +71,6 @@ class RegistrationForm(flask_wtf.FlaskForm):
         "I agree to the conditions",
         validators=[
             wtforms.validators.DataRequired(message="Please agree to the conditions."),
-            wtforms.validators.EqualTo(True, message="Please agree to the conditions."),
         ],
     )
 
