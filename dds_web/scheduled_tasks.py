@@ -185,16 +185,23 @@ def delete_invite():
 
     with scheduler.app.app_context():
         expiration: datetime.datetime = current_time() - timedelta(weeks=1)
+        errors: Dict = {}
 
         try:
             invites: list = db.session.query(models.Invite).all()
             for invite in invites:
-                if invite.created_at < expiration:
-                    models.Invite.query.filter_by(id=invite.id).delete()
-                    models.ProjectInviteKeys.query.filter_by(invite_id=invite.id).delete()
-                    db.session.commit()
-                    scheduler.app.logger.debug("Invite deleted.")
+                if (invite.created_at + timedelta(weeks=1)) < expiration:
+                    try:
+                        db.session.delete(invite)
+                        scheduler.app.logger.debug("Invite deleted.")
+                    except (OperationalError, SQLAlchemyError) as err:
+                        error[invite.id] = str(invite)
+                        scheduler.app.logger.exception(err)
+                        db.session.rollback()
+                        raise
         except (OperationalError, SQLAlchemyError) as err:
             scheduler.app.logger.exception(err)
-            db.session.rollback()
             raise
+
+        for error in errors.items():
+            scheduler.app.logger.error(f"{errors[error]} not deleted.")
