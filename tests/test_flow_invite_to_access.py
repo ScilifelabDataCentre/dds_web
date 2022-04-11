@@ -18,7 +18,7 @@ REGISTRATION_DATA = {
     "username": "user_not_existing",
     "password": "Password123",
     "confirm": "Password123",
-    "policy_checkbox": "x", 
+    "policy_checkbox": "x",
     "submit": "submit",
 }
 
