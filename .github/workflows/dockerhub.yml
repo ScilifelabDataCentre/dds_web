@@ -1,4 +1,5 @@
-name: Publish Docker image
+---
+name: Publish Docker Image
 on:
   push:
     branches:
@@ -19,12 +20,24 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - id: docker-tag
-        uses: yuya-takeyama/docker-tag-from-github-ref-action@v1
-      - name: Push backend to Docker Hub
+      - name: Log in to Github Container Repository
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            scilifelabdatacentre/dds-backend
+            ghcr.io/scilifelabdatacentre/dds-backend
+      - name: Publish image
         uses: docker/build-push-action@v2
         with:
           file: Dockerfiles/backend.Dockerfile
           context: .
           push: true
-          tags: scilifelabdatacentre/dds-backend:${{ steps.docker-tag.outputs.tag }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

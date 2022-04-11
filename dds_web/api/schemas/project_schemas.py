@@ -88,7 +88,7 @@ class CreateProjectSchema(marshmallow.Schema):
     pi = marshmallow.fields.String(
         required=True,
         allow_none=False,
-        validate=marshmallow.validate.Email(),
+        validate=marshmallow.validate.Email(error="The PI email is invalid."),
         error_messages={
             "required": {"message": "A principal investigator is required."},
             "null": {"message": "A principal investigator is required."},
