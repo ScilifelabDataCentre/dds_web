@@ -100,6 +100,7 @@ def registry_form_data(client):
         "username": "user_not_existing",
         "password": "Password123",
         "confirm": "Password123",
+        "policy_checkbox": True,
         "submit": "submit",
     }
 
