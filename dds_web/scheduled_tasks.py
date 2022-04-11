@@ -193,15 +193,16 @@ def delete_invite():
                 if (invite.created_at + timedelta(weeks=1)) < expiration:
                     try:
                         db.session.delete(invite)
+                        db.session.commit()
                         scheduler.app.logger.debug("Invite deleted.")
                     except (OperationalError, SQLAlchemyError) as err:
-                        error[invite.id] = str(invite)
+                        errors[invite] = str(err)
                         scheduler.app.logger.exception(err)
                         db.session.rollback()
-                        raise
+                        continue
         except (OperationalError, SQLAlchemyError) as err:
             scheduler.app.logger.exception(err)
             raise
 
-        for error in errors.items():
-            scheduler.app.logger.error(f"{errors[error]} not deleted.")
+        for invite, error in errors.items():
+            scheduler.app.logger.error(f"{invite} not deleted: {error}")
