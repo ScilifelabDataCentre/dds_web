@@ -17,11 +17,13 @@ def home():
     form = forms.LoginForm()
     return render_template("home.html", form=form)
 
+
 @pages.route("/policy", methods=["GET"])
 def open_policy():
     """Show privacy policy."""
     return render_template("policy.html")
-    
+
+
 @pages.route("/status")
 def get_status():
     """Return a simple status message to confirm that the system is ready."""
