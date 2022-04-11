@@ -76,7 +76,7 @@ def get_private(client, project, auth_token):
 
 
 def invite_confirm_register_and_get_private(
-    client, inviting_user, email, projects, role_per_project=None
+    client, inviting_user, email, projects, role_per_project=None, no_checkbox=False
 ):
     # Invite
     if projects is None or projects == []:
@@ -109,30 +109,62 @@ def invite_confirm_register_and_get_private(
     # Complete registration
     form_token = flask.g.csrf_token
 
-    form_data = {**REGISTRATION_DATA, "csrf_token": form_token, "email": email}
+    if no_checkbox:
+        NO_CHECKBOX_REGISTRATION_DATA = REGISTRATION_DATA.copy()
+        NO_CHECKBOX_REGISTRATION_DATA.pop("policy_checkbox")
 
-    response = client.post(
-        tests.DDSEndpoint.USER_NEW,
-        json=form_data,
-        follow_redirects=True,
-    )
-    assert response.status == "200 OK"
+        form_data = {**NO_CHECKBOX_REGISTRATION_DATA, "csrf_token": form_token, "email": email}
 
-    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+        response = client.post(
+            tests.DDSEndpoint.USER_NEW,
+            json=form_data,
+            follow_redirects=True,
+        )
 
-    auth_token = tests.UserAuth(f"{form_data['username']}:{form_data['password']}").token(client)
+        assert response.status == "200 OK"
 
-    if projects is not None:
-        for project in projects:
-            # Request decrypted project private key for user just created
-            # to somewhat test that the decryption works
-            get_private(client, project, auth_token)
+        user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+
+    else:
+        form_data = {**REGISTRATION_DATA, "csrf_token": form_token, "email": email}
+
+        response = client.post(
+            tests.DDSEndpoint.USER_NEW,
+            json=form_data,
+            follow_redirects=True,
+        )
+        assert response.status == "200 OK"
+
+        user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+
+        auth_token = tests.UserAuth(f"{form_data['username']}:{form_data['password']}").token(client)
+
+        if projects is not None:
+            for project in projects:
+                # Request decrypted project private key for user just created
+                # to somewhat test that the decryption works
+                get_private(client, project, auth_token)
 
     return user
 
 
 # Researcher invited by Unit Admin ############################# Researcher invited by Unit Admin #
 
+
+def test_invite_to_register_researcher_without_checkbox_by_unitadmin(client):
+    "Test that a user without a project can be created by unitadmin"
+    unitadmin = models.User.query.filter_by(username="unitadmin").one_or_none()
+    researcher_to_be = "researcher_to_be@example.org"
+
+    user = invite_confirm_register_and_get_private(
+        client,
+        inviting_user=unitadmin,
+        email=researcher_to_be,
+        projects=None,
+        role_per_project=["Researcher"],
+        no_checkbox=True,
+    )
+    assert not user
 
 def test_invite_to_register_researcher_without_project_by_unitadmin(client):
     "Test that a user without a project can be created by unitadmin"
