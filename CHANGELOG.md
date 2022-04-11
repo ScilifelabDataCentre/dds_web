@@ -77,3 +77,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 - New endpoint for adding a message of the day to the database ([#1136](https://github.com/ScilifelabDataCentre/dds_web/pull/1136))
 - Patch: Custom error for PI email validation ([#1146](https://github.com/ScilifelabDataCentre/dds_web/pull/1146))
+- Cronjob: Scheduled task for deleting unanswered invites after a week ([#1147](https://github.com/ScilifelabDataCentre/dds_web/pull/1147))
