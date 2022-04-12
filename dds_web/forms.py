@@ -66,6 +66,14 @@ class RegistrationForm(flask_wtf.FlaskForm):
             wtforms.validators.EqualTo("password", message="The passwords do not match."),
         ],
     )
+
+    policy_checkbox = wtforms.BooleanField(
+        "I agree to the conditions",
+        validators=[
+            wtforms.validators.DataRequired(message="Please agree to the conditions."),
+        ],
+    )
+
     submit = wtforms.SubmitField("submit")
 
 

@@ -87,7 +87,22 @@ Create account
         </div>
     </div>
     {% endif %}
-
+    
+    <!-- Agree to the conditions -->
+    <div class="row mb-3">
+        <p>Open the <a href="{{ url_for('pages.open_policy') }}" target="_blank">Privacy Policy</a></p>
+        {{ form.policy_checkbox.label(class="form-check-label")}}
+        <div>
+            {{ form.policy_checkbox }}
+            {% if form.policy_checkbox.errors %}
+                {% for error in form.policy_checkbox.errors %}
+                    <div class="invalid-feedback">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
     <!-- Submit button -->
     <button type="submit" class="btn btn-success mb-2">
         <i class="fa-solid fa-user-plus me-2"></i>
