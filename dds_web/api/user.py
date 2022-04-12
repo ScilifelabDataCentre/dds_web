@@ -234,7 +234,7 @@ class AddUser(flask_restful.Resource):
                                 goahead = True
                 else:
                     goahead = True
-                
+
                 if not project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
                 else:
