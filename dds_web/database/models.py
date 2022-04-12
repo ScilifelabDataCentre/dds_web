@@ -726,6 +726,7 @@ class Invite(db.Model):
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
+    created_at = db.Column(db.DateTime(), nullable=False, default=dds_web.utils.current_time())
 
     @property
     def projects(self):
