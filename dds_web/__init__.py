@@ -369,7 +369,11 @@ def create_new_unit(
     days_in_available,
     days_in_expired,
 ):
-    """Create a new unit."""
+    """Create a new unit.
+    
+    Rules for bucket names, which are affected by the public_id at the moment:
+    https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+    """
     from dds_web.database import models
 
     error_message = ""
