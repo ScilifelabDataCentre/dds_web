@@ -80,3 +80,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - New Data Delivery System logo ([#1148](https://github.com/ScilifelabDataCentre/dds_web/pull/1148))
 - Cronjob: Scheduled task for deleting unanswered invites after a week ([#1147](https://github.com/ScilifelabDataCentre/dds_web/pull/1147))
 - Checkbox in registration form and policy to agree to ([#1151](https://github.com/ScilifelabDataCentre/dds_web/pull/1151))
+- Patch: Add checks for valid public_id when creating new unit to avoid bucket name errors ([#1154](https://github.com/ScilifelabDataCentre/dds_web/pull/1154))
