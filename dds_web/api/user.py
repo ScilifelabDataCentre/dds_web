@@ -1101,4 +1101,4 @@ class UnitUsers(flask_restful.Resource):
             for user in unit_row.users
         ]
 
-        return {"users": unit_users, "keys": keys, "unit": unit_row.name}
+        return {"users": unit_users, "keys": keys, "unit": unit_row.name, "empty": not unit_users}
