@@ -372,19 +372,21 @@ def create_new_unit(
 ):
     """Create a new unit."""
     from dds_web.database import models
-    
+
     error_message = ""
     if len(public_id) > 50:
         error_message = "The 'public_id' can be a maximum of 50 characters"
     if re.findall(r"[^a-zA-Z0-9.-]", public_id):
-        error_message = "The 'public_id' can only contain letters, numbers, dots (.) and hyphens (-)."
+        error_message = (
+            "The 'public_id' can only contain letters, numbers, dots (.) and hyphens (-)."
+        )
     if public_id[0] in [".", "-"]:
         error_message = "The 'public_id' must begin with a letter or number."
     if public_id.count(".") > 2:
         error_message = "The 'public_id' should not contain more than two dots."
     if public_id[:4] == "xn--":
         error_message = "The 'public_id' cannot begin with the 'xn--' prefix."
-    
+
     if error_message:
         flask.current_app.logger.error(error_message)
         return
