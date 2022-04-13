@@ -1,18 +1,22 @@
 {% extends "base.html" %}
 {% block page_title -%}
-Activate TOTP
+Activate multi-factor authentication with authenticator app
 {% endblock %}
 {% block body %}
 
 <div class="container">
     <div>
-        <h4>Activate one-time authentication using TOTP </h4>
+        <h4>Activate two factor authentication using authenticator app </h4>
         <h5>Instructions:</h5>
         <ul>
-            <li>Download an authenticator on your phone, for example
+            <li>Download an authenticator app on your phone, for example
                 <a
                     href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en&gl=US">Google
                     Authenticator</a>.
+            </li>
+            <li>Scan the below QR code or enter the setup key to set up your account in the authenticator app.
+            </li>
+            <li>Once the account is set up, enter a verification code displayed in the app in the given field below and click {{ form.submit.label }} to enable two factor authentication using authenticator app.
             </li>
         </ul>
     </div>
@@ -23,36 +27,35 @@ Activate TOTP
         </div>
     </div>
     <div>
-        <h4>Secret</h4>
+        <h4>Setup Key</h4>
         <p>{{totp_secret}}</p>
     </div>
     <div>
-        <h4>TOTP URI</h4>
+        <h4>Key URI</h4>
         <p>{{totp_uri}}</p>
     </div>
     <div>
         <form method="POST" action="{{ url_for('auth_blueprint.activate_totp', token=token) }}">
             {{ form.csrf_token }}
-
+            <div class="row mb-3">
             <!-- Token -->
-            {{ form.totp.label }}
-            {{ form.totp }}
-            <ul>
+            {{ form.totp.label(class="col-md-auto col-form-label") }}
+            <div class="col-md-3">
+            {{ form.totp(class="form-control mb-2"+(" is-invalid" if form.totp.errors else "")) }}
+            {% if form.totp.errors %}
                 {% for error in form.totp.errors %}
-                <li style="color:red;">
-                    {{ error }}
-                </li>
+                    <div class="invalid-feedback">{{ error }}</div>
                 {% endfor %}
-            </ul>
-
+            {% endif %}
+            </div>
             <!-- Submit button -->
             <div class="col">
                 <button type="submit" class="btn btn-success mb-2">
                     <i class="fas fa-key me-2"></i>
-                    Activate
+                    {{ form.submit.label }}
                 </button>
             </div>
-
+          </div>
         </form>
     </div>
 

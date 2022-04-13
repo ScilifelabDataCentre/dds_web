@@ -100,7 +100,7 @@ class Confirm2FACodeHOTPForm(flask_wtf.FlaskForm):
 
 class Confirm2FACodeTOTPForm(flask_wtf.FlaskForm):
     totp = wtforms.StringField(
-        "totp",
+        "Verification Code",
         validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
     )
     submit = wtforms.SubmitField("Authenticate")
@@ -108,7 +108,7 @@ class Confirm2FACodeTOTPForm(flask_wtf.FlaskForm):
 
 class ActivateTOTPForm(flask_wtf.FlaskForm):
     totp = wtforms.StringField(
-        "totp",
+        "Verification Code",
         validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
     )
     submit = wtforms.SubmitField("Activate")

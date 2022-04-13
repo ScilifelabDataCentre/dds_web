@@ -167,7 +167,7 @@ def activate_totp(token):
     dds_web.security.auth.verify_activate_totp_token(token, current_user=user)
 
     if user.totp_enabled:
-        flask.flash("Two-factor authentication via TOTP is already enabled.")
+        flask.flash("Two-factor authentication via authenticator app is already enabled.")
         return flask.redirect(flask.url_for("pages.home"))
 
     # Don't change secret on page reload
@@ -177,7 +177,7 @@ def activate_totp(token):
     totp_secret, totp_uri = user.get_totp_secret()
 
     # QR code generation
-    image = qrcode.make(totp_uri, image_factory=qrcode.image.svg.SvgImage)
+    image = qrcode.make(totp_uri, image_factory=qrcode.image.svg.SvgFillImage)
     stream = io.BytesIO()
     image.save(stream)
 
@@ -206,7 +206,7 @@ def activate_totp(token):
 
         user.activate_totp()
 
-        flask.flash("Two-factor authentication via TOTP has been enabled.")
+        flask.flash("Two-factor authentication via authenticator app has been enabled.")
         return flask.redirect(flask.url_for("pages.home"))
 
     return (
