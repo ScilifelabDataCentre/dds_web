@@ -321,7 +321,11 @@ def confirm_2fa():
 
     else:
         return flask.render_template(
-            "user/confirm2fa.html", form=form, cancel_form=cancel_form, next=next_target, using_totp=user.totp_enabled
+            "user/confirm2fa.html",
+            form=form,
+            cancel_form=cancel_form,
+            next=next_target,
+            using_totp=user.totp_enabled,
         )
 
 
