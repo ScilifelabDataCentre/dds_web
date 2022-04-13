@@ -387,7 +387,7 @@ def create_new_unit(
         error_message = "The 'public_id' must begin with a letter or number."
     elif public_id.count(".") > 2:
         error_message = "The 'public_id' should not contain more than two dots."
-    elif public_id[:4] == "xn--":
+    elif public_id.startswith("xn--"):
         error_message = "The 'public_id' cannot begin with the 'xn--' prefix."
 
     if error_message:
