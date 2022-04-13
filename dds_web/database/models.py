@@ -181,7 +181,7 @@ class Unit(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(255), unique=True, nullable=False)
+    public_id = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(255), unique=True, nullable=False)
     external_display_name = db.Column(db.String(255), unique=False, nullable=False)
     contact_email = db.Column(db.String(255), unique=False, nullable=True)
@@ -726,6 +726,7 @@ class Invite(db.Model):
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
+    created_at = db.Column(db.DateTime(), nullable=False, default=dds_web.utils.current_time())
 
     @property
     def projects(self):
@@ -873,3 +874,21 @@ class Version(db.Model):
         """Called by print, creates representation of object"""
 
         return f"<File Version {self.id}>"
+
+
+class MOTD(db.Model):
+    """
+    Data model for keeping track of MOTD (message of the day).
+
+    Primary key:
+    - message
+    """
+
+    # Table setup
+    __tablename__ = "motd"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    message = db.Column(db.Text, nullable=False, default=None)
+    date_created = db.Column(db.DateTime(), nullable=False, default=None)

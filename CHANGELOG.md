@@ -69,3 +69,15 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Change from apscheduler to flask-apscheduler - solves the app context issue ([#1109](https://github.com/ScilifelabDataCentre/dds_web/pull/1109))
 - Send an email to all Unit Admins when a Unit Admin has reset their password ([#1110](https://github.com/ScilifelabDataCentre/dds_web/pull/1110)).
 - Patch: Add check for unanswered invite when creating project and adding user who is already invited ([#1117](https://github.com/ScilifelabDataCentre/dds_web/pull/1117))
+- Cronjob: Scheduled task for changing project status from Available to Expired ([#1116](https://github.com/ScilifelabDataCentre/dds_web/pull/1116))
+- Cronjob: Scheduled task for changing project status from Expired to Archived ([#1115](https://github.com/ScilifelabDataCentre/dds_web/pull/1115))
+- Add a Flask command for finding and deleting "lost files" (files that exist only in db or s3) ([#1124](https://github.com/ScilifelabDataCentre/dds_web/pull/1124))
+
+## Sprint (2022-04-06 - 2022-04-20)
+
+- New endpoint for adding a message of the day to the database ([#1136](https://github.com/ScilifelabDataCentre/dds_web/pull/1136))
+- Patch: Custom error for PI email validation ([#1146](https://github.com/ScilifelabDataCentre/dds_web/pull/1146))
+- New Data Delivery System logo ([#1148](https://github.com/ScilifelabDataCentre/dds_web/pull/1148))
+- Cronjob: Scheduled task for deleting unanswered invites after a week ([#1147](https://github.com/ScilifelabDataCentre/dds_web/pull/1147))
+- Checkbox in registration form and policy to agree to ([#1151](https://github.com/ScilifelabDataCentre/dds_web/pull/1151))
+- Patch: Add checks for valid public_id when creating new unit to avoid bucket name errors ([#1154](https://github.com/ScilifelabDataCentre/dds_web/pull/1154))

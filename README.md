@@ -20,7 +20,7 @@ The Delivery Portal consists of two components:
 
 The backend interface is built using [Flask](https://flask.palletsprojects.com/en/2.0.x/).
 
-See the [ADR] for information on the design decisions.
+See the [ADR](https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR) for information on the design decisions.
 
 ---
 

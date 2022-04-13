@@ -6,65 +6,109 @@ Create account
 
 {% block body %}
 
-        <form method="POST" action="{{ url_for('auth_blueprint.register') }}">
-            {{ form.csrf_token }}
+<p class="lead">Many thanks for your interest in using the SciLifeLab Data Delivery System.</p>
+<p>Please use the form below to configure your account.</p>
 
-            <!-- Name name -->
-            {{ form.name.label }}
-            {{ form.name }}
-            <ul>
+<form method="POST" action="{{ url_for('auth_blueprint.register') }}" class="mt-4">
+    {{ form.csrf_token }}
+
+    <!-- Name -->
+    <div class="row mb-3">
+        {{ form.name.label(class="col-md-2 col-form-label") }}
+        <div class="col-md-6">
+            {{ form.name(class="form-control mb-2"+(" is-invalid" if form.name.errors else "")) }}
+            {% if form.name.errors %}
                 {% for error in form.name.errors %}
-                <li style="color:red;">
-                    {{ error }}
-                </li>
+                    <div class="invalid-feedback">{{ error }}</div>
                 {% endfor %}
-            </ul>
-
-            <!-- Email -->
-            {{ form.email.label }}
-            {{ form.email }}
-            <ul>
-                {% for error in form.email.errors %}
-                <li style="color:red;">
-                    {{ error }}
-                </li>
-                {% endfor %}
-            </ul>
-
-            <!-- Username -->
-            {{ form.username.label }}
-            {{ form.username }}
-            <ul>
-                {% for error in form.username.errors %}
-                <li style="color:red;">
-                    {{ error }}
-                </li>
-                {% endfor %}
-            </ul>
-
-            <!-- Password -->
-            {{ form.password.label }}
-            {{ form.password }}
-            {{ form.confirm.label }}
-            {{ form.confirm }}
-            <ul>
-                {% for error in form.password.errors %}
-                <li style="color:red;">
-                    {{ error }}
-                </li>
-                {% endfor %}
-            </ul>
-
-
-            <!-- Unit -->
-            {% if unit %}
-            Unit name:
-            {{ unit }}
             {% endif %}
-            <br>
-            <!-- Submit button -->
-            {{ form.submit }}
+        </div>
+    </div>
 
-        </form>
+    <!-- Email -->
+    <div class="row mb-3">
+        {{ form.email.label(class="col-md-2 col-form-label") }}
+        <div class="col-md-6">
+            {{ form.email(class="form-control mb-2"+(" is-invalid" if form.email.errors else "")) }}
+            {% if form.email.errors %}
+                {% for error in form.email.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Username -->
+    <div class="row mb-3">
+        {{ form.username.label(class="col-md-2 col-form-label") }}
+        <div class="col-md-6">
+            {{ form.username(class="form-control mb-2"+(" is-invalid" if form.username.errors else "")) }}
+            {% if form.username.errors %}
+                {% for error in form.username.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Password -->
+    <div class="row mb-3">
+        {{ form.password.label(class="col-md-2 col-form-label") }}
+        <div class="col-md-6">
+            {{ form.password(class="form-control mb-2"+(" is-invalid" if form.password.errors else "")) }}
+            {% if form.password.errors %}
+                {% for error in form.password.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Confirm password -->
+    <div class="row mb-3">
+        {{ form.confirm.label(class="col-md-2 col-form-label") }}
+        <div class="col-md-6">
+            {{ form.confirm(class="form-control mb-2"+(" is-invalid" if form.confirm.errors else "")) }}
+            {% if form.confirm.errors %}
+                {% for error in form.confirm.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+
+    <!-- Unit -->
+    {% if unit %}
+    <div class="row mb-3">
+        <label class="col-md-2 col-form-label">Unit name</label>
+        <div class="col-md-6">
+            {{ unit }}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Agree to the conditions -->
+    <div class="row mb-3">
+        <p>Open the <a href="{{ url_for('pages.open_policy') }}" target="_blank">Privacy Policy</a></p>
+        {{ form.policy_checkbox.label(class="form-check-label")}}
+        <div>
+            {{ form.policy_checkbox }}
+            {% if form.policy_checkbox.errors %}
+                {% for error in form.policy_checkbox.errors %}
+                    <div class="invalid-feedback">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    <!-- Submit button -->
+    <button type="submit" class="btn btn-success mb-2">
+        <i class="fa-solid fa-user-plus me-2"></i>
+        Create Account
+    </button>
+
+</form>
 
 {% endblock %}

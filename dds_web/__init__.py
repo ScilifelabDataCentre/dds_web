@@ -9,6 +9,7 @@ import logging
 import datetime
 import pathlib
 import sys
+import re
 
 # Installed
 import click
@@ -257,6 +258,7 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(fill_db_wrapper)
         app.cli.add_command(create_new_unit)
         app.cli.add_command(update_uploaded_file_with_log)
+        app.cli.add_command(lost_files_s3_db)
 
         with app.app_context():  # Everything in here has access to sessions
             from dds_web.database import models
@@ -367,8 +369,30 @@ def create_new_unit(
     days_in_available,
     days_in_expired,
 ):
-    """Create a new unit."""
+    """Create a new unit.
+
+    Rules for bucket names, which are affected by the public_id at the moment:
+    https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+    """
     from dds_web.database import models
+
+    error_message = ""
+    if len(public_id) > 50:
+        error_message = "The 'public_id' can be a maximum of 50 characters"
+    elif re.findall(r"[^a-zA-Z0-9.-]", public_id):
+        error_message = (
+            "The 'public_id' can only contain letters, numbers, dots (.) and hyphens (-)."
+        )
+    elif public_id[0] in [".", "-"]:
+        error_message = "The 'public_id' must begin with a letter or number."
+    elif public_id.count(".") > 2:
+        error_message = "The 'public_id' should not contain more than two dots."
+    elif public_id.startswith("xn--"):
+        error_message = "The 'public_id' cannot begin with the 'xn--' prefix."
+
+    if error_message:
+        flask.current_app.logger.error(error_message)
+        return
 
     new_unit = models.Unit(
         name=name,
@@ -456,3 +480,105 @@ def update_uploaded_file_with_log(project, path_to_log_file):
 
         flask.current_app.logger.info(f"Files added: {files_added}")
         flask.current_app.logger.info(f"Errors while adding files: {errors}")
+
+
+@click.command("lost-files")
+@click.argument("action_type", type=click.Choice(["find", "list", "delete"]))
+@flask.cli.with_appcontext
+def lost_files_s3_db(action_type: str):
+    """
+    Identify (and optionally delete) files that are present in S3 or in the db, but not both.
+
+    Args:
+        action_type (str): "find", "list", or "delete"
+    """
+    from dds_web.database import models
+    import boto3
+
+    for unit in models.Unit.query:
+        session = boto3.session.Session()
+
+        resource = session.resource(
+            service_name="s3",
+            endpoint_url=unit.safespring_endpoint,
+            aws_access_key_id=unit.safespring_access,
+            aws_secret_access_key=unit.safespring_secret,
+        )
+
+        db_count = 0
+        s3_count = 0
+        for project in unit.projects:
+            try:
+                s3_filenames = set(
+                    entry.key for entry in resource.Bucket(project.bucket).objects.all()
+                )
+            except resource.meta.client.exceptions.NoSuchBucket:
+                flask.current_app.logger.warning("Missing bucket %s", project.bucket)
+                continue
+
+            try:
+                db_filenames = set(entry.name_in_bucket for entry in project.files)
+            except sqlalchemy.exc.OperationalError:
+                flask.current_app.logger.critical("Unable to connect to db")
+
+            diff_db = db_filenames.difference(s3_filenames)
+            diff_s3 = s3_filenames.difference(db_filenames)
+            if action_type == "list":
+                for file_entry in diff_db:
+                    flask.current_app.logger.info(
+                        "Entry %s (%s, %s) not found in S3", file_entry, project, unit
+                    )
+                for file_entry in diff_s3:
+                    flask.current_app.logger.info(
+                        "Entry %s (%s, %s) not found in database", file_entry, project, unit
+                    )
+            elif action_type == "delete":
+                # s3 can only delete 1000 objects per request
+                batch_size = 1000
+                s3_to_delete = list(diff_s3)
+                for i in range(0, len(s3_to_delete), batch_size):
+                    resource.meta.client.delete_objects(
+                        Bucket=project.bucket,
+                        Delete={
+                            "Objects": [
+                                {"Key": entry} for entry in s3_to_delete[i : i + batch_size]
+                            ]
+                        },
+                    )
+
+                db_entries = models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name_in_bucket.in_(diff_db),
+                        models.File.project_id == project.id,
+                    )
+                )
+                for db_entry in db_entries:
+                    try:
+                        for db_entry_version in db_entry.versions:
+                            if db_entry_version.time_deleted is None:
+                                db_entry_version.time_deleted = datetime.datetime.utcnow()
+                        db.session.delete(db_entry)
+                        db.session.commit()
+                    except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError):
+                        db.session.rollback()
+                        flask.current_app.logger.critical("Unable to delete the database entries")
+                        sys.exit(1)
+
+            # update the counters at the end of the loop to have accurate numbers for delete
+            s3_count += len(diff_s3)
+            db_count += len(diff_db)
+
+    if s3_count or db_count:
+        action_word = "Found" if action_type in ("find", "list") else "Deleted"
+        flask.current_app.logger.info(
+            "%s %d entries for lost files (%d in db, %d in s3)",
+            action_word,
+            s3_count + db_count,
+            db_count,
+            s3_count,
+        )
+        if action_type in ("find", "list"):
+            sys.exit(1)
+
+    else:
+        flask.current_app.logger.info("Found no lost files")

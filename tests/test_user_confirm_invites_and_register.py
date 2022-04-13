@@ -100,6 +100,7 @@ def registry_form_data(client):
         "username": "user_not_existing",
         "password": "Password123",
         "confirm": "Password123",
+        "policy_checkbox": "x",
         "submit": "submit",
     }
 
@@ -193,7 +194,6 @@ def test_successful_registration_should_transfer_keys(registry_form_data, client
     invite = models.Invite.query.filter_by(
         email="existing_invite_email@mailtrap.io", role="Researcher"
     ).one_or_none()
-
     assert invite is None
 
     user = models.User.query.filter_by(username=registry_form_data["username"]).one_or_none()

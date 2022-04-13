@@ -319,7 +319,11 @@ def demo_data():
             ),
         )
 
-    invites = [Invite(**{"email": "existing_invite_email@mailtrap.io", "role": "Researcher"})]
+    invites = [
+        Invite(**{"email": "existing_invite_email@mailtrap.io", "role": "Researcher"}),
+        Invite(**{"email": "existing_expired_invite_email@mailtrap.io", "role": "Researcher"}),
+    ]
+    invites[1].created_at = dds_web.utils.current_time() - datetime.timedelta(weeks=1)
 
     return (units, users, projects, invites, files_and_versions)
 
@@ -420,6 +424,7 @@ def add_data_to_db():
     units[0].projects.extend(projects)
     units[0].users.extend([users[2], users[3], users[4]])
     units[0].invites.append(invites[0])
+    units[0].invites.append(invites[1])
 
     units[1].users.extend([users[8], users[9]])
 

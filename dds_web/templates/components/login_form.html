@@ -1,10 +1,13 @@
+<div style="display: flex; flex-direction: column; justify-content: center;">
+    <h1 style="text-align: center;">Log In</h1>
+</div>
 <form method="POST" action="{{ url_for('auth_blueprint.login', next=next) }}" class="mt-2">
-    {{ form.csrf_token }}
+    {{ form.csrf_token }}    
     <div class="input-group mb-3">
         <span class="input-group-text bg-success text-black"><i class="fas fa-user mx-1"></i></span>
         <div class="col">
             <div class="form-floating">
-                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "") + " rounded-0 shadow-none", **{"placeholder": form.username.label.text, "autocomplete": "off"}) }}
+                {{ form.username(class="form-control rounded-0 shadow-none" + (" is-invalid" if form.username.errors else ""), **{"placeholder": form.username.label.text, "autocomplete": "off"}) }}
                 {{ form.username.label }}
                 {% if form.username.errors %}
                     {% for error in form.username.errors %}
@@ -18,7 +21,7 @@
         <span class="input-group-text bg-success text-black"><i class="fas fa-key mx-1"></i></span>
         <div class="col">
             <div class="form-floating">
-                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "") + " rounded-0 shadow-none", **{"placeholder": form.password.label.text, "autocomplete": "off"}) }}
+                {{ form.password(class="form-control rounded-0 shadow-none" + (" is-invalid" if form.password.errors else ""), **{"placeholder": form.password.label.text, "autocomplete": "off"}) }}
                 {{ form.password.label }}
                 {% if form.password.errors %}
                     {% for error in form.password.errors %}
