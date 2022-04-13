@@ -181,7 +181,7 @@ class Unit(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(255), unique=True, nullable=False)
+    public_id = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(255), unique=True, nullable=False)
     external_display_name = db.Column(db.String(255), unique=False, nullable=False)
     contact_email = db.Column(db.String(255), unique=False, nullable=True)
