@@ -69,7 +69,7 @@ api.add_resource(user.DeleteUserSelf, "/user/delete_self", endpoint="delete_user
 api.add_resource(user.RemoveUserAssociation, "/user/access/revoke", endpoint="revoke_from_project")
 api.add_resource(user.UserActivation, "/user/activation", endpoint="user_activation")
 api.add_resource(
-    user.RequestTOTPActivation, "/user/request_activate_totp", endpoint="request_totp_activation"
+    user.RequestTOTPActivation, "/user/totp/activate", endpoint="request_totp_activation"
 )
 api.add_resource(user.UnitUsers, "/unit/users", endpoint="unit_users")
 
