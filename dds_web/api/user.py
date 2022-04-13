@@ -216,21 +216,24 @@ class AddUser(flask_restful.Resource):
             if "Unit" in auth.current_user().role:
                 # Give new unit user access to all projects of the unit
                 auth.current_user().unit.invites.append(new_invite)
-                for unit_project in auth.current_user().unit.projects:
-                    if unit_project.is_active:
-                        try:
-                            share_project_private_key(
-                                from_user=auth.current_user(),
-                                to_another=new_invite,
-                                from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
-                                project=unit_project,
-                            )
-                        except ddserr.KeyNotFoundError as keyerr:
-                            projects_not_shared[
-                                unit_project.public_id
-                            ] = "You do not have access to the project(s)"
-                        else:
-                            goahead = True
+                if auth.current_user().unit.projects:
+                    for unit_project in auth.current_user().unit.projects:
+                        if unit_project.is_active:
+                            try:
+                                share_project_private_key(
+                                    from_user=auth.current_user(),
+                                    to_another=new_invite,
+                                    from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
+                                    project=unit_project,
+                                )
+                            except ddserr.KeyNotFoundError as keyerr:
+                                projects_not_shared[
+                                    unit_project.public_id
+                                ] = "You do not have access to the project(s)"
+                            else:
+                                goahead = True
+                else:
+                    goahead = True
 
                 if not project:  # specified project is disregarded for unituser invites
                     msg = f"{str(new_invite)} was successful."
@@ -1162,4 +1165,4 @@ class UnitUsers(flask_restful.Resource):
             for user in unit_row.users
         ]
 
-        return {"users": unit_users, "keys": keys, "unit": unit_row.name}
+        return {"users": unit_users, "keys": keys, "unit": unit_row.name, "empty": not unit_users}

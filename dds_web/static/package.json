@@ -1,7 +1,7 @@
 {
   "name": "dds_web",
   "version": "1.0.0",
-  "description": "A a single cloud-based system for all SciLifeLab facilities, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way.",
+  "description": "A a single cloud-based system for all SciLifeLab units, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way.",
   "private": true,
   "author": "SciLifeLab Data Centre",
   "license": "MIT",

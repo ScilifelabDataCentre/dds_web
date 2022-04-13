@@ -1,5 +1,8 @@
+<div style="display: flex; flex-direction: column; justify-content: center;">
+    <h1 style="text-align: center;">Log In</h1>
+</div>
 <form method="POST" action="{{ url_for('auth_blueprint.login', next=next) }}" class="mt-2">
-    {{ form.csrf_token }}
+    {{ form.csrf_token }}    
     <div class="input-group mb-3">
         <span class="input-group-text bg-success text-black"><i class="fas fa-user mx-1"></i></span>
         <div class="col">

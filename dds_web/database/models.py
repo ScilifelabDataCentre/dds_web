@@ -183,7 +183,7 @@ class Unit(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    public_id = db.Column(db.String(255), unique=True, nullable=False)
+    public_id = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(255), unique=True, nullable=False)
     external_display_name = db.Column(db.String(255), unique=False, nullable=False)
     contact_email = db.Column(db.String(255), unique=False, nullable=True)
@@ -814,6 +814,7 @@ class Invite(db.Model):
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
+    created_at = db.Column(db.DateTime(), nullable=False, default=dds_web.utils.current_time())
 
     @property
     def projects(self):

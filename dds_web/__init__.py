@@ -9,6 +9,7 @@ import logging
 import datetime
 import pathlib
 import sys
+import re
 
 # Installed
 import click
@@ -368,8 +369,30 @@ def create_new_unit(
     days_in_available,
     days_in_expired,
 ):
-    """Create a new unit."""
+    """Create a new unit.
+
+    Rules for bucket names, which are affected by the public_id at the moment:
+    https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+    """
     from dds_web.database import models
+
+    error_message = ""
+    if len(public_id) > 50:
+        error_message = "The 'public_id' can be a maximum of 50 characters"
+    elif re.findall(r"[^a-zA-Z0-9.-]", public_id):
+        error_message = (
+            "The 'public_id' can only contain letters, numbers, dots (.) and hyphens (-)."
+        )
+    elif public_id[0] in [".", "-"]:
+        error_message = "The 'public_id' must begin with a letter or number."
+    elif public_id.count(".") > 2:
+        error_message = "The 'public_id' should not contain more than two dots."
+    elif public_id.startswith("xn--"):
+        error_message = "The 'public_id' cannot begin with the 'xn--' prefix."
+
+    if error_message:
+        flask.current_app.logger.error(error_message)
+        return
 
     new_unit = models.Unit(
         name=name,
