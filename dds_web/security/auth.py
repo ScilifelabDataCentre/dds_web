@@ -365,5 +365,6 @@ def verify_password(username, password):
     user = models.User.query.get(username)
 
     if user and user.is_active and user.verify_password(input_password=password):
-        send_hotp_email(user)
+        if not user.totp_enabled:
+            send_hotp_email(user)
         return user
