@@ -992,7 +992,9 @@ class RequestTOTPActivation(flask_restful.Resource):
 
         user = auth.current_user()
         if user.totp_enabled:
-            return {"message": "Nothing to do, TOTP is already enabled for this user."}
+            return {
+                "message": "Nothing to do, two factor with app is already enabled for this user."
+            }
 
         # Not really necessary to encrypt this
         token = encrypted_jwt_token(
@@ -1010,7 +1012,7 @@ class RequestTOTPActivation(flask_restful.Resource):
         recipients = [user.primary_email]
 
         # Fill in email subject with sentence subject
-        subject = f"Request to activate TOTP for SciLifeLab Data Delivery System"
+        subject = f"Request to activate two factor with authenticator app for SciLifeLab Data Delivery System"
 
         msg = flask_mail.Message(
             subject,
@@ -1040,7 +1042,9 @@ class RequestTOTPActivation(flask_restful.Resource):
         )
 
         AddUser.send_email_with_retry(msg)
-        return {"message": "Please check your email and follow the attached link to activate TOTP."}
+        return {
+            "message": "Please check your email and follow the attached link to activate two factor with authenticator app."
+        }
 
 
 class ShowUsage(flask_restful.Resource):
