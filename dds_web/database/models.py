@@ -554,7 +554,7 @@ class User(flask_login.UserMixin, db.Model):
             current_time - self.totp_last_verified < datetime.timedelta(seconds=90)
         ):
             raise AuthenticationError(
-                "Authentication with TOTP needs to be at least 90 seconds apart."
+                "Authentications with time-based token need to be at least 90 seconds apart."
             )
 
         # construct object
@@ -573,7 +573,7 @@ class User(flask_login.UserMixin, db.Model):
                 pass
 
         if not verified:
-            raise AuthenticationError("Invalid TOTP token.")
+            raise AuthenticationError("Invalid time-based token.")
 
         # if the token is valid, save time of last successful verification
         self.totp_last_verified = current_time
