@@ -264,6 +264,119 @@ def test_auth_second_factor_TOTP_incorrect_token(client, totp_for_user):
     assert "Invalid token" == response_json.get("message")
 
 
+def test_auth_second_factor_TOTP_correct_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with correct token returns 200/OK
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    totp_token = totp_for_user.generate(time.time())
+
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"TOTP": totp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json.get("token")
+    claims = decrypt_and_verify_token_signature(response_json.get("token"))
+    print(claims)
+    assert claims["sub"] == "researchuser"
+
+
+def test_auth_second_factor_TOTP_reused_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with a reused token returns 401/UNAUTHORIZED
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    totp_token = totp_for_user.generate(time.time())
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"TOTP": totp_token.decode()},
+    )
+
+    # Reuse the same totp token
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"TOTP": totp_token.decode()},
+    )
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Authentications with time-based token need to be at least 90 seconds apart." == response_json.get("message")
+
+
+def test_auth_second_factor_TOTP_expired_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with an expired token returns 401/UNAUTHORIZED
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    # Token from one hour ago
+    totp_token = totp_for_user.generate(time.time() - 3600)
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"TOTP": totp_token.decode()},
+    )
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Invalid time-based token." == response_json.get("message")
+
+
+def test_auth_second_factor_TOTP_incorrect_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with a password_reset token returns 401/UNAUTHORIZED and
+    does not send a mail.
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    totp_token = totp_for_user.generate(time.time())
+
+    reset_token = encrypted_jwt_token(
+        username="researchuser",
+        sensitive_content=None,
+        expires_in=datetime.timedelta(
+            seconds=3600,
+        ),
+        additional_claims={"rst": "pwd"},
+    )
+
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers={"Authorization": f"Bearer {reset_token}"},
+        json={"TOTP": totp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Invalid token" == response_json.get("message")
+
+
+def test_auth_second_factor_TOTP_use_invalid_HOTP_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint for a TOTP activated user called with a HOTP token returns 400/BAD REQUEST
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    hotp_token = user_auth.fetch_hotp()
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"HOTP": hotp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert (
+        "Your account is setup to use time-based one-time authentication codes, but you entered a one-time authentication code from email."
+        == response.json
+    )
+
+
 # Token Authentication ##################################################### Token Authentication #
 
 
