@@ -307,7 +307,10 @@ def test_auth_second_factor_TOTP_reused_token(client, totp_for_user):
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
-    assert "Authentications with time-based token need to be at least 90 seconds apart." == response_json.get("message")
+    assert (
+        "Authentications with time-based token need to be at least 90 seconds apart."
+        == response_json.get("message")
+    )
 
 
 def test_auth_second_factor_TOTP_expired_token(client, totp_for_user):
