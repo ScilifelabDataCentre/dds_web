@@ -520,6 +520,7 @@ class User(flask_login.UserMixin, db.Model):
         self._totp_secret = os.urandom(20)
         db.session.commit()
 
+    @property
     def get_totp_secret(self):
         """Returns the users totp provisioning URI. Can only be sent before totp has been enabled."""
         if self.totp_enabled:
