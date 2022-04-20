@@ -16,7 +16,6 @@ from dds_web.scheduled_tasks import set_available_to_expired, set_expired_to_arc
 
 def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
     units: List = db.session.query(models.Unit).all()
-
     for unit in units:
         for project in unit.projects:
             for status in project.project_statuses:
