@@ -174,7 +174,7 @@ def activate_totp(token):
     if not user.totp_initiated:
         user.setup_totp_secret()
 
-    totp_secret, totp_uri = user.get_totp_secret()
+    (totp_secret, totp_uri) = user.totp_secret_and_uri
 
     # QR code generation
     image = qrcode.make(totp_uri, image_factory=qrcode.image.svg.SvgFillImage)

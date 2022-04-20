@@ -521,7 +521,7 @@ class User(flask_login.UserMixin, db.Model):
         db.session.commit()
 
     @property
-    def get_totp_secret(self):
+    def totp_secret_and_uri(self):
         """Returns the users totp provisioning URI. Can only be sent before totp has been enabled."""
         if self.totp_enabled:
             # Can not be fetched again after it has been enabled
@@ -538,6 +538,11 @@ class User(flask_login.UserMixin, db.Model):
         Should be called after first totp token is verified
         """
         self.totp_enabled = True
+        db.session.commit()
+
+    def deactivate_totp(self):
+        """Fallback to HOTP as the preferred means of second factor authentication."""
+        self.totp_enabled = False
         db.session.commit()
 
     def verify_TOTP(self, token):
