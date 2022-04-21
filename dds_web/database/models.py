@@ -556,7 +556,7 @@ class User(flask_login.UserMixin, db.Model):
         # Time frame chosen so that no one can use the same token more than once
         # No need to use epoch time here.
         current_time = dds_web.utils.current_time()
-        if self.totp_last_verified is not None and (
+        if self.totp_last_verified and (
             current_time - self.totp_last_verified < datetime.timedelta(seconds=90)
         ):
             raise AuthenticationError(
