@@ -26,29 +26,28 @@ def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
 
     i: Int = 0
     for unit in units:
-        for project in unit.projects:
-            assert len(project.project_statuses) == 1
-            for status in project.project_statuses:
-                if status.status == "Available" and project.current_deadline <= current_time():
-                    i += 1
-                assert (
-                    status.status == "In Progress"
-                    or status.status == "Available"
-                    or status.status == "Expired"
-                )
+        i += len(
+            [
+                project
+                for project in unit.projects
+                if project.current_status == "Available"
+                and project.current_deadline <= current_time()
+            ]
+        )
     assert i == 5
 
     set_available_to_expired()
 
     units: List = db.session.query(models.Unit).all()
 
+    i: Int = 0
+    j: Int = 0
     for unit in units:
-        for project in unit.projects:
-            j: Int = 0
-            for status in project.project_statuses:
-                if status.status == "Expired":
-                    j += 1
-            assert j == 1
+        i += len([project for project in unit.projects if project.current_status == "Available"])
+        j += len([project for project in unit.projects if project.current_status == "Expired"])
+
+    assert i == 0
+    assert j == 5
 
 
 @mock.patch("boto3.session.Session")
@@ -63,12 +62,7 @@ def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient
 
     i: Int = 0
     for unit in units:
-        for project in unit.projects:
-            assert len(project.project_statuses) == 1
-            for status in project.project_statuses:
-                if status.status == "Expired":
-                    i += 1
-                assert status.status == "Expired"
+        i += len([project for project in unit.projects if project.current_status == "Expired"])
     assert i == 5
 
     set_expired_to_archived()
@@ -76,14 +70,13 @@ def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient
     units: List = db.session.query(models.Unit).all()
 
     i: Int = 0
+    j: Int = 0
     for unit in units:
-        for project in unit.projects:
-            assert len(project.project_statuses) == 2
-            for status in project.project_statuses:
-                if status.status == "Archived":
-                    i += 1
-                assert status.status == "Archived" or status.status == "Expired"
-    assert i == 5
+        i += len([project for project in unit.projects if project.current_status == "Expired"])
+        j += len([project for project in unit.projects if project.current_status == "Archived"])
+
+    assert i == 0
+    assert j == 5
 
 
 def test_delete_invite(client: flask.testing.FlaskClient) -> None:
