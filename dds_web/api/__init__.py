@@ -13,7 +13,7 @@ from dds_web.api import user
 from dds_web.api import project
 from dds_web.api import s3
 from dds_web.api import files
-from dds_web.api import unit
+from dds_web.api import superadmin_only
 
 ####################################################################################################
 # BLUEPRINTS ########################################################################## BLUEPRINTS #
@@ -72,8 +72,8 @@ api.add_resource(user.UnitUsers, "/unit/users", endpoint="unit_users")
 
 # Units #################################################################################### Units #
 
-api.add_resource(unit.AllUnits, "/unit/info/all", endpoint="all_units")
-api.add_resource(unit.MOTD, "/unit/motd", endpoint="motd")
+api.add_resource(superadmin_only.AllUnits, "/unit/info/all", endpoint="all_units")
+api.add_resource(superadmin_only.MOTD, "/unit/motd", endpoint="motd")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")
