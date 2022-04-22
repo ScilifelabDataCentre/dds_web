@@ -70,7 +70,7 @@ api.add_resource(user.RemoveUserAssociation, "/user/access/revoke", endpoint="re
 api.add_resource(user.UserActivation, "/user/activation", endpoint="user_activation")
 api.add_resource(user.UnitUsers, "/unit/users", endpoint="unit_users")
 
-# Units #################################################################################### Units #
+# Super Admins ###################################################################### Super Admins #
 
 api.add_resource(superadmin_only.AllUnits, "/unit/info/all", endpoint="all_units")
 api.add_resource(superadmin_only.MOTD, "/unit/motd", endpoint="motd")
