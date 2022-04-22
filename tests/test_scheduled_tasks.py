@@ -1,11 +1,82 @@
+from datetime import timedelta
+
 import flask
 
-import pytest
+import tests
+import unittest
+from unittest import mock
+from unittest.mock import MagicMock
 
 from dds_web import db
 from dds_web.database import models
+from dds_web.utils import current_time
 
-from dds_web.scheduled_tasks import delete_invite
+from dds_web.scheduled_tasks import set_available_to_expired, set_expired_to_archived, delete_invite
+
+
+def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
+    units: List = db.session.query(models.Unit).all()
+    # Set project statuses to Available
+    # and deadline to now to be able to test cronjob functionality
+    for unit in units:
+        for project in unit.projects:
+            for status in project.project_statuses:
+                status.deadline = current_time() - timedelta(weeks=1)
+                status.status = "Available"
+
+    i: Int = 0
+    for unit in units:
+        i += len(
+            [
+                project
+                for project in unit.projects
+                if project.current_status == "Available"
+                and project.current_deadline <= current_time()
+            ]
+        )
+    assert i == 5
+
+    set_available_to_expired()
+
+    units: List = db.session.query(models.Unit).all()
+
+    i: Int = 0
+    j: Int = 0
+    for unit in units:
+        i += len([project for project in unit.projects if project.current_status == "Available"])
+        j += len([project for project in unit.projects if project.current_status == "Expired"])
+
+    assert i == 0
+    assert j == 5
+
+
+@mock.patch("boto3.session.Session")
+def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient) -> None:
+    units: List = db.session.query(models.Unit).all()
+
+    for unit in units:
+        for project in unit.projects:
+            for status in project.project_statuses:
+                status.deadline = current_time() - timedelta(weeks=1)
+                status.status = "Expired"
+
+    i: Int = 0
+    for unit in units:
+        i += len([project for project in unit.projects if project.current_status == "Expired"])
+    assert i == 5
+
+    set_expired_to_archived()
+
+    units: List = db.session.query(models.Unit).all()
+
+    i: Int = 0
+    j: Int = 0
+    for unit in units:
+        i += len([project for project in unit.projects if project.current_status == "Expired"])
+        j += len([project for project in unit.projects if project.current_status == "Archived"])
+
+    assert i == 0
+    assert j == 5
 
 
 def test_delete_invite(client: flask.testing.FlaskClient) -> None:
