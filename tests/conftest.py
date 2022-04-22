@@ -333,7 +333,11 @@ def add_data_to_db():
     for project in projects:
         project.project_statuses.append(
             ProjectStatuses(
-                **{"status": "In Progress", "date_created": dds_web.utils.current_time()}
+                **{
+                    "status": "In Progress",
+                    "deadline": dds_web.utils.current_time() + datetime.timedelta(weeks=1),
+                    "date_created": dds_web.utils.current_time(),
+                }
             )
         )
     # Create association with files for project 0:
