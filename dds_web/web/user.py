@@ -226,6 +226,26 @@ def activate_totp(token):
         },
     )
 
+@auth_blueprint.route("/activate_hotp/<token>", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["GET", "POST"],
+    error_message=ddserr.TooManyRequestsError.description,
+)
+def activate_hotp(token):
+    """Activates HOTP (default) as method of two-factor authentication. 
+    We can't have authentication on this request as the user might have lost their TOTP secret."""
+    user = dds_web.security.auth.verify_activate_hotp_token(token)
+
+    if not user.totp_enabled:
+        flask.flash("Two-factor authentication via email is already enabled.")
+        return flask.redirect(flask.url_for("pages.home"))
+
+    user.deactivate_totp()
+
+    flask.flash("Two-factor authentication via authenticator app has been enabled.")
+    return flask.redirect(flask.url_for("pages.home"))
+
 
 @auth_blueprint.route("/cancel_2fa", methods=["POST"])
 @limiter.limit(

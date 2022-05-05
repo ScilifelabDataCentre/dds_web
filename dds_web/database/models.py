@@ -543,6 +543,7 @@ class User(flask_login.UserMixin, db.Model):
     def deactivate_totp(self):
         """Fallback to HOTP as the preferred means of second factor authentication."""
         self.totp_enabled = False
+        self._totp_secret = None
         db.session.commit()
 
     def verify_TOTP(self, token):
