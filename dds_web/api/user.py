@@ -988,7 +988,8 @@ class RequestTOTPActivation(flask_restful.Resource):
     """Request to switch from HOTP to TOTP for second factor authentication."""
 
     @auth.login_required
-    def put(self):
+    @json_required
+    def post(self):
 
         user = auth.current_user()
         json_info = flask.request.json
@@ -1049,12 +1050,14 @@ class RequestTOTPActivation(flask_restful.Resource):
                 "message": "Please check your email and follow the attached link to activate two-factor with authenticator app."
             }
         else:
-            if not user.totp_enabled:
-                return {
-                    "message": "Nothing to do, two-factor authentication with email is already enabled for this user."
-                }
-            user.deactivate_totp()
-            return {"message": "Two-factor authentication via email has been enabled."}
+            if user.totp_enabled:
+                user.deactivate_totp()
+                return {"message": "Two-factor authentication via email has been enabled."}
+
+            return {
+                "message": "Nothing to do, two-factor authentication with email is already enabled for this user."
+            }
+
 
 
 class ShowUsage(flask_restful.Resource):
