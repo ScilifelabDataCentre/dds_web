@@ -2,5 +2,6 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "workbench.startupEditor": "none",
-  "python.formatting.provider": "black"
+  "python.formatting.provider": "black",
+  "python.terminal.activateEnvironment": true,
 }
