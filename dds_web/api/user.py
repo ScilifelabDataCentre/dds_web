@@ -1059,7 +1059,6 @@ class RequestTOTPActivation(flask_restful.Resource):
             }
 
 
-
 class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
 
