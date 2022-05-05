@@ -991,73 +991,126 @@ class RequestTOTPActivation(flask_restful.Resource):
     @json_required
     def post(self):
 
+        if user.totp_enabled:
+            return {
+                "message": "Nothing to do, two-factor authentication with app is already enabled for this user."
+            }
+
+        # Not really necessary to encrypt this
+        token = encrypted_jwt_token(
+            username=user.username,
+            sensitive_content=None,
+            expires_in=datetime.timedelta(
+                seconds=3600,
+            ),
+            additional_claims={"act": "totp"},  
+        )
+
+        link = flask.url_for("auth_blueprint.activate_totp", token=token, _external=True)
+        # Send activation token to email to work as a validation step
+        # TODO: refactor this since the email sending code is replicated in many places
+        recipients = [user.primary_email]
+
+        # Fill in email subject with sentence subject
+        subject = f"Request to activate two-factor with authenticator app for SciLifeLab Data Delivery System"
+
+        msg = flask_mail.Message(
+            subject,
+            recipients=recipients,
+        )
+
+        # Need to attach the image to be able to use it
+        msg.attach(
+            "scilifelab_logo.png",
+            "image/png",
+            open(
+                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+            ).read(),
+            "inline",
+            headers=[
+                ["Content-ID", "<Logo>"],
+            ],
+        )
+
+        msg.body = flask.render_template(
+            f"mail/request_activate_totp.txt",
+            link=link,
+        )
+        msg.html = flask.render_template(
+            f"mail/request_activate_totp.html",
+            link=link,
+        )
+
+        AddUser.send_email_with_retry(msg)
+        return {
+            "message": "Please check your email and follow the attached link to activate two-factor with authenticator app."
+        }
+
+
+class RequestHOTPActivation(flask_restful.Resource):
+    """Request to switch from TOTP to HOTP for second factor authentication"""
+    # Using Basic auth since TOTP might have been lost, will still need access to email
+    @basic_auth.login_required
+    @json_required
+    def post(self):
+
         user = auth.current_user()
         json_info = flask.request.json
-        activate_totp = json_info.get("activate_totp", False)
-        if activate_totp:
-            if user.totp_enabled:
-                return {
-                    "message": "Nothing to do, two-factor authentication with app is already enabled for this user."
-                }
 
-            # Not really necessary to encrypt this
-            token = encrypted_jwt_token(
-                username=user.username,
-                sensitive_content=None,
-                expires_in=datetime.timedelta(
-                    seconds=3600,
-                ),
-                additional_claims={"act": "totp"},  # Open for suggestions
-            )
-
-            link = flask.url_for("auth_blueprint.activate_totp", token=token, _external=True)
-            # Send activation token to email to work as a validation step
-            # TODO: refactor this since the email sending code is replicated in many places
-            recipients = [user.primary_email]
-
-            # Fill in email subject with sentence subject
-            subject = f"Request to activate two-factor with authenticator app for SciLifeLab Data Delivery System"
-
-            msg = flask_mail.Message(
-                subject,
-                recipients=recipients,
-            )
-
-            # Need to attach the image to be able to use it
-            msg.attach(
-                "scilifelab_logo.png",
-                "image/png",
-                open(
-                    os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
-                ).read(),
-                "inline",
-                headers=[
-                    ["Content-ID", "<Logo>"],
-                ],
-            )
-
-            msg.body = flask.render_template(
-                f"mail/request_activate_totp.txt",
-                link=link,
-            )
-            msg.html = flask.render_template(
-                f"mail/request_activate_totp.html",
-                link=link,
-            )
-
-            AddUser.send_email_with_retry(msg)
-            return {
-                "message": "Please check your email and follow the attached link to activate two-factor with authenticator app."
-            }
-        else:
-            if user.totp_enabled:
-                user.deactivate_totp()
-                return {"message": "Two-factor authentication via email has been enabled."}
-
+        if not user.totp_enabled:
             return {
                 "message": "Nothing to do, two-factor authentication with email is already enabled for this user."
             }
 
+        # Not really necessary to encrypt this
+        token = encrypted_jwt_token(
+            username=user.username,
+            sensitive_content=None,
+            expires_in=datetime.timedelta(
+                seconds=3600,
+            ),
+            additional_claims={"act": "hotp"},
+        )
+
+        link = flask.url_for("auth_blueprint.activate_hotp", token=token, _external=True)
+        # Send activation token to email to work as a validation step
+        # TODO: refactor this since the email sending code is replicated in many places
+        recipients = [user.primary_email]
+
+        # Fill in email subject with sentence subject
+        subject = f"Request to activate two-factor authentication with email for SciLifeLab Data Delivery System"
+
+        msg = flask_mail.Message(
+            subject,
+            recipients=recipients,
+        )
+
+        # Need to attach the image to be able to use it
+        msg.attach(
+            "scilifelab_logo.png",
+            "image/png",
+            open(
+                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+            ).read(),
+            "inline",
+            headers=[
+                ["Content-ID", "<Logo>"],
+            ],
+        )
+
+        msg.body = flask.render_template(
+            f"mail/request_activate_hotp.txt",
+            link=link,
+        )
+        msg.html = flask.render_template(
+            f"mail/request_activate_hotp.html",
+            link=link,
+        )
+
+        AddUser.send_email_with_retry(msg)
+        return {
+            "message": "Please check your email and follow the attached link to activate two-factor with email."
+        }
 
 class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
