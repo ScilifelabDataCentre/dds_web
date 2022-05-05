@@ -988,7 +988,6 @@ class RequestTOTPActivation(flask_restful.Resource):
     """Request to switch from HOTP to TOTP for second factor authentication."""
 
     @auth.login_required
-    @json_required
     def post(self):
 
         if user.totp_enabled:
@@ -1051,7 +1050,6 @@ class RequestHOTPActivation(flask_restful.Resource):
     """Request to switch from TOTP to HOTP for second factor authentication"""
     # Using Basic auth since TOTP might have been lost, will still need access to email
     @basic_auth.login_required
-    @json_required
     def post(self):
 
         user = auth.current_user()
