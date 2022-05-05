@@ -989,7 +989,7 @@ class RequestTOTPActivation(flask_restful.Resource):
 
     @auth.login_required
     def post(self):
-
+        user = auth.current_user()
         if user.totp_enabled:
             return {
                 "message": "Nothing to do, two-factor authentication with app is already enabled for this user."
