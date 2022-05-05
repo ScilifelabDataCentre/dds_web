@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Gzip (GNU zip ) is one of the most popular compression algorithms and is suitable for compression of data streams, is supported by all browsers and comes as a standard in all major web servers. However, while gzip provides a good compression ratio , it is very slow compared to other algorithms. Since there is a variety of different compression algorithms it became unreasonable to test every alternative. Instead, prior knowledge about the algorithm Zstandard lead to the choice of comparing gzip with Zstandard. 
+Gzip (GNU zip ) is one of the most popular compression algorithms and is suitable for compression of data streams, is supported by all browsers and comes as a standard in all major web servers. However, while gzip provides a good compression ratio , it is very slow compared to other algorithms. Since there is a variety of different compression algorithms it became unreasonable to test every alternative. Instead, prior knowledge about the algorithm Zstandard lead to the choice of comparing gzip with Zstandard.
 
 ## Decision
 
