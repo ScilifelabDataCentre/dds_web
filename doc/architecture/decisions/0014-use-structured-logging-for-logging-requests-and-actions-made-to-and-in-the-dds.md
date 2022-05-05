@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-When invalid requests or attempts to perform certain actions within the DDS are made, we need an easy and clear way to read this information. 
+When invalid requests or attempts to perform certain actions within the DDS are made, we need an easy and clear way to read this information.
 
 ## Decision
 

@@ -12,8 +12,8 @@ In the beginning of development the Python web framework Tornado was used, mainl
 
 ### Advantages
 
-|  Flask                                                     | Tornado                                                       |
-|------------------------------------------------------------|---------------------------------------------------------------|
+| Flask                                                      | Tornado                                                       |
+| ---------------------------------------------------------- | ------------------------------------------------------------- |
 | Plenty of online resources                                 | Asynchronous - can handle thousands of concurrent connections |
 | Flexible                                                   | Flexible                                                      |
 | Simple                                                     | Fast                                                          |
@@ -22,11 +22,10 @@ In the beginning of development the Python web framework Tornado was used, mainl
 
 ### Disadvantages
 
-|  Flask                                                      | Tornado                                                       |
-|-------------------------------------------------------------|---------------------------------------------------------------|
-| No built-in support for user authentication (-> extensions) | Not as many online resources                                  |
-| Efficiency can be affected by extensions                    | No built-in support for REST API                              |
-
+| Flask                                                       | Tornado                          |
+| ----------------------------------------------------------- | -------------------------------- |
+| No built-in support for user authentication (-> extensions) | Not as many online resources     |
+| Efficiency can be affected by extensions                    | No built-in support for REST API |
 
 ## Decision
 
@@ -37,4 +36,5 @@ We will use Flask as the framework for the DDS.
 Flask is flexible and simple, extensions provide a large variety of functionalities including REST API support, it has an integrated testing system and there is more online support than for Tornado. The built-in asynchronicity in Tornado is not an important feature since the system will not be used by thousands of users at a given time.
 
 ## References
+
 [Python’s Frameworks Comparison: Django, Pyramid, Flask, Sanic, Tornado, BottlePy and More](https://www.netguru.com/blog/python-frameworks-comparison)

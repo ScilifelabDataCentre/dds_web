@@ -12,7 +12,7 @@ There have been some discussions regarding whether or not we should pin the vers
 
 ## Decision
 
-We will not pin the requirement versions. 
+We will not pin the requirement versions.
 
 ## Consequences
 

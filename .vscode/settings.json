@@ -3,5 +3,5 @@
   "editor.formatOnSave": true,
   "workbench.startupEditor": "none",
   "python.formatting.provider": "black",
-  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvironment": true
 }

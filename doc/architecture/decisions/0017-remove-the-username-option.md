@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Previously there was a --username option for all commands where the user could specify the username. 
+Previously there was a --username option for all commands where the user could specify the username.
 
 ## Decision
 
