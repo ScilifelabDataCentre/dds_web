@@ -1002,7 +1002,7 @@ class RequestTOTPActivation(flask_restful.Resource):
             expires_in=datetime.timedelta(
                 seconds=3600,
             ),
-            additional_claims={"act": "totp"},  
+            additional_claims={"act": "totp"},
         )
 
         link = flask.url_for("auth_blueprint.activate_totp", token=token, _external=True)
@@ -1048,6 +1048,7 @@ class RequestTOTPActivation(flask_restful.Resource):
 
 class RequestHOTPActivation(flask_restful.Resource):
     """Request to switch from TOTP to HOTP for second factor authentication"""
+
     # Using Basic auth since TOTP might have been lost, will still need access to email
     @basic_auth.login_required
     def post(self):
@@ -1109,6 +1110,7 @@ class RequestHOTPActivation(flask_restful.Resource):
         return {
             "message": "Please check your email and follow the attached link to activate two-factor with email."
         }
+
 
 class ShowUsage(flask_restful.Resource):
     """Calculate and display the amount of GB hours and the total cost."""
