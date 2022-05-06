@@ -249,6 +249,7 @@ class ListFiles(flask_restful.Resource):
         """Get a list of files within the specified folder."""
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        flask.current_app.logger.debug(project)
 
         if auth.current_user().role == "Researcher" and project.current_status == "In Progress":
             raise AccessDeniedError(message="There's no data available at this time.")
@@ -282,7 +283,7 @@ class ListFiles(flask_restful.Resource):
                     "folder": False,
                 }
                 if show_size:
-                    info.update({"size": x[1]})
+                    info.update({"size": float(x[1])})
                 files_folders.append(info)
         if distinct_folders:
             for x in distinct_folders:
@@ -293,7 +294,7 @@ class ListFiles(flask_restful.Resource):
 
                 if show_size:
                     folder_size = self.get_folder_size(project=project, folder_name=x)
-                    info.update({"size": folder_size})
+                    info.update({"size": float(folder_size)})
                 files_folders.append(info)
 
         return {"files_folders": files_folders}
@@ -325,7 +326,6 @@ class ListFiles(flask_restful.Resource):
                     else "."
                 ),
             ) from err
-
         return file_info.sizeSum
 
     @staticmethod
