@@ -198,7 +198,9 @@ def delete_invite():
                         db.session.delete(invite)
                         db.session.commit()
                         if invalid_invite:
-                            scheduler.app.logger.warning("Invite with created_at = 0000-00-00 00:00:00 deleted.")
+                            scheduler.app.logger.warning(
+                                "Invite with created_at = 0000-00-00 00:00:00 deleted."
+                            )
                         else:
                             scheduler.app.logger.debug("Invite deleted.")
                     except (OperationalError, SQLAlchemyError) as err:
