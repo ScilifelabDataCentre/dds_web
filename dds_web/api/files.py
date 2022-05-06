@@ -249,7 +249,6 @@ class ListFiles(flask_restful.Resource):
         """Get a list of files within the specified folder."""
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-        flask.current_app.logger.debug(project)
 
         if auth.current_user().role == "Researcher" and project.current_status == "In Progress":
             raise AccessDeniedError(message="There's no data available at this time.")
