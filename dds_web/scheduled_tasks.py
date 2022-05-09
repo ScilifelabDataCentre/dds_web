@@ -190,9 +190,7 @@ def delete_invite():
         try:
             invites: list = db.session.query(models.Invite).all()
             for invite in invites:
-                invalid_invite = False
-                if invite.created_at == "0000-00-00 00:00:00":
-                    invalid_invite = True
+                invalid_invite = invite.created_at == "0000-00-00 00:00:00"
                 if invalid_invite or (invite.created_at + timedelta(weeks=1)) < expiration:
                     try:
                         db.session.delete(invite)
