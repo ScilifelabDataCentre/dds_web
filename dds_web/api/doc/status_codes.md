@@ -93,8 +93,20 @@
 
 ### RemoveContents
 
-- 
+- [Authentication errors](#authentication)
+- Decorators
+    - Database errors: `500 Internal Server Error`
+    - Validation error: `400 Bad Request`
+- Schemas
+    - Project does not exist: `400 Bad Request`
+    - User does not have access to project: `403 Forbidden`
+- Incorrect status: `400 Bad Request`
+- Nothing to delete in project: `400 Bad Request`
+- Database or S3 issues: `500 Internal Server Error`
 
+### ProjectUsers
+
+- 
 ## `user.py`
 
 ### AddUser
