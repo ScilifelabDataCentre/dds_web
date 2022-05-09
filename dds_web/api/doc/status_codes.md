@@ -20,8 +20,8 @@
 
 - [Authentication errors](#authentication)
 - Decorators
-    - Json required but not provided: `400 Bad Request`
-    - Validation error: `400 Bad Request`
+  - Json required but not provided: `400 Bad Request`
+  - Validation error: `400 Bad Request`
 - Missing required info or wrong format: `400 Bad Request`
 - Less than 2 Unit Admins: `403 Forbidden`
 - User / Project Key errors (any): `500 Internal Server Error`
@@ -36,54 +36,54 @@
 
 - [Authentication errors](#authentication)
 - Decorators
-    - Validation error: `400 Bad Request`
+  - Validation error: `400 Bad Request`
 - Schemas
-    - Project does not exist: `400 Bad Request`
-    - User does not have access to project: `403 Forbidden`
+  - Project does not exist: `400 Bad Request`
+  - User does not have access to project: `403 Forbidden`
 
 #### `post`
 
 - [Authentication errors](#authentication)
 - Decorators
-    - Json required but not provided: `400 Bad Request`
-    - Validation error: `400 Bad Request`
+  - Json required but not provided: `400 Bad Request`
+  - Validation error: `400 Bad Request`
 - Schemas
-    - Project does not exist: `400 Bad Request`
-    - User does not have access to project: `403 Forbidden`
+  - Project does not exist: `400 Bad Request`
+  - User does not have access to project: `403 Forbidden`
 - Missing required status info: `400 Bad Request`
 - Invalid new status: `400 Bad Request`
 - Database errors: `500 Internal Server Error`
 - Invalid status transition: `400 Bad Request`
 - `release_project`
-    - Invalid deadline: `400 Bad Request`
-    - Max number of times available reached: `400 Bad Request`
+  - Invalid deadline: `400 Bad Request`
+  - Max number of times available reached: `400 Bad Request`
 - `expire_project`
-    - Invalid deadline: `400 Bad Request`
+  - Invalid deadline: `400 Bad Request`
 - `delete_project`
-    - Trying to delete project which has been availble: `400 Bad Request`
-    - Database or S3 issues: `500 Internal Server Error`
+  - Trying to delete project which has been availble: `400 Bad Request`
+  - Database or S3 issues: `500 Internal Server Error`
 - `archive_project`
-    - Trying to archive a project which has been previously made available: `400 Bad Request`
-    - Database or S3 issues: `500 Internal Server Error`
+  - Trying to archive a project which has been previously made available: `400 Bad Request`
+  - Database or S3 issues: `500 Internal Server Error`
 
 ### GetPublic
 
 - [Authentication errors](#authentication)
 - Decorators
-    - Validation error: `400 Bad Request`
+  - Validation error: `400 Bad Request`
 - Schemas
-    - Project does not exist: `400 Bad Request`
-    - User does not have access to project: `403 Forbidden`
+  - Project does not exist: `400 Bad Request`
+  - User does not have access to project: `403 Forbidden`
 - No public key found for project: `500 Internal Server Error`
 
 ### GetPrivate
 
 - [Authentication errors](#authentication)
 - Decorators
-    - Validation error: `400 Bad Request`
+  - Validation error: `400 Bad Request`
 - Schemas
-    - Project does not exist: `400 Bad Request`
-    - User does not have access to project: `403 Forbidden`
+  - Project does not exist: `400 Bad Request`
+  - User does not have access to project: `403 Forbidden`
 - User / Project Key errors (any): `500 Internal Server Error`
 
 ### UserProjects
@@ -95,11 +95,11 @@
 
 - [Authentication errors](#authentication)
 - Decorators
-    - Database errors: `500 Internal Server Error`
-    - Validation error: `400 Bad Request`
+  - Database errors: `500 Internal Server Error`
+  - Validation error: `400 Bad Request`
 - Schemas
-    - Project does not exist: `400 Bad Request`
-    - User does not have access to project: `403 Forbidden`
+  - Project does not exist: `400 Bad Request`
+  - User does not have access to project: `403 Forbidden`
 - Incorrect status: `400 Bad Request`
 - Nothing to delete in project: `400 Bad Request`
 - Database or S3 issues: `500 Internal Server Error`
@@ -108,14 +108,26 @@
 
 - [Authentication errors](#authentication)
 - Decorators
-    - Validation error: `400 Bad Request`
+  - Validation error: `400 Bad Request`
 - Schemas
-    - Project does not exist: `400 Bad Request`
-    - User does not have access to project: `403 Forbidden`
+  - Project does not exist: `400 Bad Request`
+  - User does not have access to project: `403 Forbidden`
 
 ### ProjectAccess
 
-
+- [Authentication errors](#authentication)
+- Decorators
+  - Validation error: `400 Bad Request`
+  - Json required but not provided: `400 Bad Request`
+  - Validation error: `400 Bad Request`
+- Required email adress missing: `400 Bad Request`
+- User getting access does not exist: `400 Bad Request`
+- Schemas
+  - Project does not exist: `400 Bad Request`
+  - User does not have access to project: `403 Forbidden`
+- Attempting to renew your own project access: `403 Forbidden`
+- Attempting to renew access for invalid role (e.g. Project Owner renewing Unit Personnel): `403 Forbidden`
+- User / Project Key errors (any): `500 Internal Server Error`
 
 ## `user.py`
 
@@ -129,4 +141,3 @@ _The following is **per user**, not the status code returned to the CLI_
 - Trying to invite _as_ Project Owner but no project provided: `400 Bad Request`
 - Super Admin attempting to invite user to project: `400 Bad Request`
 - Inviting a role outside of permissions (e.g. Researcher inviting Unit Personnel): `403 Forbidden`
-
