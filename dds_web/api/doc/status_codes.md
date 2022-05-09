@@ -10,7 +10,7 @@
 - Two Factor Authentication not provided: `401 Unauthorized`
 - User is deactivated: `403 Forbidden`
 
-## Decorators 
+## Decorators
 
 - Json required but not provided: `400 Bad Request`
 - Validation error: `400 Bad Request`
