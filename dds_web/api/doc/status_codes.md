@@ -66,6 +66,35 @@
     - Trying to archive a project which has been previously made available: `400 Bad Request`
     - Database or S3 issues: `500 Internal Server Error`
 
+### GetPublic
+
+- [Authentication errors](#authentication)
+- Decorators
+    - Validation error: `400 Bad Request`
+- Schemas
+    - Project does not exist: `400 Bad Request`
+    - User does not have access to project: `403 Forbidden`
+- No public key found for project: `500 Internal Server Error`
+
+### GetPrivate
+
+- [Authentication errors](#authentication)
+- Decorators
+    - Validation error: `400 Bad Request`
+- Schemas
+    - Project does not exist: `400 Bad Request`
+    - User does not have access to project: `403 Forbidden`
+- User / Project Key errors (any): `500 Internal Server Error`
+
+### UserProjects
+
+- [Authentication errors](#authentication)
+- Database errors: `500 Internal Server Error`
+
+### RemoveContents
+
+- 
+
 ## `user.py`
 
 ### AddUser
@@ -78,3 +107,4 @@ _The following is **per user**, not the status code returned to the CLI_
 - Trying to invite _as_ Project Owner but no project provided: `400 Bad Request`
 - Super Admin attempting to invite user to project: `400 Bad Request`
 - Inviting a role outside of permissions (e.g. Researcher inviting Unit Personnel): `403 Forbidden`
+
