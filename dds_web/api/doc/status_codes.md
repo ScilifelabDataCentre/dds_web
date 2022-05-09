@@ -106,7 +106,17 @@
 
 ### ProjectUsers
 
-- 
+- [Authentication errors](#authentication)
+- Decorators
+    - Validation error: `400 Bad Request`
+- Schemas
+    - Project does not exist: `400 Bad Request`
+    - User does not have access to project: `403 Forbidden`
+
+### ProjectAccess
+
+
+
 ## `user.py`
 
 ### AddUser
