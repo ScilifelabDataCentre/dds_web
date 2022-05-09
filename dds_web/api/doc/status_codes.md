@@ -15,7 +15,7 @@
 - Json required but not provided: `400 Bad Request`
 - Validation error: `400 Bad Request`
 
-## Utils 
+## Utils
 
 - Invalid email type: `400 Bad Request`
 
@@ -37,8 +37,9 @@
 
 _In Progress_
 
+_The following is **per user**, not the status code returned to the CLI_
+
 - Trying to invite Project Owner but no project provided: `400 Bad Request`
 - Trying to invite _as_ Project Owner but no project provided: `400 Bad Request`
 - Super Admin attempting to invite user to project: `400 Bad Request`
 - Inviting a role outside of permissions (e.g. Researcher inviting Unit Personnel): `403 Forbidden`
-- Invalid
