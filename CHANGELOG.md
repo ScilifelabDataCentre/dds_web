@@ -92,3 +92,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 - `adr-tools` to document architecture decisions ([#1161](https://github.com/ScilifelabDataCentre/dds_web/pull/1161))
 - Bug: API returning float again and CLI `--size` flag works again ([#1162](https://github.com/ScilifelabDataCentre/dds_web/pull/1162))
+- Add documentation of status codes in `api/project.py` ([#1164](https://github.com/ScilifelabDataCentre/dds_web/pull/1164))
