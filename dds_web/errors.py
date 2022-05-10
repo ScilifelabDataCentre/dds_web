@@ -206,7 +206,7 @@ class DeletionError(LoggedHTTPException):
 class NoSuchProjectError(LoggedHTTPException):
     """The project does not exist in the database"""
 
-    code = http.HTTPStatus.BAD_REQUEST
+    code = http.HTTPStatus.BAD_REQUEST  # 400
 
     def __init__(self, project, message="The specified project does not exist."):
 
