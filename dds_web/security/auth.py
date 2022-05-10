@@ -85,6 +85,8 @@ def get_user_roles_common(user):
         raise AccessDeniedError(
             message="You do not have the required permissions to create a project."
         )
+    elif flask.request.path in "/api/v1/unit/motd" and user.role not in "Superadmin":
+        raise AccessDeniedError(message="Only Super Admin can add a MOTD.")
 
     if user.role == "Researcher":
         request_args = flask.request.args
