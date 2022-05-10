@@ -78,6 +78,14 @@ def get_user_roles_common(user):
 
     For all other users, return the value of the role set in the database table.
     """
+    if flask.request.path in "/api/v1/proj/create" and user.role not in [
+        "Unit Admin",
+        "Unit Personnel",
+    ]:
+        raise AccessDeniedError(
+            message="You do not have the required permissions to create a project."
+        )
+
     if user.role == "Researcher":
         request_args = flask.request.args
         project_public_id = request_args.get("project") if request_args else None
