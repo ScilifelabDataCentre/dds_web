@@ -485,3 +485,11 @@ _The following is **per user**, not the status code returned to the CLI_
     - Validation error
 - `401 Unauthorized`
   - Invalid or expired token
+
+### ShowUsage
+
+- [Authentication errors](#authentication)
+- `403 Forbidden`
+  - Attempting to get usage information as Researcher or Super Admin
+- `500 Internal Server Error`
+  - Database errors
