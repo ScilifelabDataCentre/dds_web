@@ -58,8 +58,6 @@
 - `500 Internal Server Error`
   - Database errors
 
-***
-
 ### MatchFiles
 
 - [Authentication errors](#authentication)
@@ -76,8 +74,21 @@
 - `500 Internal Server Error`
   - Database errors
 
-*** 
+### ListFiles
 
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Validation error
+  - Schemas
+    - Project does not exist
+- `403 Forbidden`
+  - Schemas
+    - User does not have access to project
+  - Researcher trying to download data from 'In Progress' project
+- `500 Internal Server Error`
+  - Database errors
+  
 
 ***
 
