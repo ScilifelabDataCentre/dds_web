@@ -173,48 +173,6 @@
 
 ***
 
-## `s3.py`
-
-### S3Info
-
-- [Authentication errors](#authentication)
-- `400 Bad Request`
-  - Decorators
-    - Validation error
-  - Schemas
-    - Project does not exist
-  - Project is not 'In Progress'
-- `403 Forbidden`
-  - Schemas
-    - User does not have access to project
-- `500 Internal Server Error`
-  - Database errors
-  - S3 connection errors
-
-***
-
-## `superadmin_only.py`
-
-### AllUnits
-
-- [Authentication errors](#authentication)
-- `500 Internal Server Error`
-  - Decorators
-    - Database errors
-
-### MOTD
-
-- [Authentication errors](#authentication)
-- `400 Bad Request`
-  - Decorators
-    - Json required but not provided
-  - No Message Of The Day provided
-- `500 Internal Server Error`
-  - Decorators
-    - Database errors
-
-***
-
 ## `project.py`
 
 ### CreateProject
@@ -348,7 +306,7 @@
 - [Authentication errors](#authentication)
 - `400 Bad Request`
   - Decorators
-    - Validation error:
+    - Validation error
     - Json required but not provided
   - Schemas
     - Project does not exist
@@ -364,11 +322,78 @@
 
 ***
 
+## `s3.py`
+
+### S3Info
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Validation error
+  - Schemas
+    - Project does not exist
+  - Project is not 'In Progress'
+- `403 Forbidden`
+  - Schemas
+    - User does not have access to project
+- `500 Internal Server Error`
+  - Database errors
+  - S3 connection errors
+
+***
+
+## `superadmin_only.py`
+
+### AllUnits
+
+- [Authentication errors](#authentication)
+- `500 Internal Server Error`
+  - Decorators
+    - Database errors
+
+### MOTD
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Json required but not provided
+  - No Message Of The Day provided
+- `500 Internal Server Error`
+  - Decorators
+    - Database errors
+
+***
+
 ## `user.py`
 
 ### AddUser
 
-_In Progress_
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Validation error
+    - Json required but not provided
+  - Schemas
+    - Project does not exist
+  - Invalid user role for user being invited
+  - No email specified for invited user
+  - Existing user but no project provided
+  - Attempting to invite user to project but no project ID provided
+  - Attempting to add Super Admin to project
+  - A Super Admin is attempting to invite a 'Unit Personnel' or 'Unit Admin' to an non-existent unit
+  - A Super Admin is attempting to invite a 'Unit Personnel' or 'Unit Admin' but a unit public ID is not provided
+  - The invite did not succeed
+- `403 Forbidden`
+  - Schemas
+    - User does not have access to project
+  - Trying to add any user as a 'Unit Admin', 'Unit Personnel' or 'Super Admin' to a project
+  - Trying to add an existing user with the role 'Unit Admin', 'Unit Personnel' or 'Super Admin' to a project  
+  - Attempting to change a users project role to existing role
+  - User-specific project key not found: user does not have access
+  - Attempting to invite a role higher in the 'hierarchy' (e.g. Unit Admin attempting to invite a Super Admin) 
+- `500 Internal Server Error`
+  - Database errors
+  - User / Project Key errors (any)
 
 _The following is **per user**, not the status code returned to the CLI_
 
