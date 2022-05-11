@@ -193,6 +193,28 @@
 
 ***
 
+## `superadmin_only.py`
+
+### AllUnits
+
+- [Authentication errors](#authentication)
+- `500 Internal Server Error`
+  - Decorators
+    - Database errors
+
+### MOTD
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Json required but not provided
+  - No Message Of The Day provided
+- `500 Internal Server Error`
+  - Decorators
+    - Database errors
+
+***
+
 ## `project.py`
 
 ### CreateProject
