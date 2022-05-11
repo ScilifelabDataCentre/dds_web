@@ -12,14 +12,14 @@
 - `403 Forbidden`
   - User is deactivated
 
-***
+---
 
 ## Utils
 
 - `400 Bad Request`
   - Invalid email type
 
-***
+---
 
 ## `files.py`
 
@@ -171,7 +171,7 @@
 - `500 Internal Server Error`
   - Database errors
 
-***
+---
 
 ## `project.py`
 
@@ -320,7 +320,7 @@
 - `500 Internal Server Error`
   - User / Project Key errors (any)
 
-***
+---
 
 ## `s3.py`
 
@@ -340,7 +340,7 @@
   - Database errors
   - S3 connection errors
 
-***
+---
 
 ## `superadmin_only.py`
 
@@ -362,7 +362,7 @@
   - Decorators
     - Database errors
 
-***
+---
 
 ## `user.py`
 
@@ -387,10 +387,10 @@
   - Schemas
     - User does not have access to project
   - Trying to add any user as a 'Unit Admin', 'Unit Personnel' or 'Super Admin' to a project
-  - Trying to add an existing user with the role 'Unit Admin', 'Unit Personnel' or 'Super Admin' to a project  
+  - Trying to add an existing user with the role 'Unit Admin', 'Unit Personnel' or 'Super Admin' to a project
   - Attempting to change a users project role to existing role
   - User-specific project key not found: user does not have access
-  - Attempting to invite a role higher in the 'hierarchy' (e.g. Unit Admin attempting to invite a Super Admin) 
+  - Attempting to invite a role higher in the 'hierarchy' (e.g. Unit Admin attempting to invite a Super Admin)
 - `500 Internal Server Error`
   - Database errors
   - User / Project Key errors (any)
@@ -416,7 +416,7 @@ _The following is **per user**, not the status code returned to the CLI_
 - `500 Internal Server Error`
   - Database errors
 
-### UserActivation 
+### UserActivation
 
 - [Authentication errors](#authentication)
 - `400 Bad Request`
@@ -430,7 +430,7 @@ _The following is **per user**, not the status code returned to the CLI_
   - Attempting to deactivate account which is already deactivated
 - `403 Forbidden`
   - A 'Unit Admin' is attempting to activate/deactivate a Researcher or Super Admin
-  - Attempting to activate/deactivate a 'Unit Admin' or 'Unit Personnel' outside of the own unit 
+  - Attempting to activate/deactivate a 'Unit Admin' or 'Unit Personnel' outside of the own unit
   - Attempting to activate/deactivate own account
 - `500 Internal Server Error`
   - Database errors
@@ -502,4 +502,3 @@ _The following is **per user**, not the status code returned to the CLI_
     - Database errors
   - A Super Admin is attempting to list the unit users but no unit public ID is specified
   - A Super Admin is attempting to list the unit users but the unit public ID is invalid - no unit with that ID
-  
