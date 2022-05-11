@@ -88,7 +88,21 @@
   - Researcher trying to download data from 'In Progress' project
 - `500 Internal Server Error`
   - Database errors
-  
+
+### RemoveFile
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Json required but not provided
+    - Validation error
+  - Schemas
+    - Project does not exist
+  - Project is not 'In Progress'
+  - Project has previously been made 'Available'
+- `403 Forbidden`
+  - Schemas
+    - User does not have access to project
 
 ***
 
