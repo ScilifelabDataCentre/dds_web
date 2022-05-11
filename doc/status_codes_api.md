@@ -154,6 +154,23 @@
 - `500 Internal Server Error`
   - S3 connection errors
 
+### UpdateFile
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Json required but not provided
+    - Validation error
+  - Schemas
+    - Project does not exist
+  - Trying to update a file but file name not provided
+  - Trying to update a file which is not found in database
+- `403 Forbidden`
+  - Schemas
+    - User does not have access to project
+- `500 Internal Server Error`
+  - Database errors
+
 ***
 
 ## `project.py`
