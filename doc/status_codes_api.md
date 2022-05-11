@@ -493,3 +493,13 @@ _The following is **per user**, not the status code returned to the CLI_
   - Attempting to get usage information as Researcher or Super Admin
 - `500 Internal Server Error`
   - Database errors
+
+### UnitUsers
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Database errors
+  - A Super Admin is attempting to list the unit users but no unit public ID is specified
+  - A Super Admin is attempting to list the unit users but the unit public ID is invalid - no unit with that ID
+  
