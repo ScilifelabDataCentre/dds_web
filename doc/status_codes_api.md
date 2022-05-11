@@ -403,3 +403,8 @@ _The following is **per user**, not the status code returned to the CLI_
   - Super Admin attempting to invite user to project
 - `403 Forbidden`
   - Inviting a role outside of permissions (e.g. Researcher inviting Unit Personnel)
+
+### RetrieveUserInfo
+
+- [Authentication errors](#authentication)
+
