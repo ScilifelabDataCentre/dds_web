@@ -173,6 +173,25 @@
 
 ***
 
+## `s3.py`
+
+### S3Info
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Validation error
+  - Schemas
+    - Project does not exist
+- `403 Forbidden`
+  - Schemas
+    - User does not have access to project
+- `500 Internal Server Error`
+  - Database errors
+  - S3 connection errors
+
+***
+
 ## `project.py`
 
 ### CreateProject
