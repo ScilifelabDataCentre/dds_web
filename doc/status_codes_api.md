@@ -120,7 +120,25 @@
     - User does not have access to project
 - `500 Internal Server Error`
   - Database errors
-  
+
+### FileInfo
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Json required but not provided
+    - Validation error
+  - Schemas
+    - Project does not exist
+    - The project does not contain any data
+  - Project is not 'Available' and downloader is Researcher
+  - No files requested for download
+- `403 Forbidden`
+  - Schemas
+    - User does not have access to project
+- `500 Internal Server Error`
+  - S3 connection errors
+
 ***
 
 ## `project.py`
