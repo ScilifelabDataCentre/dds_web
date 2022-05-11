@@ -450,3 +450,21 @@ _The following is **per user**, not the status code returned to the CLI_
   - User does not have permission to delete an invite
 - `500 Internal Server Error`
   - Database errors
+
+### RemoveUserAssociation
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Validation error
+    - Json required but not provided
+  - Schemas
+    - Project does not exist
+  - Attempting to remove users project access but no user email provided
+  - User not found in database
+  - User does not have access to project
+- `403 Forbidden`
+  - Schemas
+    - User does not have access to project
+- `500 Internal Server Error`
+  - Database errors
