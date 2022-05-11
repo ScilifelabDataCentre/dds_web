@@ -468,3 +468,11 @@ _The following is **per user**, not the status code returned to the CLI_
     - User does not have access to project
 - `500 Internal Server Error`
   - Database errors
+
+### EncryptedToken
+
+- [Authentication errors](#authentication)
+- `429 Too Many Requests`
+  - Attempting to authenticate too many times within an hour
+- `500 Internal Server Error`
+  - User / Project Key errors (any)
