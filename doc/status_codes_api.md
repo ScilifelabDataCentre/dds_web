@@ -408,3 +408,11 @@ _The following is **per user**, not the status code returned to the CLI_
 
 - [Authentication errors](#authentication)
 
+### DeleteUserSelf
+
+- [Authentication errors](#authentication)
+- `403 Forbidden`
+  - Not enough existing Unit Admins
+- `500 Internal Server Error`
+  - Database errors
+  
