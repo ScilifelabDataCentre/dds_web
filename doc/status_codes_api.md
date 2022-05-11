@@ -476,3 +476,12 @@ _The following is **per user**, not the status code returned to the CLI_
   - Attempting to authenticate too many times within an hour
 - `500 Internal Server Error`
   - User / Project Key errors (any)
+
+### SecondFactor
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Validation error
+- `401 Unauthorized`
+  - Invalid or expired token
