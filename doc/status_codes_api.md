@@ -415,4 +415,23 @@ _The following is **per user**, not the status code returned to the CLI_
   - Not enough existing Unit Admins
 - `500 Internal Server Error`
   - Database errors
-  
+
+### UserActivation 
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Validation error
+    - Json required but not provided
+  - An email is not provided
+  - Attempting to activate/deactivate a non-existent user
+  - An action (activate/deactivate) was not provided
+  - Attempting to activate account which is already active
+  - Attempting to deactivate account which is already deactivated
+- `403 Forbidden`
+  - A 'Unit Admin' is attempting to activate/deactivate a Researcher or Super Admin
+  - Attempting to activate/deactivate a 'Unit Admin' or 'Unit Personnel' outside of the own unit 
+  - Attempting to activate/deactivate own account
+- `500 Internal Server Error`
+  - Database errors
+  - User / Project Key errors (any)
