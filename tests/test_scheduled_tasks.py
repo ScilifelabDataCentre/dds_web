@@ -83,3 +83,14 @@ def test_delete_invite(client: flask.testing.FlaskClient) -> None:
     assert len(db.session.query(models.Invite).all()) == 2
     delete_invite()
     assert len(db.session.query(models.Invite).all()) == 1
+
+
+def test_delete_invite_timestamp_issue(client: flask.testing.FlaskClient) -> None:
+    """Test that the delete_invite cronjob deletes invites with '0000-00-00 00:00:00' timestamp."""
+    assert len(db.session.query(models.Invite).all()) == 2
+    invites = db.session.query(models.Invite).all()
+    for invite in invites:
+        invite.created_at = "0000-00-00 00:00:00"
+    db.session.commit()
+    delete_invite()
+    assert len(db.session.query(models.Invite).all()) == 0
