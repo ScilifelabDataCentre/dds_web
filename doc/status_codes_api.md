@@ -183,6 +183,7 @@
     - Validation error
   - Schemas
     - Project does not exist
+  - Project is not 'In Progress'
 - `403 Forbidden`
   - Schemas
     - User does not have access to project
