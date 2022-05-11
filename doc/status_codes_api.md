@@ -435,3 +435,18 @@ _The following is **per user**, not the status code returned to the CLI_
 - `500 Internal Server Error`
   - Database errors
   - User / Project Key errors (any)
+
+### DeleteUser
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Validation error
+  - Attempting to delete a non existent user
+  - Attempting to delete 'Unit Personnel' or 'Unit Admin' outside of own unit
+  - A 'Unit Admin'/'Unit Personnel' attempting to delete a 'Researcher' or a 'Super Admin'
+  - Attempting to delete own account (DeleteUserSelf used for this)
+- `403 Forbidden`
+  - User does not have permission to delete an invite
+- `500 Internal Server Error`
+  - Database errors
