@@ -235,6 +235,26 @@ def test_auth_second_factor_correctauth_reused_hotp_401_unauthorized(client):
 # TOTP ##################################################################################### TOTP #
 
 
+def test_request_totp_activation(client):
+    """Request TOTP activation for a user"""
+
+    user = dds_web.database.models.User.query.filter_by(username="researchuser").first()
+    assert not user.totp_enabled
+
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.TOTP_ACTIVATION,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json.get("message")
+    assert (
+        "Please check your email and follow the attached link to activate two-factor with authenticator app."
+        == response.json.get("message")
+    )
+
+
 @pytest.fixture()
 def totp_for_user(client):
     """Create a user with TOTP enabled and return TOTP object"""
@@ -377,6 +397,27 @@ def test_auth_second_factor_TOTP_use_invalid_HOTP_token(client, totp_for_user):
     assert (
         "Your account is setup to use time-based one-time authentication codes, but you entered a one-time authentication code from email."
         == response.json
+    )
+
+
+def test_hotp_activation(client, totp_for_user):
+    """Test hotp reactivation for a user using TOTP"""
+
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    user = dds_web.database.models.User.query.filter_by(username="researchuser").first()
+    assert user.totp_enabled
+
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).as_tuple()
+    response = client.post(
+        tests.DDSEndpoint.HOTP_ACTIVATION,
+        headers=None,
+        auth=user_auth,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json.get("message")
+    assert (
+        "Please check your email and follow the attached link to activate two-factor with email."
+        == response.json.get("message")
     )
 
 

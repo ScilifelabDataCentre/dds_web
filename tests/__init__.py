@@ -162,6 +162,10 @@ class DDSEndpoint:
     # User activation
     USER_ACTIVATION = BASE_ENDPOINT + "/user/activation"
 
+    # Switching authentication methods
+    TOTP_ACTIVATION = BASE_ENDPOINT + "/user/totp/activate"
+    HOTP_ACTIVATION = BASE_ENDPOINT + "/user/hotp/activate"
+
     # S3Connector keys
     S3KEYS = BASE_ENDPOINT + "/s3/proj"
 
