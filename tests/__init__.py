@@ -140,6 +140,8 @@ class DDSEndpoint:
     REQUEST_RESET_PASSWORD = "/reset_password"
     RESET_PASSWORD = "/reset_password/"
     PASSWORD_RESET_COMPLETED = "/password_reset_completed"
+    ACTIVATE_HOTP_WEB = "/activate_hotp/"
+    ACTIVATE_TOTP_WEB = "/activate_totp/"
 
     # User INFO
     USER_INFO = BASE_ENDPOINT + "/user/info"

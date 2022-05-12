@@ -17,6 +17,7 @@ import dds_web
 from dds_web import db
 from dds_web.security.auth import decrypt_and_verify_token_signature
 from dds_web.security.tokens import encrypted_jwt_token
+from tests.test_login_web import successful_web_login
 
 
 # TESTS #################################################################################### TESTS #
@@ -236,10 +237,11 @@ def test_auth_second_factor_correctauth_reused_hotp_401_unauthorized(client):
 
 
 def test_request_totp_activation(client):
-    """Request TOTP activation for a user"""
+    """Request TOTP activation for a user and activate TOTP"""
 
     user = dds_web.database.models.User.query.filter_by(username="researchuser").first()
     assert not user.totp_enabled
+    assert not user.totp_initiated
 
     user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
@@ -253,6 +255,38 @@ def test_request_totp_activation(client):
         "Please check your email and follow the attached link to activate two-factor with authenticator app."
         == response.json.get("message")
     )
+
+    totp_token = encrypted_jwt_token(
+        username="researchuser",
+        sensitive_content=None,
+        expires_in=datetime.timedelta(
+            seconds=3600,
+        ),
+        additional_claims={"act": "totp"},
+    )
+
+    form_token = successful_web_login(client, user_auth)
+
+    response = client.get(
+        f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "csrf_token": form_token,
+        },
+        follow_redirects=True,
+    )
+    assert user.totp_initiated
+    assert not user.totp_enabled
+    response = client.post(
+        f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "csrf_token": form_token,
+            "totp": user.totp_object().generate(time.time()),
+        },
+        follow_redirects=True,
+    )
+    assert user.totp_enabled
 
 
 @pytest.fixture()
@@ -401,17 +435,17 @@ def test_auth_second_factor_TOTP_use_invalid_HOTP_token(client, totp_for_user):
 
 
 def test_hotp_activation(client, totp_for_user):
-    """Test hotp reactivation for a user using TOTP"""
+    """Test hotp reactivation for a user using TOTP and activate HOTP"""
 
     user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
     user = dds_web.database.models.User.query.filter_by(username="researchuser").first()
     assert user.totp_enabled
 
-    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"]).as_tuple()
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
     response = client.post(
         tests.DDSEndpoint.HOTP_ACTIVATION,
         headers=None,
-        auth=user_auth,
+        auth=user_auth.as_tuple(),
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json.get("message")
@@ -419,6 +453,33 @@ def test_hotp_activation(client, totp_for_user):
         "Please check your email and follow the attached link to activate two-factor with email."
         == response.json.get("message")
     )
+
+    # Activation on web
+    token = encrypted_jwt_token(
+        username="researchuser",
+        sensitive_content=None,
+        expires_in=datetime.timedelta(
+            seconds=3600,
+        ),
+        additional_claims={"act": "hotp"},
+    )
+
+    response = client.post(
+        f"{tests.DDSEndpoint.ACTIVATE_HOTP_WEB}{token}",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        follow_redirects=True,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert not user.totp_enabled
+
+    # Try logging in with hotp
+    hotp_token = user_auth.fetch_hotp()
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"HOTP": hotp_token.decode()},
+    )
+    assert response.status_code == http.HTTPStatus.OK
 
 
 # Token Authentication ##################################################### Token Authentication #
