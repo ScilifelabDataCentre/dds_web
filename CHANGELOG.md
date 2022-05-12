@@ -81,3 +81,16 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Cronjob: Scheduled task for deleting unanswered invites after a week ([#1147](https://github.com/ScilifelabDataCentre/dds_web/pull/1147))
 - Checkbox in registration form and policy to agree to ([#1151](https://github.com/ScilifelabDataCentre/dds_web/pull/1151))
 - Patch: Add checks for valid public_id when creating new unit to avoid bucket name errors ([#1154](https://github.com/ScilifelabDataCentre/dds_web/pull/1154))
+
+## Sprint (2022-04-20 - 2022-05-04)
+
+- Renamed `api/units.py` to `api/superadmin_only.py` to reflect that it's only Super Admin accessible resources ([#1159](https://github.com/ScilifelabDataCentre/dds_web/pull/1159))
+- Add unit tests for the "set_available_to_expired" and "set_expired_to_archived" functions ([#1158](https://github.com/ScilifelabDataCentre/dds_web/pull/1158))
+- DC Branding: SciLifeLab logo + "Data Delivery System" in nav bar & DC branding in footer ([#1160](https://github.com/ScilifelabDataCentre/dds_web/pull/1160))
+
+## Sprint (2022-05-04 - 2022-05-18)
+
+- `adr-tools` to document architecture decisions ([#1161](https://github.com/ScilifelabDataCentre/dds_web/pull/1161))
+- Bug: API returning float again and CLI `--size` flag works again ([#1162](https://github.com/ScilifelabDataCentre/dds_web/pull/1162))
+- Bug: Check for timestamp `0000-00-00 00:00:00` added and invite deleted ([#1163](https://github.com/ScilifelabDataCentre/dds_web/pull/1163))
+- Add documentation of status codes in `api/project.py` ([#1164](https://github.com/ScilifelabDataCentre/dds_web/pull/1164))

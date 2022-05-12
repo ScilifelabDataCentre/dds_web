@@ -190,11 +190,17 @@ def delete_invite():
         try:
             invites: list = db.session.query(models.Invite).all()
             for invite in invites:
-                if (invite.created_at + timedelta(weeks=1)) < expiration:
+                invalid_invite = invite.created_at == "0000-00-00 00:00:00"
+                if invalid_invite or (invite.created_at + timedelta(weeks=1)) < expiration:
                     try:
                         db.session.delete(invite)
                         db.session.commit()
-                        scheduler.app.logger.debug("Invite deleted.")
+                        if invalid_invite:
+                            scheduler.app.logger.warning(
+                                "Invite with created_at = 0000-00-00 00:00:00 deleted."
+                            )
+                        else:
+                            scheduler.app.logger.debug("Invite deleted.")
                     except (OperationalError, SQLAlchemyError) as err:
                         errors[invite] = str(err)
                         scheduler.app.logger.exception(err)
