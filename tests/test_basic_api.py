@@ -3,11 +3,13 @@
 # Standard library
 import http
 import datetime
+import time
 import unittest
 
 # Installed
 import flask
 import flask_mail
+import pytest
 
 # Own
 import tests
@@ -15,6 +17,7 @@ import dds_web
 from dds_web import db
 from dds_web.security.auth import decrypt_and_verify_token_signature
 from dds_web.security.tokens import encrypted_jwt_token
+from tests.test_login_web import successful_web_login
 
 
 # TESTS #################################################################################### TESTS #
@@ -83,7 +86,7 @@ def test_auth_correct_credentials(client):
         assert mock_mail_send.call_count == 0
 
 
-# Second Factor #################################################################### Second Factor #
+# Second Factor ################################################################### Second Factor #
 
 
 def test_auth_second_factor_empty(client):
@@ -97,6 +100,9 @@ def test_auth_second_factor_empty(client):
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert "Invalid token" == response_json.get("message")
+
+
+# HOTP ##################################################################################### HOTP #
 
 
 def test_auth_second_factor_incorrect_token(client):
@@ -227,7 +233,256 @@ def test_auth_second_factor_correctauth_reused_hotp_401_unauthorized(client):
     assert "Invalid one-time authentication code." == response_json.get("message")
 
 
-# Token Authentication ###################################################### Token Authentication #
+# TOTP ##################################################################################### TOTP #
+
+
+def test_request_totp_activation(client):
+    """Request TOTP activation for a user and activate TOTP"""
+
+    user = dds_web.database.models.User.query.filter_by(username="researchuser").first()
+    assert not user.totp_enabled
+    assert not user.totp_initiated
+
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.TOTP_ACTIVATION,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json.get("message")
+    assert (
+        "Please check your email and follow the attached link to activate two-factor with authenticator app."
+        == response.json.get("message")
+    )
+
+    totp_token = encrypted_jwt_token(
+        username="researchuser",
+        sensitive_content=None,
+        expires_in=datetime.timedelta(
+            seconds=3600,
+        ),
+        additional_claims={"act": "totp"},
+    )
+
+    form_token = successful_web_login(client, user_auth)
+
+    response = client.get(
+        f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "csrf_token": form_token,
+        },
+        follow_redirects=True,
+    )
+    assert user.totp_initiated
+    assert not user.totp_enabled
+    response = client.post(
+        f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "csrf_token": form_token,
+            "totp": user.totp_object().generate(time.time()),
+        },
+        follow_redirects=True,
+    )
+    assert user.totp_enabled
+
+
+@pytest.fixture()
+def totp_for_user(client):
+    """Create a user with TOTP enabled and return TOTP object"""
+    user = dds_web.database.models.User.query.filter_by(username="researchuser").first()
+    user.setup_totp_secret()
+    user.activate_totp()
+    return user.totp_object()
+
+
+def test_auth_second_factor_TOTP_incorrect_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with incorrect partial token returns 401/UNAUTHORIZED
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    totp_token = totp_for_user.generate(time.time())
+
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers={"Authorization": f"Bearer made.up.token.long.version"},
+        json={"TOTP": totp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Invalid token" == response_json.get("message")
+
+
+def test_auth_second_factor_TOTP_correct_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with correct token returns 200/OK
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    totp_token = totp_for_user.generate(time.time())
+
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"TOTP": totp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json.get("token")
+    claims = decrypt_and_verify_token_signature(response_json.get("token"))
+    print(claims)
+    assert claims["sub"] == "researchuser"
+
+
+def test_auth_second_factor_TOTP_reused_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with a reused token returns 401/UNAUTHORIZED
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    totp_token = totp_for_user.generate(time.time())
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"TOTP": totp_token.decode()},
+    )
+
+    # Reuse the same totp token
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"TOTP": totp_token.decode()},
+    )
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert (
+        "Authentications with time-based token need to be at least 90 seconds apart."
+        == response_json.get("message")
+    )
+
+
+def test_auth_second_factor_TOTP_expired_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with an expired token returns 401/UNAUTHORIZED
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    # Token from one hour ago
+    totp_token = totp_for_user.generate(time.time() - 3600)
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"TOTP": totp_token.decode()},
+    )
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Invalid time-based token." == response_json.get("message")
+
+
+def test_auth_second_factor_TOTP_incorrect_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint called with a password_reset token returns 401/UNAUTHORIZED and
+    does not send a mail.
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+
+    totp_token = totp_for_user.generate(time.time())
+
+    reset_token = encrypted_jwt_token(
+        username="researchuser",
+        sensitive_content=None,
+        expires_in=datetime.timedelta(
+            seconds=3600,
+        ),
+        additional_claims={"rst": "pwd"},
+    )
+
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers={"Authorization": f"Bearer {reset_token}"},
+        json={"TOTP": totp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Invalid token" == response_json.get("message")
+
+
+def test_auth_second_factor_TOTP_use_invalid_HOTP_token(client, totp_for_user):
+    """
+    Test that the two_factor endpoint for a TOTP activated user called with a HOTP token returns 400/BAD REQUEST
+    """
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    hotp_token = user_auth.fetch_hotp()
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"HOTP": hotp_token.decode()},
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert (
+        "Your account is setup to use time-based one-time authentication codes, but you entered a one-time authentication code from email."
+        == response.json
+    )
+
+
+def test_hotp_activation(client, totp_for_user):
+    """Test hotp reactivation for a user using TOTP and activate HOTP"""
+
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    user = dds_web.database.models.User.query.filter_by(username="researchuser").first()
+    assert user.totp_enabled
+
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    response = client.post(
+        tests.DDSEndpoint.HOTP_ACTIVATION,
+        headers=None,
+        auth=user_auth.as_tuple(),
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json.get("message")
+    assert (
+        "Please check your email and follow the attached link to activate two-factor with email."
+        == response.json.get("message")
+    )
+
+    # Activation on web
+    token = encrypted_jwt_token(
+        username="researchuser",
+        sensitive_content=None,
+        expires_in=datetime.timedelta(
+            seconds=3600,
+        ),
+        additional_claims={"act": "hotp"},
+    )
+
+    response = client.post(
+        f"{tests.DDSEndpoint.ACTIVATE_HOTP_WEB}{token}",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        follow_redirects=True,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert not user.totp_enabled
+
+    # Try logging in with hotp
+    hotp_token = user_auth.fetch_hotp()
+    response = client.get(
+        tests.DDSEndpoint.SECOND_FACTOR,
+        headers=user_auth.partial_token(client),
+        json={"HOTP": hotp_token.decode()},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+
+# Token Authentication ##################################################### Token Authentication #
 
 
 def test_auth_incorrect_token_without_periods(client):

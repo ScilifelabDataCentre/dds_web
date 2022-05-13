@@ -9,7 +9,6 @@ import io
 
 # Installed
 import flask
-import pyqrcode
 
 # Own modules
 

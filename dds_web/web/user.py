@@ -3,7 +3,9 @@
 ####################################################################################################
 
 # Standard Library
+import base64
 import datetime
+import io
 import re
 
 # Installed
@@ -11,6 +13,8 @@ import flask
 import werkzeug
 import flask_login
 import itsdangerous
+import qrcode
+import qrcode.image.svg
 import sqlalchemy
 
 # Own Modules
@@ -148,6 +152,102 @@ def register():
     return flask.render_template("user/register.html", form=form)
 
 
+@auth_blueprint.route("/activate_totp/<token>", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["GET", "POST"],
+    error_message=ddserr.TooManyRequestsError.description,
+)
+@flask_login.login_required
+def activate_totp(token):
+    user = flask_login.current_user
+
+    form = forms.ActivateTOTPForm()
+
+    dds_web.security.auth.verify_activate_totp_token(token, current_user=user)
+
+    if user.totp_enabled:
+        flask.flash("Two-factor authentication via authenticator app is already enabled.")
+        return flask.redirect(flask.url_for("pages.home"))
+
+    # Don't change secret on page reload
+    if not user.totp_initiated:
+        user.setup_totp_secret()
+
+    (totp_secret, totp_uri) = user.totp_secret_and_uri
+
+    # QR code generation
+    image = qrcode.make(totp_uri, image_factory=qrcode.image.svg.SvgFillImage)
+    stream = io.BytesIO()
+    image.save(stream)
+
+    # POST request
+    if form.validate_on_submit():
+        try:
+            user.verify_TOTP(form.totp.data.encode())
+        except ddserr.AuthenticationError:
+            flask.flash("Invalid two-factor authentication code.")
+            return (
+                flask.render_template(
+                    "user/activate_totp.html",
+                    totp_secret=base64.b32encode(totp_secret).decode("utf-8"),
+                    totp_uri=totp_uri,
+                    qr_code=stream.getvalue().decode("utf-8"),
+                    token=token,
+                    form=form,
+                ),
+                200,
+                {
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
+                },
+            )
+
+        user.activate_totp()
+
+        flask.flash("Two-factor authentication via authenticator app has been enabled.")
+        return flask.redirect(flask.url_for("pages.home"))
+
+    return (
+        flask.render_template(
+            "user/activate_totp.html",
+            totp_secret=base64.b32encode(totp_secret).decode("utf-8"),
+            totp_uri=totp_uri,
+            qr_code=stream.getvalue().decode("utf-8"),
+            token=token,
+            form=form,
+        ),
+        200,
+        {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
+@auth_blueprint.route("/activate_hotp/<token>", methods=["GET", "POST"])
+@limiter.limit(
+    dds_web.utils.rate_limit_from_config,
+    methods=["GET", "POST"],
+    error_message=ddserr.TooManyRequestsError.description,
+)
+def activate_hotp(token):
+    """Activates HOTP (default) as method of two-factor authentication.
+    We can't have authentication on this request as the user might have lost their TOTP secret."""
+    user = dds_web.security.auth.verify_activate_hotp_token(token)
+
+    if not user.totp_enabled:
+        flask.flash("Two-factor authentication via email is already enabled.")
+        return flask.redirect(flask.url_for("pages.home"))
+
+    user.deactivate_totp()
+
+    flask.flash("Two-factor authentication via email has been enabled.")
+    return flask.redirect(flask.url_for("pages.home"))
+
+
 @auth_blueprint.route("/cancel_2fa", methods=["POST"])
 @limiter.limit(
     dds_web.utils.rate_limit_from_config,
@@ -170,10 +270,6 @@ def confirm_2fa():
     # Redirect to index if user is already authenticated
     if flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for("pages.home"))
-
-    form = forms.Confirm2FACodeForm()
-
-    cancel_form = forms.Cancel2FAForm()
 
     next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
@@ -198,7 +294,14 @@ def confirm_2fa():
         )
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
 
-    # Valid 2fa initiated token, but user does not exist (not never happen) or is inactive (could happen)
+    if user.totp_enabled:
+        form = forms.Confirm2FACodeTOTPForm()
+    else:
+        form = forms.Confirm2FACodeHOTPForm()
+
+    cancel_form = forms.Cancel2FAForm()
+
+    # Valid 2fa initiated token, but user does not exist (should never happen) or is inactive (could happen)
     # Currently same error for both, not vital, they get message to contact us
     if not user:
         flask.session.pop("2fa_initiated_token", None)
@@ -207,23 +310,31 @@ def confirm_2fa():
 
     if form.validate_on_submit():
 
-        hotp_value = form.hotp.data
+        if user.totp_enabled:
+            twofactor_value = form.totp.data
+            twofactor_verify = user.verify_TOTP
+        else:
+            twofactor_value = form.hotp.data
+            twofactor_verify = user.verify_HOTP
 
         # Raises authenticationerror if invalid
         try:
-            user.verify_HOTP(hotp_value.encode())
-        except ddserr.AuthenticationError:
-            flask.flash("Invalid one-time code.", "warning")
+            twofactor_verify(twofactor_value.encode())
+        except ddserr.AuthenticationError as err:
+            message = str(err)
+            message = message.removeprefix("401 Unauthorized: ")
+            flask.flash(message, "warning")
             return flask.redirect(
                 flask.url_for(
                     "auth_blueprint.confirm_2fa",
                     form=form,
                     cancel_form=cancel_form,
                     next=next_target,
+                    using_totp=user.totp_enabled,
                 )
             )
 
-        # Correct username, password and hotp code --> log user in
+        # Correct username, password and twofactor code --> log user in
         flask_login.login_user(user)
         flask.flash("Logged in successfully.", "success")
         # Remove token from session
@@ -233,7 +344,11 @@ def confirm_2fa():
 
     else:
         return flask.render_template(
-            "user/confirm2fa.html", form=form, cancel_form=cancel_form, next=next_target
+            "user/confirm2fa.html",
+            form=form,
+            cancel_form=cancel_form,
+            next=next_target,
+            using_totp=user.totp_enabled,
         )
 
 
@@ -273,10 +388,10 @@ def login():
             )  # Try login again
 
         # Correct credentials still needs 2fa
-
-        # Send 2fa token to user's email
-        if dds_web.security.auth.send_hotp_email(user):
-            flask.flash("One-Time Code has been sent to your primary email.")
+        if not user.totp_enabled:
+            # Send 2fa token to user's email
+            if dds_web.security.auth.send_hotp_email(user):
+                flask.flash("One-Time Code has been sent to your primary email.")
 
         # Generate signed token that indicates that the user has authenticated
         token_2fa_initiated = dds_web.security.tokens.jwt_token(
@@ -442,10 +557,10 @@ def password_reset_completed():
         user = dds_web.security.auth.verify_password_reset_token(token=token)
         if not user.is_active:
             flask.flash("Your account is not active.", "warning")
-            return flask.redirect(flask.url_for("auth_blueprint.index"))
+            return flask.redirect(flask.url_for("pages.home"))
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
-        return flask.redirect(flask.url_for("auth_blueprint.index"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     units_to_contact = {}
     unit_admins_to_contact = {}

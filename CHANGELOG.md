@@ -94,3 +94,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Bug: API returning float again and CLI `--size` flag works again ([#1162](https://github.com/ScilifelabDataCentre/dds_web/pull/1162))
 - Bug: Check for timestamp `0000-00-00 00:00:00` added and invite deleted ([#1163](https://github.com/ScilifelabDataCentre/dds_web/pull/1163))
 - Add documentation of status codes in `api/project.py` ([#1164](https://github.com/ScilifelabDataCentre/dds_web/pull/1164))
+- Add ability to switch to using TOTP and back to HOTP for MFA ([#936](https://github.com/scilifelabdatacentre/dds_web/issues/936))
+- Patch: Fix the warning in web for too soon TOTP login (within 90 seconds) ([#1173](https://github.com/ScilifelabDataCentre/dds_web/pull/1173))
+- Bug: Do not remove the bucket when emptying the project ([#1172](https://github.com/ScilifelabDataCentre/dds_web/pull/1172))
+- New `add-missing-buckets` argument option to the `lost-files` flask command ([#1174](https://github.com/ScilifelabDataCentre/dds_web/pull/1174))
