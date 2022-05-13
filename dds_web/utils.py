@@ -399,7 +399,7 @@ def bucket_is_valid(bucket_name):
         message = f"The bucket name has the incorrect length {len(bucket_name)}"
     elif re.findall(r"[^a-zA-Z0-9.-]", bucket_name):
         message = "The bucket name contains invalid characters."
-    elif bucket_name[0] in [".", "-"]:
+    elif bucket_name[0].isalnum():
         message = "The bucket name must begin with a letter or number."
     elif bucket_name.count(".") > 2:
         message = "The bucket name cannot contain more than two dots."
