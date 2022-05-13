@@ -848,6 +848,7 @@ def test_new_file_wrong_status(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Project not in right status to upload/modify files" in response.json.get("message")
 
+
 def test_delete_contents_and_upload_again(client, boto3_session):
     """Upload and then delete all project contents"""
 
@@ -860,7 +861,11 @@ def test_delete_contents_and_upload_again(client, boto3_session):
     a_completely_new_file["name_in_bucket"] = "a_completely_new_file"
 
     # Check that files have been added to db
-    file_in_db = db.session.query(models.File).filter(models.File.name == a_completely_new_file["name"]).first()
+    file_in_db = (
+        db.session.query(models.File)
+        .filter(models.File.name == a_completely_new_file["name"])
+        .first()
+    )
     assert not file_in_db
 
     # Create new file in db
@@ -873,7 +878,11 @@ def test_delete_contents_and_upload_again(client, boto3_session):
 
     # Check that files have been added to db
     assert response.status_code == http.HTTPStatus.OK
-    file_in_db = db.session.query(models.File).filter(models.File.name == a_completely_new_file["name"]).first()
+    file_in_db = (
+        db.session.query(models.File)
+        .filter(models.File.name == a_completely_new_file["name"])
+        .first()
+    )
     assert file_in_db
 
     # Try to remove all contents on empty project
@@ -884,7 +893,11 @@ def test_delete_contents_and_upload_again(client, boto3_session):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    file_in_db = db.session.query(models.File).filter(models.File.name == a_completely_new_file["name"]).first()
+    file_in_db = (
+        db.session.query(models.File)
+        .filter(models.File.name == a_completely_new_file["name"])
+        .first()
+    )
     assert not file_in_db
 
     # Create new file in db
@@ -897,5 +910,9 @@ def test_delete_contents_and_upload_again(client, boto3_session):
 
     # Check that files have been added to db
     assert response.status_code == http.HTTPStatus.OK
-    file_in_db = db.session.query(models.File).filter(models.File.name == a_completely_new_file["name"]).first()
+    file_in_db = (
+        db.session.query(models.File)
+        .filter(models.File.name == a_completely_new_file["name"])
+        .first()
+    )
     assert file_in_db
