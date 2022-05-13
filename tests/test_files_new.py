@@ -847,3 +847,95 @@ def test_new_file_wrong_status(client):
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Project not in right status to upload/modify files" in response.json.get("message")
+
+def test_delete_contents_and_upload_again(client, boto3_session):
+    """Upload and then delete all project contents"""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    a_completely_new_file = FIRST_NEW_FILE.copy()
+    a_completely_new_file["name"] = "a_completely_new_file"
+    a_completely_new_file["name_in_bucket"] = "a_completely_new_file"
+
+    # Check that files have been added to db
+    file_in_db = db.session.query(models.File).filter(models.File.name == a_completely_new_file["name"]).first()
+    assert not file_in_db
+
+    # Create new file in db
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=a_completely_new_file,
+    )
+
+    # Check that files have been added to db
+    assert response.status_code == http.HTTPStatus.OK
+    file_in_db = db.session.query(models.File).filter(models.File.name == a_completely_new_file["name"]).first()
+    assert file_in_db
+
+    # Try to remove all contents on empty project
+    response = client.delete(
+        tests.DDSEndpoint.REMOVE_PROJ_CONT,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    file_in_db = db.session.query(models.File).filter(models.File.name == a_completely_new_file["name"]).first()
+    assert not file_in_db
+
+    # Create new file in db
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=a_completely_new_file,
+    )
+
+    # Check that files have been added to db
+    assert response.status_code == http.HTTPStatus.OK
+    file_in_db = db.session.query(models.File).filter(models.File.name == a_completely_new_file["name"]).first()
+    assert file_in_db
+
+    # assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    # assert "There are no project contents to delete." in response.json["message"]
+
+    # response = client.post(
+    #     tests.DDSEndpoint.FILE_NEW,
+    #     headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+    #     query_string={"project": "file_testing_project"},
+    #     json=FIRST_NEW_FILE,
+    # )
+    # assert response.status_code == http.HTTPStatus.OK
+    # assert file_in_db(test_dict=FIRST_NEW_FILE, project=project_1.id)
+
+    # project_1 = project_row(project_id="file_testing_project")
+    # assert project_1
+    # assert project_1.current_status == "In Progress"
+
+    # file_1_in_folder = FIRST_NEW_FILE.copy()
+    # file_1_in_folder["name"] = "file_1_in_folder"
+    # file_1_in_folder["name_in_bucket"] = "bucketfile_1_in_folder"
+
+    # response = client.post(
+    #     tests.DDSEndpoint.FILE_NEW,
+    #     headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+    #     query_string={"project": "file_testing_project"},
+    #     json=file_1_in_folder,
+    # )
+    # assert response.status_code == http.HTTPStatus.OK
+    # assert file_in_db(test_dict=file_1_in_folder, project=project_1.id)
+
+    # # Remove all contents
+    # response = client.delete(
+    #     tests.DDSEndpoint.REMOVE_PROJ_CONT,
+    #     headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+    #     query_string={"project": "file_testing_project"},
+    # )
+    # assert response.status_code == http.HTTPStatus.OK
+    # assert response.json["removed"]
+    # assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project_1.id)
+    # assert not file_in_db(test_dict=file_1_in_folder, project=project_1.id)
