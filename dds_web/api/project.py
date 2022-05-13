@@ -281,7 +281,7 @@ class ProjectStatus(flask_restful.Resource):
 
         try:
             # Deletes files (also commits session in the function - possibly refactor later)
-            RemoveContents().delete_project_contents(project=project)
+            RemoveContents().delete_project_contents(project=project, delete_bucket=True)
             self.rm_project_user_keys(project=project)
 
             # Delete metadata from project row
@@ -319,7 +319,7 @@ class ProjectStatus(flask_restful.Resource):
 
         try:
             # Deletes files (also commits session in the function - possibly refactor later)
-            RemoveContents().delete_project_contents(project=project)
+            RemoveContents().delete_project_contents(project=project, delete_bucket=True)
             delete_message = f"\nAll files in {project.public_id} deleted"
             self.rm_project_user_keys(project=project)
 
@@ -545,12 +545,12 @@ class RemoveContents(flask_restful.Resource):
         return {"removed": True}
 
     @staticmethod
-    def delete_project_contents(project):
+    def delete_project_contents(project, delete_bucket=False):
         """Remove project contents"""
         # Delete from cloud
         with ApiS3Connector(project=project) as s3conn:
             try:
-                s3conn.remove_bucket()
+                s3conn.remove_bucket_contents(delete_bucket=delete_bucket)
             except botocore.client.ClientError as err:
                 raise DeletionError(message=str(err), project=project.public_id) from err
 
