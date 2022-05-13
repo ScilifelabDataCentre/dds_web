@@ -30,6 +30,14 @@ class TokenSchema(marshmallow.Schema):
         ),
     )
 
+    TOTP = marshmallow.fields.String(
+        required=False,
+        validate=marshmallow.validate.And(
+            marshmallow.validate.Length(min=6, max=6),
+            marshmallow.validate.ContainsOnly("0123456789"),
+        ),
+    )
+
     class Meta:
         unknown = marshmallow.EXCLUDE
 
@@ -38,11 +46,24 @@ class TokenSchema(marshmallow.Schema):
         """Verify HOTP (authentication One-Time code) is correct."""
 
         # This can be easily extended to require at least one MFA method
-        if "HOTP" not in data:
+        if ("HOTP" not in data) and ("TOTP" not in data):
             raise marshmallow.exceptions.ValidationError("MFA method not supplied")
 
         user = auth.current_user()
-        if "HOTP" in data:
+
+        if user.totp_enabled:
+            value = data.get("TOTP")
+            if not value:
+                raise marshmallow.ValidationError(
+                    "Your account is setup to use time-based one-time authentication codes, but you entered a one-time authentication code from email."
+                )
+            # Raises authentication error if TOTP is incorrect
+            user.verify_TOTP(value.encode())
+        else:
             value = data.get("HOTP")
+            if not value:
+                raise marshmallow.ValidationError(
+                    "Your account is setup to use one-time authentication code via email, you cannot authenticate with time-based one-time authentication codes."
+                )
             # Raises authenticationerror if invalid
             user.verify_HOTP(value.encode())

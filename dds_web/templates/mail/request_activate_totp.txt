@@ -1,0 +1,5 @@
+Activate two factor authentication with authenticator app
+If you want to activate one-time password using an authenticator app instead of e-mail, visit the following link:
+{{link}}
+
+If you did not make this request simply ignore this email and no changes will be made.

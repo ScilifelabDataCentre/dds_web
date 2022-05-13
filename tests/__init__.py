@@ -140,6 +140,8 @@ class DDSEndpoint:
     REQUEST_RESET_PASSWORD = "/reset_password"
     RESET_PASSWORD = "/reset_password/"
     PASSWORD_RESET_COMPLETED = "/password_reset_completed"
+    ACTIVATE_HOTP_WEB = "/activate_hotp/"
+    ACTIVATE_TOTP_WEB = "/activate_totp/"
 
     # User INFO
     USER_INFO = BASE_ENDPOINT + "/user/info"
@@ -161,6 +163,10 @@ class DDSEndpoint:
 
     # User activation
     USER_ACTIVATION = BASE_ENDPOINT + "/user/activation"
+
+    # Switching authentication methods
+    TOTP_ACTIVATION = BASE_ENDPOINT + "/user/totp/activate"
+    HOTP_ACTIVATION = BASE_ENDPOINT + "/user/hotp/activate"
 
     # S3Connector keys
     S3KEYS = BASE_ENDPOINT + "/s3/proj"

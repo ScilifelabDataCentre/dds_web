@@ -1,0 +1,5 @@
+Activate two factor authentication with email
+If you want to activate one-time password using email instead of an authenticator app, visit the following link:
+{{link}}
+
+If you do not wish to make any changes, please ignore this email.

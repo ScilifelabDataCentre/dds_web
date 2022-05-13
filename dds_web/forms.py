@@ -90,12 +90,28 @@ class LogoutForm(flask_wtf.FlaskForm):
     logout = wtforms.SubmitField("Logout")
 
 
-class Confirm2FACodeForm(flask_wtf.FlaskForm):
+class Confirm2FACodeHOTPForm(flask_wtf.FlaskForm):
     hotp = wtforms.StringField(
         "Multi-factor authentication code",
         validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=8, max=8)],
     )
     submit = wtforms.SubmitField("Authenticate")
+
+
+class Confirm2FACodeTOTPForm(flask_wtf.FlaskForm):
+    totp = wtforms.StringField(
+        "Verification Code",
+        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
+    )
+    submit = wtforms.SubmitField("Authenticate")
+
+
+class ActivateTOTPForm(flask_wtf.FlaskForm):
+    totp = wtforms.StringField(
+        "Verification Code",
+        validators=[wtforms.validators.InputRequired(), wtforms.validators.Length(min=6, max=6)],
+    )
+    submit = wtforms.SubmitField("Activate")
 
 
 class Cancel2FAForm(flask_wtf.FlaskForm):
