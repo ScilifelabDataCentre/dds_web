@@ -97,3 +97,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Add ability to switch to using TOTP and back to HOTP for MFA ([#936](https://github.com/scilifelabdatacentre/dds_web/issues/936))
 - Patch: Fix the warning in web for too soon TOTP login (within 90 seconds) ([#1173](https://github.com/ScilifelabDataCentre/dds_web/pull/1173))
 - Bug: Do not remove the bucket when emptying the project ([#1172](https://github.com/ScilifelabDataCentre/dds_web/pull/1172))
+- New `add-missing-buckets` argument option to the `lost-files` flask command ([#1174](https://github.com/ScilifelabDataCentre/dds_web/pull/1174))

@@ -483,7 +483,7 @@ def update_uploaded_file_with_log(project, path_to_log_file):
 
 
 @click.command("lost-files")
-@click.argument("action_type", type=click.Choice(["find", "list", "delete"]))
+@click.argument("action_type", type=click.Choice(["find", "list", "delete", "add-missing-buckets"]))
 @flask.cli.with_appcontext
 def lost_files_s3_db(action_type: str):
     """
@@ -494,6 +494,7 @@ def lost_files_s3_db(action_type: str):
     """
     from dds_web.database import models
     import boto3
+    from dds_web.utils import bucket_is_valid
 
     for unit in models.Unit.query:
         session = boto3.session.Session()
@@ -514,6 +515,15 @@ def lost_files_s3_db(action_type: str):
                 )
             except resource.meta.client.exceptions.NoSuchBucket:
                 flask.current_app.logger.warning("Missing bucket %s", project.bucket)
+                if action_type == "add-missing-buckets":
+                    valid, message = bucket_is_valid(bucket_name=project.bucket)
+                    if not valid:
+                        flask.current_app.logger.warning(
+                            f"Could not create bucket '{project.bucket}' for project '{project.public_id}': {message}"
+                        )
+                    else:
+                        resource.create_bucket(Bucket=project.bucket)
+                        flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
                 continue
 
             try:
