@@ -79,13 +79,13 @@ class ApiS3Connector:
 
         # Delete objects first
         bucket.objects.all().delete()
-        
+
         # Delete bucket if chosen
         if delete_bucket:
             bucket.delete()
-        
+
         bucket = None
-    
+
     @bucket_must_exists
     def remove_multiple(self, items, batch_size: int = 1000, *args, **kwargs):
         """Removes all with prefix."""
