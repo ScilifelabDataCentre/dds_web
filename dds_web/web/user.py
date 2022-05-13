@@ -320,8 +320,10 @@ def confirm_2fa():
         # Raises authenticationerror if invalid
         try:
             twofactor_verify(twofactor_value.encode())
-        except ddserr.AuthenticationError:
-            flask.flash("Invalid one-time code.", "warning")
+        except ddserr.AuthenticationError as err:
+            message = str(err)
+            message = message.removeprefix("401 Unauthorized: ")
+            flask.flash(message, "warning")
             return flask.redirect(
                 flask.url_for(
                     "auth_blueprint.confirm_2fa",
