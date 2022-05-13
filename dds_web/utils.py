@@ -390,13 +390,14 @@ def create_one_time_password_email(user, hotp_value):
 
     return msg
 
+
 def bucket_is_valid(bucket_name):
     """Verify that the bucket name is valid."""
     valid = False
     message = ""
     if not (3 <= len(bucket_name) <= 63):
-        message = f"The bucket name has the incorrect length {len(bucket_name)}" 
-    elif (re.findall(r"[^a-zA-Z0-9.-]", bucket_name)):
+        message = f"The bucket name has the incorrect length {len(bucket_name)}"
+    elif re.findall(r"[^a-zA-Z0-9.-]", bucket_name):
         message = "The bucket name contains invalid characters."
     elif bucket_name[0] in [".", "-"]:
         message = "The bucket name must begin with a letter or number."
