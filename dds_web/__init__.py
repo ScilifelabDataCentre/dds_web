@@ -496,9 +496,11 @@ def lost_files_s3_db(action_type: str):
     import boto3
     from dds_web.utils import bucket_is_valid
 
+    # Interate through the units
     for unit in models.Unit.query:
         session = boto3.session.Session()
 
+        # Connect to S3
         resource = session.resource(
             service_name="s3",
             endpoint_url=unit.safespring_endpoint,
@@ -506,15 +508,20 @@ def lost_files_s3_db(action_type: str):
             aws_secret_access_key=unit.safespring_secret,
         )
 
-        db_count = 0
-        s3_count = 0
+        # Variables
+        db_count = 0  # Files not found in s3
+        s3_count = 0  # Files not found in db
+
+        # Iterate through unit projects
         for project in unit.projects:
+            # Check for objects in bucket
             try:
                 s3_filenames = set(
                     entry.key for entry in resource.Bucket(project.bucket).objects.all()
                 )
             except resource.meta.client.exceptions.NoSuchBucket:
                 flask.current_app.logger.warning("Missing bucket %s", project.bucket)
+                # Create a missing bucket if argument chosen
                 if action_type == "add-missing-buckets":
                     valid, message = bucket_is_valid(bucket_name=project.bucket)
                     if not valid:
@@ -525,14 +532,19 @@ def lost_files_s3_db(action_type: str):
                         resource.create_bucket(Bucket=project.bucket)
                         flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
                 continue
-
+            
+            # Get objects in project
             try:
                 db_filenames = set(entry.name_in_bucket for entry in project.files)
             except sqlalchemy.exc.OperationalError:
                 flask.current_app.logger.critical("Unable to connect to db")
 
-            diff_db = db_filenames.difference(s3_filenames)
-            diff_s3 = s3_filenames.difference(db_filenames)
+            # Differences
+            diff_db = db_filenames.difference(s3_filenames)  # In db but not in S3
+            diff_s3 = s3_filenames.difference(db_filenames)  # In S3 but not in db
+            
+            # List all files which are missing in either db of s3
+            # or delete the files from the s3 if missing in db, or db if missing in s3
             if action_type == "list":
                 for file_entry in diff_db:
                     flask.current_app.logger.info(
@@ -577,9 +589,10 @@ def lost_files_s3_db(action_type: str):
             # update the counters at the end of the loop to have accurate numbers for delete
             s3_count += len(diff_s3)
             db_count += len(diff_db)
-
+    
+    # Print out information about actions performed in cronjob
     if s3_count or db_count:
-        action_word = "Found" if action_type in ("find", "list") else "Deleted"
+        action_word = "Found" if action_type in ("find", "list", "add-missing-buckets") else "Deleted"
         flask.current_app.logger.info(
             "%s %d entries for lost files (%d in db, %d in s3)",
             action_word,
@@ -587,7 +600,7 @@ def lost_files_s3_db(action_type: str):
             db_count,
             s3_count,
         )
-        if action_type in ("find", "list"):
+        if action_type in ("find", "list", "add-missing-buckets"):
             sys.exit(1)
 
     else:
