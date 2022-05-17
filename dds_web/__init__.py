@@ -532,7 +532,7 @@ def lost_files_s3_db(action_type: str):
                         resource.create_bucket(Bucket=project.bucket)
                         flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
                 continue
-            
+
             # Get objects in project
             try:
                 db_filenames = set(entry.name_in_bucket for entry in project.files)
@@ -542,7 +542,7 @@ def lost_files_s3_db(action_type: str):
             # Differences
             diff_db = db_filenames.difference(s3_filenames)  # In db but not in S3
             diff_s3 = s3_filenames.difference(db_filenames)  # In S3 but not in db
-            
+
             # List all files which are missing in either db of s3
             # or delete the files from the s3 if missing in db, or db if missing in s3
             if action_type == "list":
@@ -589,10 +589,12 @@ def lost_files_s3_db(action_type: str):
             # update the counters at the end of the loop to have accurate numbers for delete
             s3_count += len(diff_s3)
             db_count += len(diff_db)
-    
+
     # Print out information about actions performed in cronjob
     if s3_count or db_count:
-        action_word = "Found" if action_type in ("find", "list", "add-missing-buckets") else "Deleted"
+        action_word = (
+            "Found" if action_type in ("find", "list", "add-missing-buckets") else "Deleted"
+        )
         flask.current_app.logger.info(
             "%s %d entries for lost files (%d in db, %d in s3)",
             action_word,
