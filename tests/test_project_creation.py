@@ -7,6 +7,7 @@ import json
 import unittest
 import time
 import os
+from urllib import response
 
 # Installed
 import pytest
@@ -46,6 +47,7 @@ proj_data_with_unsuitable_user_roles = {
         {"email": "researchuser2@mailtrap.io", "role": "Unit Personnel"},
     ],
 }
+
 
 
 def create_unit_admins(num_admins, unit_id=1):
@@ -690,3 +692,47 @@ def test_create_project_with_unsuitable_roles(client, boto3_session):
     assert response.json and response.json.get("user_addition_statuses")
     for x in response.json.get("user_addition_statuses"):
         assert "User Role should be either 'Project Owner' or 'Researcher'" in x
+
+def test_create_project_valid_characters(client, boto3_session):
+    """Create a project with no unicode."""
+    # Project info with valid characters
+    proj_data_val_chars = proj_data.copy()
+    proj_data_val_chars["description"] = "A longer project description !#¤%&/()=?¡@£$€¥{[]}\\"
+
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE, 
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data_val_chars,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    
+    new_project = db.session.query(models.Project).filter(models.Project.description == proj_data_val_chars["description"]).first()
+    assert new_project
+
+def test_create_project_invalid_characters(client, boto3_session):
+    """Create a project with unicode characters."""
+    # Project info with invalid characters
+    proj_data_inval_chars = proj_data.copy()
+    proj_data_inval_chars["description"] = "A longer project description \U0001F300 \U0001F601"
+
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE, 
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data_inval_chars,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.json and response.json.get("description") and isinstance(response.json.get("description"), list)
+    assert response.json["description"][0] == "This input is not allowed: \U0001F300\U0001F601"
+
+    new_project = db.session.query(models.Project).filter(models.Project.description == proj_data_inval_chars["description"]).first()
+    assert not new_project
