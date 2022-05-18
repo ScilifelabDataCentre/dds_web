@@ -49,7 +49,6 @@ proj_data_with_unsuitable_user_roles = {
 }
 
 
-
 def create_unit_admins(num_admins, unit_id=1):
     new_admins = []
     for i in range(1, num_admins + 1):
@@ -693,6 +692,7 @@ def test_create_project_with_unsuitable_roles(client, boto3_session):
     for x in response.json.get("user_addition_statuses"):
         assert "User Role should be either 'Project Owner' or 'Researcher'" in x
 
+
 def test_create_project_valid_characters(client, boto3_session):
     """Create a project with no unicode."""
     # Project info with valid characters
@@ -705,14 +705,19 @@ def test_create_project_valid_characters(client, boto3_session):
     assert current_unit_admins == 3
 
     response = client.post(
-        tests.DDSEndpoint.PROJECT_CREATE, 
+        tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         json=proj_data_val_chars,
     )
     assert response.status_code == http.HTTPStatus.OK
-    
-    new_project = db.session.query(models.Project).filter(models.Project.description == proj_data_val_chars["description"]).first()
+
+    new_project = (
+        db.session.query(models.Project)
+        .filter(models.Project.description == proj_data_val_chars["description"])
+        .first()
+    )
     assert new_project
+
 
 def test_create_project_invalid_characters(client, boto3_session):
     """Create a project with unicode characters."""
@@ -726,13 +731,21 @@ def test_create_project_invalid_characters(client, boto3_session):
     assert current_unit_admins == 3
 
     response = client.post(
-        tests.DDSEndpoint.PROJECT_CREATE, 
+        tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         json=proj_data_inval_chars,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert response.json and response.json.get("description") and isinstance(response.json.get("description"), list)
+    assert (
+        response.json
+        and response.json.get("description")
+        and isinstance(response.json.get("description"), list)
+    )
     assert response.json["description"][0] == "This input is not allowed: \U0001F300\U0001F601"
 
-    new_project = db.session.query(models.Project).filter(models.Project.description == proj_data_inval_chars["description"]).first()
+    new_project = (
+        db.session.query(models.Project)
+        .filter(models.Project.description == proj_data_inval_chars["description"])
+        .first()
+    )
     assert not new_project
