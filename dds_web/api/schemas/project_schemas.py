@@ -125,7 +125,6 @@ class CreateProjectSchema(marshmallow.Schema):
         ):
             raise marshmallow.ValidationError("Missing fields!")
 
-
     def generate_bucketname(self, public_id, created_time):
         """Create bucket name for the given project."""
         return "{pid}-{tstamp}-{rstring}".format(
