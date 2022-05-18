@@ -79,7 +79,9 @@ class CreateProjectSchema(marshmallow.Schema):
     description = marshmallow.fields.String(
         required=True,
         allow_none=False,
-        validate=marshmallow.validate.Length(min=1),
+        validate=marshmallow.validate.And(
+            marshmallow.validate.Length(min=1), dds_web.utils.contains_unicode_emojis
+        ),
         error_messages={
             "required": {"message": "A project description is required."},
             "null": {"message": "A project description is required."},
@@ -123,14 +125,6 @@ class CreateProjectSchema(marshmallow.Schema):
         ):
             raise marshmallow.ValidationError("Missing fields!")
 
-    @marshmallow.validates("description")
-    def validate_description(self, value):
-        """Verify that description only has words, spaces and . / ,."""
-        disallowed = re.findall(r"[^(\w\s.,)]+", value)
-        if disallowed:
-            raise marshmallow.ValidationError(
-                message="The description can only contain letters, spaces, period and commas."
-            )
 
     def generate_bucketname(self, public_id, created_time):
         """Create bucket name for the given project."""
