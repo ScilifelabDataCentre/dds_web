@@ -37,7 +37,9 @@ def verify_project_exists(spec_proj, for_update=False):
     project_query = models.Project.query.filter(
         models.Project.public_id == sqlalchemy.func.binary(spec_proj)
     )
-    project = project_query.with_for_update().one_or_none() if for_update else project_query.one_or_none()
+    project = (
+        project_query.with_for_update().one_or_none() if for_update else project_query.one_or_none()
+    )
 
     if not project:
         flask.current_app.logger.warning("No such project!!")
@@ -190,7 +192,7 @@ class ProjectContentSchema(marshmallow.Schema):
 
     class Meta:
         unknown = marshmallow.EXCLUDE
-        
+
     def find_contents(self, project, contents):
 
         # All contents

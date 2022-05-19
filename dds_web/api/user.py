@@ -206,7 +206,9 @@ class AddUser(flask_restful.Resource):
             # TODO Change / move this later. This is just so that we can add an initial Unit Admin.
             if auth.current_user().role == "Super Admin":
                 if unit:
-                    unit_row = models.Unit.query.filter_by(public_id=unit).with_for_update().one_or_none()
+                    unit_row = (
+                        models.Unit.query.filter_by(public_id=unit).with_for_update().one_or_none()
+                    )
                     if not unit_row:
                         raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
 
@@ -342,13 +344,17 @@ class AddUser(flask_restful.Resource):
         ownership_change = False
 
         if isinstance(whom, models.ResearchUser):
-            project_user_row = models.ProjectUsers.query.filter_by(
-                project_id=project.id, user_id=whom.username
-            ).with_for_update().one_or_none()
+            project_user_row = (
+                models.ProjectUsers.query.filter_by(project_id=project.id, user_id=whom.username)
+                .with_for_update()
+                .one_or_none()
+            )
         else:
-            project_user_row = models.ProjectInviteKeys.query.filter_by(
-                project_id=project.id, invite_id=whom.id
-            ).with_for_update().one_or_none()
+            project_user_row = (
+                models.ProjectInviteKeys.query.filter_by(project_id=project.id, invite_id=whom.id)
+                .with_for_update()
+                .one_or_none()
+            )
 
         if project_user_row:
             send_email = False
@@ -888,7 +894,9 @@ class RemoveUserAssociation(flask_restful.Resource):
     def post(self):
         """Remove a user from a project"""
         # Verify project id and access
-        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project = db_tools.get_project_object(
+            project_id=flask.request.args.get("project"), for_update=True
+        )
         project_schemas.verify_project_access(project=project)
 
         json_input = flask.request.json
@@ -913,9 +921,13 @@ class RemoveUserAssociation(flask_restful.Resource):
             if user_association.user_id == existing_user.username:
                 user_in_project = True
                 db.session.delete(user_association)
-                project_user_key = models.ProjectUserKeys.query.filter_by(
-                    project_id=project.id, user_id=existing_user.username
-                ).with_for_update().first()
+                project_user_key = (
+                    models.ProjectUserKeys.query.filter_by(
+                        project_id=project.id, user_id=existing_user.username
+                    )
+                    .with_for_update()
+                    .first()
+                )
                 if project_user_key:
                     db.session.delete(project_user_key)
 
@@ -1136,9 +1148,13 @@ class ShowUsage(flask_restful.Resource):
 
         # Get unit info from table (incl safespring proj name)
         try:
-            unit_info = models.Unit.query.filter(
-                models.Unit.id == sqlalchemy.func.binary(current_user.unit_id)
-            ).with_for_update().first()
+            unit_info = (
+                models.Unit.query.filter(
+                    models.Unit.id == sqlalchemy.func.binary(current_user.unit_id)
+                )
+                .with_for_update()
+                .first()
+            )
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             flask.current_app.logger.exception(err)
             raise ddserr.DatabaseError(

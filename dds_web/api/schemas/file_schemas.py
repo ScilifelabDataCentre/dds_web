@@ -110,10 +110,10 @@ class NewFileSchema(marshmallow.Schema):
             "null": {"message": "Checksum required."},
         },
     )
-    
+
     class Meta:
         unknown = marshmallow.EXCLUDE
-    
+
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def get_project_object(self, data, **kwargs):
         """Set project row in data for access by validators."""

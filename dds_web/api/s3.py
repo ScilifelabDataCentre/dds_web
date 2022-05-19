@@ -14,7 +14,11 @@ import sqlalchemy
 # Own modules
 from dds_web import auth
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import project_required, logging_bind_request, handle_validation_errors
+from dds_web.api.dds_decorators import (
+    project_required,
+    logging_bind_request,
+    handle_validation_errors,
+)
 from dds_web.errors import (
     S3ProjectNotFoundError,
     DatabaseError,

@@ -84,7 +84,9 @@ class NewFile(flask_restful.Resource):
     def post(self):
         """Add new file to DB."""
         # Verify project id and access
-        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project = db_tools.get_project_object(
+            project_id=flask.request.args.get("project"), for_update=True
+        )
         project_schemas.verify_project_access(project=project)
 
         # Verify that project has correct status for upload
@@ -119,7 +121,9 @@ class NewFile(flask_restful.Resource):
     def put(self):
         """Update existing file."""
         # Verify project id and access
-        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project = db_tools.get_project_object(
+            project_id=flask.request.args.get("project"), for_update=True
+        )
         project_schemas.verify_project_access(project=project)
 
         # Verify that projet has correct status for upload
@@ -131,12 +135,16 @@ class NewFile(flask_restful.Resource):
 
         try:
             # Check if file already in db
-            existing_file = models.File.query.filter(
-                sqlalchemy.and_(
-                    models.File.name == sqlalchemy.func.binary(file_info.get("name")),
-                    models.File.project_id == project.id,
+            existing_file = (
+                models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name == sqlalchemy.func.binary(file_info.get("name")),
+                        models.File.project_id == project.id,
+                    )
                 )
-            ).with_for_update().first()
+                .with_for_update()
+                .first()
+            )
 
             # Error if not found
             if not existing_file or existing_file is None:
@@ -146,12 +154,16 @@ class NewFile(flask_restful.Resource):
                 )
 
             # Get version row
-            current_file_version = models.Version.query.filter(
-                sqlalchemy.and_(
-                    models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
-                    models.Version.time_deleted.is_(None),
+            current_file_version = (
+                models.Version.query.filter(
+                    sqlalchemy.and_(
+                        models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
+                        models.Version.time_deleted.is_(None),
+                    )
                 )
-            ).with_for_update().all()
+                .with_for_update()
+                .all()
+            )
             if len(current_file_version) > 1:
                 flask.current_app.logger.warning(
                     "There is more than one version of the file "
@@ -420,7 +432,9 @@ class RemoveFile(flask_restful.Resource):
     def delete(self):
         """Delete file(s)."""
         # Verify project id and access
-        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project = db_tools.get_project_object(
+            project_id=flask.request.args.get("project"), for_update=True
+        )
         project_schemas.verify_project_access(project=project)
 
         # Verify project status ok for deletion
@@ -502,10 +516,14 @@ class RemoveFile(flask_restful.Resource):
     def delete_one(self, project, filename):
         """Delete a single file in project."""
         # Get matching files in project
-        file = models.File.query.filter(
-            models.File.name == sqlalchemy.func.binary(filename),
-            models.File.project_id == sqlalchemy.func.binary(project.id),
-        ).with_for_update().one_or_none()
+        file = (
+            models.File.query.filter(
+                models.File.name == sqlalchemy.func.binary(filename),
+                models.File.project_id == sqlalchemy.func.binary(project.id),
+            )
+            .with_for_update()
+            .one_or_none()
+        )
 
         if not file:
             raise FileNotFoundError("Could not find the specified file.")
@@ -513,12 +531,16 @@ class RemoveFile(flask_restful.Resource):
         name_in_bucket = file.name_in_bucket
 
         # get current version
-        current_file_version = models.Version.query.filter(
-            sqlalchemy.and_(
-                models.Version.active_file == sqlalchemy.func.binary(file.id),
-                models.Version.time_deleted.is_(None),
+        current_file_version = (
+            models.Version.query.filter(
+                sqlalchemy.and_(
+                    models.Version.active_file == sqlalchemy.func.binary(file.id),
+                    models.Version.time_deleted.is_(None),
+                )
             )
-        ).with_for_update().first()
+            .with_for_update()
+            .first()
+        )
         current_file_version.time_deleted = dds_web.utils.current_time()
 
         db.session.delete(file)
@@ -538,7 +560,9 @@ class RemoveDir(flask_restful.Resource):
     def delete(self):
         """Delete folder(s)."""
         # Verify project id and access
-        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project = db_tools.get_project_object(
+            project_id=flask.request.args.get("project"), for_update=True
+        )
         project_schemas.verify_project_access(project=project)
 
         # Verify project status ok for deletion
@@ -615,7 +639,8 @@ class RemoveDir(flask_restful.Resource):
                         models.File.subpath.regexp_match(rf"^{re_folder}(/[^/]+)*$"),
                     )
                 )
-                .with_for_update().all()
+                .with_for_update()
+                .all()
             )
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             raise DatabaseError(
@@ -634,12 +659,16 @@ class RemoveDir(flask_restful.Resource):
         """Prepare queries in the db session for deletion of files in the database."""
         for entry in files:
             # get current version
-            current_file_version = models.Version.query.filter(
-                sqlalchemy.and_(
-                    models.Version.active_file == sqlalchemy.func.binary(entry.id),
-                    models.Version.time_deleted.is_(None),
+            current_file_version = (
+                models.Version.query.filter(
+                    sqlalchemy.and_(
+                        models.Version.active_file == sqlalchemy.func.binary(entry.id),
+                        models.Version.time_deleted.is_(None),
+                    )
                 )
-            ).with_for_update().first()
+                .with_for_update()
+                .first()
+            )
             current_file_version.time_deleted = dds_web.utils.current_time()
             db.session.delete(entry)
 
@@ -715,7 +744,9 @@ class UpdateFile(flask_restful.Resource):
     def put(self):
         """Update info in db."""
         # Verify project id and access
-        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project = db_tools.get_project_object(
+            project_id=flask.request.args.get("project"), for_update=True
+        )
         project_schemas.verify_project_access(project=project)
 
         # Get file name from request from CLI
@@ -730,12 +761,16 @@ class UpdateFile(flask_restful.Resource):
             )
 
             flask.current_app.logger.debug(f"File name: {file_name}")
-            file = models.File.query.filter(
-                sqlalchemy.and_(
-                    models.File.project_id == sqlalchemy.func.binary(project.id),
-                    models.File.name == sqlalchemy.func.binary(file_name),
+            file = (
+                models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.project_id == sqlalchemy.func.binary(project.id),
+                        models.File.name == sqlalchemy.func.binary(file_name),
+                    )
                 )
-            ).with_for_update().first()
+                .with_for_update()
+                .first()
+            )
 
             if not file:
                 raise NoSuchFileError()

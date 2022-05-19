@@ -85,7 +85,9 @@ class ProjectStatus(flask_restful.Resource):
     def post(self):
         """Update Project Status."""
         # Verify project id and access
-        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project = db_tools.get_project_object(
+            project_id=flask.request.args.get("project"), for_update=True
+        )
         project_schemas.verify_project_access(project=project)
 
         # Check if valid status
@@ -537,7 +539,9 @@ class RemoveContents(flask_restful.Resource):
     def delete(self):
         """Removes all project contents."""
         # Verify project id and access
-        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project = db_tools.get_project_object(
+            project_id=flask.request.args.get("project"), for_update=True
+        )
         project_schemas.verify_project_access(project=project)
 
         # Verify project status ok for deletion
@@ -791,7 +795,9 @@ class ProjectAccess(flask_restful.Resource):
         project = None
         if project_info and project_info.get("project"):
             # Verify project id and access
-            project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+            project = db_tools.get_project_object(
+                project_id=flask.request.args.get("project"), for_update=True
+            )
             project_schemas.verify_project_access(project=project)
 
         # Verify permission to give user access
