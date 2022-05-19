@@ -14,13 +14,14 @@ import sqlalchemy
 # Own modules
 from dds_web import auth
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import logging_bind_request, handle_validation_errors
+from dds_web.api.dds_decorators import args_required, logging_bind_request, handle_validation_errors
 from dds_web.errors import (
     S3ProjectNotFoundError,
     DatabaseError,
 )
 from dds_web.api.schemas import project_schemas
 from dds_web.api.files import check_eligibility_for_upload
+from dds_web.api import db_tools
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -32,11 +33,13 @@ class S3Info(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def get(self):
         """Get the safespring project."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"))
+        project_schemas.verify_project_access(project=project)
 
         check_eligibility_for_upload(status=project.current_status)
 
