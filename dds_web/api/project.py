@@ -24,6 +24,7 @@ from dds_web.api.dds_decorators import (
     logging_bind_request,
     dbsession,
     json_required,
+    args_required,
     handle_validation_errors,
 )
 from dds_web.errors import (
@@ -42,6 +43,7 @@ from dds_web.api.schemas import project_schemas, user_schemas
 from dds_web.security.project_user_keys import obtain_project_private_key, share_project_private_key
 from dds_web.security.auth import get_user_roles_common
 from dds_web.api.files import check_eligibility_for_deletion
+from dds_web.api import db_tools
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -51,11 +53,13 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"))
+        project_schemas.verify_project_access(project=project)
 
         # Get current status and deadline
         return_info = {"current_status": project.current_status}
@@ -76,11 +80,13 @@ class ProjectStatus(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
+    @args_required
     @handle_validation_errors
     def post(self):
         """Update Project Status."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project_schemas.verify_project_access(project=project)
 
         # Check if valid status
         json_input = flask.request.json
