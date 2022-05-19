@@ -56,7 +56,6 @@ def project_row(project_id):
 
 def post_file_new_json(client, args: dict) -> dict:
     """Make a POST request to the FILE_NEW endpoint."""
-    print(args)
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -82,10 +81,7 @@ def test_new_file_no_project(client):
     response_json = post_file_new_json(client, args)
 
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_new_file_project_none(client):
@@ -94,10 +90,7 @@ def test_new_file_project_none(client):
     response_json = post_file_new_json(client, args)
 
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_new_file_unknown_field(client):
@@ -109,10 +102,7 @@ def test_new_file_unknown_field(client):
     response_json = post_file_new_json(client, args)
 
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_new_file_missing_name(client):

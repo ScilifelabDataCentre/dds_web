@@ -227,7 +227,6 @@ class ProjectContentSchema(marshmallow.Schema):
         get_all = data.get("get_all")
 
         # Check if project has contents
-        flask.current_app.logger.warning(project)
         if not project.files:
             raise ddserr.EmptyProjectException(project=project.public_id)
 
