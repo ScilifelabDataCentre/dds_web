@@ -27,7 +27,7 @@ def remove_user_self_deletion_request(user):
     try:
         request_row = models.DeletionRequest.query.filter(
             models.DeletionRequest.requester_id == user.username
-        ).one_or_none()
+        ).with_for_update().one_or_none()
         if not request_row:
             raise UserDeletionError("There is no deletion request from this user.")
 
