@@ -425,7 +425,7 @@ def update_uploaded_file_with_log(project, path_to_log_file):
     from dds_web.api.api_s3_connector import ApiS3Connector
     import json
 
-    proj_in_db = models.Project.query.filter_by(public_id=project).one_or_none()
+    proj_in_db = models.Project.query.filter_by(public_id=project).with_for_update().one_or_none()
     assert proj_in_db
 
     with open(path_to_log_file, "r") as f:
