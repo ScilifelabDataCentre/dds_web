@@ -40,7 +40,7 @@ class UserSchema(marshmallow.Schema):
     def return_user(self, data, **kwargs):
         """Return the user."""
 
-        email_row = models.Email.query.filter_by(email=data.get("email")).first()
+        email_row = models.Email.query.filter_by(email=data.get("email")).with_for_update().first()
         if not email_row:
             return None
 
@@ -67,7 +67,7 @@ class UnansweredInvite(marshmallow.Schema):
         """Return the invite object."""
         # returns the invite, if there is exactly one or raises an exception.
         # returns none, if there is no invite
-        invite = models.Invite.query.filter_by(email=data.get("email")).one_or_none()
+        invite = models.Invite.query.filter_by(email=data.get("email")).with_for_update().one_or_none()
 
         # double check if there is no existing user with this email
         userexists = utils.email_in_db(email=data.get("email"))
