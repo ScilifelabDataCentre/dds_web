@@ -252,11 +252,13 @@ class ListFiles(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def get(self):
         """Get a list of files within the specified folder."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"))
+        project_schemas.verify_project_access(project=project)
 
         if auth.current_user().role == "Researcher" and project.current_status == "In Progress":
             raise AccessDeniedError(message="There's no data available at this time.")
@@ -413,11 +415,13 @@ class RemoveFile(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
+    @args_required
     @handle_validation_errors
     def delete(self):
         """Delete file(s)."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project_schemas.verify_project_access(project=project)
 
         # Verify project status ok for deletion
         check_eligibility_for_deletion(
@@ -501,7 +505,7 @@ class RemoveFile(flask_restful.Resource):
         file = models.File.query.filter(
             models.File.name == sqlalchemy.func.binary(filename),
             models.File.project_id == sqlalchemy.func.binary(project.id),
-        ).one_or_none()
+        ).with_for_update().one_or_none()
 
         if not file:
             raise FileNotFoundError("Could not find the specified file.")
@@ -514,7 +518,7 @@ class RemoveFile(flask_restful.Resource):
                 models.Version.active_file == sqlalchemy.func.binary(file.id),
                 models.Version.time_deleted.is_(None),
             )
-        ).first()
+        ).with_for_update().first()
         current_file_version.time_deleted = dds_web.utils.current_time()
 
         db.session.delete(file)
@@ -529,11 +533,14 @@ class RemoveDir(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
+    @args_required
     @handle_validation_errors
     def delete(self):
         """Delete folder(s)."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project_schemas.verify_project_access(project=project)
+
         # Verify project status ok for deletion
         check_eligibility_for_deletion(
             status=project.current_status, has_been_available=project.has_been_available
@@ -608,7 +615,7 @@ class RemoveDir(flask_restful.Resource):
                         models.File.subpath.regexp_match(rf"^{re_folder}(/[^/]+)*$"),
                     )
                 )
-                .all()
+                .with_for_update().all()
             )
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
             raise DatabaseError(
@@ -632,7 +639,7 @@ class RemoveDir(flask_restful.Resource):
                     models.Version.active_file == sqlalchemy.func.binary(entry.id),
                     models.Version.time_deleted.is_(None),
                 )
-            ).first()
+            ).with_for_update().first()
             current_file_version.time_deleted = dds_web.utils.current_time()
             db.session.delete(entry)
 
