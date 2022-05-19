@@ -28,7 +28,7 @@ import dds_web.forms
 import dds_web.errors as ddserr
 from dds_web.api.schemas import project_schemas, user_schemas, token_schemas
 from dds_web.api.dds_decorators import (
-    args_required,
+    project_required,
     logging_bind_request,
     json_required,
     handle_validation_errors,
@@ -71,7 +71,7 @@ class AddUser(flask_restful.Resource):
         project = args.get("project") if args else None
         if project:
             # Verify project id and access
-            project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+            project = db_tools.get_project_object(project_id=project, for_update=True)
             project_schemas.verify_project_access(project=project)
 
         # Verify email
@@ -883,7 +883,7 @@ class RemoveUserAssociation(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
-    @args_required
+    @project_required
     @handle_validation_errors
     def post(self):
         """Remove a user from a project"""

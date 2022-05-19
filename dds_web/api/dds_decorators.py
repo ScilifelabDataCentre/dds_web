@@ -65,12 +65,12 @@ def json_required(func):
     return verify_json
 
 
-def args_required(func):
+def project_required(func):
     @functools.wraps(func)
     def verify_args(*args, **kwargs):
 
-        if not flask.request.args:
-            raise DDSArgumentError(message="Required information missing from request!")
+        if not flask.request.args or (flask.request.args and not flask.request.args.get("project")):
+            raise DDSArgumentError(message="Project ID required.")
 
         return func(*args, **kwargs)
 

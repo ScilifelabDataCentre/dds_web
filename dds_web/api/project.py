@@ -24,7 +24,7 @@ from dds_web.api.dds_decorators import (
     logging_bind_request,
     dbsession,
     json_required,
-    args_required,
+    project_required,
     handle_validation_errors,
 )
 from dds_web.errors import (
@@ -53,7 +53,7 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
-    @args_required
+    @project_required
     @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
@@ -80,7 +80,7 @@ class ProjectStatus(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
-    @args_required
+    @project_required
     @handle_validation_errors
     def post(self):
         """Update Project Status."""
@@ -370,7 +370,7 @@ class GetPublic(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @args_required
+    @project_required
     @handle_validation_errors
     def get(self):
         """Get public key from database."""
@@ -391,7 +391,7 @@ class GetPrivate(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @args_required
+    @project_required
     @handle_validation_errors
     def get(self):
         """Get private key from database."""
@@ -532,7 +532,7 @@ class RemoveContents(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @dbsession
-    @args_required
+    @project_required
     @handle_validation_errors
     def delete(self):
         """Removes all project contents."""
@@ -732,7 +732,7 @@ class ProjectUsers(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
-    @args_required
+    @project_required
     @handle_validation_errors
     def get(self):
         # Verify project id and access

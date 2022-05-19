@@ -35,10 +35,7 @@ def test_file_download_no_project(client):
     args = {"json": ["filename1"]}
     response_json = get_json_file_info(client, args)
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_file_download_project_none(client):
@@ -49,10 +46,7 @@ def test_file_download_project_none(client):
     }
     response_json = get_json_file_info(client, args)
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_file_download_unknown_field(client):
@@ -63,10 +57,7 @@ def test_file_download_unknown_field(client):
     }
     response_json = get_json_file_info(client, args)
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 # ---
@@ -88,10 +79,7 @@ def test_file_download_empty_all(client):
     args = {}
     response_json = get_json_file_info_all(client, args)
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_file_download_project_none_all(client):
@@ -99,10 +87,7 @@ def test_file_download_project_none_all(client):
     args = {"query_string": {"project": None}}
     response_json = get_json_file_info_all(client, args)
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_file_download_unknown_field_all(client):
@@ -110,10 +95,7 @@ def test_file_download_unknown_field_all(client):
     args = {"query_string": {"test": "test"}}
     response_json = get_json_file_info_all(client, args)
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 # ---

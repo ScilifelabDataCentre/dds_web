@@ -14,7 +14,7 @@ import sqlalchemy
 # Own modules
 from dds_web import auth
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import args_required, logging_bind_request, handle_validation_errors
+from dds_web.api.dds_decorators import project_required, logging_bind_request, handle_validation_errors
 from dds_web.errors import (
     S3ProjectNotFoundError,
     DatabaseError,
@@ -33,7 +33,7 @@ class S3Info(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @args_required
+    @project_required
     @handle_validation_errors
     def get(self):
         """Get the safespring project."""

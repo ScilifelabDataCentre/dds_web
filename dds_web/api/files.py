@@ -25,7 +25,7 @@ from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
     logging_bind_request,
     json_required,
-    args_required,
+    project_required,
     handle_validation_errors,
 )
 from dds_web.errors import (
@@ -79,7 +79,7 @@ class NewFile(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
-    @args_required
+    @project_required
     @handle_validation_errors
     def post(self):
         """Add new file to DB."""
@@ -114,7 +114,7 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @args_required
+    @project_required
     @handle_validation_errors
     def put(self):
         """Update existing file."""
@@ -211,7 +211,7 @@ class MatchFiles(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
-    @args_required
+    @project_required
     @handle_validation_errors
     def get(self):
         """Get name in bucket for all files specified."""
@@ -252,7 +252,7 @@ class ListFiles(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @args_required
+    @project_required
     @handle_validation_errors
     def get(self):
         """Get a list of files within the specified folder."""
@@ -415,7 +415,7 @@ class RemoveFile(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
-    @args_required
+    @project_required
     @handle_validation_errors
     def delete(self):
         """Delete file(s)."""
@@ -533,7 +533,7 @@ class RemoveDir(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
-    @args_required
+    @project_required
     @handle_validation_errors
     def delete(self):
         """Delete folder(s)."""
@@ -650,7 +650,7 @@ class FileInfo(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
-    @args_required
+    @project_required
     @handle_validation_errors
     def get(self):
         """Checks which files can be downloaded, and get their info."""
@@ -685,7 +685,7 @@ class FileInfoAll(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @args_required
+    @project_required
     @handle_validation_errors
     def get(self):
         """Get file info on all files."""
@@ -710,7 +710,7 @@ class UpdateFile(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
-    @args_required
+    @project_required
     @handle_validation_errors
     def put(self):
         """Update info in db."""

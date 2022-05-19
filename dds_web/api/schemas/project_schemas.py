@@ -7,6 +7,7 @@
 # Standard Library
 import os
 import re
+from tkinter.tix import Tree
 
 # Installed
 import botocore.client
@@ -18,7 +19,7 @@ import sqlalchemy
 from dds_web import errors as ddserr
 from dds_web import auth
 from dds_web.database import models
-from dds_web.api import api_s3_connector, project
+from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
 from dds_web.api import db_tools
@@ -189,13 +190,6 @@ class ProjectContentSchema(marshmallow.Schema):
 
     class Meta:
         unknown = marshmallow.EXCLUDE
-    
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def get_project_object(self, data, **kwargs):
-        """Set project row in data for access by validators."""
-        project = db_tools.get_project_object(project_id=data.get("project"))
-        verify_project_access(project=project)
-        data["project_row"] = project
         
     def find_contents(self, project, contents):
 
@@ -224,6 +218,8 @@ class ProjectContentSchema(marshmallow.Schema):
     @marshmallow.post_dump
     def return_items(self, data, **kwargs):
         """Return project contents as serialized."""
+        project = db_tools.get_project_object(project_id=data.get("project"))
+        verify_project_access(project=project)
 
         # Fields
         requested_items = data.get("requested_items")
@@ -231,18 +227,18 @@ class ProjectContentSchema(marshmallow.Schema):
         get_all = data.get("get_all")
 
         # Check if project has contents
-        project_row = data.get("project_row")
-        if not project_row.files:
-            raise ddserr.EmptyProjectException(project=project_row.public_id)
+        flask.current_app.logger.warning(project)
+        if not project.files:
+            raise ddserr.EmptyProjectException(project=project.public_id)
 
         # Check if specific files have been requested or if requested all contents
         files, folder_contents, not_found = (None, None, None)
         if requested_items:
             files, folder_contents, not_found = self.find_contents(
-                project=project_row, contents=requested_items
+                project=project, contents=requested_items
             )
         elif get_all:
-            files = project_row.files
+            files = project.files
         else:
             raise ddserr.DDSArgumentError(message="No items were requested.")
 
@@ -267,7 +263,7 @@ class ProjectContentSchema(marshmallow.Schema):
         )
 
         # Connect to s3
-        with api_s3_connector.ApiS3Connector(project=project_row) as s3:
+        with api_s3_connector.ApiS3Connector(project=project) as s3:
             # Get the info and signed urls for all files
             try:
                 found_files.update(
