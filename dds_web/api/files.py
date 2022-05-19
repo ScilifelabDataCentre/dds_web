@@ -115,11 +115,14 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def put(self):
         """Update existing file."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project_id = flask.request.args.get("project")
+        project = db_tools.get_project_object(project_id=project_id, for_update=True)
+        project_schemas.verify_project_access(project=project)
 
         # Verify that projet has correct status for upload
         check_eligibility_for_upload(status=project.current_status)
@@ -150,7 +153,7 @@ class NewFile(flask_restful.Resource):
                     models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
                     models.Version.time_deleted.is_(None),
                 )
-            ).with_for_update()
+            ).with_for_update().all()
             if len(current_file_version) > 1:
                 flask.current_app.logger.warning(
                     "There is more than one version of the file "
