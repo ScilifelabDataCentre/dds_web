@@ -224,6 +224,8 @@ def monthly_usage():
 
     from dds_web import db
     from dds_web.database import models
+    from dds_web.api.project import UserProjects
+    from dds_web.utils import current_time, page_query
 
     # a mock dict with data that should be obtained from Safesprig's API
     safespring_data = {
@@ -244,3 +246,27 @@ def monthly_usage():
         for safespring_project in safespring_data:
             usage = f'Usage for project {safespring_project}: {safespring_data[safespring_project]["TotalBytes"]}'
             scheduler.app.logger.info(usage)
+
+        scheduler.app.logger.debug("Task: Projects usage from database:")
+        try:
+            for unit in db.session.query(models.Unit).with_for_update().all():
+                for project in page_query(
+                    db.session.query(models.Project)
+                    .filter(
+                        sqlalchemy.and_(
+                            models.Project.is_active == 1, models.Project.unit_id == unit.id
+                        )
+                    )
+                    .with_for_update()
+                ):
+                    proj_bhours, proj_cost = UserProjects.project_usage(project)
+                    scheduler.app.logger.info(
+                        "Current total usage for project %s is %s bhours \n and total cost is %s kr",
+                        project.public_id,
+                        proj_bhours,
+                        proj_cost,
+                    )
+        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise
