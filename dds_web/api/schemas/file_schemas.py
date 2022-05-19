@@ -12,14 +12,24 @@ import sqlalchemy
 from dds_web.database import models
 import dds_web.utils
 from dds_web.api.schemas import project_schemas
+from dds_web.api import db_tools
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
 
 
-class NewFileSchema(project_schemas.ProjectRequiredSchema):
+class NewFileSchema(marshmallow.Schema):
     """Validates and creates a new file object."""
+
+    project = marshmallow.fields.String(
+        required=True,
+        allow_none=False,
+        error_messages={
+            "required": {"message": "Project ID required."},
+            "null": {"message": "Project ID cannot be null."},
+        },
+    )
 
     # Length minimum 1 required, required=True accepts empty string
     name = marshmallow.fields.String(
@@ -100,6 +110,16 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
             "null": {"message": "Checksum required."},
         },
     )
+    
+    class Meta:
+        unknown = marshmallow.EXCLUDE
+    
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def get_project_object(self, data, **kwargs):
+        """Set project row in data for access by validators."""
+        project = db_tools.get_project_object(project_id=data.get("project"))
+        project_schemas.verify_project_access(project=project)
+        data["project_row"] = project
 
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def verify_file_not_exists(self, data, **kwargs):

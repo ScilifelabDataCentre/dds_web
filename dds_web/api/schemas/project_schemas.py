@@ -18,9 +18,10 @@ import sqlalchemy
 from dds_web import errors as ddserr
 from dds_web import auth
 from dds_web.database import models
-from dds_web.api import api_s3_connector
+from dds_web.api import api_s3_connector, project
 from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
+from dds_web.api import db_tools
 from dds_web.security.project_user_keys import generate_project_key_pair
 import dds_web.utils
 
@@ -171,8 +172,8 @@ class CreateProjectSchema(marshmallow.Schema):
         return new_project
 
 
-class ProjectRequiredSchema(marshmallow.Schema):
-    """Schema for verifying an existing project in args and database."""
+class ProjectContentSchema(marshmallow.Schema):
+    """Schema for returning a projects contents."""
 
     project = marshmallow.fields.String(
         required=True,
@@ -182,37 +183,20 @@ class ProjectRequiredSchema(marshmallow.Schema):
             "null": {"message": "Project ID cannot be null."},
         },
     )
-
-    class Meta:
-        unknown = marshmallow.EXCLUDE
-
-    @marshmallow.validates("project")
-    def validate_project(self, value):
-        """Validate existing project and user access to it."""
-
-        project = verify_project_exists(spec_proj=value)
-        verify_project_access(project=project)
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def get_project_object(self, data, **kwargs):
-        """Set project row in data for access by validators."""
-
-        data["project_row"] = verify_project_exists(spec_proj=data.get("project"), for_update=True)
-
-    @marshmallow.post_load
-    def return_items(self, data, **kwargs):
-        """Return project object."""
-
-        return data.get("project_row")
-
-
-class ProjectContentSchema(ProjectRequiredSchema):
-    """ """
-
     requested_items = marshmallow.fields.List(marshmallow.fields.String, required=False)
     url = marshmallow.fields.Boolean(required=False, default=False)
     get_all = marshmallow.fields.Boolean(required=False, default=False)
 
+    class Meta:
+        unknown = marshmallow.EXCLUDE
+    
+    @marshmallow.validates_schema(skip_on_field_errors=True)
+    def get_project_object(self, data, **kwargs):
+        """Set project row in data for access by validators."""
+        project = db_tools.get_project_object(project_id=data.get("project"))
+        verify_project_access(project=project)
+        data["project_row"] = project
+        
     def find_contents(self, project, contents):
 
         # All contents
@@ -247,7 +231,7 @@ class ProjectContentSchema(ProjectRequiredSchema):
         get_all = data.get("get_all")
 
         # Check if project has contents
-        project_row = verify_project_exists(spec_proj=data.get("project"))
+        project_row = data.get("project_row")
         if not project_row.files:
             raise ddserr.EmptyProjectException(project=project_row.public_id)
 
