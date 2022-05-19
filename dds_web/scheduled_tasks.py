@@ -212,3 +212,35 @@ def delete_invite():
 
         for invite, error in errors.items():
             scheduler.app.logger.error(f"{invite} not deleted: {error}")
+
+
+# @scheduler.task("cron", id="get_monthly_usage", day='last', hour=23, minute=10)
+@scheduler.task("interval", id="monthly_usage", seconds=15, misfire_grace_time=1)
+def monthly_usage():
+    """Get the monthly usage for the units"""
+
+    scheduler.app.logger.debug("Task: Collecting monthly usage information from Safespring.")
+    import sqlalchemy
+
+    from dds_web import db
+    from dds_web.database import models
+    
+    # a mock dict with data that should be obtained from Safesprig's API
+    safespring_data = {
+        "safespring_name_1": {
+            "TotalBytes": 164595434499,
+            "TotalBytesRounded": 164614451200,
+            "TotalEntries": 10333
+        }, 
+        "safespring_name_2": {
+            "TotalBytes": 434595434499,
+            "TotalBytesRounded": 1434614451200,
+            "TotalEntries": 10333
+        },
+    }
+
+    with scheduler.app.app_context():
+
+        for safespring_project in safespring_data:
+            usage = f'Usage for project {safespring_project}: {safespring_data[safespring_project]["TotalBytes"]}'
+            scheduler.app.logger.info(usage)
