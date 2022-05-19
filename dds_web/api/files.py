@@ -84,8 +84,7 @@ class NewFile(flask_restful.Resource):
     def post(self):
         """Add new file to DB."""
         # Verify project id and access
-        project_id = flask.request.args.get("project")
-        project = db_tools.get_project_object(project_id=project_id, for_update=True)
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
         project_schemas.verify_project_access(project=project)
 
         # Verify that project has correct status for upload
@@ -120,8 +119,7 @@ class NewFile(flask_restful.Resource):
     def put(self):
         """Update existing file."""
         # Verify project id and access
-        project_id = flask.request.args.get("project")
-        project = db_tools.get_project_object(project_id=project_id, for_update=True)
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
         project_schemas.verify_project_access(project=project)
 
         # Verify that projet has correct status for upload
@@ -213,11 +211,13 @@ class MatchFiles(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
+    @args_required
     @handle_validation_errors
     def get(self):
         """Get name in bucket for all files specified."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"))
+        project_schemas.verify_project_access(project=project)
 
         # Verify project has correct status for upload
         check_eligibility_for_upload(status=project.current_status)
