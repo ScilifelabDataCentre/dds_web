@@ -650,11 +650,13 @@ class FileInfo(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
+    @args_required
     @handle_validation_errors
     def get(self):
         """Checks which files can be downloaded, and get their info."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"))
+        project_schemas.verify_project_access(project=project)
 
         # Verify project status ok for download
         user_role = auth.current_user().role
@@ -683,11 +685,13 @@ class FileInfoAll(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def get(self):
         """Get file info on all files."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"))
+        project_schemas.verify_project_access(project=project)
 
         # Verify project status ok for download
         user_role = auth.current_user().role
@@ -706,11 +710,13 @@ class UpdateFile(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
+    @args_required
     @handle_validation_errors
     def put(self):
         """Update info in db."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project_schemas.verify_project_access(project=project)
 
         # Get file name from request from CLI
         file_name = flask.request.json.get("name")
@@ -729,7 +735,7 @@ class UpdateFile(flask_restful.Resource):
                     models.File.project_id == sqlalchemy.func.binary(project.id),
                     models.File.name == sqlalchemy.func.binary(file_name),
                 )
-            ).first()
+            ).with_for_update().first()
 
             if not file:
                 raise NoSuchFileError()
