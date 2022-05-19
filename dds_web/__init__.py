@@ -573,7 +573,7 @@ def lost_files_s3_db(action_type: str):
                         models.File.name_in_bucket.in_(diff_db),
                         models.File.project_id == project.id,
                     )
-                )
+                ).with_for_update()
                 for db_entry in db_entries:
                     try:
                         for db_entry_version in db_entry.versions:
