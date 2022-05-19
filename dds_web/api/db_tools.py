@@ -21,6 +21,9 @@ from dds_web.errors import DatabaseError, UserDeletionError, DDSArgumentError, N
 
 
 def remove_user_self_deletion_request(user):
+    """Remove row from DeletionRequest table."""
+    if not user:
+        raise UserDeletionError(message="User object needed to get deletion request.")
 
     try:
         request_row = (
@@ -53,10 +56,11 @@ def remove_user_self_deletion_request(user):
     return email
 
 
-def get_project_object(project_id, for_update=False):
+def get_project_object(project_id: str, for_update: bool = False):
     """Check if project exists and return the database row."""
     if not project_id:
         raise DDSArgumentError(message="Project ID required.")
+
     project_query = models.Project.query.filter(
         models.Project.public_id == sqlalchemy.func.binary(project_id)
     )
