@@ -11,7 +11,12 @@ from dds_web import db
 from dds_web.database import models
 from dds_web.utils import current_time
 
-from dds_web.scheduled_tasks import set_available_to_expired, set_expired_to_archived, delete_invite
+from dds_web.scheduled_tasks import (
+    monthly_usage,
+    set_available_to_expired,
+    set_expired_to_archived,
+    delete_invite,
+)
 
 
 def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
@@ -94,3 +99,8 @@ def test_delete_invite_timestamp_issue(client: flask.testing.FlaskClient) -> Non
     db.session.commit()
     delete_invite()
     assert len(db.session.query(models.Invite).all()) == 0
+
+
+def test_monthly_usage(client: flask.testing.FlaskClient) -> None:
+    """Test the monthly_usage cron job."""
+    monthly_usage()
