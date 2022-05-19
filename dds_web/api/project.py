@@ -611,7 +611,7 @@ class CreateProject(flask_restful.Resource):
         try:
             new_project = project_schemas.CreateProjectSchema().load(p_info)
             db.session.add(new_project)
-        except sqlalchemy.exc.OperationalError as err:
+        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             raise DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not new_project:
