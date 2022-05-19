@@ -10,6 +10,7 @@ import re
 
 # Installed
 import botocore
+from dds_web.api import db_tools, project
 import flask
 import flask_restful
 import sqlalchemy
@@ -24,6 +25,7 @@ from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
     logging_bind_request,
     json_required,
+    args_required,
     handle_validation_errors,
 )
 from dds_web.errors import (
@@ -77,11 +79,14 @@ class NewFile(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @json_required
+    @args_required
     @handle_validation_errors
     def post(self):
         """Add new file to DB."""
         # Verify project id and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project_id = flask.request.args.get("project")
+        project = db_tools.get_project_object(project_id=project_id, for_update=True)
+        project_schemas.verify_project_access(project=project)
 
         # Verify that project has correct status for upload
         check_eligibility_for_upload(status=project.current_status)
