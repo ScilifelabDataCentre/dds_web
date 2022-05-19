@@ -370,11 +370,13 @@ class GetPublic(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def get(self):
         """Get public key from database."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"))
+        project_schemas.verify_project_access(project=project)
 
         flask.current_app.logger.debug("Getting the public key.")
 
@@ -389,11 +391,13 @@ class GetPrivate(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def get(self):
         """Get private key from database."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"))
+        project_schemas.verify_project_access(project=project)
 
         flask.current_app.logger.debug("Getting the private key.")
 
@@ -528,11 +532,13 @@ class RemoveContents(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @dbsession
+    @args_required
     @handle_validation_errors
     def delete(self):
         """Removes all project contents."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+        project_schemas.verify_project_access(project=project)
 
         # Verify project status ok for deletion
         check_eligibility_for_deletion(
@@ -726,10 +732,12 @@ class ProjectUsers(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def get(self):
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify project id and access
+        project = db_tools.get_project_object(project_id=flask.request.args.get("project"))
+        project_schemas.verify_project_access(project=project)
 
         # Get info on research users
         research_users = list()
@@ -782,7 +790,9 @@ class ProjectAccess(flask_restful.Resource):
         project_info = flask.request.args
         project = None
         if project_info and project_info.get("project"):
-            project = project_schemas.ProjectRequiredSchema().load(project_info)
+            # Verify project id and access
+            project = db_tools.get_project_object(project_id=flask.request.args.get("project"), for_update=True)
+            project_schemas.verify_project_access(project=project)
 
         # Verify permission to give user access
         self.verify_renew_access_permission(user=user, project=project)
