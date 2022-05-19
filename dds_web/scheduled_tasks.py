@@ -188,7 +188,7 @@ def delete_invite():
         errors: Dict = {}
 
         try:
-            invites: list = db.session.query(models.Invite).all()
+            invites: list = db.session.query(models.Invite).with_for_update().all()
             for invite in invites:
                 invalid_invite = invite.created_at == "0000-00-00 00:00:00"
                 if invalid_invite or (invite.created_at + timedelta(weeks=1)) < expiration:
