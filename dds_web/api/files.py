@@ -130,7 +130,7 @@ class NewFile(flask_restful.Resource):
                     models.File.name == sqlalchemy.func.binary(file_info.get("name")),
                     models.File.project_id == project.id,
                 )
-            ).first()
+            ).with_for_update().first()
 
             # Error if not found
             if not existing_file or existing_file is None:
@@ -145,7 +145,7 @@ class NewFile(flask_restful.Resource):
                     models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
                     models.Version.time_deleted.is_(None),
                 )
-            ).all()
+            ).with_for_update()
             if len(current_file_version) > 1:
                 flask.current_app.logger.warning(
                     "There is more than one version of the file "

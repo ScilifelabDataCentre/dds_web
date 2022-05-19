@@ -29,12 +29,13 @@ import dds_web.utils
 ####################################################################################################
 
 
-def verify_project_exists(spec_proj):
+def verify_project_exists(spec_proj, for_update=False):
     """Check that project exists."""
 
-    project = models.Project.query.filter(
+    project_query = models.Project.query.filter(
         models.Project.public_id == sqlalchemy.func.binary(spec_proj)
-    ).one_or_none()
+    )
+    project = project_query.with_for_update().one_or_none() if for_update else project_query.one_or_none()
 
     if not project:
         flask.current_app.logger.warning("No such project!!")
@@ -198,7 +199,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
     def get_project_object(self, data, **kwargs):
         """Set project row in data for access by validators."""
 
-        data["project_row"] = verify_project_exists(spec_proj=data.get("project"))
+        data["project_row"] = verify_project_exists(spec_proj=data.get("project"), for_update=True)
 
     @marshmallow.post_load
     def return_items(self, data, **kwargs):
