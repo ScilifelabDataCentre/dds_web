@@ -225,46 +225,7 @@ def monthly_usage():
     from dds_web import db
     from dds_web.database import models
     from dds_web.api.project import UserProjects
-<<<<<<< HEAD
-<<<<<<< HEAD
-    from dds_web.utils import current_time, page_query
-
-    # a mock dict with data that should be obtained from Safesprig's API
-    safespring_data = {
-        "safespring_name_1": {
-            "TotalBytes": 164595434499,
-            "TotalBytesRounded": 164614451200,
-            "TotalEntries": 10333,
-        },
-        "safespring_name_2": {
-            "TotalBytes": 434595434499,
-            "TotalBytesRounded": 1434614451200,
-            "TotalEntries": 10333,
-        },
-    }
-=======
     from dds_web.utils import page_query
->>>>>>> e57e0efa (review suggestions)
-=======
-    from dds_web.utils import page_query
-=======
-    from dds_web.utils import current_time, page_query
-
-    # a mock dict with data that should be obtained from Safesprig's API
-    safespring_data = {
-        "safespring_name_1": {
-            "TotalBytes": 164595434499,
-            "TotalBytesRounded": 164614451200,
-            "TotalEntries": 10333,
-        },
-        "safespring_name_2": {
-            "TotalBytes": 434595434499,
-            "TotalBytesRounded": 1434614451200,
-            "TotalEntries": 10333,
-        },
-    }
->>>>>>> c1a89fbc (get projects usage from database)
->>>>>>> a7207893 (get projects usage from database)
 
     with scheduler.app.app_context():
         # a mock dict with data that should be obtained from Safesprig's API
@@ -280,23 +241,10 @@ def monthly_usage():
             usage = f'Total usage for unit {safespring_project}: {usage_info["TotalBytes"]}'
             scheduler.app.logger.info(usage)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
         scheduler.app.logger.debug("Task: Projects usage from database")
         try:
             for unit in db.session.query(models.Unit).with_for_update().all():
                 scheduler.app.logger.debug(f"Projects in unit {unit.safespring_name}")
-=======
-        scheduler.app.logger.debug("Task: Projects usage from database:")
-        try:
-            for unit in db.session.query(models.Unit).with_for_update().all():
->>>>>>> a7207893 (get projects usage from database)
-=======
-        scheduler.app.logger.debug("Task: Projects usage from database")
-        try:
-            for unit in db.session.query(models.Unit).with_for_update().all():
-                scheduler.app.logger.debug(f"Projects in unit {unit.safespring_name}")
->>>>>>> 557bdc50 (small changes in log messages)
                 for project in page_query(
                     db.session.query(models.Project)
                     .filter(
@@ -308,15 +256,7 @@ def monthly_usage():
                 ):
                     proj_bhours, proj_cost = UserProjects.project_usage(project)
                     scheduler.app.logger.info(
-<<<<<<< HEAD
-<<<<<<< HEAD
                         "Current total usage for project %s is %s bhours, and total cost is %s kr",
-=======
-                        "Current total usage for project %s is %s bhours \n and total cost is %s kr",
->>>>>>> a7207893 (get projects usage from database)
-=======
-                        "Current total usage for project %s is %s bhours, and total cost is %s kr",
->>>>>>> 557bdc50 (small changes in log messages)
                         project.public_id,
                         proj_bhours,
                         proj_cost,
