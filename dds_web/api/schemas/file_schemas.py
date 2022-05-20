@@ -131,6 +131,8 @@ class NewFileSchema(marshmallow.Schema):
         if file:
             raise FileExistsError
 
+        data["project_row"] = project
+
     @marshmallow.post_load
     def return_items(self, data, **kwargs):
         """Create file object."""

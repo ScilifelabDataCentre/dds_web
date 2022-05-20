@@ -30,7 +30,7 @@ def remove_user_self_deletion_request(user: models.User):
     """Remove a row in the DeletionRequest table."""
     if not user:
         raise UserDeletionError(message="User object needed to get deletion request.")
-        
+
     try:
         request_row = models.DeletionRequest.query.filter(
             models.DeletionRequest.requester_id == user.username

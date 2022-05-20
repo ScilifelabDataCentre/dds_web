@@ -22,6 +22,7 @@ from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
 from dds_web.security.project_user_keys import generate_project_key_pair
 import dds_web.utils
+from dds_web.api import db_tools
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #

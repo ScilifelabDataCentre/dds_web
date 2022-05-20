@@ -20,7 +20,6 @@ from dds_web.errors import (
     DatabaseError,
 )
 from dds_web.api import db_tools
-from dds_web.api.schemas import project_schemas
 from dds_web.api.files import check_eligibility_for_upload
 
 ####################################################################################################
