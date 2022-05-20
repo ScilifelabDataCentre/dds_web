@@ -4,7 +4,7 @@ import pytest
 from pytest_mock import MockFixture
 
 @pytest.fixture
-def runner() -> click.test.CliRunner:
+def runner() -> click.testing.CliRunner:
     return click.testing.CliRunner()
 
 def test_fill_db_wrapper(client, runner):
