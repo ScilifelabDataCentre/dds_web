@@ -9,11 +9,56 @@ import pytest
 # Own
 from dds_web import db
 from dds_web.database import models
-from dds_web.errors import AccessDeniedError, DDSArgumentError, NoSuchProjectError
+from dds_web.errors import (
+    AccessDeniedError,
+    DDSArgumentError,
+    NoSuchProjectError,
+    UserDeletionError,
+)
 from dds_web.api import db_tools
-from dds_web import auth
+from dds_web import utils
 
 # TESTS #################################################################################### TESTS #
+
+# remove_user_self_deletion_request
+
+
+def test_remove_user_self_deletion_request_none(client):
+    """Remove the row in DeletionRequest table."""
+    non_user = None
+    with pytest.raises(UserDeletionError) as err:
+        db_tools.remove_user_self_deletion_request(user=non_user)
+    assert "User object needed to get deletion request." in str(err.value)
+
+
+def test_remove_user_self_deletion_request_no_request(client):
+    """Attempt to remove a request for a user which haven't requested deletion."""
+    user = models.User.query.first()
+    with pytest.raises(UserDeletionError) as err:
+        db_tools.remove_user_self_deletion_request(user=user)
+    assert "There is no deletion request from this user."
+
+
+def test_remove_user_self_deletion_request_success(client):
+    """Remove a deletion request."""
+    # Create DeletionRequest
+    user = models.User.query.first()
+    new_deletion_request = models.DeletionRequest(
+        email=user.primary_email, issued=utils.current_time(), requester=user
+    )
+    db.session.add(new_deletion_request)
+    db.session.commit()
+
+    # Verify DeletionRequest exists
+    assert models.DeletionRequest.query.filter_by(requester_id=user.username).one()
+
+    # Try deleting
+    email = db_tools.remove_user_self_deletion_request(user=user)
+    assert email
+
+    # Verify it's deleted
+    assert not models.DeletionRequest.query.filter_by(requester_id=user.username).all()
+
 
 # get_project_object
 

@@ -33,6 +33,7 @@ from dds_web.api.dds_decorators import (
     handle_validation_errors,
     handle_db_error,
 )
+from dds_web.api import db_tools
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
     share_project_private_key,
@@ -68,7 +69,7 @@ class AddUser(flask_restful.Resource):
         # A project may or may not be specified
         project = args.get("project") if args else None
         if project:
-            project = dds_web.utils.get_project_object(public_id=project)
+            project = db_tools.get_project_object(public_id=project)
 
         # Verify email
         email = json_info.get("email")
@@ -882,7 +883,7 @@ class RemoveUserAssociation(flask_restful.Resource):
     @handle_validation_errors
     def post(self):
         """Remove a user from a project"""
-        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
+        project = db_tools.get_project_object(public_id=flask.request.args.get("project"))
         json_input = flask.request.json
 
         if not (user_email := json_input.get("email")):

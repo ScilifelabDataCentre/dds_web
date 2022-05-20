@@ -82,10 +82,7 @@ def test_new_file_no_project(client):
     response_json = post_file_new_json(client, args)
 
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_new_file_project_none(client):
@@ -94,10 +91,7 @@ def test_new_file_project_none(client):
     response_json = post_file_new_json(client, args)
 
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_new_file_unknown_field(client):
@@ -109,10 +103,7 @@ def test_new_file_unknown_field(client):
     response_json = post_file_new_json(client, args)
 
     assert response_json
-    assert (
-        "project" in response_json
-        and response_json["project"].get("message") == "Project ID required."
-    )
+    assert response_json.get("message") == "Project ID required."
 
 
 def test_new_file_missing_name(client):

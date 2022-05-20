@@ -188,7 +188,7 @@ class ProjectContentSchema(marshmallow.Schema):
         get_all = data.get("get_all")
 
         # Get project
-        project_row = dds_web.utils.get_project_object(public_id=data.get("project"))
+        project_row = db_tools.get_project_object(public_id=data.get("project"))
 
         # Check that project is not empty
         if not project_row.files:

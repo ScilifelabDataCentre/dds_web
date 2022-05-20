@@ -11,6 +11,7 @@ import sqlalchemy
 # Own modules
 from dds_web.database import models
 import dds_web.utils
+from dds_web.api import db_tools
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -113,7 +114,7 @@ class NewFileSchema(marshmallow.Schema):
     def verify_file_not_exists(self, data, **kwargs):
         """Check that the file does not match anything already in the database."""
         # Get project and verify access
-        project = dds_web.utils.get_project_object(public_id=data.get("project"))
+        project = db_tools.get_project_object(public_id=data.get("project"))
 
         # Check that there is no such file in the database
         file = (

@@ -19,6 +19,7 @@ from dds_web.errors import (
     S3ProjectNotFoundError,
     DatabaseError,
 )
+from dds_web.api import db_tools
 from dds_web.api.schemas import project_schemas
 from dds_web.api.files import check_eligibility_for_upload
 
@@ -36,7 +37,7 @@ class S3Info(flask_restful.Resource):
     def get(self):
         """Get the safespring project."""
         # Verify project ID and access
-        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
+        project = db_tools.get_project_object(public_id=flask.request.args.get("project"))
 
         check_eligibility_for_upload(status=project.current_status)
 

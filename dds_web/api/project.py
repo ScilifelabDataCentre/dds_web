@@ -26,6 +26,7 @@ from dds_web.api.dds_decorators import (
     json_required,
     handle_validation_errors,
 )
+from dds_web.api import db_tools
 from dds_web.errors import (
     AccessDeniedError,
     DDSArgumentError,
@@ -55,7 +56,7 @@ class ProjectStatus(flask_restful.Resource):
     def get(self):
         """Get current project status and optionally entire status history"""
         # Verify project ID and access
-        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
+        project = db_tools.get_project_object(public_id=flask.request.args.get("project"))
 
         # Get current status and deadline
         return_info = {"current_status": project.current_status}
@@ -80,7 +81,7 @@ class ProjectStatus(flask_restful.Resource):
     def post(self):
         """Update Project Status."""
         # Verify project ID and access
-        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
+        project = db_tools.get_project_object(public_id=flask.request.args.get("project"))
 
         # Check if valid status
         json_input = flask.request.json
@@ -368,7 +369,7 @@ class GetPublic(flask_restful.Resource):
     def get(self):
         """Get public key from database."""
         # Verify project ID and access
-        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
+        project = db_tools.get_project_object(public_id=flask.request.args.get("project"))
 
         flask.current_app.logger.debug("Getting the public key.")
 
@@ -387,7 +388,7 @@ class GetPrivate(flask_restful.Resource):
     def get(self):
         """Get private key from database."""
         # Verify project ID and access
-        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
+        project = db_tools.get_project_object(public_id=flask.request.args.get("project"))
 
         flask.current_app.logger.debug("Getting the private key.")
 
@@ -526,7 +527,7 @@ class RemoveContents(flask_restful.Resource):
     def delete(self):
         """Removes all project contents."""
         # Verify project ID and access
-        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
+        project = db_tools.get_project_object(public_id=flask.request.args.get("project"))
 
         # Verify project status ok for deletion
         check_eligibility_for_deletion(
@@ -723,7 +724,7 @@ class ProjectUsers(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         # Verify project ID and access
-        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
+        project = db_tools.get_project_object(public_id=flask.request.args.get("project"))
 
         # Get info on research users
         research_users = list()
@@ -776,7 +777,7 @@ class ProjectAccess(flask_restful.Resource):
         project_info = flask.request.args
         project = None
         if project_info and project_info.get("project"):
-            project = dds_web.utils.get_project_object(public_id=project_info.get("project"))
+            project = db_tools.get_project_object(public_id=project_info.get("project"))
 
         # Verify permission to give user access
         self.verify_renew_access_permission(user=user, project=project)
