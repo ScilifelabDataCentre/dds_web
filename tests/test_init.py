@@ -3,4 +3,4 @@ import os
 
 def test_fill_db_wrapper(client):
     """"""
-    os.system("init-db production")
+    fill_db_wrapper("production")
