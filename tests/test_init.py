@@ -85,5 +85,4 @@ def test_create_new_unit_success(client, runner) -> None:
     command = [f"--{key} {val}" for key, val in correct_unit.items()]
     result = runner.invoke(create_new_unit, [" ".join(command)])
     assert result.output == f"Unit '{correct_unit['name']}' created"
-    assert db.session.query(models.Unit).filter(models.Unit.name == incorrect_unit["name"]).all()
-    
+    assert db.session.query(models.Unit).filter(models.Unit.name == correct_unit["name"]).all()
