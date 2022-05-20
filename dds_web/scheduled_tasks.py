@@ -238,7 +238,7 @@ def monthly_usage():
             }
 
         for safespring_project, usage_info in safespring_data.items():
-            usage = f'Total usage for unit {safespring_project}: {usage_info["TotalBytes"]}'
+            usage = f"Total usage for unit {unit.name} ({safespring_project}): {usage_info['TotalBytes']}"
             scheduler.app.logger.info(usage)
 
         scheduler.app.logger.debug("Task: Projects usage from database")
