@@ -11,15 +11,23 @@ import sqlalchemy
 # Own modules
 from dds_web.database import models
 import dds_web.utils
-from dds_web.api.schemas import project_schemas
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
 
 
-class NewFileSchema(project_schemas.ProjectRequiredSchema):
+class NewFileSchema(marshmallow.Schema):
     """Validates and creates a new file object."""
+
+    project = marshmallow.fields.String(
+        required=True,
+        allow_none=False,
+        error_messages={
+            "required": {"message": "Project ID required."},
+            "null": {"message": "Project ID cannot be null."},
+        },
+    )
 
     # Length minimum 1 required, required=True accepts empty string
     name = marshmallow.fields.String(
@@ -104,8 +112,10 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def verify_file_not_exists(self, data, **kwargs):
         """Check that the file does not match anything already in the database."""
+        # Get project and verify access
+        project = dds_web.utils.get_project_object(public_id=data.get("project"))
+
         # Check that there is no such file in the database
-        project = data.get("project_row")
         file = (
             models.File.query.filter(
                 sqlalchemy.and_(

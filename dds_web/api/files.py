@@ -81,7 +81,7 @@ class NewFile(flask_restful.Resource):
     def post(self):
         """Add new file to DB."""
         # Verify project id and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
 
         # Verify that project has correct status for upload
         check_eligibility_for_upload(status=project.current_status)
@@ -114,7 +114,7 @@ class NewFile(flask_restful.Resource):
     def put(self):
         """Update existing file."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
 
         # Verify that projet has correct status for upload
         check_eligibility_for_upload(status=project.current_status)
@@ -209,7 +209,7 @@ class MatchFiles(flask_restful.Resource):
     def get(self):
         """Get name in bucket for all files specified."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
 
         # Verify project has correct status for upload
         check_eligibility_for_upload(status=project.current_status)
@@ -248,7 +248,7 @@ class ListFiles(flask_restful.Resource):
     def get(self):
         """Get a list of files within the specified folder."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
 
         if auth.current_user().role == "Researcher" and project.current_status == "In Progress":
             raise AccessDeniedError(message="There's no data available at this time.")
@@ -409,7 +409,7 @@ class RemoveFile(flask_restful.Resource):
     def delete(self):
         """Delete file(s)."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
 
         # Verify project status ok for deletion
         check_eligibility_for_deletion(
@@ -525,7 +525,8 @@ class RemoveDir(flask_restful.Resource):
     def delete(self):
         """Delete folder(s)."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
+
         # Verify project status ok for deletion
         check_eligibility_for_deletion(
             status=project.current_status, has_been_available=project.has_been_available
@@ -639,7 +640,7 @@ class FileInfo(flask_restful.Resource):
     def get(self):
         """Checks which files can be downloaded, and get their info."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
 
         # Verify project status ok for download
         user_role = auth.current_user().role
@@ -672,7 +673,7 @@ class FileInfoAll(flask_restful.Resource):
     def get(self):
         """Get file info on all files."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
 
         # Verify project status ok for download
         user_role = auth.current_user().role
@@ -695,7 +696,7 @@ class UpdateFile(flask_restful.Resource):
     def put(self):
         """Update info in db."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
 
         # Get file name from request from CLI
         file_name = flask.request.json.get("name")

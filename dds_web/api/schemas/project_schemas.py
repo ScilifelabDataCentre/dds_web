@@ -10,7 +10,6 @@ import re
 
 # Installed
 import botocore.client
-import flask
 import marshmallow
 import sqlalchemy
 
@@ -23,38 +22,6 @@ from dds_web.api.schemas import sqlalchemyautoschemas
 from dds_web.api.schemas import custom_fields
 from dds_web.security.project_user_keys import generate_project_key_pair
 import dds_web.utils
-
-####################################################################################################
-# VALIDATORS ########################################################################## VALIDATORS #
-####################################################################################################
-
-
-def verify_project_exists(spec_proj):
-    """Check that project exists."""
-
-    project = models.Project.query.filter(
-        models.Project.public_id == sqlalchemy.func.binary(spec_proj)
-    ).one_or_none()
-
-    if not project:
-        flask.current_app.logger.warning("No such project!!")
-        raise ddserr.NoSuchProjectError(project=spec_proj)
-
-    return project
-
-
-def verify_project_access(project):
-    """Check users access to project."""
-
-    if project not in auth.current_user().projects:
-        raise ddserr.AccessDeniedError(
-            message="Project access denied.",
-            username=auth.current_user().username,
-            project=project.public_id,
-        )
-
-    return project
-
 
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
@@ -172,8 +139,8 @@ class CreateProjectSchema(marshmallow.Schema):
         return new_project
 
 
-class ProjectRequiredSchema(marshmallow.Schema):
-    """Schema for verifying an existing project in args and database."""
+class ProjectContentSchema(marshmallow.Schema):
+    """Schema to get contents from project."""
 
     project = marshmallow.fields.String(
         required=True,
@@ -183,33 +150,6 @@ class ProjectRequiredSchema(marshmallow.Schema):
             "null": {"message": "Project ID cannot be null."},
         },
     )
-
-    class Meta:
-        unknown = marshmallow.EXCLUDE
-
-    @marshmallow.validates("project")
-    def validate_project(self, value):
-        """Validate existing project and user access to it."""
-
-        project = verify_project_exists(spec_proj=value)
-        verify_project_access(project=project)
-
-    @marshmallow.validates_schema(skip_on_field_errors=True)
-    def get_project_object(self, data, **kwargs):
-        """Set project row in data for access by validators."""
-
-        data["project_row"] = verify_project_exists(spec_proj=data.get("project"))
-
-    @marshmallow.post_load
-    def return_items(self, data, **kwargs):
-        """Return project object."""
-
-        return data.get("project_row")
-
-
-class ProjectContentSchema(ProjectRequiredSchema):
-    """ """
-
     requested_items = marshmallow.fields.List(marshmallow.fields.String, required=False)
     url = marshmallow.fields.Boolean(required=False, default=False)
     get_all = marshmallow.fields.Boolean(required=False, default=False)
@@ -247,8 +187,10 @@ class ProjectContentSchema(ProjectRequiredSchema):
         url = data.get("url")
         get_all = data.get("get_all")
 
-        # Check if project has contents
-        project_row = verify_project_exists(spec_proj=data.get("project"))
+        # Get project
+        project_row = dds_web.utils.get_project_object(public_id=data.get("project"))
+
+        # Check that project is not empty
         if not project_row.files:
             raise ddserr.EmptyProjectException(project=project_row.public_id)
 

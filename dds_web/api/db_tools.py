@@ -15,7 +15,11 @@ from dds_web import db
 from dds_web.errors import (
     DatabaseError,
     UserDeletionError,
+    DDSArgumentError,
+    NoSuchProjectError,
+    AccessDeniedError,
 )
+from dds_web import auth
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -49,3 +53,29 @@ def remove_user_self_deletion_request(user):
         ) from err
 
     return email
+
+
+def get_project_object(public_id: str) -> models.Project:
+    """Get project object from specified public id."""
+    if not public_id:
+        raise DDSArgumentError(message="Project ID required.")
+
+    # Get project and verify that it exists
+    project = models.Project.query.filter(
+        models.Project.public_id == sqlalchemy.func.binary(public_id)
+    ).one_or_none()
+    if not project:
+        raise NoSuchProjectError(project=public_id)
+
+    # Verify project access
+    if not auth.current_user():
+        raise AccessDeniedError(message="No authenticated user. Project access denied.")
+    if project not in auth.current_user().projects:
+        raise AccessDeniedError(
+            message="Project access denied.",
+            username=auth.current_user().username,
+            project=project.public_id,
+        )
+
+    # Return row
+    return project

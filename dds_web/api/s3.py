@@ -36,7 +36,7 @@ class S3Info(flask_restful.Resource):
     def get(self):
         """Get the safespring project."""
         # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        project = dds_web.utils.get_project_object(public_id=flask.request.args.get("project"))
 
         check_eligibility_for_upload(status=project.current_status)
 
