@@ -12,7 +12,6 @@ from dds_web.database import models
 from dds_web.errors import AccessDeniedError, DDSArgumentError, NoSuchProjectError
 from dds_web.api import db_tools
 from dds_web import auth
-import tests
 
 # TESTS #################################################################################### TESTS #
 
