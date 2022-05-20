@@ -253,8 +253,7 @@ def monthly_usage():
         usage_data = {}
         try:
             for unit in db.session.query(models.Unit).with_for_update().all():
-                # usage_data = {unit.safespring_name}
-                usage_data[unit.safespring_name] = {"Total usage": 43459543449974329847298}
+                usage_data[unit.safespring_name] = {"Total usage": 0}
                 scheduler.app.logger.debug(f"Projects in unit {unit.safespring_name}")
                 for project in page_query(
                     db.session.query(models.Project)
@@ -273,14 +272,18 @@ def monthly_usage():
                         proj_bhours,
                         proj_cost,
                     )
+                    usage_data[unit.safespring_name]["Total usage"] += proj_bhours
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise
         for u, d in usage_data_mock.items():
-            scheduler.app.logger.info(f'Total usage for unit {u} is: {d["Total usage"]}')
-            for p, da in d.items():
-                if "Total usage" not in p:
-                    percentage = (da / d["Total usage"]) * 100
-                    round_percentage = round(percentage, 2)
-                    scheduler.app.logger.info(f"Project {p} is using {round_percentage}%")
+            if d["Total usage"] != 0:
+                scheduler.app.logger.info(f'Total usage for unit {u} is: {d["Total usage"]}')
+                for p, da in d.items():
+                    if "Total usage" not in p:
+                        percentage = (da / d["Total usage"]) * 100
+                        round_percentage = round(percentage, 2)
+                        scheduler.app.logger.info(f"Project {p} is using {round_percentage}%")
+            else:
+                scheduler.app.logger.info(f'Total usage for unit {u} is: {d["Total usage"]}')
