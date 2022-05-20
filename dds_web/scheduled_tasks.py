@@ -241,9 +241,20 @@ def monthly_usage():
             usage = f"Total usage for unit {unit.name} ({safespring_project}): {usage_info['TotalBytes']}"
             scheduler.app.logger.info(usage)
 
+        # a mock for a unit with two projects with some usage in bhours
         scheduler.app.logger.debug("Task: Projects usage from database")
+        usage_data_mock = {
+            unit.safespring_name: {
+                "Total usage": 3424234,
+                "proj1": 2656548,
+                "proj2": 767686,
+            }
+        }
+        usage_data = {}
         try:
             for unit in db.session.query(models.Unit).with_for_update().all():
+                # usage_data = {unit.safespring_name}
+                usage_data[unit.safespring_name] = {"Total usage": 43459543449974329847298}
                 scheduler.app.logger.debug(f"Projects in unit {unit.safespring_name}")
                 for project in page_query(
                     db.session.query(models.Project)
@@ -255,6 +266,7 @@ def monthly_usage():
                     .with_for_update()
                 ):
                     proj_bhours, proj_cost = UserProjects.project_usage(project)
+                    usage_data[unit.safespring_name][project.public_id] = proj_bhours
                     scheduler.app.logger.info(
                         "Current total usage for project %s is %s bhours, and total cost is %s kr",
                         project.public_id,
@@ -265,3 +277,10 @@ def monthly_usage():
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise
+        for u, d in usage_data_mock.items():
+            scheduler.app.logger.info(f'Total usage for unit {u} is: {d["Total usage"]}')
+            for p, da in d.items():
+                if "Total usage" not in p:
+                    percentage = (da / d["Total usage"]) * 100
+                    round_percentage = round(percentage, 2)
+                    scheduler.app.logger.info(f"Project {p} is using {round_percentage}%")
