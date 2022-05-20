@@ -99,3 +99,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Bug: Do not remove the bucket when emptying the project ([#1172](https://github.com/ScilifelabDataCentre/dds_web/pull/1172))
 - New `add-missing-buckets` argument option to the `lost-files` flask command ([#1174](https://github.com/ScilifelabDataCentre/dds_web/pull/1174))
 - Bug: Corrected `lost-files` logic and message ([#1176](https://github.com/ScilifelabDataCentre/dds_web/pull/1176))
+
+## Sprint (2022-05-18 - 2022-06-01)
+
+- Cronjob: Scheduled task for monthly usage data 
