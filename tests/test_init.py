@@ -1,6 +1,13 @@
 from dds_web import fill_db_wrapper
-import os
+import click.testing
+import pytest
+from pytest_mock import MockFixture
 
-def test_fill_db_wrapper(client):
+@pytest.fixture
+def runner() -> click.test.CliRunner:
+    return click.testing.CliRunner()
+
+def test_fill_db_wrapper(client, runner):
     """"""
-    fill_db_wrapper("production")
+    result = runner.invoke(fill_db_wrapper, ["production"])
+    assert result.exit_code == 1
