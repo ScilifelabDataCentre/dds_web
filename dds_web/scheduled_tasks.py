@@ -240,3 +240,28 @@ def monthly_usage():
         for safespring_project, usage_info in safespring_data.items():
             usage = f"Total usage for unit {unit.name} ({safespring_project}): {usage_info['TotalBytes']}"
             scheduler.app.logger.info(usage)
+
+        scheduler.app.logger.debug("Task: Projects usage from database")
+        try:
+            for unit in db.session.query(models.Unit).with_for_update().all():
+                scheduler.app.logger.debug(f"Projects in unit {unit.safespring_name}")
+                for project in page_query(
+                    db.session.query(models.Project)
+                    .filter(
+                        sqlalchemy.and_(
+                            models.Project.is_active == 1, models.Project.unit_id == unit.id
+                        )
+                    )
+                    .with_for_update()
+                ):
+                    proj_bhours, proj_cost = UserProjects.project_usage(project=project)
+                    scheduler.app.logger.info(
+                        "Current total usage for project %s is %s bhours, and total cost is %s kr",
+                        project.public_id,
+                        proj_bhours,
+                        proj_cost,
+                    )
+        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+            flask.current_app.logger.exception(err)
+            db.session.rollback()
+            raise
