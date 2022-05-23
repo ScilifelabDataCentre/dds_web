@@ -264,8 +264,7 @@ def monthly_usage():
                     )
                     .with_for_update()
                 ):
-                    proj_bhours, proj_cost = UserProjects.project_usage(project)
-                    usage_data[unit.safespring_name][project.public_id] = proj_bhours
+                    proj_bhours, proj_cost = UserProjects.project_usage(project=project)
                     scheduler.app.logger.info(
                         "Current total usage for project %s is %s bhours, and total cost is %s kr",
                         project.public_id,
