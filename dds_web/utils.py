@@ -8,6 +8,7 @@
 import datetime
 import os
 import re
+import typing
 import urllib.parse
 
 # Installed
@@ -16,6 +17,10 @@ import flask
 from dds_web.errors import AccessDeniedError
 import flask_mail
 import flask_login
+import requests
+import requests_cache
+import simplejson
+
 
 # # imports related to scheduling
 import atexit
@@ -434,3 +439,55 @@ def bucket_is_valid(bucket_name):
     else:
         valid = True
     return valid, message
+
+
+def validate_cli_version() -> [bool, int, str]:
+    from dds_web.version import __version__ as version_number
+
+    header_name: str = "X-CLI-Version"
+    err0: str = "err0"
+    err1: str = "err1"
+    err2: str = "err2"
+    err3: str = "err3"
+
+    request_version: str = ""
+    version_header: bool = False
+    for header in flask.request.headers:
+        (key, value) = header
+        if header_name.lower() == key.lower():
+            request_version = value
+            version_header = True
+            break
+
+    if not version_header:
+        return False, 400, err0
+
+    request_version_arr: typing.List = request_version.split(".")
+
+    requests_cache.CachedSession(cache_control=True, expire_after=datetime.timedelta(days=0.5))
+    response: flask.Response = requests.get(
+        "https://pypi.python.org/pypi/dds-cli/json",
+        headers={
+            "User-Agent": f"dds-web {version_number} (https://github.com/ScilifelabDataCentre/dds_web)"
+        },
+    )
+    try:
+        response_json: typing.Dict = response.json()
+    except simplejson.JSONDecodeError as err:
+        return False, 500, str(err)
+
+    if "info" not in response_json and "version" not in response_json:
+        return False, 500, err1
+
+    latest_version: str = response_json["info"]["version"]
+    latest_version_arr: typing.List = latest_version.split(".")
+
+    if request_version_arr[0] != latest_version_arr[0]:
+        return False, 400, err2
+    elif (
+        request_version_arr[1] != latest_version_arr[1]
+        or request_version_arr[2] != latest_version_arr[2]
+    ):
+        return True, 200, err3
+
+    return True, 200, None

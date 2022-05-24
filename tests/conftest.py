@@ -10,6 +10,7 @@ import flask_migrate
 import pytest
 from sqlalchemy_utils import create_database, database_exists, drop_database
 import boto3
+from requests_mock.mocker import Mocker
 
 # Own
 from dds_web.database.models import (
@@ -38,6 +39,7 @@ from dds_web.security.tokens import encrypted_jwt_token
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
+pypi_api_url = "https://pypi.python.org/pypi/dds-cli/json"
 
 
 def fill_basic_db(db):
@@ -469,8 +471,12 @@ def client(setup_database):
     app = create_app(testing=True, database_uri=DATABASE_URI)
     with app.test_request_context():
         with app.test_client() as client:
+            client.environ_base["HTTP_Cache-Control"] = "no-cache"
+            client.environ_base["HTTP_X-CLI-Version"] = "0.0.0"
             try:
-                yield client
+                with Mocker() as mock:
+                    mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
+                    yield client
             finally:
                 # aborts any pending transactions
                 db.session.rollback()
@@ -489,8 +495,12 @@ def module_client(setup_database):
     app = create_app(testing=True, database_uri=DATABASE_URI)
     with app.test_request_context():
         with app.test_client() as client:
+            client.environ_base["HTTP_Cache-Control"] = "no-cache"
+            client.environ_base["HTTP_X-CLI-Version"] = "0.0.0"
             try:
-                yield client
+                with Mocker() as mock:
+                    mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
+                    yield client
             finally:
                 # aborts any pending transactions
                 db.session.rollback()

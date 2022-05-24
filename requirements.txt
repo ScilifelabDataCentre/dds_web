@@ -51,7 +51,9 @@ pytz-deprecation-shim==0.1.0.post0
 qrcode==7.3.1
 redis==4.1.2
 requests==2.27.1
+requests_cache==0.9.4
 s3transfer==0.5.1
+simplejson==3.17.6
 six==1.16.0
 SQLAlchemy==1.4.31
 structlog==21.5.0

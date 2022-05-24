@@ -7,6 +7,7 @@ import dds_web.errors as ddserr
 import dds_web.database
 import flask
 import flask_login
+from requests_mock.mocker import Mocker
 
 # Copied from dds_cli __init__.py:
 
@@ -61,7 +62,11 @@ class UserAuth:
         return b64encode(self.credentials.encode("utf-8")).decode("utf-8")
 
     def post_headers(self):
-        return {"Authorization": f"Basic {self.basic()}"}
+        return {
+            "Authorization": f"Basic {self.basic()}",
+            "Cache-Control": "no-cache",
+            "X-CLI-Version": "0.0.0",
+        }
 
     def fetch_hotp(self):
         user = dds_web.database.models.User.query.filter_by(username=self.username).first()
@@ -69,32 +74,41 @@ class UserAuth:
 
     def partial_token(self, client):
         """Return a partial token that can be used to get a full token."""
-        response = client.get(DDSEndpoint.ENCRYPTED_TOKEN, auth=(self.as_tuple()))
+        headers: Dict = {"Cache-Control": "no-cache", "X-CLI-Version": "0.0.0"}
+        response = client.get(DDSEndpoint.ENCRYPTED_TOKEN, headers=headers, auth=(self.as_tuple()))
 
         # Get response from api
         response_json = response.json
         token = response_json["token"]
 
         if token is not None:
-            return {"Authorization": f"Bearer {token}"}
+            headers["Authorization"] = f"Bearer {token}"
+            return headers
 
     def token(self, client):
-        temp_token = self.partial_token(client)
+        pypi_api_url: str = "https://pypi.python.org/pypi/dds-cli/json"
+        with Mocker() as mock:
+            mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
+            temp_token = self.partial_token(client)
 
-        hotp_token = self.fetch_hotp()
+            hotp_token = self.fetch_hotp()
 
-        response = client.get(
-            DDSEndpoint.SECOND_FACTOR,
-            headers=temp_token,
-            json={"HOTP": hotp_token.decode()},
-        )
+            response = client.get(
+                DDSEndpoint.SECOND_FACTOR,
+                headers=temp_token,
+                json={"HOTP": hotp_token.decode()},
+            )
 
-        response_json = response.json
-        token = response_json["token"]
-        if token is not None:
-            return {"Authorization": f"Bearer {token}"}
-        else:
-            raise ddserr.JwtTokenGenerationError()
+            response_json = response.json
+            token = response_json["token"]
+            if token is not None:
+                return {
+                    "Authorization": f"Bearer {token}",
+                    "Cache-Control": "no-cache",
+                    "X-CLI-Version": "0.0.0",
+                }
+            else:
+                raise ddserr.JwtTokenGenerationError()
 
     @property
     def username(self):
