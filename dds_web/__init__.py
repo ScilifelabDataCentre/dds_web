@@ -10,6 +10,7 @@ import datetime
 import pathlib
 import sys
 import re
+import os
 
 # Installed
 import click
@@ -426,8 +427,14 @@ def update_uploaded_file_with_log(project, path_to_log_file):
     import json
 
     proj_in_db = models.Project.query.filter_by(public_id=project).one_or_none()
-    assert proj_in_db
+    if not proj_in_db:
+        flask.current_app.logger.error(f"The project '{project}' doesn't exist.")
+        return 
 
+    if not os.path.exists(path_to_log_file):
+        flask.current_app.logger.error(f"The log file '{path_to_log_file}' doesn't exist.")
+        return 
+        
     with open(path_to_log_file, "r") as f:
         log = json.load(f)
     errors = {}
