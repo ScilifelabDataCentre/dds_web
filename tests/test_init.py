@@ -192,11 +192,10 @@ def test_update_uploaded_file_with_log_nonexisting_project(client, runner) -> No
         "somefile",
     ]
 
-    with patch("dds_web.db.session.query.filter_by.one_or_none", mock_no_project):
-        # Run command
-        result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
-        assert result.exit_code == 1
-        assert "AssertionError" in result.output
+    # Run command
+    result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
+    assert result.exit_code == 1
+    assert "AssertionError" in result.output
 
 
 def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: FakeFilesystem) -> None:
