@@ -17,8 +17,10 @@ import os
 def runner() -> click.testing.CliRunner:
     return click.testing.CliRunner()
 
+
 def mock_commit():
-    return 
+    return
+
 
 # fill_db_wrapper
 
@@ -39,6 +41,7 @@ def test_fill_db_wrapper_devbig(client, runner) -> None:
     """Run init-db with the dev-big argument."""
     result: click.testing.Result = runner.invoke(fill_db_wrapper, ["dev-big"])
     assert result.exit_code == 1
+
 
 # create_new_unit
 
@@ -172,15 +175,18 @@ def test_create_new_unit_success(client, runner) -> None:
     # Get command options
     command_options = create_command_options_from_dict(options=correct_unit)
 
-    with patch("dds_web.db.session.commit", mock_commit):   
+    with patch("dds_web.db.session.commit", mock_commit):
         # Run command
         result: click.testing.Result = runner.invoke(create_new_unit, command_options)
         # assert f"Unit '{correct_unit['name']}' created" in result.output
 
+
 # Update uploaded file with log
+
 
 def mock_no_project():
     return None
+
 
 def test_update_uploaded_file_with_log_nonexisting_project(client, runner) -> None:
     """Add file info to non existing project."""
