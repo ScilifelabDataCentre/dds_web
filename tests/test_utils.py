@@ -204,13 +204,13 @@ def test_username_not_taken_nottaken(client):
 # valid_user_role
 
 
-def test_valid_user_role_false(client):
+def test_valid_user_role_false():
     """Test if a role is incorrect."""
     valid = utils.valid_user_role(specified_role="Some Role")
     assert not valid
 
 
-def test_valid_user_role_false(client):
+def test_valid_user_role_false():
     """Test if a role is incorrect."""
     valid = utils.valid_user_role(specified_role="Super Admin")
     assert valid
