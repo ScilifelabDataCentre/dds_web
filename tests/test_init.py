@@ -7,6 +7,7 @@ import pytest
 from dds_web import db
 from dds_web.database import models
 from pytest_mock import MockFixture
+from unittest.mock import patch
 import typing
 from pyfakefs.fake_filesystem import FakeFilesystem
 import os
@@ -16,6 +17,8 @@ import os
 def runner() -> click.testing.CliRunner:
     return click.testing.CliRunner()
 
+def mock_commit():
+    return 
 
 # fill_db_wrapper
 
@@ -169,14 +172,15 @@ def test_create_new_unit_success(client, runner) -> None:
     # Get command options
     command_options = create_command_options_from_dict(options=correct_unit)
 
-    # Run command
-    result: click.testing.Result = runner.invoke(create_new_unit, command_options)
-    assert f"Unit '{correct_unit['name']}' created" in result.output
-    assert db.session.query(models.Unit).filter(models.Unit.name == correct_unit["name"]).all()
-
+    with patch("dds_web.db.session.commit", mock_commit):   
+        # Run command
+        result: click.testing.Result = runner.invoke(create_new_unit, command_options)
+        assert f"Unit '{correct_unit['name']}' created" in result.output
 
 # Update uploaded file with log
 
+def mock_no_project():
+    return None
 
 def test_update_uploaded_file_with_log_nonexisting_project(client, runner) -> None:
     """Add file info to non existing project."""
@@ -188,10 +192,11 @@ def test_update_uploaded_file_with_log_nonexisting_project(client, runner) -> No
         "somefile",
     ]
 
-    # Run command
-    result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
-    assert result.exit_code == 1
-    assert "AssertionError" in result.output
+    with patch("dds_web.db.session.query.filter_by.one_or_none", mock_no_project):
+        # Run command
+        result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
+        assert result.exit_code == 1
+        assert "AssertionError" in result.output
 
 
 def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: FakeFilesystem) -> None:
