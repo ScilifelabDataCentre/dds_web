@@ -4,17 +4,21 @@ import pytest
 
 # contains_uppercase
 
+
 def test_contains_uppercase_false():
     """Test if a lower case string contains an upper case character."""
     with pytest.raises(marshmallow.ValidationError) as err:
         utils.contains_uppercase(indata="nouppercasehere")
     assert "Required: at least one upper case letter." in str(err.value)
 
+
 def test_contains_uppercase_true():
     """Test if a string contains an upper case letter."""
     utils.contains_uppercase(indata="ThereisanuppercaseInhere")
 
+
 # contains_lowercase
+
 
 def test_contains_lowercase_false():
     """Test if a upper case string contains a lower case character."""
@@ -22,11 +26,14 @@ def test_contains_lowercase_false():
         utils.contains_lowercase(indata="NOLOWERCASEHERE")
     assert "Required: at least one lower case letter." in str(err.value)
 
+
 def test_contains_lowercase_true():
     """Test if a string contains a lower case character."""
     utils.contains_lowercase(indata="ThereISALOWERCASE")
 
+
 # contains_digit_or_specialchar
+
 
 def test_contains_digit_or_specialchar_no_digit_or_char():
     """Test if a string without a digit or char contains a digit and char."""
@@ -34,15 +41,19 @@ def test_contains_digit_or_specialchar_no_digit_or_char():
         utils.contains_digit_or_specialchar(indata="Thereisnodigitorchar")
     assert "Required: at least one digit OR a special character (#?!@$%^&*-)." in str(err.value)
 
+
 def test_contains_digit_or_specialchar_no_digit():
     """Test if a string without a digit contains a digit."""
     utils.contains_digit_or_specialchar(indata="Thereisnodigitbutthereisacharhere$")
+
 
 def test_contains_digit_or_specialchar_no_char():
     """Test if a string without a char contains a char."""
     utils.contains_digit_or_specialchar(indata="Thereisnodigitorchar1")
 
+
 # contains_disallowed_characters
+
 
 def test_contains_disallowed_characters_contains_char():
     """Test if a string contains any disallowed characters."""
@@ -51,18 +62,24 @@ def test_contains_disallowed_characters_contains_char():
     assert "The character '<' within" in str(err.value)
     assert "is not allowed" in str(err.value)
 
+
 def test_contains_disallowed_characters_contains_multiple_char():
     """Test if a string contains any disallowed characters - multiple."""
     with pytest.raises(marshmallow.ValidationError) as err:
         utils.contains_disallowed_characters(indata="Also contains < $")
-    assert "The characters '$ <' within" in str(err.value) or "The characters '< $' within" in str(err.value)
+    assert "The characters '$ <' within" in str(err.value) or "The characters '< $' within" in str(
+        err.value
+    )
     assert "are not allowed" in str(err.value)
+
 
 def test_contains_disallowed_characters():
     """Test if a string contains any disallowed characters - it doesn't."""
     utils.contains_disallowed_characters(indata="Does not contain any disallowed character")
 
+
 # contains_unicode_emojis
+
 
 def test_contains_unicode_emojis_true():
     """Test if a string contains any unicode emojis."""
@@ -121,26 +138,33 @@ def test_contains_unicode_emojis_true():
         utils.contains_unicode_emojis(indata="\U00002702\U00002703")
     assert "This input is not allowed: \U00002702\U00002703" in str(err.value)
 
+
 def test_contains_unicode_emojis_false():
     """Test if a string contains any unicode emojis."""
     utils.contains_unicode_emojis(indata="Doesn't contain any emojis.")
 
+
 # email_not_taken
+
 
 def test_email_not_taken_true(client):
     """Check if a non taken email is taken or not."""
     utils.email_not_taken(indata="nonexistentemail@mail.com")
 
+
 def test_email_not_taken_false(client):
     """Check if a taken email is taken or not."""
     from dds_web import db
     from dds_web.database import models
+
     user = db.session.query(models.User).first()
     with pytest.raises(marshmallow.ValidationError) as err:
         utils.email_not_taken(indata=user.primary_email)
     assert "The email is already taken by another user." in str(err.value)
 
+
 # email_taken
+
 
 def test_email_taken_false(client):
     """Check if a non taken email is taken or not."""
@@ -148,34 +172,43 @@ def test_email_taken_false(client):
         utils.email_taken(indata="nonexistentemail@mail.com")
     assert "If the email is connected to a user within the DDS" in str(err.value)
 
+
 def test_email_taken_false(client):
     """Check if a taken email is taken or not."""
     from dds_web import db
     from dds_web.database import models
+
     user = db.session.query(models.User).first()
     utils.email_taken(indata=user.primary_email)
 
+
 # username_not_taken
+
 
 def test_username_not_taken_taken(client):
     """Check that a username is taken."""
     from dds_web import db
     from dds_web.database import models
+
     user = db.session.query(models.User).first()
     with pytest.raises(marshmallow.ValidationError) as err:
         utils.username_not_taken(indata=user.username)
     assert "That username is taken. Please choose a different one." in str(err.value)
 
+
 def test_username_not_taken_nottaken(client):
     """Check that a username is not taken."""
     utils.username_not_taken(indata="nosuchusername")
 
+
 # valid_user_role
+
 
 def test_valid_user_role_false(client):
     """Test if a role is incorrect."""
     valid = utils.valid_user_role(specified_role="Some Role")
     assert not valid
+
 
 def test_valid_user_role_false(client):
     """Test if a role is incorrect."""
