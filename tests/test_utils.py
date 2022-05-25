@@ -1,4 +1,5 @@
 from ctypes import util
+import email
 import marshmallow
 from dds_web import utils
 import pytest
@@ -6,6 +7,8 @@ from unittest.mock import patch
 from dds_web import db
 from dds_web.database import models
 from dds_web.errors import AccessDeniedError
+import flask
+import flask_login
 
 # contains_uppercase
 
@@ -318,6 +321,8 @@ def test_verify_enough_unit_admins_ok(client):
     response = utils.verify_enough_unit_admins(unit_id=unit_id)
     assert not response
 
+# valid_chars_in_username
+
 def test_valid_chars_in_username_only_valid():
     """Verify return true if contains only valid characters."""
     response: bool = utils.valid_chars_in_username(indata="valid")
@@ -327,3 +332,107 @@ def test_valid_chars_in_username_some_invalid():
     """Verify return false if contains only some invalid characters."""
     response: bool = utils.valid_chars_in_username(indata="invalid$")
     assert not response
+
+# email_in_db
+
+def test_email_in_db_true(client):
+    """Verify return True if email is in database."""
+    # Get email known to be in database
+    email_row: models.Email = db.session.query(models.Email).first()
+    assert email_row
+
+    # Check that found in database
+    response: bool = utils.email_in_db(email=email_row.email)
+    assert response
+
+def test_email_in_db_false(client):
+    """Verify return False if email is not in database."""
+    # Define email
+    email_address: str = "notindb@mail.com"
+
+    # Check that email is not in database
+    email_row: models.Email = db.session.query(models.Email).filter_by(email="notindb@mail.com").first()
+    assert not email_row
+
+    # Check that found in database
+    response: bool = utils.email_in_db(email=email_address)
+    assert not response
+
+# username_in_db
+
+def test_username_in_db_true(client):
+    """Verify return True if username is in database."""
+    # Get username known to be in database
+    user_in_db: models.User = db.session.query(models.User).first()
+    assert user_in_db
+
+    # Check that found in database
+    response: bool = utils.username_in_db(username=user_in_db.username)
+    assert response
+
+def test_username_in_db_false(client):
+    """Verify return False if username is not in database."""
+    # Define username
+    username: str = "notindb"
+
+    # Check that username is not in database
+    user_in_db: models.User = db.session.query(models.User).filter_by(username=username).first()
+    assert not user_in_db
+
+    # Check that found in database
+    response: bool = utils.username_in_db(username=username)
+    assert not response
+
+# get_username_or_request_ip
+
+def test_get_username_or_request_ip_auth_current_user(client):
+    """Verify that the correct user object is returned."""
+    # Create new user
+    username: str = "new_user_for_test"
+    new_user: models.ResearchUser = models.ResearchUser(username=username, password="goodpassword")
+    db.session.add(new_user)
+    db.session.commit()
+
+    # Authenticate user
+    # auth.current_user() calls the following
+    # ref: https://github.com/miguelgrinberg/Flask-HTTPAuth/blob/b42168ed174cde0a9404dbf0b05b5b5c5d6eb46d/src/flask_httpauth.py#L185-L187
+    # def current_user(self):
+    #     if hasattr(g, 'flask_httpauth_user'):
+    #         return g.flask_httpauth_user
+    flask.g.flask_httpauth_user = new_user
+    
+    # Call function
+    response: str = utils.get_username_or_request_ip()
+    assert response and response == new_user.username == username
+
+def test_get_username_or_request_ip_flask_login_current_user(client):
+    """Verify that the correct user object is returned."""
+    # Get user
+    user_object: models.User = db.session.query(models.User).first()
+    assert user_object.is_authenticated
+
+    # Login user
+    flask_login.login_user(user_object)
+
+    # Call function
+    response: str = utils.get_username_or_request_ip()
+    assert response and response == user_object.username
+
+def test_get_username_or_request_ip_anonymous(client):
+    """Verify that anonymous user is returned."""
+    # Call function
+    response: str = utils.get_username_or_request_ip()
+    assert "(anonymous)" in response
+
+def test_get_username_or_request_ip_remote_addr(client):
+    """Verify that remote addr is returned"""
+    flask.request.remote_addr = "http://localhost"
+    assert flask.request.remote_addr == "http://localhost"
+    # Call function
+    response: str = utils.get_username_or_request_ip()
+    assert "http://localhost" in response
+
+# Access route test not implemented
+# def test_get_username_or_request_ip_access_route(client):
+#    pass 
+
