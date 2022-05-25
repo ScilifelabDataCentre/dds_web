@@ -524,3 +524,57 @@ def test_current_time_to_midnight():
     
     # tzinfo is None if in utc
     assert current_time_from_function.tzinfo is None
+
+# timestamp
+
+def add_zero_to_start(input):
+    """Add a zero to each part of a timestamp."""
+    return f"0{input}" if len(str(input)) == 1 else input
+
+def test_timestamp():
+    """Verify that timestamp is returned."""
+    # Call function to create timestamp
+    new_timestamp: str = utils.timestamp()
+    assert isinstance(new_timestamp, str)
+
+def test_timestamp_input_timestamp():
+    """Check that function returns string representation of timestamp passed in."""
+    # Get current time
+    now: datetime.datetime = datetime.datetime.utcnow()
+
+    # Call function
+    datetime_string: str = utils.timestamp(dts=now)
+    assert isinstance(datetime_string, str)
+    assert datetime_string == f"{now.year}-{f'0{now.month}' if len(str(now.month)) == 1 else now.month}-{now.day} {now.hour}:{now.minute}:{now.second}.{now.microsecond}"
+
+def test_timestamp_new_tsformat():
+    """Verify that new format is applied."""
+    # Get current time
+    now: datetime.datetime = datetime.datetime.utcnow()
+
+    # Call function
+    datetime_string: str = utils.timestamp(dts=now, ts_format="%Y-%m")
+    assert isinstance(datetime_string, str)
+    assert datetime_string == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}"
+
+def test_timestamp_datetime_string():
+    """Check that year is returned when datetime string is entered."""
+    # Get current time
+    now: datetime.datetime = datetime.datetime.utcnow()
+
+    # Call function
+    datetime_string: str = utils.timestamp(dts=now)
+    assert isinstance(datetime_string, str)
+
+    # Call function again - real test
+    new_datetime_string: str = utils.timestamp(datetime_string=datetime_string)
+    assert new_datetime_string == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}-{add_zero_to_start(now.day)}"
+
+# rate_limit_from_config
+
+def test_rate_limit_from_config(client):
+    """Test the limiter."""
+    limit: str = utils.rate_limit_from_config()
+    assert limit == "10/hour"
+
+# working_directory

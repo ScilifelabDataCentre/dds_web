@@ -342,15 +342,13 @@ def current_time(to_midnight=False):
     return curr_time
 
 
-def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
+def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f"):
     """Gets the current time. Formats timestamp.
 
     Returns:
         str:    Timestamp in format 'YY-MM-DD_HH-MM-SS'
 
     """
-
-    # print(f"\nTime stamp : {datetime.datetime.utcnow}\n")
     if datetime_string is not None:
         datetime_stamp = datetime.datetime.strptime(datetime_string, ts_format)
         return str(datetime_stamp.date())
