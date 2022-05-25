@@ -1,6 +1,10 @@
 import marshmallow
 from dds_web import utils
 import pytest
+from unittest.mock import patch
+from dds_web import db
+from dds_web.database import models
+from dds_web.errors import AccessDeniedError
 
 # contains_uppercase
 
@@ -226,3 +230,89 @@ def test_valid_user_role_false():
 
     valid = utils.valid_user_role(specified_role="Researcher")
     assert valid
+
+
+# username_contains_valid_characters
+
+# class TestForm(flask_wtf.FlaskForm):
+#     """User registration form."""
+#     username = wtforms.StringField(
+#         "Username",
+#         validators=[
+#             utils.username_contains_valid_characters(),
+#         ],
+#     )
+
+# def test_username_contains_valid_characters(client):
+#     """"""
+#     form = TestForm()
+#     form.username.data = "hehej?"
+#     with pytest.raises(wtforms.validators.ValidationError) as err:
+#         form.validate()
+
+# verify_enough_unit_admins
+
+def test_verify_enough_unit_admins_less_than_2(client):
+    """Verify that an exception is thrown when a unit has less than 2 unit admins."""
+    # Get unit
+    unit = db.session.query(models.Unit).first()
+    assert unit
+
+    # Get number of admins
+    num_admins = db.session.query(models.UnitUser).filter_by(is_admin=True, unit_id=unit.id).count()
+    assert num_admins == 1
+
+    # Run function
+    with pytest.raises(AccessDeniedError) as err:
+        utils.verify_enough_unit_admins(unit_id=unit.id)
+    assert "Your unit does not have enough Unit Admins" in str(err.value)
+
+def test_verify_enough_unit_admins_less_than_3(client):
+    """Verify that an error message is returned when a unit has less than 3 unit admins."""
+    # Unit ID
+    unit_id = 1
+
+    # Get unit
+    unit = db.session.query(models.Unit).filter_by(id=unit_id).one_or_none()
+    assert unit
+
+    # Get number of admins
+    num_admins = db.session.query(models.UnitUser).filter_by(is_admin=True, unit_id=unit_id).count()
+    assert num_admins == 1
+
+    # Create another unit admin
+    from tests import test_project_creation
+    test_project_creation.create_unit_admins(num_admins=1, unit_id=unit_id)
+
+    # Get number of admins
+    num_admins = db.session.query(models.UnitUser).filter_by(is_admin=True, unit_id=unit_id).count()
+    assert num_admins == 2
+
+    # Run function
+    response = utils.verify_enough_unit_admins(unit_id=unit_id)
+    assert "Your unit only has 2 Unit Admins. This poses a high risk of data loss" in response
+
+def test_verify_enough_unit_admins_ok(client):
+    """Verify that no exception is thrown and no error is returned if there are at least 3 unit admins."""
+    # Unit ID
+    unit_id = 1
+
+    # Get unit
+    unit = db.session.query(models.Unit).filter_by(id=unit_id).one_or_none()
+    assert unit
+
+    # Get number of admins
+    num_admins = db.session.query(models.UnitUser).filter_by(is_admin=True, unit_id=unit_id).count()
+    assert num_admins == 1
+
+    # Create another unit admin
+    from tests import test_project_creation
+    test_project_creation.create_unit_admins(num_admins=2, unit_id=unit_id)
+
+    # Get number of admins
+    num_admins = db.session.query(models.UnitUser).filter_by(is_admin=True, unit_id=unit_id).count()
+    assert num_admins == 3
+
+    # Run function
+    response = utils.verify_enough_unit_admins(unit_id=unit_id)
+    assert not response
