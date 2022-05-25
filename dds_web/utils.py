@@ -13,7 +13,7 @@ import urllib.parse
 # Installed
 from contextlib import contextmanager
 import flask
-from dds_web.errors import AccessDeniedError
+from dds_web.errors import AccessDeniedError, DDSArgumentError
 import flask_mail
 import flask_login
 

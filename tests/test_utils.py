@@ -9,6 +9,7 @@ from dds_web.database import models
 from dds_web.errors import AccessDeniedError
 import flask
 import flask_login
+import datetime
 
 # contains_uppercase
 
@@ -436,3 +437,90 @@ def test_get_username_or_request_ip_remote_addr(client):
 # def test_get_username_or_request_ip_access_route(client):
 #    pass 
 
+def test_delrequest_exists_true(client):
+    """Verify deletion request row exists."""
+    # Create deletion request
+    user: models.User = db.session.query(models.User).first()
+    deletion_request: models.DeletionRequest = models.DeletionRequest(email=user.primary_email, issued=utils.current_time())
+    user.deletion_request.append(deletion_request)
+    db.session.commit()
+
+    # Call function
+    response: bool = utils.delrequest_exists(email=deletion_request.email)
+    assert response
+
+def test_delrequest_exists_false(client):
+    """Check that deletion request does not exist."""
+    # Define email
+    email = "nosuchrequest@mail.com"
+
+    # Create deletion request
+    deletion_request: models.DeletionRequest = db.session.query(models.DeletionRequest).filter_by(email=email).first()
+    assert not deletion_request
+
+    # Run function
+    response: bool = utils.delrequest_exists(email=email)
+    assert not response
+
+# send_reset_email
+
+def test_send_reset_email(client):
+    """Send reset email."""
+    # Get email row
+    email_row: models.Email = db.session.query(models.Email).first()
+
+    # Run function
+    with patch("dds_web.utils.mail.send"):
+        response = utils.send_reset_email(email_row=email_row, token="")
+    assert response is None
+
+# send_project_access_reset_email
+
+def test_send_project_access_reset_email(client):
+    """Send project access reset email."""
+    # Get email row
+    email_row: models.Email = db.session.query(models.Email).first()
+
+    # Call function
+    with patch("dds_web.utils.mail.send"):
+        response = utils.send_project_access_reset_email(email_row=email_row, email=email_row.email, token=None)
+    assert response is None
+
+# is_safe_url - not tested
+# def test_is_safe_url(client):
+#     """Check if url is safe to redirect to."""
+
+# current_time
+
+def test_current_time():
+    """Test getting the current time."""
+    # Get current time
+    current_time_manual = datetime.datetime.utcnow()
+
+    # Call function
+    current_time_from_function: datetime.datetime = utils.current_time()
+    
+    # Check that they are relatively close to each other
+    assert current_time_manual < current_time_from_function
+    assert current_time_from_function - datetime.timedelta(seconds=15) < current_time_manual
+    assert isinstance(current_time_from_function, datetime.datetime)
+    
+    # tzinfo is None if in utc
+    assert current_time_from_function.tzinfo is None
+
+def test_current_time_to_midnight():
+    """Test getting the current date, time: midnight."""
+    # Get current time
+    current_time_manual = datetime.datetime.utcnow()
+
+    # Call function
+    current_time_from_function: datetime.datetime = utils.current_time(to_midnight=True)
+    
+    # Check that correct time and date
+    assert current_time_from_function.hour == 23
+    assert current_time_from_function.minute == 59
+    assert current_time_from_function.second == 59
+    assert current_time_from_function.day == current_time_manual.day
+    
+    # tzinfo is None if in utc
+    assert current_time_from_function.tzinfo is None
