@@ -1,3 +1,4 @@
+from ctypes import util
 import marshmallow
 from dds_web import utils
 import pytest
@@ -315,4 +316,14 @@ def test_verify_enough_unit_admins_ok(client):
 
     # Run function
     response = utils.verify_enough_unit_admins(unit_id=unit_id)
+    assert not response
+
+def test_valid_chars_in_username_only_valid():
+    """Verify return true if contains only valid characters."""
+    response: bool = utils.valid_chars_in_username(indata="valid")
+    assert response
+
+def test_valid_chars_in_username_some_invalid():
+    """Verify return false if contains only some invalid characters."""
+    response: bool = utils.valid_chars_in_username(indata="invalid$")
     assert not response
