@@ -11,7 +11,7 @@ import flask
 import flask_login
 import datetime
 from pyfakefs.fake_filesystem import FakeFilesystem
-import os 
+import os
 import flask_mail
 
 # contains_uppercase
@@ -260,6 +260,7 @@ def test_valid_user_role_false():
 
 # verify_enough_unit_admins
 
+
 def test_verify_enough_unit_admins_less_than_2(client):
     """Verify that an exception is thrown when a unit has less than 2 unit admins."""
     # Get unit
@@ -274,6 +275,7 @@ def test_verify_enough_unit_admins_less_than_2(client):
     with pytest.raises(AccessDeniedError) as err:
         utils.verify_enough_unit_admins(unit_id=unit.id)
     assert "Your unit does not have enough Unit Admins" in str(err.value)
+
 
 def test_verify_enough_unit_admins_less_than_3(client):
     """Verify that an error message is returned when a unit has less than 3 unit admins."""
@@ -290,6 +292,7 @@ def test_verify_enough_unit_admins_less_than_3(client):
 
     # Create another unit admin
     from tests import test_project_creation
+
     test_project_creation.create_unit_admins(num_admins=1, unit_id=unit_id)
 
     # Get number of admins
@@ -299,6 +302,7 @@ def test_verify_enough_unit_admins_less_than_3(client):
     # Run function
     response = utils.verify_enough_unit_admins(unit_id=unit_id)
     assert "Your unit only has 2 Unit Admins. This poses a high risk of data loss" in response
+
 
 def test_verify_enough_unit_admins_ok(client):
     """Verify that no exception is thrown and no error is returned if there are at least 3 unit admins."""
@@ -315,6 +319,7 @@ def test_verify_enough_unit_admins_ok(client):
 
     # Create another unit admin
     from tests import test_project_creation
+
     test_project_creation.create_unit_admins(num_admins=2, unit_id=unit_id)
 
     # Get number of admins
@@ -325,19 +330,24 @@ def test_verify_enough_unit_admins_ok(client):
     response = utils.verify_enough_unit_admins(unit_id=unit_id)
     assert not response
 
+
 # valid_chars_in_username
+
 
 def test_valid_chars_in_username_only_valid():
     """Verify return true if contains only valid characters."""
     response: bool = utils.valid_chars_in_username(indata="valid")
     assert response
 
+
 def test_valid_chars_in_username_some_invalid():
     """Verify return false if contains only some invalid characters."""
     response: bool = utils.valid_chars_in_username(indata="invalid$")
     assert not response
 
+
 # email_in_db
+
 
 def test_email_in_db_true(client):
     """Verify return True if email is in database."""
@@ -349,20 +359,25 @@ def test_email_in_db_true(client):
     response: bool = utils.email_in_db(email=email_row.email)
     assert response
 
+
 def test_email_in_db_false(client):
     """Verify return False if email is not in database."""
     # Define email
     email_address: str = "notindb@mail.com"
 
     # Check that email is not in database
-    email_row: models.Email = db.session.query(models.Email).filter_by(email="notindb@mail.com").first()
+    email_row: models.Email = (
+        db.session.query(models.Email).filter_by(email="notindb@mail.com").first()
+    )
     assert not email_row
 
     # Check that found in database
     response: bool = utils.email_in_db(email=email_address)
     assert not response
 
+
 # username_in_db
+
 
 def test_username_in_db_true(client):
     """Verify return True if username is in database."""
@@ -373,6 +388,7 @@ def test_username_in_db_true(client):
     # Check that found in database
     response: bool = utils.username_in_db(username=user_in_db.username)
     assert response
+
 
 def test_username_in_db_false(client):
     """Verify return False if username is not in database."""
@@ -387,7 +403,9 @@ def test_username_in_db_false(client):
     response: bool = utils.username_in_db(username=username)
     assert not response
 
+
 # get_username_or_request_ip
+
 
 def test_get_username_or_request_ip_auth_current_user(client):
     """Verify that the correct user object is returned."""
@@ -404,10 +422,11 @@ def test_get_username_or_request_ip_auth_current_user(client):
     #     if hasattr(g, 'flask_httpauth_user'):
     #         return g.flask_httpauth_user
     flask.g.flask_httpauth_user = new_user
-    
+
     # Call function
     response: str = utils.get_username_or_request_ip()
     assert response and response == new_user.username == username
+
 
 def test_get_username_or_request_ip_flask_login_current_user(client):
     """Verify that the correct user object is returned."""
@@ -422,11 +441,13 @@ def test_get_username_or_request_ip_flask_login_current_user(client):
     response: str = utils.get_username_or_request_ip()
     assert response and response == user_object.username
 
+
 def test_get_username_or_request_ip_anonymous(client):
     """Verify that anonymous user is returned."""
     # Call function
     response: str = utils.get_username_or_request_ip()
     assert "(anonymous)" in response
+
 
 def test_get_username_or_request_ip_remote_addr(client):
     """Verify that remote addr is returned"""
@@ -436,15 +457,19 @@ def test_get_username_or_request_ip_remote_addr(client):
     response: str = utils.get_username_or_request_ip()
     assert "http://localhost" in response
 
+
 # Access route test not implemented
 # def test_get_username_or_request_ip_access_route(client):
-#    pass 
+#    pass
+
 
 def test_delrequest_exists_true(client):
     """Verify deletion request row exists."""
     # Create deletion request
     user: models.User = db.session.query(models.User).first()
-    deletion_request: models.DeletionRequest = models.DeletionRequest(email=user.primary_email, issued=utils.current_time())
+    deletion_request: models.DeletionRequest = models.DeletionRequest(
+        email=user.primary_email, issued=utils.current_time()
+    )
     user.deletion_request.append(deletion_request)
     db.session.commit()
 
@@ -452,20 +477,25 @@ def test_delrequest_exists_true(client):
     response: bool = utils.delrequest_exists(email=deletion_request.email)
     assert response
 
+
 def test_delrequest_exists_false(client):
     """Check that deletion request does not exist."""
     # Define email
     email = "nosuchrequest@mail.com"
 
     # Create deletion request
-    deletion_request: models.DeletionRequest = db.session.query(models.DeletionRequest).filter_by(email=email).first()
+    deletion_request: models.DeletionRequest = (
+        db.session.query(models.DeletionRequest).filter_by(email=email).first()
+    )
     assert not deletion_request
 
     # Run function
     response: bool = utils.delrequest_exists(email=email)
     assert not response
 
+
 # send_reset_email
+
 
 def test_send_reset_email(client):
     """Send reset email."""
@@ -477,7 +507,9 @@ def test_send_reset_email(client):
         response = utils.send_reset_email(email_row=email_row, token="")
     assert response is None
 
+
 # send_project_access_reset_email
+
 
 def test_send_project_access_reset_email(client):
     """Send project access reset email."""
@@ -486,14 +518,18 @@ def test_send_project_access_reset_email(client):
 
     # Call function
     with patch("dds_web.utils.mail.send"):
-        response = utils.send_project_access_reset_email(email_row=email_row, email=email_row.email, token=None)
+        response = utils.send_project_access_reset_email(
+            email_row=email_row, email=email_row.email, token=None
+        )
     assert response is None
+
 
 # is_safe_url - not tested
 # def test_is_safe_url(client):
 #     """Check if url is safe to redirect to."""
 
 # current_time
+
 
 def test_current_time():
     """Test getting the current time."""
@@ -502,14 +538,15 @@ def test_current_time():
 
     # Call function
     current_time_from_function: datetime.datetime = utils.current_time()
-    
+
     # Check that they are relatively close to each other
     assert current_time_manual < current_time_from_function
     assert current_time_from_function - datetime.timedelta(seconds=15) < current_time_manual
     assert isinstance(current_time_from_function, datetime.datetime)
-    
+
     # tzinfo is None if in utc
     assert current_time_from_function.tzinfo is None
+
 
 def test_current_time_to_midnight():
     """Test getting the current date, time: midnight."""
@@ -518,27 +555,31 @@ def test_current_time_to_midnight():
 
     # Call function
     current_time_from_function: datetime.datetime = utils.current_time(to_midnight=True)
-    
+
     # Check that correct time and date
     assert current_time_from_function.hour == 23
     assert current_time_from_function.minute == 59
     assert current_time_from_function.second == 59
     assert current_time_from_function.day == current_time_manual.day
-    
+
     # tzinfo is None if in utc
     assert current_time_from_function.tzinfo is None
 
+
 # timestamp
+
 
 def add_zero_to_start(input):
     """Add a zero to each part of a timestamp."""
     return f"0{input}" if len(str(input)) == 1 else input
+
 
 def test_timestamp():
     """Verify that timestamp is returned."""
     # Call function to create timestamp
     new_timestamp: str = utils.timestamp()
     assert isinstance(new_timestamp, str)
+
 
 def test_timestamp_input_timestamp():
     """Check that function returns string representation of timestamp passed in."""
@@ -548,7 +589,11 @@ def test_timestamp_input_timestamp():
     # Call function
     datetime_string: str = utils.timestamp(dts=now)
     assert isinstance(datetime_string, str)
-    assert datetime_string == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}-{add_zero_to_start(now.day)} {add_zero_to_start(now.hour)}:{add_zero_to_start(now.minute)}:{add_zero_to_start(now.second)}.{add_zero_to_start(now.microsecond)}"
+    assert (
+        datetime_string
+        == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}-{add_zero_to_start(now.day)} {add_zero_to_start(now.hour)}:{add_zero_to_start(now.minute)}:{add_zero_to_start(now.second)}.{add_zero_to_start(now.microsecond)}"
+    )
+
 
 def test_timestamp_new_tsformat():
     """Verify that new format is applied."""
@@ -559,6 +604,7 @@ def test_timestamp_new_tsformat():
     datetime_string: str = utils.timestamp(dts=now, ts_format="%Y-%m")
     assert isinstance(datetime_string, str)
     assert datetime_string == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}"
+
 
 def test_timestamp_datetime_string():
     """Check that year is returned when datetime string is entered."""
@@ -571,16 +617,23 @@ def test_timestamp_datetime_string():
 
     # Call function again - real test
     new_datetime_string: str = utils.timestamp(datetime_string=datetime_string)
-    assert new_datetime_string == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}-{add_zero_to_start(now.day)}"
+    assert (
+        new_datetime_string
+        == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}-{add_zero_to_start(now.day)}"
+    )
+
 
 # rate_limit_from_config
+
 
 def test_rate_limit_from_config(client):
     """Test the limiter."""
     limit: str = utils.rate_limit_from_config()
     assert limit == "10/hour"
 
+
 # working_directory
+
 
 def test_working_directory(fs: FakeFilesystem):
     """Check that working directory has changed."""
@@ -590,21 +643,26 @@ def test_working_directory(fs: FakeFilesystem):
         assert os.getcwd() == f"/{test_dir}"
     assert os.getcwd() == initial_path
 
-# page_query 
+
+# page_query
+
 
 def test_page_query(client):
     """Test if paging works."""
     previous_projects = db.session.query(models.Project).count()
 
     # Create 1020 projects
-    projects = [models.Project(
-        public_id=f"project__{x}",
-        title=f"{x} Project",
-        description="This is a test project. You will be able to upload to but NOT download "
-        "from this project. Create a new project to test the entire system. ",
-        pi="support@example.com",
-        bucket=f"testbucket_{x}",
-    ) for x in range(1020)]
+    projects = [
+        models.Project(
+            public_id=f"project__{x}",
+            title=f"{x} Project",
+            description="This is a test project. You will be able to upload to but NOT download "
+            "from this project. Create a new project to test the entire system. ",
+            pi="support@example.com",
+            bucket=f"testbucket_{x}",
+        )
+        for x in range(1020)
+    ]
     assert len(projects) == 1020
     db.session.add_all(projects)
     db.session.commit()
@@ -615,10 +673,12 @@ def test_page_query(client):
     # Run function
     for x in utils.page_query(db.session.query(models.Project)):
         iteration += 1
-    
+
     assert iteration == (len(projects) + previous_projects)
 
+
 # create_one_time_password_email
+
 
 def test_create_one_time_password_email(client):
     """Test creating one time password email."""
@@ -629,7 +689,9 @@ def test_create_one_time_password_email(client):
     message: str = utils.create_one_time_password_email(user=current_user, hotp_value=b"012345")
     assert isinstance(message, flask_mail.Message)
 
+
 # bucket_is_valid
+
 
 def test_bucket_is_valid_too_short():
     """Test that a bucket name with length shorter than 3."""
@@ -638,12 +700,14 @@ def test_bucket_is_valid_too_short():
     assert not valid
     assert "The bucket name has the incorrect length 2" in message
 
+
 def test_bucket_is_valid_too_long():
     """Test that a bucket name with length longer than 63 is not valid."""
     # Call function
-    valid, message = utils.bucket_is_valid(bucket_name="b"*64)
+    valid, message = utils.bucket_is_valid(bucket_name="b" * 64)
     assert not valid
     assert "The bucket name has the incorrect length 64" in message
+
 
 def test_bucket_is_valid_invalid_chars():
     """Test that a bucket name with underscore is not valid."""
@@ -651,6 +715,7 @@ def test_bucket_is_valid_invalid_chars():
     valid, message = utils.bucket_is_valid(bucket_name="bb_")
     assert not valid
     assert "The bucket name contains invalid characters." in message
+
 
 def test_bucket_is_valid_begin_with_dot_or_dash():
     """Test that a bucket name beginning with a dot or a dash is not valid."""
@@ -663,6 +728,7 @@ def test_bucket_is_valid_begin_with_dot_or_dash():
     valid, message = utils.bucket_is_valid(bucket_name="-bb")
     assert not valid
     assert "The bucket name must begin with a letter or number." in message
+
 
 def test_bucket_is_valid_too_many_dots():
     """Test that a bucket name with more than 2 dots is not valid."""
@@ -679,12 +745,14 @@ def test_bucket_is_valid_invalid_prefix():
     assert not valid
     assert "The bucket name cannot begin with the 'xn--' prefix." in message
 
+
 def test_bucket_is_valid_invalid_suffix():
     """Test that a bucket name with suffix -s3alias is not valid."""
     # Call function
     valid, message = utils.bucket_is_valid(bucket_name="something-s3alias")
     assert not valid
     assert "The bucket name cannot end with the '-s3alias' suffix." in message
+
 
 def test_bucket_is_valid_ok():
     """Test that a bucket name with suffix -s3alias is not valid."""
