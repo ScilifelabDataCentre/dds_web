@@ -10,6 +10,9 @@ from dds_web.errors import AccessDeniedError
 import flask
 import flask_login
 import datetime
+from pyfakefs.fake_filesystem import FakeFilesystem
+import os 
+import flask_mail
 
 # contains_uppercase
 
@@ -545,7 +548,7 @@ def test_timestamp_input_timestamp():
     # Call function
     datetime_string: str = utils.timestamp(dts=now)
     assert isinstance(datetime_string, str)
-    assert datetime_string == f"{now.year}-{f'0{now.month}' if len(str(now.month)) == 1 else now.month}-{now.day} {now.hour}:{now.minute}:{now.second}.{now.microsecond}"
+    assert datetime_string == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}-{add_zero_to_start(now.day)} {add_zero_to_start(now.hour)}:{add_zero_to_start(now.minute)}:{add_zero_to_start(now.second)}.{add_zero_to_start(now.microsecond)}"
 
 def test_timestamp_new_tsformat():
     """Verify that new format is applied."""
@@ -578,3 +581,114 @@ def test_rate_limit_from_config(client):
     assert limit == "10/hour"
 
 # working_directory
+
+def test_working_directory(fs: FakeFilesystem):
+    """Check that working directory has changed."""
+    initial_path = os.getcwd()
+    test_dir = "thisisatest"
+    with utils.working_directory(path=test_dir):
+        assert os.getcwd() == f"/{test_dir}"
+    assert os.getcwd() == initial_path
+
+# page_query 
+
+def test_page_query(client):
+    """Test if paging works."""
+    previous_projects = db.session.query(models.Project).count()
+
+    # Create 1020 projects
+    projects = [models.Project(
+        public_id=f"project__{x}",
+        title=f"{x} Project",
+        description="This is a test project. You will be able to upload to but NOT download "
+        "from this project. Create a new project to test the entire system. ",
+        pi="support@example.com",
+        bucket=f"testbucket_{x}",
+    ) for x in range(1020)]
+    assert len(projects) == 1020
+    db.session.add_all(projects)
+    db.session.commit()
+
+    # Keep track of iterations
+    iteration = 0
+
+    # Run function
+    for x in utils.page_query(db.session.query(models.Project)):
+        iteration += 1
+    
+    assert iteration == (len(projects) + previous_projects)
+
+# create_one_time_password_email
+
+def test_create_one_time_password_email(client):
+    """Test creating one time password email."""
+    # User
+    current_user: models.User = db.session.query(models.User).first()
+
+    # Call function
+    message: str = utils.create_one_time_password_email(user=current_user, hotp_value=b"012345")
+    assert isinstance(message, flask_mail.Message)
+
+# bucket_is_valid
+
+def test_bucket_is_valid_too_short():
+    """Test that a bucket name with length shorter than 3."""
+    # Call function
+    valid, message = utils.bucket_is_valid(bucket_name="bb")
+    assert not valid
+    assert "The bucket name has the incorrect length 2" in message
+
+def test_bucket_is_valid_too_long():
+    """Test that a bucket name with length longer than 63 is not valid."""
+    # Call function
+    valid, message = utils.bucket_is_valid(bucket_name="b"*64)
+    assert not valid
+    assert "The bucket name has the incorrect length 64" in message
+
+def test_bucket_is_valid_invalid_chars():
+    """Test that a bucket name with underscore is not valid."""
+    # Call function
+    valid, message = utils.bucket_is_valid(bucket_name="bb_")
+    assert not valid
+    assert "The bucket name contains invalid characters." in message
+
+def test_bucket_is_valid_begin_with_dot_or_dash():
+    """Test that a bucket name beginning with a dot or a dash is not valid."""
+    # Call function
+    valid, message = utils.bucket_is_valid(bucket_name=".bb")
+    assert not valid
+    assert "The bucket name must begin with a letter or number." in message
+
+    # Call function again
+    valid, message = utils.bucket_is_valid(bucket_name="-bb")
+    assert not valid
+    assert "The bucket name must begin with a letter or number." in message
+
+def test_bucket_is_valid_too_many_dots():
+    """Test that a bucket name with more than 2 dots is not valid."""
+    # Call function
+    valid, message = utils.bucket_is_valid(bucket_name="bb...")
+    assert not valid
+    assert "The bucket name cannot contain more than two dots." in message
+
+
+def test_bucket_is_valid_invalid_prefix():
+    """Test that a bucket name with prefix xn-- is not valid."""
+    # Call function
+    valid, message = utils.bucket_is_valid(bucket_name="xn--something")
+    assert not valid
+    assert "The bucket name cannot begin with the 'xn--' prefix." in message
+
+def test_bucket_is_valid_invalid_suffix():
+    """Test that a bucket name with suffix -s3alias is not valid."""
+    # Call function
+    valid, message = utils.bucket_is_valid(bucket_name="something-s3alias")
+    assert not valid
+    assert "The bucket name cannot end with the '-s3alias' suffix." in message
+
+def test_bucket_is_valid_ok():
+    """Test that a bucket name with suffix -s3alias is not valid."""
+    # Call function
+    valid, message = utils.bucket_is_valid(bucket_name="something-.")
+    assert valid
+    assert message == ""
