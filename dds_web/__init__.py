@@ -189,10 +189,10 @@ def create_app(testing=False, database_uri=None):
         @app.before_request
         def prepare():
             """Populate flask globals for template rendering"""
-            from dds_web.utils import validate_cli_version
+            from dds_web.utils import validate_major_cli_version
             from dds_web.errors import VersionMismatchError
 
-            validate_cli_version()
+            validate_major_cli_version()
 
             flask.g.current_user = None
             flask.g.current_user_emails = None

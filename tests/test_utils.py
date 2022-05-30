@@ -1,13 +1,10 @@
-from ctypes import util
-import email
-from attr import field
 import marshmallow
 from dds_web import utils
 import pytest
 from unittest.mock import patch
 from dds_web import db
 from dds_web.database import models
-from dds_web.errors import AccessDeniedError, DDSArgumentError
+from dds_web.errors import AccessDeniedError, VersionMismatchError
 import flask
 import flask_login
 import datetime
@@ -769,3 +766,11 @@ def test_bucket_is_valid_ok():
     valid, message = utils.bucket_is_valid(bucket_name="something-.")
     assert valid
     assert message == ""
+
+# validate_major_cli_version 
+
+def test_validate_major_cli_version_no_version_in_request():
+    """No version in request header should fail."""
+    with pytest.raises(VersionMismatchError) as err:
+        utils.validate_major_cli_version()
+        
