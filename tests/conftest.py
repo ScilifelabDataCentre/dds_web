@@ -440,8 +440,9 @@ def add_data_to_db():
     return units, users, projects
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def setup_database():
+    print("setup_database is called")
     # Create database specific for tests
     if not database_exists(DATABASE_URI_BASE):
         create_database(DATABASE_URI_BASE)

@@ -104,3 +104,5 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 - Allow all characters but unicode (e.g. emojis) in project description ([#1178](https://github.com/ScilifelabDataCentre/dds_web/pull/1178))
 - Cronjob: Scheduled task for monthly usage data ([#1181](https://github.com/ScilifelabDataCentre/dds_web/pull/1181))
+- New tests for `dds_web/__init__.py` ([#1185](https://github.com/ScilifelabDataCentre/dds_web/pull/1185))
+- New tests for `dds_web/utils.py` ([#1188](https://github.com/ScilifelabDataCentre/dds_web/pull/1188))
