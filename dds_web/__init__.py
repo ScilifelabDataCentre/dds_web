@@ -185,23 +185,14 @@ def create_app(testing=False, database_uri=None):
             # Simplifies testing as we don't test the session protection anyway
             login_manager.session_protection = "basic"
 
-        @app.after_request
-        def validate_cli_version(response: flask.Response) -> flask.Response:
-            from dds_web.utils import validate_cli_version
-
-            valid, status_code, message = validate_cli_version()
-
-            if not valid:
-                flask.abort(status_code, message)
-
-            if message:
-                response.headers["X-Server-Message"] = message
-
-            return response
-
         @app.before_request
         def prepare():
             """Populate flask globals for template rendering"""
+            from dds_web.utils import validate_cli_version
+            from dds_web.errors import VersionMismatchError
+
+            validate_cli_version()
+            
             flask.g.current_user = None
             flask.g.current_user_emails = None
             if auth.current_user():
