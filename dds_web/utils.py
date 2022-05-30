@@ -469,9 +469,11 @@ def validate_major_cli_version() -> None:
         response_json: typing.Dict = response.json()
     except (requests.exceptions.RequestException, simplejson.JSONDecodeError) as err:
         flask.current_app.logger.exception(err)
-        raise VersionNotFoundError(message="Failed checking latest DDS PyPi version. Cannot proceed with request.")
+        raise VersionNotFoundError(
+            message="Failed checking latest DDS PyPi version. Cannot proceed with request."
+        )
 
-    # Check that enough info is returned from PyPi  
+    # Check that enough info is returned from PyPi
     if "info" not in response_json and "version" not in response_json["info"]:
         raise VersionNotFoundError(message="No version information received from PyPi.")
 
@@ -479,4 +481,6 @@ def validate_major_cli_version() -> None:
     major_version_latest: typing.List = latest_version[0]
 
     if major_version_request != major_version_latest:
-        raise VersionMismatchError(message=f"You have an outdated version of the DDS CLI installed. Please upgrade to version {latest_version} and try again.")
+        raise VersionMismatchError(
+            message=f"You have an outdated version of the DDS CLI installed. Please upgrade to version {latest_version} and try again."
+        )
