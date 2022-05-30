@@ -609,7 +609,10 @@ def test_timestamp_new_tsformat():
     # Call function
     datetime_string: str = utils.timestamp(dts=now, ts_format="%Y-%m")
     assert isinstance(datetime_string, str)
-    assert datetime_string == f"{add_zero_to_start(input=now.year, correct_length=4)}-{add_zero_to_start(input=now.month)}"
+    assert (
+        datetime_string
+        == f"{add_zero_to_start(input=now.year, correct_length=4)}-{add_zero_to_start(input=now.month)}"
+    )
 
 
 def test_timestamp_datetime_string():
