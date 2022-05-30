@@ -1,12 +1,13 @@
 from ctypes import util
 import email
+from attr import field
 import marshmallow
 from dds_web import utils
 import pytest
 from unittest.mock import patch
 from dds_web import db
 from dds_web.database import models
-from dds_web.errors import AccessDeniedError
+from dds_web.errors import AccessDeniedError, DDSArgumentError
 import flask
 import flask_login
 import datetime
@@ -569,9 +570,14 @@ def test_current_time_to_midnight():
 # timestamp
 
 
-def add_zero_to_start(input):
+def add_zero_to_start(input: int, correct_length: int = 2):
     """Add a zero to each part of a timestamp."""
-    return f"0{input}" if len(str(input)) == 1 else input
+    return_string: str = str(input)
+    field_length: int = len(str(input))
+    if field_length < correct_length:
+        return_string = str(0) + return_string
+
+    return return_string
 
 
 def test_timestamp():
@@ -591,7 +597,7 @@ def test_timestamp_input_timestamp():
     assert isinstance(datetime_string, str)
     assert (
         datetime_string
-        == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}-{add_zero_to_start(now.day)} {add_zero_to_start(now.hour)}:{add_zero_to_start(now.minute)}:{add_zero_to_start(now.second)}.{add_zero_to_start(now.microsecond)}"
+        == f"{add_zero_to_start(input=now.year, correct_length=4)}-{add_zero_to_start(input=now.month)}-{add_zero_to_start(input=now.day)} {add_zero_to_start(input=now.hour)}:{add_zero_to_start(input=now.minute)}:{add_zero_to_start(input=now.second)}.{add_zero_to_start(input=now.microsecond, correct_length=6)}"
     )
 
 
@@ -603,7 +609,7 @@ def test_timestamp_new_tsformat():
     # Call function
     datetime_string: str = utils.timestamp(dts=now, ts_format="%Y-%m")
     assert isinstance(datetime_string, str)
-    assert datetime_string == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}"
+    assert datetime_string == f"{add_zero_to_start(input=now.year, correct_length=4)}-{add_zero_to_start(input=now.month)}"
 
 
 def test_timestamp_datetime_string():
@@ -619,7 +625,7 @@ def test_timestamp_datetime_string():
     new_datetime_string: str = utils.timestamp(datetime_string=datetime_string)
     assert (
         new_datetime_string
-        == f"{add_zero_to_start(now.year)}-{add_zero_to_start(now.month)}-{add_zero_to_start(now.day)}"
+        == f"{add_zero_to_start(input=now.year, correct_length=4)}-{add_zero_to_start(input=now.month)}-{add_zero_to_start(input=now.day)}"
     )
 
 
