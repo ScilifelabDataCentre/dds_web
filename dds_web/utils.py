@@ -459,7 +459,7 @@ def validate_major_cli_version() -> None:
     requests_cache.CachedSession(cache_control=True, expire_after=datetime.timedelta(days=0.5))
     try:
         response: flask.Response = requests.get(
-            "https://pypi.python.org/pypi/dds-cli/son",
+            "https://pypi.python.org/pypi/dds-cli/json",
             headers={
                 "User-Agent": f"dds-web {version_number} (https://github.com/ScilifelabDataCentre/dds_web)"
             },
