@@ -472,9 +472,11 @@ def validate_major_cli_version() -> None:
         )
 
     # Check that enough info is returned from PyPi
-    if "info" not in response_json and "version" not in response_json["info"]:
+    if "info" not in response_json: 
         raise VersionNotFoundError(message="No version information received from PyPi.")
-
+    if "version" not in response_json["info"]: 
+        raise VersionNotFoundError(message="No version information received from PyPi.")
+        
     latest_version: str = response_json["info"]["version"]
     major_version_latest: typing.List = latest_version[0]
 

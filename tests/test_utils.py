@@ -1,10 +1,11 @@
+import unittest
 import marshmallow
 from dds_web import utils
 import pytest
 from unittest.mock import patch
 from dds_web import db
 from dds_web.database import models
-from dds_web.errors import AccessDeniedError, VersionMismatchError
+from dds_web.errors import AccessDeniedError, VersionMismatchError, VersionNotFoundError
 import flask
 import flask_login
 import datetime
@@ -781,7 +782,15 @@ def test_validate_major_cli_version_without_custom_header(client: FlaskClient):
     assert "No CLI version found in request header." in str(err.value)
 
 
-# def test_validate_major_cli_version_no_version_info(client: FlaskClient):
-#     """Version info from pypi required."""
-#     with Mocker() as mock:
-#         mock.get()
+def test_validate_major_cli_version_no_version_info(client: FlaskClient):
+    """Version info from pypi required."""
+    url: str = "http://localhost"
+    pypi_api_url: str = "https://pypi.python.org/pypi/dds-cli/json"
+    with Mocker() as mock:
+        mock.get(url, status_code=200, json={})
+        mock.get(pypi_api_url, status_code=200, json={"test": "test"})
+        client.get(url, headers={"X-CLI-Version": "0.0.0"})
+        with pytest.raises(VersionNotFoundError) as err:
+            utils.validate_major_cli_version()
+        assert "No version information received from PyPi." in str(err.value)
+
