@@ -106,3 +106,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Cronjob: Scheduled task for monthly usage data ([#1181](https://github.com/ScilifelabDataCentre/dds_web/pull/1181))
 - New tests for `dds_web/__init__.py` ([#1185](https://github.com/ScilifelabDataCentre/dds_web/pull/1185))
 - New tests for `dds_web/utils.py` ([#1188](https://github.com/ScilifelabDataCentre/dds_web/pull/1188))
+- Removed FontAwesome from web ([#1192](https://github.com/ScilifelabDataCentre/dds_web/pull/1192))
