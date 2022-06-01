@@ -772,6 +772,7 @@ def test_bucket_is_valid_ok():
 
 # validate_major_cli_version
 
+
 def test_validate_major_cli_version_without_custom_header(client: FlaskClient):
     """No CLI version in header should give error."""
     with pytest.raises(VersionMismatchError) as err:
@@ -779,8 +780,8 @@ def test_validate_major_cli_version_without_custom_header(client: FlaskClient):
             utils.validate_major_cli_version()
     assert "No CLI version found in request header." in str(err.value)
 
+
 # def test_validate_major_cli_version_no_version_info(client: FlaskClient):
 #     """Version info from pypi required."""
 #     with Mocker() as mock:
 #         mock.get()
-

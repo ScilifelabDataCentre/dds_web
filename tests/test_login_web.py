@@ -8,7 +8,9 @@ from dds_web.security.tokens import encrypted_jwt_token
 
 
 def successful_web_login(client: flask.testing.FlaskClient, user_auth: UserAuth):
-    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.LOGIN, headers=DEFAULT_HEADER)
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.LOGIN, headers=DEFAULT_HEADER
+    )
     assert response.status_code == HTTPStatus.OK
 
     form_token: str = flask.g.csrf_token
@@ -53,14 +55,18 @@ def successful_web_login(client: flask.testing.FlaskClient, user_auth: UserAuth)
 def test_load_login_page(client: flask.testing.FlaskClient):
     user_auth: UserAuth = UserAuth(USER_CREDENTIALS["researcher"])
 
-    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.LOGIN, headers=DEFAULT_HEADER)
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.LOGIN, headers=DEFAULT_HEADER
+    )
     assert response.status_code == HTTPStatus.OK
 
 
 def test_cancel_2fa(client: flask.testing.FlaskClient):
     user_auth = UserAuth(USER_CREDENTIALS["researcher"])
 
-    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.LOGIN, headers=DEFAULT_HEADER)
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.LOGIN, headers=DEFAULT_HEADER
+    )
     assert response.status_code == HTTPStatus.OK
 
     form_token: str = flask.g.csrf_token
@@ -110,7 +116,9 @@ def test_password_reset(client: flask.testing.FlaskClient):
     )
 
     response: werkzeug.test.WrapperTestResponse = client.get(
-        DDSEndpoint.USER_INFO, headers=headers, follow_redirects=True,
+        DDSEndpoint.USER_INFO,
+        headers=headers,
+        follow_redirects=True,
     )
     assert response.status_code == HTTPStatus.OK
     assert flask.request.path == DDSEndpoint.USER_INFO
@@ -118,9 +126,7 @@ def test_password_reset(client: flask.testing.FlaskClient):
     form_token: str = flask.g.csrf_token
 
     response: werkzeug.test.WrapperTestResponse = client.post(
-        DDSEndpoint.LOGOUT,
-        follow_redirects=True,
-        headers=headers
+        DDSEndpoint.LOGOUT, follow_redirects=True, headers=headers
     )
     assert response.status_code == HTTPStatus.OK
     assert flask.request.path == DDSEndpoint.INDEX

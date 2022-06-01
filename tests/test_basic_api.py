@@ -24,13 +24,17 @@ from tests.test_login_web import successful_web_login
 
 # Partial Token #################################################################### Partial Token #
 
+
 def test_auth_check_statuscode_401_missing_info(client):
     """
     Test that the token endpoint called without parameters returns 401/UNAUTHORIZED
     """
 
     # No params, no auth
-    response = client.get(tests.DDSEndpoint.ENCRYPTED_TOKEN, headers=tests.DEFAULT_HEADER,)
+    response = client.get(
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
@@ -68,7 +72,11 @@ def test_auth_no_password_check_statuscode_401_incorrect_info(client):
 def test_auth_incorrect_username_check_statuscode_401_incorrect_info(client):
     """Test that the token endpoint called with incorrect username returns 401/UNAUTHORIZED"""
 
-    response = client.get(tests.DDSEndpoint.ENCRYPTED_TOKEN, auth=("", "password"), headers=tests.DEFAULT_HEADER,)
+    response = client.get(
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
+        auth=("", "password"),
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
@@ -79,13 +87,21 @@ def test_auth_correct_credentials(client):
     """Test that the token endpoint called correctly returns a token and sends an email."""
 
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        response = client.get(tests.DDSEndpoint.ENCRYPTED_TOKEN, auth=("researchuser", "password"), headers=tests.DEFAULT_HEADER,)
+        response = client.get(
+            tests.DDSEndpoint.ENCRYPTED_TOKEN,
+            auth=("researchuser", "password"),
+            headers=tests.DEFAULT_HEADER,
+        )
         assert mock_mail_send.call_count == 1
     assert response.status_code == http.HTTPStatus.OK
 
     # Shouldn't send an email shortly after the first
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        response = client.get(tests.DDSEndpoint.ENCRYPTED_TOKEN, auth=("researchuser", "password"), headers=tests.DEFAULT_HEADER,)
+        response = client.get(
+            tests.DDSEndpoint.ENCRYPTED_TOKEN,
+            auth=("researchuser", "password"),
+            headers=tests.DEFAULT_HEADER,
+        )
         assert mock_mail_send.call_count == 0
 
 
@@ -97,7 +113,10 @@ def test_auth_second_factor_empty(client):
 
     response = client.get(
         tests.DDSEndpoint.SECOND_FACTOR,
-        headers={"Authorization": f"Bearer made.up.token.long.version", **tests.DEFAULT_HEADER,},
+        headers={
+            "Authorization": f"Bearer made.up.token.long.version",
+            **tests.DEFAULT_HEADER,
+        },
     )
 
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
@@ -118,7 +137,10 @@ def test_auth_second_factor_incorrect_token(client):
 
     response = client.get(
         tests.DDSEndpoint.SECOND_FACTOR,
-        headers={"Authorization": f"Bearer made.up.token.long.version", **tests.DEFAULT_HEADER,},
+        headers={
+            "Authorization": f"Bearer made.up.token.long.version",
+            **tests.DEFAULT_HEADER,
+        },
         json={"HOTP": hotp_token.decode()},
     )
 
@@ -166,7 +188,10 @@ def test_auth_second_factor_incorrect_token(client):
 
     response = client.get(
         tests.DDSEndpoint.SECOND_FACTOR,
-        headers={"Authorization": f"Bearer {reset_token}", **tests.DEFAULT_HEADER,},
+        headers={
+            "Authorization": f"Bearer {reset_token}",
+            **tests.DEFAULT_HEADER,
+        },
         json={"HOTP": hotp_token.decode()},
     )
 
@@ -273,7 +298,10 @@ def test_request_totp_activation(client):
 
     response = client.get(
         f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
-        headers={"Content-Type": "application/x-www-form-urlencoded", **tests.DEFAULT_HEADER,},
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            **tests.DEFAULT_HEADER,
+        },
         data={
             "csrf_token": form_token,
         },
@@ -283,7 +311,10 @@ def test_request_totp_activation(client):
     assert not user.totp_enabled
     response = client.post(
         f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
-        headers={"Content-Type": "application/x-www-form-urlencoded", **tests.DEFAULT_HEADER,},
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            **tests.DEFAULT_HEADER,
+        },
         data={
             "csrf_token": form_token,
             "totp": user.totp_object().generate(time.time()),
@@ -470,7 +501,10 @@ def test_hotp_activation(client, totp_for_user):
 
     response = client.post(
         f"{tests.DDSEndpoint.ACTIVATE_HOTP_WEB}{token}",
-        headers={"Content-Type": "application/x-www-form-urlencoded", **tests.DEFAULT_HEADER,},
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            **tests.DEFAULT_HEADER,
+        },
         follow_redirects=True,
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -496,7 +530,10 @@ def test_auth_incorrect_token_without_periods(client):
     response = client.get(
         tests.DDSEndpoint.PROJ_PUBLIC,
         query_string={"project": "public_project_id"},
-        headers={"Authorization": "Bearer " + "madeuptoken", **tests.DEFAULT_HEADER, },
+        headers={
+            "Authorization": "Bearer " + "madeuptoken",
+            **tests.DEFAULT_HEADER,
+        },
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
@@ -511,7 +548,10 @@ def test_auth_incorrect_token_with_periods(client):
     response = client.get(
         tests.DDSEndpoint.PROJ_PUBLIC,
         query_string={"project": "public_project_id"},
-        headers={"Authorization": "Bearer made.up.token.long.version", **tests.DEFAULT_HEADER, },
+        headers={
+            "Authorization": "Bearer made.up.token.long.version",
+            **tests.DEFAULT_HEADER,
+        },
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
@@ -529,7 +569,10 @@ def test_auth_expired_encrypted_token(client):
     response = client.get(
         tests.DDSEndpoint.PROJ_PUBLIC,
         query_string={"project": "public_project_id"},
-        headers={"Authorization": f"Bearer {token}", **tests.DEFAULT_HEADER,},
+        headers={
+            "Authorization": f"Bearer {token}",
+            **tests.DEFAULT_HEADER,
+        },
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
@@ -552,7 +595,10 @@ def test_auth_token_wrong_secret_key_encrypted_token(client):
     response = client.get(
         tests.DDSEndpoint.PROJ_PUBLIC,
         query_string={"project": "public_project_id"},
-        headers={"Authorization": f"Bearer {token}", **tests.DEFAULT_HEADER,},
+        headers={
+            "Authorization": f"Bearer {token}",
+            **tests.DEFAULT_HEADER,
+        },
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json

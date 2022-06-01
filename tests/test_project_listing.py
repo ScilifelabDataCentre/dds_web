@@ -83,7 +83,10 @@ def test_proj_private_without_project(client):
 def test_proj_public_no_token(client):
     """Attempting to get the public key without a token should not work"""
 
-    response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, headers=tests.DEFAULT_HEADER,)
+    response = client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC,
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert "No token" in response_json.get("message")

@@ -43,7 +43,10 @@ def test_request_reset_password_nonexisting_email(client):
 
 
 def test_request_reset_password_inactive_user(client):
-    response = client.get(tests.DDSEndpoint.REQUEST_RESET_PASSWORD, headers=tests.DEFAULT_HEADER,)
+    response = client.get(
+        tests.DDSEndpoint.REQUEST_RESET_PASSWORD,
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status_code == http.HTTPStatus.OK
     form_token = flask.g.csrf_token
 
@@ -70,7 +73,10 @@ def test_request_reset_password_inactive_user(client):
 
 
 def test_request_reset_password(client):
-    response = client.get(tests.DDSEndpoint.REQUEST_RESET_PASSWORD, headers=tests.DEFAULT_HEADER,)
+    response = client.get(
+        tests.DDSEndpoint.REQUEST_RESET_PASSWORD,
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status_code == http.HTTPStatus.OK
     form_token = flask.g.csrf_token
 
@@ -90,7 +96,11 @@ def test_request_reset_password(client):
 
 
 def test_reset_password_no_token(client):
-    response = client.get(tests.DDSEndpoint.RESET_PASSWORD, follow_redirects=True, headers=tests.DEFAULT_HEADER,)
+    response = client.get(
+        tests.DDSEndpoint.RESET_PASSWORD,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
+    )
     # URL with trailing slash is not valid
     assert response.status_code == http.HTTPStatus.NOT_FOUND
 
@@ -99,7 +109,11 @@ def test_reset_password_invalid_token_get(client):
     auth_token_header = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     token = auth_token_header["Authorization"].split(" ")[1]
 
-    response = client.get(tests.DDSEndpoint.RESET_PASSWORD + token, follow_redirects=True, headers=tests.DEFAULT_HEADER,)
+    response = client.get(
+        tests.DDSEndpoint.RESET_PASSWORD + token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
+    )
     # Redirection status code
     assert response.status_code == http.HTTPStatus.OK
     # Incorrect token should redirect and not lead to form
@@ -132,7 +146,9 @@ def test_reset_password_invalid_token_post(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("researchuser")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -150,7 +166,10 @@ def test_reset_password_invalid_token_post(client):
     invalid_token = auth_token_header["Authorization"].split(" ")[1]
 
     response = client.post(
-        tests.DDSEndpoint.RESET_PASSWORD + invalid_token, json=form_data, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + invalid_token,
+        json=form_data,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.INDEX
@@ -167,7 +186,11 @@ def test_reset_password_invalid_token_post(client):
 
 def test_reset_password_expired_token_get(client):
     token = get_valid_reset_token("researchuser", expires_in=-1)
-    response = client.get(tests.DDSEndpoint.RESET_PASSWORD + token, follow_redirects=True, headers=tests.DEFAULT_HEADER,)
+    response = client.get(
+        tests.DDSEndpoint.RESET_PASSWORD + token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
+    )
 
     assert response.status_code == http.HTTPStatus.OK
     # Incorrect token should redirect and not lead to form
@@ -182,7 +205,9 @@ def test_reset_password_expired_token_post_no_password_reset_row(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("researchuser")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER, 
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -204,7 +229,9 @@ def test_reset_password_expired_token_post(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("researchuser")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -221,7 +248,10 @@ def test_reset_password_expired_token_post(client):
     expired_token = get_valid_reset_token("researchuser", expires_in=-1)
 
     response = client.post(
-        tests.DDSEndpoint.RESET_PASSWORD + expired_token, json=form_data, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + expired_token,
+        json=form_data,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.INDEX
@@ -250,7 +280,9 @@ def test_reset_password_researchuser_no_password_reset_row(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("researchuser")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -278,7 +310,9 @@ def test_reset_password_researchuser(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("researchuser")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -293,7 +327,10 @@ def test_reset_password_researchuser(client):
     }
 
     response = client.post(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, json=form_data, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        json=form_data,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
@@ -332,7 +369,9 @@ def test_reset_password_project_owner_no_password_reset_row(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("projectowner")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -360,7 +399,9 @@ def test_reset_password_project_owner(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("projectowner")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -375,7 +416,10 @@ def test_reset_password_project_owner(client):
     }
 
     response = client.post(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, json=form_data, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        json=form_data,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
@@ -414,7 +458,9 @@ def test_reset_password_unituser_no_password_reset_row(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("unituser")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -442,7 +488,9 @@ def test_reset_password_unituser(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("unituser")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -457,7 +505,10 @@ def test_reset_password_unituser(client):
     }
 
     response = client.post(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, json=form_data, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        json=form_data,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
@@ -503,7 +554,9 @@ def test_reset_password_unitadmin(client):
     # Need to use a valid token for the get request to get the form token
     valid_reset_token = get_valid_reset_token("unitadmin")
     response = client.get(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -518,7 +571,10 @@ def test_reset_password_unitadmin(client):
     }
 
     response = client.post(
-        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token, json=form_data, follow_redirects=True, headers=tests.DEFAULT_HEADER,
+        tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+        json=form_data,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
