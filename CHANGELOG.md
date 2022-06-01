@@ -103,3 +103,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-05-18 - 2022-06-01)
 
 - Allow all characters but unicode (e.g. emojis) in project description ([#1178](https://github.com/ScilifelabDataCentre/dds_web/pull/1178))
+
+## Sprint (2022-06-01 - 2022-05-15)
+
+- Change FontAwesome source link to own license ([#1194](https://github.com/ScilifelabDataCentre/dds_web/pull/1194))
