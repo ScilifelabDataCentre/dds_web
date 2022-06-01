@@ -3,6 +3,7 @@ import http
 
 # Installed
 import json
+from wsgiref import headers
 
 # Own
 import tests
@@ -39,6 +40,7 @@ def test_deactivate_user_as_superadmin(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -58,6 +60,7 @@ def test_deactivate_user_as_superadmin(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
 
@@ -80,6 +83,7 @@ def test_reactivate_user_as_superadmin(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
 
@@ -99,6 +103,7 @@ def test_reactivate_user_as_superadmin(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -109,6 +114,7 @@ def test_deactivate_user_as_unitadmin(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -131,6 +137,7 @@ def test_deactivate_unituser_as_unitadmin(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -162,6 +169,7 @@ def test_deactivate_unituser_as_unitadmin(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
 
@@ -172,6 +180,7 @@ def test_reactivate_unituser_as_unitadmin(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
 
@@ -191,6 +200,7 @@ def test_reactivate_unituser_as_unitadmin(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -201,6 +211,7 @@ def test_deactivate_user_as_unituser(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
 
@@ -220,6 +231,7 @@ def test_deactivate_user_as_researchuser(module_client):
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
 

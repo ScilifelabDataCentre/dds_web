@@ -771,7 +771,7 @@ def test_bucket_is_valid_ok():
 # validate_major_cli_version
 
 
-def test_validate_major_cli_version_no_version_in_request():
+def test_validate_major_cli_version_no_version_in_request(client):
     """No version in request header should fail."""
     with pytest.raises(VersionMismatchError) as err:
         utils.validate_major_cli_version()
