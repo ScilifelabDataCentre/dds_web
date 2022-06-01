@@ -767,10 +767,11 @@ def test_bucket_is_valid_ok():
     assert valid
     assert message == ""
 
-# validate_major_cli_version 
+
+# validate_major_cli_version
+
 
 def test_validate_major_cli_version_no_version_in_request():
     """No version in request header should fail."""
     with pytest.raises(VersionMismatchError) as err:
         utils.validate_major_cli_version()
-        
