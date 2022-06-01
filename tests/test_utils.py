@@ -11,6 +11,8 @@ import datetime
 from pyfakefs.fake_filesystem import FakeFilesystem
 import os
 import flask_mail
+from flask.testing import FlaskClient
+from requests_mock.mocker import Mocker
 
 # contains_uppercase
 
@@ -770,8 +772,15 @@ def test_bucket_is_valid_ok():
 
 # validate_major_cli_version
 
-
-def test_validate_major_cli_version_no_version_in_request(client):
-    """No version in request header should fail."""
+def test_validate_major_cli_version_without_custom_header(client: FlaskClient):
+    """No CLI version in header should give error."""
     with pytest.raises(VersionMismatchError) as err:
-        utils.validate_major_cli_version()
+        with client.session_transaction() as session:
+            utils.validate_major_cli_version()
+    assert "No CLI version found in request header." in str(err.value)
+
+# def test_validate_major_cli_version_no_version_info(client: FlaskClient):
+#     """Version info from pypi required."""
+#     with Mocker() as mock:
+#         mock.get()
+
