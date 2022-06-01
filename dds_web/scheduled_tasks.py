@@ -275,6 +275,16 @@ def monthly_usage():
         usage_data = {}
         try:
             for unit in db.session.query(models.Unit).with_for_update().all():
+                # Get info from safespring / sunet (replace with e.g. api call later)
+                safespring_data[unit.safespring_name] = {
+                    "TotalBytes": 434595434499,
+                    "TotalBytesRounded": 1434614451200,
+                    "TotalEntries": 10333,
+                }
+                usage = f"Total usage in cloud for unit {unit.name} ({unit.safespring_name}): {safespring_data[unit.safespring_name]['TotalBytes']}"
+                scheduler.app.logger.info(usage)
+
+                # Calculate usage per project and total in db
                 usage_data[unit.safespring_name] = {}
                 unit_usage = 0
                 unit_cost = 0
@@ -289,6 +299,8 @@ def monthly_usage():
                     .with_for_update()
                 ):
                     usage_data[unit.safespring_name][project.id] = {}
+
+                    # Calculate project usage
                     proj_bhours, proj_cost = UserProjects.project_usage(project=project)
                     scheduler.app.logger.info(
                         "Current total usage for project %s is %s bhours, and total cost is %s kr",
@@ -296,10 +308,16 @@ def monthly_usage():
                         proj_bhours,
                         proj_cost,
                     )
+
+                    # Save project usage 
                     usage_data[unit.safespring_name][project.id]["usage"] = proj_bhours
                     usage_data[unit.safespring_name][project.id]["cost"] = proj_cost
+
+                    # Increase total usage
                     unit_usage += proj_bhours
                     unit_cost += proj_cost
+
+                # Save total usage
                 usage_data[unit.safespring_name]["Unit usage"] = unit_usage
                 usage_data[unit.safespring_name]["Unit cost"] = unit_cost
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
