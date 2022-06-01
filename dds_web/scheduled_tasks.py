@@ -309,13 +309,23 @@ def monthly_usage():
                         proj_cost,
                     )
 
-                    # Save project usage 
+                    # Save project usage
                     usage_data[unit.safespring_name][project.id]["usage"] = proj_bhours
                     usage_data[unit.safespring_name][project.id]["cost"] = proj_cost
 
                     # Increase total usage
                     unit_usage += proj_bhours
                     unit_cost += proj_cost
+
+                    # Create a record in usage table
+                    new_record = models.Usage(
+                        project_id=project.id,
+                        usage=proj_bhours,
+                        cost=proj_cost,
+                        time_collected=current_time(),
+                    )
+                    db.session.add(new_record)
+                    db.session.commit()
 
                 # Save total usage
                 usage_data[unit.safespring_name]["Unit usage"] = unit_usage
@@ -325,20 +335,13 @@ def monthly_usage():
             db.session.rollback()
             raise
 
-        # use the usage dictionary to make a DB record
+        # Projects usage as a percetage of the unit total usage
+        # might not be needed in this job
         for unit, data in usage_data.items():
             if data["Unit usage"] != 0:
                 scheduler.app.logger.info(f'Total usage for unit {unit} is: {data["Unit usage"]}')
                 for project, pdata in data.items():
                     if isinstance(project, int):
-                        new_record = models.Usage(
-                            project_id=project,
-                            usage=pdata["usage"],
-                            cost=pdata["cost"],
-                            time_collected=current_time(),
-                        )
-                        db.session.add(new_record)
-                        db.session.commit()
                         percentage = (pdata["usage"] / data["Unit usage"]) * 100
                         round_percentage = round(percentage, 2)
                         scheduler.app.logger.info(f"Project {project} is using {round_percentage}%")
