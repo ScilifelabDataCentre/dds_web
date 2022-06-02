@@ -526,7 +526,7 @@ def boto3_session():
 @pytest.fixture(scope="function", autouse=True)
 def disable_requests_cache():
     """Replace CachedSession with a regular Session for all test functions.
-    
+
     Automatically used.
     """
     with unittest.mock.patch("requests_cache.CachedSession", requests.Session):
