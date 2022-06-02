@@ -13,7 +13,12 @@ from pyfakefs.fake_filesystem import FakeFilesystem
 import os
 import flask_mail
 from flask.testing import FlaskClient
-from requests_mock.mocker import Mocker
+import requests_mock
+
+# Variables
+
+url: str = "http://localhost"
+pypi_api_url: str = "https://pypi.python.org/pypi/dds-cli/json"
 
 # contains_uppercase
 
@@ -773,7 +778,6 @@ def test_bucket_is_valid_ok():
 
 # validate_major_cli_version
 
-
 def test_validate_major_cli_version_without_custom_header(client: FlaskClient):
     """No CLI version in header should give error."""
     with pytest.raises(VersionMismatchError) as err:
@@ -784,13 +788,67 @@ def test_validate_major_cli_version_without_custom_header(client: FlaskClient):
 
 def test_validate_major_cli_version_no_version_info(client: FlaskClient):
     """Version info from pypi required."""
-    url: str = "http://localhost"
-    pypi_api_url: str = "https://pypi.python.org/pypi/dds-cli/json"
-    with Mocker() as mock:
-        mock.get(url, status_code=200, json={})
-        mock.get(pypi_api_url, status_code=200, json={"test": "test"})
-        client.get(url, headers={"X-CLI-Version": "0.0.0"})
+    import requests_cache
+    # Mock requests
+    with requests_mock.mocker.Mocker() as mock:
+        # Create mocks for no info 
+        _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
+        pypi_response: requests_mock.adapter._Matcher = mock.get(pypi_api_url, status_code=200, json={"test": "test"})
+        
+        # Perform request to have header - this will call pypi once
+        client.get(url, headers={"X-CLI-Version": "0.0.0", "Cache-Control": "no-cache",})
+        assert pypi_response.call_count == 1
+
+        # Verify failure
         with pytest.raises(VersionNotFoundError) as err:
             utils.validate_major_cli_version()
         assert "No version information received from PyPi." in str(err.value)
+        assert pypi_response.call_count == 1
+
+        # Create mock for no version in info
+        pypi_response_2: requests_mock.adapter._Matcher = mock.get(pypi_api_url, status_code=200, json={"info": {"test": "test"}})
+
+        # Verify failure
+        with pytest.raises(VersionNotFoundError) as err:
+            utils.validate_major_cli_version()
+        assert "No version information received from PyPi." in str(err.value)
+        assert pypi_response_2.called
+
+
+# def test_validate_major_cli_version_mismatch_major(client: FlaskClient):
+#     """Major version mismatch should result in blocking."""
+#     # Mock requests
+#     with requests_mock.mocker.Mocker() as mock:
+#         # Create mocks for request with version
+#         _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
+#         pypi_response: requests_mock.adapter._Matcher = mock.get(pypi_api_url, status_code=200, json={"info": {"version": "1.0.0"}})
+        
+#         # Perform request to have header - major mismatch from latest
+#         client.get(url, headers={"X-CLI-Version": "0.0.0"})
+
+#         # Verify failure - major version mismatch
+#         with pytest.raises(VersionMismatchError) as err:
+#             utils.validate_major_cli_version()
+#         assert "You have an outdated version of the DDS CLI installed. Please upgrade to version 1.0.0 and try again." in str(err.value)
+#         assert pypi_response.called
+
+# def test_validate_major_cli_version_mismatch_minor(client: FlaskClient):
+#     """Minor version mismatch should pass."""
+#     # Mock requests
+#     with requests_mock.mocker.Mocker() as mock:
+#         # Create mocks with version 
+#         mock.get(url, status_code=200, json={})
+#         mock.get(pypi_api_url, status_code=200, json={"info": {"version": "1.0.0"}})
+        
+#         # Perform request to have header - minor mismatch from latest
+#         client.get(url, headers={"X-CLI-Version": "1.1.0"})
+
+#         # Verify ok - should pass
+#         utils.validate_major_cli_version()
+        
+#         # Perform request to have header - minor mismatch from latest
+#         client.get(url, headers={"X-CLI-Version": "1.0.1"})
+
+#         # Verify ok - should pass
+#         utils.validate_major_cli_version()
 

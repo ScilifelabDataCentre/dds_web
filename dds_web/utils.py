@@ -456,9 +456,9 @@ def validate_major_cli_version() -> None:
     major_version_request: str = request_version[0]
 
     # Get latest version from PyPi and save to cache
-    requests_cache.CachedSession(cache_control=True, expire_after=datetime.timedelta(days=0.5))
+    session = requests_cache.CachedSession(cache_control=True, expire_after=datetime.timedelta(days=0.5))
     try:
-        response: flask.Response = requests.get(
+        response: flask.Response = session.get(
             "https://pypi.python.org/pypi/dds-cli/json",
             headers={
                 "User-Agent": f"dds-web {version_number} (https://github.com/ScilifelabDataCentre/dds_web)"
@@ -472,11 +472,9 @@ def validate_major_cli_version() -> None:
         )
 
     # Check that enough info is returned from PyPi
-    if "info" not in response_json: 
+    if "info" not in response_json or ("info" in response_json and "version" not in response_json["info"]): 
         raise VersionNotFoundError(message="No version information received from PyPi.")
-    if "version" not in response_json["info"]: 
-        raise VersionNotFoundError(message="No version information received from PyPi.")
-        
+
     latest_version: str = response_json["info"]["version"]
     major_version_latest: typing.List = latest_version[0]
 
