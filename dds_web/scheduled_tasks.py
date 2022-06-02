@@ -284,11 +284,11 @@ def monthly_usage():
                     db.session.commit()
 
                 scheduler.app.logger.info(
-                        "Current total usage for unit %s is %s bhours, and total cost is %s kr",
-                        unit.safespring_name,
-                        unit_usage,
-                        unit_cost,
-                        )
+                    "Current total usage for unit %s is %s bhours, and total cost is %s kr",
+                    unit.safespring_name,
+                    unit_usage,
+                    unit_cost,
+                )
                 scheduler.app.logger.info("Monthly usage data recorded in database")
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
