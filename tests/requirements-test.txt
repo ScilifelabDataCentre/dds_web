@@ -1,2 +1,4 @@
-pytest-cov
-sqlalchemy-utils
+pytest-cov==3.0.0
+sqlalchemy-utils==0.38.2
+pytest-mock==3.7.0
+pyfakefs==4.5.5
