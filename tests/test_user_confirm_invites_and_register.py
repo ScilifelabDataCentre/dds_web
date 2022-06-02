@@ -131,6 +131,7 @@ def test_register_no_token_in_session(registry_form_data, client):
         tests.DDSEndpoint.USER_NEW,
         json=registry_form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
     assert flask.request.path == tests.DDSEndpoint.INDEX
@@ -155,6 +156,7 @@ def test_register_weak_password(registry_form_data, client):
         tests.DDSEndpoint.USER_NEW,
         json=form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
     assert flask.request.path == tests.DDSEndpoint.USER_NEW
@@ -175,6 +177,7 @@ def test_successful_registration(registry_form_data, client):
         tests.DDSEndpoint.USER_NEW,
         json=registry_form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
 
