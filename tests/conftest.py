@@ -523,8 +523,8 @@ def boto3_session():
         yield mock_session
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def disable_requests_cache():
     """Replace CachedSession with a regular Session for all test functions"""
-    with unittest.mock.patch('requests_cache.CachedSession', requests.Session):
+    with unittest.mock.patch("requests_cache.CachedSession", requests.Session):
         yield
