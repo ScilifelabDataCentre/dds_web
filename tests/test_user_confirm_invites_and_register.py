@@ -206,6 +206,7 @@ def test_successful_registration_should_transfer_keys(registry_form_data, client
         tests.DDSEndpoint.USER_NEW,
         json=registry_form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
 
