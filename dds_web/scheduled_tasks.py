@@ -232,37 +232,9 @@ def monthly_usage():
         safespring_data = {}
 
         scheduler.app.logger.debug("Task: Projects usage from database")
-        # a mock for a unit with two projects with some usage in bhours
-        usage_data_mock = {
-            "unit.safespring_name1": {
-                1: {
-                    "usage": 2656548,
-                    "cost": 251.3592,
-                },
-                2: {
-                    "usage": 767686,
-                    "cost": 72.6408,
-                },
-                "Unit usage": 3424234,
-                "Unit cost": 342,
-            },
-            "unit.safespring_name2": {
-                3: {
-                    "usage": 2656548,
-                    "cost": 251.3592,
-                },
-                4: {
-                    "usage": 767686,
-                    "cost": 72.6408,
-                },
-                "Unit usage": 3424234,
-                "Unit cost": 342,
-            },
-        }
-
-        # go through units and projects in the database and
-        # construct a usage and cost data dictionary
-        usage_data = {}
+        # go through units and projects in the database
+        # collect usage and cost data
+        # and make a DB record
         try:
             for unit in db.session.query(models.Unit).with_for_update().all():
                 # Get info from safespring / sunet (replace with e.g. api call later)
@@ -275,7 +247,6 @@ def monthly_usage():
                 scheduler.app.logger.info(usage)
 
                 # Calculate usage per project and total in db
-                usage_data[unit.safespring_name] = {}
                 unit_usage = 0
                 unit_cost = 0
                 scheduler.app.logger.debug(f"Projects in unit {unit.safespring_name}")
@@ -288,7 +259,6 @@ def monthly_usage():
                     )
                     .with_for_update()
                 ):
-                    usage_data[unit.safespring_name][project.id] = {}
 
                     # Calculate project usage
                     proj_bhours, proj_cost = UserProjects.project_usage(project=project)
@@ -298,10 +268,6 @@ def monthly_usage():
                         proj_bhours,
                         proj_cost,
                     )
-
-                    # Save project usage
-                    usage_data[unit.safespring_name][project.id]["usage"] = proj_bhours
-                    usage_data[unit.safespring_name][project.id]["cost"] = proj_cost
 
                     # Increase total usage
                     unit_usage += proj_bhours
@@ -317,23 +283,14 @@ def monthly_usage():
                     db.session.add(new_record)
                     db.session.commit()
 
-                # Save total usage
-                usage_data[unit.safespring_name]["Unit usage"] = unit_usage
-                usage_data[unit.safespring_name]["Unit cost"] = unit_cost
+                scheduler.app.logger.info(
+                        "Current total usage for unit %s is %s bhours, and total cost is %s kr",
+                        unit.safespring_name,
+                        unit_usage,
+                        unit_cost,
+                        )
+                scheduler.app.logger.info("Monthly usage data recorded in database")
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise
-
-        # Projects usage as a percetage of the unit total usage
-        # might not be needed in this job
-        for unit, data in usage_data.items():
-            if data["Unit usage"] != 0:
-                scheduler.app.logger.info(f'Total usage for unit {unit} is: {data["Unit usage"]}')
-                for project, pdata in data.items():
-                    if isinstance(project, int):
-                        percentage = (pdata["usage"] / data["Unit usage"]) * 100
-                        round_percentage = round(percentage, 2)
-                        scheduler.app.logger.info(f"Project {project} is using {round_percentage}%")
-            else:
-                scheduler.app.logger.info(f'Total usage for unit {unit} is: {data["Unit usage"]}')
