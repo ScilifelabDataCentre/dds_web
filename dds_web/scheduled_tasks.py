@@ -230,21 +230,11 @@ def monthly_usage():
     with scheduler.app.app_context():
         # a mock dict with data that should be obtained from Safesprig's API
         safespring_data = {}
-        for unit in db.session.query(models.Unit).all():
-            safespring_data[unit.safespring_name] = {
-                "TotalBytes": 434595434499,
-                "TotalBytesRounded": 1434614451200,
-                "TotalEntries": 10333,
-            }
-
-        for safespring_project, usage_info in safespring_data.items():
-            usage = f"Total usage for unit {unit.name} ({safespring_project}): {usage_info['TotalBytes']}"
-            scheduler.app.logger.info(usage)
 
         scheduler.app.logger.debug("Task: Projects usage from database")
         # a mock for a unit with two projects with some usage in bhours
         usage_data_mock = {
-            unit.safespring_name: {
+            "unit.safespring_name1": {
                 1: {
                     "usage": 2656548,
                     "cost": 251.3592,
