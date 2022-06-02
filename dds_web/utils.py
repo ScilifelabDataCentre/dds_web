@@ -456,7 +456,9 @@ def validate_major_cli_version() -> None:
     major_version_request: str = request_version[0]
 
     # Get latest version from PyPi and save to cache
-    session = requests_cache.CachedSession(cache_control=True, expire_after=datetime.timedelta(days=0.5))
+    session = requests_cache.CachedSession()
+    session.cache_control = True
+    session.expire_after = datetime.timedelta(days=0.5)
     try:
         response: flask.Response = session.get(
             "https://pypi.python.org/pypi/dds-cli/json",

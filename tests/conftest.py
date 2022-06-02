@@ -1,16 +1,20 @@
 # Standard Library
 import os
+from tkinter.tix import Tree
 import unittest.mock
 import datetime
 import subprocess
 import uuid
+import requests
 
 # Installed
 import flask_migrate
 import pytest
+import requests_mock
 from sqlalchemy_utils import create_database, database_exists, drop_database
 import boto3
 from requests_mock.mocker import Mocker
+import requests_cache
 
 # Own
 from dds_web.database.models import (
@@ -517,3 +521,10 @@ def boto3_session():
     """Create a mock boto3 session since no access permissions are in place for testing"""
     with unittest.mock.patch.object(boto3.session.Session, "resource") as mock_session:
         yield mock_session
+
+
+@pytest.fixture(scope='function')
+def disable_requests_cache():
+    """Replace CachedSession with a regular Session for all test functions"""
+    with unittest.mock.patch('requests_cache.CachedSession', requests.Session):
+        yield
