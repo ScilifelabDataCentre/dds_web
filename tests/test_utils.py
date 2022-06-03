@@ -14,6 +14,7 @@ import os
 import flask_mail
 from flask.testing import FlaskClient
 import requests_mock
+import werkzeug
 
 # Variables
 
@@ -870,3 +871,23 @@ def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_
         # Verify ok - should pass
         utils.validate_major_cli_version()
         assert pypi_response.call_count == 4
+
+def test_validate_major_cli_version_jsonerror(client: FlaskClient, disable_requests_cache):
+    """Json decode error should fail."""
+    # Mock requests
+    with requests_mock.mocker.Mocker() as mock:
+        # Create mocks with version
+        base_response: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
+        pypi_response: requests_mock.adapter._Matcher = mock.get(
+            pypi_api_url, status_code=200, json=None
+        )
+
+        # Perform request
+        client.get(url, headers={"X-CLI-Version": "0.0.0"})
+        assert pypi_response.call_count == 1
+
+        # Try function
+        with pytest.raises(VersionNotFoundError) as err:
+            utils.validate_major_cli_version()
+        assert pypi_response.call_count == 2
+        assert "Failed checking latest DDS PyPi version." in str(err.value)
