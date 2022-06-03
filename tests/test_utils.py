@@ -872,6 +872,7 @@ def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_
         utils.validate_major_cli_version()
         assert pypi_response.call_count == 4
 
+
 def test_validate_major_cli_version_jsonerror(client: FlaskClient, disable_requests_cache):
     """Json decode error should fail."""
     # Mock requests
