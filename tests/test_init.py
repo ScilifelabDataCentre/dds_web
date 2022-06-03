@@ -37,10 +37,10 @@ def test_fill_db_wrapper_devsmall(client, runner) -> None:
     assert result.exit_code == 1
 
 
-def test_fill_db_wrapper_devbig(client, runner) -> None:
-    """Run init-db with the dev-big argument."""
-    result: click.testing.Result = runner.invoke(fill_db_wrapper, ["dev-big"])
-    assert result.exit_code == 1
+# def test_fill_db_wrapper_devbig(client, runner) -> None:
+#     """Run init-db with the dev-big argument."""
+#     result: click.testing.Result = runner.invoke(fill_db_wrapper, ["dev-big"])
+#     assert result.exit_code == 1
 
 
 # create_new_unit

@@ -20,7 +20,10 @@ proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer proj
 def test_list_files_no_token(client):
     """Token required"""
 
-    response = client.get(tests.DDSEndpoint.LIST_FILES)
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")

@@ -12,6 +12,7 @@ def test_get_user_change_password_without_login(client):
         tests.DDSEndpoint.CHANGE_PASSWORD,
         content_type="application/json",
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     # Because it redirects to login
@@ -49,6 +50,7 @@ def test_successful_user_change_password_with_login(client):
         tests.DDSEndpoint.CHANGE_PASSWORD,
         json=form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.LOGIN

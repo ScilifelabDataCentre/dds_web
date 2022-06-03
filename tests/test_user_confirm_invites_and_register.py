@@ -19,7 +19,11 @@ def get_email_token(invite):
 
 # Confirm Invite ##################################################################### Confirm Invite #
 def test_confirm_invite_no_token(client):
-    response = client.get(tests.DDSEndpoint.USER_CONFIRM, content_type="application/json")
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status == "404 NOT FOUND"
 
 
@@ -28,6 +32,7 @@ def test_confirm_invite_invalid_token(client):
         tests.DDSEndpoint.USER_CONFIRM + "invalidtokentesting",
         content_type="application/json",
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status == "200 OK"
@@ -49,6 +54,7 @@ def test_confirm_invite_expired_token(client):
         ),
         content_type="application/json",
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
     # index redirects to login
@@ -64,14 +70,22 @@ def test_confirm_invite_valid_token(client):
     token = get_email_token(invite)
     assert token
 
-    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM + token,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status == "200 OK"
     assert b"Create account" in response.data
 
 
 # Registration ##################################################################### Registration #
 def test_register_no_form(client):
-    response = client.post(tests.DDSEndpoint.USER_NEW, content_type="application/json")
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status == "400 BAD REQUEST"
 
 
@@ -87,7 +101,11 @@ def registry_form_data(client):
 
     assert invite.public_key
 
-    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM + token,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status == "200 OK"
     assert b"Create account" in response.data
 
@@ -113,6 +131,7 @@ def test_register_no_token_in_session(registry_form_data, client):
         tests.DDSEndpoint.USER_NEW,
         json=registry_form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
     assert flask.request.path == tests.DDSEndpoint.INDEX
@@ -137,6 +156,7 @@ def test_register_weak_password(registry_form_data, client):
         tests.DDSEndpoint.USER_NEW,
         json=form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
     assert flask.request.path == tests.DDSEndpoint.USER_NEW
@@ -157,6 +177,7 @@ def test_successful_registration(registry_form_data, client):
         tests.DDSEndpoint.USER_NEW,
         json=registry_form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
 
@@ -188,6 +209,7 @@ def test_successful_registration_should_transfer_keys(registry_form_data, client
         tests.DDSEndpoint.USER_NEW,
         json=registry_form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
 
@@ -218,7 +240,11 @@ def test_invite_key_verification_fails_with_no_setup(client):
     )
     assert token
 
-    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM + token,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status == "200 OK"
     assert b"Create account" in response.data
 
@@ -238,6 +264,7 @@ def test_invite_key_verification_fails_with_no_setup(client):
         tests.DDSEndpoint.USER_NEW,
         json=form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
 
@@ -270,7 +297,11 @@ def test_invite_key_verification_fails_with_wrong_valid_key(client):
     )
     assert token
 
-    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM + token,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status == "200 OK"
     assert b"Create account" in response.data
 
@@ -290,6 +321,7 @@ def test_invite_key_verification_fails_with_wrong_valid_key(client):
         tests.DDSEndpoint.USER_NEW,
         json=form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
 
@@ -322,7 +354,11 @@ def test_invite_key_verification_fails_with_wrong_invalid_key(client):
     )
     assert token
 
-    response = client.get(tests.DDSEndpoint.USER_CONFIRM + token, content_type="application/json")
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM + token,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status == "200 OK"
     assert b"Create account" in response.data
 
@@ -342,6 +378,7 @@ def test_invite_key_verification_fails_with_wrong_invalid_key(client):
         tests.DDSEndpoint.USER_NEW,
         json=form_data,
         follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
 
