@@ -802,13 +802,13 @@ def test_validate_major_cli_version_no_version_info(client: FlaskClient, disable
 
         # Perform request to have header - this will call pypi once
         client.get(url, headers={"X-CLI-Version": "0.0.0"})
-        assert pypi_response.call_count == 1
+        assert pypi_response.call_count == 0
 
         # Verify failure
         with pytest.raises(VersionNotFoundError) as err:
             utils.validate_major_cli_version()
         assert "No version information received from PyPi." in str(err.value)
-        assert pypi_response.call_count == 2
+        assert pypi_response.call_count == 1
 
         # Create mock for no version in info
         pypi_response_2: requests_mock.adapter._Matcher = mock.get(
@@ -834,7 +834,7 @@ def test_validate_major_cli_version_mismatch_major(client: FlaskClient, disable_
 
         # Perform request to have header - major mismatch from latest
         client.get(url, headers={"X-CLI-Version": "0.0.0"})
-        assert pypi_response.call_count == 1
+        assert pypi_response.call_count == 0
 
         # Verify failure - major version mismatch
         with pytest.raises(VersionMismatchError) as err:
@@ -843,7 +843,7 @@ def test_validate_major_cli_version_mismatch_major(client: FlaskClient, disable_
             "You have an outdated version of the DDS CLI installed. Please upgrade to version 1.0.0 and try again."
             in str(err.value)
         )
-        assert pypi_response.call_count == 2
+        assert pypi_response.call_count == 1
 
 
 def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_requests_cache):
@@ -858,19 +858,19 @@ def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_
 
         # Perform request to have header - minor mismatch from latest
         client.get(url, headers={"X-CLI-Version": "1.1.0"})
+        assert pypi_response.call_count == 0
+
+        # Verify ok - should pass
+        utils.validate_major_cli_version()
+        assert pypi_response.call_count == 1
+
+        # Perform request to have header - minor mismatch from latest
+        client.get(url, headers={"X-CLI-Version": "1.0.1"})
         assert pypi_response.call_count == 1
 
         # Verify ok - should pass
         utils.validate_major_cli_version()
         assert pypi_response.call_count == 2
-
-        # Perform request to have header - minor mismatch from latest
-        client.get(url, headers={"X-CLI-Version": "1.0.1"})
-        assert pypi_response.call_count == 3
-
-        # Verify ok - should pass
-        utils.validate_major_cli_version()
-        assert pypi_response.call_count == 4
 
 
 def test_validate_major_cli_version_jsonerror(client: FlaskClient, disable_requests_cache):
@@ -885,10 +885,10 @@ def test_validate_major_cli_version_jsonerror(client: FlaskClient, disable_reque
 
         # Perform request
         client.get(url, headers={"X-CLI-Version": "0.0.0"})
-        assert pypi_response.call_count == 1
+        assert pypi_response.call_count == 0
 
         # Try function
         with pytest.raises(VersionNotFoundError) as err:
             utils.validate_major_cli_version()
-        assert pypi_response.call_count == 2
+        assert pypi_response.call_count == 1
         assert "Failed checking latest DDS PyPi version." in str(err.value)
