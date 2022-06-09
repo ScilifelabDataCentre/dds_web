@@ -192,7 +192,7 @@ def create_app(testing=False, database_uri=None):
             """Populate flask globals for template rendering"""
             from dds_web.utils import validate_major_cli_version
             from dds_web.errors import VersionMismatchError
-            flask.current_app.logger.debug(flask.request.path)
+
             if "/api/v1" in flask.request.path:
                 validate_major_cli_version()
 
