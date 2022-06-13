@@ -18,17 +18,19 @@
         {% include 'components/navbar.html' %}
 
         <div class="container content pt-2">
-
-            {%if self.page_title() != "Data Delivery System" %}<h1>{{ self.page_title() }}</h1>{%endif%}
-
-            {% block content %}{% endblock %}
-            
             {% if g.motd %}
                 <div class="alert alert-warning" role="alert">
                     <h2>Important Information</h2>
                     {{ g.motd.message }}
                 </div>
             {% endif %}
+        </div>
+        
+        <div class="container content pt-2">
+
+            {%if self.page_title() != "Data Delivery System" %}<h1>{{ self.page_title() }}</h1>{%endif%}
+
+            {% block content %}{% endblock %}
 
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
