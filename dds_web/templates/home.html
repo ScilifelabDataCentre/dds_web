@@ -25,6 +25,13 @@
     </div>
 </div>
 
+<p class="lead">
+    {% if motd %}
+        <h2>Current status/System news</h2>
+        {{ motd['message'] }}
+    {% endif %}    
+</p>
+
 
 <h2>Background</h2>
 <p class="lead">
