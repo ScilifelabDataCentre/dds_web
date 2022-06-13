@@ -23,7 +23,7 @@
                     <h3>Important Information</h3>
                     <br>
                     {% for message in g.motd %}
-                        <p>{{ message.date_created.date()}} - {{ message.message }}</p>
+                        <p>{{ message.date_created.strftime("%Y-%m-%d %H:%M") }} - {{ message.message }}</p>
                     {% endfor %}
                 </div>
             {% endif %}
