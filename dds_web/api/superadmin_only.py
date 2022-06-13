@@ -84,3 +84,5 @@ class MOTD(flask_restful.Resource):
         new_motd = models.MOTD(message=motd, date_created=curr_date)
         db.session.add(new_motd)
         db.session.commit()
+
+        return {"message": "The MOTD was successfully added to the database."}
