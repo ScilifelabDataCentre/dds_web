@@ -196,7 +196,9 @@ def create_app(testing=False, database_uri=None):
                 validate_major_cli_version()
 
             # Get message of the day
-            flask.g.motd = db.session.query(models.MOTD).order_by(models.MOTD.date_created.desc()).first()
+            flask.g.motd = (
+                db.session.query(models.MOTD).order_by(models.MOTD.date_created.desc()).first()
+            )
 
             flask.g.current_user = None
             flask.g.current_user_emails = None
