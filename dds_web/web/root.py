@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, jsonify
 from flask import current_app as app
 from dds_web import forms, db
 from dds_web.database import models
-
+import flask
 
 pages = Blueprint("pages", __name__)
 
@@ -16,8 +16,7 @@ pages = Blueprint("pages", __name__)
 def home():
     """Home page."""
     form = forms.LoginForm()
-    motds = db.session.query(models.MOTD).order_by(models.MOTD.date_created.desc()).first()
-    return render_template("home.html", form=form, motd=motds)
+    return render_template("home.html", form=form)
 
 
 @pages.route("/policy", methods=["GET"])
