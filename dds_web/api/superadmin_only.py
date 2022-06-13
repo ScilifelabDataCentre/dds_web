@@ -86,3 +86,10 @@ class MOTD(flask_restful.Resource):
         db.session.commit()
 
         return {"message": "The MOTD was successfully added to the database."}
+
+    @handle_db_error
+    def get(self):
+        """Get the latest MOTD from database."""
+        motd = models.MOTD.query.order_by(models.MOTD.date_created.desc()).first()
+
+        return {"message": motd.message}
