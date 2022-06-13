@@ -21,7 +21,10 @@
             {% if g.motd %}
                 <div class="alert alert-warning" role="alert">
                     <h3>Important Information</h3>
-                    {{ g.motd.message }}
+                    <br>
+                    {% for message in g.motd %}
+                        <p>{{ message.date_created.date()}} - {{ message.message }}</p>
+                    {% endfor %}
                 </div>
             {% endif %}
         </div>

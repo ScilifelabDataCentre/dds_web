@@ -197,8 +197,9 @@ def create_app(testing=False, database_uri=None):
 
             # Get message of the day
             flask.g.motd = (
-                db.session.query(models.MOTD).order_by(models.MOTD.date_created.desc()).first()
+                db.session.query(models.MOTD).filter_by(active=True).order_by(models.MOTD.date_created.desc()).all()
             )
+            app.logger.info(flask.g.motd)
 
             flask.g.current_user = None
             flask.g.current_user_emails = None
