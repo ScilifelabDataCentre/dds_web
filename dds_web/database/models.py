@@ -988,6 +988,7 @@ class MOTD(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     message = db.Column(db.Text, nullable=False, default=None)
     date_created = db.Column(db.DateTime(), nullable=False, default=None)
+    active = db.Column(db.Boolean, nullable=False, default=True)
 
 
 class Usage(db.Model):
