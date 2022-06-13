@@ -74,14 +74,13 @@ class MOTD(flask_restful.Resource):
     def post(self):
         """Add a MOTD."""
 
-        curr_date = utils.current_time()
         json_input = flask.request.json
         motd = json_input.get("message")
         if not motd:
             raise ddserr.DDSArgumentError(message="No MOTD specified.")
 
         flask.current_app.logger.debug(motd)
-        new_motd = models.MOTD(message=motd, date_created=curr_date)
+        new_motd = models.MOTD(message=motd)
         db.session.add(new_motd)
         db.session.commit()
 
