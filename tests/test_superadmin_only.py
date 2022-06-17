@@ -24,6 +24,7 @@ users = {
 def get_token(username, client):
     return tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
 
+# AllUnits
 
 def test_list_units_as_not_superadmin(client):
     """Only Super Admin can list users."""
@@ -70,3 +71,43 @@ def test_list_units_as_super_admin(client):
             "Days In Expired": unit.days_in_expired,
         }
         assert expected in units
+
+# MOTD 
+
+def test_create_motd_not_superadmin(client):
+    """Create a new message of the day, using everything but Super Admin access."""
+    no_access_users = users.copy()
+    no_access_users.pop("Super Admin")
+
+    for u in no_access_users:
+        token = get_token(username=users[u], client=client)
+        response = client.post(tests.DDSEndpoint.MOTD, headers=token)
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+def test_create_motd_as_superadmin_no_json(client):
+    """Create a new message of the day, using a Super Admin account, but without any json."""
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.post(tests.DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Required data missing from request!" in response.json.get("message")
+
+def test_create_motd_as_superadmin_no_message(client):
+    """Create a new message of the day, using a Super Admin account, but without any json."""
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.post(tests.DDSEndpoint.MOTD, headers=token, json={"test": "test"})
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "No MOTD specified." in response.json.get("message")
+
+def test_create_motd_as_superadmin_empty_message(client):
+    """Create a new message of the day, using a Super Admin account, but without any json."""
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.post(tests.DDSEndpoint.MOTD, headers=token, json={"message": ""})
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "No MOTD specified." in response.json.get("message")
+
+def test_create_motd_as_superadmin_success(client):
+    """Create a new message of the day, using a Super Admin account, but without any json."""
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.post(tests.DDSEndpoint.MOTD, headers=token, json={"message": "test"})
+    assert response.status_code == http.HTTPStatus.OK
+    assert "The MOTD was successfully added to the database." in response.json.get("message")
