@@ -10,6 +10,7 @@
 import flask_restful
 import flask
 import structlog
+import sqlalchemy
 
 # Own modules
 from dds_web import auth, db
@@ -86,3 +87,9 @@ class MOTD(flask_restful.Resource):
         db.session.commit()
 
         return {"message": "The MOTD was successfully added to the database."}
+
+    @handle_db_error
+    def get(self):
+        """Get the latest MOTD from database."""
+        motd = utils.get_latest_motd()
+        return {"message": motd}

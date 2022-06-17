@@ -112,3 +112,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 - Change FontAwesome source link to own license ([#1194](https://github.com/ScilifelabDataCentre/dds_web/pull/1194))
 - Display MOTD on web ([#1196](https://github.com/ScilifelabDataCentre/dds_web/pull/1196))
+
+## Sprint (2022-06-15 - 2022-06-29)
+
+- Get MOTD from API ([#1198](https://github.com/ScilifelabDataCentre/dds_web/pull/1198))

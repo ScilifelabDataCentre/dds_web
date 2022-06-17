@@ -189,16 +189,14 @@ def create_app(testing=False, database_uri=None):
         @app.before_request
         def prepare():
             """Populate flask globals for template rendering"""
-            from dds_web.utils import validate_major_cli_version
+            from dds_web.utils import validate_major_cli_version, get_latest_motd
             from dds_web.errors import VersionMismatchError
 
             if "/api/v1" in flask.request.path:
                 validate_major_cli_version()
 
             # Get message of the day
-            flask.g.motd = (
-                db.session.query(models.MOTD).order_by(models.MOTD.date_created.desc()).first()
-            )
+            flask.g.motd = get_latest_motd()
 
             flask.g.current_user = None
             flask.g.current_user_emails = None

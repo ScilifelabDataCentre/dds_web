@@ -892,3 +892,21 @@ def test_validate_major_cli_version_jsonerror(client: FlaskClient, disable_reque
             utils.validate_major_cli_version()
         assert pypi_response.call_count == 1
         assert "Failed checking latest DDS PyPi version." in str(err.value)
+
+
+# get_latest_motd
+
+
+def test_get_latest_motd_no_motd(client: FlaskClient):
+    motd = utils.get_latest_motd()
+    assert not motd
+
+
+def test_get_latest_motd(client: FlaskClient):
+    new_message: str = "test message"
+    new_motd = models.MOTD(message=new_message, date_created=utils.current_time())
+    db.session.add(new_motd)
+    db.session.commit()
+
+    motd = utils.get_latest_motd()
+    assert motd == new_message
