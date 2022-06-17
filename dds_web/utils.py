@@ -486,3 +486,11 @@ def validate_major_cli_version() -> None:
         raise VersionMismatchError(
             message=f"You have an outdated version of the DDS CLI installed. Please upgrade to version {latest_version} and try again."
         )
+
+
+# 
+
+def get_latest_motd():
+    """Return latest MOTD."""
+    motd_object = models.MOTD.query.order_by(models.MOTD.date_created.desc()).first()
+    return motd_object.message if motd_object else ""

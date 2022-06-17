@@ -91,5 +91,5 @@ class MOTD(flask_restful.Resource):
     @handle_db_error
     def get(self):
         """Get the latest MOTD from database."""
-        motd_object = models.MOTD.query.order_by(models.MOTD.date_created.desc()).first()
-        return {"message": motd_object.message if motd_object else ""}
+        motd = utils.get_latest_motd()
+        return {"message": motd}
