@@ -217,7 +217,7 @@ class DDSEndpoint:
     USAGE = BASE_ENDPOINT + "/usage"
     INVOICE = BASE_ENDPOINT + "/invoice"
 
-    # Superadmins only 
+    # Superadmins only
     LIST_UNITS_ALL = BASE_ENDPOINT + "/unit/info/all"
     MOTD = BASE_ENDPOINT + "/motd"
 
