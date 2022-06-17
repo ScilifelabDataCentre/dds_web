@@ -124,11 +124,13 @@ def test_create_motd_as_superadmin_success(client):
 
     assert models.MOTD.query.filter_by(message="test")
 
+
 def test_get_motd_no_message(client):
     """Get latest MOTD from database."""
     response = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
     assert response.status_code == http.HTTPStatus.OK
     assert not response.json.get("message")
+
 
 def test_get_motd(client):
     """Get latest MOTD from database."""
@@ -146,7 +148,9 @@ def test_get_motd(client):
     time.sleep(5)
 
     # Create new message
-    response2 = client.post(tests.DDSEndpoint.MOTD, headers=token, json={"message": "something else"})
+    response2 = client.post(
+        tests.DDSEndpoint.MOTD, headers=token, json={"message": "something else"}
+    )
     assert response2.status_code == http.HTTPStatus.OK
     assert models.MOTD.query.filter_by(message="something else")
 
