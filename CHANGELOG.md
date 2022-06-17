@@ -108,6 +108,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - New tests for `dds_web/utils.py` ([#1188](https://github.com/ScilifelabDataCentre/dds_web/pull/1188))
 - Removed FontAwesome from web ([#1192](https://github.com/ScilifelabDataCentre/dds_web/pull/1192))
 
-## Sprint (2022-06-01 - 2022-05-15)
+## Sprint (2022-06-01 - 2022-06-15)
 
 - Change FontAwesome source link to own license ([#1194](https://github.com/ScilifelabDataCentre/dds_web/pull/1194))
+- Display MOTD on web ([#1196](https://github.com/ScilifelabDataCentre/dds_web/pull/1196))
