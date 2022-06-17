@@ -2,6 +2,8 @@
 
 # Standard library
 import http
+from urllib import response
+import time
 
 # Own
 from dds_web import db
@@ -98,7 +100,7 @@ def test_create_motd_as_superadmin_no_json(client):
 
 
 def test_create_motd_as_superadmin_no_message(client):
-    """Create a new message of the day, using a Super Admin account, but without any json."""
+    """Create a new message of the day, using a Super Admin account, but without any message."""
     token = get_token(username=users["Super Admin"], client=client)
     response = client.post(tests.DDSEndpoint.MOTD, headers=token, json={"test": "test"})
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -106,7 +108,7 @@ def test_create_motd_as_superadmin_no_message(client):
 
 
 def test_create_motd_as_superadmin_empty_message(client):
-    """Create a new message of the day, using a Super Admin account, but without any json."""
+    """Create a new message of the day, using a Super Admin account, but with empty message."""
     token = get_token(username=users["Super Admin"], client=client)
     response = client.post(tests.DDSEndpoint.MOTD, headers=token, json={"message": ""})
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -114,8 +116,41 @@ def test_create_motd_as_superadmin_empty_message(client):
 
 
 def test_create_motd_as_superadmin_success(client):
-    """Create a new message of the day, using a Super Admin account, but without any json."""
+    """Create a new message of the day, using a Super Admin account."""
     token = get_token(username=users["Super Admin"], client=client)
     response = client.post(tests.DDSEndpoint.MOTD, headers=token, json={"message": "test"})
     assert response.status_code == http.HTTPStatus.OK
     assert "The MOTD was successfully added to the database." in response.json.get("message")
+
+    assert models.MOTD.query.filter_by(message="test")
+
+def test_get_motd_no_message(client):
+    """Get latest MOTD from database."""
+    response = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
+    assert response.status_code == http.HTTPStatus.OK
+    assert not response.json.get("message")
+
+def test_get_motd(client):
+    """Get latest MOTD from database."""
+    # Create first message
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.post(tests.DDSEndpoint.MOTD, headers=token, json={"message": "test"})
+    assert response.status_code == http.HTTPStatus.OK
+    assert models.MOTD.query.filter_by(message="test")
+
+    # Get first message
+    response1 = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
+    assert response1.status_code == http.HTTPStatus.OK
+    assert "test" in response1.json.get("message")
+
+    time.sleep(5)
+
+    # Create new message
+    response2 = client.post(tests.DDSEndpoint.MOTD, headers=token, json={"message": "something else"})
+    assert response2.status_code == http.HTTPStatus.OK
+    assert models.MOTD.query.filter_by(message="something else")
+
+    # Check that new message is displayed
+    response3 = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
+    assert response3.status_code == http.HTTPStatus.OK
+    assert "something else" in response3.json.get("message")

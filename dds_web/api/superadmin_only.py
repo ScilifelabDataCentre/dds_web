@@ -10,6 +10,7 @@
 import flask_restful
 import flask
 import structlog
+import sqlalchemy
 
 # Own modules
 from dds_web import auth, db
@@ -90,6 +91,5 @@ class MOTD(flask_restful.Resource):
     @handle_db_error
     def get(self):
         """Get the latest MOTD from database."""
-        motd = models.MOTD.query.order_by(models.MOTD.date_created.desc()).first()
-
-        return {"message": motd.message}
+        motd_object = models.MOTD.query.order_by(models.MOTD.date_created.desc()).first()        
+        return {"message": motd_object.message if motd_object else ""}
