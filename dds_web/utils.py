@@ -488,7 +488,8 @@ def validate_major_cli_version() -> None:
         )
 
 
-# 
+#
+
 
 def get_latest_motd():
     """Return latest MOTD."""
