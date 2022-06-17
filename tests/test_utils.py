@@ -904,7 +904,7 @@ def test_get_latest_motd_no_motd(client: FlaskClient):
 
 def test_get_latest_motd(client: FlaskClient):
     new_message: str = "test message"
-    new_motd = models.MOTD(message=new_message)
+    new_motd = models.MOTD(message=new_message, date_created=utils.current_time())
     db.session.add(new_motd)
     db.session.commit()
 
