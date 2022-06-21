@@ -456,7 +456,7 @@ def validate_major_cli_version() -> None:
     major_version_request: str = request_version[0]
 
     # Get latest version from PyPi and save to cache
-    session = requests_cache.CachedSession()
+    session = requests_cache.CachedSession('http_cache', backend='sqlite', use_temp=True)
     session.cache_control = True
     session.expire_after = datetime.timedelta(days=0.5)
     try:
