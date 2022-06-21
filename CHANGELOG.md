@@ -116,3 +116,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-06-15 - 2022-06-29)
 
 - Get MOTD from API ([#1198](https://github.com/ScilifelabDataCentre/dds_web/pull/1198))
+- Store requests_cache.CachedSession DB in /tmp ([#1200](https://github.com/ScilifelabDataCentre/dds_web/pull/1200))
