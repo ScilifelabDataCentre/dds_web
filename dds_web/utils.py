@@ -457,6 +457,7 @@ def validate_major_cli_version() -> None:
 
     # Get latest version from PyPi and save to cache
     session = requests_cache.CachedSession(backend="sqlite", use_temp=True)
+    flask.current_app.logger.info(session.cache.db_path)
     session.cache_control = True
     session.expire_after = datetime.timedelta(days=0.5)
     try:

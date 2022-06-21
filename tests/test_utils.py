@@ -780,9 +780,7 @@ def test_bucket_is_valid_ok():
 # validate_major_cli_version
 
 
-def test_validate_major_cli_version_without_custom_header(
-    client: FlaskClient, disable_requests_cache
-):
+def test_validate_major_cli_version_without_custom_header(client: FlaskClient):
     """No CLI version in header should give error."""
     with pytest.raises(VersionMismatchError) as err:
         with client.session_transaction() as session:
@@ -790,7 +788,7 @@ def test_validate_major_cli_version_without_custom_header(
     assert "No CLI version found in request header." in str(err.value)
 
 
-def test_validate_major_cli_version_no_version_info(client: FlaskClient, disable_requests_cache):
+def test_validate_major_cli_version_no_version_info(client: FlaskClient):
     """Version info from pypi required."""
     # Mock requests
     with requests_mock.Mocker() as mock:
@@ -822,7 +820,7 @@ def test_validate_major_cli_version_no_version_info(client: FlaskClient, disable
         assert pypi_response_2.call_count == 1
 
 
-def test_validate_major_cli_version_mismatch_major(client: FlaskClient, disable_requests_cache):
+def test_validate_major_cli_version_mismatch_major(client: FlaskClient):
     """Major version mismatch should result in blocking."""
     # Mock requests
     with requests_mock.mocker.Mocker() as mock:
@@ -846,7 +844,7 @@ def test_validate_major_cli_version_mismatch_major(client: FlaskClient, disable_
         assert pypi_response.call_count == 1
 
 
-def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_requests_cache):
+def test_validate_major_cli_version_mismatch_minor(client: FlaskClient):
     """Minor version mismatch should pass."""
     # Mock requests
     with requests_mock.mocker.Mocker() as mock:
@@ -873,7 +871,7 @@ def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_
         assert pypi_response.call_count == 2
 
 
-def test_validate_major_cli_version_jsonerror(client: FlaskClient, disable_requests_cache):
+def test_validate_major_cli_version_jsonerror(client: FlaskClient):
     """Json decode error should fail."""
     # Mock requests
     with requests_mock.mocker.Mocker() as mock:
