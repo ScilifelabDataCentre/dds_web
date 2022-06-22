@@ -202,7 +202,6 @@ def create_app(testing=False, database_uri=None):
                 .order_by(models.MOTD.date_created.desc())
                 .all()
             )
-            app.logger.info(flask.g.motd)
 
             flask.g.current_user = None
             flask.g.current_user_emails = None
