@@ -3,15 +3,11 @@
 # Standard library
 import http
 import datetime
-import json
 import unittest
 import time
 import os
-from urllib import response
 
 # Installed
-import pytest
-import marshmallow
 
 # Own
 from dds_web import db

@@ -6,7 +6,6 @@ import unittest
 import flask
 import flask_mail
 import itsdangerous
-import json
 import pytest
 
 # own modules

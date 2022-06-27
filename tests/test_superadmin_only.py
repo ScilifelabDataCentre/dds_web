@@ -2,12 +2,9 @@
 
 # Standard library
 import http
-from urllib import response
 import time
 
 # Own
-from dds_web import db
-from dds_web.api import user
 from dds_web.database import models
 import tests
 

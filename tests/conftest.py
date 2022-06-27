@@ -1,6 +1,5 @@
 # Standard Library
 import os
-from tkinter.tix import Tree
 import unittest.mock
 import datetime
 import subprocess
@@ -10,7 +9,6 @@ import requests
 # Installed
 import flask_migrate
 import pytest
-import requests_mock
 from sqlalchemy_utils import create_database, database_exists, drop_database
 import boto3
 from requests_mock.mocker import Mocker

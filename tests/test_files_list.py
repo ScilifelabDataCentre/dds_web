@@ -2,11 +2,8 @@
 
 # Standard library
 import http
-import json
 
 # Own
-from dds_web import db
-from dds_web.database import models
 import tests
 
 
