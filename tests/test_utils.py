@@ -1,4 +1,3 @@
-import unittest
 import marshmallow
 from dds_web import utils
 import pytest

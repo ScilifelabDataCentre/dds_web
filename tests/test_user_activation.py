@@ -2,8 +2,6 @@
 import http
 
 # Installed
-import json
-from wsgiref import headers
 
 # Own
 import tests

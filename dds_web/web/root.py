@@ -5,8 +5,7 @@ Here we have the routes that are not specific to a user.
 """
 from flask import Blueprint, render_template, jsonify
 from flask import current_app as app
-from dds_web import forms, db
-from dds_web.database import models
+from dds_web import forms
 
 pages = Blueprint("pages", __name__)
 

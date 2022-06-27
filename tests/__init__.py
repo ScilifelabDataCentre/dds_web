@@ -1,8 +1,6 @@
 """Testing of the dds_web code with pytest."""
 
 from base64 import b64encode
-from urllib.parse import quote_plus
-import json
 import dds_web.errors as ddserr
 import dds_web.database
 import flask

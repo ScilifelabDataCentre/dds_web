@@ -2,8 +2,6 @@ from datetime import timedelta
 
 import flask
 
-import tests
-import unittest
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -12,10 +10,10 @@ from dds_web.database import models
 from dds_web.utils import current_time
 
 from dds_web.scheduled_tasks import (
-    monthly_usage,
     set_available_to_expired,
     set_expired_to_archived,
     delete_invite,
+    # monthly_usage
 )
 
 
@@ -101,6 +99,6 @@ def test_delete_invite_timestamp_issue(client: flask.testing.FlaskClient) -> Non
     assert len(db.session.query(models.Invite).all()) == 0
 
 
-def test_monthly_usage(client: flask.testing.FlaskClient) -> None:
-    """Test the monthly_usage cron job."""
-    monthly_usage()
+# def test_monthly_usage(client: flask.testing.FlaskClient) -> None:
+#     """Test the monthly_usage cron job."""
+#     monthly_usage()

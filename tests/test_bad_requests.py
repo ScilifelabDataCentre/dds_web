@@ -4,7 +4,6 @@ Make empty/bad requests to all endpoints.
 No assertions, only checking whether any uncaught exceptions are thrown.
 """
 
-from dds_web import db
 import tests
 
 ENDPOINTS = dict(tests.DDSEndpoint.__dict__)

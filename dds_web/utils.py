@@ -6,7 +6,6 @@
 
 # Standard library
 import datetime
-from email import message
 import os
 import re
 import typing
@@ -24,16 +23,13 @@ import simplejson
 
 
 # # imports related to scheduling
-import atexit
-import werkzeug
-from apscheduler.schedulers import background
 import marshmallow
 import wtforms
 
 
 # Own modules
 from dds_web.database import models
-from dds_web import auth, db, mail
+from dds_web import auth, mail
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #

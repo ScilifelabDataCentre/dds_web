@@ -1,12 +1,8 @@
-from unittest import result
-
-from click import command
 from dds_web import fill_db_wrapper, create_new_unit, update_uploaded_file_with_log
 import click.testing
 import pytest
 from dds_web import db
 from dds_web.database import models
-from pytest_mock import MockFixture
 from unittest.mock import patch
 import typing
 from pyfakefs.fake_filesystem import FakeFilesystem

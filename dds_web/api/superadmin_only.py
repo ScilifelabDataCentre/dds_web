@@ -10,7 +10,6 @@
 import flask_restful
 import flask
 import structlog
-import sqlalchemy
 
 # Own modules
 from dds_web import auth, db

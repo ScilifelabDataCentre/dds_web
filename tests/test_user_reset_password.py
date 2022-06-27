@@ -1,9 +1,7 @@
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import datetime
 import http
 import flask
 import flask_mail
-import pytest
 import unittest
 
 import tests
