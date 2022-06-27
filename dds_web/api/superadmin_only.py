@@ -130,4 +130,3 @@ class MOTD(flask_restful.Resource):
             return {"message": "The MOTD was successfully deactivated the database."}
         else:
             raise ddserr.DDSArgumentError(message=f"MOTD with id {motd_id} is not active.")
-
