@@ -781,6 +781,7 @@ def test_bucket_is_valid_ok():
 
 # validate_major_cli_version
 
+
 def test_validate_major_cli_version_without_custom_header(
     client: FlaskClient, disable_requests_cache
 ):
@@ -789,6 +790,7 @@ def test_validate_major_cli_version_without_custom_header(
         with client.session_transaction() as session:
             utils.validate_major_cli_version()
     assert "No CLI version found in request header." in str(err.value)
+
 
 def test_validate_major_cli_version_no_version_info(client: FlaskClient, disable_requests_cache):
     """Version info from pypi required."""
@@ -820,6 +822,7 @@ def test_validate_major_cli_version_no_version_info(client: FlaskClient, disable
             utils.validate_major_cli_version()
         assert "No version information received from PyPi." in str(err.value)
         assert pypi_response_2.call_count == 1
+
 
 def test_validate_major_cli_version_mismatch_major(client: FlaskClient, disable_requests_cache):
     """Major version mismatch should result in blocking."""
@@ -858,8 +861,8 @@ def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_
         # Perform request to have header - minor mismatch from latest
         client.get(url, headers={"X-CLI-Version": "1.1.0"})
         assert pypi_response.call_count == 0
-        
-        # Bump num days 
+
+        # Bump num days
         global NUM_FREEZES
         NUM_FREEZES += 1
 
@@ -874,7 +877,7 @@ def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_
         client.get(url, headers={"X-CLI-Version": "1.0.1"})
         assert pypi_response.call_count == 1
 
-        # Bump num days 
+        # Bump num days
         NUM_FREEZES += 1
 
         # Freeze time to two days from now
@@ -899,7 +902,7 @@ def test_validate_major_cli_version_(client: FlaskClient, disable_requests_cache
         client.get(url, headers={"X-CLI-Version": "0.0.0"})
         assert pypi_response.call_count == 0
 
-        # Bump num days 
+        # Bump num days
         global NUM_FREEZES
         NUM_FREEZES += 1
 
@@ -911,7 +914,6 @@ def test_validate_major_cli_version_(client: FlaskClient, disable_requests_cache
                 utils.validate_major_cli_version()
         assert pypi_response.call_count == 1
         assert "Failed checking latest DDS PyPi version." in str(err.value)
-
 
 
 # get_latest_motd
