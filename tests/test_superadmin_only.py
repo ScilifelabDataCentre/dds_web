@@ -156,3 +156,65 @@ def test_get_motd(client):
     assert response3.status_code == http.HTTPStatus.OK
     assert "something else" in response3.json.get("message")
 
+
+# FindUser
+
+def test_find_user_not_superadmin(client):
+    """Try finding a specific user without being Super Admin."""
+    no_access_users = users.copy()
+    no_access_users.pop("Super Admin")
+
+    for u in no_access_users:
+        token = get_token(username=users[u], client=client)
+        response = client.get(tests.DDSEndpoint.USER_FIND, headers=token)
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+def test_find_user_no_json(client):
+    """Try finding a specific user without specifying the user."""
+    # Authenticate
+    token = get_token(username=users["Super Admin"], client=client)
+
+    # Get user
+    response = client.get(tests.DDSEndpoint.USER_FIND, headers=token)
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Required data missing from request!" in response.json.get("message")
+
+def test_find_user_no_username(client):
+    """Find specific user with empty username."""
+    # Authenticate
+    token = get_token(username=users["Super Admin"], client=client)
+
+    # Get user
+    for x in ["", None]:
+        response = client.get(tests.DDSEndpoint.USER_FIND, headers=token, json={"username": x})
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert "Username required to check existence of account." in response.json.get("message")
+
+
+def test_find_user_non_existent(client):
+    """Try to find non existent user."""
+    # Authenticate
+    token = get_token(username=users["Super Admin"], client=client)
+
+    # Non existent user
+    username = "nonexistentuser"
+    assert not models.User.query.filter_by(username=username).first()
+
+    # Get user
+    response = client.get(tests.DDSEndpoint.USER_FIND, headers=token, json={"username": username})
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json and response.json.get("exists") is False
+
+def test_find_user(client):
+    """Find existing user."""
+    # Authenticate
+    token = get_token(username=users["Super Admin"], client=client)
+
+    # Non existent user
+    user_row = models.User.query.first()
+    assert user_row
+
+    # Get user
+    response = client.get(tests.DDSEndpoint.USER_FIND, headers=token, json={"username": user_row.username})
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json and response.json.get("exists") is True

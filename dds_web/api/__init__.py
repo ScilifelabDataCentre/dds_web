@@ -81,7 +81,7 @@ api.add_resource(user.Users, "/users", endpoint="users")
 
 api.add_resource(superadmin_only.AllUnits, "/unit/info/all", endpoint="all_units")
 api.add_resource(superadmin_only.MOTD, "/motd", endpoint="motd")
-# api.add_resource(superadmin_only.AllUsers, "/users", endpoint="users")
+api.add_resource(superadmin_only.FindUser, "/user/find", endpoint="find_user")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")
