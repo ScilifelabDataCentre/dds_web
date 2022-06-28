@@ -1234,10 +1234,8 @@ class Users(flask_restful.Resource):
             json_input = flask.request.json
 
             # The unit public ID must be specified if there is any json input
-            if json_input:
+            if json_input and json_input.get("unit"):
                 unit = json_input.get("unit")
-                if not unit:
-                    raise ddserr.DDSArgumentError(message="Unit public id missing.")
 
                 # Verify unit public id
                 unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
