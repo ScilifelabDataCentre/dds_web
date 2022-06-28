@@ -5,6 +5,7 @@
 # Standard library
 
 # Installed
+from calendar import c
 import flask
 import flask_restful
 
@@ -80,6 +81,7 @@ api.add_resource(user.UnitUsers, "/unit/users", endpoint="unit_users")
 
 api.add_resource(superadmin_only.AllUnits, "/unit/info/all", endpoint="all_units")
 api.add_resource(superadmin_only.MOTD, "/motd", endpoint="motd")
+api.add_resource(superadmin_only.AllUsers, "/users", endpoint="users")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")
