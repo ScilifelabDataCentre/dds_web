@@ -103,12 +103,13 @@ class AllUsers(flask_restful.Resource):
     def get(self):
         """Return users or a confirmation on if one exists."""
         json_input = flask.request.json
-        user_to_find = json_input.get("username") if json_input else None
-        if user_to_find:
-            if user_to_find == "":
+        if json_input:
+            user_to_find = json_input.get("username")
+            if not user_to_find:
                 raise ddserr.DDSArgumentError(
-                    message="Username required to check existence of account."
-                )
+                        message="Username required to check existence of account."
+                    )
+                          
             return {
                 "exists": models.User.query.filter_by(username=user_to_find).one_or_none()
                 is not None
