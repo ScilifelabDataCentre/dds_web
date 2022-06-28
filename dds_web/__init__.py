@@ -536,17 +536,18 @@ def lost_files_s3_db(action_type: str):
                     entry.key for entry in resource.Bucket(project.bucket).objects.all()
                 )
             except resource.meta.client.exceptions.NoSuchBucket:
-                flask.current_app.logger.warning("Missing bucket %s", project.bucket)
-                # Create a missing bucket if argument chosen
-                if action_type == "add-missing-buckets":
-                    valid, message = bucket_is_valid(bucket_name=project.bucket)
-                    if not valid:
-                        flask.current_app.logger.warning(
-                            f"Could not create bucket '{project.bucket}' for project '{project.public_id}': {message}"
-                        )
-                    else:
-                        resource.create_bucket(Bucket=project.bucket)
-                        flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
+                if project.is_active:
+                    flask.current_app.logger.warning("Missing bucket %s", project.bucket)
+                    # Create a missing bucket if argument chosen
+                    if action_type == "add-missing-buckets":
+                        valid, message = bucket_is_valid(bucket_name=project.bucket)
+                        if not valid:
+                            flask.current_app.logger.warning(
+                                f"Could not create bucket '{project.bucket}' for project '{project.public_id}': {message}"
+                            )
+                        else:
+                            resource.create_bucket(Bucket=project.bucket)
+                            flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
                 continue
 
             # Get objects in project
