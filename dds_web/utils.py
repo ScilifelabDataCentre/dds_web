@@ -436,52 +436,53 @@ def bucket_is_valid(bucket_name):
     return valid, message
 
 
-def validate_major_cli_version() -> None:
-    """Validate that major CLI version matches latest version on PyPi."""
-    from dds_web.version import __version__ as version_number
+# NOTE: COMMENTING TEMPORARY
+# def validate_major_cli_version() -> None:
+#     """Validate that major CLI version matches latest version on PyPi."""
+#     from dds_web.version import __version__ as version_number
 
-    # Define header name
-    header_name: str = "X-CLI-Version"
+#     # Define header name
+#     header_name: str = "X-CLI-Version"
 
-    # Get CLI version from request headers
-    request_version: str = flask.request.headers.get(header_name)
-    if not request_version:
-        raise VersionMismatchError(message="No CLI version found in request header.")
+#     # Get CLI version from request headers
+#     request_version: str = flask.request.headers.get(header_name)
+#     if not request_version:
+#         raise VersionMismatchError(message="No CLI version found in request header.")
 
-    # Major version
-    major_version_request: str = request_version[0]
+#     # Major version
+#     major_version_request: str = request_version[0]
 
-    # Get latest version from PyPi and save to cache
-    session = requests_cache.CachedSession()
-    session.cache_control = True
-    session.expire_after = datetime.timedelta(days=0.5)
-    try:
-        response: flask.Response = session.get(
-            "https://pypi.python.org/pypi/dds-cli/json",
-            headers={
-                "User-Agent": f"dds-web {version_number} (https://github.com/ScilifelabDataCentre/dds_web)"
-            },
-        )
-        response_json: typing.Dict = response.json()
-    except (requests.exceptions.RequestException, simplejson.JSONDecodeError) as err:
-        flask.current_app.logger.exception(err)
-        raise VersionNotFoundError(
-            message="Failed checking latest DDS PyPi version. Cannot proceed with request."
-        )
+#     # Get latest version from PyPi and save to cache
+#     session = requests_cache.CachedSession()
+#     session.cache_control = True
+#     session.expire_after = datetime.timedelta(days=0.5)
+#     try:
+#         response: flask.Response = session.get(
+#             "https://pypi.python.org/pypi/dds-cli/json",
+#             headers={
+#                 "User-Agent": f"dds-web {version_number} (https://github.com/ScilifelabDataCentre/dds_web)"
+#             },
+#         )
+#         response_json: typing.Dict = response.json()
+#     except (requests.exceptions.RequestException, simplejson.JSONDecodeError) as err:
+#         flask.current_app.logger.exception(err)
+#         raise VersionNotFoundError(
+#             message="Failed checking latest DDS PyPi version. Cannot proceed with request."
+#         )
 
-    # Check that enough info is returned from PyPi
-    if "info" not in response_json or (
-        "info" in response_json and "version" not in response_json["info"]
-    ):
-        raise VersionNotFoundError(message="No version information received from PyPi.")
+#     # Check that enough info is returned from PyPi
+#     if "info" not in response_json or (
+#         "info" in response_json and "version" not in response_json["info"]
+#     ):
+#         raise VersionNotFoundError(message="No version information received from PyPi.")
 
-    latest_version: str = response_json["info"]["version"]
-    major_version_latest: typing.List = latest_version[0]
+#     latest_version: str = response_json["info"]["version"]
+#     major_version_latest: typing.List = latest_version[0]
 
-    if major_version_request != major_version_latest:
-        raise VersionMismatchError(
-            message=f"You have an outdated version of the DDS CLI installed. Please upgrade to version {latest_version} and try again."
-        )
+#     if major_version_request != major_version_latest:
+#         raise VersionMismatchError(
+#             message=f"You have an outdated version of the DDS CLI installed. Please upgrade to version {latest_version} and try again."
+#         )
 
 
 #

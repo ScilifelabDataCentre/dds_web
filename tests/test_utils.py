@@ -778,119 +778,120 @@ def test_bucket_is_valid_ok():
 
 # validate_major_cli_version
 
+# NOTE: COMMENTING TEMPORARY
+# def test_validate_major_cli_version_without_custom_header(
+#     client: FlaskClient, disable_requests_cache
+# ):
+#     """No CLI version in header should give error."""
+#     with pytest.raises(VersionMismatchError) as err:
+#         with client.session_transaction() as session:
+#             utils.validate_major_cli_version()
+#     assert "No CLI version found in request header." in str(err.value)
 
-def test_validate_major_cli_version_without_custom_header(
-    client: FlaskClient, disable_requests_cache
-):
-    """No CLI version in header should give error."""
-    with pytest.raises(VersionMismatchError) as err:
-        with client.session_transaction() as session:
-            utils.validate_major_cli_version()
-    assert "No CLI version found in request header." in str(err.value)
+# NOTE: COMMENTING TEMPORARY
+# def test_validate_major_cli_version_no_version_info(client: FlaskClient, disable_requests_cache):
+#     """Version info from pypi required."""
+#     # Mock requests
+#     with requests_mock.Mocker() as mock:
+#         # Create mocks for no info
+#         _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
+#         pypi_response: requests_mock.adapter._Matcher = mock.get(
+#             pypi_api_url, status_code=200, json={"test": "test"}
+#         )
+
+#         # Perform request to have header - this will call pypi once
+#         client.get(url, headers={"X-CLI-Version": "0.0.0"})
+#         assert pypi_response.call_count == 0
+
+#         # Verify failure
+#         with pytest.raises(VersionNotFoundError) as err:
+#             utils.validate_major_cli_version()
+#         assert "No version information received from PyPi." in str(err.value)
+#         assert pypi_response.call_count == 1
+
+#         # Create mock for no version in info
+#         pypi_response_2: requests_mock.adapter._Matcher = mock.get(
+#             pypi_api_url, status_code=200, json={"info": {"test": "test"}}
+#         )
+
+#         # Verify failure
+#         with pytest.raises(VersionNotFoundError) as err:
+#             utils.validate_major_cli_version()
+#         assert "No version information received from PyPi." in str(err.value)
+#         assert pypi_response_2.call_count == 1
+
+# NOTE: COMMENTING TEMPORARY
+# def test_validate_major_cli_version_mismatch_major(client: FlaskClient, disable_requests_cache):
+#     """Major version mismatch should result in blocking."""
+#     # Mock requests
+#     with requests_mock.mocker.Mocker() as mock:
+#         # Create mocks for request with version
+#         _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
+#         pypi_response: requests_mock.adapter._Matcher = mock.get(
+#             pypi_api_url, status_code=200, json={"info": {"version": "1.0.0"}}
+#         )
+
+#         # Perform request to have header - major mismatch from latest
+#         client.get(url, headers={"X-CLI-Version": "0.0.0"})
+#         assert pypi_response.call_count == 0
+
+#         # Verify failure - major version mismatch
+#         with pytest.raises(VersionMismatchError) as err:
+#             utils.validate_major_cli_version()
+#         assert (
+#             "You have an outdated version of the DDS CLI installed. Please upgrade to version 1.0.0 and try again."
+#             in str(err.value)
+#         )
+#         assert pypi_response.call_count == 1
+
+# NOTE: COMMENTING TEMPORARY
+# def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_requests_cache):
+#     """Minor version mismatch should pass."""
+#     # Mock requests
+#     with requests_mock.mocker.Mocker() as mock:
+#         # Create mocks with version
+#         _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
+#         pypi_response: requests_mock.adapter._Matcher = mock.get(
+#             pypi_api_url, status_code=200, json={"info": {"version": "1.0.0"}}
+#         )
+
+#         # Perform request to have header - minor mismatch from latest
+#         client.get(url, headers={"X-CLI-Version": "1.1.0"})
+#         assert pypi_response.call_count == 0
+
+#         # Verify ok - should pass
+#         utils.validate_major_cli_version()
+#         assert pypi_response.call_count == 1
+
+#         # Perform request to have header - minor mismatch from latest
+#         client.get(url, headers={"X-CLI-Version": "1.0.1"})
+#         assert pypi_response.call_count == 1
+
+#         # Verify ok - should pass
+#         utils.validate_major_cli_version()
+#         assert pypi_response.call_count == 2
 
 
-def test_validate_major_cli_version_no_version_info(client: FlaskClient, disable_requests_cache):
-    """Version info from pypi required."""
-    # Mock requests
-    with requests_mock.Mocker() as mock:
-        # Create mocks for no info
-        _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
-        pypi_response: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json={"test": "test"}
-        )
+# NOTE: COMMENTING TEMPORARY
+# def test_validate_major_cli_version_jsonerror(client: FlaskClient, disable_requests_cache):
+#     """Json decode error should fail."""
+#     # Mock requests
+#     with requests_mock.mocker.Mocker() as mock:
+#         # Create mocks with version
+#         base_response: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
+#         pypi_response: requests_mock.adapter._Matcher = mock.get(
+#             pypi_api_url, status_code=200, json=None
+#         )
 
-        # Perform request to have header - this will call pypi once
-        client.get(url, headers={"X-CLI-Version": "0.0.0"})
-        assert pypi_response.call_count == 0
+#         # Perform request
+#         client.get(url, headers={"X-CLI-Version": "0.0.0"})
+#         assert pypi_response.call_count == 0
 
-        # Verify failure
-        with pytest.raises(VersionNotFoundError) as err:
-            utils.validate_major_cli_version()
-        assert "No version information received from PyPi." in str(err.value)
-        assert pypi_response.call_count == 1
-
-        # Create mock for no version in info
-        pypi_response_2: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json={"info": {"test": "test"}}
-        )
-
-        # Verify failure
-        with pytest.raises(VersionNotFoundError) as err:
-            utils.validate_major_cli_version()
-        assert "No version information received from PyPi." in str(err.value)
-        assert pypi_response_2.call_count == 1
-
-
-def test_validate_major_cli_version_mismatch_major(client: FlaskClient, disable_requests_cache):
-    """Major version mismatch should result in blocking."""
-    # Mock requests
-    with requests_mock.mocker.Mocker() as mock:
-        # Create mocks for request with version
-        _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
-        pypi_response: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json={"info": {"version": "1.0.0"}}
-        )
-
-        # Perform request to have header - major mismatch from latest
-        client.get(url, headers={"X-CLI-Version": "0.0.0"})
-        assert pypi_response.call_count == 0
-
-        # Verify failure - major version mismatch
-        with pytest.raises(VersionMismatchError) as err:
-            utils.validate_major_cli_version()
-        assert (
-            "You have an outdated version of the DDS CLI installed. Please upgrade to version 1.0.0 and try again."
-            in str(err.value)
-        )
-        assert pypi_response.call_count == 1
-
-
-def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_requests_cache):
-    """Minor version mismatch should pass."""
-    # Mock requests
-    with requests_mock.mocker.Mocker() as mock:
-        # Create mocks with version
-        _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
-        pypi_response: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json={"info": {"version": "1.0.0"}}
-        )
-
-        # Perform request to have header - minor mismatch from latest
-        client.get(url, headers={"X-CLI-Version": "1.1.0"})
-        assert pypi_response.call_count == 0
-
-        # Verify ok - should pass
-        utils.validate_major_cli_version()
-        assert pypi_response.call_count == 1
-
-        # Perform request to have header - minor mismatch from latest
-        client.get(url, headers={"X-CLI-Version": "1.0.1"})
-        assert pypi_response.call_count == 1
-
-        # Verify ok - should pass
-        utils.validate_major_cli_version()
-        assert pypi_response.call_count == 2
-
-
-def test_validate_major_cli_version_jsonerror(client: FlaskClient, disable_requests_cache):
-    """Json decode error should fail."""
-    # Mock requests
-    with requests_mock.mocker.Mocker() as mock:
-        # Create mocks with version
-        base_response: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
-        pypi_response: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json=None
-        )
-
-        # Perform request
-        client.get(url, headers={"X-CLI-Version": "0.0.0"})
-        assert pypi_response.call_count == 0
-
-        # Try function
-        with pytest.raises(VersionNotFoundError) as err:
-            utils.validate_major_cli_version()
-        assert pypi_response.call_count == 1
-        assert "Failed checking latest DDS PyPi version." in str(err.value)
+#         # Try function
+#         with pytest.raises(VersionNotFoundError) as err:
+#             utils.validate_major_cli_version()
+#         assert pypi_response.call_count == 1
+#         assert "Failed checking latest DDS PyPi version." in str(err.value)
 
 
 # get_latest_motd
