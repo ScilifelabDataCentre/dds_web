@@ -276,7 +276,11 @@ def confirm_2fa():
     next_target = flask.request.args.get("next")
     flask.current_app.logger.info(f"next: {next_target}")
     # is_safe_url should check if the url is safe for redirects.
-    if next_target and next_target in VALID_REDIRECTS and not dds_web.utils.is_safe_url(next_target):
+    if (
+        next_target
+        and next_target in VALID_REDIRECTS
+        and not dds_web.utils.is_safe_url(next_target)
+    ):
         return flask.abort(400)
 
     # Check user has initiated 2FA
@@ -367,7 +371,11 @@ def login():
 
     next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
-    if next_target and next_target in VALID_REDIRECTS and not dds_web.utils.is_safe_url(next_target):
+    if (
+        next_target
+        and next_target in VALID_REDIRECTS
+        and not dds_web.utils.is_safe_url(next_target)
+    ):
         return flask.abort(400)
 
     # Redirect to next or index if user is already authenticated
