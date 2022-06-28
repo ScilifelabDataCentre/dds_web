@@ -456,30 +456,33 @@ def validate_major_cli_version() -> None:
     major_version_request: str = request_version[0]
 
     # Get latest version from PyPi and save to cache
-    session = requests_cache.CachedSession(backend="sqlite", use_temp=True)
-    session.cache_control = True
-    session.expire_after = datetime.timedelta(days=0.5)
-    try:
-        response: flask.Response = session.get(
-            "https://pypi.python.org/pypi/dds-cli/json",
-            headers={
-                "User-Agent": f"dds-web {version_number} (https://github.com/ScilifelabDataCentre/dds_web)"
-            },
-        )
-        response_json: typing.Dict = response.json()
-    except (requests.exceptions.RequestException, simplejson.JSONDecodeError) as err:
-        flask.current_app.logger.exception(err)
-        raise VersionNotFoundError(
-            message="Failed checking latest DDS PyPi version. Cannot proceed with request."
-        )
+    # app.config.get
+    if 'cached_version' not in locals():
+        cached_version = {}
+        try:
+            response: flask.Response = requests.get(
+                "https://pypi.python.org/pypi/dds-cli/json",
+                headers={
+                    "User-Agent": f"dds-web {version_number} (https://github.com/ScilifelabDataCentre/dds_web)"
+                },
+            )
+            response_json: typing.Dict = response.json()
+        except (requests.exceptions.RequestException, simplejson.JSONDecodeError) as err:
+            flask.current_app.logger.exception(err)
+            raise VersionNotFoundError(
+                message="Failed checking latest DDS PyPi version. Cannot proceed with request."
+            )
 
-    # Check that enough info is returned from PyPi
-    if "info" not in response_json or (
-        "info" in response_json and "version" not in response_json["info"]
-    ):
-        raise VersionNotFoundError(message="No version information received from PyPi.")
+        # Check that enough info is returned from PyPi
+        if "info" not in response_json or (
+            "info" in response_json and "version" not in response_json["info"]
+        ):
+            raise VersionNotFoundError(message="No version information received from PyPi.")
 
-    latest_version: str = response_json["info"]["version"]
+        cached_version: str = response_json["info"]["version"]
+
+
+    latest_version: str = cached_version
     major_version_latest: typing.List = latest_version[0]
 
     if major_version_request != major_version_latest:
