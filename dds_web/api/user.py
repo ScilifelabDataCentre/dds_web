@@ -1202,16 +1202,16 @@ class Users(flask_restful.Resource):
     @handle_db_error
     def get(self):
         """List unit users within the unit the current user is connected to, or the one defined by a superadmin."""
-        
+
         # Function only accessible here
         def get_users(unit: models.Unit = None):
             """Get users, either all or from specific unit."""
             users_to_iterate = None
             if unit:
                 users_to_iterate = unit.users
-            else: 
+            else:
                 users_to_iterate = models.User.query.all()
-                
+
             users_to_return = [
                 {
                     "Name": user.name,
@@ -1223,16 +1223,17 @@ class Users(flask_restful.Resource):
                 for user in users_to_iterate
             ]
             return users_to_return
+
         # End of function
 
-        # Keys to return 
+        # Keys to return
         keys = ["Name", "Username", "Email", "Role", "Active"]
 
         # Super Admins can list users in units or all users,
         if auth.current_user().role == "Super Admin":
             json_input = flask.request.json
 
-            # The unit public ID must be specified if there is any json input 
+            # The unit public ID must be specified if there is any json input
             if json_input:
                 unit = json_input.get("unit")
                 if not unit:
@@ -1244,19 +1245,28 @@ class Users(flask_restful.Resource):
                     raise ddserr.DDSArgumentError(
                         message=f"There is no unit with the public id '{unit}'."
                     )
-                
+
                 # Get users in unit
                 users_to_return = get_users(unit=unit_row)
-                return {"users": users_to_return, "unit": unit_row.name, "keys": keys, "empty": not users_to_return}
+                return {
+                    "users": users_to_return,
+                    "unit": unit_row.name,
+                    "keys": keys,
+                    "empty": not users_to_return,
+                }
 
             # Get all users if no unit specified
             users_to_return = get_users()
             return {"users": users_to_return, "keys": keys, "empty": not users_to_return}
 
-        # Unit Personnel and Unit Admins can list all users within their units 
+        # Unit Personnel and Unit Admins can list all users within their units
         unit_row = auth.current_user().unit
 
         # Get users in unit
         users_to_return = get_users(unit=unit_row)
-        return {"users": users_to_return, "unit": unit_row.name, "keys": keys, "empty": not users_to_return}
-
+        return {
+            "users": users_to_return,
+            "unit": unit_row.name,
+            "keys": keys,
+            "empty": not users_to_return,
+        }
