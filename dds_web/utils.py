@@ -455,9 +455,14 @@ def validate_major_cli_version() -> None:
     # Major version
     major_version_request: str = request_version[0]
 
-    # Get latest version from PyPi and save to cache
-    if "cached_version" not in globals():
-        cached_version = {}
+    # Get latest version from PyPi and save to global variable once a day
+    today = current_time().date()
+
+    # Check if the last fetch from PyPi is from today and use global var if yes
+    if ("version_fetch_date" in globals()) and (globals()["version_fetch_date"] == today):
+        cached_version = globals()["cached_version"]
+    else:
+        # make the request
         try:
             response: flask.Response = requests.get(
                 "https://pypi.python.org/pypi/dds-cli/json",
@@ -478,10 +483,10 @@ def validate_major_cli_version() -> None:
         ):
             raise VersionNotFoundError(message="No version information received from PyPi.")
 
+        # save the latest version and the date in global variables
         cached_version: str = response_json["info"]["version"]
         globals()["cached_version"] = cached_version
-    else:
-        cached_version = globals()["cached_version"]
+        globals()["version_fetch_date"] = current_time().date()
 
     latest_version: str = cached_version
     major_version_latest: typing.List = latest_version[0]
@@ -490,9 +495,6 @@ def validate_major_cli_version() -> None:
         raise VersionMismatchError(
             message=f"You have an outdated version of the DDS CLI installed. Please upgrade to version {latest_version} and try again."
         )
-
-
-#
 
 
 def get_latest_motd():
