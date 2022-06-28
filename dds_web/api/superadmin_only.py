@@ -107,9 +107,9 @@ class AllUsers(flask_restful.Resource):
             user_to_find = json_input.get("username")
             if not user_to_find:
                 raise ddserr.DDSArgumentError(
-                        message="Username required to check existence of account."
-                    )
-                          
+                    message="Username required to check existence of account."
+                )
+
             return {
                 "exists": models.User.query.filter_by(username=user_to_find).one_or_none()
                 is not None
