@@ -166,7 +166,7 @@ class DDSEndpoint:
     USER_CONFIRM_DELETE = "/confirm_deletion/"
 
     # List users
-    LIST_UNIT_USERS = BASE_ENDPOINT + "/unit/users"
+    LIST_USERS = BASE_ENDPOINT + "/users"
 
     # Authentication - user and project
     ENCRYPTED_TOKEN = BASE_ENDPOINT + "/user/encrypted_token"
