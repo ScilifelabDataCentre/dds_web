@@ -108,8 +108,7 @@ class FindUser(flask_restful.Resource):
             raise ddserr.DDSArgumentError(
                 message="Username required to check existence of account."
             )
-           
+
         return {
-            "exists": models.User.query.filter_by(username=user_to_find).one_or_none()
-            is not None
+            "exists": models.User.query.filter_by(username=user_to_find).one_or_none() is not None
         }

@@ -159,6 +159,7 @@ def test_get_motd(client):
 
 # FindUser
 
+
 def test_find_user_not_superadmin(client):
     """Try finding a specific user without being Super Admin."""
     no_access_users = users.copy()
@@ -169,6 +170,7 @@ def test_find_user_not_superadmin(client):
         response = client.get(tests.DDSEndpoint.USER_FIND, headers=token)
         assert response.status_code == http.HTTPStatus.FORBIDDEN
 
+
 def test_find_user_no_json(client):
     """Try finding a specific user without specifying the user."""
     # Authenticate
@@ -178,6 +180,7 @@ def test_find_user_no_json(client):
     response = client.get(tests.DDSEndpoint.USER_FIND, headers=token)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Required data missing from request!" in response.json.get("message")
+
 
 def test_find_user_no_username(client):
     """Find specific user with empty username."""
@@ -205,6 +208,7 @@ def test_find_user_non_existent(client):
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("exists") is False
 
+
 def test_find_user(client):
     """Find existing user."""
     # Authenticate
@@ -215,6 +219,8 @@ def test_find_user(client):
     assert user_row
 
     # Get user
-    response = client.get(tests.DDSEndpoint.USER_FIND, headers=token, json={"username": user_row.username})
+    response = client.get(
+        tests.DDSEndpoint.USER_FIND, headers=token, json={"username": user_row.username}
+    )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json and response.json.get("exists") is True

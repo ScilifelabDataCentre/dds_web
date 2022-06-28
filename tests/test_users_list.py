@@ -126,6 +126,7 @@ def test_list_unitusers_with_super_admin_correct_unit(client):
     for x in unit_row.users:
         assert x.username in unit_users
 
+
 def test_list_all_users_with_super_admin(client):
     """Super admins need to specify a unit."""
     token = get_token(username=users["Super Admin"], client=client)
@@ -138,7 +139,7 @@ def test_list_all_users_with_super_admin(client):
     all_users = [
         {
             "Name": u.name,
-            "Username": u.username, 
+            "Username": u.username,
             "Email": u.primary_email,
             "Role": u.role,
             "Active": u.is_active,
@@ -148,4 +149,3 @@ def test_list_all_users_with_super_admin(client):
 
     users_returned = response_json.get("users")
     assert all(user in users_returned for user in all_users)
-    
