@@ -156,7 +156,9 @@ def test_get_motd(client):
     assert response3.status_code == http.HTTPStatus.OK
     assert "something else" in response3.json.get("message")
 
+
 # AllUsers
+
 
 def test_get_all_users_wrong_user(client):
     """Try to get all users when not Super Admin."""
@@ -167,6 +169,7 @@ def test_get_all_users_wrong_user(client):
         token = get_token(username=users[u], client=client)
         response = client.get(tests.DDSEndpoint.LIST_USERS, headers=token)
         assert response.status_code == http.HTTPStatus.FORBIDDEN
+
 
 def test_get_all_users_correct(client):
     """Get list of all users when Super Admin."""
@@ -180,23 +183,23 @@ def test_get_all_users_correct(client):
     users = response_json.get("users")
     keys = response_json.get("keys")
     empty = response_json.get("empty")
-    
-    # Verify all returned 
+
+    # Verify all returned
     assert users and keys
-    assert empty is False # not empty also gives True for None
+    assert empty is False  # not empty also gives True for None
     assert keys == ["Name", "Username", "Email", "Role", "Active"]
 
     # Verify all users returned
     users_correct = [
-            {
-                "Name": user.name,
-                "Username": user.username,
-                "Email": user.primary_email,
-                "Role": user.role,
-                "Active": user.is_active,
-            }
-            for user in models.User.query.all()
-        ]
+        {
+            "Name": user.name,
+            "Username": user.username,
+            "Email": user.primary_email,
+            "Role": user.role,
+            "Active": user.is_active,
+        }
+        for user in models.User.query.all()
+    ]
     for x in users_correct:
         assert x in users
 
@@ -208,6 +211,7 @@ def test_check_specific_user_no_specified(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Username required to check existence of account." in response.json.get("message")
 
+
 def test_check_specific_user_non_existent(client):
     """Check if a non existent user is in the database."""
     token = get_token(username=users["Super Admin"], client=client)
@@ -216,12 +220,13 @@ def test_check_specific_user_non_existent(client):
     username = "nonexistinguser"
     response = client.get(tests.DDSEndpoint.LIST_USERS, headers=token, json={"username": username})
     assert response.status_code == http.HTTPStatus.OK
-    
+
     response_json = response.json
     assert response_json
 
     exists = response_json.get("exists")
     assert exists is False
+
 
 def test_check_specific_user_ok(client):
     """Check if a non existent user is in the database."""
@@ -231,9 +236,11 @@ def test_check_specific_user_ok(client):
     user = models.User.query.first()
     assert user
 
-    response = client.get(tests.DDSEndpoint.LIST_USERS, headers=token, json={"username": user.username})
+    response = client.get(
+        tests.DDSEndpoint.LIST_USERS, headers=token, json={"username": user.username}
+    )
     assert response.status_code == http.HTTPStatus.OK
-    
+
     response_json = response.json
     assert response_json
 

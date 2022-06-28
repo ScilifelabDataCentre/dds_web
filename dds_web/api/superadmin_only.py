@@ -93,6 +93,7 @@ class MOTD(flask_restful.Resource):
         motd = utils.get_latest_motd()
         return {"message": motd}
 
+
 class AllUsers(flask_restful.Resource):
     """Get all users or check if there a specific user in the database."""
 
@@ -105,9 +106,14 @@ class AllUsers(flask_restful.Resource):
         user_to_find = json_input.get("username") if json_input else None
         if user_to_find:
             if user_to_find == "":
-                raise ddserr.DDSArgumentError(message="Username required to check existence of account.")
-            return {"exists": models.User.query.filter_by(username=user_to_find).one_or_none() is not None}
-        
+                raise ddserr.DDSArgumentError(
+                    message="Username required to check existence of account."
+                )
+            return {
+                "exists": models.User.query.filter_by(username=user_to_find).one_or_none()
+                is not None
+            }
+
         keys = ["Name", "Username", "Email", "Role", "Active"]
 
         users = [
