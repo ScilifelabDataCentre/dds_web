@@ -456,8 +456,7 @@ def validate_major_cli_version() -> None:
     major_version_request: str = request_version[0]
 
     # Get latest version from PyPi and save to cache
-    # app.config.get
-    if "cached_version" not in locals():
+    if "cached_version" not in globals():
         cached_version = {}
         try:
             response: flask.Response = requests.get(
@@ -480,6 +479,9 @@ def validate_major_cli_version() -> None:
             raise VersionNotFoundError(message="No version information received from PyPi.")
 
         cached_version: str = response_json["info"]["version"]
+        globals()["cached_version"] = cached_version
+    else:
+        cached_version = globals()["cached_version"]
 
     latest_version: str = cached_version
     major_version_latest: typing.List = latest_version[0]
