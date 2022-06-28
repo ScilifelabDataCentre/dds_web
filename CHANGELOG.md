@@ -117,3 +117,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 - Get MOTD from API ([#1198](https://github.com/ScilifelabDataCentre/dds_web/pull/1198))
 - Only print warning about missing bucket if the project is active ([#1203](https://github.com/ScilifelabDataCentre/dds_web/pull/1203))
+- Removed (commented out) version check ([#1206](https://github.com/ScilifelabDataCentre/dds_web/pull/1206))
