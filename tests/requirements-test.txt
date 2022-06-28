@@ -6,3 +6,4 @@ sqlalchemy-utils==0.38.2
 pytest-mock==3.7.0
 pyfakefs==4.5.5
 requests_cache==0.9.4
+freezegun==1.2.1
