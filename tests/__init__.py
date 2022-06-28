@@ -218,6 +218,5 @@ class DDSEndpoint:
     # Superadmins only
     LIST_UNITS_ALL = BASE_ENDPOINT + "/unit/info/all"
     MOTD = BASE_ENDPOINT + "/motd"
-    LIST_USERS = BASE_ENDPOINT + "/users"
 
     TIMEOUT = 5
