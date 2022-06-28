@@ -32,6 +32,8 @@ from dds_web.security.project_user_keys import update_user_keys_for_password_cha
 
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 
+VALID_REDIRECTS = [""]
+
 ####################################################################################################
 # ERROR HANDLING ################################################################## ERROR HANDLING #
 ####################################################################################################
@@ -272,8 +274,9 @@ def confirm_2fa():
         return flask.redirect(flask.url_for("pages.home"))
 
     next_target = flask.request.args.get("next")
+    flask.current_app.logger.info(f"next: {next_target}")
     # is_safe_url should check if the url is safe for redirects.
-    if next_target and not dds_web.utils.is_safe_url(next_target):
+    if next_target and next_target in VALID_REDIRECTS and not dds_web.utils.is_safe_url(next_target):
         return flask.abort(400)
 
     # Check user has initiated 2FA
@@ -339,6 +342,7 @@ def confirm_2fa():
         flask.flash("Logged in successfully.", "success")
         # Remove token from session
         flask.session.pop("2fa_initiated_token", None)
+
         # Next is assured to be url_safe above
         return flask.redirect(next_target or flask.url_for("pages.home"))
 
@@ -363,7 +367,7 @@ def login():
 
     next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
-    if next_target and not dds_web.utils.is_safe_url(next_target):
+    if next_target and next_target in VALID_REDIRECTS and not dds_web.utils.is_safe_url(next_target):
         return flask.abort(400)
 
     # Redirect to next or index if user is already authenticated
