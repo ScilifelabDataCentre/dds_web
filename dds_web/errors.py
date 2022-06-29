@@ -57,6 +57,7 @@ class LoggedHTTPException(exceptions.HTTPException):
 # EXCEPTIONS ########################################################################## EXCEPTIONS #
 ####################################################################################################
 
+
 class KeyLengthError(SystemExit):
     """Invalid key length for encryption"""
 
