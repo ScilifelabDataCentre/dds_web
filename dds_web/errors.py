@@ -57,30 +57,30 @@ class LoggedHTTPException(exceptions.HTTPException):
 # EXCEPTIONS ########################################################################## EXCEPTIONS #
 ####################################################################################################
 
+# NOTE: COMMENTING TEMPORARY
+# class VersionNotFoundError(LoggedHTTPException):
+#     """Could not find the version in request."""
 
-class VersionNotFoundError(LoggedHTTPException):
-    """Could not find the version in request."""
+#     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
-    code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+#     def __init__(self, message="There is a newer version of the CLI available."):
+#         super().__init__(message)
 
-    def __init__(self, message="There is a newer version of the CLI available."):
-        super().__init__(message)
+#         general_logger.warning(message)
 
-        general_logger.warning(message)
+# NOTE: COMMENTING TEMPORARY
+# class VersionMismatchError(LoggedHTTPException):
+#     """Errors and / or warning due to incorrect CLI version."""
 
+#     def __init__(
+#         self,
+#         message="There is a newer version of the CLI available.",
+#         status_code=http.HTTPStatus.FORBIDDEN,
+#     ):
+#         self.code = status_code
+#         super().__init__(message)
 
-class VersionMismatchError(LoggedHTTPException):
-    """Errors and / or warning due to incorrect CLI version."""
-
-    def __init__(
-        self,
-        message="There is a newer version of the CLI available.",
-        status_code=http.HTTPStatus.FORBIDDEN,
-    ):
-        self.code = status_code
-        super().__init__(message)
-
-        general_logger.warning(message)
+#         general_logger.warning(message)
 
 
 class KeyLengthError(SystemExit):

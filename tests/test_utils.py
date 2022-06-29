@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import patch
 from dds_web import db
 from dds_web.database import models
-from dds_web.errors import AccessDeniedError, VersionMismatchError, VersionNotFoundError
+from dds_web.errors import AccessDeniedError  # , VersionMismatchError, VersionNotFoundError
 import flask
 import flask_login
 import datetime

@@ -14,7 +14,9 @@ import urllib.parse
 # Installed
 from contextlib import contextmanager
 import flask
-from dds_web.errors import AccessDeniedError, VersionMismatchError, VersionNotFoundError
+from dds_web.errors import (
+    AccessDeniedError,
+)  # NOTE: COMMENTING TEMPORARY, VersionMismatchError, VersionNotFoundError
 import flask_mail
 import flask_login
 import requests
