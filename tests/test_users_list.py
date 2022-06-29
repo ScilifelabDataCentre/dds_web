@@ -79,16 +79,6 @@ def test_list_unitusers_with_unit_personnel_and_admin_ok(client):
             }
             assert expected in users_in_response
 
-
-def test_list_unitusers_with_super_admin_unit_empty(client):
-    """Super admins need to specify a unit."""
-    token = get_token(username=users["Super Admin"], client=client)
-    for x in [None, ""]:
-        response = client.get(tests.DDSEndpoint.LIST_USERS, json={"unit": x}, headers=token)
-        assert response.status_code == http.HTTPStatus.BAD_REQUEST
-        assert "Unit public id missing" in response.json.get("message")
-
-
 def test_list_unitusers_with_super_admin_nonexistent_unit(client):
     """Super admins need to specify a correct unit."""
     incorrect_unit = "incorrect_unit"
