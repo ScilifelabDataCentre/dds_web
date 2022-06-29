@@ -189,11 +189,7 @@ def create_app(testing=False, database_uri=None):
         @app.before_request
         def prepare():
             """Populate flask globals for template rendering"""
-            from dds_web.utils import get_latest_motd  # , validate_major_cli_version
-
-            # NOTE: COMMENTING TEMPORARY
-            # if "/api/v1" in flask.request.path:
-            #     validate_major_cli_version()
+            from dds_web.utils import get_latest_motd 
 
             # Get message of the day
             flask.g.motd = get_latest_motd()
