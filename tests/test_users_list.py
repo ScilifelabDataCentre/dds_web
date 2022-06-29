@@ -119,7 +119,7 @@ def test_list_unitusers_with_super_admin_correct_unit(client):
 
 
 def test_list_all_users_with_super_admin(client):
-    """Super admins need to specify a unit."""
+    """Super admins can list all user when no unit specified."""
     token = get_token(username=users["Super Admin"], client=client)
     response = client.get(tests.DDSEndpoint.LIST_USERS, headers=token)
     assert response.status_code == http.HTTPStatus.OK
