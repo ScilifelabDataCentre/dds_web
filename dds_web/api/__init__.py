@@ -5,7 +5,6 @@
 # Standard library
 
 # Installed
-from calendar import c
 import flask
 import flask_restful
 
