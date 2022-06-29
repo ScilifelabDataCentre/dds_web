@@ -103,7 +103,19 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-05-18 - 2022-06-01)
 
 - Allow all characters but unicode (e.g. emojis) in project description ([#1178](https://github.com/ScilifelabDataCentre/dds_web/pull/1178))
+- Cronjob: Scheduled task for monthly usage data ([#1181](https://github.com/ScilifelabDataCentre/dds_web/pull/1181))
+- New tests for `dds_web/__init__.py` ([#1185](https://github.com/ScilifelabDataCentre/dds_web/pull/1185))
+- New tests for `dds_web/utils.py` ([#1188](https://github.com/ScilifelabDataCentre/dds_web/pull/1188))
+- Removed FontAwesome from web ([#1192](https://github.com/ScilifelabDataCentre/dds_web/pull/1192))
 
-## Sprint (2022-06-01 - 2022-05-15)
+## Sprint (2022-06-01 - 2022-06-15)
 
 - Change FontAwesome source link to own license ([#1194](https://github.com/ScilifelabDataCentre/dds_web/pull/1194))
+- Display MOTD on web ([#1196](https://github.com/ScilifelabDataCentre/dds_web/pull/1196))
+
+## Sprint (2022-06-15 - 2022-06-29)
+
+- Get MOTD from API ([#1198](https://github.com/ScilifelabDataCentre/dds_web/pull/1198))
+- New endpoint for listing all users ([#1204](https://github.com/ScilifelabDataCentre/dds_web/pull/1204))
+- Only print warning about missing bucket if the project is active ([#1203](https://github.com/ScilifelabDataCentre/dds_web/pull/1203))
+- Removed version check ([#1206](https://github.com/ScilifelabDataCentre/dds_web/pull/1206))

@@ -2,10 +2,6 @@
 
 # Standard library
 import http
-import json
-import pytest
-import marshmallow
-import unittest
 
 # Own
 from dds_web import db
@@ -24,7 +20,7 @@ proj_query = {"project": "public_project_id"}
 
 def test_fix_access_no_token(client):
     """Token required to fix project access."""
-    response = client.post(tests.DDSEndpoint.PROJECT_ACCESS)
+    response = client.post(tests.DDSEndpoint.PROJECT_ACCESS, headers=tests.DEFAULT_HEADER)
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     assert response.json.get("message")
     assert "No token" in response.json.get("message")

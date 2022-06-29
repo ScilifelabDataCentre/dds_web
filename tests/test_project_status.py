@@ -2,7 +2,6 @@
 
 # Standard library
 import http
-import json
 import pytest
 import datetime
 import time

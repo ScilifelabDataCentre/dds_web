@@ -4,12 +4,15 @@ import unittest.mock
 import datetime
 import subprocess
 import uuid
+import requests
 
 # Installed
 import flask_migrate
 import pytest
 from sqlalchemy_utils import create_database, database_exists, drop_database
 import boto3
+from requests_mock.mocker import Mocker
+import requests_cache
 
 # Own
 from dds_web.database.models import (
@@ -38,6 +41,7 @@ from dds_web.security.tokens import encrypted_jwt_token
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
+pypi_api_url = "https://pypi.python.org/pypi/dds-cli/json"
 
 
 def fill_basic_db(db):
@@ -438,8 +442,9 @@ def add_data_to_db():
     return units, users, projects
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def setup_database():
+    print("setup_database is called")
     # Create database specific for tests
     if not database_exists(DATABASE_URI_BASE):
         create_database(DATABASE_URI_BASE)
@@ -469,8 +474,12 @@ def client(setup_database):
     app = create_app(testing=True, database_uri=DATABASE_URI)
     with app.test_request_context():
         with app.test_client() as client:
+            client.environ_base["HTTP_Cache-Control"] = "no-cache"
+            client.environ_base["HTTP_X-CLI-Version"] = "0.0.0"
             try:
-                yield client
+                with Mocker() as mock:
+                    mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
+                    yield client
             finally:
                 # aborts any pending transactions
                 db.session.rollback()
@@ -489,8 +498,12 @@ def module_client(setup_database):
     app = create_app(testing=True, database_uri=DATABASE_URI)
     with app.test_request_context():
         with app.test_client() as client:
+            client.environ_base["HTTP_Cache-Control"] = "no-cache"
+            client.environ_base["HTTP_X-CLI-Version"] = "0.0.0"
             try:
-                yield client
+                with Mocker() as mock:
+                    mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
+                    yield client
             finally:
                 # aborts any pending transactions
                 db.session.rollback()
@@ -506,3 +519,13 @@ def boto3_session():
     """Create a mock boto3 session since no access permissions are in place for testing"""
     with unittest.mock.patch.object(boto3.session.Session, "resource") as mock_session:
         yield mock_session
+
+
+@pytest.fixture(scope="function", autouse=True)
+def disable_requests_cache():
+    """Replace CachedSession with a regular Session for all test functions.
+
+    Automatically used.
+    """
+    with unittest.mock.patch("requests_cache.CachedSession", requests.Session):
+        yield

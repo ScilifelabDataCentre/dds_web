@@ -1,5 +1,4 @@
 import http
-import json
 import uuid
 
 import pytest

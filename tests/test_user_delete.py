@@ -6,7 +6,6 @@ import unittest
 import flask
 import flask_mail
 import itsdangerous
-import json
 import pytest
 
 # own modules
@@ -55,7 +54,7 @@ def test_del_self_nouser(client):
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         response = client.delete(
             tests.DDSEndpoint.USER_DELETE_SELF,
-            headers=None,
+            headers=tests.DEFAULT_HEADER,
             json=None,
         )
         # No token email and none for deletion confirmation
@@ -103,7 +102,11 @@ def test_del_self(client):
 
 def test_del_route_no_token(client):
     """Contact Route without token"""
-    response = client.get(tests.DDSEndpoint.USER_CONFIRM_DELETE, content_type="application/json")
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM_DELETE,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
     assert response.status_code == http.HTTPStatus.NOT_FOUND
 
 
@@ -112,7 +115,9 @@ def test_del_route_invalid_token(client):
     client = tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).fake_web_login(client)
 
     response = client.get(
-        tests.DDSEndpoint.USER_CONFIRM_DELETE + "invalidtoken", content_type="application/json"
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + "invalidtoken",
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -124,7 +129,9 @@ def test_del_route_expired_token(client):
     client = tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).fake_web_login(client)
 
     response = client.get(
-        tests.DDSEndpoint.USER_CONFIRM_DELETE + token, content_type="application/json"
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + token,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -140,7 +147,9 @@ def test_del_route_valid_token_wrong_user(client):
     client = tests.UserAuth(tests.USER_CREDENTIALS["researchuser2"]).fake_web_login(client)
 
     response = client.get(
-        tests.DDSEndpoint.USER_CONFIRM_DELETE + token, content_type="application/json"
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + token,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -158,7 +167,9 @@ def test_del_route_valid_token(client):
     client = tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).fake_web_login(client)
 
     response = client.get(
-        tests.DDSEndpoint.USER_CONFIRM_DELETE + token, content_type="application/json"
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + token,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
     )
 
     assert response.status_code == http.HTTPStatus.OK

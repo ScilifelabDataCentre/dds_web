@@ -270,6 +270,7 @@ class Project(db.Model):
     project_invite_keys = db.relationship(
         "ProjectInviteKeys", back_populates="project", passive_deletes=True
     )
+    monthly_usage = db.relationship("Usage", back_populates="project")
 
     @property
     def current_status(self):
@@ -987,3 +988,35 @@ class MOTD(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     message = db.Column(db.Text, nullable=False, default=None)
     date_created = db.Column(db.DateTime(), nullable=False, default=None)
+
+
+class Usage(db.Model):
+    """
+    Data model for keeping track of projects storage usage.
+
+    Primary key:
+    - id
+
+    Foreign key(s):
+    - project_id
+    """
+
+    # Table setup
+    __tablename__ = "usage"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    # Foreign keys & relationships
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id", ondelete="RESTRICT"), nullable=False
+    )
+    project = db.relationship("Project", back_populates="monthly_usage")
+
+    # Additional columns
+    usage = db.Column(db.Float, nullable=False, default=None)
+    cost = db.Column(db.Float, nullable=False, default=None)
+    time_collected = db.Column(
+        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time()
+    )

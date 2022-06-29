@@ -84,3 +84,31 @@ class MOTD(flask_restful.Resource):
         new_motd = models.MOTD(message=motd, date_created=curr_date)
         db.session.add(new_motd)
         db.session.commit()
+
+        return {"message": "The MOTD was successfully added to the database."}
+
+    @handle_db_error
+    def get(self):
+        """Get the latest MOTD from database."""
+        motd = utils.get_latest_motd()
+        return {"message": motd}
+
+
+class FindUser(flask_restful.Resource):
+    """Get all users or check if there a specific user in the database."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def get(self):
+        """Return users or a confirmation on if one exists."""
+        user_to_find = flask.request.json.get("username")
+        if not user_to_find:
+            raise ddserr.DDSArgumentError(
+                message="Username required to check existence of account."
+            )
+
+        return {
+            "exists": models.User.query.filter_by(username=user_to_find).one_or_none() is not None
+        }

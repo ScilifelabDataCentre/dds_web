@@ -102,7 +102,9 @@ def invite_confirm_register_and_get_private(
 
     # Confirm invite
     response = client.get(
-        tests.DDSEndpoint.USER_CONFIRM + invite_token, content_type="application/json"
+        tests.DDSEndpoint.USER_CONFIRM + invite_token,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
     )
     assert response.status == "200 OK"
 
@@ -119,6 +121,7 @@ def invite_confirm_register_and_get_private(
             tests.DDSEndpoint.USER_NEW,
             json=form_data,
             follow_redirects=True,
+            headers=tests.DEFAULT_HEADER,
         )
 
         assert response.status == "200 OK"
@@ -132,6 +135,7 @@ def invite_confirm_register_and_get_private(
             tests.DDSEndpoint.USER_NEW,
             json=form_data,
             follow_redirects=True,
+            headers=tests.DEFAULT_HEADER,
         )
         assert response.status == "200 OK"
 

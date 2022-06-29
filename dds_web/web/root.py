@@ -7,7 +7,6 @@ from flask import Blueprint, render_template, jsonify
 from flask import current_app as app
 from dds_web import forms
 
-
 pages = Blueprint("pages", __name__)
 
 

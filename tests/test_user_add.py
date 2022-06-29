@@ -1,4 +1,3 @@
-from urllib import response
 import dds_web
 import flask_mail
 import http
@@ -7,9 +6,7 @@ import sqlalchemy
 from dds_web import db
 from dds_web.database import models
 import tests
-import pytest
 import unittest
-import marshmallow
 
 existing_project = "public_project_id"
 existing_project_2 = "second_public_project_id"

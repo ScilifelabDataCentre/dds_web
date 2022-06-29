@@ -494,7 +494,7 @@ _The following is **per user**, not the status code returned to the CLI_
 - `500 Internal Server Error`
   - Database errors
 
-### UnitUsers
+### Users
 
 - [Authentication errors](#authentication)
 - `400 Bad Request`

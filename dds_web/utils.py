@@ -8,6 +8,7 @@
 import datetime
 import os
 import re
+import typing
 import urllib.parse
 
 # Installed
@@ -16,18 +17,19 @@ import flask
 from dds_web.errors import AccessDeniedError
 import flask_mail
 import flask_login
+import requests
+import requests_cache
+import simplejson
+
 
 # # imports related to scheduling
-import atexit
-import werkzeug
-from apscheduler.schedulers import background
 import marshmallow
 import wtforms
 
 
 # Own modules
 from dds_web.database import models
-from dds_web import auth, db, mail
+from dds_web import auth, mail
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
@@ -342,15 +344,13 @@ def current_time(to_midnight=False):
     return curr_time
 
 
-def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f%z"):
+def timestamp(dts=None, datetime_string=None, ts_format="%Y-%m-%d %H:%M:%S.%f"):
     """Gets the current time. Formats timestamp.
 
     Returns:
         str:    Timestamp in format 'YY-MM-DD_HH-MM-SS'
 
     """
-
-    # print(f"\nTime stamp : {datetime.datetime.utcnow}\n")
     if datetime_string is not None:
         datetime_stamp = datetime.datetime.strptime(datetime_string, ts_format)
         return str(datetime_stamp.date())
@@ -434,3 +434,9 @@ def bucket_is_valid(bucket_name):
     else:
         valid = True
     return valid, message
+
+
+def get_latest_motd():
+    """Return latest MOTD."""
+    motd_object = models.MOTD.query.order_by(models.MOTD.date_created.desc()).first()
+    return motd_object.message if motd_object else ""

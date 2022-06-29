@@ -8,8 +8,6 @@ import pytest
 import sqlalchemy
 
 # Own
-import tests
-import dds_web
 from dds_web import db
 from dds_web.database import models
 

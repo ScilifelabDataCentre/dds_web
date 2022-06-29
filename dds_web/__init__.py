@@ -10,6 +10,7 @@ import datetime
 import pathlib
 import sys
 import re
+import os
 
 # Installed
 import click
@@ -188,6 +189,11 @@ def create_app(testing=False, database_uri=None):
         @app.before_request
         def prepare():
             """Populate flask globals for template rendering"""
+            from dds_web.utils import get_latest_motd
+
+            # Get message of the day
+            flask.g.motd = get_latest_motd()
+
             flask.g.current_user = None
             flask.g.current_user_emails = None
             if auth.current_user():
@@ -426,7 +432,13 @@ def update_uploaded_file_with_log(project, path_to_log_file):
     import json
 
     proj_in_db = models.Project.query.filter_by(public_id=project).one_or_none()
-    assert proj_in_db
+    if not proj_in_db:
+        flask.current_app.logger.error(f"The project '{project}' doesn't exist.")
+        return
+
+    if not os.path.exists(path_to_log_file):
+        flask.current_app.logger.error(f"The log file '{path_to_log_file}' doesn't exist.")
+        return
 
     with open(path_to_log_file, "r") as f:
         log = json.load(f)
@@ -520,17 +532,18 @@ def lost_files_s3_db(action_type: str):
                     entry.key for entry in resource.Bucket(project.bucket).objects.all()
                 )
             except resource.meta.client.exceptions.NoSuchBucket:
-                flask.current_app.logger.warning("Missing bucket %s", project.bucket)
-                # Create a missing bucket if argument chosen
-                if action_type == "add-missing-buckets":
-                    valid, message = bucket_is_valid(bucket_name=project.bucket)
-                    if not valid:
-                        flask.current_app.logger.warning(
-                            f"Could not create bucket '{project.bucket}' for project '{project.public_id}': {message}"
-                        )
-                    else:
-                        resource.create_bucket(Bucket=project.bucket)
-                        flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
+                if project.is_active:
+                    flask.current_app.logger.warning("Missing bucket %s", project.bucket)
+                    # Create a missing bucket if argument chosen
+                    if action_type == "add-missing-buckets":
+                        valid, message = bucket_is_valid(bucket_name=project.bucket)
+                        if not valid:
+                            flask.current_app.logger.warning(
+                                f"Could not create bucket '{project.bucket}' for project '{project.public_id}': {message}"
+                            )
+                        else:
+                            resource.create_bucket(Bucket=project.bucket)
+                            flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
                 continue
 
             # Get objects in project

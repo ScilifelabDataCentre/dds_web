@@ -1,5 +1,4 @@
 # Installed
-import json
 import http
 import copy
 

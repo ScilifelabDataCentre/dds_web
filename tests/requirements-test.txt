@@ -1,2 +1,8 @@
-pytest-cov
-sqlalchemy-utils
+mock==4.0.3
+pytest==7.1.2
+pytest-cov==3.0.0
+requests-mock==1.9.3
+sqlalchemy-utils==0.38.2
+pytest-mock==3.7.0
+pyfakefs==4.5.5
+requests_cache==0.9.4
