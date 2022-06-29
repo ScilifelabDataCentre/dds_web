@@ -79,6 +79,7 @@ def test_list_unitusers_with_unit_personnel_and_admin_ok(client):
             }
             assert expected in users_in_response
 
+
 def test_list_unitusers_with_super_admin_nonexistent_unit(client):
     """Super admins need to specify a correct unit."""
     incorrect_unit = "incorrect_unit"
