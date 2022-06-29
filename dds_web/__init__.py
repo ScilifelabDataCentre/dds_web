@@ -193,9 +193,6 @@ def create_app(testing=False, database_uri=None):
 
             # Get message of the day
             flask.g.motd = get_latest_motd()
-            flask.current_app.logger.info(
-                f"message of the day: {flask.g.motd} ({type(flask.g.motd)})"
-            )
 
             flask.g.current_user = None
             flask.g.current_user_emails = None
