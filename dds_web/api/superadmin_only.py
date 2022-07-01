@@ -110,7 +110,7 @@ class MOTD(flask_restful.Resource):
                 ],
             }
         else:
-            return ""
+            return {"message": "There are no active MOTDs."}
 
     @auth.login_required(role=["Super Admin"])
     @logging_bind_request
