@@ -182,6 +182,13 @@ def test_deactivate_motd_no_motd_id(client):
     assert "No MOTD for deactivation specified." in response.json.get("message")
 
 
+def test_deactivate_motd_no_such_motd(client):
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.put(tests.DDSEndpoint.MOTD, headers=token, json={"motd_id": 8})
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "MOTD with id 8 does not exist in the database" in response.json.get("message")
+
+
 def test_deactivate_motd_not_superadmin(client):
     """Deactivate a message of the day, using everything but Super Admin access."""
     no_access_users = users.copy()
