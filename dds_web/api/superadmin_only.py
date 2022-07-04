@@ -129,7 +129,7 @@ class MOTD(flask_restful.Resource):
             motd_to_deactivate.active = 0
             db.session.commit()
 
-            return {"message": "The MOTD was successfully deactivated the database."}
+            return {"message": "The MOTD was successfully deactivated in the database."}
         else:
             raise ddserr.DDSArgumentError(message=f"MOTD with id {motd_id} is not active.")
 

@@ -774,21 +774,3 @@ def test_bucket_is_valid_ok():
     valid, message = utils.bucket_is_valid(bucket_name="something-.")
     assert valid
     assert message == ""
-
-
-# get_latest_motd
-
-
-def test_get_latest_motd_no_motd(client: FlaskClient):
-    motd = utils.get_latest_motd()
-    assert not motd
-
-
-def test_get_latest_motd(client: FlaskClient):
-    new_message: str = "test message"
-    new_motd = models.MOTD(message=new_message, date_created=utils.current_time())
-    db.session.add(new_motd)
-    db.session.commit()
-
-    motd = utils.get_latest_motd()
-    assert motd == new_message
