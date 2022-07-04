@@ -125,6 +125,10 @@ class MOTD(flask_restful.Resource):
             raise ddserr.DDSArgumentError(message="No MOTD for deactivation specified.")
 
         motd_to_deactivate = models.MOTD.query.filter_by(id=motd_id).first()
+        if not motd_to_deactivate:
+            raise ddserr.DDSArgumentError(
+                message=f"MOTD with id {motd_id} does not exist in the database"
+            )
         if motd_to_deactivate.active == True:
             motd_to_deactivate.active = 0
             db.session.commit()
