@@ -189,10 +189,10 @@ def create_app(testing=False, database_uri=None):
         @app.before_request
         def prepare():
             """Populate flask globals for template rendering"""
-            from dds_web.utils import get_latest_motd
+            from dds_web.utils import get_active_motds
 
             # Get message of the day
-            flask.g.motd = get_latest_motd()
+            flask.g.motd = get_active_motds()
 
             flask.g.current_user = None
             flask.g.current_user_emails = None
