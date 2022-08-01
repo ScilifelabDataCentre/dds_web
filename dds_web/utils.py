@@ -438,7 +438,7 @@ def bucket_is_valid(bucket_name):
 
 def get_active_motds():
     """Return latest MOTD."""
-    motd_object = (
+    motds_active = (
         models.MOTD.query.filter_by(active=True).order_by(models.MOTD.date_created.desc()).all()
     )
-    return motd_object if motd_object else ""
+    return motds_active or None
