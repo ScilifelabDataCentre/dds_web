@@ -25,6 +25,9 @@ def __derive_key(user, password):
     if not user.kd_salt:
         raise KeySetupError(message="User keys are not properly setup!")
 
+    flask.current_app.logger.info(
+        f"- - - __derive_key (before hash_secret_raw)\t Current time: {utils.current_time()}"
+    )
     derived_key = argon2.low_level.hash_secret_raw(
         secret=password.encode(),
         salt=user.kd_salt,
@@ -33,6 +36,9 @@ def __derive_key(user, password):
         parallelism=8,
         hash_len=32,
         type=argon2.Type.ID,
+    )
+    flask.current_app.logger.info(
+        f"- - - __derive_key (after hash_secret_raw)\t Current time: {utils.current_time()}"
     )
 
     if len(derived_key) != 32:
@@ -247,22 +253,52 @@ def __encrypt_owner_private_key(owner, private_key, owner_key=None):
 
 def __decrypt_user_private_key(user, user_key):
     if user.private_key and user.nonce:
-        return __decrypt_with_aes(
+        flask.current_app.logger.info(
+            f"- - - __decrypt_user_private_key (before __decrypt_with_aes)\t Current time: {utils.current_time()}"
+        )
+        decrypted_user_private_key = __decrypt_with_aes(
             user_key,
             user.private_key,
             user.nonce,
             aad=b"private key for " + user.username.encode(),
         )
+        flask.current_app.logger.info(
+            f"- - - __decrypt_user_private_key (after __decrypt_with_aes)\t Current time: {utils.current_time()}"
+        )
+        return decrypted_user_private_key
     raise KeySetupError(message="User keys are not properly setup!")
 
 
 def __decrypt_user_private_key_via_token(user, token):
+    flask.current_app.logger.info(
+        f"- - - - __decrypt_user_private_key_via_token (before extract_encrypted_token_sensitive_content)\t Current time: {utils.current_time()}"
+    )
     password = extract_encrypted_token_sensitive_content(token, user.username)
-    if not password:
-        raise SensitiveContentMissingError
-    user_key = __derive_key(user, password)
+    flask.current_app.logger.info(
+        f"- - - - __decrypt_user_private_key_via_token (after extract_encrypted_token_sensitive_content)\t Current time: {utils.current_time()}"
+    )
 
-    return __decrypt_user_private_key(user, user_key)
+    if not password:
+        flask.current_app.logger.info("There is no password found.")
+        raise SensitiveContentMissingError
+
+    flask.current_app.logger.info(
+        f"- - - - __decrypt_user_private_key_via_token (before __derive_key)\t Current time: {utils.current_time()}"
+    )
+    user_key = __derive_key(user, password)
+    flask.current_app.logger.info(
+        f"- - - - __decrypt_user_private_key_via_token (after __derive_key)\t Current time: {utils.current_time()}"
+    )
+
+    flask.current_app.logger.info(
+        f"- - - - __decrypt_user_private_key_via_token (before __decrypt_user_private_key)\t Current time: {utils.current_time()}"
+    )
+    decrypted_user_private_key = __decrypt_user_private_key(user, user_key)
+    flask.current_app.logger.info(
+        f"- - - - __decrypt_user_private_key_via_token (after __decrypt_user_private_key)\t Current time: {utils.current_time()}"
+    )
+
+    return decrypted_user_private_key
 
 
 def __decrypt_invite_private_key(invite, temporary_key):
