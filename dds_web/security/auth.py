@@ -333,7 +333,7 @@ def extract_encrypted_token_sensitive_content(token, username):
     """Extract the sensitive content from inside the encrypted token."""
     if token is None:
         raise TokenMissingError(message="There is no token to extract sensitive content from.")
-    
+
     flask.current_app.logger.info(
         f"- - - - - extract_encrypted_token_sensitive_content (before decrypt_and_verify_token_signature)\t Current time: {dds_web.utils.current_time()}"
     )
@@ -394,7 +394,7 @@ def verify_token_signature(token):
     except ValueError as exc:
         # "Token format unrecognized"
         raise AuthenticationError(message="Invalid token") from exc
-    
+
 
 @basic_auth.verify_password
 def verify_password(username, password):

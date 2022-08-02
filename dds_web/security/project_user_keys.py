@@ -279,9 +279,7 @@ def __decrypt_user_private_key_via_token(user, token):
     )
 
     if not password:
-        flask.current_app.logger.info(
-            "There is no password found."
-        )
+        flask.current_app.logger.info("There is no password found.")
         raise SensitiveContentMissingError
 
     flask.current_app.logger.info(
