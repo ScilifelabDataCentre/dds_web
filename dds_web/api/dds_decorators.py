@@ -39,7 +39,9 @@ action_logger = structlog.getLogger("actions")
 def handle_validation_errors(func):
     @functools.wraps(func)
     def handle_error(*args, **kwargs):
-        flask.current_app.logger.info(f"- handle_validation_errors\t Current time: {current_time()}")
+        flask.current_app.logger.info(
+            f"- handle_validation_errors\t Current time: {current_time()}"
+        )
         try:
             result = func(*args, **kwargs)
         except (marshmallow.exceptions.ValidationError) as valerr:

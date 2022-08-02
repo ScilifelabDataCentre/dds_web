@@ -368,11 +368,11 @@ class GetPublic(flask_restful.Resource):
     def get(self):
         """Get public key from database."""
         # Verify project ID and access
-        
+
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         # project = models.Project.query.filter(
         #     models.Project.public_id == sqlalchemy.func.binary(flask.request.args.get("project"))
-        # ).one_or_none() 
+        # ).one_or_none()
         flask.current_app.logger.debug("Getting the public key.")
 
         if not project.public_key:
@@ -389,27 +389,33 @@ class GetPrivate(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         """Get private key from database."""
-        flask.current_app.logger.info(f"- GetPrivate (before schema)\t Current time: {dds_web.utils.current_time()}")
+        flask.current_app.logger.info(
+            f"- GetPrivate (before schema)\t Current time: {dds_web.utils.current_time()}"
+        )
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-        flask.current_app.logger.info(f"- GetPrivate (after schema)\t Current time: {dds_web.utils.current_time()}")
+        flask.current_app.logger.info(
+            f"- GetPrivate (after schema)\t Current time: {dds_web.utils.current_time()}"
+        )
 
         # flask.current_app.logger.debug("Getting the private key.")
-        flask.current_app.logger.info(f"- GetPrivate (before obtain_project_private_key)\t Current time: {dds_web.utils.current_time()}")
-        dict_to_return = {
-                "private": obtain_project_private_key(
-                    user=auth.current_user(),
-                    project=project,
-                    token=dds_web.security.auth.obtain_current_encrypted_token(),
-                )
-                .hex()
-                .upper()
-            }
-        flask.current_app.logger.info(f"- GetPrivate (after obtain_project_private_key)\t Current time: {dds_web.utils.current_time()}")
-
-        return flask.jsonify(
-            dict_to_return
+        flask.current_app.logger.info(
+            f"- GetPrivate (before obtain_project_private_key)\t Current time: {dds_web.utils.current_time()}"
         )
+        dict_to_return = {
+            "private": obtain_project_private_key(
+                user=auth.current_user(),
+                project=project,
+                token=dds_web.security.auth.obtain_current_encrypted_token(),
+            )
+            .hex()
+            .upper()
+        }
+        flask.current_app.logger.info(
+            f"- GetPrivate (after obtain_project_private_key)\t Current time: {dds_web.utils.current_time()}"
+        )
+
+        return flask.jsonify(dict_to_return)
 
 
 class UserProjects(flask_restful.Resource):
