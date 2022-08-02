@@ -364,12 +364,15 @@ class GetPublic(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @handle_validation_errors
+    # @handle_validation_errors
     def get(self):
         """Get public key from database."""
         # Verify project ID and access
+        
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-
+        # project = models.Project.query.filter(
+        #     models.Project.public_id == sqlalchemy.func.binary(flask.request.args.get("project"))
+        # ).one_or_none() 
         flask.current_app.logger.debug("Getting the public key.")
 
         if not project.public_key:
@@ -386,13 +389,14 @@ class GetPrivate(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         """Get private key from database."""
+        flask.current_app.logger.info(f"Function: GetPrivate (before schema)\t Current time: {dds_web.utils.current_time()}")
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        flask.current_app.logger.info(f"Function: GetPrivate (after schema)\t Current time: {dds_web.utils.current_time()}")
 
-        flask.current_app.logger.debug("Getting the private key.")
-
-        return flask.jsonify(
-            {
+        # flask.current_app.logger.debug("Getting the private key.")
+        flask.current_app.logger.info(f"Function: GetPrivate (before obtain_project_private_key)\t Current time: {dds_web.utils.current_time()}")
+        dict_to_return = {
                 "private": obtain_project_private_key(
                     user=auth.current_user(),
                     project=project,
@@ -401,6 +405,10 @@ class GetPrivate(flask_restful.Resource):
                 .hex()
                 .upper()
             }
+        flask.current_app.logger.info(f"Function: GetPrivate (after obtain_project_private_key)\t Current time: {dds_web.utils.current_time()}")
+
+        return flask.jsonify(
+            dict_to_return
         )
 
 

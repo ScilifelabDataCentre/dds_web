@@ -25,7 +25,7 @@ from dds_web.errors import (
     MissingJsonError,
     S3ConnectionError,
 )
-from dds_web.utils import get_username_or_request_ip
+from dds_web.utils import current_time, get_username_or_request_ip
 
 # initiate logging
 action_logger = structlog.getLogger("actions")
@@ -39,7 +39,7 @@ action_logger = structlog.getLogger("actions")
 def handle_validation_errors(func):
     @functools.wraps(func)
     def handle_error(*args, **kwargs):
-
+        flask.current_app.logger.info(f"Function: handle_validation_errors\t Current time: {current_time()}")
         try:
             result = func(*args, **kwargs)
         except (marshmallow.exceptions.ValidationError) as valerr:
@@ -185,6 +185,7 @@ def logging_bind_request(func):
 
     @functools.wraps(func)
     def wrapper_logging_bind_request(*args, **kwargs):
+        flask.current_app.logger.info(f"Function: logging_bind_request\t Current time: {current_time()}")
         with structlog.threadlocal.bound_threadlocal(
             resource=flask.request.path or "not applicable",
             project=flask.request.args.get("project") if flask.request.args else None,
