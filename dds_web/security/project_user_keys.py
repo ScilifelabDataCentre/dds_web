@@ -18,6 +18,7 @@ from dds_web.security.auth import (
     extract_encrypted_token_sensitive_content,
     extract_token_invite_key,
 )
+from dds_web import utils
 
 
 def __derive_key(user, password):
@@ -83,12 +84,16 @@ def __encrypt_project_private_key(owner, project_private_key):
 
 
 def __decrypt_project_private_key(user, token, encrypted_project_private_key):
+    flask.current_app.logger.info(f"- - - __decrypt_project_private_key (before __decrypt_user_private_key_via_token)\t Current time: {utils.current_time()}")
     private_key_bytes = __decrypt_user_private_key_via_token(user, token)
+    flask.current_app.logger.info(f"- - - __decrypt_project_private_key (after __decrypt_user_private_key_via_token)\t Current time: {utils.current_time()}")
+
     if not private_key_bytes:
         raise KeyOperationError(message="User private key could not be decrypted!")
 
     try:
         user_private_key = serialization.load_der_private_key(private_key_bytes, password=None)
+        flask.current_app.logger.info(f"- - - __decrypt_project_private_key (before __decrypt_with_rsa)\t Current time: {utils.current_time()}")
         if isinstance(user_private_key, asymmetric.rsa.RSAPrivateKey):
             return __decrypt_with_rsa(encrypted_project_private_key, user_private_key)
     except ValueError as exc:
@@ -96,11 +101,18 @@ def __decrypt_project_private_key(user, token, encrypted_project_private_key):
 
 
 def obtain_project_private_key(user, project, token):
+    flask.current_app.logger.info(f"- - obtain_project_private_key (before ProjectUserKeys)\t Current time: {utils.current_time()}")
+
     project_key = models.ProjectUserKeys.query.filter_by(
         project_id=project.id, user_id=user.username
     ).first()
+    flask.current_app.logger.info(f"- - obtain_project_private_key (after ProjectUserKeys)\t Current time: {utils.current_time()}")
+    
+    flask.current_app.logger.info(f"- - obtain_project_private_key (before __decrypt_project_private_key)\t Current time: {utils.current_time()}")
     if project_key:
         return __decrypt_project_private_key(user, token, project_key.key)
+    flask.current_app.logger.info(f"- - obtain_project_private_key (after __decrypt_project_private_key)\t Current time: {utils.current_time()}")
+
     raise KeyNotFoundError(project=project.public_id)
 
 
