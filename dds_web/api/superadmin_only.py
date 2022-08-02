@@ -123,7 +123,7 @@ class MOTD(flask_restful.Resource):
         motd_id = json_input.get("motd_id")
         if not motd_id:
             raise ddserr.DDSArgumentError(message="No MOTD for deactivation specified.")
-        
+
         # Get motd row from db
         motd_to_deactivate = models.MOTD.query.filter_by(id=motd_id).first()
         if not motd_to_deactivate:
@@ -134,12 +134,11 @@ class MOTD(flask_restful.Resource):
         # Check if motd is active
         if not motd_to_deactivate.active:
             raise ddserr.DDSArgumentError(message=f"MOTD with id {motd_id} is not active.")
-        
+
         motd_to_deactivate.active = False
         db.session.commit()
 
         return {"message": "The MOTD was successfully deactivated in the database."}
-            
 
 
 class FindUser(flask_restful.Resource):
