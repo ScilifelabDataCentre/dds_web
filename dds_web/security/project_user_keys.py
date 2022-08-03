@@ -33,7 +33,7 @@ def __derive_key(user, password):
         salt=user.kd_salt,
         time_cost=2,
         memory_cost=0x1000000,
-        parallelism=8,
+        parallelism=4,
         hash_len=32,
         type=argon2.Type.ID,
     )
