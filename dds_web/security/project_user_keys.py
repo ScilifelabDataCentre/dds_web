@@ -32,8 +32,8 @@ def __derive_key(user, password):
         secret=password.encode(),
         salt=user.kd_salt,
         time_cost=2,
-        memory_cost=flask.current_app.config["ARGON_KD_MEMORY_COST"],
-        parallelism=4,
+        memory_cost=0x80000,
+        parallelism=8,
         hash_len=32,
         type=argon2.Type.ID,
     )
