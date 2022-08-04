@@ -18,27 +18,20 @@ from dds_web.security.auth import (
     extract_encrypted_token_sensitive_content,
     extract_token_invite_key,
 )
-from dds_web import utils
 
 
 def __derive_key(user, password):
     if not user.kd_salt:
         raise KeySetupError(message="User keys are not properly setup!")
 
-    flask.current_app.logger.info(
-        f"- - - __derive_key (before hash_secret_raw)\t Current time: {utils.current_time()}"
-    )
     derived_key = argon2.low_level.hash_secret_raw(
         secret=password.encode(),
         salt=user.kd_salt,
         time_cost=2,
-        memory_cost=2097152,  # 16384 worked
+        memory_cost=flask.current_app.config["ARGON_KD_MEMORY_COST"],
         parallelism=8,
         hash_len=32,
         type=argon2.Type.ID,
-    )
-    flask.current_app.logger.info(
-        f"- - - __derive_key (after hash_secret_raw)\t Current time: {utils.current_time()}"
     )
 
     if len(derived_key) != 32:
@@ -90,22 +83,12 @@ def __encrypt_project_private_key(owner, project_private_key):
 
 
 def __decrypt_project_private_key(user, token, encrypted_project_private_key):
-    flask.current_app.logger.info(
-        f"- - - __decrypt_project_private_key (before __decrypt_user_private_key_via_token)\t Current time: {utils.current_time()}"
-    )
     private_key_bytes = __decrypt_user_private_key_via_token(user, token)
-    flask.current_app.logger.info(
-        f"- - - __decrypt_project_private_key (after __decrypt_user_private_key_via_token)\t Current time: {utils.current_time()}"
-    )
-
     if not private_key_bytes:
         raise KeyOperationError(message="User private key could not be decrypted!")
 
     try:
         user_private_key = serialization.load_der_private_key(private_key_bytes, password=None)
-        flask.current_app.logger.info(
-            f"- - - __decrypt_project_private_key (before __decrypt_with_rsa)\t Current time: {utils.current_time()}"
-        )
         if isinstance(user_private_key, asymmetric.rsa.RSAPrivateKey):
             return __decrypt_with_rsa(encrypted_project_private_key, user_private_key)
     except ValueError as exc:
@@ -113,26 +96,11 @@ def __decrypt_project_private_key(user, token, encrypted_project_private_key):
 
 
 def obtain_project_private_key(user, project, token):
-    flask.current_app.logger.info(
-        f"- - obtain_project_private_key (before ProjectUserKeys)\t Current time: {utils.current_time()}"
-    )
-
     project_key = models.ProjectUserKeys.query.filter_by(
         project_id=project.id, user_id=user.username
     ).first()
-    flask.current_app.logger.info(
-        f"- - obtain_project_private_key (after ProjectUserKeys)\t Current time: {utils.current_time()}"
-    )
-
-    flask.current_app.logger.info(
-        f"- - obtain_project_private_key (before __decrypt_project_private_key)\t Current time: {utils.current_time()}"
-    )
     if project_key:
         return __decrypt_project_private_key(user, token, project_key.key)
-    flask.current_app.logger.info(
-        f"- - obtain_project_private_key (after __decrypt_project_private_key)\t Current time: {utils.current_time()}"
-    )
-
     raise KeyNotFoundError(project=project.public_id)
 
 
@@ -253,52 +221,22 @@ def __encrypt_owner_private_key(owner, private_key, owner_key=None):
 
 def __decrypt_user_private_key(user, user_key):
     if user.private_key and user.nonce:
-        flask.current_app.logger.info(
-            f"- - - __decrypt_user_private_key (before __decrypt_with_aes)\t Current time: {utils.current_time()}"
-        )
-        decrypted_user_private_key = __decrypt_with_aes(
+        return __decrypt_with_aes(
             user_key,
             user.private_key,
             user.nonce,
             aad=b"private key for " + user.username.encode(),
         )
-        flask.current_app.logger.info(
-            f"- - - __decrypt_user_private_key (after __decrypt_with_aes)\t Current time: {utils.current_time()}"
-        )
-        return decrypted_user_private_key
     raise KeySetupError(message="User keys are not properly setup!")
 
 
 def __decrypt_user_private_key_via_token(user, token):
-    flask.current_app.logger.info(
-        f"- - - - __decrypt_user_private_key_via_token (before extract_encrypted_token_sensitive_content)\t Current time: {utils.current_time()}"
-    )
     password = extract_encrypted_token_sensitive_content(token, user.username)
-    flask.current_app.logger.info(
-        f"- - - - __decrypt_user_private_key_via_token (after extract_encrypted_token_sensitive_content)\t Current time: {utils.current_time()}"
-    )
-
     if not password:
-        flask.current_app.logger.info("There is no password found.")
         raise SensitiveContentMissingError
-
-    flask.current_app.logger.info(
-        f"- - - - __decrypt_user_private_key_via_token (before __derive_key)\t Current time: {utils.current_time()}"
-    )
     user_key = __derive_key(user, password)
-    flask.current_app.logger.info(
-        f"- - - - __decrypt_user_private_key_via_token (after __derive_key)\t Current time: {utils.current_time()}"
-    )
 
-    flask.current_app.logger.info(
-        f"- - - - __decrypt_user_private_key_via_token (before __decrypt_user_private_key)\t Current time: {utils.current_time()}"
-    )
-    decrypted_user_private_key = __decrypt_user_private_key(user, user_key)
-    flask.current_app.logger.info(
-        f"- - - - __decrypt_user_private_key_via_token (after __decrypt_user_private_key)\t Current time: {utils.current_time()}"
-    )
-
-    return decrypted_user_private_key
+    return __decrypt_user_private_key(user, user_key)
 
 
 def __decrypt_invite_private_key(invite, temporary_key):
