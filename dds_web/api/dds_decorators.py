@@ -39,9 +39,6 @@ action_logger = structlog.getLogger("actions")
 def handle_validation_errors(func):
     @functools.wraps(func)
     def handle_error(*args, **kwargs):
-        flask.current_app.logger.info(
-            f"- handle_validation_errors\t Current time: {current_time()}"
-        )
         try:
             result = func(*args, **kwargs)
         except (marshmallow.exceptions.ValidationError) as valerr:
@@ -187,7 +184,6 @@ def logging_bind_request(func):
 
     @functools.wraps(func)
     def wrapper_logging_bind_request(*args, **kwargs):
-        flask.current_app.logger.info(f"- logging_bind_request\t Current time: {current_time()}")
         with structlog.threadlocal.bound_threadlocal(
             resource=flask.request.path or "not applicable",
             project=flask.request.args.get("project") if flask.request.args else None,

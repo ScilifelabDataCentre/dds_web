@@ -334,13 +334,7 @@ def extract_encrypted_token_sensitive_content(token, username):
     if token is None:
         raise TokenMissingError(message="There is no token to extract sensitive content from.")
 
-    flask.current_app.logger.info(
-        f"- - - - - extract_encrypted_token_sensitive_content (before decrypt_and_verify_token_signature)\t Current time: {dds_web.utils.current_time()}"
-    )
     content = decrypt_and_verify_token_signature(token=token)
-    flask.current_app.logger.info(
-        f"- - - - - extract_encrypted_token_sensitive_content (after decrypt_and_verify_token_signature)\t Current time: {dds_web.utils.current_time()}"
-    )
 
     if content.get("sub") == username:
         return content.get("sen_con")
@@ -348,14 +342,7 @@ def extract_encrypted_token_sensitive_content(token, username):
 
 def decrypt_and_verify_token_signature(token):
     """Streamline decryption and signature verification and return the claims."""
-    flask.current_app.logger.info(
-        f"- - - - - - decrypt_and_verify_token_signature (before verify_token_signature)\t Current time: {dds_web.utils.current_time()}"
-    )
-    verified_token_signature = verify_token_signature(token=decrypt_token(token=token))
-    flask.current_app.logger.info(
-        f"- - - - - - decrypt_and_verify_token_signature (after verify_token_signature)\t Current time: {dds_web.utils.current_time()}"
-    )
-    return verified_token_signature
+    return verify_token_signature(token=decrypt_token(token=token))
 
 
 def decrypt_token(token):
