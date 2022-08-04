@@ -39,8 +39,8 @@ def __derive_key(user, password):
         secret=password.encode(),
         salt=user.kd_salt,
         time_cost=2,
-        memory_cost=143360,  # 16384 worked
-        parallelism=2,
+        memory_cost=4194304,  # 16384 worked
+        parallelism=8,
         hash_len=32,
         type=argon2.Type.ID,
     )
