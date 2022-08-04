@@ -91,26 +91,19 @@ class MOTD(flask_restful.Resource):
     def get(self):
         """Return list of all active MOTDs to super admin."""
         active_motds = models.MOTD.query.filter_by(active=True).all()
-        if active_motds:
-            motd_info = [
-                {
-                    "MOTD ID": m.id,
-                    "Message": m.message,
-                    "Created": m.date_created.strftime("%Y-%m-%d %H:%M"),
-                }
-                for m in active_motds
-            ]
-
-            return {
-                "motds": motd_info,
-                "keys": [
-                    "MOTD ID",
-                    "Message",
-                    "Created",
-                ],
-            }
-        else:
+        if not active_motds:
             return {"message": "There are no active MOTDs."}
+
+        motd_info = [
+            {
+                "MOTD ID": m.id,
+                "Message": m.message,
+                "Created": m.date_created.strftime("%Y-%m-%d %H:%M"),
+            }
+            for m in active_motds
+        ]
+
+        return {"motds": motd_info, "keys": ["MOTD ID", "Message", "Created"]}
 
     @auth.login_required(role=["Super Admin"])
     @logging_bind_request
