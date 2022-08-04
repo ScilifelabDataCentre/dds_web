@@ -28,15 +28,31 @@ def __derive_key(user, password):
     flask.current_app.logger.info(
         f"- - - __derive_key (before hash_secret_raw)\t Current time: {utils.current_time()}"
     )
+    # Original settings
+    # Minimum number of iterations: time_cost=2
+    # Minimum memory size: memory_cost=4GiB
+    # Degree of parallelism, CPU cores * 2: parallelism=8
+    # OWASP:
+    # minimum alternative 1: m=37 MiB, t=1, p=1
+    # minimum alternative 2: m=15 MiB, t=2, p=1
     derived_key = argon2.low_level.hash_secret_raw(
         secret=password.encode(),
         salt=user.kd_salt,
         time_cost=2,
         memory_cost=143360,  # 16384 worked
-        parallelism=4,
+        parallelism=2,
         hash_len=32,
         type=argon2.Type.ID,
     )
+    # RFC_9106_LOW_MEMORY = Parameters(
+    #     type=Type.ID,
+    #     version=19,
+    #     salt_len=16,
+    #     hash_len=32,
+    #     time_cost=3,
+    #     memory_cost=65536,  # 64 MiB
+    #     parallelism=4,
+    # )
     flask.current_app.logger.info(
         f"- - - __derive_key (after hash_secret_raw)\t Current time: {utils.current_time()}"
     )
