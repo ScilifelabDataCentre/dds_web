@@ -24,8 +24,10 @@ from dds_web import utils
 def __derive_key(user, password):
     if not user.kd_salt:
         raise KeySetupError(message="User keys are not properly setup!")
-    
-    flask.current_app.logger.info("Argon2id starting. Risk of timeouts due to parameters and server incompatibility.")
+
+    flask.current_app.logger.info(
+        "Argon2id starting. Risk of timeouts due to parameters and server incompatibility."
+    )
     derived_key = argon2.low_level.hash_secret_raw(
         secret=password.encode(),
         salt=user.kd_salt,
@@ -35,7 +37,6 @@ def __derive_key(user, password):
         hash_len=32,
         type=argon2.Type.ID,
     )
-    
 
     if len(derived_key) != 32:
         raise KeySetupError(message="Derived key is not 256 bits long!")

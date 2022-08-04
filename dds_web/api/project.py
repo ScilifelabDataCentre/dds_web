@@ -393,15 +393,17 @@ class GetPrivate(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         flask.current_app.logger.debug("Getting the private key.")
-        return flask.jsonify({
-            "private": obtain_project_private_key(
-                user=auth.current_user(),
-                project=project,
-                token=dds_web.security.auth.obtain_current_encrypted_token(),
-            )
-            .hex()
-            .upper()
-        })
+        return flask.jsonify(
+            {
+                "private": obtain_project_private_key(
+                    user=auth.current_user(),
+                    project=project,
+                    token=dds_web.security.auth.obtain_current_encrypted_token(),
+                )
+                .hex()
+                .upper()
+            }
+        )
 
 
 class UserProjects(flask_restful.Resource):
