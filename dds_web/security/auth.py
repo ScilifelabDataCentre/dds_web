@@ -231,7 +231,6 @@ def verify_token(token):
     if not user:
         raise AccessDeniedError(message="Invalid token. Try reauthenticating.")
 
-    flask.current_app.logger.debug(type(user.password_reset))
     if user.password_reset:
         token_expired = claims.get("exp")
         token_issued = datetime.datetime.fromtimestamp(token_expired) - MFA_EXPIRES_IN
