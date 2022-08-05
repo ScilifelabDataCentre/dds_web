@@ -50,7 +50,7 @@ def test_list_files_auth_not_available(client):
         query_string={"project": "public_project_id"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
-    assert "no data available" in response.json["message"]
+    assert "Please wait for unit to release the data" in response.json["message"]
 
 
 def test_list_files_auth(client):
