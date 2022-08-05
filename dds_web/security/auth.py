@@ -313,10 +313,10 @@ def __handle_multi_factor_authentication(user, mfa_auth_time_string):
 
 def send_hotp_email(user):
     """Send one time code via email."""
-    # Only send if 
-    # - not trying to activate hotp 
-    # or 
-    # - the hotp has not been issued or if it's been 
+    # Only send if
+    # - not trying to activate hotp
+    # or
+    # - the hotp has not been issued or if it's been
     # more than 15 minutes since a hotp email was last sent
     if flask.request.path.endswith("/user/hotp/activate"):
         pass
