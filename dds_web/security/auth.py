@@ -229,7 +229,7 @@ def verify_token(token):
 
     user = __user_from_subject(subject=claims.get("sub"))
     if not user:
-        raise AccessDeniedError("Invalid token. Try reauthenticating.")
+        raise AccessDeniedError(message="Invalid token. Try reauthenticating.")
 
     flask.current_app.logger.debug(type(user.password_reset))
     if user.password_reset:
