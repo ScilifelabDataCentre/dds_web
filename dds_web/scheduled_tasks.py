@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import flask_apscheduler
 import flask
 
+from typing import Dict
+
 ## Apscheduler
 scheduler = flask_apscheduler.APScheduler()
 
@@ -91,6 +93,7 @@ def set_available_to_expired():
 
 
 @scheduler.task("cron", id="expired_to_archived", hour=0, minute=1, misfire_grace_time=3600)
+# @scheduler.task("interval", id="expired_to_archived", seconds=15, misfire_grace_time=1)
 def set_expired_to_archived():
     """Search for expired projects whose deadlines are past and archive them"""
 
@@ -172,6 +175,8 @@ def set_expired_to_archived():
 
 
 @scheduler.task("cron", id="delete_invite", hour=0, minute=1, misfire_grace_time=3600)
+# @scheduler.task("interval", id="delete_invite", seconds=15, misfire_grace_time=1)
+
 def delete_invite():
     """Delete invite older than a week"""
 
@@ -214,8 +219,8 @@ def delete_invite():
             scheduler.app.logger.error(f"{invite} not deleted: {error}")
 
 
-# @scheduler.task("cron", id="get_monthly_usage", day='1', hour=0, minute=1)
-@scheduler.task("interval", id="monthly_usage", seconds=150, misfire_grace_time=1)
+@scheduler.task("cron", id="get_monthly_usage", day='1', hour=0, minute=1)
+# @scheduler.task("interval", id="monthly_usage", seconds=150, misfire_grace_time=1)
 def monthly_usage():
     """Get the monthly usage for the units"""
 
