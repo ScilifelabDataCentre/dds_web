@@ -13,12 +13,13 @@ from dds_web.scheduled_tasks import (
     set_available_to_expired,
     set_expired_to_archived,
     delete_invite,
-    monthly_usage
+    monthly_usage,
 )
 
 from typing import List
 
 # set_available_to_expired
+
 
 def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
     units: List = db.session.query(models.Unit).all()
@@ -57,6 +58,7 @@ def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
 
 
 # set_expired_to_archived
+
 
 @mock.patch("boto3.session.Session")
 def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient) -> None:
