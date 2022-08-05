@@ -251,7 +251,9 @@ class ListFiles(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         if auth.current_user().role == "Researcher" and project.current_status == "In Progress":
-            raise AccessDeniedError(message="There's no data available at this time.")
+            raise AccessDeniedError(
+                message="The project status must be 'Available'. Please wait for unit to release the data."
+            )
 
         extra_args = flask.request.json
         if extra_args is None:
