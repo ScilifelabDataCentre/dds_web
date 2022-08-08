@@ -228,6 +228,8 @@ def verify_token(token):
         raise AuthenticationError(message="Invalid token")
 
     user = __user_from_subject(subject=claims.get("sub"))
+    if not user:
+        raise AccessDeniedError(message="Invalid token. Try reauthenticating.")
 
     if user.password_reset:
         token_expired = claims.get("exp")
