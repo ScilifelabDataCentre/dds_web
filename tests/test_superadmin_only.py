@@ -126,7 +126,7 @@ def test_get_motd_no_message(client):
     """Get latest MOTD from database."""
     response = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
     assert response.status_code == http.HTTPStatus.OK
-    assert not response.json.get("message")
+    assert "There are no active MOTDs." in response.json.get("message")
 
 
 def test_get_motd(client):
@@ -140,7 +140,8 @@ def test_get_motd(client):
     # Get first message
     response1 = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
     assert response1.status_code == http.HTTPStatus.OK
-    assert "test" in response1.json.get("message")
+    assert isinstance(response1.json.get("motds"), list)
+    assert "test" in response1.json.get("motds")[0]["Message"]
 
     time.sleep(5)
 
@@ -154,7 +155,49 @@ def test_get_motd(client):
     # Check that new message is displayed
     response3 = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
     assert response3.status_code == http.HTTPStatus.OK
-    assert "something else" in response3.json.get("message")
+    assert "something else" in response3.json.get("motds")[1]["Message"]
+
+    # Deactivate message
+    response4 = client.put(tests.DDSEndpoint.MOTD, headers=token, json={"motd_id": 1})
+    assert response4.status_code == http.HTTPStatus.OK
+    assert "The MOTD was successfully deactivated in the database." in response4.json.get("message")
+
+    # Deactivate message that is not active
+    response5 = client.put(tests.DDSEndpoint.MOTD, headers=token, json={"motd_id": 1})
+    assert response5.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "MOTD with id 1 is not active." in response5.json.get("message")
+
+
+def test_deactivate_motd_no_json(client):
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.put(tests.DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Required data missing from request!" in response.json.get("message")
+
+
+def test_deactivate_motd_no_motd_id(client):
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.put(tests.DDSEndpoint.MOTD, headers=token, json={"test": "test"})
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "No MOTD for deactivation specified." in response.json.get("message")
+
+
+def test_deactivate_motd_no_such_motd(client):
+    token = get_token(username=users["Super Admin"], client=client)
+    response = client.put(tests.DDSEndpoint.MOTD, headers=token, json={"motd_id": 8})
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "MOTD with id 8 does not exist in the database" in response.json.get("message")
+
+
+def test_deactivate_motd_not_superadmin(client):
+    """Deactivate a message of the day, using everything but Super Admin access."""
+    no_access_users = users.copy()
+    no_access_users.pop("Super Admin")
+
+    for u in no_access_users:
+        token = get_token(username=users[u], client=client)
+        response = client.put(tests.DDSEndpoint.MOTD, headers=token)
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
 # FindUser

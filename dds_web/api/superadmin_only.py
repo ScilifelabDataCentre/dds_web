@@ -81,7 +81,7 @@ class MOTD(flask_restful.Resource):
             raise ddserr.DDSArgumentError(message="No MOTD specified.")
 
         flask.current_app.logger.debug(motd)
-        new_motd = models.MOTD(message=motd, date_created=curr_date)
+        new_motd = models.MOTD(message=motd)
         db.session.add(new_motd)
         db.session.commit()
 
@@ -89,9 +89,49 @@ class MOTD(flask_restful.Resource):
 
     @handle_db_error
     def get(self):
-        """Get the latest MOTD from database."""
-        motd = utils.get_latest_motd()
-        return {"message": motd}
+        """Return list of all active MOTDs to super admin."""
+        active_motds = models.MOTD.query.filter_by(active=True).all()
+        if not active_motds:
+            return {"message": "There are no active MOTDs."}
+
+        motd_info = [
+            {
+                "MOTD ID": m.id,
+                "Message": m.message,
+                "Created": m.date_created.strftime("%Y-%m-%d %H:%M"),
+            }
+            for m in active_motds
+        ]
+
+        return {"motds": motd_info, "keys": ["MOTD ID", "Message", "Created"]}
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def put(self):
+        """Deactivate MOTDs."""
+        # Get motd id
+        json_input = flask.request.json
+        motd_id = json_input.get("motd_id")
+        if not motd_id:
+            raise ddserr.DDSArgumentError(message="No MOTD for deactivation specified.")
+
+        # Get motd row from db
+        motd_to_deactivate = models.MOTD.query.filter_by(id=motd_id).first()
+        if not motd_to_deactivate:
+            raise ddserr.DDSArgumentError(
+                message=f"MOTD with id {motd_id} does not exist in the database"
+            )
+
+        # Check if motd is active
+        if not motd_to_deactivate.active:
+            raise ddserr.DDSArgumentError(message=f"MOTD with id {motd_id} is not active.")
+
+        motd_to_deactivate.active = False
+        db.session.commit()
+
+        return {"message": "The MOTD was successfully deactivated in the database."}
 
 
 class FindUser(flask_restful.Resource):
