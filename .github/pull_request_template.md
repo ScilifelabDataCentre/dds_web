@@ -22,6 +22,9 @@ Please delete options that are not relevant.
 - [ ] Any dependent changes have been merged and published in downstream modules
 - [ ] Rebase/merge the branch which this PR is made to
 - [ ] Changes to the database schema: A new migration is included in the PR
+- [ ] Product Owner / Scrum Master: This PR is made to the `master` branch and I have updated the [version](../dds_web/version.py)
+- [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x) and I have made the corresponding changes to the CLI version
+
 
 ## Formatting and documentation
 
