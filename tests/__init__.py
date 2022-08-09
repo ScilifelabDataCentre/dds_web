@@ -39,7 +39,7 @@ USER_CREDENTIALS = {
     "delete_me_unitadmin": "delete_me_unitadmin:password",
 }
 
-DEFAULT_HEADER = {"X-CLI-Version": "0.0.0"}
+DEFAULT_HEADER = {"X-CLI-Version": "1.0.8"}
 
 ###############################################################################
 # CLASSES ########################################################### CLASSES #
