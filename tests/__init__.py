@@ -7,7 +7,7 @@ import flask
 import flask_login
 from requests_mock.mocker import Mocker
 from dds_web.version import __version__
-from typing import Dict 
+from typing import Dict
 
 # Copied from dds_cli __init__.py:
 
