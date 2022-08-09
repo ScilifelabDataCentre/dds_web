@@ -29,7 +29,7 @@ extra_info = {"result": "DENIED"}
 
 class LoggedHTTPException(exceptions.HTTPException):
     """Base class to enable standard action logging on HTTP Exceptions"""
-    
+
     def __init__(self, message=None, **kwargs):
         # Put import here to avoid circular imports: errors -> utils -> models -> errors
         from dds_web.utils import get_username_or_request_ip
@@ -402,10 +402,13 @@ class RoleException(LoggedHTTPException):
         super().__init__(message)
         general_logger.warning(message)
 
+
 class VersionMismatchError(LoggedHTTPException):
 
     code = http.HTTPStatus.FORBIDDEN
 
-    def __init__(self, message="You're using an old CLI version, please upgrade to the latest one."):
+    def __init__(
+        self, message="You're using an old CLI version, please upgrade to the latest one."
+    ):
         super().__init__(message)
         general_logger.warning(message)

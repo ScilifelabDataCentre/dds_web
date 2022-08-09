@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import patch
 from dds_web import db
 from dds_web.database import models
-from dds_web.errors import AccessDeniedError
+from dds_web.errors import AccessDeniedError, VersionMismatchError
 import flask
 import flask_login
 import datetime
@@ -19,6 +19,30 @@ import werkzeug
 
 url: str = "http://localhost"
 pypi_api_url: str = "https://pypi.python.org/pypi/dds-cli/json"
+
+# verify_cli_version
+
+
+def test_verify_cli_version_no_version_in_request(client: flask.testing.FlaskClient) -> None:
+    """Version is required in order to compare."""
+    with pytest.raises(VersionMismatchError) as err:
+        utils.verify_cli_version()
+    assert "No version found in request, cannot proceed." in str(err.value)
+
+
+def test_verify_cli_version_incompatible(client: flask.testing.FlaskClient) -> None:
+    """Incompatible versions should return an error."""
+    with pytest.raises(VersionMismatchError) as err:
+        utils.verify_cli_version(version_cli="0.0.0")
+    assert "You're using an old CLI version, please upgrade to the latest one." in str(err.value)
+
+
+def test_verify_cli_version_ok(client: flask.testing.FlaskClient) -> None:
+    """Compatible versions should not fail."""
+    from dds_web import version
+
+    utils.verify_cli_version(version_cli=version.__version__)
+
 
 # contains_uppercase
 

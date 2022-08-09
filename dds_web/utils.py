@@ -38,10 +38,12 @@ from dds_web.version import __version__
 
 # General ################################################################################ General #
 
-def verify_cli_version():
+
+def verify_cli_version(version_cli: str = None) -> None:
     """Verify that the CLI version in header is compatible with the web version."""
-    # Get version from header
-    version_cli = flask.request.headers.get("X-Cli-Version")
+    # Verify that version is specified
+    if not version_cli:
+        raise VersionMismatchError(message="No version found in request, cannot proceed.")
     flask.current_app.logger.info(f"CLI VERSION: {version_cli}")
 
     # Split version string up into major, middle, minor
@@ -50,7 +52,7 @@ def verify_cli_version():
 
     # Verify that major versions match
     if version_cli_parts[0] != version_correct_parts[0]:
-        raise VersionMismatchError()
+        raise VersionMismatchError
 
 
 def contains_uppercase(indata):
