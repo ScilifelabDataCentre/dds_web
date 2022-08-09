@@ -29,7 +29,7 @@ extra_info = {"result": "DENIED"}
 
 class LoggedHTTPException(exceptions.HTTPException):
     """Base class to enable standard action logging on HTTP Exceptions"""
-
+    
     def __init__(self, message=None, **kwargs):
         # Put import here to avoid circular imports: errors -> utils -> models -> errors
         from dds_web.utils import get_username_or_request_ip
@@ -61,7 +61,7 @@ class LoggedHTTPException(exceptions.HTTPException):
 class KeyLengthError(SystemExit):
     """Invalid key length for encryption"""
 
-    def __init__(self, encryption_key_char_length):
+    def __init__(self, encryption_key_char_length: str):
         message = (
             f"SECRET KEY MUST BE {encryption_key_char_length} "
             f"CHARACTERS LONG IN ORDER TO SATISFY THE CURRENT TOKEN ENCRYPTION!"
@@ -399,5 +399,13 @@ class RoleException(LoggedHTTPException):
 
     def __init__(self, message="Invalid role."):
 
+        super().__init__(message)
+        general_logger.warning(message)
+
+class VersionMismatchError(LoggedHTTPException):
+
+    code = http.HTTPStatus.FORBIDDEN
+
+    def __init__(self, message="You're using an old CLI version, please upgrade to the latest one."):
         super().__init__(message)
         general_logger.warning(message)
