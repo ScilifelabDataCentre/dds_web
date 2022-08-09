@@ -8,14 +8,17 @@ import pytest
 import http
 import flask
 
+
 class LoggedHTTPExceptionTest(errors.LoggedHTTPException):
 
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
 
 def test_LoggedHTTPException(client: flask.testing.FlaskClient) -> None:
     with pytest.raises(LoggedHTTPExceptionTest) as err:
         raise LoggedHTTPExceptionTest(message="Some message", test="test")
     assert "Some message" in str(err.value)
+
 
 def test_KeyLengthError(client: flask.testing.FlaskClient) -> None:
     with pytest.raises(errors.KeyLengthError) as err:
