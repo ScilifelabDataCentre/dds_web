@@ -193,7 +193,8 @@ def create_app(testing=False, database_uri=None):
             from dds_web.utils import get_active_motds
 
             # Verify cli version compatible
-            verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
+            if "api/v1" in flask.request.path:
+                verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
 
             # Get message of the day
             flask.g.motd = get_active_motds()

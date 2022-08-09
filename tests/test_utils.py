@@ -18,7 +18,6 @@ import werkzeug
 # Variables
 
 url: str = "http://localhost"
-pypi_api_url: str = "https://pypi.python.org/pypi/dds-cli/json"
 
 # verify_cli_version
 
@@ -36,6 +35,11 @@ def test_verify_cli_version_incompatible(client: flask.testing.FlaskClient) -> N
         utils.verify_cli_version(version_cli="0.0.0")
     assert "You're using an old CLI version, please upgrade to the latest one." in str(err.value)
 
+def test_verify_cli_version_incorrect_length(client: flask.testing.FlaskClient) -> None:
+    """Incorrect version lengths should return an error."""
+    with pytest.raises(VersionMismatchError) as err:
+        utils.verify_cli_version(version_cli="0.0.0.0")
+    assert "Incompatible version lengths." in str(err.value)
 
 def test_verify_cli_version_ok(client: flask.testing.FlaskClient) -> None:
     """Compatible versions should not fail."""
