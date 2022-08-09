@@ -61,7 +61,7 @@ class LoggedHTTPException(exceptions.HTTPException):
 class KeyLengthError(SystemExit):
     """Invalid key length for encryption"""
 
-    def __init__(self, encryption_key_char_length: str):
+    def __init__(self, encryption_key_char_length):
         message = (
             f"SECRET KEY MUST BE {encryption_key_char_length} "
             f"CHARACTERS LONG IN ORDER TO SATISFY THE CURRENT TOKEN ENCRYPTION!"
