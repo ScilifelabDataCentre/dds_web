@@ -50,6 +50,7 @@ def verify_cli_version(version_cli: str = None) -> None:
     version_cli_parts = version_cli.split(".")
     version_correct_parts = __version__.split(".")
 
+    # The versions must have the same lengths
     if len(version_cli_parts) != len(version_correct_parts):
         raise VersionMismatchError(message="Incompatible version lengths.")
 
