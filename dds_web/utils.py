@@ -14,7 +14,7 @@ import urllib.parse
 # Installed
 from contextlib import contextmanager
 import flask
-from dds_web.errors import AccessDeniedError
+from dds_web.errors import AccessDeniedError, VersionMismatchError
 import flask_mail
 import flask_login
 import requests
@@ -30,12 +30,33 @@ import wtforms
 # Own modules
 from dds_web.database import models
 from dds_web import auth, mail
+from dds_web.version import __version__
 
 ####################################################################################################
 # VALIDATORS ########################################################################## VALIDATORS #
 ####################################################################################################
 
 # General ################################################################################ General #
+
+
+def verify_cli_version(version_cli: str = None) -> None:
+    """Verify that the CLI version in header is compatible with the web version."""
+    # Verify that version is specified
+    if not version_cli:
+        raise VersionMismatchError(message="No version found in request, cannot proceed.")
+    flask.current_app.logger.info(f"CLI VERSION: {version_cli}")
+
+    # Split version string up into major, middle, minor
+    version_cli_parts = version_cli.split(".")
+    version_correct_parts = __version__.split(".")
+
+    # The versions must have the same lengths
+    if len(version_cli_parts) != len(version_correct_parts):
+        raise VersionMismatchError(message="Incompatible version lengths.")
+
+    # Verify that major versions match
+    if version_cli_parts[0] != version_correct_parts[0]:
+        raise VersionMismatchError
 
 
 def contains_uppercase(indata):

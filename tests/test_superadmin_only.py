@@ -124,7 +124,7 @@ def test_create_motd_as_superadmin_success(client):
 
 def test_get_motd_no_message(client):
     """Get latest MOTD from database."""
-    response = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
+    response = client.get(tests.DDSEndpoint.MOTD, headers=tests.DEFAULT_HEADER)
     assert response.status_code == http.HTTPStatus.OK
     assert "There are no active MOTDs." in response.json.get("message")
 
@@ -138,7 +138,7 @@ def test_get_motd(client):
     assert models.MOTD.query.filter_by(message="test")
 
     # Get first message
-    response1 = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
+    response1 = client.get(tests.DDSEndpoint.MOTD, headers=tests.DEFAULT_HEADER)
     assert response1.status_code == http.HTTPStatus.OK
     assert isinstance(response1.json.get("motds"), list)
     assert "test" in response1.json.get("motds")[0]["Message"]
@@ -153,7 +153,7 @@ def test_get_motd(client):
     assert models.MOTD.query.filter_by(message="something else")
 
     # Check that new message is displayed
-    response3 = client.get(tests.DDSEndpoint.MOTD, headers={"X-CLI-Version": "0.0.0"})
+    response3 = client.get(tests.DDSEndpoint.MOTD, headers=tests.DEFAULT_HEADER)
     assert response3.status_code == http.HTTPStatus.OK
     assert "something else" in response3.json.get("motds")[1]["Message"]
 

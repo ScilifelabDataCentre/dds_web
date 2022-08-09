@@ -37,11 +37,11 @@ from dds_web.security.project_user_keys import (
     share_project_private_key,
 )
 from dds_web.security.tokens import encrypted_jwt_token
+from dds_web.version import __version__
 
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
-pypi_api_url = "https://pypi.python.org/pypi/dds-cli/json"
 
 
 def fill_basic_db(db):
@@ -475,11 +475,9 @@ def client(setup_database):
     with app.test_request_context():
         with app.test_client() as client:
             client.environ_base["HTTP_Cache-Control"] = "no-cache"
-            client.environ_base["HTTP_X-CLI-Version"] = "0.0.0"
+            client.environ_base["HTTP_X-CLI-Version"] = __version__
             try:
-                with Mocker() as mock:
-                    mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
-                    yield client
+                yield client
             finally:
                 # aborts any pending transactions
                 db.session.rollback()
@@ -499,11 +497,9 @@ def module_client(setup_database):
     with app.test_request_context():
         with app.test_client() as client:
             client.environ_base["HTTP_Cache-Control"] = "no-cache"
-            client.environ_base["HTTP_X-CLI-Version"] = "0.0.0"
+            client.environ_base["HTTP_X-CLI-Version"] = __version__
             try:
-                with Mocker() as mock:
-                    mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
-                    yield client
+                yield client
             finally:
                 # aborts any pending transactions
                 db.session.rollback()
