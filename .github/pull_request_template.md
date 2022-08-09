@@ -25,7 +25,6 @@ Please delete options that are not relevant.
 - [ ] Product Owner / Scrum Master: This PR is made to the `master` branch and I have updated the [version](../dds_web/version.py)
 - [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x) and I have made the corresponding changes to the CLI version
 
-
 ## Formatting and documentation
 
 - [ ] I have added a row in the [changelog](../CHANGELOG.md)
