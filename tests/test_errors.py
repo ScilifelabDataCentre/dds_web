@@ -160,6 +160,10 @@ def test_DatabaseError(client: flask.testing.FlaskClient) -> None:
         raise errors.DatabaseError(message=first_error, alt_message=alternative_error)
     assert str(err4.value) == f"{error_start}{alternative_error}"
 
+    with pytest.raises(errors.DatabaseError) as err5:
+        raise errors.DatabaseError(message=first_error, project="project_id")
+    assert str(err5.value) == f"{error_start}The system encountered an error in the database."
+
 
 def test_EmptyProjectException(client: flask.testing.FlaskClient) -> None:
     error_start = f"{http.HTTPStatus.BAD_REQUEST} Bad Request: "
