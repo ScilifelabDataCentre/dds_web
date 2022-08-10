@@ -62,6 +62,7 @@ def test_project(module_client):
 
 # ProjectStatus
 
+
 def test_projectstatus_get_status_without_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
     # Create unit admins to allow project creation
@@ -70,7 +71,7 @@ def test_projectstatus_get_status_without_args(module_client, boto3_session):
         create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins >= 3
-    
+
     # Create project
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -98,6 +99,7 @@ def test_projectstatus_get_status_without_args(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Required information missing from request!" in response.json["message"]
 
+
 def test_projectstatus_get_status_with_empty_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
     # Create unit admins to allow project creation
@@ -106,7 +108,7 @@ def test_projectstatus_get_status_with_empty_args(module_client, boto3_session):
         create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins >= 3
-    
+
     # Create project
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -125,6 +127,7 @@ def test_projectstatus_get_status_with_empty_args(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Missing required information: 'project'" in response.json["message"]
 
+
 def test_projectstatus_get_status_with_invalid_project(module_client, boto3_session):
     """Submit status request with invalid arguments"""
     # Create unit admins to allow project creation
@@ -133,7 +136,7 @@ def test_projectstatus_get_status_with_invalid_project(module_client, boto3_sess
         create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins >= 3
-    
+
     # Create project
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -152,6 +155,7 @@ def test_projectstatus_get_status_with_invalid_project(module_client, boto3_sess
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "The specified project does not exist." in response.json["message"]
 
+
 def test_projectstatus_get_status_with_non_accessible_project(module_client, boto3_session):
     """Submit status request with invalid arguments"""
     # Get project for unit 2
@@ -168,6 +172,7 @@ def test_projectstatus_get_status_with_non_accessible_project(module_client, bot
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert "Project access denied." in response.json["message"]
 
+
 def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
     # Create unit admins to allow project creation
@@ -176,7 +181,7 @@ def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_ses
         create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins >= 3
-    
+
     # Create project
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,

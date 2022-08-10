@@ -58,10 +58,10 @@ class ProjectStatus(flask_restful.Resource):
         """Get current project status and optionally entire status history"""
         # Get project ID
         project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
-        
+
         # Get project object
         project = dds_web.utils.collect_project(project_id=project_id)
-        
+
         # Verify that authenticated user has access to project
         dds_web.utils.verify_project_access(project=project)
 

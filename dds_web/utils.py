@@ -14,7 +14,12 @@ import urllib.parse
 # Installed
 from contextlib import contextmanager
 import flask
-from dds_web.errors import AccessDeniedError, VersionMismatchError, DDSArgumentError, NoSuchProjectError
+from dds_web.errors import (
+    AccessDeniedError,
+    VersionMismatchError,
+    DDSArgumentError,
+    NoSuchProjectError,
+)
 import flask_mail
 import flask_login
 import requests
@@ -50,6 +55,7 @@ def collect_project(project_id: str):
 
     return project
 
+
 def get_required_item(obj: werkzeug.datastructures.ImmutableMultiDict, req: str) -> str:
     """Get value from dict."""
     req_val = obj.get(req)
@@ -57,6 +63,7 @@ def get_required_item(obj: werkzeug.datastructures.ImmutableMultiDict, req: str)
         raise DDSArgumentError(f"Missing required information: '{req}'")
 
     return req_val
+
 
 # Cannot have type hint for return due to models.Project giving circular import
 def verify_project_access(project) -> None:

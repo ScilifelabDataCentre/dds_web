@@ -234,7 +234,7 @@ def demo_data():
             description="this project is used for testing unit 2",
             pi="unit 2 testing project PI",
             bucket="bucket-2",
-        )
+        ),
     ]
 
     files_and_versions = [
