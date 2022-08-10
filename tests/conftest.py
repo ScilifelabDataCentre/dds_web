@@ -228,6 +228,13 @@ def demo_data():
             pi="file testing project PI",
             bucket="bucket",
         ),
+        Project(
+            public_id="unit2testing",
+            title="unit 2 testing project",
+            description="this project is used for testing unit 2",
+            pi="unit 2 testing project PI",
+            bucket="bucket-2",
+        )
     ]
 
     files_and_versions = [
@@ -428,12 +435,14 @@ def add_data_to_db():
     users[2].created_projects.append(projects[2])
     users[3].created_projects.append(projects[3])
     users[2].created_projects.append(projects[4])
+    users[8].created_projects.append(projects[5])
 
     units[0].projects.extend(projects)
     units[0].users.extend([users[2], users[3], users[4]])
     units[0].invites.append(invites[0])
     units[0].invites.append(invites[1])
 
+    units[1].projects.append(projects[5])
     units[1].users.extend([users[8], users[9]])
 
     for user in users:

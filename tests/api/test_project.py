@@ -152,6 +152,22 @@ def test_projectstatus_get_status_with_invalid_project(module_client, boto3_sess
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "The specified project does not exist." in response.json["message"]
 
+def test_projectstatus_get_status_with_non_accessible_project(module_client, boto3_session):
+    """Submit status request with invalid arguments"""
+    # Get project for unit 2
+    project = models.Project.query.filter_by(unit_id=2).first()
+    assert project
+
+    # Test getting project status without args - should fail
+    response = module_client.get(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        json={},
+        query_string={"project": project.public_id},
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    assert "Project access denied." in response.json["message"]
+
 def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
     # Create unit admins to allow project creation

@@ -56,11 +56,14 @@ class ProjectStatus(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
+        # Get project ID
         project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        
+        # Get project object
         project = dds_web.utils.collect_project(project_id=project_id)
         
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Verify that authenticated user has access to project
+        dds_web.utils.verify_project_access(project=project)
 
         # Get current status and deadline
         return_info = {"current_status": project.current_status}

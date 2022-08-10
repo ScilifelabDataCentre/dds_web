@@ -58,14 +58,15 @@ def get_required_item(obj: werkzeug.datastructures.ImmutableMultiDict, req: str)
 
     return req_val
 
-# def verify_project_access(project: models.Project) -> None:
-#     """Verify that current authenticated user has access to project."""
-#     if project not in auth.current_user().projects:
-#         raise AccessDeniedError(
-#             message="Project access denied.",
-#             username=auth.current_user().username,
-#             project=project.public_id,
-#         )
+# Cannot have type hint for return due to models.Project giving circular import
+def verify_project_access(project) -> None:
+    """Verify that current authenticated user has access to project."""
+    if project not in auth.current_user().projects:
+        raise AccessDeniedError(
+            message="Project access denied.",
+            username=auth.current_user().username,
+            project=project.public_id,
+        )
 
 
 def verify_cli_version(version_cli: str = None) -> None:
