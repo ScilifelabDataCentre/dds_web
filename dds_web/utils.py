@@ -14,13 +14,14 @@ import urllib.parse
 # Installed
 from contextlib import contextmanager
 import flask
-from dds_web.errors import AccessDeniedError, VersionMismatchError
+from dds_web.errors import AccessDeniedError, VersionMismatchError, DDSArgumentError, NoSuchProjectError
 import flask_mail
 import flask_login
 import requests
 import requests_cache
 import simplejson
-
+import werkzeug
+import sqlalchemy
 
 # # imports related to scheduling
 import marshmallow
@@ -37,23 +38,25 @@ from dds_web.version import __version__
 ####################################################################################################
 
 # General ################################################################################ General #
-# def collect_project(project_id: str) -> Project:
-#     """Get project object from database."""
-#     project = Project.query.filter(
-#         Project.public_id == sqlalchemy.func.binary(project_id)
-#     ).one_or_none()
-#     if not project:
-#         raise NoSuchProjectError(project=project_id)
 
-#     return project
+# Cannot have type hint for return due to models.Project giving circular import
+def collect_project(project_id: str):
+    """Get project object from database."""
+    project = models.Project.query.filter(
+        models.Project.public_id == sqlalchemy.func.binary(project_id)
+    ).one_or_none()
+    if not project:
+        raise NoSuchProjectError(project=project_id)
 
-# def get_required_item(obj: werkzeug.datastructures.ImmutableMultiDict, req: str) -> str:
-#     """Get value from dict."""
-#     req_val = obj.get(req)
-#     if not req_val:
-#         raise DDSArgumentError(f"Missing required information: {req}")
+    return project
 
-#     return req_val
+def get_required_item(obj: werkzeug.datastructures.ImmutableMultiDict, req: str) -> str:
+    """Get value from dict."""
+    req_val = obj.get(req)
+    if not req_val:
+        raise DDSArgumentError(f"Missing required information: '{req}'")
+
+    return req_val
 
 # def verify_project_access(project: models.Project) -> None:
 #     """Verify that current authenticated user has access to project."""
