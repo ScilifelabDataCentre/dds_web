@@ -4,7 +4,12 @@ import pytest
 from unittest.mock import patch
 from dds_web import db
 from dds_web.database import models
-from dds_web.errors import AccessDeniedError, DDSArgumentError, NoSuchProjectError, VersionMismatchError
+from dds_web.errors import (
+    AccessDeniedError,
+    DDSArgumentError,
+    NoSuchProjectError,
+    VersionMismatchError,
+)
 import flask
 import flask_login
 import datetime
@@ -21,11 +26,13 @@ url: str = "http://localhost"
 
 # collect_project
 
+
 def test_collect_project_project_doesnt_exist(client: flask.testing.FlaskClient) -> None:
     """Non existent project should give error."""
     with pytest.raises(NoSuchProjectError) as err:
         utils.collect_project(project_id="nonexistent")
     assert "The specified project does not exist." in str(err.value)
+
 
 def test_collect_project_ok(client: flask.testing.FlaskClient):
     """Existing project should return project object."""
@@ -36,7 +43,9 @@ def test_collect_project_ok(client: flask.testing.FlaskClient):
     project = utils.collect_project(project_id=existing_project.public_id)
     assert project and project == existing_project
 
+
 # get_required_item
+
 
 def test_get_required_item_not_in_obj(client: flask.testing.FlaskClient) -> None:
     """If the required item is not in the dict, there should be an error."""
@@ -44,20 +53,22 @@ def test_get_required_item_not_in_obj(client: flask.testing.FlaskClient) -> None
         utils.get_required_item(obj={"test": "something"}, req="project")
     assert "Missing required information: 'project'" in str(err.value)
 
-def test_get_required_item_ok(client: flask.testing.FlaskClient) -> None: 
+
+def test_get_required_item_ok(client: flask.testing.FlaskClient) -> None:
     """If dict contains item, value should be returned."""
     value = utils.get_required_item(obj={"project": "project_id"}, req="project")
     assert value == "project_id"
 
-def test_verify_project_access_denied(client: flask.testing.FlaskClient) -> None: 
+
+def test_verify_project_access_denied(client: flask.testing.FlaskClient) -> None:
     """A project must have access to the project, otherwise error."""
-    # First user 
+    # First user
     user1 = models.UnitUser.query.filter_by(unit_id=1).first()
     assert user1
 
-    # Second user 
+    # Second user
     user2 = models.UnitUser.query.filter_by(unit_id=2).first()
-    assert user2 
+    assert user2
 
     # Get project for unit 2
     project = models.Project.query.filter_by(unit_id=2).first()
@@ -71,9 +82,10 @@ def test_verify_project_access_denied(client: flask.testing.FlaskClient) -> None
         utils.verify_project_access(project=project)
     assert "Project access denied" in str(err.value)
 
-def test_verify_project_access_ok(client: flask.testing.FlaskClient) -> None: 
+
+def test_verify_project_access_ok(client: flask.testing.FlaskClient) -> None:
     """A project must have access to the project, otherwise error."""
-    # First user 
+    # First user
     user1 = models.UnitUser.query.filter_by(unit_id=1).first()
     assert user1
 
@@ -86,7 +98,6 @@ def test_verify_project_access_ok(client: flask.testing.FlaskClient) -> None:
 
     # Verify project access -- not ok
     utils.verify_project_access(project=project)
-
 
 
 # verify_cli_version
