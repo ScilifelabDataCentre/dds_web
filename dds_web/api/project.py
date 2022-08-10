@@ -21,6 +21,7 @@ from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
+    args_required,
     logging_bind_request,
     dbsession,
     json_required,
@@ -51,11 +52,18 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Get project ID
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+
+        # Get project object
+        project = dds_web.utils.collect_project(project_id=project_id)
+
+        # Verify that authenticated user has access to project
+        dds_web.utils.verify_project_access(project=project)
 
         # Get current status and deadline
         return_info = {"current_status": project.current_status}

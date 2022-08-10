@@ -14,13 +14,19 @@ import urllib.parse
 # Installed
 from contextlib import contextmanager
 import flask
-from dds_web.errors import AccessDeniedError, VersionMismatchError
+from dds_web.errors import (
+    AccessDeniedError,
+    VersionMismatchError,
+    DDSArgumentError,
+    NoSuchProjectError,
+)
 import flask_mail
 import flask_login
 import requests
 import requests_cache
 import simplejson
-
+import werkzeug
+import sqlalchemy
 
 # # imports related to scheduling
 import marshmallow
@@ -37,6 +43,37 @@ from dds_web.version import __version__
 ####################################################################################################
 
 # General ################################################################################ General #
+
+# Cannot have type hint for return due to models.Project giving circular import
+def collect_project(project_id: str):
+    """Get project object from database."""
+    project = models.Project.query.filter(
+        models.Project.public_id == sqlalchemy.func.binary(project_id)
+    ).one_or_none()
+    if not project:
+        raise NoSuchProjectError(project=project_id)
+
+    return project
+
+
+def get_required_item(obj: werkzeug.datastructures.ImmutableMultiDict, req: str) -> str:
+    """Get value from dict."""
+    req_val = obj.get(req)
+    if not req_val:
+        raise DDSArgumentError(f"Missing required information: '{req}'")
+
+    return req_val
+
+
+# Cannot have type hint for return due to models.Project giving circular import
+def verify_project_access(project) -> None:
+    """Verify that current authenticated user has access to project."""
+    if project not in auth.current_user().projects:
+        raise AccessDeniedError(
+            message="Project access denied.",
+            username=auth.current_user().username,
+            project=project.public_id,
+        )
 
 
 def verify_cli_version(version_cli: str = None) -> None:
