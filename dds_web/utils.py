@@ -37,7 +37,32 @@ from dds_web.version import __version__
 ####################################################################################################
 
 # General ################################################################################ General #
+# def collect_project(project_id: str) -> Project:
+#     """Get project object from database."""
+#     project = Project.query.filter(
+#         Project.public_id == sqlalchemy.func.binary(project_id)
+#     ).one_or_none()
+#     if not project:
+#         raise NoSuchProjectError(project=project_id)
 
+#     return project
+
+# def get_required_item(obj: werkzeug.datastructures.ImmutableMultiDict, req: str) -> str:
+#     """Get value from dict."""
+#     req_val = obj.get(req)
+#     if not req_val:
+#         raise DDSArgumentError(f"Missing required information: {req}")
+    
+#     return req_val
+
+# def verify_project_access(project: models.Project) -> None:
+#     """Verify that current authenticated user has access to project."""
+#     if project not in auth.current_user().projects:
+#         raise AccessDeniedError(
+#             message="Project access denied.",
+#             username=auth.current_user().username,
+#             project=project.public_id,
+#         )
 
 def verify_cli_version(version_cli: str = None) -> None:
     """Verify that the CLI version in header is compatible with the web version."""

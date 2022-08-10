@@ -59,8 +59,9 @@ def test_project(module_client):
 
     return project_id
 
+# ProjectStatus
 
-def test_submit_request_with_invalid_args(module_client, boto3_session):
+def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
     create_unit_admins(num_admins=2)
 
@@ -97,7 +98,7 @@ def test_submit_request_with_invalid_args(module_client, boto3_session):
     assert "Invalid status" in response.json["message"]
 
 
-def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
+def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     """Create project and set status to deleted"""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
@@ -152,7 +153,7 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     assert not project.project_user_keys
 
 
-def test_archived_project(module_client, boto3_session):
+def test_projectstatus_archived_project(module_client, boto3_session):
     """Create a project and archive it"""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
@@ -198,7 +199,7 @@ def test_archived_project(module_client, boto3_session):
     assert project.researchusers
 
 
-def test_aborted_project(module_client, boto3_session):
+def test_projectstatus_aborted_project(module_client, boto3_session):
     """Create a project and try to abort it"""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
@@ -250,7 +251,7 @@ def test_aborted_project(module_client, boto3_session):
     assert len(project.researchusers) == 0
 
 
-def test_abort_from_in_progress_once_made_available(module_client, boto3_session):
+def test_projectstatus_abort_from_in_progress_once_made_available(module_client, boto3_session):
     """Create project and abort it from In Progress after it has been made available"""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
@@ -337,7 +338,7 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
     assert not project.project_user_keys
 
 
-def test_check_invalid_transitions_from_in_progress(module_client, boto3_session):
+def test_projectstatus_check_invalid_transitions_from_in_progress(module_client, boto3_session):
     """Check all invalid transitions from In Progress"""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
@@ -381,7 +382,7 @@ def test_check_invalid_transitions_from_in_progress(module_client, boto3_session
     assert project.current_status == "Archived"
 
 
-def test_set_project_to_available_valid_transition(module_client, test_project):
+def test_projectstatus_set_project_to_available_valid_transition(module_client, test_project):
     """Set status to Available for test project"""
 
     new_status = {"new_status": "Available", "deadline": 10}
@@ -408,7 +409,7 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
     assert db_deadline == calc_deadline
 
 
-def test_set_project_to_available_no_mail(module_client, boto3_session):
+def test_projectstatus_set_project_to_available_no_mail(module_client, boto3_session):
     """Set status to Available for test project, but skip sending mails"""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
@@ -445,7 +446,7 @@ def test_set_project_to_available_no_mail(module_client, boto3_session):
     assert "An e-mail notification has not been sent." in response.json["message"]
 
 
-def test_set_project_to_deleted_from_available(module_client, test_project):
+def test_projectstatus_set_project_to_deleted_from_available(module_client, test_project):
     """Try to set status to Deleted for test project in Available"""
 
     new_status = {"new_status": "Deleted"}
@@ -464,7 +465,7 @@ def test_set_project_to_deleted_from_available(module_client, test_project):
     assert project.current_status == "Available"
 
 
-def test_check_deadline_remains_same_when_made_available_again_after_going_to_in_progress(
+def test_projectstatus_check_deadline_remains_same_when_made_available_again_after_going_to_in_progress(
     module_client, test_project
 ):
     """Check deadline remains same when an available project goes to In Progress and is made available again"""
@@ -512,7 +513,7 @@ def test_check_deadline_remains_same_when_made_available_again_after_going_to_in
     assert project.current_deadline == deadline_initial
 
 
-def test_set_project_to_expired_from_available(module_client, test_project):
+def test_projectstatus_set_project_to_expired_from_available(module_client, test_project):
     """Set status to Expired for test project"""
 
     new_status = {"new_status": "Expired", "deadline": 5}
@@ -539,7 +540,7 @@ def test_set_project_to_expired_from_available(module_client, test_project):
     assert db_deadline == calc_deadline
 
 
-def test_project_availability_after_set_to_expired_more_than_twice(module_client, test_project):
+def test_projectstatus_project_availability_after_set_to_expired_more_than_twice(module_client, test_project):
     """Try to set status to Available for test project after being in Expired 3 times"""
 
     new_status = {"new_status": "Available", "deadline": 5}
@@ -613,7 +614,7 @@ def test_project_availability_after_set_to_expired_more_than_twice(module_client
     assert "Project cannot be made Available any more times" in response.json["message"]
 
 
-def test_invalid_transitions_from_expired(module_client, test_project):
+def test_projectstatus_invalid_transitions_from_expired(module_client, test_project):
     """Check all invalid transitions from Expired"""
 
     # Expired to In progress
@@ -649,7 +650,7 @@ def test_invalid_transitions_from_expired(module_client, test_project):
     )
 
 
-def test_set_project_to_archived(module_client, test_project, boto3_session):
+def test_projectstatus_set_project_to_archived(module_client, test_project, boto3_session):
     """Archive an expired project"""
 
     new_status = {"new_status": "Archived"}
@@ -673,7 +674,7 @@ def test_set_project_to_archived(module_client, test_project, boto3_session):
     assert not project.project_user_keys
 
 
-def test_invalid_transitions_from_archived(module_client, test_project):
+def test_projectstatus_invalid_transitions_from_archived(module_client, test_project):
     """Check all invalid transitions from Archived"""
 
     # Archived to In progress
