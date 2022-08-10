@@ -62,14 +62,43 @@ def test_project(module_client):
 
 # ProjectStatus
 
+def test_projectstatus_get_status_without_args(module_client, boto3_session):
+    """Submit status request with invalid arguments"""
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+    
+    # Create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Test getting project status without args - should fail
+    response = module_client.get(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        json={},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Required information missing from request!" in response.json["message"]
+
 
 def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
-    create_unit_admins(num_admins=2)
-
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
-
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+    
+    # Create project
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
@@ -102,8 +131,12 @@ def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_ses
 
 def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     """Create project and set status to deleted"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     new_status = {"new_status": "Deleted"}
     response = module_client.post(
@@ -157,8 +190,12 @@ def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, bo
 
 def test_projectstatus_archived_project(module_client, boto3_session):
     """Create a project and archive it"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -203,8 +240,12 @@ def test_projectstatus_archived_project(module_client, boto3_session):
 
 def test_projectstatus_aborted_project(module_client, boto3_session):
     """Create a project and try to abort it"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -255,8 +296,12 @@ def test_projectstatus_aborted_project(module_client, boto3_session):
 
 def test_projectstatus_abort_from_in_progress_once_made_available(module_client, boto3_session):
     """Create project and abort it from In Progress after it has been made available"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -342,8 +387,12 @@ def test_projectstatus_abort_from_in_progress_once_made_available(module_client,
 
 def test_projectstatus_check_invalid_transitions_from_in_progress(module_client, boto3_session):
     """Check all invalid transitions from In Progress"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -413,8 +462,12 @@ def test_projectstatus_set_project_to_available_valid_transition(module_client, 
 
 def test_projectstatus_set_project_to_available_no_mail(module_client, boto3_session):
     """Set status to Available for test project, but skip sending mails"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
 
