@@ -52,7 +52,7 @@ from dds_web.version import __version__
 #     req_val = obj.get(req)
 #     if not req_val:
 #         raise DDSArgumentError(f"Missing required information: {req}")
-    
+
 #     return req_val
 
 # def verify_project_access(project: models.Project) -> None:
@@ -63,6 +63,7 @@ from dds_web.version import __version__
 #             username=auth.current_user().username,
 #             project=project.public_id,
 #         )
+
 
 def verify_cli_version(version_cli: str = None) -> None:
     """Verify that the CLI version in header is compatible with the web version."""

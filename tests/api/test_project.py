@@ -59,7 +59,9 @@ def test_project(module_client):
 
     return project_id
 
+
 # ProjectStatus
+
 
 def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
@@ -540,7 +542,9 @@ def test_projectstatus_set_project_to_expired_from_available(module_client, test
     assert db_deadline == calc_deadline
 
 
-def test_projectstatus_project_availability_after_set_to_expired_more_than_twice(module_client, test_project):
+def test_projectstatus_project_availability_after_set_to_expired_more_than_twice(
+    module_client, test_project
+):
     """Try to set status to Available for test project after being in Expired 3 times"""
 
     new_status = {"new_status": "Available", "deadline": 5}
