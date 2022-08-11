@@ -92,11 +92,11 @@ def test_proj_public_no_token(client):
 def test_proj_public_no_project(client):
     """Attempting to get public key without a project should not work"""
     token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
-    response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, headers=token)
+    response = client.get(tests.DDSEndpoint.PROJ_PUBLIC, headers=token, )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert "project" in response_json
-    assert "Project ID required." in response_json["project"].get("message")
+    assert "Missing required information: 'project'" in response_json["project"].get("message")
 
 
 def test_proj_public_insufficient_credentials(client):

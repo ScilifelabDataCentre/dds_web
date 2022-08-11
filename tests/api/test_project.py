@@ -1198,4 +1198,4 @@ def test_getpublic_publickey(module_client, boto3_session):
 
     # Verify correct
     public_key = response_json.get("public")
-    assert public_key and public_key == project.public_key
+    assert public_key and public_key == project.public_key.hex().upper()
