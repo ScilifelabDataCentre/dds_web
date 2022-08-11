@@ -64,7 +64,7 @@ def test_project(module_client):
     return project_id
 
 
-def mock_operationalError():
+def mock_sqlalchemyerror():
     raise sqlalchemy.exc.SQLAlchemyError()
 
 
@@ -254,7 +254,7 @@ def test_projectstatus_post_operationalerror(module_client, boto3_session):
     project = project_row(project_id=project_id)
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
-    with unittest.mock.patch("dds_web.db.session.commit", mock_operationalError):
+    with unittest.mock.patch("dds_web.db.session.commit", mock_sqlalchemyerror):
         # Run command
         response = module_client.post(
             tests.DDSEndpoint.PROJECT_STATUS,
@@ -1016,7 +1016,7 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
 
     def mock_bucketnotfounderror():
         raise BucketNotFoundError()
-    
+
     for func in [mock_typeerror, mock_databaseerror, mock_deletionerror, mock_bucketnotfounderror]:
         with unittest.mock.patch("dds_web.api.project.ProjectStatus.delete_project_info", func):
             # Release project
@@ -1028,6 +1028,7 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+
 
 def test_projectstatus_post_archiving_without_aborting(module_client, boto3_session):
     """Try to archive a project thas has been available."""
@@ -1055,7 +1056,7 @@ def test_projectstatus_post_archiving_without_aborting(module_client, boto3_sess
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    time.sleep(1) # tests are too fast 
+    time.sleep(1)  # tests are too fast
 
     # Retract project
     response = module_client.post(
@@ -1074,7 +1075,11 @@ def test_projectstatus_post_archiving_without_aborting(module_client, boto3_sess
         json={"new_status": "Archived"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "You cannot archive a project that has been made available previously" in response.json["message"]
+    assert (
+        "You cannot archive a project that has been made available previously"
+        in response.json["message"]
+    )
+
 
 def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):
     """Mock the different expections that can occur when deleting project."""
@@ -1112,7 +1117,7 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
 
     def mock_bucketnotfounderror():
         raise BucketNotFoundError()
-    
+
     for func in [mock_typeerror, mock_databaseerror, mock_deletionerror, mock_bucketnotfounderror]:
         with unittest.mock.patch("dds_web.api.project.ProjectStatus.delete_project_info", func):
             # Release project
@@ -1124,3 +1129,33 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+
+
+# GetPublic
+
+
+def test_getpublic_publickey_is_none(module_client, boto3_session):
+    """Try to get public key from project that does not have a project public key."""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Get public key
+    response = module_client.post(
+        tests.DDSEndpoint.PROJ_PUBLIC,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        query_string={"project": project_id},
+    )
+    assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "Unrecoverable key error. Aborting." in response.json["message"]

@@ -297,7 +297,9 @@ class ProjectStatus(flask_restful.Resource):
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DeletionError(
-                project=project.public_id, message="Server Error: Status was not updated", pass_message=True
+                project=project.public_id,
+                message="Server Error: Status was not updated",
+                pass_message=True,
             ) from err
 
         delete_message = (
@@ -338,7 +340,9 @@ class ProjectStatus(flask_restful.Resource):
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DeletionError(
-                project=project.public_id, message="Server Error: Status was not updated", pass_message=True
+                project=project.public_id,
+                message="Server Error: Status was not updated",
+                pass_message=True,
             ) from err
 
         return (
@@ -473,7 +477,7 @@ class UserProjects(flask_restful.Resource):
                 raise DatabaseError(
                     message=str(err),
                     alt_message=(
-                        "Could not get users project access information."
+                        "Could not get users project access information"
                         + (
                             ": Database malfunction."
                             if isinstance(err, sqlalchemy.exc.OperationalError)
