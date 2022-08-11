@@ -10,6 +10,7 @@ import unittest.mock
 # Installed
 import boto3
 import flask_mail
+import werkzeug
 
 # Own
 import dds_web
@@ -62,6 +63,7 @@ def test_project(module_client):
 
 # ProjectStatus
 
+# get 
 
 def test_projectstatus_get_status_without_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
@@ -172,6 +174,7 @@ def test_projectstatus_get_status_with_non_accessible_project(module_client, bot
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert "Project access denied." in response.json["message"]
 
+# post
 
 def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
@@ -211,6 +214,15 @@ def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_ses
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Invalid status" in response.json["message"]
+
+    response: werkzeug.test.WrapperTestResponse = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS, 
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"test": "test"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "No status transition provided. Specify the new status." in response.json["message"]
 
 
 def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, boto3_session):
