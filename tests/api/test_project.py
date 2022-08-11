@@ -1137,12 +1137,14 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
 
 def test_getpublic_publickey_is_none(module_client, boto3_session):
     """Try to get public key from project that does not have a project public key."""
+    # Ensure enough unit admins
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
         create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins >= 3
 
+    # Create project
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
@@ -1152,10 +1154,11 @@ def test_getpublic_publickey_is_none(module_client, boto3_session):
     project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
 
+    # Remove public key
     project.public_key = None
     db.session.commit()
 
-    # Get public key
+    # Get public key - does not exist so it fails
     response = module_client.get(
         tests.DDSEndpoint.PROJ_PUBLIC,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
@@ -1163,3 +1166,36 @@ def test_getpublic_publickey_is_none(module_client, boto3_session):
     )
     assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
     assert "Unrecoverable key error. Aborting." in response.json["message"]
+
+
+def test_getpublic_publickey(module_client, boto3_session):
+    """Get project public key."""
+    # Ensure enough unit admins
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # Create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Get public key
+    response = module_client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        query_string={"project": project_id},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+
+    # Verify correct
+    public_key = response_json.get("public")
+    assert public_key and public_key == project.public_key

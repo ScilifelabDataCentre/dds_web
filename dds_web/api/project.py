@@ -378,8 +378,10 @@ class GetPublic(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         """Get public key from database."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
 
         flask.current_app.logger.debug("Getting the public key.")
 
