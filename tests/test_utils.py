@@ -46,6 +46,11 @@ def test_collect_project_ok(client: flask.testing.FlaskClient):
 
 # get_required_item
 
+def test_get_required_item_no_obj(client: flask.testing.FlaskClient) -> None:
+    """Get item from dict, but no dict specified."""
+    with pytest.raises(DDSArgumentError) as err:
+        utils.get_required_item(req="project")
+    assert "Missing required information: 'project'" in str(err.value)
 
 def test_get_required_item_not_in_obj(client: flask.testing.FlaskClient) -> None:
     """If the required item is not in the dict, there should be an error."""

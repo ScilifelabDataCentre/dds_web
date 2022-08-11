@@ -21,7 +21,6 @@ from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
-    args_required,
     logging_bind_request,
     dbsession,
     json_required,
@@ -52,7 +51,6 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
-    @args_required
     @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
@@ -79,7 +77,6 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @args_required
     @json_required
     @handle_validation_errors
     def post(self):
@@ -375,7 +372,6 @@ class GetPublic(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @args_required
     @handle_validation_errors
     def get(self):
         """Get public key from database."""
