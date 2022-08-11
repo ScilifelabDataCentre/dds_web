@@ -99,7 +99,7 @@ def test_proj_public_no_project(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
     assert "project" in response_json
-    assert "Missing required information: 'project'" in response_json["project"].get("message")
+    assert "Missing required information: 'project'" in response_json.get("message")
 
 
 def test_proj_public_insufficient_credentials(client):
