@@ -16,6 +16,7 @@ import sqlalchemy
 
 # Own
 import dds_web
+from dds_web.errors import BucketNotFoundError, DatabaseError, DeletionError
 import tests
 from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
 from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
@@ -921,5 +922,108 @@ def test_projectstatus_invalid_transitions_from_archived(module_client, test_pro
     assert "Cannot change status for a project" in response.json["message"]
 
 
-def test_check_transition_possible_delete_to_available_no():
-    """Should not be possible to release a deleted project."""
+def test_projectstatus_post_invalid_deadline_release(module_client, boto3_session):
+    """Attempt to set an invalid deadline."""
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Release project - should fail due to invalid deadline
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available", "deadline": 100},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be less than (or equal to) 90 days." in response.json["message"]
+
+
+def test_projectstatus_post_invalid_deadline_expire(module_client, boto3_session):
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Release project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Expire project - should fail due to invalid deadline
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Expired", "deadline": 40},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be less than (or equal to) 30 days." in response.json["message"]
+
+
+def test_projectstatus_post_deletion_errors(module_client, boto3_session):
+    """Mock the different expections that can occur when deleting project."""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    def mock_typeerror():
+        raise TypeError
+
+    def mock_databaseerror():
+        raise DatabaseError
+
+    def mock_deletionerror():
+        raise DeletionError()
+
+    def mock_bucketnotfounderror():
+        raise BucketNotFoundError()
+
+    for func in [mock_typeerror, mock_databaseerror, mock_deletionerror, mock_bucketnotfounderror]:
+        with unittest.mock.patch("dds_web.api.project.ProjectStatus.delete_project_info", func):
+            # Release project
+            response = module_client.post(
+                tests.DDSEndpoint.PROJECT_STATUS,
+                headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+                query_string={"project": project_id},
+                json={"new_status": "Deleted"},
+            )
+            assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
