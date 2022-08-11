@@ -1199,3 +1199,40 @@ def test_getpublic_publickey(module_client, boto3_session):
     # Verify correct
     public_key = response_json.get("public")
     assert public_key and public_key == project.public_key.hex().upper()
+
+
+def test_proj_public_no_project(client):
+    """Attempting to get public key without a project should not work"""
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert "project" in response_json
+    assert "Missing required information: 'project'" in response_json.get("message")
+
+
+def test_project_public_researcher_get(client):
+    """User should get access to public key"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC, query_string={"project": "public_project_id"}, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json.get("public")
+
+
+def test_project_public_facility_put(client):
+    """User should get access to public key"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC, query_string={"project": "public_project_id"}, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json.get("public")
