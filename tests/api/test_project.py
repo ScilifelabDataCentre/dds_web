@@ -2,6 +2,7 @@
 
 # Standard library
 import http
+from sqlite3 import OperationalError
 import pytest
 import datetime
 import time
@@ -11,6 +12,7 @@ import unittest.mock
 import boto3
 import flask_mail
 import werkzeug
+import sqlalchemy
 
 # Own
 import dds_web
@@ -60,6 +62,8 @@ def test_project(module_client):
 
     return project_id
 
+def mock_operationalError():
+    raise sqlalchemy.exc.SQLAlchemyError()
 
 # ProjectStatus
 
@@ -223,6 +227,36 @@ def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_ses
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "No status transition provided. Specify the new status." in response.json["message"]
+
+def test_projectstatus_post_operationalerror(module_client, boto3_session):
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    new_status = {"new_status": "Deleted"}
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
+    with unittest.mock.patch("dds_web.db.session.commit", mock_operationalError):
+        # Run command
+        response = module_client.post(
+            tests.DDSEndpoint.PROJECT_STATUS,
+            headers=token,
+            query_string={"project": project_id},
+            json=new_status,
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+
 
 
 def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, boto3_session):
