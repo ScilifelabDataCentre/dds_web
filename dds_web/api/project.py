@@ -297,7 +297,7 @@ class ProjectStatus(flask_restful.Resource):
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DeletionError(
-                project=project.public_id, message="Server Error: Status was not updated"
+                project=project.public_id, message="Server Error: Status was not updated", pass_message=True
             ) from err
 
         delete_message = (

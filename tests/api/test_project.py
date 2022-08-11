@@ -1027,3 +1027,4 @@ def test_projectstatus_post_deletion_errors(module_client, boto3_session):
                 json={"new_status": "Deleted"},
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+            assert "Server Error: Status was not updated" in response.json["message"]
