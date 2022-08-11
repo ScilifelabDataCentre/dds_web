@@ -1151,10 +1151,10 @@ def test_getpublic_publickey_is_none(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.OK
     project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
-    
+
     project.public_key = None
     db.session.commit()
-    
+
     # Get public key
     response = module_client.get(
         tests.DDSEndpoint.PROJ_PUBLIC,
