@@ -1201,10 +1201,10 @@ def test_getpublic_publickey(module_client, boto3_session):
     assert public_key and public_key == project.public_key.hex().upper()
 
 
-def test_proj_public_no_project(client):
+def test_proj_public_no_project(module_client):
     """Attempting to get public key without a project should not work"""
-    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
-    response = client.get(
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(module_client)
+    response = module_client.get(
         tests.DDSEndpoint.PROJ_PUBLIC,
         headers=token,
     )
@@ -1214,11 +1214,11 @@ def test_proj_public_no_project(client):
     assert "Missing required information: 'project'" in response_json.get("message")
 
 
-def test_project_public_researcher_get(client):
+def test_project_public_researcher_get(module_client):
     """User should get access to public key"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
-    response = client.get(
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(module_client)
+    response = module_client.get(
         tests.DDSEndpoint.PROJ_PUBLIC, query_string={"project": "public_project_id"}, headers=token
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -1226,11 +1226,11 @@ def test_project_public_researcher_get(client):
     assert response_json.get("public")
 
 
-def test_project_public_facility_put(client):
+def test_project_public_facility_put(module_client):
     """User should get access to public key"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
-    response = client.get(
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
+    response = module_client.get(
         tests.DDSEndpoint.PROJ_PUBLIC, query_string={"project": "public_project_id"}, headers=token
     )
     assert response.status_code == http.HTTPStatus.OK
