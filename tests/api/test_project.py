@@ -98,7 +98,7 @@ def test_projectstatus_get_status_without_args(module_client, boto3_session):
         json={},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "Required information missing from request!" in response.json["message"]
+    assert "Missing required information: 'project'" in response.json["message"]
 
     # Test getting project status without args version 2 - should fail
     response = module_client.get(
@@ -108,7 +108,7 @@ def test_projectstatus_get_status_without_args(module_client, boto3_session):
         query_string={},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "Required information missing from request!" in response.json["message"]
+    assert "Missing required information: 'project'" in response.json["message"]
 
 
 def test_projectstatus_get_status_with_empty_args(module_client, boto3_session):
