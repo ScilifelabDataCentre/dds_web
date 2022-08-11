@@ -1210,7 +1210,6 @@ def test_proj_public_no_project(module_client):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     response_json = response.json
-    assert "project" in response_json
     assert "Missing required information: 'project'" in response_json.get("message")
 
 
