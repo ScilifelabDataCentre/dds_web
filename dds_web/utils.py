@@ -22,9 +22,6 @@ from dds_web.errors import (
 )
 import flask_mail
 import flask_login
-import requests
-import requests_cache
-import simplejson
 import werkzeug
 import sqlalchemy
 
