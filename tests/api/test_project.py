@@ -62,12 +62,15 @@ def test_project(module_client):
 
     return project_id
 
+
 def mock_operationalError():
     raise sqlalchemy.exc.SQLAlchemyError()
 
+
 # ProjectStatus
 
-# get 
+# get
+
 
 def test_projectstatus_get_status_without_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
@@ -178,7 +181,9 @@ def test_projectstatus_get_status_with_non_accessible_project(module_client, bot
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert "Project access denied." in response.json["message"]
 
+
 # post
+
 
 def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
@@ -220,13 +225,14 @@ def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_ses
     assert "Invalid status" in response.json["message"]
 
     response: werkzeug.test.WrapperTestResponse = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS, 
+        tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
         json={"test": "test"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "No status transition provided. Specify the new status." in response.json["message"]
+
 
 def test_projectstatus_post_operationalerror(module_client, boto3_session):
     # Create unit admins to allow project creation
@@ -256,7 +262,6 @@ def test_projectstatus_post_operationalerror(module_client, boto3_session):
             json=new_status,
         )
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
-
 
 
 def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, boto3_session):
@@ -914,3 +919,7 @@ def test_projectstatus_invalid_transitions_from_archived(module_client, test_pro
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"
     assert "Cannot change status for a project" in response.json["message"]
+
+
+def test_check_transition_possible_delete_to_available_no():
+    """Should not be possible to release a deleted project."""
