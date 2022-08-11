@@ -375,6 +375,7 @@ class GetPublic(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @args_required
     @handle_validation_errors
     def get(self):
         """Get public key from database."""
