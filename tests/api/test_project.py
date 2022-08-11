@@ -1152,7 +1152,7 @@ def test_getpublic_publickey_is_none(module_client, boto3_session):
     project = project_row(project_id=project_id)
 
     # Get public key
-    response = module_client.post(
+    response = module_client.get(
         tests.DDSEndpoint.PROJ_PUBLIC,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
         query_string={"project": project_id},
