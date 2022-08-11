@@ -53,12 +53,12 @@ def collect_project(project_id: str):
     return project
 
 
-def get_required_item(req: str, obj: werkzeug.datastructures.ImmutableMultiDict=None) -> str:
+def get_required_item(req: str, obj: werkzeug.datastructures.ImmutableMultiDict = None) -> str:
     """Get value from dict."""
     error_message = f"Missing required information: '{req}'"
     if not obj:
         raise DDSArgumentError(message=error_message)
-    
+
     req_val = obj.get(req)
     if not req_val:
         raise DDSArgumentError(message=error_message)
