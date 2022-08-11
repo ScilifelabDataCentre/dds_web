@@ -22,6 +22,10 @@ def open_policy():
     """Show privacy policy."""
     return render_template("policy.html")
 
+@pages.route("/trouble", methods=["GET"])
+def open_troubleshooting():
+    """Show troubleshooting document."""
+    return render_template("troubleshooting.html")
 
 @pages.route("/status")
 def get_status():
