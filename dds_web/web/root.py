@@ -25,7 +25,13 @@ def open_policy():
 @pages.route("/trouble", methods=["GET"])
 def open_troubleshooting():
     """Show troubleshooting document."""
-    return render_template("troubleshooting.html")
+    import requests
+    response = requests.get("https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage")
+    response_json = response.json()
+    info = response_json["body"]["storage"]["value"]
+    info = info.replace("<h2>", "<br><h2>")
+    # info = info.replace("</h2>", "</h2><br>")
+    return render_template("troubleshooting.html", info=info)
 
 @pages.route("/status")
 def get_status():
