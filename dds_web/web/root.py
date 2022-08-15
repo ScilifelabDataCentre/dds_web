@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, jsonify
 from flask import current_app as app
 from dds_web import forms
 import re
+from dds_web import cache
 
 
 pages = Blueprint("pages", __name__)
@@ -25,6 +26,7 @@ def open_policy():
     return render_template("policy.html")
 
 @pages.route("/trouble", methods=["GET"])
+@cache.cached(timeout=50)
 def open_troubleshooting():
     """Show troubleshooting document."""
     import requests
