@@ -6,6 +6,8 @@ Here we have the routes that are not specific to a user.
 from flask import Blueprint, render_template, jsonify
 from flask import current_app as app
 from dds_web import forms
+import re
+
 
 pages = Blueprint("pages", __name__)
 
@@ -30,7 +32,11 @@ def open_troubleshooting():
     response_json = response.json()
     info = response_json["body"]["storage"]["value"]
     info = info.replace("<h2>", "<br><h2>")
-    # info = info.replace("</h2>", "</h2><br>")
+    pattern_found = re.findall('<ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="(.*?)"><ac:plain-text-body><!\[CDATA\[', info)
+    for codeid in pattern_found:
+        info = info.replace(f'<ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="{codeid}"><ac:plain-text-body><![CDATA[', "<pre>")    
+    info = info.replace(']]></ac:plain-text-body></ac:structured-macro>', "</pre>")
+    
     return render_template("troubleshooting.html", info=info)
 
 @pages.route("/status")
