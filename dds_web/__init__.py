@@ -36,7 +36,6 @@ import werkzeug
 
 from dds_web.scheduled_tasks import scheduler
 
-
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
 ####################################################################################################
@@ -270,7 +269,14 @@ def create_app(testing=False, database_uri=None):
         )
 
         # Initialize cache
-        cache.init_app(app, config={"CACHE_TYPE": "SimpleCache"})
+        cache.init_app(
+            app,
+            config={
+                "CACHE_TYPE": app.config.get("CACHE_TYPE"),
+                "CACHE_REDIS_URL": app.config.get("RATELIMIT_STORAGE_URI"),
+                "CACHE_KEY_PREFIX": app.config.get("CACHE_KEY_PREFIX"),
+            },
+        )
 
         app.cli.add_command(fill_db_wrapper)
         app.cli.add_command(create_new_unit)

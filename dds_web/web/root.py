@@ -30,11 +30,12 @@ def open_policy():
 
 
 @pages.route("/trouble", methods=["GET"])
-@cache.cached(timeout=14400)  # 4 hours (60*60*4)
+@cache.cached(timeout=30)  # 14400 = 4 hours (60*60*4)
 def open_troubleshooting():
     """Show troubleshooting document."""
     # Get troubleshooting doc from confluence
     try:
+        print("calling confluence .......", flush=True)
         response = requests.get(
             "https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage"
         )
