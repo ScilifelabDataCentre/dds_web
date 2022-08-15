@@ -29,7 +29,7 @@ Flask-Migrate==3.1.0
 Flask-RESTful==0.3.9
 Flask-SQLAlchemy==2.5.1
 Flask-WTF==1.0.0
-Flask-Caching==2.0.1
+Flask-Caching==2.0.0
 idna==3.3
 itsdangerous==2.0.1
 Jinja2==3.0.3
