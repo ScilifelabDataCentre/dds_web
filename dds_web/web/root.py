@@ -30,7 +30,7 @@ def open_policy():
 
 
 @pages.route("/trouble", methods=["GET"])
-@cache.cached(timeout=14400) # 4 hours (60*60*4)
+@cache.cached(timeout=14400)  # 4 hours (60*60*4)
 def open_troubleshooting():
     """Show troubleshooting document."""
     # Get troubleshooting doc from confluence
