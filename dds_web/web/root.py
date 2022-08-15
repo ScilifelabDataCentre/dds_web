@@ -7,7 +7,10 @@ from flask import Blueprint, render_template, jsonify
 from flask import current_app as app
 from dds_web import forms
 import re
+import requests
 from dds_web import cache
+import simplejson
+import flask 
 
 
 pages = Blueprint("pages", __name__)
@@ -29,16 +32,42 @@ def open_policy():
 @cache.cached(timeout=50)
 def open_troubleshooting():
     """Show troubleshooting document."""
-    import requests
-    response = requests.get("https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage")
-    response_json = response.json()
-    info = response_json["body"]["storage"]["value"]
-    info = info.replace("<h2>", "<br><h2>")
+    # Get troubleshooting doc from confluence
+    try:
+        response = requests.get("https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage")
+        response_json = response.json()
+    except (simplejson.JSONDecodeError, requests.exceptions.RequestException) as err:
+        flask.current_app.logger.exception(err)
+        flask.abort(404, "Troubleshooting information could not be collected.")
+
+    # Get troubleshooting info
+    info = response_json
+    for key in ["body", "storage", "value"]:
+        info=info.get(key)
+        if not info:
+            err = f"No '{key}' returned from troubleshooting page."
+            flask.current_app.logger.warning(err)
+            flask.abort(404, err)
+    
+    # Fix formatting
+    # Code boxes
     pattern_found = re.findall('<ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="(.*?)"><ac:plain-text-body><!\[CDATA\[', info)
     for codeid in pattern_found:
         info = info.replace(f'<ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="{codeid}"><ac:plain-text-body><![CDATA[', "<pre>")    
-    info = info.replace(']]></ac:plain-text-body></ac:structured-macro>', "</pre>")
+
+    # Info boxes
+    info_box_start = re.findall('<table data-layout="default" ac:local-id="(.*?)"><colgroup><col style="width: 760.0px;" /></colgroup><tbody><tr><td data-highlight-colour="#deebff">', info)
+    for codeid in info_box_start:
+        info = info.replace(f'<table data-layout="default" ac:local-id="{codeid}"><colgroup><col style="width: 760.0px;" /></colgroup><tbody><tr><td data-highlight-colour="#deebff">', '<div style="border: 3px solid lightgray; padding: 10px; margin: 10px;"">') 
     
+    # Additional fixes
+    replacement_1 = {
+        "<h2>": "<br><h2>", 
+        "]]></ac:plain-text-body></ac:structured-macro>": "</pre>",
+        "</td></tr></tbody></table>": "</div>"
+        }
+    for key, value in replacement_1.items():
+        info = info.replace(key, value)
     return render_template("troubleshooting.html", info=info)
 
 @pages.route("/status")
