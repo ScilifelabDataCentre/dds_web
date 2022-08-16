@@ -7,6 +7,7 @@ Authlib==0.15.5
 blinker==1.4
 boto3==1.20.47
 botocore==1.23.47
+cachetools==5.2.0
 certifi==2021.10.8
 cffi==1.15.0
 charset-normalizer==2.0.11
@@ -29,7 +30,6 @@ Flask-Migrate==3.1.0
 Flask-RESTful==0.3.9
 Flask-SQLAlchemy==2.5.1
 Flask-WTF==1.0.0
-Flask-Caching==2.0.0
 idna==3.3
 itsdangerous==2.0.1
 Jinja2==3.0.3

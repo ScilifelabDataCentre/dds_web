@@ -3,12 +3,15 @@
 Most of the app routes are in `dds_web/web/user.py`.
 Here we have the routes that are not specific to a user.
 """
+from datetime import datetime, timedelta
+import functools
+import threading
 from flask import Blueprint, render_template, jsonify
 from flask import current_app as app
 from dds_web import forms
 import re
 import requests
-from dds_web import cache
+import cachetools
 import simplejson
 import flask
 
@@ -30,9 +33,16 @@ def open_policy():
 
 
 @pages.route("/trouble", methods=["GET"])
-@cache.cached(timeout=14400)  # 4 hours (60*60*4)
+@cachetools.cached(cache=cachetools.TTLCache(maxsize=5, ttl=timedelta(hours=4), timer=datetime.now), lock=threading.Lock())
 def open_troubleshooting():
-    """Show troubleshooting document."""
+    """Show troubleshooting document.
+    
+    Cache information: 
+    - Flask-Caching not used due to security vulnerability.
+    - Args:
+        - cache=cachetools.TTLCache: Time-to-live cache. timer() + ttl --> defines expiration time of cached item
+        - lock: synchronize thread access to cache --> threadsafe
+    """
     # Get troubleshooting doc from confluence
     try:
         print("calling confluence .......", flush=True)

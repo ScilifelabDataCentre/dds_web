@@ -56,8 +56,6 @@ services:
       - FLASK_APP=dds_web
       - DB_TYPE=${DDS_DB_TYPE}
       # - RATELIMIT_STORAGE_URI=redis://dds_redis
-      # - CACHE_TYPE=RedisCache
-      # - CACHE_KEY_PREFIX=dds
     depends_on:
       db:
         condition: service_healthy

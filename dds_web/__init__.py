@@ -23,7 +23,6 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
 import flask_migrate
-from flask_caching import Cache
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 
 # import flask_qrcode
@@ -67,9 +66,6 @@ limiter = Limiter(key_func=get_remote_address)
 
 # Migration
 migrate = flask_migrate.Migrate()
-
-# Cache
-cache = Cache()
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -266,16 +262,6 @@ def create_app(testing=False, database_uri=None):
             client_id=app.config.get("OIDC_CLIENT_ID"),
             server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
             client_kwargs={"scope": "openid profile email"},
-        )
-
-        # Initialize cache
-        cache.init_app(
-            app,
-            config={
-                "CACHE_TYPE": app.config.get("CACHE_TYPE"),
-                "CACHE_REDIS_URL": app.config.get("RATELIMIT_STORAGE_URI"),
-                "CACHE_KEY_PREFIX": app.config.get("CACHE_KEY_PREFIX"),
-            },
         )
 
         app.cli.add_command(fill_db_wrapper)
