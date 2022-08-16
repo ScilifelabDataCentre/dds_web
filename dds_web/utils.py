@@ -520,7 +520,7 @@ def calculate_period_usage(project):
         sqlalchemy.or_(
             models.Version.time_deleted != models.Version.time_invoiced,
             sqlalchemy.and_(
-                models.Version.time_deleted==None, models.Version.time_invoiced==None
+                models.Version.time_deleted == None, models.Version.time_invoiced == None
             ),
         ),
     ).all()
@@ -535,18 +535,26 @@ def calculate_period_usage(project):
         else:
             if version.time_deleted and not version.time_invoiced:
                 bytehours = calculate_bytehours(
-                    minuend=version.time_deleted, subtrahend=version.time_uploaded, size_bytes=version.size_stored
+                    minuend=version.time_deleted,
+                    subtrahend=version.time_uploaded,
+                    size_bytes=version.size_stored,
                 )
                 project_byte_hours += bytehours
                 version.time_invoiced = version.time_deleted
             elif version.time_invoiced and not version.time_deleted:
                 now = current_time()
-                bytehours = calculate_bytehours(minuend=now, subtrahend=version.time_invoiced, size_bytes=version.size_stored)
+                bytehours = calculate_bytehours(
+                    minuend=now, subtrahend=version.time_invoiced, size_bytes=version.size_stored
+                )
                 project_byte_hours += bytehours
                 version.time_invoiced = now
             else:
                 # (if version.time_deleted > version.time_invoiced)
-                bytehours = calculate_bytehours(minuend=version.time_deleted, subtrahend=version.time_invoiced, size_bytes=version.size_stored)
+                bytehours = calculate_bytehours(
+                    minuend=version.time_deleted,
+                    subtrahend=version.time_invoiced,
+                    size_bytes=version.size_stored,
+                )
                 project_byte_hours += bytehours
                 version.time_invoiced = version.time_deleted
 

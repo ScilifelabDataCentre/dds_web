@@ -9,6 +9,7 @@ from dds_web import forms
 
 pages = Blueprint("pages", __name__)
 
+
 @pages.route("/", methods=["GET"])
 def home():
     """Home page."""
@@ -20,6 +21,7 @@ def home():
 def open_policy():
     """Show privacy policy."""
     return render_template("policy.html")
+
 
 @pages.route("/status")
 def get_status():
