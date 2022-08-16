@@ -33,11 +33,14 @@ def open_policy():
 
 
 @pages.route("/trouble", methods=["GET"])
-@cachetools.cached(cache=cachetools.TTLCache(maxsize=5, ttl=timedelta(hours=4), timer=datetime.now), lock=threading.Lock())
+@cachetools.cached(
+    cache=cachetools.TTLCache(maxsize=5, ttl=timedelta(hours=4), timer=datetime.now),
+    lock=threading.Lock(),
+)
 def open_troubleshooting():
     """Show troubleshooting document.
-    
-    Cache information: 
+
+    Cache information:
     - Flask-Caching not used due to security vulnerability.
     - Args:
         - cache=cachetools.TTLCache: Time-to-live cache. timer() + ttl --> defines expiration time of cached item
