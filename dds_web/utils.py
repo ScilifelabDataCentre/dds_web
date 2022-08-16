@@ -523,7 +523,7 @@ def calculate_period_usage(project):
                 models.Version.time_deleted == None, models.Version.time_invoiced == None
             ),
         ),
-    ).all()
+    )
     for version in file_versions:
         if version.time_deleted is None and version.time_invoiced is None:
             now = current_time()
