@@ -141,6 +141,8 @@ class DDSEndpoint:
 
     # Web
     INDEX = "/"
+    POLICY="/policy"
+    TROUBLE = "/trouble"
     LOGIN = "/login"
     LOGOUT = "/logout"
     CANCEL_2FA = "/cancel_2fa"
