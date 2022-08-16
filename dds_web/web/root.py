@@ -48,7 +48,6 @@ def open_troubleshooting():
     """
     # Get troubleshooting doc from confluence
     try:
-        print("calling confluence .......", flush=True)
         response = requests.get(
             "https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage"
         )
