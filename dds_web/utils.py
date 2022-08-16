@@ -501,3 +501,53 @@ def get_active_motds():
         models.MOTD.query.filter_by(active=True).order_by(models.MOTD.date_created.desc()).all()
     )
     return motds_active or None
+
+
+def calculate_bytehours(minuend, subtrahend, size_bytes):
+    """Calculate byte hours."""
+    hours_stored = (minuend - subtrahend).seconds / (60 * 60)
+    bytehours = hours_stored * size_bytes
+    return bytehours
+
+
+def calculate_period_usage(project):
+    """Calculate storage during the last period."""
+    project_byte_hours: int = 0
+
+    # If time_deleted == time_invoiced --> all data storage for version is calculated previously
+    file_versions = models.Version.query.filter(
+        models.Version.project_id == project.id,
+        sqlalchemy.or_(
+            models.Version.time_deleted != models.Version.time_invoiced,
+            sqlalchemy.and_(
+                models.Version.time_deleted==None, models.Version.time_invoiced==None
+            ),
+        ),
+    ).all()
+    for version in file_versions:
+        if version.time_deleted is None and version.time_invoiced is None:
+            now = current_time()
+            bytehours = calculate_bytehours(
+                minuend=now, subtrahend=version.time_uploaded, size_bytes=version.size_stored
+            )
+            project_byte_hours += bytehours
+            version.time_invoiced = now
+        else:
+            if version.time_deleted and not version.time_invoiced:
+                bytehours = calculate_bytehours(
+                    minuend=version.time_deleted, subtrahend=version.time_uploaded, size_bytes=version.size_stored
+                )
+                project_byte_hours += bytehours
+                version.time_invoiced = version.time_deleted
+            elif version.time_invoiced and not version.time_deleted:
+                now = current_time()
+                bytehours = calculate_bytehours(minuend=now, subtrahend=version.time_invoiced, size_bytes=version.size_stored)
+                project_byte_hours += bytehours
+                version.time_invoiced = now
+            else:
+                # (if version.time_deleted > version.time_invoiced)
+                bytehours = calculate_bytehours(minuend=version.time_deleted, subtrahend=version.time_invoiced, size_bytes=version.size_stored)
+                project_byte_hours += bytehours
+                version.time_invoiced = version.time_deleted
+
+    return project_byte_hours
