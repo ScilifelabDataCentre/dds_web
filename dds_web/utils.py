@@ -512,19 +512,22 @@ def calculate_bytehours(minuend, subtrahend, size_bytes):
 
 def calculate_period_usage(project):
     """Calculate storage during the last period."""
+    # Number of byte hours per project
     project_byte_hours: int = 0
 
+    # Iterate through all versions
     # If time_deleted == time_invoiced --> all data storage for version is calculated previously
-    file_versions = models.Version.query.filter(
-        models.Version.project_id == project.id,
-        sqlalchemy.or_(
-            models.Version.time_deleted != models.Version.time_invoiced,
-            sqlalchemy.and_(
-                models.Version.time_deleted == None, models.Version.time_invoiced == None
+    for version in page_query(
+        models.Version.query.filter(
+            models.Version.project_id == project.id,
+            sqlalchemy.or_(
+                models.Version.time_deleted != models.Version.time_invoiced,
+                sqlalchemy.and_(
+                    models.Version.time_deleted == None, models.Version.time_invoiced == None
+                ),
             ),
-        ),
-    )
-    for version in file_versions:
+        ).with_for_update()
+    ):
         if version.time_deleted is None and version.time_invoiced is None:
             now = current_time()
             bytehours = calculate_bytehours(
