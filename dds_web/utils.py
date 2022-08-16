@@ -529,6 +529,7 @@ def calculate_period_usage(project):
         ).with_for_update()
     ):
         if version.time_deleted is None and version.time_invoiced is None:
+            # Version uploaded after last usage calculation
             now = current_time()
             bytehours = calculate_bytehours(
                 minuend=now, subtrahend=version.time_uploaded, size_bytes=version.size_stored
@@ -537,6 +538,7 @@ def calculate_period_usage(project):
             version.time_invoiced = now
         else:
             if version.time_deleted and not version.time_invoiced:
+                # Version uploaded >and< deleted after last usage calculation
                 bytehours = calculate_bytehours(
                     minuend=version.time_deleted,
                     subtrahend=version.time_uploaded,
@@ -545,6 +547,7 @@ def calculate_period_usage(project):
                 project_byte_hours += bytehours
                 version.time_invoiced = version.time_deleted
             elif version.time_invoiced and not version.time_deleted:
+                # Version partially included in previous usage calculation and still stored
                 now = current_time()
                 bytehours = calculate_bytehours(
                     minuend=now, subtrahend=version.time_invoiced, size_bytes=version.size_stored
@@ -552,6 +555,7 @@ def calculate_period_usage(project):
                 project_byte_hours += bytehours
                 version.time_invoiced = now
             else:
+                # Version has been deleted after last usage calculation
                 # (if version.time_deleted > version.time_invoiced)
                 bytehours = calculate_bytehours(
                     minuend=version.time_deleted,
