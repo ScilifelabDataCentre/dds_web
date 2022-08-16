@@ -51,6 +51,10 @@ def open_troubleshooting():
         response = requests.get(
             "https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage"
         )
+        if not response.ok:
+            err: str = "Failed getting troubleshooting information."
+            flask.current_app.logger.warning(err)
+            flask.abort(404, err)
         response_json = response.json()
     except (simplejson.JSONDecodeError, requests.exceptions.RequestException) as err:
         flask.current_app.logger.exception(err)
