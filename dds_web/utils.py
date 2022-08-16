@@ -521,7 +521,10 @@ def calculate_period_usage(project):
         models.Version.query.filter(
             models.Version.project_id == project.id,
             sqlalchemy.or_(
-                models.Version.time_deleted != models.Version.time_invoiced,
+                sqlalchemy.or_(
+                    models.Version.time_deleted == None,
+                    models.Version.time_deleted != models.Version.time_invoiced,
+                ),
                 sqlalchemy.and_(
                     models.Version.time_deleted == None, models.Version.time_invoiced == None
                 ),
