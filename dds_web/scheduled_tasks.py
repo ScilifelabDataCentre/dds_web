@@ -230,13 +230,19 @@ def monthly_usage():
 
     from dds_web import db
     from dds_web.database import models
-    from dds_web.utils import current_time, page_query, calculate_period_usage
+    from dds_web.utils import (
+        current_time,
+        page_query,
+        # calculate_period_usage,
+        calculate_version_period_usage,
+    )
 
     with scheduler.app.app_context():
         try:
             # 1. Get projects where is_active = False
             # .. a. Check if the versions are all time_deleted == time_invoiced
             # .. b. Yes --> Set new column to True ("done")
+            scheduler.app.logger.info("Marking projects as 'done'....")
             for unit, project in page_query(
                 db.session.query(models.Unit, models.Project)
                 .join(models.Project)
@@ -257,52 +263,48 @@ def monthly_usage():
                 )
 
                 scheduler.app.logger.debug(f"Number of done versions: {num_done}")
-                scheduler.app.logger.debug(f"Total number of versions: {len(project.file_versions)}")
+                scheduler.app.logger.debug(
+                    f"Total number of versions: {len(project.file_versions)}"
+                )
                 # Check if there are any versions that are not fully included
                 # If not, project is done and should not be included in any more usage calculations in billing
                 if num_done == len(project.file_versions):
                     project.done = True
 
                 db.session.commit()
-            
-            # # 2. Get project where done = False
-            # for unit, project in page_query(
-            #     db.session.query(models.Unit, models.Project)
-            #     .join(models.Project)
-            #     .filter(models.Project.done == False)
-            # ): 
-            #     proj_bhours = calculate_period_usage(project=project)
-            #     scheduler.app.logger.info(f"Project: {project.public_id}\tUsage: {proj_bhours}")
-            #     print(f"{unit} -- {project}", flush=True)
-            # return
 
-            for unit in db.session.query(models.Unit).with_for_update().all():
-                # Non active --
+            print("", flush=True)
 
-                # Active projects
-                for project in page_query(
-                    db.session.query(models.Project)
-                    .filter(
-                        sqlalchemy.and_(
-                            models.Project.is_active == 1, models.Project.unit_id == unit.id
-                        )
-                    )
-                    .with_for_update()
-                ):
+            # 2. Get project where done = False
+            for unit, project in page_query(
+                db.session.query(models.Unit, models.Project)
+                .join(models.Project)
+                .filter(models.Project.done == False)
+            ):
+                project_byte_hours: int = 0
+                for version in project.file_versions:
+                    if version.time_deleted == version.time_invoiced and [
+                        version.time_deleted,
+                        version.time_invoiced,
+                    ] != [None, None]:
+                        flask.current_app.logger.debug("passing....")
+                        continue
+                    version_bhours = calculate_version_period_usage(version=version)
+                    scheduler.app.logger.info(f"Version: {version}\tUsage: {version_bhours}")
+                    project_byte_hours += version_bhours
+                scheduler.app.logger.info(
+                    f"Project {project.public_id} byte hours: {project_byte_hours}"
+                )
 
-                    # Calculate project usage
-                    proj_bhours = calculate_period_usage(project=project)
-                    scheduler.app.logger.info(f"Project: {project.public_id}\tUsage: {proj_bhours}")
-
-                    # Create a record in usage table
-                    new_record = models.Usage(
-                        project_id=project.id,
-                        usage=proj_bhours,
-                        cost=0,
-                        time_collected=current_time(),
-                    )
-                    db.session.add(new_record)
-                    db.session.commit()
+                # Create a record in usage table
+                new_record = models.Usage(
+                    project_id=project.id,
+                    usage=project_byte_hours,
+                    cost=0,
+                    time_collected=current_time(),
+                )
+                db.session.add(new_record)
+                db.session.commit()
 
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)

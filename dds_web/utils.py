@@ -511,6 +511,46 @@ def calculate_bytehours(minuend, subtrahend, size_bytes):
     return bytehours
 
 
+def calculate_period_usage_version(version):
+    bytehours: int = 0
+    if not version.time_deleted and version.time_invoiced:
+        flask.current_app.logger.debug("1")
+        now = current_time()
+        bytehours = calculate_bytehours(
+            minuend=now, subtrahend=version.time_invoiced, size_bytes=version.size_stored
+        )
+        version.time_invoiced = now
+    elif version.time_deleted and not version.time_invoiced:
+        flask.current_app.logger.debug("2")
+        # Version uploaded >and< deleted after last usage calculation
+        bytehours = calculate_bytehours(
+            minuend=version.time_deleted,
+            subtrahend=version.time_uploaded,
+            size_bytes=version.size_stored,
+        )
+        version.time_invoiced = version.time_deleted
+    elif version.time_deleted != version.time_invoiced:
+        flask.current_app.logger.debug("3")
+        # Version has been deleted after last usage calculation
+        # (if version.time_deleted > version.time_invoiced)
+        bytehours = calculate_bytehours(
+            minuend=version.time_deleted,
+            subtrahend=version.time_invoiced,
+            size_bytes=version.size_stored,
+        )
+        version.time_invoiced = version.time_deleted
+    elif not version.time_deleted and not version.time_invoiced:
+        flask.current_app.logger.debug("4")
+        # Version uploaded after last usage calculation
+        now = current_time()
+        bytehours = calculate_bytehours(
+            minuend=now, subtrahend=version.time_uploaded, size_bytes=version.size_stored
+        )
+        version.time_invoiced = now
+
+    return bytehours
+
+
 def calculate_period_usage(project):
     """Calculate storage during the last period."""
     # Number of byte hours per project
