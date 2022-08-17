@@ -152,3 +152,33 @@ class FindUser(flask_restful.Resource):
         return {
             "exists": models.User.query.filter_by(username=user_to_find).one_or_none() is not None
         }
+
+
+class ResetTwoFactor(flask_restful.Resource):
+    """Deactivate TOTP and activate HOTP for other user, e.g. if phone lost."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def put(self):
+        """Change totp to hotp."""
+        # Check that username is specified
+        username = flask.request.json.get("username")
+        if not username:
+            raise ddserr.DDSArgumentError(message="Username required to reset 2FA to HOTP")
+
+        # Verify valid user
+        user = models.User.query.filter_by(username=username).one_or_none()
+        if not user:
+            raise ddserr.DDSArgumentError(message=f"The user doesn't exist: {username}")
+
+        # TOTP needs to be active in order to deactivate
+        if not user.totp_enabled:
+            raise ddserr.DDSArgumentError(message="TOTP is already deactivated for this user.")
+
+        user.deactivate_totp()
+
+        return {
+            "message": f"TOTP has been deactivated for user: {user.username}. They can now use 2FA via email during authentication."
+        }
