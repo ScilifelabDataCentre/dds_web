@@ -19,6 +19,7 @@ from dds_web.errors import (
     VersionMismatchError,
     DDSArgumentError,
     NoSuchProjectError,
+    CronJobError,
 )
 import flask_mail
 import flask_login
@@ -517,55 +518,88 @@ def calculate_period_usage(project):
 
     # Iterate through all versions
     # If time_deleted == time_invoiced --> all data storage for version is calculated previously
+    print("time_deleted == None + time_invoiced != None", flush=True)
     for version in page_query(
         models.Version.query.filter(
-            models.Version.project_id == project.id,
-            sqlalchemy.or_(
-                sqlalchemy.or_(
-                    models.Version.time_deleted == None,
-                    models.Version.time_deleted != models.Version.time_invoiced,
-                ),
-                sqlalchemy.and_(
-                    models.Version.time_deleted == None, models.Version.time_invoiced == None
-                ),
-            ),
+            sqlalchemy.and_(
+                models.Version.project_id == project.id,
+                models.Version.time_deleted == None,
+                models.Version.time_invoiced != None,
+            )
         ).with_for_update()
     ):
-        if version.time_deleted is None and version.time_invoiced is None:
-            # Version uploaded after last usage calculation
-            now = current_time()
-            bytehours = calculate_bytehours(
-                minuend=now, subtrahend=version.time_uploaded, size_bytes=version.size_stored
+        print(f"- {version}", flush=True)
+        # Version partially included in previous usage calculation and still stored
+        now = current_time()
+        bytehours = calculate_bytehours(
+            minuend=now, subtrahend=version.time_invoiced, size_bytes=version.size_stored
+        )
+        project_byte_hours += bytehours
+        # version.time_invoiced = now
+
+    print("time_deleted != None + time_invoiced == None", flush=True)
+    for version in page_query(
+        models.Version.query.filter(
+            sqlalchemy.and_(
+                models.Version.project_id == project.id,
+                models.Version.time_deleted != None,
+                models.Version.time_invoiced == None,
             )
-            project_byte_hours += bytehours
-            version.time_invoiced = now
-        else:
-            if version.time_deleted and not version.time_invoiced:
-                # Version uploaded >and< deleted after last usage calculation
-                bytehours = calculate_bytehours(
-                    minuend=version.time_deleted,
-                    subtrahend=version.time_uploaded,
-                    size_bytes=version.size_stored,
-                )
-                project_byte_hours += bytehours
-                version.time_invoiced = version.time_deleted
-            elif version.time_invoiced and not version.time_deleted:
-                # Version partially included in previous usage calculation and still stored
-                now = current_time()
-                bytehours = calculate_bytehours(
-                    minuend=now, subtrahend=version.time_invoiced, size_bytes=version.size_stored
-                )
-                project_byte_hours += bytehours
-                version.time_invoiced = now
-            else:
-                # Version has been deleted after last usage calculation
-                # (if version.time_deleted > version.time_invoiced)
-                bytehours = calculate_bytehours(
-                    minuend=version.time_deleted,
-                    subtrahend=version.time_invoiced,
-                    size_bytes=version.size_stored,
-                )
-                project_byte_hours += bytehours
-                version.time_invoiced = version.time_deleted
+        ).with_for_update()
+    ):
+        print(f"- {version}", flush=True)
+        # Version uploaded >and< deleted after last usage calculation
+        bytehours = calculate_bytehours(
+            minuend=version.time_deleted,
+            subtrahend=version.time_uploaded,
+            size_bytes=version.size_stored,
+        )
+        project_byte_hours += bytehours
+        # version.time_invoiced = version.time_deleted
+
+    print("time_deleted != time_invoiced", flush=True)
+    for version in page_query(
+        models.Version.query.filter(
+            sqlalchemy.and_(
+                models.Version.project_id == project.id,
+                models.Version.time_deleted != models.Version.time_invoiced,
+            )
+        ).with_for_update()
+    ):
+        if version.time_deleted < version.time_invoiced:
+            flask.current_app.logger.exception(
+                "File included in usage calculations. `time_deleted` should be >= `time_invoiced` but is <. Error in cronjob and / or database. Attention required."
+            )
+            continue
+
+        print(f"- {version}", flush=True)
+        # Version has been deleted after last usage calculation
+        # (if version.time_deleted > version.time_invoiced)
+        bytehours = calculate_bytehours(
+            minuend=version.time_deleted,
+            subtrahend=version.time_invoiced,
+            size_bytes=version.size_stored,
+        )
+        project_byte_hours += bytehours
+        # version.time_invoiced = version.time_deleted
+
+    print("time_deleted == None + time_invoiced == None", flush=True)
+    for version in page_query(
+        models.Version.query.filter(
+            sqlalchemy.and_(
+                models.Version.project_id == project.id,
+                models.Version.time_deleted == None,
+                models.Version.time_invoiced == None,
+            )
+        ).with_for_update()
+    ):
+        print(f"- {version}", flush=True)
+        # Version uploaded after last usage calculation
+        now = current_time()
+        bytehours = calculate_bytehours(
+            minuend=now, subtrahend=version.time_uploaded, size_bytes=version.size_stored
+        )
+        project_byte_hours += bytehours
+        # version.time_invoiced = now
 
     return project_byte_hours

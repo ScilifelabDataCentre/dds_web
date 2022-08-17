@@ -221,7 +221,7 @@ def delete_invite():
 
 
 # @scheduler.task("cron", id="get_monthly_usage", day="1", hour=0, minute=1)
-@scheduler.task("interval", id="monthly_usage", seconds=10, misfire_grace_time=1)
+@scheduler.task("interval", id="monthly_usage", seconds=15, misfire_grace_time=1)
 def monthly_usage():
     """Get the monthly usage for the units"""
 
@@ -234,7 +234,52 @@ def monthly_usage():
 
     with scheduler.app.app_context():
         try:
+            # 1. Get projects where is_active = False
+            # .. a. Check if the versions are all time_deleted == time_invoiced
+            # .. b. Yes --> Set new column to True ("done")
+            for unit, project in page_query(
+                db.session.query(models.Unit, models.Project)
+                .join(models.Project)
+                .filter(models.Project.is_active == False)
+            ):
+                scheduler.app.logger.debug(f"Project: {project}")
+                # Get number of versions in project that have been fully included in usage calcs
+                num_done = (
+                    db.session.query(models.Project, models.Version)
+                    .join(models.Version)
+                    .filter(
+                        sqlalchemy.and_(
+                            models.Project.id == project.id,
+                            models.Version.time_deleted == models.Version.time_invoiced,
+                        )
+                    )
+                    .count()
+                )
+
+                scheduler.app.logger.debug(f"Number of done versions: {num_done}")
+                scheduler.app.logger.debug(f"Total number of versions: {len(project.file_versions)}")
+                # Check if there are any versions that are not fully included
+                # If not, project is done and should not be included in any more usage calculations in billing
+                if num_done == len(project.file_versions):
+                    project.done = True
+
+                db.session.commit()
+            
+            # # 2. Get project where done = False
+            # for unit, project in page_query(
+            #     db.session.query(models.Unit, models.Project)
+            #     .join(models.Project)
+            #     .filter(models.Project.done == False)
+            # ): 
+            #     proj_bhours = calculate_period_usage(project=project)
+            #     scheduler.app.logger.info(f"Project: {project.public_id}\tUsage: {proj_bhours}")
+            #     print(f"{unit} -- {project}", flush=True)
+            # return
+
             for unit in db.session.query(models.Unit).with_for_update().all():
+                # Non active --
+
+                # Active projects
                 for project in page_query(
                     db.session.query(models.Project)
                     .filter(

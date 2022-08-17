@@ -27,6 +27,13 @@ action_logger = structlog.getLogger("actions")
 extra_info = {"result": "DENIED"}
 
 
+class CronJobError(Exception):
+    """Exception notifying that something in cronjob has gone wrong."""
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 class LoggedHTTPException(exceptions.HTTPException):
     """Base class to enable standard action logging on HTTP Exceptions"""
 

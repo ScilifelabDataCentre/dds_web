@@ -244,6 +244,7 @@ class Project(db.Model):
     non_sensitive = db.Column(db.Boolean, unique=False, default=False, nullable=False)
     released = db.Column(db.DateTime(), nullable=True)
     is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, index=True)
+    done = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     # Foreign keys & relationships
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id", ondelete="RESTRICT"), nullable=True)
