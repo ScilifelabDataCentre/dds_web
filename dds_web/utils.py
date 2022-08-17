@@ -511,7 +511,7 @@ def calculate_bytehours(minuend, subtrahend, size_bytes):
     return bytehours
 
 
-def calculate_period_usage_version(version):
+def calculate_version_period_usage(version):
     bytehours: int = 0
     if not version.time_deleted and version.time_invoiced:
         flask.current_app.logger.debug("1")
