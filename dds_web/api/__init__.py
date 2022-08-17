@@ -81,7 +81,7 @@ api.add_resource(user.Users, "/users", endpoint="users")
 api.add_resource(superadmin_only.AllUnits, "/unit/info/all", endpoint="all_units")
 api.add_resource(superadmin_only.MOTD, "/motd", endpoint="motd")
 api.add_resource(superadmin_only.FindUser, "/user/find", endpoint="find_user")
-api.add_resource(superadmin_only.ResetTwoFactor, "/user/hotp/reset", endpoint="reset_user_hotp")
+api.add_resource(superadmin_only.ResetTwoFactor, "/user/totp/deactivate", endpoint="reset_user_hotp")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")

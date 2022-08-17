@@ -219,6 +219,6 @@ class DDSEndpoint:
     LIST_UNITS_ALL = BASE_ENDPOINT + "/unit/info/all"
     MOTD = BASE_ENDPOINT + "/motd"
     USER_FIND = BASE_ENDPOINT + "/user/find"
-    RESET_2FA = BASE_ENDPOINT + "/user/hotp/reset"
+    TOTP_DEACTIVATE = BASE_ENDPOINT + "/user/hotp/reset"
 
     TIMEOUT = 5

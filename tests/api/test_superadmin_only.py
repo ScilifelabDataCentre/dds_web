@@ -282,7 +282,7 @@ def test_reset_hotp_not_superadmin(client):
 
     for u in no_access_users:
         token = get_token(username=users[u], client=client)
-        response = client.put(tests.DDSEndpoint.RESET_2FA, headers=token)
+        response = client.put(tests.DDSEndpoint.TOTP_DEACTIVATE, headers=token)
         assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
@@ -292,7 +292,7 @@ def test_reset_hotp_no_json(client):
     token = get_token(username=users["Super Admin"], client=client)
 
     # Deactivate TOTP
-    response = client.put(tests.DDSEndpoint.RESET_2FA, headers=token)
+    response = client.put(tests.DDSEndpoint.TOTP_DEACTIVATE, headers=token)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Required data missing from request!" in response.json.get("message")
 
@@ -304,7 +304,7 @@ def test_reset_hotp_no_username(client):
 
     # Deactivate TOTP
     for x in ["", None]:
-        response = client.put(tests.DDSEndpoint.RESET_2FA, headers=token, json={"username": x})
+        response = client.put(tests.DDSEndpoint.TOTP_DEACTIVATE, headers=token, json={"username": x})
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert "Username required to reset 2FA to HOTP" in response.json.get("message")
 
@@ -319,7 +319,7 @@ def test_reset_hotp_non_existent_user(client):
     assert not models.User.query.filter_by(username=username).first()
 
     # Deactivate TOTP
-    response = client.put(tests.DDSEndpoint.RESET_2FA, headers=token, json={"username": username})
+    response = client.put(tests.DDSEndpoint.TOTP_DEACTIVATE, headers=token, json={"username": username})
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert f"The user doesn't exist: {username}" in response.json.get("message")
 
@@ -336,7 +336,7 @@ def test_reset_hotp_already_set(client):
 
     # Deactivate TOTP
     response = client.put(
-        tests.DDSEndpoint.RESET_2FA, headers=token, json={"username": user_row.username}
+        tests.DDSEndpoint.TOTP_DEACTIVATE, headers=token, json={"username": user_row.username}
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "TOTP is already deactivated for this user" in response.json.get("message")
@@ -355,7 +355,7 @@ def test_reset_hotp(client):
 
     # Deactivate TOTP
     response = client.put(
-        tests.DDSEndpoint.RESET_2FA, headers=token, json={"username": user_row.username}
+        tests.DDSEndpoint.TOTP_DEACTIVATE, headers=token, json={"username": user_row.username}
     )
     assert response.status_code == http.HTTPStatus.OK
     assert (
