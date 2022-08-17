@@ -291,7 +291,7 @@ def test_reset_hotp_no_json(client):
     # Authenticate
     token = get_token(username=users["Super Admin"], client=client)
 
-    # Get user
+    # Deactivate TOTP
     response = client.put(tests.DDSEndpoint.RESET_2FA, headers=token)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Required data missing from request!" in response.json.get("message")
@@ -302,7 +302,7 @@ def test_reset_hotp_no_username(client):
     # Authenticate
     token = get_token(username=users["Super Admin"], client=client)
 
-    # Get user
+    # Deactivate TOTP
     for x in ["", None]:
         response = client.put(tests.DDSEndpoint.RESET_2FA, headers=token, json={"username": x})
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -318,7 +318,7 @@ def test_reset_hotp_non_existent_user(client):
     username = "nonexistentuser"
     assert not models.User.query.filter_by(username=username).first()
 
-    # Get user
+    # Deactivate TOTP
     response = client.put(tests.DDSEndpoint.RESET_2FA, headers=token, json={"username": username})
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert f"The user doesn't exist: {username}" in response.json.get("message")
@@ -334,12 +334,12 @@ def test_reset_hotp_already_set(client):
     assert user_row
     assert not user_row.totp_enabled
 
-    # Get user
+    # Deactivate TOTP
     response = client.put(
         tests.DDSEndpoint.RESET_2FA, headers=token, json={"username": user_row.username}
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "HOTP is already activated for this user" in response.json.get("message")
+    assert "TOTP is already deactivated for this user" in response.json.get("message")
 
 
 def test_reset_hotp(client):
@@ -353,7 +353,7 @@ def test_reset_hotp(client):
     user_row.activate_totp()
     assert user_row.totp_enabled
 
-    # Get user
+    # Deactivate TOTP
     response = client.put(
         tests.DDSEndpoint.RESET_2FA, headers=token, json={"username": user_row.username}
     )
