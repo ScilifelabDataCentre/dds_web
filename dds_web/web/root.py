@@ -68,7 +68,7 @@ def open_troubleshooting():
             err = f"No '{key}' returned from troubleshooting page."
             flask.current_app.logger.warning(err)
             flask.abort(404, err)
-
+    
     # Fix formatting
     # Code boxes
     pattern_found = re.findall(
@@ -83,13 +83,16 @@ def open_troubleshooting():
 
     # Info boxes
     info_box_start = re.findall(
-        '<table data-layout="default" ac:local-id="(.*?)"><colgroup><col style="width: 760.0px;" /></colgroup><tbody><tr><td data-highlight-colour="#deebff">',
+        '<table data-layout="default" ac:local-id="(.*?)"><colgroup><col style="width: 760.0px;" /></colgroup><tbody><tr><td data-highlight-colour="(.*?)">',
         info,
     )
     for codeid in info_box_start:
+        color = "lightgray"
+        if codeid[1] == "#eae6ff":
+            color = "purple"
         info = info.replace(
-            f'<table data-layout="default" ac:local-id="{codeid}"><colgroup><col style="width: 760.0px;" /></colgroup><tbody><tr><td data-highlight-colour="#deebff">',
-            '<div style="border: 3px solid lightgray; padding: 10px; margin: 10px;"">',
+            f'<table data-layout="default" ac:local-id="{codeid[0]}"><colgroup><col style="width: 760.0px;" /></colgroup><tbody><tr><td data-highlight-colour="{codeid[1]}">',
+            f'<div style="border: 3px solid {color}; padding: 10px; margin: 10px;"">',
         )
 
     # Additional fixes
