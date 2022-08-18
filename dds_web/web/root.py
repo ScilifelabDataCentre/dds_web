@@ -68,7 +68,7 @@ def open_troubleshooting():
             err = f"No '{key}' returned from troubleshooting page."
             flask.current_app.logger.warning(err)
             flask.abort(404, err)
-    
+
     # Fix formatting
     # Code boxes
     pattern_found = re.findall(
