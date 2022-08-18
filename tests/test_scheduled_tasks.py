@@ -41,7 +41,7 @@ def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
                 and project.current_deadline <= current_time()
             ]
         )
-    assert i == 5
+    assert i == 6
 
     set_available_to_expired()
 
@@ -54,7 +54,7 @@ def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
         j += len([project for project in unit.projects if project.current_status == "Expired"])
 
     assert i == 0
-    assert j == 5
+    assert j == 6
 
 
 # set_expired_to_archived
@@ -73,7 +73,7 @@ def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient
     i: int = 0
     for unit in units:
         i += len([project for project in unit.projects if project.current_status == "Expired"])
-    assert i == 5
+    assert i == 6
 
     set_expired_to_archived()
 
@@ -86,7 +86,7 @@ def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient
         j += len([project for project in unit.projects if project.current_status == "Archived"])
 
     assert i == 0
-    assert j == 5
+    assert j == 6
 
 
 def test_delete_invite(client: flask.testing.FlaskClient) -> None:

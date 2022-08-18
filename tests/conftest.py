@@ -37,11 +37,11 @@ from dds_web.security.project_user_keys import (
     share_project_private_key,
 )
 from dds_web.security.tokens import encrypted_jwt_token
+from dds_web.version import __version__
 
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
-pypi_api_url = "https://pypi.python.org/pypi/dds-cli/json"
 
 
 def fill_basic_db(db):
@@ -227,6 +227,13 @@ def demo_data():
             description="this project is used for testing to add new files.",
             pi="file testing project PI",
             bucket="bucket",
+        ),
+        Project(
+            public_id="unit2testing",
+            title="unit 2 testing project",
+            description="this project is used for testing unit 2",
+            pi="unit 2 testing project PI",
+            bucket="bucket-2",
         ),
     ]
 
@@ -428,12 +435,14 @@ def add_data_to_db():
     users[2].created_projects.append(projects[2])
     users[3].created_projects.append(projects[3])
     users[2].created_projects.append(projects[4])
+    users[8].created_projects.append(projects[5])
 
     units[0].projects.extend(projects)
     units[0].users.extend([users[2], users[3], users[4]])
     units[0].invites.append(invites[0])
     units[0].invites.append(invites[1])
 
+    units[1].projects.append(projects[5])
     units[1].users.extend([users[8], users[9]])
 
     for user in users:
@@ -475,11 +484,9 @@ def client(setup_database):
     with app.test_request_context():
         with app.test_client() as client:
             client.environ_base["HTTP_Cache-Control"] = "no-cache"
-            client.environ_base["HTTP_X-CLI-Version"] = "0.0.0"
+            client.environ_base["HTTP_X-CLI-Version"] = __version__
             try:
-                with Mocker() as mock:
-                    mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
-                    yield client
+                yield client
             finally:
                 # aborts any pending transactions
                 db.session.rollback()
@@ -499,11 +506,9 @@ def module_client(setup_database):
     with app.test_request_context():
         with app.test_client() as client:
             client.environ_base["HTTP_Cache-Control"] = "no-cache"
-            client.environ_base["HTTP_X-CLI-Version"] = "0.0.0"
+            client.environ_base["HTTP_X-CLI-Version"] = __version__
             try:
-                with Mocker() as mock:
-                    mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
-                    yield client
+                yield client
             finally:
                 # aborts any pending transactions
                 db.session.rollback()

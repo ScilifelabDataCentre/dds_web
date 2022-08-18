@@ -2,6 +2,7 @@
 
 # Standard library
 import http
+from sqlite3 import OperationalError
 import pytest
 import datetime
 import time
@@ -10,9 +11,13 @@ import unittest.mock
 # Installed
 import boto3
 import flask_mail
+import werkzeug
+import sqlalchemy
 
 # Own
 import dds_web
+from dds_web import db
+from dds_web.errors import BucketNotFoundError, DatabaseError, DeletionError
 import tests
 from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
 from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
@@ -60,13 +65,138 @@ def test_project(module_client):
     return project_id
 
 
-def test_submit_request_with_invalid_args(module_client, boto3_session):
+def mock_sqlalchemyerror():
+    raise sqlalchemy.exc.SQLAlchemyError()
+
+
+# ProjectStatus
+
+# get
+
+
+def test_projectstatus_get_status_without_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
-    create_unit_admins(num_admins=2)
-
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
+    # Create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Test getting project status without args - should fail
+    response = module_client.get(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        json={},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Missing required information: 'project'" in response.json["message"]
+
+    # Test getting project status without args version 2 - should fail
+    response = module_client.get(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        json={},
+        query_string={},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Missing required information: 'project'" in response.json["message"]
+
+
+def test_projectstatus_get_status_with_empty_args(module_client, boto3_session):
+    """Submit status request with invalid arguments"""
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # Create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Test getting project status without args - should fail
+    response = module_client.get(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        json={},
+        query_string={"test": "test"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Missing required information: 'project'" in response.json["message"]
+
+
+def test_projectstatus_get_status_with_invalid_project(module_client, boto3_session):
+    """Submit status request with invalid arguments"""
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # Create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Test getting project status without args - should fail
+    response = module_client.get(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        json={},
+        query_string={"project": "nonexistentproject"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The specified project does not exist." in response.json["message"]
+
+
+def test_projectstatus_get_status_with_non_accessible_project(module_client, boto3_session):
+    """Submit status request with invalid arguments"""
+    # Get project for unit 2
+    project = models.Project.query.filter_by(unit_id=2).first()
+    assert project
+
+    # Test getting project status without args - should fail
+    response = module_client.get(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        json={},
+        query_string={"project": project.public_id},
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    assert "Project access denied." in response.json["message"]
+
+
+# post
+
+
+def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
+    """Submit status request with invalid arguments"""
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # Create project
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
@@ -96,11 +226,54 @@ def test_submit_request_with_invalid_args(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Invalid status" in response.json["message"]
 
+    response: werkzeug.test.WrapperTestResponse = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"test": "test"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "No status transition provided. Specify the new status." in response.json["message"]
 
-def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
-    """Create project and set status to deleted"""
+
+def test_projectstatus_post_operationalerror(module_client, boto3_session):
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    new_status = {"new_status": "Deleted"}
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
+    with unittest.mock.patch("dds_web.db.session.commit", mock_sqlalchemyerror):
+        # Run command
+        response = module_client.post(
+            tests.DDSEndpoint.PROJECT_STATUS,
+            headers=token,
+            query_string={"project": project_id},
+            json=new_status,
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, boto3_session):
+    """Create project and set status to deleted"""
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     new_status = {"new_status": "Deleted"}
     response = module_client.post(
@@ -152,10 +325,14 @@ def test_set_project_to_deleted_from_in_progress(module_client, boto3_session):
     assert not project.project_user_keys
 
 
-def test_archived_project(module_client, boto3_session):
+def test_projectstatus_archived_project(module_client, boto3_session):
     """Create a project and archive it"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -198,10 +375,14 @@ def test_archived_project(module_client, boto3_session):
     assert project.researchusers
 
 
-def test_aborted_project(module_client, boto3_session):
+def test_projectstatus_aborted_project(module_client, boto3_session):
     """Create a project and try to abort it"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -250,10 +431,14 @@ def test_aborted_project(module_client, boto3_session):
     assert len(project.researchusers) == 0
 
 
-def test_abort_from_in_progress_once_made_available(module_client, boto3_session):
+def test_projectstatus_abort_from_in_progress_once_made_available(module_client, boto3_session):
     """Create project and abort it from In Progress after it has been made available"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -337,10 +522,14 @@ def test_abort_from_in_progress_once_made_available(module_client, boto3_session
     assert not project.project_user_keys
 
 
-def test_check_invalid_transitions_from_in_progress(module_client, boto3_session):
+def test_projectstatus_check_invalid_transitions_from_in_progress(module_client, boto3_session):
     """Check all invalid transitions from In Progress"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -381,7 +570,7 @@ def test_check_invalid_transitions_from_in_progress(module_client, boto3_session
     assert project.current_status == "Archived"
 
 
-def test_set_project_to_available_valid_transition(module_client, test_project):
+def test_projectstatus_set_project_to_available_valid_transition(module_client, test_project):
     """Set status to Available for test project"""
 
     new_status = {"new_status": "Available", "deadline": 10}
@@ -408,10 +597,14 @@ def test_set_project_to_available_valid_transition(module_client, test_project):
     assert db_deadline == calc_deadline
 
 
-def test_set_project_to_available_no_mail(module_client, boto3_session):
+def test_projectstatus_set_project_to_available_no_mail(module_client, boto3_session):
     """Set status to Available for test project, but skip sending mails"""
+    # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
 
@@ -445,7 +638,7 @@ def test_set_project_to_available_no_mail(module_client, boto3_session):
     assert "An e-mail notification has not been sent." in response.json["message"]
 
 
-def test_set_project_to_deleted_from_available(module_client, test_project):
+def test_projectstatus_set_project_to_deleted_from_available(module_client, test_project):
     """Try to set status to Deleted for test project in Available"""
 
     new_status = {"new_status": "Deleted"}
@@ -464,7 +657,7 @@ def test_set_project_to_deleted_from_available(module_client, test_project):
     assert project.current_status == "Available"
 
 
-def test_check_deadline_remains_same_when_made_available_again_after_going_to_in_progress(
+def test_projectstatus_check_deadline_remains_same_when_made_available_again_after_going_to_in_progress(
     module_client, test_project
 ):
     """Check deadline remains same when an available project goes to In Progress and is made available again"""
@@ -512,7 +705,7 @@ def test_check_deadline_remains_same_when_made_available_again_after_going_to_in
     assert project.current_deadline == deadline_initial
 
 
-def test_set_project_to_expired_from_available(module_client, test_project):
+def test_projectstatus_set_project_to_expired_from_available(module_client, test_project):
     """Set status to Expired for test project"""
 
     new_status = {"new_status": "Expired", "deadline": 5}
@@ -539,7 +732,9 @@ def test_set_project_to_expired_from_available(module_client, test_project):
     assert db_deadline == calc_deadline
 
 
-def test_project_availability_after_set_to_expired_more_than_twice(module_client, test_project):
+def test_projectstatus_project_availability_after_set_to_expired_more_than_twice(
+    module_client, test_project
+):
     """Try to set status to Available for test project after being in Expired 3 times"""
 
     new_status = {"new_status": "Available", "deadline": 5}
@@ -613,7 +808,7 @@ def test_project_availability_after_set_to_expired_more_than_twice(module_client
     assert "Project cannot be made Available any more times" in response.json["message"]
 
 
-def test_invalid_transitions_from_expired(module_client, test_project):
+def test_projectstatus_invalid_transitions_from_expired(module_client, test_project):
     """Check all invalid transitions from Expired"""
 
     # Expired to In progress
@@ -649,7 +844,7 @@ def test_invalid_transitions_from_expired(module_client, test_project):
     )
 
 
-def test_set_project_to_archived(module_client, test_project, boto3_session):
+def test_projectstatus_set_project_to_archived(module_client, test_project, boto3_session):
     """Archive an expired project"""
 
     new_status = {"new_status": "Archived"}
@@ -673,7 +868,7 @@ def test_set_project_to_archived(module_client, test_project, boto3_session):
     assert not project.project_user_keys
 
 
-def test_invalid_transitions_from_archived(module_client, test_project):
+def test_projectstatus_invalid_transitions_from_archived(module_client, test_project):
     """Check all invalid transitions from Archived"""
 
     # Archived to In progress
@@ -726,3 +921,317 @@ def test_invalid_transitions_from_archived(module_client, test_project):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert project.current_status == "Archived"
     assert "Cannot change status for a project" in response.json["message"]
+
+
+def test_projectstatus_post_invalid_deadline_release(module_client, boto3_session):
+    """Attempt to set an invalid deadline."""
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Release project - should fail due to invalid deadline
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available", "deadline": 100},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be less than (or equal to) 90 days." in response.json["message"]
+
+
+def test_projectstatus_post_invalid_deadline_expire(module_client, boto3_session):
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Release project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Expire project - should fail due to invalid deadline
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Expired", "deadline": 40},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be less than (or equal to) 30 days." in response.json["message"]
+
+
+def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):
+    """Mock the different expections that can occur when deleting project."""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    def mock_typeerror():
+        raise TypeError
+
+    def mock_databaseerror():
+        raise DatabaseError
+
+    def mock_deletionerror():
+        raise DeletionError()
+
+    def mock_bucketnotfounderror():
+        raise BucketNotFoundError()
+
+    for func in [mock_typeerror, mock_databaseerror, mock_deletionerror, mock_bucketnotfounderror]:
+        with unittest.mock.patch("dds_web.api.project.ProjectStatus.delete_project_info", func):
+            # Release project
+            response = module_client.post(
+                tests.DDSEndpoint.PROJECT_STATUS,
+                headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+                query_string={"project": project_id},
+                json={"new_status": "Deleted"},
+            )
+            assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+            assert "Server Error: Status was not updated" in response.json["message"]
+
+
+def test_projectstatus_post_archiving_without_aborting(module_client, boto3_session):
+    """Try to archive a project thas has been available."""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Release project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    time.sleep(1)  # tests are too fast
+
+    # Retract project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "In Progress"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Retract project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Archived"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert (
+        "You cannot archive a project that has been made available previously"
+        in response.json["message"]
+    )
+
+
+def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):
+    """Mock the different expections that can occur when deleting project."""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    def mock_typeerror():
+        raise TypeError
+
+    def mock_databaseerror():
+        raise DatabaseError
+
+    def mock_deletionerror():
+        raise DeletionError()
+
+    def mock_bucketnotfounderror():
+        raise BucketNotFoundError()
+
+    for func in [mock_typeerror, mock_databaseerror, mock_deletionerror, mock_bucketnotfounderror]:
+        with unittest.mock.patch("dds_web.api.project.ProjectStatus.delete_project_info", func):
+            # Release project
+            response = module_client.post(
+                tests.DDSEndpoint.PROJECT_STATUS,
+                headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+                query_string={"project": project_id},
+                json={"new_status": "Archived", "is_aborted": True},
+            )
+            assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+            assert "Server Error: Status was not updated" in response.json["message"]
+
+
+# GetPublic
+
+
+def test_getpublic_publickey_is_none(module_client, boto3_session):
+    """Try to get public key from project that does not have a project public key."""
+    # Ensure enough unit admins
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # Create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Remove public key
+    project.public_key = None
+    db.session.commit()
+
+    # Get public key - does not exist so it fails
+    response = module_client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        query_string={"project": project_id},
+    )
+    assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "Unrecoverable key error. Aborting." in response.json["message"]
+
+
+def test_getpublic_publickey(module_client, boto3_session):
+    """Get project public key."""
+    # Ensure enough unit admins
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # Create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Get public key
+    response = module_client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        query_string={"project": project_id},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+
+    # Verify correct
+    public_key = response_json.get("public")
+    assert public_key and public_key == project.public_key.hex().upper()
+
+
+def test_proj_public_no_project(module_client):
+    """Attempting to get public key without a project should not work"""
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(module_client)
+    response = module_client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    response_json = response.json
+    assert "Missing required information: 'project'" in response_json.get("message")
+
+
+def test_project_public_researcher_get(module_client):
+    """User should get access to public key"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(module_client)
+    response = module_client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC, query_string={"project": "public_project_id"}, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json.get("public")
+
+
+def test_project_public_facility_put(module_client):
+    """User should get access to public key"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
+    response = module_client.get(
+        tests.DDSEndpoint.PROJ_PUBLIC, query_string={"project": "public_project_id"}, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json.get("public")

@@ -401,3 +401,14 @@ class RoleException(LoggedHTTPException):
 
         super().__init__(message)
         general_logger.warning(message)
+
+
+class VersionMismatchError(LoggedHTTPException):
+
+    code = http.HTTPStatus.FORBIDDEN
+
+    def __init__(
+        self, message="You're using an old CLI version, please upgrade to the latest one."
+    ):
+        super().__init__(message)
+        general_logger.warning(message)
