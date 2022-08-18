@@ -34,7 +34,7 @@ def open_policy():
 
 @pages.route("/trouble", methods=["GET"])
 @cachetools.cached(
-    cache=cachetools.TTLCache(maxsize=5, ttl=timedelta(hours=4), timer=datetime.now),
+    cache=cachetools.TTLCache(maxsize=5, ttl=timedelta(seconds=10), timer=datetime.now),
     lock=threading.Lock(),
 )
 def open_troubleshooting():
@@ -46,6 +46,8 @@ def open_troubleshooting():
         - cache=cachetools.TTLCache: Time-to-live cache. timer() + ttl --> defines expiration time of cached item
         - lock: synchronize thread access to cache --> threadsafe
     """
+    page_if_not_works = "https://scilifelab.atlassian.net/wiki/spaces/deliveryportal/pages/2192998453/2022+August+18+-+Troubleshooting"
+
     # Get troubleshooting doc from confluence
     try:
         response = requests.get(
@@ -57,8 +59,8 @@ def open_troubleshooting():
             flask.abort(404, err)
         response_json = response.json()
     except (simplejson.JSONDecodeError, requests.exceptions.RequestException) as err:
-        flask.current_app.logger.exception(err)
-        flask.abort(404, "Troubleshooting information could not be collected.")
+        flask.current_app.logger.exception(f"Troubleshooting information could not be collected.\n{err}")
+        return render_template("troubleshooting.html", confluence_link=page_if_not_works)
 
     # Get troubleshooting info
     info = response_json
@@ -67,7 +69,7 @@ def open_troubleshooting():
         if not info:
             err = f"No '{key}' returned from troubleshooting page."
             flask.current_app.logger.warning(err)
-            flask.abort(404, err)
+            return render_template("troubleshooting.html", confluence_link=page_if_not_works)
 
     # Fix formatting
     # Code boxes

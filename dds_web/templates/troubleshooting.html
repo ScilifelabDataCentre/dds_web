@@ -3,7 +3,25 @@
 <div class="container", style="width: 70%;">
 <h1>Troubleshooting</h1>
 <br><br>
-<div>{{ info|safe }}</div>
+<div>
+    {% if confluence_link %}
+        It seems that the DDS is having issues with collecting the troubleshooting information. To proceed:
+        <ul>
+            <li>
+                The same information can also be found at <a href={{ confluece_link }}>this Confluence page</a>. 
+            </li>
+            <li>
+                Please notify the Data Centre of this error.
+            </li>
+        </ul>
+        
+        We are sorry for the inconvenience.
+    {% elif info %}
+        {{ info|safe }}
+    {% else %}
+        The troubleshooting information could not be collected and / or displayed, please contact the Data Centre.
+    {% endif %}
+</div>
 </div>
 {% endblock %}
 
