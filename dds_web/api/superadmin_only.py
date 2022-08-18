@@ -164,12 +164,12 @@ class ResetTwoFactor(flask_restful.Resource):
     def put(self):
         """Change totp to hotp."""
         # Check that username is specified
-        username = flask.request.json.get("username")
+        username: str = flask.request.json.get("username")
         if not username:
             raise ddserr.DDSArgumentError(message="Username required to reset 2FA to HOTP")
 
         # Verify valid user
-        user = models.User.query.filter_by(username=username).one_or_none()
+        user: models.User = models.User.query.filter_by(username=username).one_or_none()
         if not user:
             raise ddserr.DDSArgumentError(message=f"The user doesn't exist: {username}")
 
