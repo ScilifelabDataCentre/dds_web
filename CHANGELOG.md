@@ -125,3 +125,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Do not send one time code to email if the email 2fa is getting activated ([#1236](https://github.com/ScilifelabDataCentre/dds_web/pull/1236))
 - Raise AccessDeniedError with message when token specified but user not existent ([#1235](https://github.com/ScilifelabDataCentre/dds_web/pull/1235))
 - Display multiple MOTDS ([#1212](https://github.com/ScilifelabDataCentre/dds_web/pull/1212))
+
+## Sprint (2022-08-18 - 2022-09-02)
+
+- Allow Super Admins to deactivate user 2FA via authenticator app ([#1247](https://github.com/ScilifelabDataCentre/dds_web/pull/1247))
