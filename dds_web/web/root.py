@@ -59,7 +59,9 @@ def open_troubleshooting():
             flask.abort(404, err)
         response_json = response.json()
     except (simplejson.JSONDecodeError, requests.exceptions.RequestException) as err:
-        flask.current_app.logger.exception(f"Troubleshooting information could not be collected.\n{err}")
+        flask.current_app.logger.exception(
+            f"Troubleshooting information could not be collected.\n{err}"
+        )
         return render_template("troubleshooting.html", confluence_link=page_if_not_works)
 
     # Get troubleshooting info

@@ -72,7 +72,11 @@ def test_open_troubleshooting_no_response_from_confluence(
     status_code: int = 200
     response_json: typing.Dict = None
 
-    problem_page_info = [b"It seems that the DDS is having issues with collecting the troubleshooting information. To proceed:", b"The same information can also be found at", b"Please notify the Data Centre of this error."]
+    problem_page_info = [
+        b"It seems that the DDS is having issues with collecting the troubleshooting information. To proceed:",
+        b"The same information can also be found at",
+        b"Please notify the Data Centre of this error.",
+    ]
     with Mocker() as mock:
         mock.get(url, status_code=status_code, json=response_json)
         response = client.get(tests.DDSEndpoint.TROUBLE, content_type="application/json")
@@ -91,7 +95,11 @@ def test_open_troubleshooting_500(client: flask.testing.FlaskClient) -> None:
     url: str = "https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage"
     status_code: int = 500
     response_json: typing.Dict = None
-    problem_page_info = [b"It seems that the DDS is having issues with collecting the troubleshooting information. To proceed:", b"The same information can also be found at", b"Please notify the Data Centre of this error."]
+    problem_page_info = [
+        b"It seems that the DDS is having issues with collecting the troubleshooting information. To proceed:",
+        b"The same information can also be found at",
+        b"Please notify the Data Centre of this error.",
+    ]
     with Mocker() as mock:
         mock.get(url, status_code=status_code, json=response_json)
         response = client.get(tests.DDSEndpoint.TROUBLE, content_type="application/json")
@@ -112,7 +120,9 @@ def test_open_troubleshooting(client: flask.testing.FlaskClient) -> None:
         assert response.status_code == http.HTTPStatus.OK
         assert b"<h1>Troubleshooting</h1>" in response.data
 
+
 # get status
+
 
 def test_get_status_post(client: flask.testing.FlaskClient) -> None:
     """Post should not work."""
