@@ -73,7 +73,7 @@ def test_open_troubleshooting_no_response_from_confluence(
     response_json: typing.Dict = None
 
     problem_page_info = [
-        b"It seems that the DDS is having issues with collecting the troubleshooting information. To proceed:",
+        b"Ironically enough it seems that the DDS is having trouble with collecting the troubleshooting information. To proceed:",
         b"The same information can also be found at",
         b"Please notify the Data Centre of this error.",
     ]
@@ -96,7 +96,7 @@ def test_open_troubleshooting_500(client: flask.testing.FlaskClient) -> None:
     status_code: int = 500
     response_json: typing.Dict = None
     problem_page_info = [
-        b"It seems that the DDS is having issues with collecting the troubleshooting information. To proceed:",
+        b"Ironically enough it seems that the DDS is having trouble with collecting the troubleshooting information. To proceed:",
         b"The same information can also be found at",
         b"Please notify the Data Centre of this error.",
     ]
