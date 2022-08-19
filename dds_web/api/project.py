@@ -507,21 +507,63 @@ class UserProjects(flask_restful.Resource):
         bhours = 0.0
         cost = 0.0
 
+        # 9 öre = 0.09 
+        # 0.09 kr per gb per month 
+        # 0.09 kr per 0.001 terrabyte per month 
+        # 90 kr per terrabyte per month 
+        # 
+        if project.public_id != "someunit00001":
+            return bhours, cost
         for v in project.file_versions:
+            print(v)
             # Calculate hours of the current file
+            # Time
             time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
+            print(f"Time deleted: {time_deleted}", flush=True)
+
             time_uploaded = v.time_uploaded
+            print(f"Time uploaded: {time_uploaded}", flush=True)
 
-            file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
+            # Time difference
+            time_difference_datetimeobj = time_deleted - time_uploaded
+            print(f"Time difference {time_difference_datetimeobj}", flush=True)
 
-            # Calculate BHours
-            bhours += v.size_stored * file_hours
+            time_difference_days = time_difference_datetimeobj.days
+            print(f"Time difference in days {time_difference_days}", flush=True)
 
-            # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
-            cost_gbhour = 0.09 / (30 * 24)
+            time_difference_hours = time_difference_days * 24
+            print(f"Time difference in hours {time_difference_hours}", flush=True)
+            
+            # Size
+            # Bytes
+            print(f"File size B: {v.size_stored}", flush=True)
+            
+            # GB
+            file_size_in_gb = v.size_stored / 1000000000
+            print(f"File size GB: {file_size_in_gb}", flush=True)
 
-            # Save file cost to project info and increase total unit cost
-            cost += bhours / 1e9 * cost_gbhour
+            # GBHours
+            gbhours = file_size_in_gb * time_difference_hours 
+            print(f"GBHours: {gbhours}", flush=True)
+
+            # Cost
+            # Per hour
+            cost_per_hour = 0.09 / (30 * 24)
+            print(f"Cost per hour: {cost_per_hour}", flush=True)
+
+            # File
+            cost_for_file = gbhours * cost_per_hour
+            print(f"Cost for file: {cost_for_file}", flush=True)
+
+            # # Calculate BHours
+            # bhours += v.size_stored
+
+            # # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
+            # cost_gbhour = 0.09 / (30 * 24) 
+            # print(cost_gbhour, flush=True)
+
+            # # Save file cost to project info and increase total unit cost
+            # cost += bhours / 1e9 * cost_gbhour
 
         return bhours, cost
 
