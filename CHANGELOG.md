@@ -129,3 +129,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-08-18 - 2022-09-02)
 
 - Allow Super Admins to deactivate user 2FA via authenticator app ([#1247](https://github.com/ScilifelabDataCentre/dds_web/pull/1247))
+- Get troubleshooting document from Confluence ([#1244](https://github.com/ScilifelabDataCentre/dds_web/pull/1244))
