@@ -19,7 +19,6 @@ from dds_web.errors import (
     VersionMismatchError,
     DDSArgumentError,
     NoSuchProjectError,
-    CronJobError,
 )
 import flask_mail
 import flask_login
