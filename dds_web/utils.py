@@ -505,7 +505,15 @@ def get_active_motds():
 
 def calculate_bytehours(minuend, subtrahend, size_bytes):
     """Calculate byte hours."""
-    hours_stored = (minuend - subtrahend).seconds / (60 * 60)
+    # hours_stored = (minuend - subtrahend).seconds / (60 * 60)
+    time_diff_timedelta = minuend - subtrahend
+    flask.current_app.logger.debug(f"timedelta {time_diff_timedelta}")
+    time_diff_days = time_diff_timedelta.days
+    flask.current_app.logger.debug(f"days {time_diff_days}")
+    time_diff_hours = time_diff_timedelta.seconds / (60 * 60)
+    flask.current_app.logger.debug(f"hours {time_diff_hours}")
+    hours_stored = time_diff_hours + (time_diff_days * 24)
+    flask.current_app.logger.debug(hours_stored)
     bytehours = hours_stored * size_bytes
     return bytehours
 

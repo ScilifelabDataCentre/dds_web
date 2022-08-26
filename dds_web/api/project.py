@@ -512,15 +512,20 @@ class UserProjects(flask_restful.Resource):
             time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
             time_uploaded = v.time_uploaded
 
-            time_diff_timedelta = time_deleted - time_uploaded
-            time_diff_days = time_diff_timedelta.days
-            file_hours = time_diff_days * 24
-            print(f"Time difference in hours {file_hours}", flush=True)
-            print(f"Bytes stored {v.size_stored}", flush=True)
-            print(f"GBs stored {v.size_stored / 1e9}", flush=True)
+            # time_diff_timedelta = time_deleted - time_uploaded
+            # time_diff_days = time_diff_timedelta.days
+            # file_hours = time_diff_days * 24
+            # print(f"Time difference timedelta {time_diff_timedelta}", flush=True)
+            # print(f"Time difference in hours {file_hours}", flush=True)
+            # print(f"Time difference secs {time_diff_timedelta.seconds / (60 * 60)}", flush=True)
+            # print(f"Bytes stored {v.size_stored}", flush=True)
+            # print(f"GBs stored {v.size_stored / 1e9}", flush=True)
 
             # Calculate BHours
-            bhours += v.size_stored * file_hours
+            # bhours += v.size_stored * file_hours
+            bhours += dds_web.utils.calculate_bytehours(
+                minuend=time_deleted, subtrahend=time_uploaded, size_bytes=v.size_stored
+            )
 
             # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
             cost_gbhour = 0.09 / (30 * 24)
