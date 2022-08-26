@@ -892,3 +892,83 @@ def test_bucket_is_valid_ok():
     valid, message = utils.bucket_is_valid(bucket_name="something-.")
     assert valid
     assert message == ""
+
+
+# calculate usage
+
+
+def test_calculate_bytehours_ok(client: flask.testing.FlaskClient):
+    """Test that function returns correct value."""
+    minuend: datetime.datetime = datetime.datetime.utcnow()
+    subtrahend = minuend - datetime.timedelta(hours=24)
+
+    # Call function
+    bytehours = utils.calculate_bytehours(minuend=minuend, subtrahend=subtrahend, size_bytes=2)
+    assert bytehours == 48
+
+
+def test_calculate_version_period_usage_existing_and_invoiced_version(
+    client: flask.testing.FlaskClient,
+):
+    """Test that function returns correct value and resets time_invoiced."""
+    now: datetime.datetime = datetime.datetime.utcnow()
+
+    version = models.Version(
+        size_stored=1,
+        time_uploaded=now,
+        time_invoiced=now - datetime.timedelta(hours=24),
+    )
+
+    time_invoiced_before = version.time_invoiced
+    # Call function
+    bytehours = utils.calculate_version_period_usage(version=version)
+    assert bytehours == 24
+    assert version.time_invoiced != time_invoiced_before
+
+
+def test_calculate_version_period_usage_deleted_and_not_invoiced_version(
+    client: flask.testing.FlaskClient,
+):
+    """Test that function returns correct value and sets time_invoiced."""
+    now: datetime.datetime = datetime.datetime.utcnow()
+
+    version = models.Version(
+        size_stored=1,
+        time_uploaded=now - datetime.timedelta(hours=24),
+        time_deleted=now - datetime.timedelta(hours=12),
+    )
+
+    # Call function
+    bytehours = utils.calculate_version_period_usage(version=version)
+    assert bytehours == 12
+    assert version.time_invoiced
+
+
+def test_calculate_version_period_usage_deleted_and_invoiced_version(
+    client: flask.testing.FlaskClient,
+):
+    """Test that function returns correct value and sets correct time_invoiced."""
+    now: datetime.datetime = datetime.datetime.utcnow()
+
+    version = models.Version(
+        size_stored=1,
+        time_invoiced=now - datetime.timedelta(hours=24),
+        time_deleted=now - datetime.timedelta(hours=12),
+    )
+
+    time_invoiced_before = version.time_invoiced
+    # Call function
+    bytehours = utils.calculate_version_period_usage(version=version)
+    assert bytehours == 12
+    assert version.time_invoiced != time_invoiced_before
+
+
+def test_calculate_version_period_usage_new_version(client: flask.testing.FlaskClient):
+    """Test that function returns correct value and sets time_invoiced."""
+    existing_version = models.Version.query.first()
+
+    # Call function
+    bytehours = utils.calculate_version_period_usage(version=existing_version)
+    assert existing_version.size_stored == 10000
+    assert bytehours < 10000
+    assert existing_version.time_invoiced
