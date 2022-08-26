@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block body %}
+<html>
+    <div class="container p-0" style="margin-top: 30px; font-size: medium;">
+        <h2>Technical overview ot the Data Delivery System</h2>
+        <p class="lead">To read the Technical overview of the DDS, please follow the link <a href="https://scilifelab.atlassian.net/wiki/spaces/deliveryportal/pages/2201944070/2022+June+-+Technical+Overview" target="_blank">Technical overviview</a>.&nbsp;</p>
+        <p class="lead">Alternatively, you can download a PDF version on the document usinng the link <a href="https://scilifelab.atlassian.net/wiki/download/attachments/2201944070/2022-June_Technical-Overview.pdf?api=v2">Technical overviview PDF version</a>.&nbsp;</p>
+    <br>
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row text-muted">
+                <div class="col-md-10">
+                    <p>The Data Delivery System is developed and maintained by the <a href="https://scilifelab.se/data">SciLifeLab Data Centre</a>. With any questions please email datacentre@scilifelab.se.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    </div>
+    
+        <!-- Cookie alert -->
+        <div class="d-flex justify-content-center cookiealert" role="alert">
+            <span style="display: flex;align-items: center;">We use cookies to improve your experience of the website. By continuing you accept that we use cookies.</span>
+        </div>
+    
+        <!-- JS code for the cookie alert-->
+        <script src="/static/dist/js/cookiealert.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.min.js"></script>
+        
+        <script src="/static/dist/js/app.js"></script>
+
+</html>
+{% endblock %}
