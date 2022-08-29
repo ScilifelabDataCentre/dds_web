@@ -39,7 +39,7 @@ def open_policy():
 )
 def open_troubleshooting():
     """Show troubleshooting document.
-    
+
     Cache information:
     - Flask-Caching not used due to security vulnerability.
     - Args:
