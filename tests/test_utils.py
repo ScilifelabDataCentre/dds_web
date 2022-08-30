@@ -887,7 +887,7 @@ def test_bucket_is_valid_invalid_suffix():
 
 
 def test_bucket_is_valid_ok():
-    """Test that a bucket name with suffix -s3alias is not valid."""
+    """Test that a bucket name with suffix -s3alias is valid."""
     # Call function
     valid, message = utils.bucket_is_valid(bucket_name="something-.")
     assert valid
@@ -900,11 +900,14 @@ def test_bucket_is_valid_ok():
 def test_calculate_bytehours_ok(client: flask.testing.FlaskClient):
     """Test that function returns correct value."""
     minuend: datetime.datetime = datetime.datetime.utcnow()
-    subtrahend = minuend - datetime.timedelta(hours=24)
+    subtrahend = minuend - datetime.timedelta(hours=2928.58)
 
     # Call function
-    bytehours = utils.calculate_bytehours(minuend=minuend, subtrahend=subtrahend, size_bytes=2)
-    assert bytehours == 48
+    bytehours = utils.calculate_bytehours(
+        minuend=minuend, subtrahend=subtrahend, size_bytes=1000000000000000
+    )
+    assert type(bytehours) == float
+    assert bytehours == 2.92858e18
 
 
 def test_calculate_version_period_usage_existing_and_invoiced_version(
@@ -922,7 +925,7 @@ def test_calculate_version_period_usage_existing_and_invoiced_version(
     time_invoiced_before = version.time_invoiced
     # Call function
     bytehours = utils.calculate_version_period_usage(version=version)
-    assert round(bytehours) == 24
+    assert round(bytehours) == 24.0
     assert version.time_invoiced != time_invoiced_before
 
 
@@ -940,7 +943,7 @@ def test_calculate_version_period_usage_deleted_and_not_invoiced_version(
 
     # Call function
     bytehours = utils.calculate_version_period_usage(version=version)
-    assert bytehours == 12
+    assert bytehours == 12.0
     assert version.time_invoiced
 
 
@@ -959,7 +962,7 @@ def test_calculate_version_period_usage_deleted_and_invoiced_version(
     time_invoiced_before = version.time_invoiced
     # Call function
     bytehours = utils.calculate_version_period_usage(version=version)
-    assert bytehours == 12
+    assert bytehours == 12.0
     assert version.time_invoiced != time_invoiced_before
 
 
@@ -970,5 +973,5 @@ def test_calculate_version_period_usage_new_version(client: flask.testing.FlaskC
     # Call function
     bytehours = utils.calculate_version_period_usage(version=existing_version)
     assert existing_version.size_stored == 10000
-    assert bytehours < 10000
+    assert bytehours < 10000.0
     assert existing_version.time_invoiced

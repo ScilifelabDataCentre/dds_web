@@ -503,7 +503,9 @@ def get_active_motds():
     return motds_active or None
 
 
-def calculate_bytehours(minuend, subtrahend, size_bytes):
+def calculate_bytehours(
+    minuend: datetime.datetime, subtrahend: datetime.datetime, size_bytes: int
+) -> float:
     """Calculate byte hours."""
     # Calculate the time difference as timedelta
     time_diff_timedelta = minuend - subtrahend
