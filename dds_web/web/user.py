@@ -365,12 +365,10 @@ def login():
 
     next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
-    if (
-        next_target
-        and next_target in VALID_REDIRECTS
-        and not dds_web.utils.is_safe_url(next_target)
-    ):
-        return flask.abort(400)
+    VALID_REDIRECTS = [str(p) for p in flask.current_app.url_map.iter_rules() if not str(p).startswith("/api/v1") and str(p).count("/") <= 1]
+    if next_target:
+        if next_target not in VALID_REDIRECTS or (next_target in VALID_REDIRECTS and not dds_web.utils.is_safe_url(target=next_target)):
+            return flask.abort(400)
 
     # Redirect to next or index if user is already authenticated
     if flask_login.current_user.is_authenticated:
