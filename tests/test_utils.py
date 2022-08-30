@@ -922,7 +922,7 @@ def test_calculate_version_period_usage_existing_and_invoiced_version(
     time_invoiced_before = version.time_invoiced
     # Call function
     bytehours = utils.calculate_version_period_usage(version=version)
-    assert bytehours == 24
+    assert round(bytehours) == 24
     assert version.time_invoiced != time_invoiced_before
 
 
