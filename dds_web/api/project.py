@@ -54,8 +54,10 @@ class ProjectStatus(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
 
         # Get current status and deadline
         return_info = {"current_status": project.current_status}
@@ -79,8 +81,10 @@ class ProjectStatus(flask_restful.Resource):
     @handle_validation_errors
     def post(self):
         """Update Project Status."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
 
         # Check if valid status
         json_input = flask.request.json
@@ -290,7 +294,9 @@ class ProjectStatus(flask_restful.Resource):
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DeletionError(
-                project=project.public_id, message="Server Error: Status was not updated"
+                project=project.public_id,
+                message="Server Error: Status was not updated",
+                pass_message=True,
             ) from err
 
         delete_message = (
@@ -331,7 +337,9 @@ class ProjectStatus(flask_restful.Resource):
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise DeletionError(
-                project=project.public_id, message="Server Error: Status was not updated"
+                project=project.public_id,
+                message="Server Error: Status was not updated",
+                pass_message=True,
             ) from err
 
         return (
@@ -367,8 +375,10 @@ class GetPublic(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         """Get public key from database."""
-        # Verify project ID and access
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
 
         flask.current_app.logger.debug("Getting the public key.")
 
@@ -466,7 +476,7 @@ class UserProjects(flask_restful.Resource):
                 raise DatabaseError(
                     message=str(err),
                     alt_message=(
-                        "Could not get users project access information."
+                        "Could not get users project access information"
                         + (
                             ": Database malfunction."
                             if isinstance(err, sqlalchemy.exc.OperationalError)

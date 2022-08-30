@@ -228,6 +228,8 @@ def verify_token(token):
         raise AuthenticationError(message="Invalid token")
 
     user = __user_from_subject(subject=claims.get("sub"))
+    if not user:
+        raise AccessDeniedError(message="Invalid token. Try reauthenticating.")
 
     if user.password_reset:
         token_expired = claims.get("exp")
@@ -313,9 +315,14 @@ def __handle_multi_factor_authentication(user, mfa_auth_time_string):
 
 def send_hotp_email(user):
     """Send one time code via email."""
-    # Only send if the hotp has not been issued or if it's been more than 15 minutes since
-    # a hotp email was last sent
-    if not user.hotp_issue_time or (
+    # Only send if
+    # - not trying to activate hotp
+    # or
+    # - the hotp has not been issued or if it's been
+    # more than 15 minutes since a hotp email was last sent
+    if flask.request.path.endswith("/user/hotp/activate"):
+        pass
+    elif not user.hotp_issue_time or (
         user.hotp_issue_time
         and (dds_web.utils.current_time() - user.hotp_issue_time > datetime.timedelta(minutes=15))
     ):

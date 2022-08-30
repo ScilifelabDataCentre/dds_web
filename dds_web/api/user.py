@@ -1194,7 +1194,7 @@ class ShowUsage(flask_restful.Resource):
         }
 
 
-class UnitUsers(flask_restful.Resource):
+class Users(flask_restful.Resource):
     """List unit users."""
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
@@ -1202,36 +1202,69 @@ class UnitUsers(flask_restful.Resource):
     @handle_db_error
     def get(self):
         """List unit users within the unit the current user is connected to, or the one defined by a superadmin."""
-        unit_users = {}
 
-        if auth.current_user().role == "Super Admin":
-            json_input = flask.request.json
-            if not json_input:
-                raise ddserr.DDSArgumentError(message="Unit public id missing.")
+        # Function only accessible here
+        def get_users(unit: models.Unit = None):
+            """Get users, either all or from specific unit."""
+            users_to_iterate = None
+            if unit:
+                users_to_iterate = unit.users
+            else:
+                users_to_iterate = models.User.query.all()
 
-            unit = json_input.get("unit")
-            if not unit:
-                raise ddserr.DDSArgumentError(message="Unit public id missing.")
+            users_to_return = [
+                {
+                    "Name": user.name,
+                    "Username": user.username,
+                    "Email": user.primary_email,
+                    "Role": user.role,
+                    "Active": user.is_active,
+                }
+                for user in users_to_iterate
+            ]
+            return users_to_return
 
-            unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
-            if not unit_row:
-                raise ddserr.DDSArgumentError(
-                    message=f"There is no unit with the public id '{unit}'."
-                )
-        else:
-            unit_row = auth.current_user().unit
+        # End of function
 
+        # Keys to return
         keys = ["Name", "Username", "Email", "Role", "Active"]
 
-        unit_users = [
-            {
-                "Name": user.name,
-                "Username": user.username,
-                "Email": user.primary_email,
-                "Role": user.role,
-                "Active": user.is_active,
-            }
-            for user in unit_row.users
-        ]
+        # Super Admins can list users in units or all users,
+        if auth.current_user().role == "Super Admin":
+            json_input = flask.request.json
 
-        return {"users": unit_users, "keys": keys, "unit": unit_row.name, "empty": not unit_users}
+            # The unit public ID must be specified if there is any json input
+            if json_input and json_input.get("unit"):
+                unit = json_input.get("unit")
+
+                # Verify unit public id
+                unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
+                if not unit_row:
+                    raise ddserr.DDSArgumentError(
+                        message=f"There is no unit with the public id '{unit}'."
+                    )
+
+                # Get users in unit
+                users_to_return = get_users(unit=unit_row)
+                return {
+                    "users": users_to_return,
+                    "unit": unit_row.name,
+                    "keys": keys,
+                    "empty": not users_to_return,
+                }
+
+            # Get all users if no unit specified
+            users_to_return = get_users()
+            return {"users": users_to_return, "keys": keys, "empty": not users_to_return}
+
+        # Unit Personnel and Unit Admins can list all users within their units
+        unit_row = auth.current_user().unit
+
+        # Get users in unit
+        users_to_return = get_users(unit=unit_row)
+        return {
+            "users": users_to_return,
+            "unit": unit_row.name,
+            "keys": keys,
+            "empty": not users_to_return,
+        }

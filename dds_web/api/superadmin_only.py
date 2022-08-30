@@ -81,7 +81,7 @@ class MOTD(flask_restful.Resource):
             raise ddserr.DDSArgumentError(message="No MOTD specified.")
 
         flask.current_app.logger.debug(motd)
-        new_motd = models.MOTD(message=motd, date_created=curr_date)
+        new_motd = models.MOTD(message=motd)
         db.session.add(new_motd)
         db.session.commit()
 
@@ -89,6 +89,96 @@ class MOTD(flask_restful.Resource):
 
     @handle_db_error
     def get(self):
-        """Get the latest MOTD from database."""
-        motd = utils.get_latest_motd()
-        return {"message": motd}
+        """Return list of all active MOTDs to super admin."""
+        active_motds = models.MOTD.query.filter_by(active=True).all()
+        if not active_motds:
+            return {"message": "There are no active MOTDs."}
+
+        motd_info = [
+            {
+                "MOTD ID": m.id,
+                "Message": m.message,
+                "Created": m.date_created.strftime("%Y-%m-%d %H:%M"),
+            }
+            for m in active_motds
+        ]
+
+        return {"motds": motd_info, "keys": ["MOTD ID", "Message", "Created"]}
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def put(self):
+        """Deactivate MOTDs."""
+        # Get motd id
+        json_input = flask.request.json
+        motd_id = json_input.get("motd_id")
+        if not motd_id:
+            raise ddserr.DDSArgumentError(message="No MOTD for deactivation specified.")
+
+        # Get motd row from db
+        motd_to_deactivate = models.MOTD.query.filter_by(id=motd_id).first()
+        if not motd_to_deactivate:
+            raise ddserr.DDSArgumentError(
+                message=f"MOTD with id {motd_id} does not exist in the database"
+            )
+
+        # Check if motd is active
+        if not motd_to_deactivate.active:
+            raise ddserr.DDSArgumentError(message=f"MOTD with id {motd_id} is not active.")
+
+        motd_to_deactivate.active = False
+        db.session.commit()
+
+        return {"message": "The MOTD was successfully deactivated in the database."}
+
+
+class FindUser(flask_restful.Resource):
+    """Get all users or check if there a specific user in the database."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def get(self):
+        """Return users or a confirmation on if one exists."""
+        user_to_find = flask.request.json.get("username")
+        if not user_to_find:
+            raise ddserr.DDSArgumentError(
+                message="Username required to check existence of account."
+            )
+
+        return {
+            "exists": models.User.query.filter_by(username=user_to_find).one_or_none() is not None
+        }
+
+
+class ResetTwoFactor(flask_restful.Resource):
+    """Deactivate TOTP and activate HOTP for other user, e.g. if phone lost."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def put(self):
+        """Change totp to hotp."""
+        # Check that username is specified
+        username: str = flask.request.json.get("username")
+        if not username:
+            raise ddserr.DDSArgumentError(message="Username required to reset 2FA to HOTP")
+
+        # Verify valid user
+        user: models.User = models.User.query.filter_by(username=username).one_or_none()
+        if not user:
+            raise ddserr.DDSArgumentError(message=f"The user doesn't exist: {username}")
+
+        # TOTP needs to be active in order to deactivate
+        if not user.totp_enabled:
+            raise ddserr.DDSArgumentError(message="TOTP is already deactivated for this user.")
+
+        user.deactivate_totp()
+
+        return {
+            "message": f"TOTP has been deactivated for user: {user.username}. They can now use 2FA via email during authentication."
+        }

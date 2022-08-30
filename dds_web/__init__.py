@@ -35,7 +35,6 @@ import werkzeug
 
 from dds_web.scheduled_tasks import scheduler
 
-
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
 ####################################################################################################
@@ -67,7 +66,6 @@ limiter = Limiter(key_func=get_remote_address)
 
 # Migration
 migrate = flask_migrate.Migrate()
-
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -189,14 +187,15 @@ def create_app(testing=False, database_uri=None):
         @app.before_request
         def prepare():
             """Populate flask globals for template rendering"""
-            from dds_web.utils import validate_major_cli_version, get_latest_motd
-            from dds_web.errors import VersionMismatchError
+            from dds_web.utils import verify_cli_version
+            from dds_web.utils import get_active_motds
 
-            if "/api/v1" in flask.request.path:
-                validate_major_cli_version()
+            # Verify cli version compatible
+            if "api/v1" in flask.request.path:
+                verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
 
             # Get message of the day
-            flask.g.motd = get_latest_motd()
+            flask.g.motd = get_active_motds()
 
             flask.g.current_user = None
             flask.g.current_user_emails = None
@@ -536,17 +535,18 @@ def lost_files_s3_db(action_type: str):
                     entry.key for entry in resource.Bucket(project.bucket).objects.all()
                 )
             except resource.meta.client.exceptions.NoSuchBucket:
-                flask.current_app.logger.warning("Missing bucket %s", project.bucket)
-                # Create a missing bucket if argument chosen
-                if action_type == "add-missing-buckets":
-                    valid, message = bucket_is_valid(bucket_name=project.bucket)
-                    if not valid:
-                        flask.current_app.logger.warning(
-                            f"Could not create bucket '{project.bucket}' for project '{project.public_id}': {message}"
-                        )
-                    else:
-                        resource.create_bucket(Bucket=project.bucket)
-                        flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
+                if project.is_active:
+                    flask.current_app.logger.warning("Missing bucket %s", project.bucket)
+                    # Create a missing bucket if argument chosen
+                    if action_type == "add-missing-buckets":
+                        valid, message = bucket_is_valid(bucket_name=project.bucket)
+                        if not valid:
+                            flask.current_app.logger.warning(
+                                f"Could not create bucket '{project.bucket}' for project '{project.public_id}': {message}"
+                            )
+                        else:
+                            resource.create_bucket(Bucket=project.bucket)
+                            flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
                 continue
 
             # Get objects in project

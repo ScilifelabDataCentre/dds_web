@@ -503,7 +503,6 @@ def test_hotp_activation(client, totp_for_user):
         f"{tests.DDSEndpoint.ACTIVATE_HOTP_WEB}{token}",
         headers={
             "Content-Type": "application/x-www-form-urlencoded",
-            **tests.DEFAULT_HEADER,
         },
         follow_redirects=True,
     )

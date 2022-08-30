@@ -116,3 +116,17 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-06-15 - 2022-06-29)
 
 - Get MOTD from API ([#1198](https://github.com/ScilifelabDataCentre/dds_web/pull/1198))
+- New endpoint for listing all users ([#1204](https://github.com/ScilifelabDataCentre/dds_web/pull/1204))
+- Only print warning about missing bucket if the project is active ([#1203](https://github.com/ScilifelabDataCentre/dds_web/pull/1203))
+- Removed version check ([#1206](https://github.com/ScilifelabDataCentre/dds_web/pull/1206))
+
+## Summer 2022
+
+- Do not send one time code to email if the email 2fa is getting activated ([#1236](https://github.com/ScilifelabDataCentre/dds_web/pull/1236))
+- Raise AccessDeniedError with message when token specified but user not existent ([#1235](https://github.com/ScilifelabDataCentre/dds_web/pull/1235))
+- Display multiple MOTDS ([#1212](https://github.com/ScilifelabDataCentre/dds_web/pull/1212))
+
+## Sprint (2022-08-18 - 2022-09-02)
+
+- Allow Super Admins to deactivate user 2FA via authenticator app ([#1247](https://github.com/ScilifelabDataCentre/dds_web/pull/1247))
+- Get troubleshooting document from Confluence ([#1244](https://github.com/ScilifelabDataCentre/dds_web/pull/1244))

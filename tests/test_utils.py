@@ -4,7 +4,12 @@ import pytest
 from unittest.mock import patch
 from dds_web import db
 from dds_web.database import models
-from dds_web.errors import AccessDeniedError, VersionMismatchError, VersionNotFoundError
+from dds_web.errors import (
+    AccessDeniedError,
+    DDSArgumentError,
+    NoSuchProjectError,
+    VersionMismatchError,
+)
 import flask
 import flask_login
 import datetime
@@ -18,7 +23,120 @@ import werkzeug
 # Variables
 
 url: str = "http://localhost"
-pypi_api_url: str = "https://pypi.python.org/pypi/dds-cli/json"
+
+# collect_project
+
+
+def test_collect_project_project_doesnt_exist(client: flask.testing.FlaskClient) -> None:
+    """Non existent project should give error."""
+    with pytest.raises(NoSuchProjectError) as err:
+        utils.collect_project(project_id="nonexistent")
+    assert "The specified project does not exist." in str(err.value)
+
+
+def test_collect_project_ok(client: flask.testing.FlaskClient):
+    """Existing project should return project object."""
+    # Get project from database to make sure it exists
+    existing_project = models.Project.query.first()
+
+    # Should return project
+    project = utils.collect_project(project_id=existing_project.public_id)
+    assert project and project == existing_project
+
+
+# get_required_item
+
+
+def test_get_required_item_no_obj(client: flask.testing.FlaskClient) -> None:
+    """Get item from dict, but no dict specified."""
+    with pytest.raises(DDSArgumentError) as err:
+        utils.get_required_item(req="project")
+    assert "Missing required information: 'project'" in str(err.value)
+
+
+def test_get_required_item_not_in_obj(client: flask.testing.FlaskClient) -> None:
+    """If the required item is not in the dict, there should be an error."""
+    with pytest.raises(DDSArgumentError) as err:
+        utils.get_required_item(obj={"test": "something"}, req="project")
+    assert "Missing required information: 'project'" in str(err.value)
+
+
+def test_get_required_item_ok(client: flask.testing.FlaskClient) -> None:
+    """If dict contains item, value should be returned."""
+    value = utils.get_required_item(obj={"project": "project_id"}, req="project")
+    assert value == "project_id"
+
+
+def test_verify_project_access_denied(client: flask.testing.FlaskClient) -> None:
+    """A project must have access to the project, otherwise error."""
+    # First user
+    user1 = models.UnitUser.query.filter_by(unit_id=1).first()
+    assert user1
+
+    # Second user
+    user2 = models.UnitUser.query.filter_by(unit_id=2).first()
+    assert user2
+
+    # Get project for unit 2
+    project = models.Project.query.filter_by(unit_id=2).first()
+    assert project
+
+    # Set auth.current_user
+    flask.g.flask_httpauth_user = user1
+
+    # Verify project access -- not ok
+    with pytest.raises(AccessDeniedError) as err:
+        utils.verify_project_access(project=project)
+    assert "Project access denied" in str(err.value)
+
+
+def test_verify_project_access_ok(client: flask.testing.FlaskClient) -> None:
+    """A project must have access to the project, otherwise error."""
+    # First user
+    user1 = models.UnitUser.query.filter_by(unit_id=1).first()
+    assert user1
+
+    # Get project for unit 1
+    project = models.Project.query.filter_by(unit_id=1).first()
+    assert project
+
+    # Set auth.current_user
+    flask.g.flask_httpauth_user = user1
+
+    # Verify project access -- not ok
+    utils.verify_project_access(project=project)
+
+
+# verify_cli_version
+
+
+def test_verify_cli_version_no_version_in_request(client: flask.testing.FlaskClient) -> None:
+    """Version is required in order to compare."""
+    with pytest.raises(VersionMismatchError) as err:
+        utils.verify_cli_version()
+    assert "No version found in request, cannot proceed." in str(err.value)
+
+
+def test_verify_cli_version_incompatible(client: flask.testing.FlaskClient) -> None:
+    """Incompatible versions should return an error."""
+    with pytest.raises(VersionMismatchError) as err:
+        utils.verify_cli_version(version_cli="0.0.0")
+    assert "You're using an old CLI version, please upgrade to the latest one." in str(err.value)
+
+
+def test_verify_cli_version_incorrect_length(client: flask.testing.FlaskClient) -> None:
+    """Incorrect version lengths should return an error."""
+    with pytest.raises(VersionMismatchError) as err:
+        utils.verify_cli_version(version_cli="0.0.0.0")
+    assert "Incompatible version lengths." in str(err.value)
+
+
+def test_verify_cli_version_ok(client: flask.testing.FlaskClient) -> None:
+    """Compatible versions should not fail."""
+    from dds_web import version
+
+    utils.verify_cli_version(version_cli=version.__version__)
+
 
 # contains_uppercase
 
@@ -774,138 +892,3 @@ def test_bucket_is_valid_ok():
     valid, message = utils.bucket_is_valid(bucket_name="something-.")
     assert valid
     assert message == ""
-
-
-# validate_major_cli_version
-
-
-def test_validate_major_cli_version_without_custom_header(
-    client: FlaskClient, disable_requests_cache
-):
-    """No CLI version in header should give error."""
-    with pytest.raises(VersionMismatchError) as err:
-        with client.session_transaction() as session:
-            utils.validate_major_cli_version()
-    assert "No CLI version found in request header." in str(err.value)
-
-
-def test_validate_major_cli_version_no_version_info(client: FlaskClient, disable_requests_cache):
-    """Version info from pypi required."""
-    # Mock requests
-    with requests_mock.Mocker() as mock:
-        # Create mocks for no info
-        _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
-        pypi_response: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json={"test": "test"}
-        )
-
-        # Perform request to have header - this will call pypi once
-        client.get(url, headers={"X-CLI-Version": "0.0.0"})
-        assert pypi_response.call_count == 0
-
-        # Verify failure
-        with pytest.raises(VersionNotFoundError) as err:
-            utils.validate_major_cli_version()
-        assert "No version information received from PyPi." in str(err.value)
-        assert pypi_response.call_count == 1
-
-        # Create mock for no version in info
-        pypi_response_2: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json={"info": {"test": "test"}}
-        )
-
-        # Verify failure
-        with pytest.raises(VersionNotFoundError) as err:
-            utils.validate_major_cli_version()
-        assert "No version information received from PyPi." in str(err.value)
-        assert pypi_response_2.call_count == 1
-
-
-def test_validate_major_cli_version_mismatch_major(client: FlaskClient, disable_requests_cache):
-    """Major version mismatch should result in blocking."""
-    # Mock requests
-    with requests_mock.mocker.Mocker() as mock:
-        # Create mocks for request with version
-        _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
-        pypi_response: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json={"info": {"version": "1.0.0"}}
-        )
-
-        # Perform request to have header - major mismatch from latest
-        client.get(url, headers={"X-CLI-Version": "0.0.0"})
-        assert pypi_response.call_count == 0
-
-        # Verify failure - major version mismatch
-        with pytest.raises(VersionMismatchError) as err:
-            utils.validate_major_cli_version()
-        assert (
-            "You have an outdated version of the DDS CLI installed. Please upgrade to version 1.0.0 and try again."
-            in str(err.value)
-        )
-        assert pypi_response.call_count == 1
-
-
-def test_validate_major_cli_version_mismatch_minor(client: FlaskClient, disable_requests_cache):
-    """Minor version mismatch should pass."""
-    # Mock requests
-    with requests_mock.mocker.Mocker() as mock:
-        # Create mocks with version
-        _: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
-        pypi_response: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json={"info": {"version": "1.0.0"}}
-        )
-
-        # Perform request to have header - minor mismatch from latest
-        client.get(url, headers={"X-CLI-Version": "1.1.0"})
-        assert pypi_response.call_count == 0
-
-        # Verify ok - should pass
-        utils.validate_major_cli_version()
-        assert pypi_response.call_count == 1
-
-        # Perform request to have header - minor mismatch from latest
-        client.get(url, headers={"X-CLI-Version": "1.0.1"})
-        assert pypi_response.call_count == 1
-
-        # Verify ok - should pass
-        utils.validate_major_cli_version()
-        assert pypi_response.call_count == 2
-
-
-def test_validate_major_cli_version_jsonerror(client: FlaskClient, disable_requests_cache):
-    """Json decode error should fail."""
-    # Mock requests
-    with requests_mock.mocker.Mocker() as mock:
-        # Create mocks with version
-        base_response: requests_mock.adapter._Matcher = mock.get(url, status_code=200, json={})
-        pypi_response: requests_mock.adapter._Matcher = mock.get(
-            pypi_api_url, status_code=200, json=None
-        )
-
-        # Perform request
-        client.get(url, headers={"X-CLI-Version": "0.0.0"})
-        assert pypi_response.call_count == 0
-
-        # Try function
-        with pytest.raises(VersionNotFoundError) as err:
-            utils.validate_major_cli_version()
-        assert pypi_response.call_count == 1
-        assert "Failed checking latest DDS PyPi version." in str(err.value)
-
-
-# get_latest_motd
-
-
-def test_get_latest_motd_no_motd(client: FlaskClient):
-    motd = utils.get_latest_motd()
-    assert not motd
-
-
-def test_get_latest_motd(client: FlaskClient):
-    new_message: str = "test message"
-    new_motd = models.MOTD(message=new_message, date_created=utils.current_time())
-    db.session.add(new_motd)
-    db.session.commit()
-
-    motd = utils.get_latest_motd()
-    assert motd == new_message

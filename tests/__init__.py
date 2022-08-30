@@ -6,6 +6,8 @@ import dds_web.database
 import flask
 import flask_login
 from requests_mock.mocker import Mocker
+from dds_web.version import __version__
+from typing import Dict
 
 # Copied from dds_cli __init__.py:
 
@@ -39,7 +41,7 @@ USER_CREDENTIALS = {
     "delete_me_unitadmin": "delete_me_unitadmin:password",
 }
 
-DEFAULT_HEADER = {"X-CLI-Version": "0.0.0"}
+DEFAULT_HEADER = {"X-CLI-Version": __version__}
 
 ###############################################################################
 # CLASSES ########################################################### CLASSES #
@@ -65,7 +67,7 @@ class UserAuth:
         return {
             "Authorization": f"Basic {self.basic()}",
             "Cache-Control": "no-cache",
-            "X-CLI-Version": "0.0.0",
+            **DEFAULT_HEADER,
         }
 
     def fetch_hotp(self):
@@ -74,7 +76,7 @@ class UserAuth:
 
     def partial_token(self, client):
         """Return a partial token that can be used to get a full token."""
-        headers: Dict = {"Cache-Control": "no-cache", "X-CLI-Version": "0.0.0"}
+        headers: Dict = {"Cache-Control": "no-cache", **DEFAULT_HEADER}
         response = client.get(DDSEndpoint.ENCRYPTED_TOKEN, headers=headers, auth=(self.as_tuple()))
 
         # Get response from api
@@ -86,9 +88,7 @@ class UserAuth:
             return headers
 
     def token(self, client):
-        pypi_api_url: str = "https://pypi.python.org/pypi/dds-cli/json"
         with Mocker() as mock:
-            mock.get(pypi_api_url, status_code=200, json={"info": {"version": "0.0.0"}})
             temp_token = self.partial_token(client)
 
             hotp_token = self.fetch_hotp()
@@ -105,7 +105,7 @@ class UserAuth:
                 return {
                     "Authorization": f"Bearer {token}",
                     "Cache-Control": "no-cache",
-                    "X-CLI-Version": "0.0.0",
+                    **DEFAULT_HEADER,
                 }
             else:
                 raise ddserr.JwtTokenGenerationError()
@@ -141,6 +141,8 @@ class DDSEndpoint:
 
     # Web
     INDEX = "/"
+    POLICY = "/policy"
+    TROUBLE = "/trouble"
     LOGIN = "/login"
     LOGOUT = "/logout"
     CANCEL_2FA = "/cancel_2fa"
@@ -166,7 +168,7 @@ class DDSEndpoint:
     USER_CONFIRM_DELETE = "/confirm_deletion/"
 
     # List users
-    LIST_UNIT_USERS = BASE_ENDPOINT + "/unit/users"
+    LIST_USERS = BASE_ENDPOINT + "/users"
 
     # Authentication - user and project
     ENCRYPTED_TOKEN = BASE_ENDPOINT + "/user/encrypted_token"
@@ -218,5 +220,7 @@ class DDSEndpoint:
     # Superadmins only
     LIST_UNITS_ALL = BASE_ENDPOINT + "/unit/info/all"
     MOTD = BASE_ENDPOINT + "/motd"
+    USER_FIND = BASE_ENDPOINT + "/user/find"
+    TOTP_DEACTIVATE = BASE_ENDPOINT + "/user/totp/deactivate"
 
     TIMEOUT = 5
