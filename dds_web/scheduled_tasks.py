@@ -220,7 +220,9 @@ def delete_invite():
             scheduler.app.logger.error(f"{invite} not deleted: {error}")
 
 
-@scheduler.task("cron", id="get_quarterly_usage", month="Jan,Apr,Jul,Oct", day="1", hour=0, minute=1)
+@scheduler.task(
+    "cron", id="get_quarterly_usage", month="Jan,Apr,Jul,Oct", day="1", hour=0, minute=1
+)
 # @scheduler.task("interval", id="monthly_usage", seconds=60, misfire_grace_time=1)
 def quarterly_usage():
     """Get the monthly usage for the units"""
