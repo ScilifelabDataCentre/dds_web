@@ -132,3 +132,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Get troubleshooting document from Confluence ([#1244](https://github.com/ScilifelabDataCentre/dds_web/pull/1244))
 - Quarterly cron job calculating projects storage usage based on the database ([#1246](https://github.com/ScilifelabDataCentre/dds_web/pull/1246))
 - Add Technical Overview page with links to Confluence and to a PDF download ([#1250](https://github.com/ScilifelabDataCentre/dds_web/pull/1250))
+- Technical Overview moved to repository ([#1250](https://github.com/ScilifelabDataCentre/dds_web/pull/1253))
