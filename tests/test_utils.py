@@ -887,7 +887,7 @@ def test_bucket_is_valid_invalid_suffix():
 
 
 def test_bucket_is_valid_ok():
-    """Test that a bucket name with suffix -s3alias is valid."""
+    """Test that a bucket name is valid."""
     # Call function
     valid, message = utils.bucket_is_valid(bucket_name="something-.")
     assert valid
