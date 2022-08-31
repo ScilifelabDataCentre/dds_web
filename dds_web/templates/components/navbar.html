@@ -25,6 +25,18 @@
                         Documentation
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('pages.open_troubleshooting') }}" target="_self" title="Troubleshooting the DDS system">
+                        <i class="fa-solid fa-book d-block mx-auto"></i>
+                        Troubleshooting
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('pages.open_technical_overview') }}" target="_self" title="Technical overview of the DDS system">
+                        <i class="fa-solid fa-book d-block mx-auto"></i>
+                        Technical overview
+                    </a>
+                </li>
                 {% if g.current_user %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('auth_blueprint.projects_info') }}">

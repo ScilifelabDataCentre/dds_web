@@ -3,9 +3,18 @@
 Most of the app routes are in `dds_web/web/user.py`.
 Here we have the routes that are not specific to a user.
 """
+from datetime import datetime, timedelta
+import functools
+import threading
 from flask import Blueprint, render_template, jsonify
 from flask import current_app as app
 from dds_web import forms
+import re
+import requests
+import cachetools
+import simplejson
+import flask
+
 
 pages = Blueprint("pages", __name__)
 
@@ -21,6 +30,19 @@ def home():
 def open_policy():
     """Show privacy policy."""
     return render_template("policy.html")
+
+
+@pages.route("/trouble", methods=["GET"])
+def open_troubleshooting():
+    """Show troubleshooting document."""
+
+    return render_template("troubleshooting.html")
+
+
+@pages.route("/technical", methods=["GET"])
+def open_technical_overview():
+    """Show technical overview document."""
+    return render_template("technical_overview.html")
 
 
 @pages.route("/status")
