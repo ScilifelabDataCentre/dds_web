@@ -13,7 +13,7 @@ from dds_web.scheduled_tasks import (
     set_available_to_expired,
     set_expired_to_archived,
     delete_invite,
-    monthly_usage,
+    quarterly_usage,
 )
 
 from typing import List
@@ -106,6 +106,6 @@ def test_delete_invite_timestamp_issue(client: flask.testing.FlaskClient) -> Non
     assert len(db.session.query(models.Invite).all()) == 0
 
 
-def test_monthly_usage(client: flask.testing.FlaskClient) -> None:
-    """Test the monthly_usage cron job."""
-    monthly_usage()
+def test_quarterly_usage(client: flask.testing.FlaskClient) -> None:
+    """Test the quarterly_usage cron job."""
+    quarterly_usage()
