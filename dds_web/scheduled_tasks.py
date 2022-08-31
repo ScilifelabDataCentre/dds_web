@@ -250,7 +250,6 @@ def quarterly_usage():
                 .join(models.Project)
                 .filter(models.Project.is_active == False)
             ):
-                scheduler.app.logger.debug(f"Project: {project}")
                 # Get number of versions in project that have been fully included in usage calcs
                 num_done = (
                     db.session.query(models.Project, models.Version)
@@ -264,18 +263,12 @@ def quarterly_usage():
                     .count()
                 )
 
-                scheduler.app.logger.debug(f"Number of done versions: {num_done}")
-                scheduler.app.logger.debug(
-                    f"Total number of versions: {len(project.file_versions)}"
-                )
                 # Check if there are any versions that are not fully included
                 # If not, project is done and should not be included in any more usage calculations in billing
                 if num_done == len(project.file_versions):
                     project.done = True
 
                 db.session.commit()
-
-            print("", flush=True)
 
             # 2. Get project where done = False
             for unit, project in page_query(

@@ -898,8 +898,9 @@ def test_bucket_is_valid_ok():
 
 
 def test_calculate_bytehours_ok(client: flask.testing.FlaskClient):
-    """Test that function returns correct value."""
+    """Test that the float and function can handle a huge file stored for about 4 months."""
     minuend: datetime.datetime = datetime.datetime.utcnow()
+    # simulate time_uploaded about 4 months ago = 2928.58 hours
     subtrahend = minuend - datetime.timedelta(hours=2928.58)
 
     # Call function
