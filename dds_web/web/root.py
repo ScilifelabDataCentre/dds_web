@@ -111,6 +111,12 @@ def open_troubleshooting():
     return render_template("troubleshooting.html", info=info)
 
 
+@pages.route("/technical", methods=["GET"])
+def open_technical_overview():
+    """Show technical overview document."""
+    return render_template("technical_overview.html")
+
+
 @pages.route("/status")
 def get_status():
     """Return a simple status message to confirm that the system is ready."""
