@@ -220,12 +220,12 @@ def delete_invite():
             scheduler.app.logger.error(f"{invite} not deleted: {error}")
 
 
-# @scheduler.task("cron", id="get_monthly_usage", day="1", hour=0, minute=1)
-@scheduler.task("interval", id="monthly_usage", seconds=60, misfire_grace_time=1)
-def monthly_usage():
+@scheduler.task("cron", id="get_quarterly_usage", month="Jan,Apr,Jul,Oct", day="1", hour=0, minute=1)
+# @scheduler.task("interval", id="monthly_usage", seconds=60, misfire_grace_time=1)
+def quarterly_usage():
     """Get the monthly usage for the units"""
 
-    scheduler.app.logger.debug("Task: Collecting monthly usage information from Safespring.")
+    scheduler.app.logger.debug("Task: Collecting usage information from database.")
     import sqlalchemy
 
     from dds_web import db
@@ -283,14 +283,13 @@ def monthly_usage():
             ):
                 project_byte_hours: int = 0
                 for version in project.file_versions:
+                    # Skipp deleted and already invoiced versions
                     if version.time_deleted == version.time_invoiced and [
                         version.time_deleted,
                         version.time_invoiced,
                     ] != [None, None]:
-                        flask.current_app.logger.debug("passing....")
                         continue
                     version_bhours = calculate_version_period_usage(version=version)
-                    scheduler.app.logger.info(f"Version: {version}\tUsage: {version_bhours}")
                     project_byte_hours += version_bhours
                 scheduler.app.logger.info(
                     f"Project {project.public_id} byte hours: {project_byte_hours}"

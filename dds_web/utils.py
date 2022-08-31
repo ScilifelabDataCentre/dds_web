@@ -523,7 +523,6 @@ def calculate_version_period_usage(version):
     bytehours: int = 0
     if not version.time_deleted and version.time_invoiced:
         # Existing and invoiced version
-        flask.current_app.logger.debug("1")
         now = current_time()
         bytehours = calculate_bytehours(
             minuend=now, subtrahend=version.time_invoiced, size_bytes=version.size_stored
@@ -531,7 +530,6 @@ def calculate_version_period_usage(version):
         version.time_invoiced = now
     elif version.time_deleted and not version.time_invoiced:
         # Version uploaded >and< deleted after last usage calculation
-        flask.current_app.logger.debug("2")
         bytehours = calculate_bytehours(
             minuend=version.time_deleted,
             subtrahend=version.time_uploaded,
@@ -541,7 +539,6 @@ def calculate_version_period_usage(version):
     elif version.time_deleted != version.time_invoiced:
         # Version has been deleted after last usage calculation
         # (if version.time_deleted > version.time_invoiced)
-        flask.current_app.logger.debug("3")
         bytehours = calculate_bytehours(
             minuend=version.time_deleted,
             subtrahend=version.time_invoiced,
@@ -550,7 +547,6 @@ def calculate_version_period_usage(version):
         version.time_invoiced = version.time_deleted
     elif not version.time_deleted and not version.time_invoiced:
         # New version: uploaded after last usage calculation
-        flask.current_app.logger.debug("4")
         now = current_time()
         bytehours = calculate_bytehours(
             minuend=now, subtrahend=version.time_uploaded, size_bytes=version.size_stored
