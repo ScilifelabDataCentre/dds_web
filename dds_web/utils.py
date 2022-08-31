@@ -501,3 +501,56 @@ def get_active_motds():
         models.MOTD.query.filter_by(active=True).order_by(models.MOTD.date_created.desc()).all()
     )
     return motds_active or None
+
+
+def calculate_bytehours(
+    minuend: datetime.datetime, subtrahend: datetime.datetime, size_bytes: int
+) -> float:
+    """Calculate byte hours."""
+    # Calculate the time difference as timedelta
+    time_diff_timedelta = minuend - subtrahend
+
+    # Convert the timedelta to hours
+    hours_stored = time_diff_timedelta.total_seconds() / (60 * 60)
+
+    # Calculate the bytehours
+    bytehours = hours_stored * size_bytes
+
+    return bytehours
+
+
+def calculate_version_period_usage(version):
+    bytehours: int = 0
+    if not version.time_deleted and version.time_invoiced:
+        # Existing and invoiced version
+        now = current_time()
+        bytehours = calculate_bytehours(
+            minuend=now, subtrahend=version.time_invoiced, size_bytes=version.size_stored
+        )
+        version.time_invoiced = now
+    elif version.time_deleted and not version.time_invoiced:
+        # Version uploaded >and< deleted after last usage calculation
+        bytehours = calculate_bytehours(
+            minuend=version.time_deleted,
+            subtrahend=version.time_uploaded,
+            size_bytes=version.size_stored,
+        )
+        version.time_invoiced = version.time_deleted
+    elif version.time_deleted != version.time_invoiced:
+        # Version has been deleted after last usage calculation
+        # (if version.time_deleted > version.time_invoiced)
+        bytehours = calculate_bytehours(
+            minuend=version.time_deleted,
+            subtrahend=version.time_invoiced,
+            size_bytes=version.size_stored,
+        )
+        version.time_invoiced = version.time_deleted
+    elif not version.time_deleted and not version.time_invoiced:
+        # New version: uploaded after last usage calculation
+        now = current_time()
+        bytehours = calculate_bytehours(
+            minuend=now, subtrahend=version.time_uploaded, size_bytes=version.size_stored
+        )
+        version.time_invoiced = now
+
+    return bytehours

@@ -220,82 +220,86 @@ def delete_invite():
             scheduler.app.logger.error(f"{invite} not deleted: {error}")
 
 
-@scheduler.task("cron", id="get_monthly_usage", day="1", hour=0, minute=1)
-# @scheduler.task("interval", id="monthly_usage", seconds=150, misfire_grace_time=1)
-def monthly_usage():
+@scheduler.task(
+    "cron", id="get_quarterly_usage", month="Jan,Apr,Jul,Oct", day="1", hour=0, minute=1
+)
+# @scheduler.task("interval", id="monthly_usage", seconds=60, misfire_grace_time=1)
+def quarterly_usage():
     """Get the monthly usage for the units"""
 
-    scheduler.app.logger.debug("Task: Collecting monthly usage information from Safespring.")
+    scheduler.app.logger.debug("Task: Collecting usage information from database.")
     import sqlalchemy
 
     from dds_web import db
     from dds_web.database import models
-    from dds_web.api.project import UserProjects
-    from dds_web.utils import current_time, page_query
+    from dds_web.utils import (
+        current_time,
+        page_query,
+        # calculate_period_usage,
+        calculate_version_period_usage,
+    )
 
     with scheduler.app.app_context():
-        # a mock dict with data that should be obtained from Safesprig's API
-        safespring_data = {}
-
-        scheduler.app.logger.debug("Task: Projects usage from database")
-        # go through units and projects in the database
-        # collect usage and cost data
-        # and make a DB record
         try:
-            for unit in db.session.query(models.Unit).with_for_update().all():
-                # Get info from safespring / sunet (replace with e.g. api call later)
-                safespring_data[unit.safespring_name] = {
-                    "TotalBytes": 434595434499,
-                    "TotalBytesRounded": 1434614451200,
-                    "TotalEntries": 10333,
-                }
-                usage = f"Total usage in cloud for unit {unit.name} ({unit.safespring_name}): {safespring_data[unit.safespring_name]['TotalBytes']}"
-                scheduler.app.logger.info(usage)
-
-                # Calculate usage per project and total in db
-                unit_usage = 0
-                unit_cost = 0
-                scheduler.app.logger.debug(f"Projects in unit {unit.safespring_name}")
-                for project in page_query(
-                    db.session.query(models.Project)
+            # 1. Get projects where is_active = False
+            # .. a. Check if the versions are all time_deleted == time_invoiced
+            # .. b. Yes --> Set new column to True ("done")
+            scheduler.app.logger.info("Marking projects as 'done'....")
+            for unit, project in page_query(
+                db.session.query(models.Unit, models.Project)
+                .join(models.Project)
+                .filter(models.Project.is_active == False)
+            ):
+                # Get number of versions in project that have been fully included in usage calcs
+                num_done = (
+                    db.session.query(models.Project, models.Version)
+                    .join(models.Version)
                     .filter(
                         sqlalchemy.and_(
-                            models.Project.is_active == 1, models.Project.unit_id == unit.id
+                            models.Project.id == project.id,
+                            models.Version.time_deleted == models.Version.time_invoiced,
                         )
                     )
-                    .with_for_update()
-                ):
-
-                    # Calculate project usage
-                    proj_bhours, proj_cost = UserProjects.project_usage(project=project)
-                    scheduler.app.logger.info(
-                        "Current total usage for project %s is %s bhours, and total cost is %s kr",
-                        project.id,
-                        proj_bhours,
-                        proj_cost,
-                    )
-
-                    # Increase total usage
-                    unit_usage += proj_bhours
-                    unit_cost += proj_cost
-
-                    # Create a record in usage table
-                    new_record = models.Usage(
-                        project_id=project.id,
-                        usage=proj_bhours,
-                        cost=proj_cost,
-                        time_collected=current_time(),
-                    )
-                    db.session.add(new_record)
-                    db.session.commit()
-
-                scheduler.app.logger.info(
-                    "Current total usage for unit %s is %s bhours, and total cost is %s kr",
-                    unit.safespring_name,
-                    unit_usage,
-                    unit_cost,
+                    .count()
                 )
-                scheduler.app.logger.info("Monthly usage data recorded in database")
+
+                # Check if there are any versions that are not fully included
+                # If not, project is done and should not be included in any more usage calculations in billing
+                if num_done == len(project.file_versions):
+                    project.done = True
+
+                db.session.commit()
+
+            # 2. Get project where done = False
+            for unit, project in page_query(
+                db.session.query(models.Unit, models.Project)
+                .join(models.Project)
+                .filter(models.Project.done == False)
+            ):
+                project_byte_hours: int = 0
+                for version in project.file_versions:
+                    # Skipp deleted and already invoiced versions
+                    if version.time_deleted == version.time_invoiced and [
+                        version.time_deleted,
+                        version.time_invoiced,
+                    ] != [None, None]:
+                        continue
+                    version_bhours = calculate_version_period_usage(version=version)
+                    project_byte_hours += version_bhours
+                scheduler.app.logger.info(
+                    f"Project {project.public_id} byte hours: {project_byte_hours}"
+                )
+
+                # Create a record in usage table
+                new_record = models.Usage(
+                    project_id=project.id,
+                    usage=project_byte_hours,
+                    cost=0,
+                    time_collected=current_time(),
+                )
+                db.session.add(new_record)
+                db.session.commit()
+
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
