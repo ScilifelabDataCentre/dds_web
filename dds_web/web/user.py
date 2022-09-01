@@ -265,7 +265,16 @@ def confirm_2fa():
     if flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for("pages.home"))
 
+    VALID_ENDPOINTS = [
+        str(p)
+        for p in flask.current_app.url_map.iter_rules()
+        if not str(p).startswith("/api/v1") and str(p).count("/") <= 1
+    ]
+
     next_target = flask.request.args.get("next")
+    if next_target and next_target not in VALID_ENDPOINTS:
+        flask.abort(400)
+
     # is_safe_url should check if the url is safe for redirects.
     if next_target and not dds_web.utils.is_safe_url(next_target):
         return flask.abort(400)
