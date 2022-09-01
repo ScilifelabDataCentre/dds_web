@@ -64,63 +64,6 @@ def test_open_troubleshooting_post(client: flask.testing.FlaskClient) -> None:
     assert response.status_code == http.HTTPStatus.METHOD_NOT_ALLOWED
 
 
-def test_open_troubleshooting_no_response_from_confluence(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Mock confluence data - none."""
-    url: str = "https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage"
-    status_code: int = 200
-    response_json: typing.Dict = None
-
-    problem_page_info = [
-        b"Ironically enough it seems that the DDS is having trouble with collecting the troubleshooting information. To proceed:",
-        b"The same information can also be found at",
-        b"Please notify the Data Centre of this error.",
-    ]
-    with Mocker() as mock:
-        mock.get(url, status_code=status_code, json=response_json)
-        response = client.get(tests.DDSEndpoint.TROUBLE, content_type="application/json")
-        assert response.status_code == http.HTTPStatus.OK
-        assert all([x in response.data for x in problem_page_info])
-
-        response_json: typing.Dict = {}
-        mock.get(url, status_code=status_code, json=response_json)
-        response = client.get(tests.DDSEndpoint.TROUBLE, content_type="application/json")
-        assert response.status_code == http.HTTPStatus.OK
-        assert all([x in response.data for x in problem_page_info])
-
-
-def test_open_troubleshooting_500(client: flask.testing.FlaskClient) -> None:
-    """Mock confluence data - none."""
-    url: str = "https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage"
-    status_code: int = 500
-    response_json: typing.Dict = None
-    problem_page_info = [
-        b"Ironically enough it seems that the DDS is having trouble with collecting the troubleshooting information. To proceed:",
-        b"The same information can also be found at",
-        b"Please notify the Data Centre of this error.",
-    ]
-    with Mocker() as mock:
-        mock.get(url, status_code=status_code, json=response_json)
-        response = client.get(tests.DDSEndpoint.TROUBLE, content_type="application/json")
-        assert response.status_code == http.HTTPStatus.OK
-        assert all([x in response.data for x in problem_page_info])
-
-
-def test_open_troubleshooting(client: flask.testing.FlaskClient) -> None:
-    """Mock confluence data and display on page."""
-    url: str = "https://scilifelab.atlassian.net/wiki/rest/api/content/2192998470?expand=space,metadata.labels,body.storage"
-    status_code: int = 200
-    response_json: typing.Dict = {
-        "body": {"storage": {"value": "This is some data that should be displayed"}}
-    }
-    with Mocker() as mock:
-        mock.get(url, status_code=status_code, json=response_json)
-        response = client.get(tests.DDSEndpoint.TROUBLE, content_type="application/json")
-        assert response.status_code == http.HTTPStatus.OK
-        assert b"<h1>Troubleshooting</h1>" in response.data
-
-
 # get status
 
 

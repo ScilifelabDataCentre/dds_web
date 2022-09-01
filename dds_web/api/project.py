@@ -512,10 +512,10 @@ class UserProjects(flask_restful.Resource):
             time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
             time_uploaded = v.time_uploaded
 
-            file_hours = (time_deleted - time_uploaded).seconds / (60 * 60)
-
             # Calculate BHours
-            bhours += v.size_stored * file_hours
+            bhours += dds_web.utils.calculate_bytehours(
+                minuend=time_deleted, subtrahend=time_uploaded, size_bytes=v.size_stored
+            )
 
             # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
             cost_gbhour = 0.09 / (30 * 24)

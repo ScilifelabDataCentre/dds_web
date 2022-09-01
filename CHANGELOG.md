@@ -130,3 +130,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 - Allow Super Admins to deactivate user 2FA via authenticator app ([#1247](https://github.com/ScilifelabDataCentre/dds_web/pull/1247))
 - Get troubleshooting document from Confluence ([#1244](https://github.com/ScilifelabDataCentre/dds_web/pull/1244))
+- Quarterly cron job calculating projects storage usage based on the database ([#1246](https://github.com/ScilifelabDataCentre/dds_web/pull/1246))
+- Add Technical Overview page with links to Confluence and to a PDF download ([#1250](https://github.com/ScilifelabDataCentre/dds_web/pull/1250))
+- Technical Overview moved to repository ([#1250](https://github.com/ScilifelabDataCentre/dds_web/pull/1253))
+- Troubleshooting document moved to repository and buttons added to web to link and download ([#1255](https://github.com/ScilifelabDataCentre/dds_web/pull/1255))
