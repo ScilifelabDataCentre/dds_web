@@ -26,7 +26,7 @@ This backend is built using
 [![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)](<[https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/)>)
 [![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white)](<[https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/)>)
 
-------
+---
 
 ## Development
 
