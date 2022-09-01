@@ -53,7 +53,7 @@
 >
 > _This project is supported by EIT Digital, activity number 19390. This deliverable consists of design document and implementation report of application and validation of VEIL.AI technology in SciLifeLab context in Sweden._
 
---- 
+---
 
 ## Table of Contents
 
@@ -64,14 +64,13 @@
   - [Database changes](#database-changes)
 - [Production Instance](#production-instance)
 
-
 ## Development Setup
 
 When developing this software, we recommend that you run the web server locally using Docker.
 You can download Docker here: <https://docs.docker.com/get-docker/>
 
 Then, fork this repository and clone to your local system.
-In the root folder of the repo, run the server with one of the following profiles (_plain_, _dev_, _full-dev_, _cli_) depending on your needs. 
+In the root folder of the repo, run the server with one of the following profiles (_plain_, _dev_, _full-dev_, _cli_) depending on your needs.
 
 ### Profiles
 
@@ -92,7 +91,6 @@ docker-compose --profile dev up
 This will give you the above two containers, but also `mailcatcher` that will allow you to read
 any sent emails by going to `localhost:1080` in a web browser.
 
-
 #### Minio S3 Storage & Limiter: `full-dev`
 
 ```bash
@@ -104,7 +102,6 @@ You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to en
 
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
 If using this method, you can stop the web server with the command `docker-compose down`.
-
 
 #### CLI development against local environment: `cli`
 
@@ -124,8 +121,6 @@ Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume
    ```
 
 Then you can freely use the dds cli component against the local development setup in the active CLI.
-
-
 
 ### Python debugger inside docker
 
