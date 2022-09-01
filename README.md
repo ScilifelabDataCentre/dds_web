@@ -53,19 +53,29 @@
 >
 > _This project is supported by EIT Digital, activity number 19390. This deliverable consists of design document and implementation report of application and validation of VEIL.AI technology in SciLifeLab context in Sweden._
 
----
+--- 
 
-## Development
+## Table of Contents
 
-### Running with Docker
+- [Development Setup](#development-setup)
+  - [Profiles](#profiles)
+  - [Debugging inside docker](#python-debugger-inside-docker)
+  - [Config settings](#config-settings)
+  - [Database changes](#database-changes)
+- [Production Instance](#production-instance)
+
+
+## Development Setup
 
 When developing this software, we recommend that you run the web server locally using Docker.
 You can download Docker here: <https://docs.docker.com/get-docker/>
 
 Then, fork this repository and clone to your local system.
-In the root folder of the repo, run the server as follows:
+In the root folder of the repo, run the server with one of the following profiles (_plain_, _dev_, _full-dev_, _cli_) depending on your needs. 
 
-There are multiple profiles prepared depending on your needs:
+### Profiles
+
+#### Application & Database: Plain
 
 ```bash
 docker-compose up
@@ -73,12 +83,17 @@ docker-compose up
 
 This command will orchestrate the building and running of two containers: one for the SQL database (`mariadb`) and one for the application.
 
+#### Mailcatcher: `dev`
+
 ```bash
 docker-compose --profile dev up
 ```
 
 This will give you the above two containers, but also `mailcatcher` that will allow you to read
 any sent emails by going to `localhost:1080` in a web browser.
+
+
+#### Minio S3 Storage & Limiter: `full-dev`
 
 ```bash
 docker-compose --profile full-dev up
@@ -90,7 +105,8 @@ You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to en
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
 If using this method, you can stop the web server with the command `docker-compose down`.
 
-### CLI development against local environment
+
+#### CLI development against local environment: `cli`
 
 ```bash
 docker-compose --profile cli up
@@ -108,6 +124,8 @@ Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume
    ```
 
 Then you can freely use the dds cli component against the local development setup in the active CLI.
+
+
 
 ### Python debugger inside docker
 
@@ -202,7 +220,7 @@ Then run `docker-compose up` as normal. The images will be rebuilt from scratch 
 
 If there are still issues, try deleting the `pycache` folders and repeat the above steps.
 
-### Run tests
+## Run tests
 
 Tests run on github actions on every pull request and push against master and dev. To run the tests locally, use this command:
 
@@ -242,7 +260,7 @@ Equally, if you want to tear down you need to run pytest _twice_ without it, as 
 
 ---
 
-## Production
+## Production Instance
 
 The production version of the backend image is published at [Dockerhub](https://hub.docker.com/repository/docker/scilifelabdatacentre/dds-backend). It can also be built by running:
 
