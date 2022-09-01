@@ -32,6 +32,14 @@ from dds_web.security.project_user_keys import update_user_keys_for_password_cha
 
 auth_blueprint = flask.Blueprint("auth_blueprint", __name__)
 
+VALID_ENDPOINTS = [
+    str(p)
+    for p in flask.current_app.url_map.iter_rules()
+    if not str(p).startswith("/api/v1") and str(p).count("/") <= 1
+]
+VALID_ENDPOINTS.append("/activate_totp")
+
+
 ####################################################################################################
 # ERROR HANDLING ################################################################## ERROR HANDLING #
 ####################################################################################################
@@ -267,8 +275,10 @@ def confirm_2fa():
 
     next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
-    if next_target and not dds_web.utils.is_safe_url(next_target):
-        return flask.abort(400)
+    if next_target:
+        res = [ep for ep in VALID_ENDPOINTS if (ep in next_target)]
+        if res and not dds_web.utils.is_safe_url(next_target):
+            return flask.abort(400)
 
     # Check user has initiated 2FA
     token = flask.session.get("2fa_initiated_token")
@@ -357,8 +367,10 @@ def login():
 
     next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
-    if next_target and not dds_web.utils.is_safe_url(next_target):
-        return flask.abort(400)
+    if next_target:
+        res = [ep for ep in VALID_ENDPOINTS if (ep in next_target)]
+        if res and not dds_web.utils.is_safe_url(next_target):
+            return flask.abort(400)
 
     # Redirect to next or index if user is already authenticated
     if flask_login.current_user.is_authenticated:
