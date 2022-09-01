@@ -15,8 +15,7 @@
 [![Technical Overview](https://img.shields.io/badge/-Technical%20Overview-informational?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Technical-Overview.pdf)
 [![Architecture Decision Record](https://img.shields.io/badge/-ADR-000000?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR)
 [![Troubleshooting](https://img.shields.io/badge/-Troubleshooting%20Guide-red?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Troubleshooting.pdf)
-(https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR)
-[![CLI](https://img.shields.io/badge/-CLI-yellow?logo=github)]([https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Troubleshooting.pdf](https://github.com/ScilifelabDataCentre/dds_cli))
+[![CLI](https://img.shields.io/badge/-CLI-yellow?logo=github)](https://github.com/ScilifelabDataCentre/dds_cli))
 
 > _The Data Delivery System is developed and maintained by the SciLifeLab Data Centre. National Genomics Infrastructure (NGI) Stockholm has been a part of the development team during 2021 and early 2022._
 >
