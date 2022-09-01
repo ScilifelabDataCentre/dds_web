@@ -1,4 +1,4 @@
-# Data Delivery System, DDS
+# Data Delivery System Web / API
 
 ![Release](https://img.shields.io/github/v/release/SciLifeLabDataCentre/dds_web)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
