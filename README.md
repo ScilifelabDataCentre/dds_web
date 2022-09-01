@@ -2,11 +2,10 @@
 
 ![Release](https://img.shields.io/github/v/release/SciLifeLabDataCentre/dds_web)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-&nbsp;&nbsp;&nbsp;
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 ![Linting](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/python-black.yml/badge.svg)
 ![CodeQL](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/codeql-analysis.yml/badge.svg)
-&nbsp;&nbsp;&nbsp;
 [![codecov](https://codecov.io/gh/ScilifelabDataCentre/dds_web/branch/dev/graph/badge.svg?token=r5tM6o08Sd)](https://codecov.io/gh/ScilifelabDataCentre/dds_web)
 ![Tests](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/docker-compose-tests.yml/badge.svg)
 
