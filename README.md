@@ -1,30 +1,57 @@
-# Data Delivery System Web / API
+<p>
+   <h1 align="center">Data Delivery System Web / API</h1>
+</p>
 
-![Release](https://img.shields.io/github/v/release/SciLifeLabDataCentre/dds_web)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+<p align="center">
+   <img width="70%" src="https://github.com/ScilifelabDataCentre/dds_web/blob/master/dds_web/templates/components/hero_image.svg">
+</p>
 
-![Linting](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/python-black.yml/badge.svg)
-![CodeQL](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/codeql-analysis.yml/badge.svg)
-[![codecov](https://codecov.io/gh/ScilifelabDataCentre/dds_web/branch/dev/graph/badge.svg?token=r5tM6o08Sd)](https://codecov.io/gh/ScilifelabDataCentre/dds_web)
-![Tests](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/docker-compose-tests.yml/badge.svg)
+<p align="center">
+   <img alt="Release" src="https://img.shields.io/github/v/release/SciLifeLabDataCentre/dds_web">
+   <a href="https://opensource.org/licenses/MIT">
+      <img alt="Licence: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg">
+   </a>
+   <a href="[https://opensource.org/licenses/MIT](https://github.com/psf/black)">
+      <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
+   </a>
+   <a href="https://prettier.io/">
+      <img alt="Code style: prettier" src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg">
+   </a>
+   <br />
+   <img alt="Linting" src="https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/python-black.yml/badge.svg">
+   <img alt="CodeQL" src="https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/codeql-analysis.yml/badge.svg">
+   <a href="https://codecov.io/gh/ScilifelabDataCentre/dds_web">
+      <img alt="codecov" src="https://codecov.io/gh/ScilifelabDataCentre/dds_web/branch/dev/graph/badge.svg?token=r5tM6o08Sd">
+   </a>
+   <img alt="Tests" src="https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/docker-compose-tests.yml/badge.svg">
+</p>
+<p align="center">
+   <b>Links</b>
+   <br />
+   <a href="https://scilifelabdatacentre.github.io/dds_cli/">
+      <img alt="Documentation" src="https://img.shields.io/badge/-Documentation-222222?logo=github-pages">
+   </a>
+   <a href="https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Technical-Overview.pdf">
+      <img alt="Technical Overview" src="https://img.shields.io/badge/-Technical%20Overview-informational?logo=github">
+   </a>
+   <a href="https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR">
+      <img alt="Architecture Decision Record" src="https://img.shields.io/badge/-ADR-000000?logo=github">
+   </a>
+   <a href="https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Troubleshooting.pdf">
+      <img alt="Troubleshooting" src="https://img.shields.io/badge/-Troubleshooting%20Guide-red?logo=github">
+   </a>
+   <a href="https://github.com/ScilifelabDataCentre/dds_cli">
+      <img alt="CLI" src="https://img.shields.io/badge/-CLI-yellow?logo=github">
+   </a>
+</p>
+
+## About
 
 **The Data Delivery System (DDS) is a cloud-based system for all SciLifeLab platforms where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way. The Web / API is the backend, handling the requests and the logic behind the scenes.**
-
-[![Documentation](https://img.shields.io/badge/-Documentation-222222?logo=github-pages)](https://scilifelabdatacentre.github.io/dds_cli/)
-[![Technical Overview](https://img.shields.io/badge/-Technical%20Overview-informational?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Technical-Overview.pdf)
-[![Architecture Decision Record](https://img.shields.io/badge/-ADR-000000?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR)
-[![Troubleshooting](https://img.shields.io/badge/-Troubleshooting%20Guide-red?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Troubleshooting.pdf)
-[![CLI](https://img.shields.io/badge/-CLI-yellow?logo=github)](https://github.com/ScilifelabDataCentre/dds_cli)
 
 > _The Data Delivery System is developed and maintained by the SciLifeLab Data Centre. National Genomics Infrastructure (NGI) Stockholm has been a part of the development team during 2021 and early 2022._
 >
 > _This project is supported by EIT Digital, activity number 19390. This deliverable consists of design document and implementation report of application and validation of VEIL.AI technology in SciLifeLab context in Sweden._
-
-This backend is built using
-
-[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)](<[https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/)>)
-[![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white)](<[https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/)>)
 
 ---
 
