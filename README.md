@@ -1,31 +1,34 @@
-[![Documentation](https://img.shields.io/badge/-Documentation-222222?logo=github-pages)](https://scilifelabdatacentre.github.io/dds_cli/)
-[![Technical Overview](https://img.shields.io/badge/-Technical%20Overview-informational?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Technical-Overview.pdf)
-[![Troubleshooting](https://img.shields.io/badge/-Troubleshooting%20Guide-red?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Troubleshooting.pdf)
-[![CLI](https://img.shields.io/badge/-CLI-yellow?logo=github)](https://github.com/ScilifelabDataCentre/dds_cli)
+# Data Delivery System, DDS
 
+![Release](https://img.shields.io/github/v/release/SciLifeLabDataCentre/dds_web)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+&nbsp;&nbsp;&nbsp;
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![codecov](https://codecov.io/gh/ScilifelabDataCentre/dds_web/branch/dev/graph/badge.svg?token=r5tM6o08Sd)](https://codecov.io/gh/ScilifelabDataCentre/dds_web)
-![Tests](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/docker-compose-tests.yml/badge.svg)
 ![Linting](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/python-black.yml/badge.svg)
 ![CodeQL](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/codeql-analysis.yml/badge.svg)
+&nbsp;&nbsp;&nbsp;
+[![codecov](https://codecov.io/gh/ScilifelabDataCentre/dds_web/branch/dev/graph/badge.svg?token=r5tM6o08Sd)](https://codecov.io/gh/ScilifelabDataCentre/dds_web)
+![Tests](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/docker-compose-tests.yml/badge.svg)
 
-# SciLifeLab Data Centre - Data Delivery System
+**The Data Delivery System (DDS) is a cloud-based system for all SciLifeLab platforms where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way.**
 
-**A single cloud-based system for all SciLifeLab units, where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way.**
+[![Documentation](https://img.shields.io/badge/-Documentation-222222?logo=github-pages)](https://scilifelabdatacentre.github.io/dds_cli/)
+[![Technical Overview](https://img.shields.io/badge/-Technical%20Overview-informational?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Technical-Overview.pdf)
+[![Architecture Decision Record](https://img.shields.io/badge/-ADR-000000?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR)
+[![Troubleshooting](https://img.shields.io/badge/-Troubleshooting%20Guide-red?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Troubleshooting.pdf)
 
 > _This project is supported by EIT Digital, activity number 19390. This deliverable consists of design document and implementation report of application and validation of VEIL.AI technology in SciLifeLab context in Sweden._
 
-The Delivery Portal consists of two components:
+## Components
 
-- The _backend api_ handling the requests and the logic behind the scenes.
-  - <https://github.com/ScilifelabDataCentre/dds_web> (this repository)
-- The _command line interface (CLI)_. This will be used for data delivery within larger projects
-  and/or projects resulting in the production of large amounts of data, e.g. sequence data.
-  - <https://github.com/ScilifelabDataCentre/dds_cli>
+The DDS consists of two parts:
+- The _web/backend api_ handling the requests and the logic behind the scenes (this repository)
+- The _[command line interface](https://github.com/ScilifelabDataCentre/dds_cli)_, making requests to the API in order to use it's functionality. 
 
-The backend interface is built using [Flask](https://flask.palletsprojects.com/en/2.0.x/).
+This backend is built using
 
-See the [ADR](https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR) for information on the design decisions.
+[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)]([https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/))
+[![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white)]([https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/))
 
 ---
 
