@@ -9,7 +9,7 @@
 [![codecov](https://codecov.io/gh/ScilifelabDataCentre/dds_web/branch/dev/graph/badge.svg?token=r5tM6o08Sd)](https://codecov.io/gh/ScilifelabDataCentre/dds_web)
 ![Tests](https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/docker-compose-tests.yml/badge.svg)
 
-**The Data Delivery System (DDS) is a cloud-based system for all SciLifeLab platforms where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way. The Web / API is the backend, handling the requests and the logic behind the scenes. **
+**The Data Delivery System (DDS) is a cloud-based system for all SciLifeLab platforms where data generated throughout each project can be delivered to the research groups in a fast, secure and simple way. The Web / API is the backend, handling the requests and the logic behind the scenes.**
 
 [![Documentation](https://img.shields.io/badge/-Documentation-222222?logo=github-pages)](https://scilifelabdatacentre.github.io/dds_cli/)
 [![Technical Overview](https://img.shields.io/badge/-Technical%20Overview-informational?logo=github)](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Technical-Overview.pdf)
