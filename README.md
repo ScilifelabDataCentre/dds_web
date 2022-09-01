@@ -22,13 +22,14 @@
 ## Components
 
 The DDS consists of two parts:
+
 - The _web/backend api_ handling the requests and the logic behind the scenes (this repository)
-- The _[command line interface](https://github.com/ScilifelabDataCentre/dds_cli)_, making requests to the API in order to use it's functionality. 
+- The _[command line interface](https://github.com/ScilifelabDataCentre/dds_cli)_, making requests to the API in order to use it's functionality.
 
 This backend is built using
 
-[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)]([https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/))
-[![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white)]([https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/))
+[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)](<[https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/)>)
+[![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white)](<[https://scilifelabdatacentre.github.io/dds_cli/](https://flask.palletsprojects.com/en/2.0.x/)>)
 
 ---
 
