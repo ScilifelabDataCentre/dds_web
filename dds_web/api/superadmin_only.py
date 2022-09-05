@@ -37,29 +37,19 @@ class AllUnits(flask_restful.Resource):
         """Return info about unit to super admin."""
         all_units = models.Unit.query.all()
 
-        for u in all_units:
-            total_size = 0
-            # 1. get projects
-            projects = models.Project.query.filter_by(unit_id=u.id).all()
-            # 2. for each project
-            #   get size
-            #   accumulate unit size
-            for p in projects:
-                total_size += p.size
-                # 3. add the accumulated size to unit_info
-                unit_info = [
-                    {
-                        "Name": u.name,
-                        "Public ID": u.public_id,
-                        "External Display Name": u.external_display_name,
-                        "Contact Email": u.contact_email,
-                        "Safespring Endpoint": u.safespring_endpoint,
-                        "Days In Available": u.days_in_available,
-                        "Days In Expired": u.days_in_expired,
-                        "Size": total_size,
-                    }
-                ]
-            flask.current_app.logger.debug(f"Tot size stored for unit {u.public_id}: {total_size}")
+        unit_info = [
+            {
+                "Name": u.name,
+                "Public ID": u.public_id,
+                "External Display Name": u.external_display_name,
+                "Contact Email": u.contact_email,
+                "Safespring Endpoint": u.safespring_endpoint,
+                "Days In Available": u.days_in_available,
+                "Days In Expired": u.days_in_expired,
+                "Size": u.size,
+            }
+            for u in all_units
+        ]
 
         return {
             "units": unit_info,
