@@ -73,6 +73,7 @@ def test_list_units_as_super_admin(client: flask.testing.FlaskClient) -> None:
         "Days In Expired",
         "Safespring Endpoint",
         "Contact Email",
+        "Size",
     ]
     assert len(all_units) == len(units)
 
