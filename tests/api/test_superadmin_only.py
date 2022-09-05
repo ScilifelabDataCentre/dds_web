@@ -86,6 +86,7 @@ def test_list_units_as_super_admin(client: flask.testing.FlaskClient) -> None:
             "Safespring Endpoint": unit.safespring_endpoint,
             "Days In Available": unit.days_in_available,
             "Days In Expired": unit.days_in_expired,
+            "Size": unit.size,
         }
         assert expected in units
 
