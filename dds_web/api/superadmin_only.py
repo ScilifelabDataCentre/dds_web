@@ -46,6 +46,7 @@ class AllUnits(flask_restful.Resource):
                 "Safespring Endpoint": u.safespring_endpoint,
                 "Days In Available": u.days_in_available,
                 "Days In Expired": u.days_in_expired,
+                "Size": u.size,
             }
             for u in all_units
         ]
@@ -60,6 +61,7 @@ class AllUnits(flask_restful.Resource):
                 "Days In Expired",
                 "Safespring Endpoint",
                 "Contact Email",
+                "Size",
             ],
         }
 

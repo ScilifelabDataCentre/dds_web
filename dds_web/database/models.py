@@ -209,6 +209,12 @@ class Unit(db.Model):
         """Called by print, creates representation of object"""
         return f"<Unit {self.public_id}>"
 
+    @property
+    def size(self):
+        """Calculate size of unit - current total storage usage."""
+
+        return sum([p.size for p in self.projects])
+
 
 class Project(db.Model):
     """

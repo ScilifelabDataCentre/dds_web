@@ -134,3 +134,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Add Technical Overview page with links to Confluence and to a PDF download ([#1250](https://github.com/ScilifelabDataCentre/dds_web/pull/1250))
 - Technical Overview moved to repository ([#1250](https://github.com/ScilifelabDataCentre/dds_web/pull/1253))
 - Troubleshooting document moved to repository and buttons added to web to link and download ([#1255](https://github.com/ScilifelabDataCentre/dds_web/pull/1255))
+
+## Sprint (2022-09-02 - 2022-09-16)
+
+- Add storage usage information in the Units listing table for Super Admin ([#1264](https://github.com/ScilifelabDataCentre/dds_web/pull/1264))
