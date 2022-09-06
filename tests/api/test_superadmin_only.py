@@ -73,6 +73,7 @@ def test_list_units_as_super_admin(client: flask.testing.FlaskClient) -> None:
         "Days In Expired",
         "Safespring Endpoint",
         "Contact Email",
+        "Size",
     ]
     assert len(all_units) == len(units)
 
@@ -85,7 +86,14 @@ def test_list_units_as_super_admin(client: flask.testing.FlaskClient) -> None:
             "Safespring Endpoint": unit.safespring_endpoint,
             "Days In Available": unit.days_in_available,
             "Days In Expired": unit.days_in_expired,
+            "Size": unit.size,
         }
+
+        correct_size: int = 0
+        for project in unit.projects:
+            for file in project.files:
+                correct_size += file.size_stored
+        assert correct_size == unit.size
         assert expected in units
 
 
