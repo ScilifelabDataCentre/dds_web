@@ -88,7 +88,7 @@ def test_list_units_as_super_admin(client: flask.testing.FlaskClient) -> None:
             "Days In Expired": unit.days_in_expired,
             "Size": unit.size,
         }
-        
+
         correct_size: int = 0
         for project in unit.projects:
             for file in project.files:
