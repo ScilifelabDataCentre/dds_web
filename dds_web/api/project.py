@@ -870,6 +870,7 @@ class ProjectAccess(flask_restful.Resource):
 
         return fix_errors
 
+
 class ProjectBusy(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
@@ -891,15 +892,18 @@ class ProjectBusy(flask_restful.Resource):
             # Check if project is busy
             if project.busy:
                 raise ProjectBusyError(message="The project is already busy, cannot proceed.")
-        
+
             # Set project as busy
             project.busy = True
-        else: 
+        else:
             # Check if project is not busy
             if not project.busy:
                 raise ProjectBusyError(message="The project is not busy, cannot proceed.")
-            
+
             # Set project to not busy
             project.busy = False
 
-        return {"ok": True, "message": f"Project {project_id} was set to {'busy' if set_to_busy else 'not busy'}."}
+        return {
+            "ok": True,
+            "message": f"Project {project_id} was set to {'busy' if set_to_busy else 'not busy'}.",
+        }
