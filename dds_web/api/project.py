@@ -882,11 +882,24 @@ class ProjectBusy(flask_restful.Resource):
         project = dds_web.utils.collect_project(project_id=project_id)
         dds_web.utils.verify_project_access(project=project)
 
-        # Check if project is busy
-        if project.busy:
-            raise ProjectBusyError(message="The project is already busy, cannot proceed.")
-        
-        # Set project as busy
-        project.busy = True
+        # Get busy or not busy
+        set_to_busy = flask.request.json.get("busy")
+        if set_to_busy is None:
+            raise DDSArgumentError(message="Are you trying to set the project as busy or not busy?")
 
-        return {"ok": True, "message": f"Project {project_id} was set to busy."}
+        if set_to_busy:
+            # Check if project is busy
+            if project.busy:
+                raise ProjectBusyError(message="The project is already busy, cannot proceed.")
+        
+            # Set project as busy
+            project.busy = True
+        else: 
+            # Check if project is not busy
+            if not project.busy:
+                raise ProjectBusyError(message="The project is not busy, cannot proceed.")
+            
+            # Set project to not busy
+            project.busy = False
+
+        return {"ok": True, "message": f"Project {project_id} was set to {'busy' if set_to_busy else 'not busy'}."}
