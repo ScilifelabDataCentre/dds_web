@@ -291,6 +291,15 @@ class MissingProjectIDError(LoggedHTTPException):
 
         general_logger.warning(message)
 
+class ProjectBusyError(LoggedHTTPException):
+    """Something has gone wrong when transitioning between busy and not busy project."""
+
+    code = http.HTTPStatus.BAD_REQUEST
+
+    def __init__(self, message):
+        super().__init__(message)
+
+        general_logger.warning(message)
 
 class DDSArgumentError(LoggedHTTPException):
     """Base class for errors occurring due to missing request arguments."""
