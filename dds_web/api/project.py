@@ -103,7 +103,9 @@ class ProjectStatus(flask_restful.Resource):
             json_input = flask.request.json
             new_status = json_input.get("new_status")
             if not new_status:
-                raise DDSArgumentError(message="No status transition provided. Specify the new status.")
+                raise DDSArgumentError(
+                    message="No status transition provided. Specify the new status."
+                )
 
             # Override default to send email
             send_email = json_input.get("send_email", True)
@@ -186,7 +188,9 @@ class ProjectStatus(flask_restful.Resource):
         """Set project as not busy."""
         project.busy = busy
         db.session.commit()
-        flask.current_app.logger.info(f"Busy status set. Project: '{project.public_id}', Busy: {busy}")
+        flask.current_app.logger.info(
+            f"Busy status set. Project: '{project.public_id}', Busy: {busy}"
+        )
 
     def check_transition_possible(self, current_status, new_status):
         """Check if the transition is valid."""
