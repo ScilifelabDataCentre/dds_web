@@ -891,7 +891,8 @@ class ProjectBusy(flask_restful.Resource):
         if set_to_busy:
             # Check if project is busy
             if project.busy:
-                raise ProjectBusyError(message="The project is already busy, cannot proceed.")
+                # raise ProjectBusyError(message="The project is already busy, cannot proceed.")
+                return {"ok": False, "message": "The project is already busy, cannot proceed."}
 
             # Set project as busy
             project.busy = True
