@@ -88,6 +88,7 @@ class ProjectStatus(flask_restful.Resource):
         project = dds_web.utils.collect_project(project_id=project_id)
         dds_web.utils.verify_project_access(project=project)
 
+        # Cannot change project status if project is busy
         if project.busy:
             raise ProjectBusyError(
                 message=(
@@ -97,6 +98,7 @@ class ProjectStatus(flask_restful.Resource):
                     "If you know the project is not busy, contact support."
                 )
             )
+        self.set_as_busy(project=project)
 
         # Check if valid status
         json_input = flask.request.json
@@ -139,6 +141,7 @@ class ProjectStatus(flask_restful.Resource):
 
         try:
             project.project_statuses.append(new_status_row)
+            project.busy = False
             db.session.commit()
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
             flask.current_app.logger.exception(err)
@@ -173,6 +176,14 @@ class ProjectStatus(flask_restful.Resource):
                 f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
             )
         return {"message": return_message}
+
+    @dbsession
+    @staticmethod
+    def set_as_busy(project: models.Project) -> None:
+        """Set project as busy."""
+        project.busy = True
+        db.session.commit()
+        flask.current_app.logger.info(f"Project '{project.public_id}' set as busy.")
 
     def check_transition_possible(self, current_status, new_status):
         """Check if the transition is valid."""
