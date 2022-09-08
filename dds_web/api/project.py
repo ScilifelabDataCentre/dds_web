@@ -899,10 +899,33 @@ class ProjectAccess(flask_restful.Resource):
         return fix_errors
 
 
+class ResetBusy(flask_restful.Resource):
+    """Endpoint allowing Unit Admin to force-reset the busy status.
+
+    This is to avoid using ProjectBusy which allows everyone to change the status but is only intended for 
+    """
+
+    @auth.login_required(role=["Unit Admin"])
+    @logging_bind_request
+    @dbsession
+    def put(self):
+        """Reset busy."""
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
+
+        # Set project to not busy
+        ProjectStatus.set_busy(project=project, busy=False)
+
+        return {
+            "message": "The project is set to not busy and should not be blocking any actions to the project."
+        }
+
+
 class ProjectBusy(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @dbsession
     @json_required
     def put(self):
         """Set project to busy / not busy."""
@@ -916,20 +939,15 @@ class ProjectBusy(flask_restful.Resource):
         if set_to_busy is None:
             raise DDSArgumentError(message="Missing information about setting busy or not busy.")
 
-        if set_to_busy:
-            # Check if project is busy
-            if project.busy:
-                return {"ok": False, "message": "The project is already busy, cannot proceed."}
+        # Check if trying to set a busy project to busy or a non busy project to not busy
+        if set_to_busy and project.busy:
+            return {"ok": False, "message": "The project is already busy, cannot proceed."}
 
-            # Set project as busy
-            project.busy = True
-        else:
-            # Check if project is not busy
-            if not project.busy:
-                return {"ok": False, "message": "The project is already not busy, cannot proceed."}
+        if not set_to_busy and not project.busy:
+            return {"ok": False, "message": "The project is already not busy, cannot proceed."}
 
-            # Set project to not busy
-            project.busy = False
+        # Set project to busy / not busy
+        ProjectStatus.set_busy(project=project, busy=set_to_busy)
 
         return {
             "ok": True,
