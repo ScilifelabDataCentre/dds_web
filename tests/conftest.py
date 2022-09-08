@@ -199,6 +199,15 @@ def demo_data():
             "from this project. Create a new project to test the entire system. ",
             pi="PI",
             bucket=f"publicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            busy=False,
+        ),
+        Project(
+            public_id="busy_project_id",
+            title="busy project",
+            description="This is a test project with busy set to True. Can be used with unitadmin",
+            pi="PI",
+            bucket=f"busypublicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
+            busy=True,
         ),
         Project(
             public_id="unused_project_id",
