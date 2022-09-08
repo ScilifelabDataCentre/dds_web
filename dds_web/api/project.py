@@ -88,6 +88,16 @@ class ProjectStatus(flask_restful.Resource):
         project = dds_web.utils.collect_project(project_id=project_id)
         dds_web.utils.verify_project_access(project=project)
 
+        if project.busy:
+            raise ProjectBusyError(
+                message=(
+                    f"Status change not possible at this time. The project '{project_id}' "
+                    "is currently busy with upload/download/deletion. Please try again later. "
+                    "\n\n"
+                    "If you know the project is not busy, contact support."
+                )
+            )
+
         # Check if valid status
         json_input = flask.request.json
         new_status = json_input.get("new_status")
