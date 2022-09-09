@@ -1240,29 +1240,29 @@ def test_project_public_facility_put(module_client):
 # ProjectBusy
 
 
-def test_set_busy_no_token(client):
+def test_set_busy_no_token(module_client):
     """Token required to set project busy/not busy."""
-    response = client.put(tests.DDSEndpoint.PROJECT_BUSY, headers=tests.DEFAULT_HEADER)
+    response = module_client.put(tests.DDSEndpoint.PROJECT_BUSY, headers=tests.DEFAULT_HEADER)
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     assert response.json.get("message")
     assert "No token" in response.json.get("message")
 
 
-def test_set_busy_superadmin_not_allowed(client):
+def test_set_busy_superadmin_not_allowed(module_client):
     """Super admin cannot set project busy/not busy."""
-    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
-    response = client.put(
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(module_client)
+    response = module_client.put(
         tests.DDSEndpoint.PROJECT_BUSY,
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
-def test_set_busy_no_args(client):
+def test_set_busy_no_args(module_client):
     """Args required to set busy/not busy."""
     # Unit Personnel
-    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
-    response = client.put(
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
+    response = module_client.put(
         tests.DDSEndpoint.PROJECT_BUSY,
         headers=token,
     )
@@ -1270,8 +1270,8 @@ def test_set_busy_no_args(client):
     assert "Required data missing" in response.json.get("message")
 
     # Unit Admin
-    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
-    response = client.put(
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
+    response = module_client.put(
         tests.DDSEndpoint.PROJECT_BUSY,
         headers=token,
     )
@@ -1279,8 +1279,8 @@ def test_set_busy_no_args(client):
     assert "Required data missing" in response.json.get("message")
 
     # Researcher
-    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
-    response = client.put(
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(module_client)
+    response = module_client.put(
         tests.DDSEndpoint.PROJECT_BUSY,
         headers=token,
     )
@@ -1288,7 +1288,7 @@ def test_set_busy_no_args(client):
     assert "Required data missing" in response.json.get("message")
 
 
-def test_set_busy_no_busy(client):
+def test_set_busy_no_busy(module_client):
     """busy bool required."""
     for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
         # Get user
@@ -1300,8 +1300,8 @@ def test_set_busy_no_busy(client):
         assert project
 
         # Authenticate and run
-        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
-        response = client.put(
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client)
+        response = module_client.put(
             tests.DDSEndpoint.PROJECT_BUSY,
             headers=token,
             query_string={"project": project.public_id},
@@ -1311,7 +1311,7 @@ def test_set_busy_no_busy(client):
         assert "Missing information about setting busy or not busy." in response.json.get("message")
 
 
-def test_set_busy_true(client):
+def test_set_busy_true(module_client):
     """Set project as busy."""
     for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
         # Get user
@@ -1328,8 +1328,8 @@ def test_set_busy_true(client):
         assert not project.busy
 
         # Authenticate and run
-        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
-        response = client.put(
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client)
+        response = module_client.put(
             tests.DDSEndpoint.PROJECT_BUSY,
             headers=token,
             query_string={"project": project.public_id},
@@ -1339,7 +1339,7 @@ def test_set_busy_true(client):
         assert f"Project {project.public_id} was set to busy." in response.json.get("message")
 
 
-def test_set_not_busy_project_already_not_busy(client):
+def test_set_not_busy_project_already_not_busy(module_client):
     """Set project as busy."""
     for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
         # Get user
@@ -1356,8 +1356,8 @@ def test_set_not_busy_project_already_not_busy(client):
         assert not project.busy
 
         # Authenticate and run
-        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
-        response = client.put(
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client)
+        response = module_client.put(
             tests.DDSEndpoint.PROJECT_BUSY,
             headers=token,
             query_string={"project": project.public_id},
@@ -1367,7 +1367,7 @@ def test_set_not_busy_project_already_not_busy(client):
         assert f"The project is already not busy, cannot proceed." in response.json.get("message")
 
 
-def test_set_busy_false(client):
+def test_set_busy_false(module_client):
     """Set project as not busy."""
     for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
         # Get user
@@ -1384,8 +1384,8 @@ def test_set_busy_false(client):
         assert project.busy
 
         # Authenticate and run
-        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
-        response = client.put(
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client)
+        response = module_client.put(
             tests.DDSEndpoint.PROJECT_BUSY,
             headers=token,
             query_string={"project": project.public_id},
@@ -1395,7 +1395,7 @@ def test_set_busy_false(client):
         assert f"Project {project.public_id} was set to not busy." in response.json.get("message")
 
 
-def test_set_busy_project_already_busy(client):
+def test_set_busy_project_already_busy(module_client):
     """Set a busy project as busy."""
     for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
         # Get user
@@ -1411,8 +1411,8 @@ def test_set_busy_project_already_busy(client):
         db.session.commit()
         assert project.busy
 
-        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
-        response = client.put(
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client)
+        response = module_client.put(
             tests.DDSEndpoint.PROJECT_BUSY,
             headers=token,
             query_string={"project": project.public_id},
