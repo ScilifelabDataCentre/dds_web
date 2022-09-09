@@ -1235,3 +1235,190 @@ def test_project_public_facility_put(module_client):
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
     assert response_json.get("public")
+
+# ProjectBusy
+
+def test_set_busy_no_token(client):
+    """Token required to set project busy/not busy."""
+    response = client.put(tests.DDSEndpoint.PROJECT_BUSY, headers=tests.DEFAULT_HEADER)
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    assert response.json.get("message")
+    assert "No token" in response.json.get("message")
+
+
+def test_set_busy_superadmin_not_allowed(client):
+    """Super admin cannot set project busy/not busy."""
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
+    response = client.put(
+        tests.DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+def test_set_busy_no_args(client):
+    """Args required to set busy/not busy."""
+    # Unit Personnel
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.put(
+        tests.DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Required data missing" in response.json.get("message")
+
+    # Unit Admin
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.put(
+        tests.DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Required data missing" in response.json.get("message")
+
+    # Researcher
+    token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
+    response = client.put(
+        tests.DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Required data missing" in response.json.get("message")
+
+
+def test_set_busy_no_busy(client):
+    """busy bool required."""
+    for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
+        # Get user
+        user = models.User.query.filter_by(username=username).one_or_none()
+        assert user
+
+        # Get project
+        project = user.projects[0]
+        assert project 
+
+        # Authenticate and run 
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
+        response = client.put(
+            tests.DDSEndpoint.PROJECT_BUSY,
+            headers=token,
+            query_string={"project": project.public_id},
+            json={"something": "notabool"},
+        )
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert "Missing information about setting busy or not busy." in response.json.get("message")
+
+
+def test_set_busy_true(client):
+    """Set project as busy."""
+    for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
+        # Get user
+        user = models.User.query.filter_by(username=username).one_or_none()
+        assert user
+
+        # Get project
+        project = user.projects[0]
+        assert project 
+        
+        # Set project to not busy
+        project.busy = False
+        db.session.commit()
+        assert not project.busy
+
+        # Authenticate and run
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
+        response = client.put(
+            tests.DDSEndpoint.PROJECT_BUSY,
+            headers=token,
+            query_string={"project": project.public_id},
+            json={"busy": True},
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        assert f"Project {project.public_id} was set to busy." in response.json.get(
+            "message"
+        )
+
+
+def test_set_not_busy_project_already_not_busy(client):
+    """Set project as busy."""
+    for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
+        # Get user
+        user = models.User.query.filter_by(username=username).one_or_none()
+        assert user
+
+        # Get project
+        project = user.projects[0]
+        assert project 
+        
+        # Set project to not busy
+        project.busy = False
+        db.session.commit()
+        assert not project.busy
+
+        # Authenticate and run
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
+        response = client.put(
+            tests.DDSEndpoint.PROJECT_BUSY,
+            headers=token,
+            query_string={"project": project.public_id},
+            json={"busy": False},
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        assert f"The project is already not busy, cannot proceed." in response.json.get("message")
+
+
+def test_set_busy_false(client):
+    """Set project as not busy."""
+    for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
+        # Get user
+        user = models.User.query.filter_by(username=username).one_or_none()
+        assert user
+
+        # Get project
+        project = user.projects[0]
+        assert project 
+        
+        # Set project to busy
+        project.busy = True
+        db.session.commit()
+        assert project.busy
+
+        # Authenticate and run 
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
+        response = client.put(
+            tests.DDSEndpoint.PROJECT_BUSY,
+            headers=token,
+            query_string={"project": project.public_id},
+            json={"busy": False},
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        assert f"Project {project.public_id} was set to not busy." in response.json.get(
+            "message"
+        )
+
+
+def test_set_busy_project_already_busy(client):
+    """Set a busy project as busy."""
+    for username in ["researchuser", "projectowner", "unituser", "unitadmin"]:
+        # Get user
+        user = models.User.query.filter_by(username=username).one_or_none()
+        assert user
+
+        # Get project
+        project = user.projects[0]
+        assert project 
+        
+        # Set project to busy
+        project.busy = True
+        db.session.commit()
+        assert project.busy
+
+        token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
+        response = client.put(
+            tests.DDSEndpoint.PROJECT_BUSY,
+            headers=token,
+            query_string={"project": project.public_id},
+            json={"busy": True},
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        assert "The project is already busy, cannot proceed." in response.json.get("message")
