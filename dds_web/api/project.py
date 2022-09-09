@@ -34,6 +34,8 @@ from dds_web.errors import (
     DeletionError,
     BucketNotFoundError,
     KeyNotFoundError,
+    NoSuchProjectError,
+    ProjectBusyError,
     S3ConnectionError,
     NoSuchUserError,
 )
@@ -867,3 +869,45 @@ class ProjectAccess(flask_restful.Resource):
                 ] = "You do not have access to this project. Please contact the responsible unit."
 
         return fix_errors
+
+
+class ProjectBusy(flask_restful.Resource):
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
+    @logging_bind_request
+    @dbsession
+    @json_required
+    def put(self):
+        """Set project to busy / not busy."""
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
+
+        # Get busy or not busy
+        set_to_busy = flask.request.json.get("busy")
+        if set_to_busy is None:
+            raise DDSArgumentError(message="Missing information about setting busy or not busy.")
+
+        if set_to_busy:
+            # Check if project is busy
+            if project.busy:
+                # raise ProjectBusyError(message="The project is already busy, cannot proceed.")
+                return {"ok": False, "message": "The project is already busy, cannot proceed."}
+
+            # Set project as busy
+            project.busy = True
+        else:
+            # Check if project is not busy
+            if not project.busy:
+                return {
+                    "ok": False,
+                    "message": "The project is already not busy, cannot proceed.",
+                }
+
+            # Set project to not busy
+            project.busy = False
+
+        return {
+            "ok": True,
+            "message": f"Project {project_id} was set to {'busy' if set_to_busy else 'not busy'}.",
+        }
