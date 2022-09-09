@@ -77,7 +77,7 @@ def test_set_busy_no_busy(client):
         json={"something": "notabool"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "Missing information about setting busy or not busy?" in response.json.get("message")
+    assert "Missing information about setting busy or not busy." in response.json.get("message")
 
 
 def test_set_busy_true(client):
