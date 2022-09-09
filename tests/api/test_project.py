@@ -1236,7 +1236,9 @@ def test_project_public_facility_put(module_client):
     response_json = response.json
     assert response_json.get("public")
 
+
 # ProjectBusy
+
 
 def test_set_busy_no_token(client):
     """Token required to set project busy/not busy."""
@@ -1295,9 +1297,9 @@ def test_set_busy_no_busy(client):
 
         # Get project
         project = user.projects[0]
-        assert project 
+        assert project
 
-        # Authenticate and run 
+        # Authenticate and run
         token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
         response = client.put(
             tests.DDSEndpoint.PROJECT_BUSY,
@@ -1318,8 +1320,8 @@ def test_set_busy_true(client):
 
         # Get project
         project = user.projects[0]
-        assert project 
-        
+        assert project
+
         # Set project to not busy
         project.busy = False
         db.session.commit()
@@ -1334,9 +1336,7 @@ def test_set_busy_true(client):
             json={"busy": True},
         )
         assert response.status_code == http.HTTPStatus.OK
-        assert f"Project {project.public_id} was set to busy." in response.json.get(
-            "message"
-        )
+        assert f"Project {project.public_id} was set to busy." in response.json.get("message")
 
 
 def test_set_not_busy_project_already_not_busy(client):
@@ -1348,8 +1348,8 @@ def test_set_not_busy_project_already_not_busy(client):
 
         # Get project
         project = user.projects[0]
-        assert project 
-        
+        assert project
+
         # Set project to not busy
         project.busy = False
         db.session.commit()
@@ -1376,14 +1376,14 @@ def test_set_busy_false(client):
 
         # Get project
         project = user.projects[0]
-        assert project 
-        
+        assert project
+
         # Set project to busy
         project.busy = True
         db.session.commit()
         assert project.busy
 
-        # Authenticate and run 
+        # Authenticate and run
         token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)
         response = client.put(
             tests.DDSEndpoint.PROJECT_BUSY,
@@ -1392,9 +1392,7 @@ def test_set_busy_false(client):
             json={"busy": False},
         )
         assert response.status_code == http.HTTPStatus.OK
-        assert f"Project {project.public_id} was set to not busy." in response.json.get(
-            "message"
-        )
+        assert f"Project {project.public_id} was set to not busy." in response.json.get("message")
 
 
 def test_set_busy_project_already_busy(client):
@@ -1406,8 +1404,8 @@ def test_set_busy_project_already_busy(client):
 
         # Get project
         project = user.projects[0]
-        assert project 
-        
+        assert project
+
         # Set project to busy
         project.busy = True
         db.session.commit()

@@ -17,5 +17,3 @@ busy_proj_query = {"project": "restricted_project_id"}
 # proj_query_restricted = {"project": "restricted_project_id"}
 
 # TESTS #################################################################################### TESTS #
-
-
