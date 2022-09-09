@@ -184,7 +184,93 @@ def test_projectstatus_get_status_with_non_accessible_project(module_client, bot
     assert "Project access denied." in response.json["message"]
 
 
+# set_busy
+
+
+def test_set_busy_true(module_client):
+    """Test set busy to true."""
+    from dds_web.api import project
+
+    # Get project
+    project_obj = models.Project.query.first()
+    assert project_obj
+
+    # Set as not busy
+    project_obj.busy = False
+    db.session.commit()
+
+    # Run function
+    project.ProjectStatus.set_busy(project=project_obj, busy=True)
+    assert project_obj.busy
+
+
+def test_set_busy_false(module_client):
+    """Test set busy to false."""
+    from dds_web.api import project
+
+    # Get project
+    project_obj = models.Project.query.first()
+    assert project_obj
+
+    # Set as not busy
+    project_obj.busy = True
+    db.session.commit()
+
+    # Run function
+    project.ProjectStatus.set_busy(project=project_obj, busy=False)
+    assert not project_obj.busy
+
+
 # post
+
+
+def test_projectstatus_when_busy(module_client):
+    """Status change should not be possible when project is busy."""
+    # Get user
+    username = "unitadmin"
+    user = models.User.query.filter_by(username=username).one_or_none()
+    assert user
+
+    # Get project and set to busy
+    project = user.projects[0]
+    project.busy = True
+    db.session.commit()
+    assert project.busy
+
+    # Attempt to change status
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client),
+        query_string={"project": project.public_id},
+        json={"something": "something"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert f"The project '{project.public_id}' is currently busy" in response.json.get("message")
+
+
+def test_projectstatus_when_not_busy_but_invalid(module_client):
+    """Status change which results in an exception should also reset busy to False."""
+    # Get user
+    username = "unitadmin"
+    user = models.User.query.filter_by(username=username).one_or_none()
+    assert user
+
+    # Get project and set as not busy
+    project = user.projects[0]
+    project.busy = False
+    db.session.commit()
+    assert not project.busy
+
+    # Attempt to change status
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client),
+        query_string={"project": project.public_id},
+        json={"new_status": ""},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "No status transition provided. Specify the new status." in response.json.get("message")
+    assert not project.busy
 
 
 def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
