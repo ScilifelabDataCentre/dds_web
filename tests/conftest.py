@@ -235,14 +235,6 @@ def demo_data():
             pi="unit 2 testing project PI",
             bucket="bucket-2",
         ),
-        # Project(
-        #     public_id="busy_project_id",
-        #     title="busy project",
-        #     description="This is a test project with busy set to True. Can be used with unitadmin",
-        #     pi="PI",
-        #     bucket=f"busypublicproj-{str(timestamp(ts_format='%Y%m%d%H%M%S'))}-{str(uuid.uuid4())}",
-        #     busy=True,
-        # ),
     ]
 
     files_and_versions = [
