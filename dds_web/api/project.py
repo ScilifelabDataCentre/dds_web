@@ -186,11 +186,10 @@ class ProjectStatus(flask_restful.Resource):
     @dbsession
     def set_busy(project: models.Project, busy: bool) -> None:
         """Set project as not busy."""
-        project.busy = busy
-        db.session.commit()
         flask.current_app.logger.info(
-            f"Busy status set. Project: '{project.public_id}', Busy: {busy}"
+            f"Setting busy status. Project: '{project.public_id}', Busy: {busy}"
         )
+        project.busy = busy
 
     def check_transition_possible(self, current_status, new_status):
         """Check if the transition is valid."""
