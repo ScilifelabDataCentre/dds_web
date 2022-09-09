@@ -186,6 +186,7 @@ def test_projectstatus_get_status_with_non_accessible_project(module_client, bot
 
 # set_busy
 
+
 def test_set_busy_true(module_client):
     """Test set busy to true."""
     from dds_web.api import project
@@ -199,8 +200,9 @@ def test_set_busy_true(module_client):
     db.session.commit()
 
     # Run function
-    project.ProjectStatus.set_busy(project=project_obj, busy=True)    
+    project.ProjectStatus.set_busy(project=project_obj, busy=True)
     assert project_obj.busy
+
 
 def test_set_busy_false(module_client):
     """Test set busy to false."""
@@ -215,10 +217,12 @@ def test_set_busy_false(module_client):
     db.session.commit()
 
     # Run function
-    project.ProjectStatus.set_busy(project=project_obj, busy=False)    
+    project.ProjectStatus.set_busy(project=project_obj, busy=False)
     assert not project_obj.busy
 
+
 # post
+
 
 def test_projectstatus_when_busy(module_client):
     """Status change should not be possible when project is busy."""
@@ -243,6 +247,7 @@ def test_projectstatus_when_busy(module_client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert f"The project '{project.public_id}' is currently busy" in response.json.get("message")
 
+
 def test_projectstatus_when_not_busy_but_invalid(module_client):
     """Status change which results in an exception should also reset busy to False."""
     # Get user
@@ -266,6 +271,7 @@ def test_projectstatus_when_not_busy_but_invalid(module_client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "No status transition provided. Specify the new status." in response.json.get("message")
     assert not project.busy
+
 
 def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_session):
     """Submit status request with invalid arguments"""
