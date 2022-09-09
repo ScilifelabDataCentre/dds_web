@@ -886,7 +886,7 @@ class ProjectBusy(flask_restful.Resource):
         # Get busy or not busy
         set_to_busy = flask.request.json.get("busy")
         if set_to_busy is None:
-            raise DDSArgumentError(message="Are you trying to set the project as busy or not busy?")
+            raise DDSArgumentError(message="Missing information about setting busy or not busy?")
 
         if set_to_busy:
             # Check if project is busy

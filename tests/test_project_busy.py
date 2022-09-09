@@ -12,7 +12,7 @@ import tests
 # CONFIG ################################################################################## CONFIG #
 
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
-proj_query = {"project": "public_project_id"}
+not_busy_proj_query = {"project": "public_project_id"}
 busy_proj_query = {"project": "restricted_project_id"}
 # proj_query_restricted = {"project": "restricted_project_id"}
 
@@ -48,7 +48,7 @@ def test_set_busy_no_args(client):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Required data missing" in response.json.get("message")
 
-    # Unit Personnel
+    # Unit Admin
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
     response = client.put(
         tests.DDSEndpoint.PROJECT_BUSY,
@@ -73,11 +73,11 @@ def test_set_busy_no_busy(client):
     response = client.put(
         tests.DDSEndpoint.PROJECT_BUSY,
         headers=token,
-        query_string=proj_query,
+        query_string=not_busy_proj_query,
         json={"something": "notabool"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "Are you trying to set the project as busy or not busy?" in response.json.get("message")
+    assert "Missing information about setting busy or not busy?" in response.json.get("message")
 
 
 def test_set_busy_true(client):
@@ -86,11 +86,26 @@ def test_set_busy_true(client):
     response = client.put(
         tests.DDSEndpoint.PROJECT_BUSY,
         headers=token,
-        query_string=proj_query,
+        query_string=not_busy_proj_query,
         json={"busy": True},
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert f"Project {proj_query.get('project')} was set to busy." in response.json.get("message")
+    assert f"Project {not_busy_proj_query.get('project')} was set to busy." in response.json.get(
+        "message"
+    )
+
+
+def test_set_busy_false(client):
+    """Set project as busy."""
+    token = tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client)
+    response = client.put(
+        tests.DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string=not_busy_proj_query,
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert f"The project is already not busy, cannot proceed." in response.json.get("message")
 
 
 def test_set_busy_false(client):
@@ -119,5 +134,5 @@ def test_set_busy_project_already_busy(client):
         query_string=busy_proj_query,
         json={"busy": True},
     )
-    # assert response.status_code == http.HTTPStatus.OK
+    assert response.status_code == http.HTTPStatus.OK
     assert "The project is already busy, cannot proceed." in response.json.get("message")
