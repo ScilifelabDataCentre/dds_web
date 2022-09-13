@@ -3,7 +3,7 @@ name: trivy
 
 on:
   schedule:
-    - cron: '22 22 * * *'
+    - cron: "22 22 * * *"
 
 jobs:
   scan:
@@ -17,18 +17,18 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Ensure lowercase name
-        run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+        run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.7.1
         with:
-          image-ref: 'ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:latest'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
+          image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:latest"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
           category: trivy
