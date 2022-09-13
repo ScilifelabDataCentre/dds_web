@@ -942,10 +942,11 @@ def test_invite_users_should_have_different_timestamps(client):
 
     # Use freezegun
     import freezegun
+
     with freezegun.freeze_time(new_time_initial):
         start_time = current_time()
         assert start_time == new_time_initial
-    
+
     # Invite researcher
     researcher_info = {"role": "Researcher", "email": "newresearcher@test.com"}
     new_time_1 = new_time_initial + timedelta(days=1)
@@ -953,12 +954,14 @@ def test_invite_users_should_have_different_timestamps(client):
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
-            json=researcher_info
+            json=researcher_info,
         )
         assert response.status_code == http.HTTPStatus.OK
-    
+
     # Check invite created time
-    researcher_invite: models.Invite = models.Invite.query.filter_by(email=researcher_info["email"], role=researcher_info["role"]).one_or_none()
+    researcher_invite: models.Invite = models.Invite.query.filter_by(
+        email=researcher_info["email"], role=researcher_info["role"]
+    ).one_or_none()
     assert researcher_invite
     assert new_time_initial != researcher_invite.created_at == new_time_1
 
@@ -966,39 +969,58 @@ def test_invite_users_should_have_different_timestamps(client):
     unit: models.Unit = models.Unit.query.first()
     assert unit
 
-    unitpersonnel_info = {"role": "Unit Personnel", "email": "newunitpersonnel@test.com", "unit": unit.public_id}
+    unitpersonnel_info = {
+        "role": "Unit Personnel",
+        "email": "newunitpersonnel@test.com",
+        "unit": unit.public_id,
+    }
     new_time_2 = new_time_1 + timedelta(days=1)
     with freezegun.freeze_time(new_time_2):
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
-            json=unitpersonnel_info
+            json=unitpersonnel_info,
         )
         assert response.status_code == http.HTTPStatus.OK
-    
+
     # Check invite created time
-    unitpersonnel_invite: models.Invite = models.Invite.query.filter_by(email=unitpersonnel_info["email"], role=unitpersonnel_info["role"]).one_or_none()
+    unitpersonnel_invite: models.Invite = models.Invite.query.filter_by(
+        email=unitpersonnel_info["email"], role=unitpersonnel_info["role"]
+    ).one_or_none()
     assert unitpersonnel_invite
-    assert unitpersonnel_invite.created_at == new_time_2 and unitpersonnel_invite.created_at not in [new_time_initial, new_time_1]
+    assert (
+        unitpersonnel_invite.created_at == new_time_2
+        and unitpersonnel_invite.created_at not in [new_time_initial, new_time_1]
+    )
 
     # Invite Unit Admin
     unit: models.Unit = models.Unit.query.first()
     assert unit
 
-    unitadmin_info = {"role": "Unit Admin", "email": "newunitadmin@test.com", "unit": unit.public_id}
+    unitadmin_info = {
+        "role": "Unit Admin",
+        "email": "newunitadmin@test.com",
+        "unit": unit.public_id,
+    }
     new_time_3 = new_time_2 + timedelta(days=1, hours=3)
     with freezegun.freeze_time(new_time_3):
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
-            json=unitadmin_info
+            json=unitadmin_info,
         )
         assert response.status_code == http.HTTPStatus.OK
-    
+
     # Check invite created time
-    unitadmin_invite: models.Invite = models.Invite.query.filter_by(email=unitadmin_info["email"], role=unitadmin_info["role"]).one_or_none()
+    unitadmin_invite: models.Invite = models.Invite.query.filter_by(
+        email=unitadmin_info["email"], role=unitadmin_info["role"]
+    ).one_or_none()
     assert unitadmin_invite
-    assert unitadmin_invite.created_at == new_time_3 and unitadmin_invite.created_at not in [new_time_initial, new_time_1, new_time_2]
+    assert unitadmin_invite.created_at == new_time_3 and unitadmin_invite.created_at not in [
+        new_time_initial,
+        new_time_1,
+        new_time_2,
+    ]
 
     # Invite Super Admin
     superadmin_info = {"role": "Super Admin", "email": "newsuperadmin@test.com"}
@@ -1007,16 +1029,18 @@ def test_invite_users_should_have_different_timestamps(client):
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.USER_ADD,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
-            json=superadmin_info
+            json=superadmin_info,
         )
         assert response.status_code == http.HTTPStatus.OK
-    
+
     # Check invite created time
-    superadmin_invite: models.Invite = models.Invite.query.filter_by(email=superadmin_info["email"], role=superadmin_info["role"]).one_or_none()
+    superadmin_invite: models.Invite = models.Invite.query.filter_by(
+        email=superadmin_info["email"], role=superadmin_info["role"]
+    ).one_or_none()
     assert superadmin_invite
-    assert superadmin_invite.created_at == new_time_4 and superadmin_invite.created_at not in [new_time_initial, new_time_1, new_time_2, new_time_3]
-
-
-
-        
-
+    assert superadmin_invite.created_at == new_time_4 and superadmin_invite.created_at not in [
+        new_time_initial,
+        new_time_1,
+        new_time_2,
+        new_time_3,
+    ]
