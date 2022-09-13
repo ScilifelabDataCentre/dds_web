@@ -34,6 +34,8 @@ from dds_web.errors import (
     DeletionError,
     BucketNotFoundError,
     KeyNotFoundError,
+    NoSuchProjectError,
+    ProjectBusyError,
     S3ConnectionError,
     NoSuchUserError,
 )
@@ -86,81 +88,108 @@ class ProjectStatus(flask_restful.Resource):
         project = dds_web.utils.collect_project(project_id=project_id)
         dds_web.utils.verify_project_access(project=project)
 
-        # Check if valid status
-        json_input = flask.request.json
-        new_status = json_input.get("new_status")
-        if not new_status:
-            raise DDSArgumentError(message="No status transition provided. Specify the new status.")
-
-        # Override default to send email
-        send_email = json_input.get("send_email", True)
-
-        # Initial variable definition
-        curr_date = dds_web.utils.current_time()
-        delete_message = ""
-        is_aborted = False
-
-        # Moving to Available
-        if new_status == "Available":
-            deadline_in = json_input.get("deadline", project.responsible_unit.days_in_available)
-            new_status_row = self.release_project(
-                project=project, current_time=curr_date, deadline_in=deadline_in
+        # Cannot change project status if project is busy
+        if project.busy:
+            raise ProjectBusyError(
+                message=(
+                    f"The project '{project_id}' is currently busy with upload/download/deletion. "
+                    "Please try again later. \n\nIf you know the project is not busy, contact support."
+                )
             )
-        elif new_status == "In Progress":
-            new_status_row = self.retract_project(project=project, current_time=curr_date)
-        elif new_status == "Expired":
-            deadline_in = json_input.get("deadline", project.responsible_unit.days_in_expired)
-            new_status_row = self.expire_project(
-                project=project, current_time=curr_date, deadline_in=deadline_in
-            )
-        elif new_status == "Deleted":
-            new_status_row, delete_message = self.delete_project(
-                project=project, current_time=curr_date
-            )
-        elif new_status == "Archived":
-            is_aborted = json_input.get("is_aborted", False)
-            new_status_row, delete_message = self.archive_project(
-                project=project, current_time=curr_date, aborted=is_aborted
-            )
-        else:
-            raise DDSArgumentError(message="Invalid status")
+        self.set_busy(project=project, busy=True)
 
         try:
-            project.project_statuses.append(new_status_row)
-            db.session.commit()
-        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise DatabaseError(
-                message=str(err),
-                alt_message=(
-                    "Status was not updated"
-                    + (
-                        ": Database malfunction."
-                        if isinstance(err, sqlalchemy.exc.OperationalError)
-                        else ": Server Error."
-                    )
-                ),
-            ) from err
-
-        # Mail users once project is made available
-        if new_status == "Available" and send_email:
-            for user in project.researchusers:
-                AddUser.compose_and_send_email_to_user(
-                    userobj=user.researchuser, mail_type="project_release", project=project
+            # Check if valid status
+            json_input = flask.request.json
+            new_status = json_input.get("new_status")
+            if not new_status:
+                raise DDSArgumentError(
+                    message="No status transition provided. Specify the new status."
                 )
 
-        return_message = f"{project.public_id} updated to status {new_status}" + (
-            " (aborted)" if new_status == "Archived" and is_aborted else ""
-        )
+            # Override default to send email
+            send_email = json_input.get("send_email", True)
 
-        if new_status != "Available":
-            return_message += delete_message + "."
-        else:
-            return_message += (
-                f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
+            # Initial variable definition
+            curr_date = dds_web.utils.current_time()
+            delete_message = ""
+            is_aborted = False
+
+            # Moving to Available
+            if new_status == "Available":
+                deadline_in = json_input.get("deadline", project.responsible_unit.days_in_available)
+                new_status_row = self.release_project(
+                    project=project, current_time=curr_date, deadline_in=deadline_in
+                )
+            elif new_status == "In Progress":
+                new_status_row = self.retract_project(project=project, current_time=curr_date)
+            elif new_status == "Expired":
+                deadline_in = json_input.get("deadline", project.responsible_unit.days_in_expired)
+                new_status_row = self.expire_project(
+                    project=project, current_time=curr_date, deadline_in=deadline_in
+                )
+            elif new_status == "Deleted":
+                new_status_row, delete_message = self.delete_project(
+                    project=project, current_time=curr_date
+                )
+            elif new_status == "Archived":
+                is_aborted = json_input.get("is_aborted", False)
+                new_status_row, delete_message = self.archive_project(
+                    project=project, current_time=curr_date, aborted=is_aborted
+                )
+            else:
+                raise DDSArgumentError(message="Invalid status")
+
+            try:
+                project.project_statuses.append(new_status_row)
+                project.busy = False
+                db.session.commit()
+            except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+                flask.current_app.logger.exception(err)
+                db.session.rollback()
+                raise DatabaseError(
+                    message=str(err),
+                    alt_message=(
+                        "Status was not updated"
+                        + (
+                            ": Database malfunction."
+                            if isinstance(err, sqlalchemy.exc.OperationalError)
+                            else ": Server Error."
+                        )
+                    ),
+                ) from err
+
+            # Mail users once project is made available
+            if new_status == "Available" and send_email:
+                for user in project.researchusers:
+                    AddUser.compose_and_send_email_to_user(
+                        userobj=user.researchuser, mail_type="project_release", project=project
+                    )
+
+            return_message = f"{project.public_id} updated to status {new_status}" + (
+                " (aborted)" if new_status == "Archived" and is_aborted else ""
             )
+
+            if new_status != "Available":
+                return_message += delete_message + "."
+            else:
+                return_message += (
+                    f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
+                )
+        except:
+            self.set_busy(project=project, busy=False)
+            raise
+
         return {"message": return_message}
+
+    @staticmethod
+    @dbsession
+    def set_busy(project: models.Project, busy: bool) -> None:
+        """Set project as not busy."""
+        flask.current_app.logger.info(
+            f"Setting busy status. Project: '{project.public_id}', Busy: {busy}"
+        )
+        project.busy = busy
 
     def check_transition_possible(self, current_status, new_status):
         """Check if the transition is valid."""
@@ -867,3 +896,44 @@ class ProjectAccess(flask_restful.Resource):
                 ] = "You do not have access to this project. Please contact the responsible unit."
 
         return fix_errors
+
+
+class ProjectBusy(flask_restful.Resource):
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
+    @logging_bind_request
+    @dbsession
+    @json_required
+    def put(self):
+        """Set project to busy / not busy."""
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
+
+        # Get busy or not busy
+        set_to_busy = flask.request.json.get("busy")
+        if set_to_busy is None:
+            raise DDSArgumentError(message="Missing information about setting busy or not busy.")
+
+        if set_to_busy:
+            # Check if project is busy
+            if project.busy:
+                return {"ok": False, "message": "The project is already busy, cannot proceed."}
+
+            # Set project as busy
+            project.busy = True
+        else:
+            # Check if project is not busy
+            if not project.busy:
+                return {
+                    "ok": False,
+                    "message": "The project is already not busy, cannot proceed.",
+                }
+
+            # Set project to not busy
+            project.busy = False
+
+        return {
+            "ok": True,
+            "message": f"Project {project_id} was set to {'busy' if set_to_busy else 'not busy'}.",
+        }
