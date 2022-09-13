@@ -140,3 +140,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Add storage usage information in the Units listing table for Super Admin ([#1264](https://github.com/ScilifelabDataCentre/dds_web/pull/1264))
 - New endpoint for setting project as busy / not busy ([#1266](https://github.com/ScilifelabDataCentre/dds_web/pull/1266))
 - Check for if project busy before status change ([#1266](https://github.com/ScilifelabDataCentre/dds_web/pull/1266))
+- Bug fix: Default timestamps fixed ([#1271](https://github.com/ScilifelabDataCentre/dds_web/pull/1271))
