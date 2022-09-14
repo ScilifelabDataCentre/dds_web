@@ -3,10 +3,12 @@
 #############################
 
 # Set official image -- parent image
-FROM python:latest as base
+FROM python:3.10-alpine as base
 
 # Install some necessary systems packages
-RUN apt-get update && apt-get upgrade -y
+RUN apk update && apk upgrade
+RUN apk add g++ gcc musl-dev libffi-dev
+RUN apk add jpeg-dev zlib-dev libjpeg
 
 # Copy the content to a code folder in container
 COPY ./requirements.txt /code/requirements.txt
