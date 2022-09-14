@@ -550,7 +550,7 @@ class UserProjects(flask_restful.Resource):
             cost_gbhour = 0.09 / (30 * 24)
 
             # Save file cost to project info and increase total unit cost
-            cost += bhours / 1e9 * cost_gbhour
+            cost = (bhours / 1e9) * cost_gbhour
 
         return bhours, cost
 
