@@ -536,13 +536,10 @@ class UserProjects(flask_restful.Resource):
         bhours = 0.0
         cost = 0.0
 
-        flask.current_app.logger.debug(f"Project: {project}")
         for v in project.file_versions:
             # Calculate hours of the current file
             time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
             time_uploaded = v.time_uploaded
-            flask.current_app.logger.debug(f"start time: {time_uploaded}")
-            flask.current_app.logger.debug(f"end time: {time_deleted}")
 
             # Calculate BHours
             bhours += dds_web.utils.calculate_bytehours(
