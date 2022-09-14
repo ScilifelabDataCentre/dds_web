@@ -5,13 +5,18 @@
 # Set official image -- parent image
 FROM python:3.10-alpine as base
 
-# Install some necessary systems packages
+# Update and upgrade
 RUN apk update && apk upgrade
-RUN apk add tzdata
+
+# Install required dependencies...
+# ...Some for build
 RUN apk add g++ gcc musl-dev libffi-dev
+
+# ...Some for requirements
 RUN apk add jpeg-dev zlib-dev libjpeg
 
 # Set time zone
+RUN apk add tzdata
 ENV TZ="America/New_York"
 
 # Copy the content to a code folder in container
