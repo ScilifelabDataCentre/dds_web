@@ -533,6 +533,8 @@ class UserProjects(flask_restful.Resource):
     @staticmethod
     def project_usage(project):
 
+        # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
+        cost_gbhour = 0.09 / (30 * 24)
         bhours = 0.0
         cost = 0.0
 
@@ -541,16 +543,13 @@ class UserProjects(flask_restful.Resource):
             time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
             time_uploaded = v.time_uploaded
 
-            # Calculate BHours
+            # Calculate and accumulate BHours for all versions in project
             bhours += dds_web.utils.calculate_bytehours(
                 minuend=time_deleted, subtrahend=time_uploaded, size_bytes=v.size_stored
             )
 
-            # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
-            cost_gbhour = 0.09 / (30 * 24)
-
-            # Save file cost to project info and increase total unit cost
-            cost = (bhours / 1e9) * cost_gbhour
+        # Save file cost to project info and increase total unit cost
+        cost = (bhours / 1e9) * cost_gbhour
 
         return bhours, cost
 
