@@ -17,7 +17,7 @@ RUN apk add jpeg-dev zlib-dev libjpeg
 
 # Set time zone
 RUN apk add tzdata
-ENV TZ="America/New_York"
+ENV TZ="UCT"
 
 # Copy the content to a code folder in container
 COPY ./requirements.txt /code/requirements.txt
