@@ -488,7 +488,7 @@ class UserProjects(flask_restful.Resource):
             project_info["Size"] = proj_size
 
             if usage:
-                proj_bhours, proj_cost = self.project_usage(project=p)
+                proj_bhours, proj_cost = self.project_usage(project=p)                
                 total_bhours_db += proj_bhours
                 total_cost_db += proj_cost
                 # return ByteHours
@@ -536,21 +536,21 @@ class UserProjects(flask_restful.Resource):
         bhours = 0.0
         cost = 0.0
 
+        flask.current_app.logger.debug(f"Project: {project}")
         for v in project.file_versions:
             # Calculate hours of the current file
             time_deleted = v.time_deleted if v.time_deleted else dds_web.utils.current_time()
             time_uploaded = v.time_uploaded
+            flask.current_app.logger.debug(f"start time: {time_uploaded}")
+            flask.current_app.logger.debug(f"end time: {time_deleted}")
 
             # Calculate BHours
             bhours += dds_web.utils.calculate_bytehours(
                 minuend=time_deleted, subtrahend=time_uploaded, size_bytes=v.size_stored
             )
 
-            # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
-            cost_gbhour = 0.09 / (30 * 24)
-
-            # Save file cost to project info and increase total unit cost
-            cost += bhours / 1e9 * cost_gbhour
+        gbmonths = bhours / (1e9 * 24 * 30) # bhours --> gbhours --> gbdays --> gbmonths
+        cost = gbmonths * 0.09 # cost is in kr per gb per month
 
         return bhours, cost
 
