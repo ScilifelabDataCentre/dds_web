@@ -27,7 +27,7 @@ ENV PYTHONPATH /code
 ###################
 FROM base as test
 RUN pip3 install -r /code/tests/requirements-test.txt
-RUN apt-get install -y mariadb-client
+RUN apk add mariadb-client
 
 ###################
 ## BUILD FRONTEND
