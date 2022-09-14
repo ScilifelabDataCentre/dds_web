@@ -488,7 +488,7 @@ class UserProjects(flask_restful.Resource):
             project_info["Size"] = proj_size
 
             if usage:
-                proj_bhours, proj_cost = self.project_usage(project=p)                
+                proj_bhours, proj_cost = self.project_usage(project=p)
                 total_bhours_db += proj_bhours
                 total_cost_db += proj_cost
                 # return ByteHours
@@ -546,8 +546,8 @@ class UserProjects(flask_restful.Resource):
                 minuend=time_deleted, subtrahend=time_uploaded, size_bytes=v.size_stored
             )
 
-        gbmonths = bhours / (1e9 * 24 * 30) # bhours --> gbhours --> gbdays --> gbmonths
-        cost = gbmonths * 0.09 # cost is in kr per gb per month
+        gbmonths = bhours / (1e9 * 24 * 30)  # bhours --> gbhours --> gbdays --> gbmonths
+        cost = gbmonths * 0.09  # cost is in kr per gb per month
 
         return bhours, cost
 
