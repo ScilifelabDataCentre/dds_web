@@ -17,7 +17,7 @@ tasks:
     command: >
       gp await-port 5000 &&
       echo -e "\033[1;31mUse the dds cli in this terminal window\033[0m\n\033[0;33me.g.: dds auth login\033[0m" &&
-      docker exec -it dds_cli bash
+      docker exec -it dds_cli sh
 
 ports:
   - port: 5000 # backend
