@@ -99,6 +99,5 @@ jobs:
           file: Dockerfiles/backend.Dockerfile
           context: .
           push: true
-          # Set to wanted target, or remove if you do not use targets
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
