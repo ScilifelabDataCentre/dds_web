@@ -117,7 +117,7 @@ Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume
 2. Inject into the `dds_cli` container:
 
    ```bash
-   docker exec -it dds_cli /bin/bash
+   docker exec -it dds_cli /bin/sh
    ```
 
 Then you can freely use the dds cli component against the local development setup in the active CLI.
@@ -237,7 +237,7 @@ docker-compose -f docker-compose.yml -f tests/docker-compose-test-interactive.ym
 Then in a new terminal, shell into the container and run pytest:
 
 ```bash
-docker exec -it dds_backend /bin/bash
+docker exec -it dds_backend /bin/sh
 ```
 
 ```bash

@@ -9,7 +9,7 @@ services:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./
       target: test
-    command: bash
+    command: sh
     restart: "no"
     stdin_open: true
     tty: true
