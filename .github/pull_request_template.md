@@ -2,31 +2,31 @@
 
 # Description
 
-In this section:
-
 - [ ] Add a summary of the changes and the related issue
 - [ ] Add motivation and context regarding why the change is needed
 - [ ] List / describe any dependencies or other changes required for this change
-- [ ] If this PR solves an issue, link it (if in GitHub) or add the issue ID (if in Jira). Do this by filling in `[issue link or ID]` below.
-
-Fixes [issue link or ID]
+- [ ] Fixes [link to issue / Jira issue ID]
 
 ## Type of change
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change requires a documentation update
+- [ ] Documentation
+- [ ] Workflow
+- [ ] Security Alert fix
+- [ ] Bug fix (non-breaking)
+- [ ] New feature (non-breaking)
+- [ ] Breaking change (breaking, will cause existing functionality to not work as expected)
 
 # Checklist:
 
-Please delete options that are not relevant.
-
-- [ ] Any dependent changes have been merged and published in downstream modules
-- [ ] Rebase/merge the branch which this PR is made to
-- [ ] Changes to the database schema: A new migration is included in the PR
-- [ ] Product Owner / Scrum Master: This PR is made to the `master` branch and I have updated the [version](../dds_web/version.py)
-- [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x) and I have made the corresponding changes to the CLI version
+- [ ] Blocking PRs have been merged
+- [ ] Rebase / update of branch done
+- [ ] Database schema has changed
+    - [ ] A new migration is included in the PR
+    - [ ] The change does not require a migration
+- [ ] Product Owner / Scrum Master
+    - [ ] The [version](../dds_web/version.py) is updated (PR to `master` branch)
+    - [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x)
+        - [ ] I have made the corresponding changes to the CLI version
 
 ## Formatting and documentation
 
