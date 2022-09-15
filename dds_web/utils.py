@@ -133,7 +133,6 @@ def contains_unicode_emojis(indata):
     # Ref: https://gist.github.com/Alex-Just/e86110836f3f93fe7932290526529cd1#gistcomment-3208085
     # Ref: https://en.wikipedia.org/wiki/Unicode_block
     EMOJI_PATTERN = re.compile(
-        "(["
         "\U0001F1E0-\U0001F1FF"  # flags (iOS)
         "\U0001F300-\U0001F5FF"  # symbols & pictographs
         "\U0001F600-\U0001F64F"  # emoticons
@@ -145,7 +144,6 @@ def contains_unicode_emojis(indata):
         "\U0001FA00-\U0001FA6F"  # Chess Symbols
         "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
         "\U00002702-\U000027B0"  # Dingbats
-        "])"
     )
     emojis = re.findall(EMOJI_PATTERN, indata)
     if emojis:
