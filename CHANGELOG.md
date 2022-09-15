@@ -141,4 +141,8 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - New endpoint for setting project as busy / not busy ([#1266](https://github.com/ScilifelabDataCentre/dds_web/pull/1266))
 - Check for if project busy before status change ([#1266](https://github.com/ScilifelabDataCentre/dds_web/pull/1266))
 - Bug fix: Default timestamps fixed ([#1271](https://github.com/ScilifelabDataCentre/dds_web/pull/1271))
+<<<<<<< HEAD
 - Change docker image to alpine ([#1272](https://github.com/ScilifelabDataCentre/dds_web/pull/1272))
+=======
+- Bug fix: Cost value displayed by the --usage flag fixed ([#1274](https://github.com/ScilifelabDataCentre/dds_web/pull/1274))
+>>>>>>> 3ae1a84e (add changelog entry and a test)
