@@ -2,6 +2,7 @@
 name: Publish Docker Image
 on:
   pull_request:
+    types: [opened, edited, reopened]
   push:
     branches:
       - master
