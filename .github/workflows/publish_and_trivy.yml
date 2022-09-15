@@ -76,7 +76,7 @@ jobs:
       - name: Build for scan
         uses: docker/build-push-action@v3
         with:
-          file: ${{ matrix.dockerfile }}
+          file: Dockerfiles/backend.Dockerfile
           context: .
           push: false
           target: production
@@ -96,7 +96,7 @@ jobs:
       - name: Build and Publish
         uses: docker/build-push-action@v3
         with:
-          file: ${{ matrix.dockerfile }}
+          file: Dockerfiles/backend.Dockerfile
           context: .
           push: true
           # Set to wanted target, or remove if you do not use targets
