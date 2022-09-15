@@ -37,7 +37,7 @@ Jinja2==3.0.3
 jmespath==0.10.0
 jwcrypto==1.0
 limits==2.3.2
-Mako==1.2.2
+Mako==1.1.6
 MarkupSafe==2.0.1
 marshmallow==3.14.1
 marshmallow-sqlalchemy==0.27.0
