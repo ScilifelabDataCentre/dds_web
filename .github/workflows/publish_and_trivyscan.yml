@@ -1,5 +1,5 @@
 ---
-name: Publish Docker Image
+name: Publish Docker Image and run Trivy Security Scan
 on:
   pull_request:
     types: [opened, edited, reopened]
