@@ -3,7 +3,7 @@
 
 # on:
 #   schedule:
-#     - cron: "22 22 * * *"
+#     - cron: "51 10 * * *"
 
 # jobs:
 #   scan:
@@ -15,14 +15,13 @@
 #     steps:
 #       - name: Checkout code
 #         uses: actions/checkout@v3
-
 #       - name: Ensure lowercase name
 #         run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
 
 #       - name: Run Trivy vulnerability scanner
 #         uses: aquasecurity/trivy-action@0.7.1
 #         with:
-#           image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:latest"
+#           image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:dev"
 #           format: "sarif"
 #           output: "trivy-results.sarif"
 #           severity: "CRITICAL,HIGH"
