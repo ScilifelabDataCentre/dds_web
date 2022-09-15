@@ -1,10 +1,7 @@
----
 name: trivy
-
 on:
   schedule:
-    - cron: "51 10 * * *"
-
+    - cron: "*/15 * * * *"
 jobs:
   scan:
     permissions:
