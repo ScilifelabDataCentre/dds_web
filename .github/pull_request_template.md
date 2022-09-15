@@ -1,4 +1,6 @@
-> **Before submitting the PR, please go through the seconds below and fill in what you can. If there are any items that are irrelevant for the current PR, remove the row. If a relevant option is missing, please add it as an item and add a PR comment informing that the new option should be included into this template.**
+> **Before submitting the PR, please go through the sections below and fill in what you can. If there are any items that are irrelevant for the current PR, remove the row. If a relevant option is missing, please add it as an item and add a PR comment informing that the new option should be included into this template.**
+
+> **_All items should be ticked before the PR is merged_**
 
 # Description
 
