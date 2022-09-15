@@ -22,30 +22,29 @@
 
 - [ ] [Changelog](../CHANGELOG.md): New row added
 - [ ] Database schema has changed
-    - [ ] A new migration is included in the PR
-    - [ ] The change does not require a migration
+  - [ ] A new migration is included in the PR
+  - [ ] The change does not require a migration
 - [ ] Code change
-    - [ ] Self-review of code done
-    - [ ] Comments added, particularly in hard-to-understand areas
-    - [ ] Documentation is updated
+  - [ ] Self-review of code done
+  - [ ] Comments added, particularly in hard-to-understand areas
+  - [ ] Documentation is updated
 
 ## Repository / Releases
 
 - [ ] Blocking PRs have been merged
 - [ ] Rebase / update of branch done
 - [ ] Product Owner / Scrum Master
-    - [ ] The [version](../dds_web/version.py) is updated (PR to `master` branch)
-    - [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x)
-        - [ ] I have made the corresponding changes to the CLI version
+  - [ ] The [version](../dds_web/version.py) is updated (PR to `master` branch)
+  - [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x)
+    - [ ] I have made the corresponding changes to the CLI version
 
 ## Checks
 
 - [ ] Formatting: Black & Prettier checks pass
 - [ ] Tests
-    - [ ] I have added tests for the new code
-    - [ ] The tests pass 
-- [ ] Trivy: 
-    - [ ] This PR fixes new security alerts
-    - [ ] Security alerts have been dismissed
-    - [ ] PR will be merged with new security alerts; This is why: _Please add a short description here_
-
+  - [ ] I have added tests for the new code
+  - [ ] The tests pass
+- [ ] Trivy:
+  - [ ] This PR fixes new security alerts
+  - [ ] Security alerts have been dismissed
+  - [ ] PR will be merged with new security alerts; This is why: _Please add a short description here_
