@@ -65,7 +65,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ matrix.images }}
+          images: |
+            scilifelabdatacentre/dds-backend
+            ghcr.io/scilifelabdatacentre/dds-backend
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -79,7 +81,6 @@ jobs:
           file: Dockerfiles/backend.Dockerfile
           context: .
           push: false
-          target: production
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.7.1
