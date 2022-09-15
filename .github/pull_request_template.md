@@ -1,12 +1,15 @@
+> **Before submitting the PR, please go through the seconds below and fill in what you can. If there are any items that are irrelevant for the current PR, remove the row. If a relevant option is missing, please add it as an item and add a PR comment informing that the new option should be included into this template.**
+
 # Description
 
-Please include the following in this section
+In this section:
 
-- [ ] Summary of the changes and the related issue
-- [ ] Relevant motivation and context
-- [ ] Any dependencies that are required for this change
+- [ ] Add a summary of the changes and the related issue
+- [ ] Add motivation and context regarding why the change is needed
+- [ ] List / describe any dependencies or other changes required for this change
+- [ ] If this PR solves an issue, link it (if in GitHub) or add the issue ID (if in Jira). Do this by filling in `[issue link or ID]` below.
 
-Fixes # (issue)
+Fixes [issue link or ID]
 
 ## Type of change
 
