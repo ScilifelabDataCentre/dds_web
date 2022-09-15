@@ -41,10 +41,11 @@
 ## Checks
 
 - [ ] Formatting: Black & Prettier checks pass
+- [ ] CodeQL passes
 - [ ] Tests
   - [ ] I have added tests for the new code
   - [ ] The tests pass
-- [ ] Trivy:
+- [ ] Trivy / Snyk:
   - [ ] There are no new security alerts
   - [ ] This PR fixes new security alerts
   - [ ] Security alerts have been dismissed
