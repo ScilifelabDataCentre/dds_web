@@ -143,3 +143,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Bug fix: Default timestamps fixed ([#1271](https://github.com/ScilifelabDataCentre/dds_web/pull/1271))
 - Change docker image to alpine ([#1272](https://github.com/ScilifelabDataCentre/dds_web/pull/1272))
 - Added trivy when publishing to dockerhub ([#1276](https://github.com/ScilifelabDataCentre/dds_web/pull/1276))
+- Bug fix: Cost value displayed by the --usage flag fixed ([#1274](https://github.com/ScilifelabDataCentre/dds_web/pull/1274))
