@@ -2,7 +2,6 @@
 name: Publish Docker Image and run Trivy Security Scan
 on:
   pull_request:
-    types: [opened, edited, reopened]
   push:
     branches:
       - master
