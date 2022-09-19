@@ -313,7 +313,9 @@ def fill_db_wrapper(db_type):
     from dds_web.database import models
 
     maintenance_active: bool = db_type == "production"
-    flask.current_app.logger.info(f"Setting maintenance as {'active' if maintenance_active else 'inactive'}...")
+    flask.current_app.logger.info(
+        f"Setting maintenance as {'active' if maintenance_active else 'inactive'}..."
+    )
 
     old_maintenance: models.Maintenance = models.Maintenance.query.all()
     if len(old_maintenance) > 1:
