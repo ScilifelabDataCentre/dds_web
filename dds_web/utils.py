@@ -449,6 +449,7 @@ def page_query(q):
         if not r:
             break
 
+
 def send_email_with_retry(msg, times_retried=0, obj=None):
     """Send email with retry on exception"""
     if obj is None:
