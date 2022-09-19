@@ -11,6 +11,7 @@ import pathlib
 import sys
 import re
 import os
+import typing
 
 # Installed
 import click
@@ -309,10 +310,18 @@ def create_app(testing=False, database_uri=None):
 @click.argument("db_type", type=click.Choice(["production", "dev-small", "dev-big"]))
 @flask.cli.with_appcontext
 def fill_db_wrapper(db_type):
+    from dds_web.database import models
+
+    maintenance_rows: typing.List = models.Maintenance.query.all()
 
     if db_type == "production":
-        from dds_web.database import models
+        # Verify that there's one maintenance row
+        if maintenance_rows:
+            maintenance_rows[0].active = True
+            db.session.delete(maintenance_rows[1::])
+        db.session.commit()
 
+        # Fill rest
         username = flask.current_app.config["SUPERADMIN_USERNAME"]
         password = flask.current_app.config["SUPERADMIN_PASSWORD"]
         name = flask.current_app.config["SUPERADMIN_NAME"]
@@ -339,6 +348,11 @@ def fill_db_wrapper(db_type):
             db.session.commit()
             flask.current_app.logger.info(f"Super Admin added: {username} ({email})")
     else:
+        # Verify that there's one maintenance row
+        if maintenance_rows:
+            maintenance_rows[0].active = False
+            db.session.delete(maintenance_rows[1::])
+        db.session.commit()
         flask.current_app.logger.info("Initializing development db")
         assert flask.current_app.config["USE_LOCAL_DB"]
 
