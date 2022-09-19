@@ -6,8 +6,6 @@
 
 # Standard library
 import os
-import smtplib
-import time
 
 # Installed
 import flask_restful
