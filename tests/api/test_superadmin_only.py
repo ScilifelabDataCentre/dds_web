@@ -539,6 +539,7 @@ def test_send_motd_not_active(client: flask.testing.FlaskClient) -> None:
         )
         assert mock_mail_send.call_count == 0
 
+
 def test_send_motd_no_primary_email(client: flask.testing.FlaskClient) -> None:
     """Send a motd to all users."""
     # Authenticate
