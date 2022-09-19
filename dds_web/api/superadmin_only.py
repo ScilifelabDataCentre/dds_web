@@ -175,7 +175,7 @@ class SendMOTD(flask_restful.Resource):
                     flask.current_app.logger.warning(
                         f"No primary email found for user '{user.username}'."
                     )
-                    pass
+                    continue
                 msg = flask_mail.Message(
                     subject=subject, recipients=[primary_email], body=body, html=html
                 )
