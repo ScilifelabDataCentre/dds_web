@@ -5,11 +5,13 @@
 ####################################################################################################
 
 # Standard library
+import os
 
 # Installed
 import flask_restful
 import flask
 import structlog
+import flask_mail
 
 # Own modules
 from dds_web import auth, db
@@ -155,9 +157,40 @@ class SendMOTD(flask_restful.Resource):
         motd_obj: models.MOTD.query.get(motd_id)
         if not motd_obj:
             raise ddserr.DDSArgumentError(message=f"There is no active MOTD with ID '{motd_id}'.")
-            
 
+        # Create email content
+        # put motd_obj.message etc in there etc
 
+        # Get all users primary email
+        emails = [user.primary_email for user in models.User.query.all()]
+
+        # Structure email 
+        msg = flask_mail.Message(subject="DDS Important Information", recipients=emails)
+        msg.attach(
+            "scilifelab_logo.png",
+            "image/png",
+            open(
+                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+            ).read(),
+            "inline",
+            headers=[
+                ["Content-ID", "<Logo>"],
+            ],
+        )
+
+        msg.body = flask.render_template(
+            f"mail/motd.txt",
+            motd=motd_obj.message,
+        )
+        msg.html = flask.render_template(
+            f"mail/motd.html",
+            motd=motd_obj.message,
+        )
+
+        from dds_web.api import user
+        user.AddUser.send_email_with_retry(msg=msg)
+
+        return {"message": "email sent"}
 
 
 class FindUser(flask_restful.Resource):
