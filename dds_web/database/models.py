@@ -1046,3 +1046,4 @@ class Maintenance(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     active = db.Column(db.Boolean, nullable=False, default=True)
+
