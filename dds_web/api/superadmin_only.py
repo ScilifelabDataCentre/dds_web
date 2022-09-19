@@ -168,7 +168,6 @@ class SendMOTD(flask_restful.Resource):
 
         # Setup email connection
         with mail.connect() as conn:
-            flask.current_app.logger.info(type(conn))
             # Email users
             for user in utils.page_query(db.session.query(models.User)):
                 primary_email = user.primary_email
