@@ -192,7 +192,7 @@ class SendMOTD(flask_restful.Resource):
                     ],
                 )
                 # Send email
-                AddUser.send_email_with_retry(msg=msg, obj=conn)
+                utils.send_email_with_retry(msg=msg, obj=conn)
 
         return {"message": f"MOTD '{motd_id}' has been sent to the users."}
 

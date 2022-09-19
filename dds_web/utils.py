@@ -10,6 +10,8 @@ import os
 import re
 import typing
 import urllib.parse
+import time
+import smtplib
 
 # Installed
 from contextlib import contextmanager
@@ -446,6 +448,20 @@ def page_query(q):
         offset += 1000
         if not r:
             break
+
+def send_email_with_retry(msg, times_retried=0, obj=None):
+    """Send email with retry on exception"""
+    if obj is None:
+        obj = mail
+    try:
+        obj.send(msg)
+    except smtplib.SMTPException as err:
+        # Wait a little bit
+        time.sleep(10)
+        # Retry twice
+        if times_retried < 2:
+            retry = times_retried + 1
+            send_email_with_retry(msg, times_retried=retry, obj=obj)
 
 
 def create_one_time_password_email(user, hotp_value):
