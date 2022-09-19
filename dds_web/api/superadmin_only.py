@@ -7,7 +7,7 @@
 # Standard library
 import os
 import smtplib
-import time 
+import time
 
 # Installed
 import flask_restful
@@ -140,6 +140,7 @@ class MOTD(flask_restful.Resource):
 
         return {"message": "The MOTD was successfully deactivated in the database."}
 
+
 class SendMOTD(flask_restful.Resource):
     """Send a MOTD to all users in database."""
 
@@ -151,11 +152,11 @@ class SendMOTD(flask_restful.Resource):
         """Send MOTD as email to users."""
         # Get MOTD ID
         motd_id: int = flask.request.json.get("motd_id")
-        if not motd_id or not isinstance(motd_id, int): # The id starts at 1 - ok to not accept 0
+        if not motd_id or not isinstance(motd_id, int):  # The id starts at 1 - ok to not accept 0
             raise ddserr.DDSArgumentError(
                 message="Please specify the ID of the MOTD you want to send."
             )
-        
+
         # Get MOTD object
         motd_obj: models.MOTD = models.MOTD.query.get(motd_id)
         if not motd_obj or not motd_obj.active:
@@ -174,14 +175,19 @@ class SendMOTD(flask_restful.Resource):
             for user in utils.page_query(db.session.query(models.User)):
                 primary_email = user.primary_email
                 if not primary_email:
-                    flask.current_app.logger.warning(f"No primary email found for user '{user.username}'.")
+                    flask.current_app.logger.warning(
+                        f"No primary email found for user '{user.username}'."
+                    )
                     pass
-                msg = flask_mail.Message(subject=subject, recipients=[primary_email], body=body, html=html)
+                msg = flask_mail.Message(
+                    subject=subject, recipients=[primary_email], body=body, html=html
+                )
                 msg.attach(
                     "scilifelab_logo.png",
                     "image/png",
                     open(
-                        os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+                        os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"),
+                        "rb",
                     ).read(),
                     "inline",
                     headers=[
@@ -242,5 +248,3 @@ class ResetTwoFactor(flask_restful.Resource):
         return {
             "message": f"TOTP has been deactivated for user: {user.username}. They can now use 2FA via email during authentication."
         }
-
-
