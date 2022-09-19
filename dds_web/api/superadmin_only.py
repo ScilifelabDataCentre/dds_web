@@ -158,7 +158,7 @@ class SendMOTD(flask_restful.Resource):
         
         # Get MOTD object
         motd_obj: models.MOTD = models.MOTD.query.get(motd_id)
-        if not motd_obj:
+        if not motd_obj or not motd_obj.active:
             raise ddserr.DDSArgumentError(message=f"There is no active MOTD with ID '{motd_id}'.")
 
         # Create email content
@@ -169,6 +169,7 @@ class SendMOTD(flask_restful.Resource):
 
         # Setup email connection
         with mail.connect() as conn:
+            flask.current_app.logger.info(type(conn))
             # Email users
             for user in utils.page_query(db.session.query(models.User)):
                 primary_email = user.primary_email
