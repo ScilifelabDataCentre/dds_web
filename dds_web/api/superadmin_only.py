@@ -6,6 +6,8 @@
 
 # Standard library
 import os
+import smtplib
+import time 
 
 # Installed
 import flask_restful
@@ -14,11 +16,12 @@ import structlog
 import flask_mail
 
 # Own modules
-from dds_web import auth, db
+from dds_web import auth, db, mail
 from dds_web.database import models
 from dds_web.api.dds_decorators import json_required, logging_bind_request, handle_db_error
 from dds_web import utils
 import dds_web.errors as ddserr
+from dds_web.api.user import AddUser
 
 
 # initiate bound logger
@@ -154,43 +157,40 @@ class SendMOTD(flask_restful.Resource):
             )
         
         # Get MOTD object
-        motd_obj: models.MOTD.query.get(motd_id)
+        motd_obj: models.MOTD = models.MOTD.query.get(motd_id)
         if not motd_obj:
             raise ddserr.DDSArgumentError(message=f"There is no active MOTD with ID '{motd_id}'.")
 
         # Create email content
         # put motd_obj.message etc in there etc
+        subject: str = "DDS Important Information"
+        body: str = flask.render_template(f"mail/motd.txt", motd=motd_obj.message)
+        html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
 
-        # Get all users primary email
-        emails = [user.primary_email for user in models.User.query.all()]
+        # Setup email connection
+        with mail.connect() as conn:
+            # Email users
+            for user in utils.page_query(db.session.query(models.User)):
+                primary_email = user.primary_email
+                if not primary_email:
+                    flask.current_app.logger.warning(f"No primary email found for user '{user.username}'.")
+                    pass
+                msg = flask_mail.Message(subject=subject, recipients=[primary_email], body=body, html=html)
+                msg.attach(
+                    "scilifelab_logo.png",
+                    "image/png",
+                    open(
+                        os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+                    ).read(),
+                    "inline",
+                    headers=[
+                        ["Content-ID", "<Logo>"],
+                    ],
+                )
+                # Send email
+                AddUser.send_email_with_retry(msg=msg, obj=conn)
 
-        # Structure email 
-        msg = flask_mail.Message(subject="DDS Important Information", recipients=emails)
-        msg.attach(
-            "scilifelab_logo.png",
-            "image/png",
-            open(
-                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
-            ).read(),
-            "inline",
-            headers=[
-                ["Content-ID", "<Logo>"],
-            ],
-        )
-
-        msg.body = flask.render_template(
-            f"mail/motd.txt",
-            motd=motd_obj.message,
-        )
-        msg.html = flask.render_template(
-            f"mail/motd.html",
-            motd=motd_obj.message,
-        )
-
-        from dds_web.api import user
-        user.AddUser.send_email_with_retry(msg=msg)
-
-        return {"message": "email sent"}
+        return {"message": f"MOTD '{motd_id}' has been sent to the users."}
 
 
 class FindUser(flask_restful.Resource):

@@ -297,18 +297,19 @@ class AddUser(flask_restful.Resource):
         }
 
     @staticmethod
-    def send_email_with_retry(msg, times_retried=0):
+    def send_email_with_retry(msg, times_retried=0, obj=None):
         """Send email with retry on exception"""
-
+        if obj is None:
+            obj = mail
         try:
-            mail.send(msg)
+            obj.send(msg)
         except smtplib.SMTPException as err:
             # Wait a little bit
             time.sleep(10)
             # Retry twice
             if times_retried < 2:
                 retry = times_retried + 1
-                AddUser.send_email_with_retry(msg, retry)
+                AddUser.send_email_with_retry(msg, times_retried=retry, obj=obj)
 
     @staticmethod
     @logging_bind_request
