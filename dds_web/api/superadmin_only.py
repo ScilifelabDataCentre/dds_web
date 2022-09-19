@@ -5,18 +5,21 @@
 ####################################################################################################
 
 # Standard library
+import os
 
 # Installed
 import flask_restful
 import flask
 import structlog
+import flask_mail
 
 # Own modules
-from dds_web import auth, db
+from dds_web import auth, db, mail
 from dds_web.database import models
 from dds_web.api.dds_decorators import json_required, logging_bind_request, handle_db_error
 from dds_web import utils
 import dds_web.errors as ddserr
+from dds_web.api.user import AddUser
 
 
 # initiate bound logger
@@ -134,6 +137,64 @@ class MOTD(flask_restful.Resource):
         db.session.commit()
 
         return {"message": "The MOTD was successfully deactivated in the database."}
+
+
+class SendMOTD(flask_restful.Resource):
+    """Send a MOTD to all users in database."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def post(self):
+        """Send MOTD as email to users."""
+        # Get MOTD ID
+        motd_id: int = flask.request.json.get("motd_id")
+        if not motd_id or not isinstance(motd_id, int):  # The id starts at 1 - ok to not accept 0
+            raise ddserr.DDSArgumentError(
+                message="Please specify the ID of the MOTD you want to send."
+            )
+
+        # Get MOTD object
+        motd_obj: models.MOTD = models.MOTD.query.get(motd_id)
+        if not motd_obj or not motd_obj.active:
+            raise ddserr.DDSArgumentError(message=f"There is no active MOTD with ID '{motd_id}'.")
+
+        # Create email content
+        # put motd_obj.message etc in there etc
+        subject: str = "DDS Important Information"
+        body: str = flask.render_template(f"mail/motd.txt", motd=motd_obj.message)
+        html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
+
+        # Setup email connection
+        with mail.connect() as conn:
+            # Email users
+            for user in utils.page_query(db.session.query(models.User)):
+                primary_email = user.primary_email
+                if not primary_email:
+                    flask.current_app.logger.warning(
+                        f"No primary email found for user '{user.username}'."
+                    )
+                    continue
+                msg = flask_mail.Message(
+                    subject=subject, recipients=[primary_email], body=body, html=html
+                )
+                msg.attach(
+                    "scilifelab_logo.png",
+                    "image/png",
+                    open(
+                        os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"),
+                        "rb",
+                    ).read(),
+                    "inline",
+                    headers=[
+                        ["Content-ID", "<Logo>"],
+                    ],
+                )
+                # Send email
+                utils.send_email_with_retry(msg=msg, obj=conn)
+
+        return {"message": f"MOTD '{motd_id}' has been sent to the users."}
 
 
 class FindUser(flask_restful.Resource):

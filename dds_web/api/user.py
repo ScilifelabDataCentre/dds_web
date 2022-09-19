@@ -297,20 +297,6 @@ class AddUser(flask_restful.Resource):
         }
 
     @staticmethod
-    def send_email_with_retry(msg, times_retried=0):
-        """Send email with retry on exception"""
-
-        try:
-            mail.send(msg)
-        except smtplib.SMTPException as err:
-            # Wait a little bit
-            time.sleep(10)
-            # Retry twice
-            if times_retried < 2:
-                retry = times_retried + 1
-                AddUser.send_email_with_retry(msg, retry)
-
-    @staticmethod
     @logging_bind_request
     def add_to_project(whom, project, role, send_email=True):
         """Add existing user or invite to a project"""
@@ -493,7 +479,7 @@ class AddUser(flask_restful.Resource):
             deadline=deadline,
         )
 
-        AddUser.send_email_with_retry(msg)
+        dds_web.utils.send_email_with_retry(msg)
 
 
 class RetrieveUserInfo(flask_restful.Resource):
@@ -1040,7 +1026,7 @@ class RequestTOTPActivation(flask_restful.Resource):
             link=link,
         )
 
-        AddUser.send_email_with_retry(msg)
+        dds_web.utils.send_email_with_retry(msg)
         return {
             "message": "Please check your email and follow the attached link to activate two-factor with authenticator app."
         }
@@ -1106,7 +1092,7 @@ class RequestHOTPActivation(flask_restful.Resource):
             link=link,
         )
 
-        AddUser.send_email_with_retry(msg)
+        dds_web.utils.send_email_with_retry(msg)
         return {
             "message": "Please check your email and follow the attached link to activate two-factor with email."
         }

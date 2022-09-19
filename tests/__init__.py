@@ -221,6 +221,7 @@ class DDSEndpoint:
     # Superadmins only
     LIST_UNITS_ALL = BASE_ENDPOINT + "/unit/info/all"
     MOTD = BASE_ENDPOINT + "/motd"
+    MOTD_SEND = BASE_ENDPOINT + "/motd/send"
     USER_FIND = BASE_ENDPOINT + "/user/find"
     TOTP_DEACTIVATE = BASE_ENDPOINT + "/user/totp/deactivate"
 
