@@ -135,6 +135,30 @@ class MOTD(flask_restful.Resource):
 
         return {"message": "The MOTD was successfully deactivated in the database."}
 
+class SendMOTD(flask_restful.Resource):
+    """Send a MOTD to all users in database."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def post(self):
+        """Send MOTD as email to users."""
+        # Get MOTD ID
+        motd_id: int = flask.request.json.get("motd_id")
+        if not motd_id or not isinstance(motd_id, int): # The id starts at 1 - ok to not accept 0
+            raise ddserr.DDSArgumentError(
+                message="Please specify the ID of the MOTD you want to send."
+            )
+        
+        # Get MOTD object
+        motd_obj: models.MOTD.query.get(motd_id)
+        if not motd_obj:
+            raise ddserr.DDSArgumentError(message=f"There is no active MOTD with ID '{motd_id}'.")
+            
+
+
+
 
 class FindUser(flask_restful.Resource):
     """Get all users or check if there a specific user in the database."""
@@ -184,3 +208,5 @@ class ResetTwoFactor(flask_restful.Resource):
         return {
             "message": f"TOTP has been deactivated for user: {user.username}. They can now use 2FA via email during authentication."
         }
+
+
