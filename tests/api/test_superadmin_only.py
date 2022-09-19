@@ -539,6 +539,43 @@ def test_send_motd_not_active(client: flask.testing.FlaskClient) -> None:
         )
         assert mock_mail_send.call_count == 0
 
+def test_send_motd_no_primary_email(client: flask.testing.FlaskClient) -> None:
+    """Send a motd to all users."""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+    # Create a motd
+    message: str = "This is a message that should become a MOTD and then be sent to all the users."
+    new_motd: models.MOTD = models.MOTD(message=message)
+    db.session.add(new_motd)
+    db.session.commit()
+
+    # Make sure the motd is created
+    created_motd: models.MOTD = models.MOTD.query.filter_by(message=message).one_or_none()
+    assert created_motd
+
+    # Get number of users
+    num_users: int = models.User.query.count()
+
+    # Remove primary_email for one user
+    primary_email: models.Email = models.Email.query.first()
+    email: str = primary_email.email
+    username: str = primary_email.user.username
+    db.session.delete(primary_email)
+    db.session.commit()
+
+    # Make sure email is removed
+    assert not models.Email.query.filter_by(email=email).one_or_none()
+    assert not models.User.query.filter_by(username=username).one().primary_email
+
+    # Attempt request
+    with unittest.mock.patch.object(flask_mail.Connection, "send") as mock_mail_send:
+        response: werkzeug.test.WrapperTestResponse = client.post(
+            tests.DDSEndpoint.MOTD_SEND, headers=token, json={"motd_id": created_motd.id}
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        assert mock_mail_send.call_count == num_users - 1
+
 
 def test_send_motd_ok(client: flask.testing.FlaskClient) -> None:
     """Send a motd to all users."""
