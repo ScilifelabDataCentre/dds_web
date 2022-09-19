@@ -328,7 +328,6 @@ def fill_db_wrapper(db_type):
     db.session.commit()
 
     if db_type == "production":
-        # Fill rest
         username = flask.current_app.config["SUPERADMIN_USERNAME"]
         password = flask.current_app.config["SUPERADMIN_PASSWORD"]
         name = flask.current_app.config["SUPERADMIN_NAME"]
