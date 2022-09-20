@@ -79,6 +79,7 @@ api.add_resource(user.Users, "/users", endpoint="users")
 
 # Super Admins ###################################################################### Super Admins #
 
+api.add_resource(superadmin_only.Maintenance, "/maintenance", endpoint="maintenance")
 api.add_resource(superadmin_only.AllUnits, "/unit/info/all", endpoint="all_units")
 api.add_resource(superadmin_only.MOTD, "/motd", endpoint="motd")
 api.add_resource(superadmin_only.SendMOTD, "/motd/send", endpoint="send_motd")

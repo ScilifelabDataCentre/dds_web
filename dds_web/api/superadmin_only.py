@@ -245,3 +245,41 @@ class ResetTwoFactor(flask_restful.Resource):
         return {
             "message": f"TOTP has been deactivated for user: {user.username}. They can now use 2FA via email during authentication."
         }
+
+
+class Maintenance(flask_restful.Resource):
+    """Change the maintenance mode of the system."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def put(self):
+        """Change the Maintenance mode."""
+        # Get desired maintenance mode
+        json_input = flask.request.json
+        command = json_input.get("state")
+        flask.current_app.logger.debug(f"command: {command}")
+
+        # Get maintenance row from db
+        current_mode = models.Maintenance.query.first()
+        flask.current_app.logger.debug(f"current mode: {current_mode.active}")
+        # for m in current_mode:
+        if not current_mode:
+            raise ddserr.DDSArgumentError(message=f"Failed setting maintenance mode")
+
+        # Activate maintenance if currently inactive
+        if command == "on":
+            if current_mode.active:
+                raise ddserr.DDSArgumentError(message=f"Maintenance mode already active")
+            else:
+                current_mode.actve = True
+                db.session.commit()
+                return {"message": "Maintenance mode activated."}
+        elif command == "off":
+            if not current_mode.active:
+                raise ddserr.DDSArgumentError(message=f"Maintenance mode already deactivated")
+            else:
+                current_mode.active = False
+                db.session.commit()
+                return {"message": "Maintenance mode deactivated."}
