@@ -259,27 +259,18 @@ class Maintenance(flask_restful.Resource):
         # Get desired maintenance mode
         json_input = flask.request.json
         command = json_input.get("state")
-        flask.current_app.logger.debug(f"command: {command}")
 
         # Get maintenance row from db
         current_mode = models.Maintenance.query.first()
-        flask.current_app.logger.debug(f"current mode: {current_mode.active}")
         # for m in current_mode:
         if not current_mode:
             raise ddserr.DDSArgumentError(message=f"Failed setting maintenance mode")
 
         # Activate maintenance if currently inactive
-        if command == "on":
-            if current_mode.active:
-                raise ddserr.DDSArgumentError(message=f"Maintenance mode already active")
-            else:
-                current_mode.actve = True
-                db.session.commit()
-                return {"message": "Maintenance mode activated."}
-        elif command == "off":
-            if not current_mode.active:
-                raise ddserr.DDSArgumentError(message=f"Maintenance mode already deactivated")
-            else:
-                current_mode.active = False
-                db.session.commit()
-                return {"message": "Maintenance mode deactivated."}
+        if command not in ["on", "off"]:
+            raise ddserr.DDSArgumentError(message=f"Please, specify the correct command: on or off")
+
+        current_mode.active = command == "on"
+        db.session.commit()
+
+        return {"message": f"Maintenance set to {command}"}
