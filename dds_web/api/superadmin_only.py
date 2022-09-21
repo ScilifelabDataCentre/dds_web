@@ -260,7 +260,7 @@ class Maintenance(flask_restful.Resource):
         json_input = flask.request.json
         setting = json_input.get("state")
         if not setting:
-            raise ddserr.DDSArgumentError(message=f"on or off argument is required")
+            raise ddserr.DDSArgumentError(message="Please, specify the correct argument: on or off")
 
         # Get maintenance row from db
         current_mode = models.Maintenance.query.first()
@@ -269,9 +269,7 @@ class Maintenance(flask_restful.Resource):
 
         # Activate maintenance if currently inactive
         if setting not in ["on", "off"]:
-            raise ddserr.DDSArgumentError(
-                message=f"Please, specify the correct argument: on or off"
-            )
+            raise ddserr.DDSArgumentError(message="Please, specify the correct argument: on or off")
 
         current_mode.active = setting == "on"
         db.session.commit()
