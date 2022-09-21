@@ -264,7 +264,6 @@ class Maintenance(flask_restful.Resource):
 
         # Get maintenance row from db
         current_mode = models.Maintenance.query.first()
-        # for m in current_mode:
         if not current_mode:
             raise ddserr.DDSArgumentError(message=f"Failed setting maintenance mode")
 

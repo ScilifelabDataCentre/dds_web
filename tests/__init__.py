@@ -219,6 +219,7 @@ class DDSEndpoint:
     INVOICE = BASE_ENDPOINT + "/invoice"
 
     # Superadmins only
+    MAINTENANCE = BASE_ENDPOINT + "/maintenance"
     LIST_UNITS_ALL = BASE_ENDPOINT + "/unit/info/all"
     MOTD = BASE_ENDPOINT + "/motd"
     MOTD_SEND = BASE_ENDPOINT + "/motd/send"
