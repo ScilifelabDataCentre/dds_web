@@ -148,6 +148,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-09-16 - 2022-09-30)
 
 - New endpoint: SendMOTD - send important information to users ([#1283](https://github.com/ScilifelabDataCentre/dds_web/pull/1283))
-
 - New table: `Maintenance`, for keeping track of DDS maintenance mode ([#1284](https://github.com/ScilifelabDataCentre/dds_web/pull/1284))
-
