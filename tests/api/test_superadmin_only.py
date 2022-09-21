@@ -679,4 +679,4 @@ def test_set_maintenance_ok(client: flask.testing.FlaskClient) -> None:
         tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": setting}
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert f"Maintenance set to {setting}" in response.json.get("message")
+    assert f"Maintenance set to {setting.upper()}" in response.json.get("message")
