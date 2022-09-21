@@ -652,6 +652,10 @@ def test_set_maintenance_incorrect_state(client: flask.testing.FlaskClient) -> N
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
 
+    # create record in Maintenance
+    current_mode: models.Maintenance = models.Maintenance(active=False)
+    db.session.add(current_mode)
+    db.session.commit()
     # Attempt request
     response: werkzeug.test.WrapperTestResponse = client.put(
         tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": "something"}

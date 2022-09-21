@@ -265,7 +265,7 @@ class Maintenance(flask_restful.Resource):
         # Get maintenance row from db
         current_mode = models.Maintenance.query.first()
         if not current_mode:
-            raise ddserr.DDSArgumentError(message=f"Failed setting maintenance mode")
+            raise ddserr.DDSArgumentError(message="There's no row in the Maintenance table.")
 
         # Activate maintenance if currently inactive
         if setting not in ["on", "off"]:
