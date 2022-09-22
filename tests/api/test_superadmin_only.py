@@ -603,3 +603,106 @@ def test_send_motd_ok(client: flask.testing.FlaskClient) -> None:
         )
         assert response.status_code == http.HTTPStatus.OK
         assert mock_mail_send.call_count == num_users
+
+
+# Maintenance ######################################################################################
+
+
+def test_set_maintenance_not_superadmin(client: flask.testing.FlaskClient) -> None:
+    """Change Maintenance mode using everything but Super Admin access."""
+    no_access_users: typing.Dict = users.copy()
+    no_access_users.pop("Super Admin")
+
+    for u in no_access_users:
+        token: typing.Dict = get_token(username=users[u], client=client)
+        response: werkzeug.test.WrapperTestResponse = client.put(
+            tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": "on"}
+        )
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+def test_set_maintenance_incorrect_method(client: flask.testing.FlaskClient) -> None:
+    """Only put should be accepted."""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+    # Attempt request
+    for method in [client.get, client.post, client.delete, client.patch]:
+        response: werkzeug.test.WrapperTestResponse = method(
+            tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": "on"}
+        )
+        assert response.status_code == http.HTTPStatus.METHOD_NOT_ALLOWED
+
+
+def test_set_maintenance_no_json(client: flask.testing.FlaskClient) -> None:
+    """The request needs json in order to change Maintenance mode."""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+    # Attempt request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        tests.DDSEndpoint.MAINTENANCE, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Required data missing from request" in response.json.get("message")
+
+
+def test_set_maintenance_incorrect_state(client: flask.testing.FlaskClient) -> None:
+    """The json should be 'on' or 'off'."""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+    # create record in Maintenance
+    current_mode: models.Maintenance = models.Maintenance(active=False)
+    db.session.add(current_mode)
+    db.session.commit()
+    # Attempt request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": "something"}
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Please, specify the correct argument: on or off" in response.json.get("message")
+
+
+def test_set_maintenance_on_ok(client: flask.testing.FlaskClient) -> None:
+    """Set Maintenance mode to 'on'."""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+    setting = "on"
+
+    # create record in Maintenance
+    current_mode: models.Maintenance = models.Maintenance(active=False)
+    db.session.add(current_mode)
+    db.session.commit()
+
+    # Verify that maintenance is off
+    assert models.Maintenance.query.first().active is False
+
+    # Attempt request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": setting}
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert f"Maintenance set to: {setting.upper()}" in response.json.get("message")
+
+
+def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
+    """Set Maintenance mode to 'off'."""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+    setting = "off"
+
+    # create record in Maintenance
+    current_mode: models.Maintenance = models.Maintenance(active=True)
+    db.session.add(current_mode)
+    db.session.commit()
+
+    # Verify that maintenance is on
+    assert models.Maintenance.query.first().active
+
+    # Attempt request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": setting}
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert f"Maintenance set to: {setting.upper()}" in response.json.get("message")
