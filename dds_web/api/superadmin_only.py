@@ -6,6 +6,7 @@
 
 # Standard library
 import os
+import typing
 
 # Installed
 import flask_restful
@@ -285,5 +286,20 @@ class AnyProjectsBusy(flask_restful.Resource):
     @handle_db_error
     def get(self):
         """Check if any projects are busy."""
-        num_busy: int = models.Project.query.filter_by(busy=True).count()
-        return {"num": num_busy}
+        # Get busy projects
+        projects_busy: typing.List = models.Project.query.filter_by(busy=True).all()
+        num_busy: int = len(projects_busy)
+
+        # Set info to always return nu
+        return_info: typing.Dict = {"num": num_busy}
+
+        # Return 0 if none are busy
+        if num_busy == 0:
+            return return_info
+
+        # Check if user listing busy projects
+        json_input = flask.request.json
+        if json_input and json_input.get("list") is True:
+            return_info.update({"projects": {p.public_id: p.date_updated for p in projects_busy}})
+
+        return return_info
