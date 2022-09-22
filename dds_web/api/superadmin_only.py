@@ -275,3 +275,13 @@ class SetMaintenance(flask_restful.Resource):
         db.session.commit()
 
         return {"message": f"Maintenance set to: {setting.upper()}"}
+
+class AnyProjectsBusy(flask_restful.Resource):
+    """Check if any projects are busy."""
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        """Check if any projects are busy."""
+        num_busy: int = models.Project.query.filter_by(busy=True).count()
+        return {"num": num_busy}

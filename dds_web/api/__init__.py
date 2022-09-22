@@ -87,6 +87,7 @@ api.add_resource(superadmin_only.FindUser, "/user/find", endpoint="find_user")
 api.add_resource(
     superadmin_only.ResetTwoFactor, "/user/totp/deactivate", endpoint="reset_user_hotp"
 )
+api.add_resource(superadmin_only.AnyProjectsBusy, "/proj/busy/any", endpoint="projects_busy_any")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")
