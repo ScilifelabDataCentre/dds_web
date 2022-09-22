@@ -685,6 +685,7 @@ def test_set_maintenance_on_ok(client: flask.testing.FlaskClient) -> None:
     assert response.status_code == http.HTTPStatus.OK
     assert f"Maintenance set to: {setting.upper()}" in response.json.get("message")
 
+
 def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
     """Set Maintenance mode to 'off'."""
     # Authenticate
