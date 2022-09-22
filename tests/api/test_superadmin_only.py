@@ -664,7 +664,7 @@ def test_set_maintenance_incorrect_state(client: flask.testing.FlaskClient) -> N
     assert "Please, specify the correct argument: on or off" in response.json.get("message")
 
 
-def test_set_maintenance_ok(client: flask.testing.FlaskClient) -> None:
+def test_set_maintenance_on_ok(client: flask.testing.FlaskClient) -> None:
     """Set Maintenance mode to 'on'."""
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
@@ -674,9 +674,34 @@ def test_set_maintenance_ok(client: flask.testing.FlaskClient) -> None:
     current_mode: models.Maintenance = models.Maintenance(active=False)
     db.session.add(current_mode)
     db.session.commit()
+
+    # Verify that maintenance is off
+    assert models.Maintenance.query.first().active is False
+
     # Attempt request
     response: werkzeug.test.WrapperTestResponse = client.put(
         tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": setting}
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert f"Maintenance set to {setting.upper()}" in response.json.get("message")
+    assert f"Maintenance set to: {setting.upper()}" in response.json.get("message")
+
+def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
+    """Set Maintenance mode to 'off'."""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+    setting = "off"
+
+    # create record in Maintenance
+    current_mode: models.Maintenance = models.Maintenance(active=True)
+    db.session.add(current_mode)
+    db.session.commit()
+
+    # Verify that maintenance is on
+    assert models.Maintenance.query.first().active
+
+    # Attempt request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": setting}
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert f"Maintenance set to: {setting.upper()}" in response.json.get("message")

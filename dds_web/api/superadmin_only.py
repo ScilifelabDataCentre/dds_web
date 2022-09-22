@@ -274,4 +274,4 @@ class Maintenance(flask_restful.Resource):
         current_mode.active = setting == "on"
         db.session.commit()
 
-        return {"message": f"Maintenance set to {setting.upper()}"}
+        return {"message": f"Maintenance set to: {setting.upper()}"}
