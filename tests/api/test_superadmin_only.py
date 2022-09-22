@@ -725,7 +725,7 @@ def test_anyprojectsbusy_not_allowed(client: flask.testing.FlaskClient) -> None:
     """Only super admins allowed."""
     for role in ["researcher", "unituser", "unitadmin"]:
         token = tests.UserAuth(tests.USER_CREDENTIALS[role]).token(client)
-        response = client.put(
+        response = client.get(
             tests.DDSEndpoint.PROJECT_BUSY_ANY,
             headers=token,
         )
@@ -743,7 +743,7 @@ def test_anyprojectsbusy_true(client: flask.testing.FlaskClient) -> None:
 
     # Call endpoint
     token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
-    response = client.put(
+    response = client.get(
         tests.DDSEndpoint.PROJECT_BUSY_ANY,
         headers=token,
     )
@@ -765,7 +765,7 @@ def test_anyprojectsbusy_false(client: flask.testing.FlaskClient) -> None:
 
     # Call endpoint
     token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
-    response = client.put(
+    response = client.get(
         tests.DDSEndpoint.PROJECT_BUSY_ANY,
         headers=token,
     )
@@ -791,7 +791,7 @@ def test_anyprojectsbusy_true_list(client: flask.testing.FlaskClient) -> None:
 
     # Call endpoint
     token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
-    response = client.put(tests.DDSEndpoint.PROJECT_BUSY_ANY, headers=token, json={"list": True})
+    response = client.get(tests.DDSEndpoint.PROJECT_BUSY_ANY, headers=token, json={"list": True})
     assert response.status_code == http.HTTPStatus.OK
 
     # Check response
@@ -814,7 +814,7 @@ def test_anyprojectsbusy_false_list(client: flask.testing.FlaskClient) -> None:
 
     # Call endpoint
     token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
-    response = client.put(tests.DDSEndpoint.PROJECT_BUSY_ANY, headers=token, json={"list": True})
+    response = client.get(tests.DDSEndpoint.PROJECT_BUSY_ANY, headers=token, json={"list": True})
     assert response.status_code == http.HTTPStatus.OK
 
     # Check response
