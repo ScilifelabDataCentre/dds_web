@@ -707,9 +707,11 @@ def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
     assert response.status_code == http.HTTPStatus.OK
     assert f"Maintenance set to: {setting.upper()}" in response.json.get("message")
 
+
 # AnyProjectsBusy
 
-# -- get 
+# -- get
+
 
 def test_anyprojectsbusy_no_token(client: flask.testing.FlaskClient) -> None:
     """Token required to check if projects are busy."""
@@ -717,6 +719,7 @@ def test_anyprojectsbusy_no_token(client: flask.testing.FlaskClient) -> None:
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     assert response.json.get("message")
     assert "No token" in response.json.get("message")
+
 
 def test_anyprojectsbusy_not_allowed(client: flask.testing.FlaskClient) -> None:
     """Only super admins allowed."""
@@ -727,6 +730,7 @@ def test_anyprojectsbusy_not_allowed(client: flask.testing.FlaskClient) -> None:
             headers=token,
         )
         assert response.status_code == http.HTTPStatus.FORBIDDEN
+
 
 def test_anyprojectsbusy_true(client: flask.testing.FlaskClient) -> None:
     """There are busy projects."""
@@ -744,10 +748,11 @@ def test_anyprojectsbusy_true(client: flask.testing.FlaskClient) -> None:
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.OK
-    
+
     # Check response
     num: int = response.json.get("num")
     assert num == busy_count
+
 
 def test_anyprojectsbusy_false(client: flask.testing.FlaskClient) -> None:
     """There are busy projects."""
@@ -765,7 +770,7 @@ def test_anyprojectsbusy_false(client: flask.testing.FlaskClient) -> None:
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.OK
-    
+
     # Check response
     num: int = response.json.get("num")
     assert num == 0

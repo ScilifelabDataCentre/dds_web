@@ -276,8 +276,10 @@ class SetMaintenance(flask_restful.Resource):
 
         return {"message": f"Maintenance set to: {setting.upper()}"}
 
+
 class AnyProjectsBusy(flask_restful.Resource):
     """Check if any projects are busy."""
+
     @auth.login_required(role=["Super Admin"])
     @logging_bind_request
     @handle_db_error
