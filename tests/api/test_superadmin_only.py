@@ -758,7 +758,7 @@ def test_anyprojectsbusy_false(client: flask.testing.FlaskClient) -> None:
     """There are busy projects."""
     # Set all projects to not busy
     for project in models.Project.query.all():
-        project.busy = True
+        project.busy = False
     db.session.commit()
     busy_count: int = models.Project.query.filter_by(busy=True).count()
     assert busy_count == 0
