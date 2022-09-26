@@ -5,18 +5,22 @@
 ####################################################################################################
 
 # Standard library
+import os
+import typing
 
 # Installed
 import flask_restful
 import flask
 import structlog
+import flask_mail
 
 # Own modules
-from dds_web import auth, db
+from dds_web import auth, db, mail
 from dds_web.database import models
 from dds_web.api.dds_decorators import json_required, logging_bind_request, handle_db_error
 from dds_web import utils
 import dds_web.errors as ddserr
+from dds_web.api.user import AddUser
 
 
 # initiate bound logger
@@ -136,6 +140,64 @@ class MOTD(flask_restful.Resource):
         return {"message": "The MOTD was successfully deactivated in the database."}
 
 
+class SendMOTD(flask_restful.Resource):
+    """Send a MOTD to all users in database."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def post(self):
+        """Send MOTD as email to users."""
+        # Get MOTD ID
+        motd_id: int = flask.request.json.get("motd_id")
+        if not motd_id or not isinstance(motd_id, int):  # The id starts at 1 - ok to not accept 0
+            raise ddserr.DDSArgumentError(
+                message="Please specify the ID of the MOTD you want to send."
+            )
+
+        # Get MOTD object
+        motd_obj: models.MOTD = models.MOTD.query.get(motd_id)
+        if not motd_obj or not motd_obj.active:
+            raise ddserr.DDSArgumentError(message=f"There is no active MOTD with ID '{motd_id}'.")
+
+        # Create email content
+        # put motd_obj.message etc in there etc
+        subject: str = "DDS Important Information"
+        body: str = flask.render_template(f"mail/motd.txt", motd=motd_obj.message)
+        html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
+
+        # Setup email connection
+        with mail.connect() as conn:
+            # Email users
+            for user in utils.page_query(db.session.query(models.User)):
+                primary_email = user.primary_email
+                if not primary_email:
+                    flask.current_app.logger.warning(
+                        f"No primary email found for user '{user.username}'."
+                    )
+                    continue
+                msg = flask_mail.Message(
+                    subject=subject, recipients=[primary_email], body=body, html=html
+                )
+                msg.attach(
+                    "scilifelab_logo.png",
+                    "image/png",
+                    open(
+                        os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"),
+                        "rb",
+                    ).read(),
+                    "inline",
+                    headers=[
+                        ["Content-ID", "<Logo>"],
+                    ],
+                )
+                # Send email
+                utils.send_email_with_retry(msg=msg, obj=conn)
+
+        return {"message": f"MOTD '{motd_id}' has been sent to the users."}
+
+
 class FindUser(flask_restful.Resource):
     """Get all users or check if there a specific user in the database."""
 
@@ -184,3 +246,60 @@ class ResetTwoFactor(flask_restful.Resource):
         return {
             "message": f"TOTP has been deactivated for user: {user.username}. They can now use 2FA via email during authentication."
         }
+
+
+class SetMaintenance(flask_restful.Resource):
+    """Change the maintenance mode of the system."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def put(self):
+        """Change the Maintenance mode."""
+        # Get desired maintenance mode
+        json_input = flask.request.json
+        setting = json_input.get("state")
+        if not setting:
+            raise ddserr.DDSArgumentError(message="Please, specify an argument: on or off")
+
+        # Get maintenance row from db
+        current_mode = models.Maintenance.query.first()
+        if not current_mode:
+            raise ddserr.DDSArgumentError(message="There's no row in the Maintenance table.")
+
+        # Activate maintenance if currently inactive
+        if setting not in ["on", "off"]:
+            raise ddserr.DDSArgumentError(message="Please, specify the correct argument: on or off")
+
+        current_mode.active = setting == "on"
+        db.session.commit()
+
+        return {"message": f"Maintenance set to: {setting.upper()}"}
+
+
+class AnyProjectsBusy(flask_restful.Resource):
+    """Check if any projects are busy."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        """Check if any projects are busy."""
+        # Get busy projects
+        projects_busy: typing.List = models.Project.query.filter_by(busy=True).all()
+        num_busy: int = len(projects_busy)
+
+        # Set info to always return nu
+        return_info: typing.Dict = {"num": num_busy}
+
+        # Return 0 if none are busy
+        if num_busy == 0:
+            return return_info
+
+        # Check if user listing busy projects
+        json_input = flask.request.json
+        if json_input and json_input.get("list") is True:
+            return_info.update({"projects": {p.public_id: p.date_updated for p in projects_busy}})
+
+        return return_info

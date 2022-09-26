@@ -239,7 +239,7 @@ class Project(db.Model):
     date_created = db.Column(
         db.DateTime(),
         nullable=True,
-        default=dds_web.utils.current_time(),
+        default=dds_web.utils.current_time,
     )
     date_updated = db.Column(db.DateTime(), nullable=True)
     description = db.Column(db.Text)
@@ -830,7 +830,7 @@ class Invite(db.Model):
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
-    created_at = db.Column(db.DateTime(), nullable=False, default=dds_web.utils.current_time())
+    created_at = db.Column(db.DateTime(), nullable=False, default=dds_web.utils.current_time)
 
     @property
     def projects(self):
@@ -969,7 +969,7 @@ class Version(db.Model):
     # Additional columns
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     time_uploaded = db.Column(
-        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time()
+        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time
     )
     time_deleted = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
     time_invoiced = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
@@ -994,8 +994,8 @@ class MOTD(db.Model):
 
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    message = db.Column(db.Text, nullable=False, default=None)
-    date_created = db.Column(db.DateTime(), nullable=False, default=dds_web.utils.current_time())
+    message = db.Column(db.Text, nullable=False)
+    date_created = db.Column(db.DateTime(), nullable=False, default=dds_web.utils.current_time)
     active = db.Column(db.Boolean, nullable=False, default=True)
 
 
@@ -1024,8 +1024,25 @@ class Usage(db.Model):
     project = db.relationship("Project", back_populates="monthly_usage")
 
     # Additional columns
-    usage = db.Column(db.Float, nullable=False, default=None)
-    cost = db.Column(db.Float, nullable=False, default=None)
+    usage = db.Column(db.Float, nullable=False)
+    cost = db.Column(db.Float, nullable=False)
     time_collected = db.Column(
-        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time()
+        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time
     )
+
+
+class Maintenance(db.Model):
+    """
+    Keep track of whether or not the DDS is in maintenance mode.
+
+    Primary key:
+    - id
+    """
+
+    # Table setup
+    __tablename__ = "maintenance"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    active = db.Column(db.Boolean, nullable=False, default=True)

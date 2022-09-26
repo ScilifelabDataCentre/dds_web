@@ -1,3 +1,8 @@
+from datetime import datetime
+from datetime import timedelta
+from tracemalloc import start
+import typing
+from unittest import mock
 import dds_web
 import flask_mail
 import http
@@ -5,8 +10,11 @@ import json
 import sqlalchemy
 from dds_web import db
 from dds_web.database import models
+from dds_web.utils import current_time
 import tests
 import unittest
+import werkzeug
+import time
 
 existing_project = "public_project_id"
 existing_project_2 = "second_public_project_id"
@@ -41,8 +49,11 @@ submit_with_same_ownership = {
     "project": "second_public_project_id",
 }
 
-# Inviting Users ################################################################# Inviting Users #
+# AddUser ################################################################# AddUser #
+
+
 def test_add_user_with_researcher(client):
+    """Researchers cannot invite other users."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
@@ -54,6 +65,7 @@ def test_add_user_with_researcher(client):
 
 
 def test_add_user_with_unituser_no_role(client):
+    """An ok invite requires a role to be specified."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -65,6 +77,7 @@ def test_add_user_with_unituser_no_role(client):
 
 
 def test_add_user_with_unitadmin_with_extraargs(client):
+    """Extra args should not be noticed when inviting users."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -78,6 +91,7 @@ def test_add_user_with_unitadmin_with_extraargs(client):
 
 
 def test_add_user_with_unitadmin_and_invalid_role(client):
+    """An invalid role should result in a failed invite."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -91,6 +105,7 @@ def test_add_user_with_unitadmin_and_invalid_role(client):
 
 
 def test_add_user_with_unitadmin_and_invalid_email(client):
+    """An invalid email should not be accepted."""
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
@@ -108,6 +123,7 @@ def test_add_user_with_unitadmin_and_invalid_email(client):
 
 
 def test_add_user_with_unitadmin(client):
+    """Add researcher as unit admin."""
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
         response = client.post(
@@ -145,7 +161,7 @@ def test_add_user_with_unitadmin(client):
 
 
 def test_add_unit_user_with_unitadmin(client):
-
+    """Add unit user as unit admin."""
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
         response = client.post(
@@ -197,6 +213,7 @@ def test_add_unit_user_with_unitadmin(client):
 
 
 def test_add_user_with_superadmin(client):
+    """Adding users as super admin should work."""
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
         token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
         response = client.post(
@@ -229,6 +246,7 @@ def test_add_user_with_superadmin(client):
 
 
 def test_add_user_existing_email_no_project(client):
+    """Granting an existing user access to a project requires a project id."""
     invited_user = models.Invite.query.filter_by(
         email=existing_invite["email"], role=existing_invite["role"]
     ).one_or_none()
@@ -242,6 +260,7 @@ def test_add_user_existing_email_no_project(client):
 
 
 def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
+    """Unit admins cannot be invited as unit personnel."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
@@ -253,8 +272,9 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
     assert invited_user is None
 
 
-# Add existing users to projects ################################# Add existing users to projects #
+# -- Add existing users to projects ################################# Add existing users to projects #
 def test_add_existing_user_without_project(client):
+    """Project required if inviting user to project."""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
@@ -264,6 +284,7 @@ def test_add_existing_user_without_project(client):
 
 
 def test_research_user_cannot_add_existing_user_to_existing_project(client):
+    """Research user cannot add other users to project."""
     user_copy = existing_research_user_to_existing_project.copy()
     project_id = user_copy.pop("project")
 
@@ -298,6 +319,7 @@ def test_research_user_cannot_add_existing_user_to_existing_project(client):
 
 # projectowner adds researchuser2 to projects[0]
 def test_project_owner_can_add_existing_user_to_existing_project(client):
+    """Project owners can add users to existing projects."""
     user_copy = existing_research_user_to_existing_project.copy()
     project_id = user_copy.pop("project")
 
@@ -331,6 +353,7 @@ def test_project_owner_can_add_existing_user_to_existing_project(client):
 
 
 def test_add_existing_user_to_existing_project(client):
+    """Unit user can invite users to project."""
     user_copy = existing_research_user_to_existing_project.copy()
     project_id = user_copy.pop("project")
 
@@ -404,6 +427,7 @@ def test_add_existing_user_to_existing_project_no_mail_flag(client):
 
 
 def test_add_existing_user_to_existing_project_after_release(client):
+    """User should be able to be added after project status release."""
     user_copy = existing_research_user_to_existing_project.copy()
     project_id = user_copy.pop("project")
 
@@ -447,6 +471,7 @@ def test_add_existing_user_to_existing_project_after_release(client):
 
 
 def test_add_existing_user_to_nonexistent_proj(client):
+    """Adding user to non existent project should fail."""
     user_copy = existing_research_user_to_nonexistent_proj.copy()
     project = user_copy.pop("project")
     response = client.post(
@@ -459,6 +484,7 @@ def test_add_existing_user_to_nonexistent_proj(client):
 
 
 def test_existing_user_change_ownership(client):
+    """Change user role in project to project owner."""
     project = models.Project.query.filter_by(
         public_id=change_owner_existing_user["project"]
     ).one_or_none()
@@ -489,6 +515,7 @@ def test_existing_user_change_ownership(client):
 
 
 def test_existing_user_change_ownership_same_permissions(client):
+    """Try to change role in project to same role."""
     user_same_ownership = submit_with_same_ownership.copy()
     project = user_same_ownership.pop("project")
     response = client.post(
@@ -501,6 +528,7 @@ def test_existing_user_change_ownership_same_permissions(client):
 
 
 def test_add_existing_user_with_unsuitable_role(client):
+    """Cannot add unit admins to projects. They have access to all."""
     user_with_unsuitable_role = existing_research_user_to_existing_project.copy()
     user_with_unsuitable_role["role"] = "Unit Admin"
     project = user_with_unsuitable_role.pop("project")
@@ -518,7 +546,6 @@ def test_add_existing_user_with_unsuitable_role(client):
 
 def test_invite_with_project_by_unituser(client):
     "Test that a new invite including a project can be created"
-
     project = existing_project
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
@@ -899,3 +926,121 @@ def test_invite_unituser_with_valid_unit_as_superadmin(client):
             email=invite_with_valid_unit["email"]
         ).one_or_none()
         assert new_invite
+
+
+# -- timestamp
+
+
+def test_invite_users_should_have_different_timestamps(client):
+    """Invites should not get the same timestamps in the database."""
+    # Current time
+    real_time = current_time()
+
+    # Set initial time
+    new_time_initial = datetime(year=2022, month=9, day=12, hour=15, minute=49, second=10)
+    assert real_time != new_time_initial
+
+    # Use freezegun
+    import freezegun
+
+    with freezegun.freeze_time(new_time_initial):
+        start_time = current_time()
+        assert start_time == new_time_initial
+
+    # Invite researcher
+    researcher_info = {"role": "Researcher", "email": "newresearcher@test.com"}
+    new_time_1 = new_time_initial + timedelta(days=1)
+    with freezegun.freeze_time(new_time_1):
+        response: werkzeug.test.WrapperTestResponse = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=researcher_info,
+        )
+        assert response.status_code == http.HTTPStatus.OK
+
+    # Check invite created time
+    researcher_invite: models.Invite = models.Invite.query.filter_by(
+        email=researcher_info["email"], role=researcher_info["role"]
+    ).one_or_none()
+    assert researcher_invite
+    assert new_time_initial != researcher_invite.created_at == new_time_1
+
+    # Invite Unit Personnel
+    unit: models.Unit = models.Unit.query.first()
+    assert unit
+
+    unitpersonnel_info = {
+        "role": "Unit Personnel",
+        "email": "newunitpersonnel@test.com",
+        "unit": unit.public_id,
+    }
+    new_time_2 = new_time_1 + timedelta(days=1)
+    with freezegun.freeze_time(new_time_2):
+        response: werkzeug.test.WrapperTestResponse = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=unitpersonnel_info,
+        )
+        assert response.status_code == http.HTTPStatus.OK
+
+    # Check invite created time
+    unitpersonnel_invite: models.Invite = models.Invite.query.filter_by(
+        email=unitpersonnel_info["email"], role=unitpersonnel_info["role"]
+    ).one_or_none()
+    assert unitpersonnel_invite
+    assert (
+        unitpersonnel_invite.created_at == new_time_2
+        and unitpersonnel_invite.created_at not in [new_time_initial, new_time_1]
+    )
+
+    # Invite Unit Admin
+    unit: models.Unit = models.Unit.query.first()
+    assert unit
+
+    unitadmin_info = {
+        "role": "Unit Admin",
+        "email": "newunitadmin@test.com",
+        "unit": unit.public_id,
+    }
+    new_time_3 = new_time_2 + timedelta(days=1, hours=3)
+    with freezegun.freeze_time(new_time_3):
+        response: werkzeug.test.WrapperTestResponse = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=unitadmin_info,
+        )
+        assert response.status_code == http.HTTPStatus.OK
+
+    # Check invite created time
+    unitadmin_invite: models.Invite = models.Invite.query.filter_by(
+        email=unitadmin_info["email"], role=unitadmin_info["role"]
+    ).one_or_none()
+    assert unitadmin_invite
+    assert unitadmin_invite.created_at == new_time_3 and unitadmin_invite.created_at not in [
+        new_time_initial,
+        new_time_1,
+        new_time_2,
+    ]
+
+    # Invite Super Admin
+    superadmin_info = {"role": "Super Admin", "email": "newsuperadmin@test.com"}
+    new_time_4 = new_time_3 + timedelta(days=1, hours=6)
+    with freezegun.freeze_time(new_time_4):
+        response: werkzeug.test.WrapperTestResponse = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            json=superadmin_info,
+        )
+        assert response.status_code == http.HTTPStatus.OK
+
+    # Check invite created time
+    superadmin_invite: models.Invite = models.Invite.query.filter_by(
+        email=superadmin_info["email"], role=superadmin_info["role"]
+    ).one_or_none()
+    assert superadmin_invite
+    assert superadmin_invite.created_at == new_time_4 and superadmin_invite.created_at not in [
+        new_time_initial,
+        new_time_1,
+        new_time_2,
+        new_time_3,
+    ]

@@ -3,10 +3,21 @@
 #############################
 
 # Set official image -- parent image
-FROM python:latest as base
+FROM python:3.10-alpine as base
 
-# Install some necessary systems packages
-RUN apt-get update && apt-get upgrade -y
+# Update and upgrade
+RUN apk update && apk upgrade
+
+# Install required dependencies...
+# ...Some for build
+RUN apk add g++ gcc musl-dev libffi-dev
+
+# ...Some for requirements
+RUN apk add jpeg-dev zlib-dev libjpeg
+
+# Set time zone
+RUN apk add tzdata
+ENV TZ="UCT"
 
 # Copy the content to a code folder in container
 COPY ./requirements.txt /code/requirements.txt
@@ -25,7 +36,7 @@ ENV PYTHONPATH /code
 ###################
 FROM base as test
 RUN pip3 install -r /code/tests/requirements-test.txt
-RUN apt-get install -y mariadb-client
+RUN apk add mariadb-client
 
 ###################
 ## BUILD FRONTEND

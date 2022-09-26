@@ -22,6 +22,7 @@ import tests
 from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
 from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
 from dds_web.database import models
+from dds_web.api.project import UserProjects
 
 # CONFIG ################################################################################## CONFIG #
 
@@ -1506,3 +1507,22 @@ def test_set_busy_project_already_busy(module_client):
         )
         assert response.status_code == http.HTTPStatus.OK
         assert "The project is already busy, cannot proceed." in response.json.get("message")
+
+
+# Project usage
+
+
+def test_project_usage(module_client):
+    """Test if correct cost value is returned."""
+
+    cost_gbhour = 0.09 / (30 * 24)
+
+    # Get user and project
+    user = models.User.query.filter_by(username="unitadmin").one_or_none()
+    assert user
+    project_0 = user.projects[0]
+    assert project_0
+
+    # Call project_usage() for the project and check if cost is calculated correctly
+    proj_bhours, proj_cost = UserProjects.project_usage(project=project_0)
+    assert (proj_bhours / 1e9) * cost_gbhour == proj_cost

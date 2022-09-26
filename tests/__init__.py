@@ -199,6 +199,7 @@ class DDSEndpoint:
     PROJECT_STATUS = BASE_ENDPOINT + "/proj/status"
     PROJECT_ACCESS = BASE_ENDPOINT + "/proj/access"
     PROJECT_BUSY = BASE_ENDPOINT + "/proj/busy"
+    PROJECT_BUSY_ANY = BASE_ENDPOINT + "/proj/busy/any"
 
     # Listing urls
     LIST_PROJ = BASE_ENDPOINT + "/proj/list"
@@ -219,8 +220,10 @@ class DDSEndpoint:
     INVOICE = BASE_ENDPOINT + "/invoice"
 
     # Superadmins only
+    MAINTENANCE = BASE_ENDPOINT + "/maintenance"
     LIST_UNITS_ALL = BASE_ENDPOINT + "/unit/info/all"
     MOTD = BASE_ENDPOINT + "/motd"
+    MOTD_SEND = BASE_ENDPOINT + "/motd/send"
     USER_FIND = BASE_ENDPOINT + "/user/find"
     TOTP_DEACTIVATE = BASE_ENDPOINT + "/user/totp/deactivate"
 

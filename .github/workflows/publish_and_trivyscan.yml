@@ -1,0 +1,65 @@
+---
+name: Publish Docker Image and run Trivy Security Scan
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - dev
+  release:
+    types: [published]
+jobs:
+  push_to_registry:
+    if: github.repository == 'ScilifelabDataCentre/dds_web'
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Log in to Github Container Repository
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            scilifelabdatacentre/dds-backend
+            ghcr.io/scilifelabdatacentre/dds-backend
+      - name: Ensure lowercase name
+        run: echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+      - name: Build for scan
+        uses: docker/build-push-action@v3
+        with:
+          file: Dockerfiles/backend.Dockerfile
+          context: .
+          push: false
+          tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.7.1
+        with:
+          image-ref: "ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+      - name: Upload Trivy scan results to Github Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results.sarif"
+          category: trivy-build
+      - name: Publish image
+        uses: docker/build-push-action@v3
+        with:
+          file: Dockerfiles/backend.Dockerfile
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
