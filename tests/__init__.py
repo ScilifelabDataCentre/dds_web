@@ -199,6 +199,7 @@ class DDSEndpoint:
     PROJECT_STATUS = BASE_ENDPOINT + "/proj/status"
     PROJECT_ACCESS = BASE_ENDPOINT + "/proj/access"
     PROJECT_BUSY = BASE_ENDPOINT + "/proj/busy"
+    PROJECT_BUSY_ANY = BASE_ENDPOINT + "/proj/busy/any"
 
     # Listing urls
     LIST_PROJ = BASE_ENDPOINT + "/proj/list"

@@ -6,6 +6,7 @@
 
 # Standard library
 import os
+import typing
 
 # Installed
 import flask_restful
@@ -275,3 +276,30 @@ class SetMaintenance(flask_restful.Resource):
         db.session.commit()
 
         return {"message": f"Maintenance set to: {setting.upper()}"}
+
+
+class AnyProjectsBusy(flask_restful.Resource):
+    """Check if any projects are busy."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        """Check if any projects are busy."""
+        # Get busy projects
+        projects_busy: typing.List = models.Project.query.filter_by(busy=True).all()
+        num_busy: int = len(projects_busy)
+
+        # Set info to always return nu
+        return_info: typing.Dict = {"num": num_busy}
+
+        # Return 0 if none are busy
+        if num_busy == 0:
+            return return_info
+
+        # Check if user listing busy projects
+        json_input = flask.request.json
+        if json_input and json_input.get("list") is True:
+            return_info.update({"projects": {p.public_id: p.date_updated for p in projects_busy}})
+
+        return return_info

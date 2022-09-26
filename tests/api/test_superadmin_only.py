@@ -706,3 +706,119 @@ def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
     )
     assert response.status_code == http.HTTPStatus.OK
     assert f"Maintenance set to: {setting.upper()}" in response.json.get("message")
+
+
+# AnyProjectsBusy
+
+# -- get
+
+
+def test_anyprojectsbusy_no_token(client: flask.testing.FlaskClient) -> None:
+    """Token required to check if projects are busy."""
+    response = client.get(tests.DDSEndpoint.PROJECT_BUSY_ANY, headers=tests.DEFAULT_HEADER)
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    assert response.json.get("message")
+    assert "No token" in response.json.get("message")
+
+
+def test_anyprojectsbusy_not_allowed(client: flask.testing.FlaskClient) -> None:
+    """Only super admins allowed."""
+    for role in ["researcher", "unituser", "unitadmin"]:
+        token = tests.UserAuth(tests.USER_CREDENTIALS[role]).token(client)
+        response = client.get(
+            tests.DDSEndpoint.PROJECT_BUSY_ANY,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+def test_anyprojectsbusy_true(client: flask.testing.FlaskClient) -> None:
+    """There are busy projects."""
+    # Get a project and set to busy
+    project: models.Project = models.Project.query.first()
+    project.busy = True
+    db.session.commit()
+    busy_count: int = models.Project.query.filter_by(busy=True).count()
+    assert busy_count > 0
+
+    # Call endpoint
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.PROJECT_BUSY_ANY,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Check response
+    num: int = response.json.get("num")
+    assert num == busy_count
+
+
+def test_anyprojectsbusy_false(client: flask.testing.FlaskClient) -> None:
+    """There are busy projects."""
+    # Set all projects to not busy
+    for project in models.Project.query.all():
+        project.busy = False
+    db.session.commit()
+    busy_count: int = models.Project.query.filter_by(busy=True).count()
+    assert busy_count == 0
+
+    # Call endpoint
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.PROJECT_BUSY_ANY,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Check response
+    num: int = response.json.get("num")
+    assert num == 0
+
+
+def test_anyprojectsbusy_true_list(client: flask.testing.FlaskClient) -> None:
+    """There are busy projects, list them."""
+    wanted_return_info: typing.Dict = {}
+
+    # Get all projects and set to busy
+    all_projects: typing.List = models.Project.query.all()
+    for project in all_projects:
+        project.busy = True
+        wanted_return_info[project.public_id] = project.date_updated
+    db.session.commit()
+    busy_count: int = models.Project.query.filter_by(busy=True).count()
+    assert busy_count == len(all_projects)
+
+    # Call endpoint
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
+    response = client.get(tests.DDSEndpoint.PROJECT_BUSY_ANY, headers=token, json={"list": True})
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Check response
+    num: int = response.json.get("num")
+    assert num == len(all_projects)
+    projects_returned: typing.Dict = response.json.get("projects")
+    for p in wanted_return_info:
+        assert p in projects_returned
+
+
+def test_anyprojectsbusy_false_list(client: flask.testing.FlaskClient) -> None:
+    """There are busy projects."""
+    # Get all projects and set to not busy
+    all_projects: typing.List = models.Project.query.all()
+    for project in all_projects:
+        project.busy = False
+    db.session.commit()
+    busy_count: int = models.Project.query.filter_by(busy=True).count()
+    assert busy_count == 0
+
+    # Call endpoint
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
+    response = client.get(tests.DDSEndpoint.PROJECT_BUSY_ANY, headers=token, json={"list": True})
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Check response
+    num: int = response.json.get("num")
+    assert num == 0
+    projects_returned: typing.Dict = response.json.get("projects")
+    assert projects_returned is None
