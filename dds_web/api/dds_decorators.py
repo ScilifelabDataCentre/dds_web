@@ -26,7 +26,7 @@ from dds_web.errors import (
     MissingJsonError,
     S3ConnectionError,
 )
-from dds_web.utils import get_username_or_request_ip
+from dds_web.utils import collect_project, get_username_or_request_ip
 from dds_web.database import models
 from dds_web import auth
 
@@ -221,9 +221,14 @@ def stop_if_maintenance(func):
     @functools.wraps(func)
     def maintenance_check(*args, **kwargs):
         # Get maintenance row
-        row: models.Maintenance = models.Maintenance.query.first()
-        if row.active and auth.current_user().role != "Super Admin": 
-            raise MaintenanceOngoingException()
+        maintenance: models.Maintenance = models.Maintenance.query.first()
+        
+        # Super Admins always allowed in during maintenance
+        # Only busy projects accept requests - could be ongoing upload / download / delete
+        if maintenance.active and auth.current_user().role != "Super Admin":
+            if (req_args := flask.request.args) and (project_id := req_args.get("project")):
+                if not project_id or ((project := collect_project(project_id=project_id)) and not project.busy):
+                    raise MaintenanceOngoingException()
 
         return func(*args, **kwargs)
     
