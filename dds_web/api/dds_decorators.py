@@ -22,10 +22,13 @@ from dds_web.errors import (
     DatabaseError,
     DDSArgumentError,
     LoggedHTTPException,
+    MaintenanceOngoingException,
     MissingJsonError,
     S3ConnectionError,
 )
 from dds_web.utils import get_username_or_request_ip
+from dds_web.database import models
+from dds_web import auth
 
 # initiate logging
 action_logger = structlog.getLogger("actions")
@@ -212,3 +215,16 @@ def logging_bind_request(func):
                 raise
 
     return wrapper_logging_bind_request
+
+def stop_if_maintenance(func):
+    """Check if DDS is in maintenance and in that case do not accept new commands."""
+    @functools.wraps(func)
+    def maintenance_check(*args, **kwargs):
+        # Get maintenance row
+        row: models.Maintenance = models.Maintenance.query.first()
+        if row.active and auth.current_user().role != "Super Admin": 
+            raise MaintenanceOngoingException()
+
+        return func(*args, **kwargs)
+    
+    return maintenance_check

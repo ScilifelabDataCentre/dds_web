@@ -18,6 +18,7 @@ from contextlib import contextmanager
 import flask
 from dds_web.errors import (
     AccessDeniedError,
+    MaintenanceOngoingException,
     VersionMismatchError,
     DDSArgumentError,
     NoSuchProjectError,
@@ -571,3 +572,4 @@ def calculate_version_period_usage(version):
         version.time_invoiced = now
 
     return bytehours
+

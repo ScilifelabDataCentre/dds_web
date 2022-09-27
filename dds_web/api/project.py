@@ -25,6 +25,7 @@ from dds_web.api.dds_decorators import (
     dbsession,
     json_required,
     handle_validation_errors,
+    stop_if_maintenance
 )
 from dds_web.errors import (
     AccessDeniedError,
@@ -448,6 +449,7 @@ class UserProjects(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @stop_if_maintenance
     def get(self):
         """Get info regarding all projects which user is involved in."""
         return self.format_project_dict(current_user=auth.current_user())
