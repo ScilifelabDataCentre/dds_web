@@ -29,7 +29,7 @@ from dds_web.database.models import (
     Version,
     Identifier,
     DeletionRequest,
-    Maintenance
+    Maintenance,
 )
 import dds_web.utils
 from dds_web import create_app, db
