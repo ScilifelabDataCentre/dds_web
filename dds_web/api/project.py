@@ -54,6 +54,7 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @stop_if_maintenance
     @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
@@ -80,6 +81,7 @@ class ProjectStatus(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def post(self):
@@ -402,6 +404,7 @@ class GetPublic(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @stop_if_maintenance
     @handle_validation_errors
     def get(self):
         """Get public key from database."""
@@ -423,6 +426,7 @@ class GetPrivate(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @stop_if_maintenance
     @handle_validation_errors
     def get(self):
         """Get private key from database."""
@@ -762,6 +766,7 @@ class ProjectUsers(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
+    @stop_if_maintenance
     @handle_validation_errors
     def get(self):
         # Verify project ID and access
@@ -798,6 +803,7 @@ class ProjectAccess(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
+    @stop_if_maintenance
     @dbsession
     @json_required
     @handle_validation_errors
@@ -904,6 +910,7 @@ class ProjectAccess(flask_restful.Resource):
 class ProjectBusy(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @stop_if_maintenance
     @dbsession
     @json_required
     def put(self):
