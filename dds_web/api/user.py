@@ -32,6 +32,7 @@ from dds_web.api.dds_decorators import (
     json_required,
     handle_validation_errors,
     handle_db_error,
+    stop_if_maintenance
 )
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
@@ -50,6 +51,7 @@ action_logger = structlog.getLogger("actions")
 class AddUser(flask_restful.Resource):
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
+    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def post(self):
@@ -485,6 +487,7 @@ class AddUser(flask_restful.Resource):
 class RetrieveUserInfo(flask_restful.Resource):
     @auth.login_required
     @logging_bind_request
+    @stop_if_maintenance
     def get(self):
         """Return own info when queried"""
         curr_user = auth.current_user()
@@ -506,6 +509,7 @@ class DeleteUserSelf(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @stop_if_maintenance
     def delete(self):
         """Request deletion of own account."""
         current_user = auth.current_user()
@@ -626,6 +630,7 @@ class UserActivation(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
+    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def post(self):
@@ -739,6 +744,7 @@ class DeleteUser(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin"])
     @logging_bind_request
+    @stop_if_maintenance
     @handle_validation_errors
     def delete(self):
         """Delete user or invite in the DDS."""
@@ -864,6 +870,7 @@ class DeleteUser(flask_restful.Resource):
 class RemoveUserAssociation(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def post(self):
@@ -944,6 +951,7 @@ class EncryptedToken(flask_restful.Resource):
 
     @basic_auth.login_required
     @logging_bind_request
+    @stop_if_maintenance
     def get(self):
         secondfactor_method = "TOTP" if auth.current_user().totp_enabled else "HOTP"
         return {
@@ -960,6 +968,7 @@ class SecondFactor(flask_restful.Resource):
     """Take in and verify an authentication one-time code entered by an authenticated user with basic credentials"""
 
     @auth.login_required
+    @stop_if_maintenance
     @handle_validation_errors
     def get(self):
 
@@ -974,6 +983,7 @@ class RequestTOTPActivation(flask_restful.Resource):
     """Request to switch from HOTP to TOTP for second factor authentication."""
 
     @auth.login_required
+    @stop_if_maintenance
     def post(self):
         user = auth.current_user()
         if user.totp_enabled:
@@ -1037,6 +1047,7 @@ class RequestHOTPActivation(flask_restful.Resource):
 
     # Using Basic auth since TOTP might have been lost, will still need access to email
     @basic_auth.login_required
+    @stop_if_maintenance
     def post(self):
 
         user = auth.current_user()
@@ -1103,6 +1114,7 @@ class ShowUsage(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @stop_if_maintenance
     def get(self):
         current_user = auth.current_user()
 
@@ -1185,6 +1197,7 @@ class Users(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin", "Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @stop_if_maintenance
     @handle_db_error
     def get(self):
         """List unit users within the unit the current user is connected to, or the one defined by a superadmin."""
