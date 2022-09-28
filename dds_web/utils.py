@@ -21,6 +21,7 @@ from dds_web.errors import (
     VersionMismatchError,
     DDSArgumentError,
     NoSuchProjectError,
+    MaintenanceOngoingException
 )
 import flask_mail
 import flask_login
@@ -571,3 +572,34 @@ def calculate_version_period_usage(version):
         version.time_invoiced = now
 
     return bytehours
+
+# maintenance check
+def block_if_maintenance():
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    if maintenance.active:
+        if "api/v1" in flask.request.path:
+            approved = [
+                f"/api/v1{x}"
+                for x in [
+                    "/proj/busy/any",
+                    "/maintenance",
+                    "/motd",
+                    "/motd/send",
+                    "/file/new",
+                    "/file/update",
+                    "/s3/proj",
+                    "/user/info",
+                ]
+            ]
+            # Request not to accepted endpoint
+            # OR request to accepted endpoint but project not specified or busy
+            if flask.request.path not in approved:
+                raise MaintenanceOngoingException()
+            else:
+                if (req_args := flask.request.args) and (project_id := req_args.get("project")):
+                    if not models.Project.query.filter_by(
+                        public_id=project_id, busy=True
+                    ).one_or_none():
+                        raise MaintenanceOngoingException()
+        else: 
+            flask.abort(503)
