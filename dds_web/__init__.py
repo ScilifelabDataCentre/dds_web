@@ -192,7 +192,9 @@ def create_app(testing=False, database_uri=None):
             """Populate flask globals for template rendering"""
             from dds_web.utils import verify_cli_version
             from dds_web.utils import get_active_motds
-
+            
+            # Check if maintenance mode is active and in that case display specific page
+            
             # Verify cli version compatible
             if "api/v1" in flask.request.path:
                 verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
