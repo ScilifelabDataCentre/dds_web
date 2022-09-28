@@ -21,7 +21,7 @@ from dds_web.errors import (
     VersionMismatchError,
     DDSArgumentError,
     NoSuchProjectError,
-    MaintenanceOngoingException
+    MaintenanceOngoingException,
 )
 import flask_mail
 import flask_login
@@ -573,6 +573,7 @@ def calculate_version_period_usage(version):
 
     return bytehours
 
+
 # maintenance check
 def block_if_maintenance():
     maintenance: models.Maintenance = models.Maintenance.query.first()
@@ -601,5 +602,5 @@ def block_if_maintenance():
                         public_id=project_id, busy=True
                     ).one_or_none():
                         raise MaintenanceOngoingException()
-        else: 
+        else:
             flask.abort(503)
