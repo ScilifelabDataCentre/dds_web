@@ -693,8 +693,8 @@ def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
     setting = "off"
 
     # create record in Maintenance
-    current_mode: models.Maintenance = models.Maintenance(active=True)
-    db.session.add(current_mode)
+    current_mode: models.Maintenance = models.Maintenance.query.first()
+    current_mode.active = True
     db.session.commit()
 
     # Verify that maintenance is on
