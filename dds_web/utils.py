@@ -572,4 +572,3 @@ def calculate_version_period_usage(version):
         version.time_invoiced = now
 
     return bytehours
-

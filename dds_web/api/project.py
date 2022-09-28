@@ -25,7 +25,7 @@ from dds_web.api.dds_decorators import (
     dbsession,
     json_required,
     handle_validation_errors,
-    stop_if_maintenance
+    stop_if_maintenance,
 )
 from dds_web.errors import (
     AccessDeniedError,
@@ -561,6 +561,7 @@ class RemoveContents(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @stop_if_maintenance
     @dbsession
     @handle_validation_errors
     def delete(self):
@@ -630,6 +631,7 @@ class RemoveContents(flask_restful.Resource):
 class CreateProject(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
+    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def post(self):
