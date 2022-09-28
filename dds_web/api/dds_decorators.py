@@ -22,13 +22,10 @@ from dds_web.errors import (
     DatabaseError,
     DDSArgumentError,
     LoggedHTTPException,
-    MaintenanceOngoingException,
     MissingJsonError,
     S3ConnectionError,
 )
-from dds_web.utils import collect_project, get_username_or_request_ip
-from dds_web.database import models
-from dds_web import auth
+from dds_web.utils import get_username_or_request_ip
 
 # initiate logging
 action_logger = structlog.getLogger("actions")

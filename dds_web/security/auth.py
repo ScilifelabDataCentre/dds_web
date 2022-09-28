@@ -18,13 +18,7 @@ import structlog
 
 # Own modules
 from dds_web import basic_auth, auth, mail
-from dds_web.errors import (
-    AuthenticationError,
-    AccessDeniedError,
-    InviteError,
-    MaintenanceOngoingException,
-    TokenMissingError,
-)
+from dds_web.errors import AuthenticationError, AccessDeniedError, InviteError, TokenMissingError
 from dds_web.database import models
 import dds_web.utils
 

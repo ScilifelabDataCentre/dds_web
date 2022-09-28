@@ -427,7 +427,7 @@ class VersionMismatchError(LoggedHTTPException):
 
 class MaintenanceOngoingException(LoggedHTTPException):
 
-    code = http.HTTPStatus.FORBIDDEN
+    code = http.HTTPStatus.SERVICE_UNAVAILABLE
 
     def __init__(self, message="Maintenance of DDS is ongoing."):
         """Inform that maintenance is ongoing."""

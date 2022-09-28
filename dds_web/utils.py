@@ -18,7 +18,6 @@ from contextlib import contextmanager
 import flask
 from dds_web.errors import (
     AccessDeniedError,
-    MaintenanceOngoingException,
     VersionMismatchError,
     DDSArgumentError,
     NoSuchProjectError,
