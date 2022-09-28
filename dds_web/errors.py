@@ -26,6 +26,7 @@ action_logger = structlog.getLogger("actions")
 
 extra_info = {"result": "DENIED"}
 
+
 class LoggedHTTPException(exceptions.HTTPException):
     """Base class to enable standard action logging on HTTP Exceptions"""
 

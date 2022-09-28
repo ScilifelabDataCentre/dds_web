@@ -19,6 +19,7 @@ import sqlalchemy
 
 pages = Blueprint("pages", __name__)
 
+
 @pages.route("/", methods=["GET"])
 def home():
     """Home page."""
@@ -56,10 +57,12 @@ def page_not_found(e):
     # note that we set the 404 status explicitly
     return render_template("errorpages/404.html"), 404
 
+
 @app.errorhandler(sqlalchemy.exc.SQLAlchemyError)
 def handle_sqlalchemyerror(e):
     flask.current_app.logger.exception(e)
-    return render_template("errorpages/sqlalchemy.html"), 500 
+    return render_template("errorpages/sqlalchemy.html"), 500
+
 
 @app.errorhandler(503)
 def maintenance_ongoing(e):
