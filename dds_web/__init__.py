@@ -36,7 +36,6 @@ import werkzeug
 
 from dds_web.scheduled_tasks import scheduler
 
-
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
 ####################################################################################################
@@ -192,12 +191,14 @@ def create_app(testing=False, database_uri=None):
             """Populate flask globals for template rendering"""
             from dds_web.utils import verify_cli_version
             from dds_web.utils import get_active_motds
-            
-            # Check if maintenance mode is active and in that case display specific page
-            
+
             # Verify cli version compatible
             if "api/v1" in flask.request.path:
                 verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
+            else:
+                maintenance: models.Maintenance = models.Maintenance.query.first()
+                if maintenance.active:
+                    flask.abort(503)
 
             # Get message of the day
             flask.g.motd = get_active_motds()
@@ -236,11 +237,6 @@ def create_app(testing=False, database_uri=None):
 
         # Initialize marshmallows
         ma.init_app(app)
-
-        # Errors, TODO: Move somewhere else?
-        @app.errorhandler(sqlalchemy.exc.SQLAlchemyError)
-        def handle_sqlalchemyerror(e):
-            return f"SQLAlchemyError: {e}", 500  # TODO: Fix logging and a page
 
         # Initialize login manager
         login_manager.init_app(app)
