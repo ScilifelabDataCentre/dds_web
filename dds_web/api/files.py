@@ -25,7 +25,6 @@ from dds_web.api.dds_decorators import (
     logging_bind_request,
     json_required,
     handle_validation_errors,
-    stop_if_maintenance,
 )
 from dds_web.errors import (
     AccessDeniedError,
@@ -77,7 +76,6 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def post(self):
@@ -112,7 +110,6 @@ class NewFile(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @stop_if_maintenance
     @handle_validation_errors
     def put(self):
         """Update existing file."""
@@ -207,7 +204,6 @@ class MatchFiles(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def get(self):
@@ -248,7 +244,6 @@ class ListFiles(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @stop_if_maintenance
     @handle_validation_errors
     def get(self):
         """Get a list of files within the specified folder."""
@@ -411,7 +406,6 @@ class RemoveFile(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def delete(self):
@@ -528,7 +522,6 @@ class RemoveDir(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def delete(self):
@@ -643,7 +636,6 @@ class FileInfo(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def get(self):
@@ -678,7 +670,6 @@ class FileInfoAll(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @stop_if_maintenance
     @handle_validation_errors
     def get(self):
         """Get file info on all files."""
@@ -701,7 +692,6 @@ class UpdateFile(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @stop_if_maintenance
     @json_required
     @handle_validation_errors
     def put(self):

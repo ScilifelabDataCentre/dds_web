@@ -191,14 +191,37 @@ def create_app(testing=False, database_uri=None):
             """Populate flask globals for template rendering"""
             from dds_web.utils import verify_cli_version
             from dds_web.utils import get_active_motds
+            from dds_web.errors import MaintenanceOngoingException
+
+            maintenance: models.Maintenance = models.Maintenance.query.first()
+            if maintenance.active:
+                approved = [
+                    f"/api/v1{x}"
+                    for x in [
+                        "/proj/busy/any",
+                        "/maintenance",
+                        "/motd",
+                        "/motd/send",
+                        "/file/new",
+                        "/file/update",
+                        "/s3/proj",
+                        "/user/info",
+                    ]
+                ]
+                # Request not to accepted endpoint
+                # OR request to accepted endpoint but project not specified or busy
+                if flask.request.path not in approved:
+                    raise MaintenanceOngoingException()
+                else:
+                    if (req_args := flask.request.args) and (project_id := req_args.get("project")):
+                        if not models.Project.query.filter_by(
+                            public_id=project_id, busy=True
+                        ).one_or_none():
+                            raise MaintenanceOngoingException()
 
             # Verify cli version compatible
             if "api/v1" in flask.request.path:
                 verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
-            else:
-                maintenance: models.Maintenance = models.Maintenance.query.first()
-                if maintenance.active:
-                    flask.abort(503)
 
             # Get message of the day
             flask.g.motd = get_active_motds()

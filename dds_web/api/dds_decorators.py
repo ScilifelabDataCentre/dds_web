@@ -217,29 +217,29 @@ def logging_bind_request(func):
     return wrapper_logging_bind_request
 
 
-def stop_if_maintenance(func):
-    """Check if DDS is in maintenance and in that case do not accept new commands."""
+# def stop_if_maintenance(func):
+#     """Check if DDS is in maintenance and in that case do not accept new commands."""
 
-    @functools.wraps(func)
-    def maintenance_check(*args, **kwargs):
-        # Super admins are always allowed in
-        if auth.current_user().role == "Super Admin":
-            return func(*args, **kwargs)
+#     @functools.wraps(func)
+#     def maintenance_check(*args, **kwargs):
+#         # Super admins are always allowed in
+#         if auth.current_user().role == "Super Admin":
+#             return func(*args, **kwargs)
 
-        # Get maintenance row
-        maintenance: models.Maintenance = models.Maintenance.query.first()
+#         # Get maintenance row
+#         maintenance: models.Maintenance = models.Maintenance.query.first()
 
-        # Super Admins always allowed in during maintenance
-        if maintenance.active:
-            # Project needs to be specified in order to allow access during maintenance
-            if not (req_args := flask.request.args) or not (project_id := req_args.get("project")):
-                raise MaintenanceOngoingException()
+#         # Super Admins always allowed in during maintenance
+#         if maintenance.active:
+#             # Project needs to be specified in order to allow access during maintenance
+#             if not (req_args := flask.request.args) or not (project_id := req_args.get("project")):
+#                 raise MaintenanceOngoingException()
 
-            # Only busy projects are allowed access during maintenance
-            project: models.Project = collect_project(project_id=project_id)
-            if not project.busy:
-                raise MaintenanceOngoingException()
+#             # Only busy projects are allowed access during maintenance
+#             project: models.Project = collect_project(project_id=project_id)
+#             if not project.busy:
+#                 raise MaintenanceOngoingException()
 
-        return func(*args, **kwargs)
+#         return func(*args, **kwargs)
 
-    return maintenance_check
+#     return maintenance_check
