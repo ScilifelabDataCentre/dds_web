@@ -25,7 +25,7 @@ from dds_web.api.dds_decorators import (
     logging_bind_request,
     json_required,
     handle_validation_errors,
-    stop_if_maintenance
+    stop_if_maintenance,
 )
 from dds_web.errors import (
     AccessDeniedError,

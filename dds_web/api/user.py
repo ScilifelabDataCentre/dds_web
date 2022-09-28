@@ -32,7 +32,7 @@ from dds_web.api.dds_decorators import (
     json_required,
     handle_validation_errors,
     handle_db_error,
-    stop_if_maintenance
+    stop_if_maintenance,
 )
 from dds_web.security.project_user_keys import (
     generate_invite_key_pair,
