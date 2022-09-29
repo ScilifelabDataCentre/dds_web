@@ -585,11 +585,12 @@ def block_if_maintenance():
                     "/file/new",
                     "/file/update",
                     "/proj/busy",
-                    "/proj/busy/any",
                     "/user/info",
                     "/maintenance",
+                    "/unit/info/all",
                     "/motd",
                     "/motd/send",
+                    "/proj/busy/any",
                 ]
             ]
             # Request not to accepted endpoint
