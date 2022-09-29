@@ -579,32 +579,31 @@ def block_if_maintenance():
     """Block API requests if maintenance is ongoing and projects are busy."""
     maintenance: models.Maintenance = models.Maintenance.query.first()
     if maintenance.active:
-        if "api/v1" in flask.request.path:
-            project_required_endpoints: typing.List = [
-                f"/api/v1{resource}" for resource in ["/file/new", "/file/update", "/proj/busy"]
+        project_required_endpoints: typing.List = [
+            f"/api/v1{resource}" for resource in ["/file/new", "/file/update", "/proj/busy"]
+        ]
+        approved: typing.List = [
+            f"/api/v1{x}"
+            for x in [
+                "/user/info",
+                "/maintenance",
+                "/unit/info/all",
+                "/motd",
+                "/motd/send",
+                "/proj/busy/any",
             ]
-            approved: typing.List = [
-                f"/api/v1{x}"
-                for x in [
-                    "/user/info",
-                    "/maintenance",
-                    "/unit/info/all",
-                    "/motd",
-                    "/motd/send",
-                    "/proj/busy/any",
-                ]
-            ] + project_required_endpoints
-            # Request not to accepted endpoint
-            # OR request to accepted endpoint but project not specified or busy
-            if flask.request.path not in approved:
-                raise MaintenanceOngoingException()
-            else:
-                req_args = flask.request.args
-                if flask.request.path in project_required_endpoints:
-                    if not (req_args and (project_id := req_args.get("project"))):
-                        raise MaintenanceOngoingException()
+        ] + project_required_endpoints
+        # Request not to accepted endpoint
+        # OR request to accepted endpoint but project not specified or busy
+        if flask.request.path not in approved:
+            raise MaintenanceOngoingException()
+        else:
+            req_args = flask.request.args
+            if flask.request.path in project_required_endpoints:
+                if not (req_args and (project_id := req_args.get("project"))):
+                    raise MaintenanceOngoingException()
 
-                    if not models.Project.query.filter_by(
-                        public_id=project_id, busy=True
-                    ).one_or_none():
-                        raise MaintenanceOngoingException()
+                if not models.Project.query.filter_by(
+                    public_id=project_id, busy=True
+                ).one_or_none():
+                    raise MaintenanceOngoingException()
