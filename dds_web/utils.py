@@ -593,7 +593,7 @@ def block_if_maintenance():
                     "/motd/send",
                     "/proj/busy/any",
                 ]
-            ].extend(project_required_endpoints)
+            ] + project_required_endpoints
             # Request not to accepted endpoint
             # OR request to accepted endpoint but project not specified or busy
             if flask.request.path not in approved:
