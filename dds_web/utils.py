@@ -603,8 +603,8 @@ def block_if_maintenance():
                 if flask.request.path in ["/file/new", "/file/update", "/proj/busy"]:
                     if not (req_args and (project_id := req_args.get("project"))):
                         raise MaintenanceOngoingException()
-                    
+
                     if not models.Project.query.filter_by(
-                            public_id=project_id, busy=True
+                        public_id=project_id, busy=True
                     ).one_or_none():
                         raise MaintenanceOngoingException()
