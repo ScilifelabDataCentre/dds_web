@@ -576,6 +576,7 @@ def calculate_version_period_usage(version):
 
 # maintenance check
 def block_if_maintenance():
+    """Block API requests if maintenance is ongoing and projects are busy."""
     maintenance: models.Maintenance = models.Maintenance.query.first()
     if maintenance.active:
         if "api/v1" in flask.request.path:
