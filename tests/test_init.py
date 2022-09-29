@@ -225,7 +225,7 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
     assert result.exit_code == 1
 
 
-# block_if_maintenance
+# block_if_maintenance - should be blocked in init by before_request
 
 
 def test_block_if_maintenance_active_encryptedtoken_not_approved(
