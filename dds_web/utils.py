@@ -580,7 +580,9 @@ def block_if_maintenance():
     maintenance: models.Maintenance = models.Maintenance.query.first()
     if maintenance.active:
         if "api/v1" in flask.request.path:
-            project_required_endpoints: typing.List = ["/file/new", "/file/update", "/proj/busy"]
+            project_required_endpoints: typing.List = [
+                f"/api/v1{resource}" for resource in ["/file/new", "/file/update", "/proj/busy"]
+            ]
             approved: typing.List = [
                 f"/api/v1{x}"
                 for x in [
@@ -590,8 +592,8 @@ def block_if_maintenance():
                     "/motd",
                     "/motd/send",
                     "/proj/busy/any",
-                ].extend(project_required_endpoints)
-            ]
+                ]
+            ].extend(project_required_endpoints)
             # Request not to accepted endpoint
             # OR request to accepted endpoint but project not specified or busy
             if flask.request.path not in approved:
