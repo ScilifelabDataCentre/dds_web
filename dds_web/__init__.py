@@ -191,9 +191,9 @@ def create_app(testing=False, database_uri=None):
             """Populate flask globals for template rendering"""
             from dds_web.utils import verify_cli_version, get_active_motds, block_if_maintenance
 
-            block_if_maintenance()
             # Verify cli version compatible
             if "api/v1" in flask.request.path:
+                block_if_maintenance()
                 verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
 
             # Get message of the day

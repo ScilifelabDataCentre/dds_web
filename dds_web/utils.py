@@ -599,16 +599,11 @@ def block_if_maintenance():
                 raise MaintenanceOngoingException()
             else:
                 req_args = flask.request.args
-                if not req_args:
-                    raise MaintenanceOngoingException()
-
-                project_id: str = req_args.get("project")
-                if not project_id:
-                    raise MaintenanceOngoingException()
-
-                if not models.Project.query.filter_by(
-                    public_id=project_id, busy=True
-                ).one_or_none():
-                    raise MaintenanceOngoingException()
-        else:
-            flask.abort(503)
+                if flask.request.path in ["/file/new", "/file/update", "/proj/busy"]:
+                    if not (req_args and (project_id := req_args.get("project"))):
+                        raise MaintenanceOngoingException()
+                    
+                    if not models.Project.query.filter_by(
+                            public_id=project_id, busy=True
+                    ).one_or_none():
+                        raise MaintenanceOngoingException()
