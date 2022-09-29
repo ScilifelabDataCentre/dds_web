@@ -582,14 +582,14 @@ def block_if_maintenance():
             approved = [
                 f"/api/v1{x}"
                 for x in [
+                    "/file/new",
+                    "/file/update",
+                    "/proj/busy",
                     "/proj/busy/any",
+                    "/user/info",
                     "/maintenance",
                     "/motd",
                     "/motd/send",
-                    "/file/new",
-                    "/file/update",
-                    "/s3/proj",
-                    "/user/info",
                 ]
             ]
             # Request not to accepted endpoint
@@ -597,10 +597,17 @@ def block_if_maintenance():
             if flask.request.path not in approved:
                 raise MaintenanceOngoingException()
             else:
-                if (req_args := flask.request.args) and (project_id := req_args.get("project")):
-                    if not models.Project.query.filter_by(
-                        public_id=project_id, busy=True
-                    ).one_or_none():
-                        raise MaintenanceOngoingException()
+                req_args = flask.request.args
+                if not req_args:
+                    raise MaintenanceOngoingException()
+                
+                project_id: str = req_args.get("project")
+                if not project_id:
+                    raise MaintenanceOngoingException()
+                
+                if not models.Project.query.filter_by(
+                    public_id=project_id, busy=True
+                ).one_or_none():
+                    raise MaintenanceOngoingException()
         else:
             flask.abort(503)
