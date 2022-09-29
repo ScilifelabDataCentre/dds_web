@@ -601,11 +601,11 @@ def block_if_maintenance():
                 req_args = flask.request.args
                 if not req_args:
                     raise MaintenanceOngoingException()
-                
+
                 project_id: str = req_args.get("project")
                 if not project_id:
                     raise MaintenanceOngoingException()
-                
+
                 if not models.Project.query.filter_by(
                     public_id=project_id, busy=True
                 ).one_or_none():
