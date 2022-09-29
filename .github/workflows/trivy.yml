@@ -20,7 +20,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.7.1
         with:
-          image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:dev"
+          image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:latest"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
