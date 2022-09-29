@@ -19,9 +19,6 @@ import flask_mail
 from flask.testing import FlaskClient
 import requests_mock
 import werkzeug
-from tests import DDSEndpoint, DEFAULT_HEADER, UserAuth, USER_CREDENTIALS
-import http
-import time
 
 # Variables
 
