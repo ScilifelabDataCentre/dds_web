@@ -577,8 +577,12 @@ def calculate_version_period_usage(version):
 # maintenance check
 def block_if_maintenance():
     """Block API requests if maintenance is ongoing and projects are busy."""
+    # Get maintenance row
     maintenance: models.Maintenance = models.Maintenance.query.first()
+
+    # Possibly block request if maintenance ongoing / planned
     if maintenance.active:
+        # Endpoints accepting requests during active maintenance / planned
         project_required_endpoints: typing.List = [
             f"/api/v1{resource}" for resource in ["/file/new", "/file/update", "/proj/busy"]
         ]
@@ -594,21 +598,22 @@ def block_if_maintenance():
             ]
         ]
         approved_endpoints: typing.List = project_required_endpoints + admin_endpoints
-        flask.current_app.logger.debug(project_required_endpoints)
-        flask.current_app.logger.debug(admin_endpoints)
+
         # Request not to accepted endpoint
         # OR request to accepted endpoint but project not specified or busy
         current_endpoint: str = flask.request.path
         if current_endpoint not in approved_endpoints:
-            flask.current_app.logger.debug(f"no it's not there - {flask.request.path}")
+            # Request not accepted during maintenance
             raise MaintenanceOngoingException()
         else:
-            flask.current_app.logger.debug(f"yes it's there - {flask.request.path}")
+            # Request accepted during maintenance but...
             req_args = flask.request.args
-            if flask.request.path in project_required_endpoints:
+            if current_endpoint in project_required_endpoints:
+                # Request requires a project
                 if not (req_args and (project_id := req_args.get("project"))):
                     raise MaintenanceOngoingException()
 
+                # Request requires an busy project
                 if not models.Project.query.filter_by(
                     public_id=project_id, busy=True
                 ).one_or_none():
