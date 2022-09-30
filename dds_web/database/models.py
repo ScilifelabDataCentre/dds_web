@@ -838,7 +838,7 @@ class Invite(db.Model):
         if self.project_invite_keys:
             projects = [proj.project for proj in self.project_invite_keys]
         else:
-            projects = None
+            projects = []
         return projects
 
     def __str__(self):
