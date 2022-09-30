@@ -835,8 +835,11 @@ class Invite(db.Model):
     @property
     def projects(self):
         """Return list of project items."""
-
-        return [proj.project for proj in self.project_associations]
+        if self.project_invite_keys:
+            projects = [proj.project for proj in self.project_invite_keys]
+        else:
+            projects = None
+        return projects
 
     def __str__(self):
         """Called by str(), creates representation of object"""
