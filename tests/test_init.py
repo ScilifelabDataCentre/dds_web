@@ -1585,7 +1585,7 @@ def test_block_put_if_maintenancen_active_after_add_file_db(client: flask.testin
 # block data get
 
 def test_block_get_if_maintenancen_not_active(client: flask.testing.FlaskClient, boto3_session) -> None:
-    """Go through all endpoints that the upload command uses.
+    """Go through all endpoints that the download command uses.
 
     Check what happens when maintenance is set to active after upload started.
     """
@@ -1708,6 +1708,537 @@ def test_block_get_if_maintenancen_not_active(client: flask.testing.FlaskClient,
     ).one_or_none()
     assert updated_file and updated_file.time_latest_download is not None
 
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_get_if_maintenancen_active_after_auth(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the download command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # __get_key (public)
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.PROJ_PUBLIC, headers=token, query_string={"project": project.public_id}
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify resposne
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+
+    # __get_key (private)
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.PROJ_PRIVATE, headers=token, query_string={"project": project.public_id}
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+
+    # __collect_file_info_remote
+    # - request
+    files = models.File.query.filter_by(project_id=project.id).all()
+    with patch(
+        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
+    ) as mock_url:
+        mock_url.return_value = "url"
+        response: werkzeug.test.WrapperTestResponse = client.get(
+            DDSEndpoint.FILE_INFO,
+            headers=token,
+            query_string={"project": project.public_id},
+            json=[f.name for f in files],
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json.get("message") == "Maintenance of DDS is ongoing."
+
+    # update_db
+    # - file info
+    file_to_update: models.File = files[0]
+    assert file_to_update.time_latest_download is None
+    file_info = {"name": file_to_update.name}
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.FILE_UPDATE,
+        headers=token,
+        query_string={"project": project.public_id},
+        json=file_info,
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+
+def test_block_get_if_maintenancen_active_after_busy(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the download command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # __get_key (public)
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.PROJ_PUBLIC, headers=token, query_string={"project": project.public_id}
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify resposne
+    public_key: str = response.json.get("public")
+    assert public_key
+    assert public_key == project.public_key.hex().upper()
+
+    # __get_key (private)
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.PROJ_PRIVATE, headers=token, query_string={"project": project.public_id}
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert response.json.get("private") # not testing encryption stuff here
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+
+    # __collect_file_info_remote
+    # - request
+    files = models.File.query.filter_by(project_id=project.id).all()
+    with patch(
+        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
+    ) as mock_url:
+        mock_url.return_value = "url"
+        response: werkzeug.test.WrapperTestResponse = client.get(
+            DDSEndpoint.FILE_INFO,
+            headers=token,
+            query_string={"project": project.public_id},
+            json=[f.name for f in files],
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json.get("message") == "Maintenance of DDS is ongoing."
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_get_if_maintenancen_active_after_collect_file_info_remote(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the download command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # __get_key (public)
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.PROJ_PUBLIC, headers=token, query_string={"project": project.public_id}
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify resposne
+    public_key: str = response.json.get("public")
+    assert public_key
+    assert public_key == project.public_key.hex().upper()
+
+    # __get_key (private)
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.PROJ_PRIVATE, headers=token, query_string={"project": project.public_id}
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert response.json.get("private") # not testing encryption stuff here
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # __collect_file_info_remote
+    # - request
+    files = models.File.query.filter_by(project_id=project.id).all()
+    with patch(
+        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
+    ) as mock_url:
+        mock_url.return_value = "url"
+        response: werkzeug.test.WrapperTestResponse = client.get(
+            DDSEndpoint.FILE_INFO,
+            headers=token,
+            query_string={"project": project.public_id},
+            json=[f.name for f in files],
+        )
+        assert response.status_code == http.HTTPStatus.OK
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+    
+    # update_db
+    # - file info
+    file_to_update: models.File = files[0]
+    assert file_to_update.time_latest_download is None
+    file_info = {"name": file_to_update.name}
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.FILE_UPDATE,
+        headers=token,
+        query_string={"project": project.public_id},
+        json=file_info,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    message: str = response.json.get("message")
+    assert message == "File info updated."
+    updated_file: models.File = models.File.query.filter_by(
+        name=file_to_update.name,
+        name_in_bucket=file_to_update.name_in_bucket,
+        subpath=file_to_update.subpath,
+        size_original=file_to_update.size_original,
+        size_stored=file_to_update.size_stored,
+        compressed=file_to_update.compressed,
+        salt=file_to_update.salt,
+        public_key=file_to_update.public_key,
+        checksum=file_to_update.checksum,
+    ).one_or_none()
+    assert updated_file and updated_file.time_latest_download is not None
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_get_if_maintenancen_active_after_update_db(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the download command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # __get_key (public)
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.PROJ_PUBLIC, headers=token, query_string={"project": project.public_id}
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify resposne
+    public_key: str = response.json.get("public")
+    assert public_key
+    assert public_key == project.public_key.hex().upper()
+
+    # __get_key (private)
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        DDSEndpoint.PROJ_PRIVATE, headers=token, query_string={"project": project.public_id}
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert response.json.get("private") # not testing encryption stuff here
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # __collect_file_info_remote
+    # - request
+    files = models.File.query.filter_by(project_id=project.id).all()
+    with patch(
+        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
+    ) as mock_url:
+        mock_url.return_value = "url"
+        response: werkzeug.test.WrapperTestResponse = client.get(
+            DDSEndpoint.FILE_INFO,
+            headers=token,
+            query_string={"project": project.public_id},
+            json=[f.name for f in files],
+        )
+        assert response.status_code == http.HTTPStatus.OK
+
+    # update_db
+    # - file info
+    file_to_update: models.File = files[0]
+    assert file_to_update.time_latest_download is None
+    file_info = {"name": file_to_update.name}
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.FILE_UPDATE,
+        headers=token,
+        query_string={"project": project.public_id},
+        json=file_info,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    message: str = response.json.get("message")
+    assert message == "File info updated."
+    updated_file: models.File = models.File.query.filter_by(
+        name=file_to_update.name,
+        name_in_bucket=file_to_update.name_in_bucket,
+        subpath=file_to_update.subpath,
+        size_original=file_to_update.size_original,
+        size_stored=file_to_update.size_stored,
+        compressed=file_to_update.compressed,
+        salt=file_to_update.salt,
+        public_key=file_to_update.public_key,
+        checksum=file_to_update.checksum,
+    ).one_or_none()
+    assert updated_file and updated_file.time_latest_download is not None
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+    
     # change_busy_status - busy
     # - request
     response: werkzeug.test.WrapperTestResponse = client.put(
