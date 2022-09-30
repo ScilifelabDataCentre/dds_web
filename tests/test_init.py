@@ -820,6 +820,7 @@ def test_block_if_maintenance_active_usage_not_approved(client: flask.testing.Fl
     )
     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
 
+
 # block data put
 
 
