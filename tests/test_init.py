@@ -1113,6 +1113,7 @@ def test_block_if_maintenancen_active_after_auth(client: flask.testing.FlaskClie
     )
     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
 
+
 def test_block_if_maintenancen_active_after_busy(client: flask.testing.FlaskClient) -> None:
     """Go through all endpoints that the upload command uses.
 
@@ -1240,7 +1241,10 @@ def test_block_if_maintenancen_active_after_busy(client: flask.testing.FlaskClie
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_if_maintenancen_active_after_check_previous_upload(client: flask.testing.FlaskClient) -> None:
+
+def test_block_if_maintenancen_active_after_check_previous_upload(
+    client: flask.testing.FlaskClient,
+) -> None:
     """Go through all endpoints that the upload command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -1406,6 +1410,7 @@ def test_block_if_maintenancen_active_after_check_previous_upload(client: flask.
     message: str = response.json.get("message")
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
 
 def test_block_if_maintenancen_active_after_add_file_db(client: flask.testing.FlaskClient) -> None:
     """Go through all endpoints that the upload command uses.
