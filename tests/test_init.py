@@ -2238,7 +2238,925 @@ def test_block_get_if_maintenancen_active_after_update_db(client: flask.testing.
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
     db.session.commit()
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+# block data rm
+
+def test_block_rm_all_if_maintenancen_not_active(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # __collect_file_info_remote
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_PROJ_CONT,
+        headers=token,
+        query_string={"project": project.public_id},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json.get("removed") is True
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+
+def test_block_rm_all_if_maintenancen_after_auth(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
     
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert not models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # remove_all
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_PROJ_CONT,
+        headers=token,
+        query_string={"project": project.public_id},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_rm_all_if_maintenancen_active_after_busy(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # remove_all
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_PROJ_CONT,
+        headers=token,
+        query_string={"project": project.public_id},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_rm_all_if_maintenancen_active_after_rm(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # remove_all
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_PROJ_CONT,
+        headers=token,
+        query_string={"project": project.public_id},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json.get("removed") is True
+    assert models.File.query.filter_by(project_id=project.public_id).count() == 0
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_rm_file_if_maintenancen_after_auth(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+    
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert not models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # remove_file
+    # - get files
+    files: typing.List = [file.name for file in models.File.query.all()]
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_FILE,
+        headers=token,
+        query_string={"project": project.public_id},
+        json=files
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert models.File.query.filter(models.File.name.in_(files)).count() == len(files)
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_rm_file_if_maintenancen_active_after_busy(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # remove_file
+    # - get files
+    files: typing.List = [file.name for file in models.File.query.all()]
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_FILE,
+        headers=token,
+        query_string={"project": project.public_id},
+        json=files
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert models.File.query.filter(models.File.name.in_(files)).count() == len(files)
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_rm_file_if_maintenancen_active_after_rm(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # remove_file
+    # - get files
+    files: typing.List = [file.name for file in models.File.query.all()]
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_FILE,
+        headers=token,
+        query_string={"project": project.public_id},
+        json=files
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert not models.File.query.filter(models.File.name.in_(files)).all()
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_rm_folder_if_maintenancen_after_auth(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+    
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert not models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # remove_folder
+    # - get folders
+    files_in_folders: typing.List = models.File.query.filter(models.File.subpath != ".").all()
+    folders: typing.List = list(set(file.subpath for file in files_in_folders))
+    assert folders
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_FOLDER,
+        headers=token,
+        query_string={"project": project.public_id},
+        json=folders
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert models.File.query.filter(models.File.subpath.in_(folders)).count() == len(files_in_folders)
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    # - verify response
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_rm_folder_if_maintenancen_active_after_busy(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # remove_folder
+    files_in_folders: typing.List = models.File.query.filter(models.File.subpath != ".").all()
+    folders: typing.List = list(set(file.subpath for file in files_in_folders))
+    assert folders
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_FOLDER,
+        headers=token,
+        query_string={"project": project.public_id},
+        json=folders
+    )
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.json.get("message") == "Maintenance of DDS is ongoing."
+    assert models.File.query.filter(models.File.subpath.in_(folders)).count() == len(files_in_folders)
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": False},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to not busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
+def test_block_rm_folder_if_maintenancen_active_after_rm(client: flask.testing.FlaskClient, boto3_session) -> None:
+    """Go through all endpoints that the remove command uses.
+
+    Check what happens when maintenance is set to active after upload started.
+    """
+    # Auth
+    username: str = "unituser"
+    token: typing.Dict = UserAuth(USER_CREDENTIALS[username]).token(client)
+    project: models.Project = (
+        models.User.query.filter_by(username="unituser").one_or_none().projects[0]
+    )
+
+    # list_all_active_motds
+    # - new motd
+    new_motd_message: str = "Test motd"
+    new_motd: models.MOTD = models.MOTD(message=new_motd_message)
+    db.session.add(new_motd)
+    db.session.commit()
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.MOTD, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    assert isinstance(response.json.get("motds"), list)
+    assert new_motd_message in response.json.get("motds")[0]["Message"]
+
+    # get_user_name_if_logged_in
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.get(DDSEndpoint.USER_INFO, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    user: models.User = models.User.query.filter_by(username=username).one_or_none()
+    expected_output: typing.Dict = {
+        "email_primary": user.primary_email,
+        "emails_all": [x.email for x in user.emails],
+        "role": user.role,
+        "username": username,
+        "name": user.name,
+    }
+    info: typing.Dict = response.json.get("info")
+    assert info
+    for x, y in expected_output.items():
+        assert x in info
+        assert info[x] == y
+
+    # change_busy_status - busy
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"busy": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # - verify response
+    busy_status_set: bool = response.json.get("ok")
+    assert busy_status_set
+    message: str = response.json.get("message")
+    assert message == f"Project {project.public_id} was set to busy."
+    assert models.Project.query.filter_by(public_id=project.public_id, busy=True).one_or_none()
+
+    # remove_folder
+    # - get folders
+    files_in_folders: typing.List = models.File.query.filter(models.File.subpath != ".").all()
+    folders: typing.List = list(set(file.subpath for file in files_in_folders))
+    assert folders
+    # - request
+    response: werkzeug.test.WrapperTestResponse = client.delete(
+        DDSEndpoint.REMOVE_FOLDER,
+        headers=token,
+        query_string={"project": project.public_id},
+        json=folders
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert not models.File.query.filter(models.File.subpath.in_(folders)).all()
+
+    # Set maintenance to on
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
     # change_busy_status - busy
     # - request
     response: werkzeug.test.WrapperTestResponse = client.put(
