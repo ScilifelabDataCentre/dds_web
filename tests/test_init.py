@@ -820,7 +820,8 @@ def mock_commit():
 #     )
 #     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
 
-# block data put 
+# block data put
+
 
 def test_block_put_if_maintenancen_not_active(client: flask.testing.FlaskClient) -> None:
     """Go through all endpoints that the upload command uses.
@@ -1415,7 +1416,9 @@ def test_block_put_if_maintenancen_active_after_check_previous_upload(
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
 
-def test_block_put_if_maintenancen_active_after_add_file_db(client: flask.testing.FlaskClient) -> None:
+def test_block_put_if_maintenancen_active_after_add_file_db(
+    client: flask.testing.FlaskClient,
+) -> None:
     """Go through all endpoints that the upload command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -1582,9 +1585,13 @@ def test_block_put_if_maintenancen_active_after_add_file_db(client: flask.testin
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
+
 # block data get
 
-def test_block_get_if_maintenancen_not_active(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_get_if_maintenancen_not_active(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the download command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -1646,7 +1653,7 @@ def test_block_get_if_maintenancen_not_active(client: flask.testing.FlaskClient,
     )
     assert response.status_code == http.HTTPStatus.OK
     # - verify response
-    assert response.json.get("private") # not testing encryption stuff here
+    assert response.json.get("private")  # not testing encryption stuff here
 
     # change_busy_status - busy
     # - request
@@ -1667,9 +1674,7 @@ def test_block_get_if_maintenancen_not_active(client: flask.testing.FlaskClient,
     # __collect_file_info_remote
     # - request
     files = models.File.query.filter_by(project_id=project.id).all()
-    with patch(
-        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
-    ) as mock_url:
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url") as mock_url:
         mock_url.return_value = "url"
         response: werkzeug.test.WrapperTestResponse = client.get(
             DDSEndpoint.FILE_INFO,
@@ -1724,7 +1729,10 @@ def test_block_get_if_maintenancen_not_active(client: flask.testing.FlaskClient,
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_get_if_maintenancen_active_after_auth(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_get_if_maintenancen_active_after_auth(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the download command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -1806,9 +1814,7 @@ def test_block_get_if_maintenancen_active_after_auth(client: flask.testing.Flask
     # __collect_file_info_remote
     # - request
     files = models.File.query.filter_by(project_id=project.id).all()
-    with patch(
-        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
-    ) as mock_url:
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url") as mock_url:
         mock_url.return_value = "url"
         response: werkzeug.test.WrapperTestResponse = client.get(
             DDSEndpoint.FILE_INFO,
@@ -1847,7 +1853,10 @@ def test_block_get_if_maintenancen_active_after_auth(client: flask.testing.Flask
     # - verify response
     assert response.json.get("message") == "Maintenance of DDS is ongoing."
 
-def test_block_get_if_maintenancen_active_after_busy(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_get_if_maintenancen_active_after_busy(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the download command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -1909,7 +1918,7 @@ def test_block_get_if_maintenancen_active_after_busy(client: flask.testing.Flask
     )
     assert response.status_code == http.HTTPStatus.OK
     # - verify response
-    assert response.json.get("private") # not testing encryption stuff here
+    assert response.json.get("private")  # not testing encryption stuff here
 
     # change_busy_status - busy
     # - request
@@ -1932,13 +1941,10 @@ def test_block_get_if_maintenancen_active_after_busy(client: flask.testing.Flask
     maintenance.active = True
     db.session.commit()
 
-
     # __collect_file_info_remote
     # - request
     files = models.File.query.filter_by(project_id=project.id).all()
-    with patch(
-        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
-    ) as mock_url:
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url") as mock_url:
         mock_url.return_value = "url"
         response: werkzeug.test.WrapperTestResponse = client.get(
             DDSEndpoint.FILE_INFO,
@@ -1965,7 +1971,10 @@ def test_block_get_if_maintenancen_active_after_busy(client: flask.testing.Flask
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_get_if_maintenancen_active_after_collect_file_info_remote(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_get_if_maintenancen_active_after_collect_file_info_remote(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the download command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2027,7 +2036,7 @@ def test_block_get_if_maintenancen_active_after_collect_file_info_remote(client:
     )
     assert response.status_code == http.HTTPStatus.OK
     # - verify response
-    assert response.json.get("private") # not testing encryption stuff here
+    assert response.json.get("private")  # not testing encryption stuff here
 
     # change_busy_status - busy
     # - request
@@ -2048,9 +2057,7 @@ def test_block_get_if_maintenancen_active_after_collect_file_info_remote(client:
     # __collect_file_info_remote
     # - request
     files = models.File.query.filter_by(project_id=project.id).all()
-    with patch(
-        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
-    ) as mock_url:
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url") as mock_url:
         mock_url.return_value = "url"
         response: werkzeug.test.WrapperTestResponse = client.get(
             DDSEndpoint.FILE_INFO,
@@ -2064,7 +2071,7 @@ def test_block_get_if_maintenancen_active_after_collect_file_info_remote(client:
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
     db.session.commit()
-    
+
     # update_db
     # - file info
     file_to_update: models.File = files[0]
@@ -2110,7 +2117,10 @@ def test_block_get_if_maintenancen_active_after_collect_file_info_remote(client:
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_get_if_maintenancen_active_after_update_db(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_get_if_maintenancen_active_after_update_db(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the download command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2172,7 +2182,7 @@ def test_block_get_if_maintenancen_active_after_update_db(client: flask.testing.
     )
     assert response.status_code == http.HTTPStatus.OK
     # - verify response
-    assert response.json.get("private") # not testing encryption stuff here
+    assert response.json.get("private")  # not testing encryption stuff here
 
     # change_busy_status - busy
     # - request
@@ -2193,9 +2203,7 @@ def test_block_get_if_maintenancen_active_after_update_db(client: flask.testing.
     # __collect_file_info_remote
     # - request
     files = models.File.query.filter_by(project_id=project.id).all()
-    with patch(
-        "dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url"
-    ) as mock_url:
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url") as mock_url:
         mock_url.return_value = "url"
         response: werkzeug.test.WrapperTestResponse = client.get(
             DDSEndpoint.FILE_INFO,
@@ -2254,10 +2262,14 @@ def test_block_get_if_maintenancen_active_after_update_db(client: flask.testing.
     message: str = response.json.get("message")
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
+
 
 # block data rm
 
-def test_block_rm_all_if_maintenancen_not_active(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_rm_all_if_maintenancen_not_active(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2344,7 +2356,9 @@ def test_block_rm_all_if_maintenancen_not_active(client: flask.testing.FlaskClie
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
 
-def test_block_rm_all_if_maintenancen_after_auth(client: flask.testing.FlaskClient, boto3_session) -> None:
+def test_block_rm_all_if_maintenancen_after_auth(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2355,7 +2369,7 @@ def test_block_rm_all_if_maintenancen_after_auth(client: flask.testing.FlaskClie
     project: models.Project = (
         models.User.query.filter_by(username="unituser").one_or_none().projects[0]
     )
-    
+
     # Set maintenance to on
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
@@ -2429,7 +2443,10 @@ def test_block_rm_all_if_maintenancen_after_auth(client: flask.testing.FlaskClie
     assert response.json.get("message") == "Maintenance of DDS is ongoing."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_rm_all_if_maintenancen_active_after_busy(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_rm_all_if_maintenancen_active_after_busy(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2520,7 +2537,10 @@ def test_block_rm_all_if_maintenancen_active_after_busy(client: flask.testing.Fl
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_rm_all_if_maintenancen_active_after_rm(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_rm_all_if_maintenancen_active_after_rm(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2612,7 +2632,10 @@ def test_block_rm_all_if_maintenancen_active_after_rm(client: flask.testing.Flas
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_rm_file_if_maintenancen_after_auth(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_rm_file_if_maintenancen_after_auth(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2623,7 +2646,7 @@ def test_block_rm_file_if_maintenancen_after_auth(client: flask.testing.FlaskCli
     project: models.Project = (
         models.User.query.filter_by(username="unituser").one_or_none().projects[0]
     )
-    
+
     # Set maintenance to on
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
@@ -2682,7 +2705,7 @@ def test_block_rm_file_if_maintenancen_after_auth(client: flask.testing.FlaskCli
         DDSEndpoint.REMOVE_FILE,
         headers=token,
         query_string={"project": project.public_id},
-        json=files
+        json=files,
     )
     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
     assert response.json.get("message") == "Maintenance of DDS is ongoing."
@@ -2701,7 +2724,10 @@ def test_block_rm_file_if_maintenancen_after_auth(client: flask.testing.FlaskCli
     assert response.json.get("message") == "Maintenance of DDS is ongoing."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_rm_file_if_maintenancen_active_after_busy(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_rm_file_if_maintenancen_active_after_busy(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2774,7 +2800,7 @@ def test_block_rm_file_if_maintenancen_active_after_busy(client: flask.testing.F
         DDSEndpoint.REMOVE_FILE,
         headers=token,
         query_string={"project": project.public_id},
-        json=files
+        json=files,
     )
     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
     assert response.json.get("message") == "Maintenance of DDS is ongoing."
@@ -2796,7 +2822,10 @@ def test_block_rm_file_if_maintenancen_active_after_busy(client: flask.testing.F
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_rm_file_if_maintenancen_active_after_rm(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_rm_file_if_maintenancen_active_after_rm(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2864,7 +2893,7 @@ def test_block_rm_file_if_maintenancen_active_after_rm(client: flask.testing.Fla
         DDSEndpoint.REMOVE_FILE,
         headers=token,
         query_string={"project": project.public_id},
-        json=files
+        json=files,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert not models.File.query.filter(models.File.name.in_(files)).all()
@@ -2890,7 +2919,10 @@ def test_block_rm_file_if_maintenancen_active_after_rm(client: flask.testing.Fla
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_rm_folder_if_maintenancen_after_auth(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_rm_folder_if_maintenancen_after_auth(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -2901,7 +2933,7 @@ def test_block_rm_folder_if_maintenancen_after_auth(client: flask.testing.FlaskC
     project: models.Project = (
         models.User.query.filter_by(username="unituser").one_or_none().projects[0]
     )
-    
+
     # Set maintenance to on
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
@@ -2962,11 +2994,13 @@ def test_block_rm_folder_if_maintenancen_after_auth(client: flask.testing.FlaskC
         DDSEndpoint.REMOVE_FOLDER,
         headers=token,
         query_string={"project": project.public_id},
-        json=folders
+        json=folders,
     )
     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
     assert response.json.get("message") == "Maintenance of DDS is ongoing."
-    assert models.File.query.filter(models.File.subpath.in_(folders)).count() == len(files_in_folders)
+    assert models.File.query.filter(models.File.subpath.in_(folders)).count() == len(
+        files_in_folders
+    )
 
     # change_busy_status - busy
     # - request
@@ -2981,7 +3015,10 @@ def test_block_rm_folder_if_maintenancen_after_auth(client: flask.testing.FlaskC
     assert response.json.get("message") == "Maintenance of DDS is ongoing."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_rm_folder_if_maintenancen_active_after_busy(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_rm_folder_if_maintenancen_active_after_busy(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -3055,11 +3092,13 @@ def test_block_rm_folder_if_maintenancen_active_after_busy(client: flask.testing
         DDSEndpoint.REMOVE_FOLDER,
         headers=token,
         query_string={"project": project.public_id},
-        json=folders
+        json=folders,
     )
     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
     assert response.json.get("message") == "Maintenance of DDS is ongoing."
-    assert models.File.query.filter(models.File.subpath.in_(folders)).count() == len(files_in_folders)
+    assert models.File.query.filter(models.File.subpath.in_(folders)).count() == len(
+        files_in_folders
+    )
 
     # change_busy_status - busy
     # - request
@@ -3077,7 +3116,10 @@ def test_block_rm_folder_if_maintenancen_active_after_busy(client: flask.testing
     assert message == f"Project {project.public_id} was set to not busy."
     assert models.Project.query.filter_by(public_id=project.public_id, busy=False).one_or_none()
 
-def test_block_rm_folder_if_maintenancen_active_after_rm(client: flask.testing.FlaskClient, boto3_session) -> None:
+
+def test_block_rm_folder_if_maintenancen_active_after_rm(
+    client: flask.testing.FlaskClient, boto3_session
+) -> None:
     """Go through all endpoints that the remove command uses.
 
     Check what happens when maintenance is set to active after upload started.
@@ -3147,7 +3189,7 @@ def test_block_rm_folder_if_maintenancen_active_after_rm(client: flask.testing.F
         DDSEndpoint.REMOVE_FOLDER,
         headers=token,
         query_string={"project": project.public_id},
-        json=folders
+        json=folders,
     )
     assert response.status_code == http.HTTPStatus.OK
     assert not models.File.query.filter(models.File.subpath.in_(folders)).all()
