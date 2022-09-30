@@ -76,6 +76,7 @@ api.add_resource(
     user.RequestTOTPActivation, "/user/totp/activate", endpoint="request_totp_activation"
 )
 api.add_resource(user.Users, "/users", endpoint="users")
+api.add_resource(user.InvitedUsers, "/user/invites", endpoint="list_invites")
 
 # Super Admins ###################################################################### Super Admins #
 

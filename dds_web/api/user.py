@@ -1245,12 +1245,61 @@ class Users(flask_restful.Resource):
 
         # Unit Personnel and Unit Admins can list all users within their units
         unit_row = auth.current_user().unit
-
+        
         # Get users in unit
         users_to_return = get_users(unit=unit_row)
+        flask.current_app.logger.error({
+            "users": users_to_return,
+            "unit": unit_row.name,
+            "keys": keys,
+            "empty": not users_to_return,
+        })
         return {
             "users": users_to_return,
             "unit": unit_row.name,
             "keys": keys,
             "empty": not users_to_return,
         }
+
+
+class InvitedUsers(flask_restful.Resource):
+    """Provide a list of invited users."""
+
+    @auth.login_required()
+    def get(self):
+        out_model = ("email", "role", "created_at", "public_id")
+        current_user = auth.current_user()
+        if current_user.role == "Super Admin":
+            raw_hits = models.Invite.query.all()
+        elif current_user.role in ("Unit Admin", "Unit Personnel"):
+            unit = models.UnitUser.query.filter_by(username=current_user.username).one().unit
+            owned_projects = models.Project.query.filter_by(unit_id=unit.id).all()
+            unit_projects = set(proj.id for proj in owned_projects)
+            raw_invites = models.Invite.query.all()
+            raw_hits = []
+            for inv in raw_invites:
+                if inv.role == "Researcher" and set(proj.id for proj in inv.projects).intersection(unit_projects):
+                    raw_hits.append(inv)
+                elif inv.role in ("Unit Admin", "Unit Personnel") and inv.unit == unit:
+                    raw_hits.append(inv)
+        elif current_user.role == "Researcher":
+            owned_projects = models.ProjectUsers.query.filter_by(user_id=current_user.username).filter_by(owner=1).all()
+            user_projects = set(proj.project_id for proj in owned_projects)
+            raw_invites = models.Invite.query.all()
+            raw_hits = []
+            for inv in raw_invites:
+                if inv.role == "Researcher" and set(proj.id for proj in inv.projects).intersection(user_projects):
+                    raw_hits.append(inv)
+        else:
+            raw_hits = []
+        hits = []
+        key_map = {"email": "Email", "role": "Role", "created_at": "Created"}
+        key_order = (key_map["email"], key_map["role"], "Projects", key_map["created_at"])
+        for entry in raw_hits:
+            hit = {}
+            for key in key_map.keys():
+                hit[key_map[key]] = getattr(entry, key)
+            hit["Projects"] = [project.public_id for project in entry.projects]
+            hits.append(hit)
+       
+        return {"invites": hits, "keys": key_order}
