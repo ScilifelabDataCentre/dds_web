@@ -582,7 +582,7 @@ def block_if_maintenance():
         project_required_endpoints: typing.List = [
             f"/api/v1{resource}" for resource in ["/file/new", "/file/update", "/proj/busy"]
         ]
-        approved: typing.List = [
+        admin_endpoints: typing.List = [
             f"/api/v1{x}"
             for x in [
                 "/user/info",
@@ -592,12 +592,18 @@ def block_if_maintenance():
                 "/motd/send",
                 "/proj/busy/any",
             ]
-        ] + project_required_endpoints
+        ]
+        approved_endpoints: typing.List = project_required_endpoints + admin_endpoints
+        flask.current_app.logger.debug(project_required_endpoints)
+        flask.current_app.logger.debug(admin_endpoints)
         # Request not to accepted endpoint
         # OR request to accepted endpoint but project not specified or busy
-        if flask.request.path not in approved:
+        current_endpoint: str = flask.request.path
+        if current_endpoint not in approved_endpoints:
+            flask.current_app.logger.debug(f"no it's not there - {flask.request.path}")
             raise MaintenanceOngoingException()
         else:
+            flask.current_app.logger.debug(f"yes it's there - {flask.request.path}")
             req_args = flask.request.args
             if flask.request.path in project_required_endpoints:
                 if not (req_args and (project_id := req_args.get("project"))):
