@@ -151,3 +151,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - New table: `Maintenance`, for keeping track of DDS maintenance mode ([#1284](https://github.com/ScilifelabDataCentre/dds_web/pull/1284))
 - New endpoint: SetMaintenance - set maintenance mode to on or off ([#1286](https://github.com/ScilifelabDataCentre/dds_web/pull/1286))
 - New endpoint: AnyProjectsBusy - check if any projects are busy in DDS ([#1288](https://github.com/ScilifelabDataCentre/dds_web/pull/1288))
+- Bug fix: Fix the Invite.projects database model ([#1290](https://github.com/ScilifelabDataCentre/dds_web/pull/1290))
