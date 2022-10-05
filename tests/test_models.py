@@ -444,14 +444,7 @@ def test_invite_custom_properties(client):
 
     project = models.Project.query.first()
     project_invite = models.ProjectInviteKeys(invite=invite, project=project, key="asd".encode())
-
-    project.project_invite_keys.append(project_invite)
-
     assert invite.projects == [project]
-
-    db.session.delete(invite)
-    db.session.delete(project_invite)
-    db.session.commit()
 
 
 def test_delete_invite(client):
