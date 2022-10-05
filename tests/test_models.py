@@ -436,6 +436,24 @@ def __setup_invite(unit_name, invite_email):
     return invite
 
 
+def test_invite_custom_properties(client):
+    """Confirm that the custom model properties are functional."""
+    unit_name = "Unit 1"
+    invite_email = "proj_invite@example.com"
+    invite = __setup_invite(unit_name, invite_email)
+
+    project = models.Project.query.first()
+    project_invite = models.ProjectInviteKeys(invite=invite, project=project, key="asd".encode())
+
+    project.project_invite_keys.append(project_invite)
+
+    assert invite.projects == [project]
+
+    db.session.delete(invite)
+    db.session.delete(project_invite)
+    db.session.commit()
+
+
 def test_delete_invite(client):
     """
     Invite row deleted
