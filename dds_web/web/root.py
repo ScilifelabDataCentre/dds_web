@@ -23,6 +23,7 @@ pages = Blueprint("pages", __name__)
 def home():
     """Home page."""
     form = forms.LoginForm()
+    flask.abort(404)
     return render_template("home.html", form=form)
 
 
