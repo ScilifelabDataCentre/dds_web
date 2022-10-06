@@ -1044,3 +1044,74 @@ def test_invite_users_should_have_different_timestamps(client):
         new_time_2,
         new_time_3,
     ]
+
+
+def test_list_invites(client):
+    """
+    Confirm that users can list relevant invites
+
+    * Researcher who do not own any projects cannot see invites
+    * Researcher who own a project can see invites for that project
+    * Unit admin|personnel can see invites to any projects owned by the unit, and invites to the unit
+    * Superadmin can see any invites
+    * All invites contain columns for email, role, created_at, public_id
+    * Invites for unit admin|personnel also includes unit column for superadmin
+    """
+
+    def invite_user(user_data: str, as_user: str) -> dict:
+        params = "?"
+        if "project" in user_data:
+            params += "project=" + user_data["project"]
+        return client.post(
+            tests.DDSEndpoint.USER_ADD + params,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS[as_user]).token(client),
+            json=user_data,
+        )
+
+    def get_list(as_user) -> dict:
+        return client.get(
+            tests.DDSEndpoint.LIST_INVITES,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS[as_user]).token(client),
+        )
+
+    unit_invite = dict(new_unit_user)
+    unit_invite["unit"] = "Unit 1"
+    invite_user(unit_invite, "unitadmin")
+    invite_user(new_super_admin, "superadmin")
+    invite_user(first_new_user_existing_project, "unitadmin")
+
+    import logging
+    from dds_web.database import models
+
+    response = get_list("superadmin")
+    assert "invites" in response.json
+    assert len(response.json["invites"]) == 5
+    for entry in response.json["invites"]:
+        for key in ["Email", "Role", "Projects", "Created"]:
+            assert key in entry
+
+    logging.error(response.json)
+    for invite in models.Invite.query.all():
+        logging.error(invite.__dict__)
+    for invite in models.ProjectInviteKeys.query.all():
+        logging.error(invite.__dict__)
+
+    response = get_list("unitadmin")
+    assert "invites" in response.json
+    assert len(response.json["invites"]) == 2
+    for entry in response.json["invites"]:
+        for key in ["Email", "Role", "Projects", "Created"]:
+            assert key in entry
+        assert "Unit" not in entry
+
+    response = get_list("projectowner")
+    assert "invites" in response.json
+    assert len(response.json["invites"]) == 1
+    for entry in response.json["invites"]:
+        for key in ["Email", "Role", "Projects", "Created"]:
+            assert key in entry
+        assert "Unit" not in entry
+
+    response = get_list("researchuser")
+    assert "invites" in response.json
+    assert len(response.json["invites"]) == 0
