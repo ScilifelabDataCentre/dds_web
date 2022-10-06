@@ -1087,14 +1087,10 @@ def test_list_invites(client):
     assert "invites" in response.json
     assert len(response.json["invites"]) == 5
     for entry in response.json["invites"]:
-        for key in ["Email", "Role", "Projects", "Created"]:
+        for key in ["Email", "Role", "Projects", "Created", "Unit"]:
             assert key in entry
-
-    logging.error(response.json)
-    for invite in models.Invite.query.all():
-        logging.error(invite.__dict__)
-    for invite in models.ProjectInviteKeys.query.all():
-        logging.error(invite.__dict__)
+        if entry["Role"] in ("Unit Admin", "Unit Personnel"):
+            assert entry["Unit"] == "Unit 1"
 
     response = get_list("unitadmin")
     assert "invites" in response.json
