@@ -1091,6 +1091,7 @@ def test_list_invites(client):
             assert key in entry
         if entry["Role"] in ("Unit Admin", "Unit Personnel"):
             assert entry["Unit"] == "Unit 1"
+    assert response.json.get("keys"]) == ["Email", "Unit", "Role", "Projects", "Created"]
 
     response = get_list("unitadmin")
     assert "invites" in response.json
@@ -1099,6 +1100,7 @@ def test_list_invites(client):
         for key in ["Email", "Role", "Projects", "Created"]:
             assert key in entry
         assert "Unit" not in entry
+    assert response.json.get("keys"]) == ["Email", "Role", "Projects", "Created"]
 
     response = get_list("projectowner")
     assert "invites" in response.json
@@ -1107,7 +1109,9 @@ def test_list_invites(client):
         for key in ["Email", "Role", "Projects", "Created"]:
             assert key in entry
         assert "Unit" not in entry
+    assert response.json.get("keys"]) == ["Email", "Role", "Projects", "Created"]
 
     response = get_list("researchuser")
     assert "invites" in response.json
     assert len(response.json["invites"]) == 0
+    assert response.json.get("keys"]) == ["Email", "Role", "Projects", "Created"]
