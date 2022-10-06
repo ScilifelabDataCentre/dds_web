@@ -251,6 +251,8 @@ class Project(db.Model):
     released = db.Column(db.DateTime(), nullable=True)
     is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, index=True)
     done = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    busy_downloading = db.Column(db.Boolean, unique=False, nullable=False, default=False)
+    busy_altering = db.Column(db.Boolean, unique=False, nullable=False, default=False)
     busy = db.Column(db.Boolean, unique=False, nullable=False, default=False)
 
     # Foreign keys & relationships
@@ -330,6 +332,11 @@ class Project(db.Model):
 
         return len(self.files)
 
+    @property
+    def is_busy(self):
+        """Check if project is currently busy."""
+        return (self.busy_altering or self.busy_downloading)
+        
     def __str__(self):
         """Called by str(), creates representation of object"""
 

@@ -89,14 +89,14 @@ class ProjectStatus(flask_restful.Resource):
         dds_web.utils.verify_project_access(project=project)
 
         # Cannot change project status if project is busy
-        if project.busy:
+        if project.is_busy:
             raise ProjectBusyError(
                 message=(
                     f"The project '{project_id}' is currently busy with upload/download/deletion. "
                     "Please try again later. \n\nIf you know the project is not busy, contact support."
                 )
             )
-        self.set_busy(project=project, busy=True)
+        self.set_altering(project=project, altering=True)
 
         try:
             # Check if valid status
@@ -142,7 +142,7 @@ class ProjectStatus(flask_restful.Resource):
 
             try:
                 project.project_statuses.append(new_status_row)
-                project.busy = False
+                project.busy_altering = False
                 db.session.commit()
             except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
                 flask.current_app.logger.exception(err)
@@ -177,7 +177,7 @@ class ProjectStatus(flask_restful.Resource):
                     f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
                 )
         except:
-            self.set_busy(project=project, busy=False)
+            self.set_altering(project=project, altering=False)
             raise
 
         return {"message": return_message}
@@ -190,6 +190,15 @@ class ProjectStatus(flask_restful.Resource):
             f"Setting busy status. Project: '{project.public_id}', Busy: {busy}"
         )
         project.busy = busy
+
+    @staticmethod
+    @dbsession
+    def set_altering(project: models.Project, altering: bool) -> None:
+        """Set project as altering (upload/delete/status change)."""
+        flask.current_app.logger.info(
+            f"Setting project '{project.public_id}' altering status (status/upload/delete) to: {altering}"
+        )
+        project.busy_altering = altering
 
     def check_transition_possible(self, current_status, new_status):
         """Check if the transition is valid."""
