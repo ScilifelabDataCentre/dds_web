@@ -1248,14 +1248,6 @@ class Users(flask_restful.Resource):
 
         # Get users in unit
         users_to_return = get_users(unit=unit_row)
-        flask.current_app.logger.error(
-            {
-                "users": users_to_return,
-                "unit": unit_row.name,
-                "keys": keys,
-                "empty": not users_to_return,
-            }
-        )
         return {
             "users": users_to_return,
             "unit": unit_row.name,
