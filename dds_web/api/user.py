@@ -1294,12 +1294,19 @@ class InvitedUsers(flask_restful.Resource):
             raw_hits = []
         hits = []
         key_map = {"email": "Email", "role": "Role", "created_at": "Created"}
-        key_order = (key_map["email"], key_map["role"], "Projects", key_map["created_at"])
+        key_order = [key_map["email"], key_map["role"], "Projects", key_map["created_at"]]
+        if current_user.role == "Super Admin":
+            key_map["unit"] = "Unit"
+            key_order = key_order.insert(1, "Unit")
+
         for entry in raw_hits:
             hit = {}
             for key in key_map.keys():
                 hit[key_map[key]] = getattr(entry, key)
+
             hit["Projects"] = [project.public_id for project in entry.projects]
+            if "Unit" in hit and hit["Unit"]:
+                hit["Unit"] = hit["Unit"].name
             hits.append(hit)
        
         return {"invites": hits, "keys": key_order}
