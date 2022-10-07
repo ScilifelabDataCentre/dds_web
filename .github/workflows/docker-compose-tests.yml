@@ -8,6 +8,9 @@ on:
 
 jobs:
   pytest:
+    concurrency:
+      group: ${{ github.ref }}-pytest
+      cancel-in-progress: true
     runs-on: ubuntu-latest
 
     steps:
