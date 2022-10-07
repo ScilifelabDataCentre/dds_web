@@ -1099,6 +1099,8 @@ def test_list_invites(client):
     for entry in response.json["invites"]:
         for key in ["Email", "Role", "Projects", "Created"]:
             assert key in entry
+        if entry["Role"] in ("Unit Admin", "Unit Personnel"):
+            assert len(entry["Projects"]) == 5
         assert "Unit" not in entry
     assert response.json.get("keys") == ["Email", "Role", "Projects", "Created"]
 
@@ -1112,6 +1114,6 @@ def test_list_invites(client):
     assert response.json.get("keys") == ["Email", "Role", "Projects", "Created"]
 
     response = get_list("researchuser")
-    assert "invites" in response.json
-    assert len(response.json["invites"]) == 0
-    assert response.json.get("keys") == ["Email", "Role", "Projects", "Created"]
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    assert not response.json.get("invites")
+    assert not response.json.get("keys")
