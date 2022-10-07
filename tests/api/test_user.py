@@ -22,8 +22,6 @@ first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
 first_new_owner = {**first_new_email, "role": "Project Owner"}
 first_new_user_existing_project = {**first_new_user, "project": "public_project_id"}
-first_new_user_existing_project2 = {**first_new_user, "project": "second_public_project_id"}
-first_new_user_existing_project3 = {**first_new_user, "project": "unit2testing"}
 first_new_user_extra_args = {**first_new_user, "extra": "test"}
 first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
 first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_new_user["role"]}
@@ -1082,9 +1080,14 @@ def test_list_invites(client):
     unit_invite["unit"] = "The league of the extinct gentlemen"
     invite_user(unit_invite, "superadmin")
     invite_user(new_super_admin, "superadmin")
-    invite_user(first_new_user_existing_project, "unitadmin")
-    invite_user(first_new_user_existing_project2, "unitadmin")
-    invite_user(first_new_user_existing_project3, "delete_me_unituser")
+
+
+    researcher_to_project = dict(first_new_user_existing_project)
+    invite_user(researcher_to_project, "unitadmin")
+    researcher_to_project["project"] = "second_public_project_id"
+    invite_user(researcher_to_project, "unitadmin")
+    researcher_to_project["project"] = "unit2testing"
+    invite_user(researcher_to_project, "unitadmin")
 
     response = get_list("superadmin")
     assert "invites" in response.json
