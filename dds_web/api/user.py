@@ -1300,12 +1300,11 @@ class InvitedUsers(flask_restful.Resource):
             raw_invites = models.Invite.query.all()
             hits = []
             for inv in raw_invites:
-                flask.current_app.logger.error(set(proj.id for proj in inv.projects))
-                flask.current_app.logger.error(inv.role)
                 if inv.role == "Researcher" and set(proj.id for proj in inv.projects).intersection(
                     unit_projects
                 ):
                     entry = row_to_dict(inv)
+                    # do not list projects the unit does not own
                     entry["Projects"] = [
                         project for project in entry["Projects"] if project in unit_projects_pubid
                     ]
@@ -1335,6 +1334,7 @@ class InvitedUsers(flask_restful.Resource):
                     user_projects
                 ):
                     entry = row_to_dict(inv)
+                    # do not list projects the current user does not own
                     entry["Projects"] = [
                         project for project in entry["Projects"] if project in user_projects_pubid
                     ]
