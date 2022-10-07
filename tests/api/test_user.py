@@ -22,6 +22,8 @@ first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
 first_new_owner = {**first_new_email, "role": "Project Owner"}
 first_new_user_existing_project = {**first_new_user, "project": "public_project_id"}
+first_new_user_existing_project2 = {**first_new_user, "project": "second_public_project_id"}
+first_new_user_existing_project3 = {**first_new_user, "project": "unit2testing"}
 first_new_user_extra_args = {**first_new_user, "extra": "test"}
 first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
 first_new_user_invalid_email = {"email": "first_invalid_email", "role": first_new_user["role"]}
@@ -1061,7 +1063,7 @@ def test_list_invites(client):
     def invite_user(user_data: str, as_user: str) -> dict:
         params = "?"
         if "project" in user_data:
-            params += "project=" + user_data["project"]
+            params += f"project={user_data['project']}&"
         return client.post(
             tests.DDSEndpoint.USER_ADD + params,
             headers=tests.UserAuth(tests.USER_CREDENTIALS[as_user]).token(client),
@@ -1077,8 +1079,12 @@ def test_list_invites(client):
     unit_invite = dict(new_unit_user)
     unit_invite["unit"] = "Unit 1"
     invite_user(unit_invite, "unitadmin")
+    unit_invite["unit"] = "The league of the extinct gentlemen"
+    invite_user(unit_invite, "superadmin")
     invite_user(new_super_admin, "superadmin")
     invite_user(first_new_user_existing_project, "unitadmin")
+    invite_user(first_new_user_existing_project2, "unitadmin")
+    invite_user(first_new_user_existing_project3, "delete_me_unituser")
 
     response = get_list("superadmin")
     assert "invites" in response.json
@@ -1088,7 +1094,7 @@ def test_list_invites(client):
             assert key in entry
         if entry["Role"] in ("Unit Admin", "Unit Personnel"):
             assert entry["Unit"] == "Unit 1"
-    assert response.json.get("keys") == ["Email", "Unit", "Role", "Projects", "Created"]
+    assert response.json.get("keys", []) == ["Email", "Unit", "Role", "Projects", "Created"]
 
     response = get_list("unitadmin")
     assert "invites" in response.json
@@ -1099,9 +1105,11 @@ def test_list_invites(client):
         if entry["Role"] in ("Unit Admin", "Unit Personnel"):
             assert len(entry["Projects"]) == 5
         elif entry["Role"] == "Researcher":
-            assert len(entry["Projects"]) == 1
+            assert len(entry["Projects"]) == 2
+        elif entry["Role"] == "Superadmin":  # Should never happen
+            assert False
         assert "Unit" not in entry
-    assert response.json.get("keys") == ["Email", "Role", "Projects", "Created"]
+    assert response.json.get("keys", []) == ["Email", "Role", "Projects", "Created"]
 
     response = get_list("projectowner")
     assert "invites" in response.json
@@ -1111,7 +1119,7 @@ def test_list_invites(client):
             assert key in entry
         assert "Unit" not in entry
         assert len(entry["Projects"]) == 1
-    assert response.json.get("keys") == ["Email", "Role", "Projects", "Created"]
+    assert response.json.get("keys", []) == ["Email", "Role", "Projects", "Created"]
 
     response = get_list("researchuser")
     assert response.status_code == http.HTTPStatus.FORBIDDEN
