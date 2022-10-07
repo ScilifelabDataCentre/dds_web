@@ -1259,16 +1259,17 @@ class Users(flask_restful.Resource):
 class InvitedUsers(flask_restful.Resource):
     """Provide a list of invited users."""
 
-    @auth.login_required()
+    @auth.login_required
     def get(self):
-        out_model = ("email", "role", "created_at", "public_id")
         current_user = auth.current_user()
         if current_user.role == "Super Admin":
+            # superadmin can see all invites
             raw_hits = models.Invite.query.all()
         elif current_user.role in ("Unit Admin", "Unit Personnel"):
-            unit = models.UnitUser.query.filter_by(username=current_user.username).one().unit
-            owned_projects = models.Project.query.filter_by(unit_id=unit.id).all()
-            unit_projects = set(proj.id for proj in owned_projects)
+            # unit users can see all invites to the unit and any projects it owns
+            # start by getting all invites, then filter by project and unit
+            unit = current_user.unit
+            unit_projects = set(proj.id for proj in unit.projects)
             raw_invites = models.Invite.query.all()
             raw_hits = []
             for inv in raw_invites:
@@ -1279,11 +1280,15 @@ class InvitedUsers(flask_restful.Resource):
                 elif inv.role in ("Unit Admin", "Unit Personnel") and inv.unit == unit:
                     raw_hits.append(inv)
         elif current_user.role == "Researcher":
+            # researchers can see invitations to projects where they are the owner
             owned_projects = (
                 models.ProjectUsers.query.filter_by(user_id=current_user.username)
                 .filter_by(owner=1)
                 .all()
             )
+            if not owned_projects:
+                raise ddserr.RoleException(message="You need to have the role 'Project Owner' in at least one project to be able to list any invites.")
+            # use set intersection to find overlaps between projects for invite and current_user
             user_projects = set(proj.project_id for proj in owned_projects)
             raw_invites = models.Invite.query.all()
             raw_hits = []
@@ -1293,23 +1298,29 @@ class InvitedUsers(flask_restful.Resource):
                 ):
                     raw_hits.append(inv)
         else:
+            # in case further roles are defined in the future
             raw_hits = []
+
+        # columns to return, map to displayed column names
         hits = []
-        key_map = {"email": "Email", "role": "Role", "created_at": "Created"}
-        key_order = [key_map["email"], key_map["role"], "Projects", key_map["created_at"]]
+        key_map = {"email": "Email", "role": "Role", "created_at": "Created", "projects": "Projects"}
+        key_order = [key_map["email"], key_map["role"], key_map["projects"], key_map["created_at"]]
+        # superadmin also has a unit column
         if current_user.role == "Super Admin":
             key_map["unit"] = "Unit"
             key_order.insert(1, "Unit")
 
+        # extract the chosen columns for each entry
         for entry in raw_hits:
             hit = {}
             for key in key_map.keys():
                 hit[key_map[key]] = getattr(entry, key) or ""
 
-            hit["Projects"] = [project.public_id for project in entry.projects]
-            if "Unit" in hit and hit["Unit"]:
+            # represent projects with public_id
+            hit["Projects"] = [project.public_id for project in hit["Projects"]] 
+            # represent unit with name
+            if hit.get("Unit"):
                 hit["Unit"] = hit["Unit"].name
-
             hits.append(hit)
 
         return {"invites": hits, "keys": key_order}
