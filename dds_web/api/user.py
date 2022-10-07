@@ -1264,7 +1264,12 @@ class InvitedUsers(flask_restful.Resource):
         current_user = auth.current_user()
 
         # columns to return, map to displayed column names
-        key_map = {"email": "Email", "role": "Role", "created_at": "Created", "projects": "Projects"}
+        key_map = {
+            "email": "Email",
+            "role": "Role",
+            "created_at": "Created",
+            "projects": "Projects",
+        }
         key_order = [key_map["email"], key_map["role"], key_map["projects"], key_map["created_at"]]
         if current_user.role == "Super Admin":
             key_map["unit"] = "Unit"
@@ -1276,7 +1281,7 @@ class InvitedUsers(flask_restful.Resource):
             for key in key_map.keys():
                 hit[key_map[key]] = getattr(entry, key) or ""
             # represent projects with public_id
-            hit["Projects"] = [project.public_id for project in hit["Projects"]] 
+            hit["Projects"] = [project.public_id for project in hit["Projects"]]
             # represent unit with name
             if hit.get("Unit"):
                 hit["Unit"] = hit["Unit"].name
@@ -1299,9 +1304,11 @@ class InvitedUsers(flask_restful.Resource):
                 flask.current_app.logger.error(inv.role)
                 if inv.role == "Researcher" and set(proj.id for proj in inv.projects).intersection(
                     unit_projects
-                ):                    
+                ):
                     entry = row_to_dict(inv)
-                    entry["Projects"] = [project for project in entry["Projects"] if project in unit_projects_pubid]
+                    entry["Projects"] = [
+                        project for project in entry["Projects"] if project in unit_projects_pubid
+                    ]
                     hits.append(entry)
                 elif inv.role in ("Unit Admin", "Unit Personnel") and inv.unit == unit:
                     hits.append(row_to_dict(inv))
@@ -1313,8 +1320,11 @@ class InvitedUsers(flask_restful.Resource):
                 .filter_by(owner=1)
                 .all()
             )
+
             if not project_connections:
-                raise ddserr.RoleException(message="You need to have the role 'Project Owner' in at least one project to be able to list any invites.")
+                raise ddserr.RoleException(
+                    message="You need to have the role 'Project Owner' in at least one project to be able to list any invites."
+                )
             # use set intersection to find overlaps between projects for invite and current_user
             user_projects = set(entry.project.id for entry in project_connections)
             user_projects_pubid = set(entry.project.public_id for entry in project_connections)
@@ -1325,7 +1335,9 @@ class InvitedUsers(flask_restful.Resource):
                     user_projects
                 ):
                     entry = row_to_dict(inv)
-                    entry["Projects"] = [project for project in entry["Projects"] if project in user_projects_pubid]
+                    entry["Projects"] = [
+                        project for project in entry["Projects"] if project in user_projects_pubid
+                    ]
                     hits.append(entry)
         else:
             # in case further roles are defined in the future

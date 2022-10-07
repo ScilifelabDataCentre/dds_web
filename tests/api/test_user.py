@@ -1081,7 +1081,6 @@ def test_list_invites(client):
     invite_user(unit_invite, "superadmin")
     invite_user(new_super_admin, "superadmin")
 
-
     researcher_to_project = dict(first_new_user_existing_project)
     invite_user(researcher_to_project, "unitadmin")
     researcher_to_project["project"] = "second_public_project_id"
