@@ -153,5 +153,5 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - New endpoint: AnyProjectsBusy - check if any projects are busy in DDS ([#1288](https://github.com/ScilifelabDataCentre/dds_web/pull/1288))
 
 ## Sprint (2022-09-30 - 2022-10-14)
-
+- Bug fix: Fix the Invite.projects database model ([#1290](https://github.com/ScilifelabDataCentre/dds_web/pull/1290))
 - Display different information on who to contact depending on user role ([#1292](https://github.com/ScilifelabDataCentre/dds_web/pull/1292))
