@@ -1080,9 +1080,6 @@ def test_list_invites(client):
     invite_user(new_super_admin, "superadmin")
     invite_user(first_new_user_existing_project, "unitadmin")
 
-    import logging
-    from dds_web.database import models
-
     response = get_list("superadmin")
     assert "invites" in response.json
     assert len(response.json["invites"]) == 5
@@ -1101,6 +1098,8 @@ def test_list_invites(client):
             assert key in entry
         if entry["Role"] in ("Unit Admin", "Unit Personnel"):
             assert len(entry["Projects"]) == 5
+        elif entry["Role"] == "Researcher":
+            assert len(entry["Projects"]) == 1
         assert "Unit" not in entry
     assert response.json.get("keys") == ["Email", "Role", "Projects", "Created"]
 
@@ -1111,6 +1110,7 @@ def test_list_invites(client):
         for key in ["Email", "Role", "Projects", "Created"]:
             assert key in entry
         assert "Unit" not in entry
+        assert len(entry["Projects"]) == 1
     assert response.json.get("keys") == ["Email", "Role", "Projects", "Created"]
 
     response = get_list("researchuser")
