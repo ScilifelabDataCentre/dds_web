@@ -17,12 +17,13 @@
 - [ ] Bug fix (non-breaking)
 - [ ] New feature (non-breaking)
 - [ ] Breaking change (breaking, will cause existing functionality to not work as expected)
+- [ ] Tests (only)
 
 # Checklist:
 
 ## General
 
-- [ ] [Changelog](../CHANGELOG.md): New row added
+- [ ] [Changelog](../CHANGELOG.md): New row added. Not needed when PR includes _only_ tests.
 - [ ] Database schema has changed
   - [ ] A new migration is included in the PR
   - [ ] The change does not require a migration
