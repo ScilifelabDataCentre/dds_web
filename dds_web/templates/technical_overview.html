@@ -1,13 +1,6 @@
 {% extends "base.html" %}
 
 {% block body %}
-
-{% if g.current_user and g.role and g.role in ["Unit Admin", "Unit Personnel", "Super Admin"] %} 
-    {% set contact = "datacentre@scilifelab.se" %}
-{% else %}
-    {% set contact = "" %}
-{% endif %}
-
     <div class="container p-0" style="margin-top: 30px; font-size: medium;">
         <h2>Technical Overview of the Data Delivery System</h2>
         <p>The technical overview provides an overview of how the DDS works and is meant to be used. The document can be found on GitHub or downloaded as a PDF.</p>
