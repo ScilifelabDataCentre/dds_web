@@ -1295,7 +1295,7 @@ class InvitedUsers(flask_restful.Resource):
                 entry = row_to_dict(inv)
                 if inv.role == "Super Admin":
                     entry["Projects"] = "----"
-                hits.append(entry)            
+                hits.append(entry)
 
         elif current_user.role in ("Unit Admin", "Unit Personnel"):
             # unit users can see all invites to the unit and any projects it owns
