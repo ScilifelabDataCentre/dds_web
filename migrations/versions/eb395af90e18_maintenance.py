@@ -24,6 +24,9 @@ def upgrade():
         sa.Column("active", sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
+    op.execute(
+        "INSERT INTO maintenance (active) VALUES (1);"
+    )
     # ### end Alembic commands ###
 
 

@@ -310,6 +310,17 @@ def create_app(testing=False, database_uri=None):
 @flask.cli.with_appcontext
 def fill_db_wrapper(db_type):
     from dds_web.database import models
+    
+    if db_type != "production":
+        maintenance_rows: models.Maintenance = models.Maintenance.query.all()
+        if len(maintenance_rows) > 1:
+            for row in old_maintenance[1::]:
+                db.session.delete(row)
+            maintenance_rows[0].active = False
+        else:
+            maintenance_row: models.Maintenance = models.Maintenance(active=False)
+            db.session.add(maintenance_row)
+        db.session.commit()
 
     maintenance_active: bool = db_type == "production"
     flask.current_app.logger.info(
