@@ -338,16 +338,6 @@ def fill_db_wrapper(db_type):
             db.session.commit()
             flask.current_app.logger.info(f"Super Admin added: {username} ({email})")
     else:
-        maintenance_rows: models.Maintenance = models.Maintenance.query.all()
-        if len(maintenance_rows) > 1:
-            for row in maintenance_rows[1::]:
-                db.session.delete(row)
-            maintenance_rows[0].active = False
-        else:
-            maintenance_row: models.Maintenance = models.Maintenance(active=False)
-            db.session.add(maintenance_row)
-        db.session.commit()
-
         flask.current_app.logger.info("Initializing development db")
         assert flask.current_app.config["USE_LOCAL_DB"]
 
