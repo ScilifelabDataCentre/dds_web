@@ -21,6 +21,7 @@ from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
+    args_required,
     logging_bind_request,
     dbsession,
     json_required,
@@ -945,3 +946,30 @@ class ProjectBusy(flask_restful.Resource):
             "ok": True,
             "message": f"Project {project_id} was set to {'busy' if set_to_busy else 'not busy'}.",
         }
+
+class ProjectUpdating(flask_restful.Resource):
+    """Set project as updating: upload / rm."""
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    @logging_bind_request
+    @dbsession
+    @json_required
+    def put(self):
+        """Change updating status."""
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
+
+        # Get busy or not busy
+        set_to_updating = flask.request.json.get("busy")
+        if set_to_updating is None or not isinstance(set_to_updating, bool):
+            raise DDSArgumentError(message="Missing information about setting busy or not busy.")
+        
+        if set_to_updating and project.is_busy: 
+            return {"ok": False, "message": "The project is already busy, cannot proceed."}
+        elif not set_to_updating and not project.is_busy:
+            return {"ok": False, "message": "The project is already not busy, cannot proceed."}
+        else:
+            project.busy_updating = set_to_updating
+
+        return {"ok": True, "message": f"Project {project_id} was set to {'busy' if set_to_updating else 'not busy'}."}
