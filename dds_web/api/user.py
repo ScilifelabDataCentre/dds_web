@@ -1289,7 +1289,13 @@ class InvitedUsers(flask_restful.Resource):
 
         if current_user.role == "Super Admin":
             # superadmin can see all invites
-            hits = [row_to_dict(entry) for entry in models.Invite.query.all()]
+            raw_invites = models.Invite.query.all()
+            hits = []
+            for inv in raw_invites:
+                entry = row_to_dict(inv)
+                if inv.role == "Super Admin":
+                    entry["Projects"] = "----"
+                hits.append(entry)            
 
         elif current_user.role in ("Unit Admin", "Unit Personnel"):
             # unit users can see all invites to the unit and any projects it owns
