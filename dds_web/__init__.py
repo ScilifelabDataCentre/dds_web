@@ -207,7 +207,6 @@ def create_app(testing=False, database_uri=None):
             elif flask_login.current_user.is_authenticated:
                 flask.g.current_user = flask_login.current_user.username
                 flask.g.current_user_emails = flask_login.current_user.emails
-                flask.g.role = flask_login.current_user.role
             elif flask.request.authorization:
                 flask.g.current_user = flask.request.authorization.get("username")
                 flask.g.current_user_emails = flask.request.authorization.get("emails")
