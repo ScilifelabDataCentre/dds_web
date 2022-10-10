@@ -314,7 +314,7 @@ def fill_db_wrapper(db_type):
     if db_type != "production":
         maintenance_rows: models.Maintenance = models.Maintenance.query.all()
         if len(maintenance_rows) > 1:
-            for row in old_maintenance[1::]:
+            for row in maintenance_rows[1::]:
                 db.session.delete(row)
             maintenance_rows[0].active = False
         else:
