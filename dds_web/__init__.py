@@ -311,17 +311,6 @@ def create_app(testing=False, database_uri=None):
 def fill_db_wrapper(db_type):
     from dds_web.database import models
 
-    if db_type != "production":
-        maintenance_rows: models.Maintenance = models.Maintenance.query.all()
-        if len(maintenance_rows) > 1:
-            for row in maintenance_rows[1::]:
-                db.session.delete(row)
-            maintenance_rows[0].active = False
-        else:
-            maintenance_row: models.Maintenance = models.Maintenance(active=False)
-            db.session.add(maintenance_row)
-        db.session.commit()
-
     if db_type == "production":
         username = flask.current_app.config["SUPERADMIN_USERNAME"]
         password = flask.current_app.config["SUPERADMIN_PASSWORD"]
@@ -349,6 +338,16 @@ def fill_db_wrapper(db_type):
             db.session.commit()
             flask.current_app.logger.info(f"Super Admin added: {username} ({email})")
     else:
+        maintenance_rows: models.Maintenance = models.Maintenance.query.all()
+        if len(maintenance_rows) > 1:
+            for row in maintenance_rows[1::]:
+                db.session.delete(row)
+            maintenance_rows[0].active = False
+        else:
+            maintenance_row: models.Maintenance = models.Maintenance(active=False)
+            db.session.add(maintenance_row)
+        db.session.commit()
+
         flask.current_app.logger.info("Initializing development db")
         assert flask.current_app.config["USE_LOCAL_DB"]
 
