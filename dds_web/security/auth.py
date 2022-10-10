@@ -77,6 +77,8 @@ def get_user_roles_common(user):
     has been specified, the user role is returned as Project Owner. Otherwise, it is Researcher.
 
     For all other users, return the value of the role set in the database table.
+
+    Not run if the endpoint accepts all roles.
     """
     if flask.request.path in "/api/v1/proj/create" and user.role not in [
         "Unit Admin",

@@ -582,6 +582,9 @@ def test_delete_version(client):
 def test_new_maintenance_active(client: flask.testing.FlaskClient) -> None:
     """Create a new maintenance row."""
     # Verify no maintenance row yet
+    assert models.Maintenance.query.count() == 1
+    models.Maintenance.query.delete()
+    db.session.commit()
     assert models.Maintenance.query.count() == 0
 
     # Create row
@@ -597,6 +600,9 @@ def test_new_maintenance_active(client: flask.testing.FlaskClient) -> None:
 def test_new_maintenance_inactive(client: flask.testing.FlaskClient) -> None:
     """Create a new maintenance row."""
     # Verify no maintenance row yet
+    assert models.Maintenance.query.count() == 1
+    models.Maintenance.query.delete()
+    db.session.commit()
     assert models.Maintenance.query.count() == 0
 
     # Create row
