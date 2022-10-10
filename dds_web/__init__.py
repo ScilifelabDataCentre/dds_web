@@ -311,6 +311,21 @@ def create_app(testing=False, database_uri=None):
 def fill_db_wrapper(db_type):
     from dds_web.database import models
 
+    maintenance_active: bool = db_type == "production"
+    flask.current_app.logger.info(
+        f"Setting maintenance as {'active' if maintenance_active else 'inactive'}..."
+    )
+
+    old_maintenance: models.Maintenance = models.Maintenance.query.all()
+    if len(old_maintenance) > 1:
+        for row in old_maintenance[1::]:
+            db.session.delete(row)
+        old_maintenance[0].active = maintenance_active
+    else:
+        new_maintenance: models.Maintenance = models.Maintenance(active=maintenance_active)
+        db.session.add(new_maintenance)
+    db.session.commit()
+
     if db_type == "production":
         username = flask.current_app.config["SUPERADMIN_USERNAME"]
         password = flask.current_app.config["SUPERADMIN_PASSWORD"]
