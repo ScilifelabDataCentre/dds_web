@@ -155,3 +155,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-09-30 - 2022-10-14)
 
 - Bug fix: Fix the Invite.projects database model ([#1290](https://github.com/ScilifelabDataCentre/dds_web/pull/1290))
+- New endpoint: ListInvites - list invites ([#1294](https://github.com/ScilifelabDataCentre/dds_web/pull/1294))
