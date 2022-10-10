@@ -233,7 +233,7 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
 def test_block_if_maintenance_active_encryptedtoken_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Get maintenance row and set to active
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
@@ -253,7 +253,7 @@ def test_block_if_maintenance_active_encryptedtoken_not_approved(
 def test_block_if_maintenance_active_secondfactor_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Requests with wrong 2FA should be blocked if maintenance is active."""
     # Get maintenance row and set to active
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
@@ -269,7 +269,7 @@ def test_block_if_maintenance_active_secondfactor_not_approved(
 
 
 def test_block_if_maintenance_active_s3proj_not_approved(client: flask.testing.FlaskClient) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """More requests to be blocked if maintenance is active."""
     # Get maintenance row and set to active
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
@@ -286,7 +286,7 @@ def test_block_if_maintenance_active_s3proj_not_approved(client: flask.testing.F
 def test_block_if_maintenance_active_fileslist_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """More requests to be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["researchuser"]).token(client)
 
@@ -308,7 +308,7 @@ def test_block_if_maintenance_active_fileslist_not_approved(
 def test_block_if_maintenance_active_filematch_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """More requests to be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -330,7 +330,7 @@ def test_block_if_maintenance_active_filematch_not_approved(
 def test_block_if_maintenance_active_removefile_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -354,7 +354,7 @@ def test_block_if_maintenance_active_removefile_not_approved(
 def test_block_if_maintenance_active_removedir_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -378,7 +378,7 @@ def test_block_if_maintenance_active_removedir_not_approved(
 def test_block_if_maintenance_active_fileinfo_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["researchuser"]).token(client)
 
@@ -402,7 +402,7 @@ def test_block_if_maintenance_active_fileinfo_not_approved(
 def test_block_if_maintenance_active_fileallinfo_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["researchuser"]).token(client)
 
@@ -425,7 +425,7 @@ def test_block_if_maintenance_active_fileallinfo_not_approved(
 def test_block_if_maintenance_active_projectlist_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -447,7 +447,7 @@ def test_block_if_maintenance_active_projectlist_not_approved(
 def test_block_if_maintenance_active_removeprojectcontents_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -468,7 +468,7 @@ def test_block_if_maintenance_active_removeprojectcontents_not_approved(
 def test_block_if_maintenance_active_projectpublic_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -487,7 +487,7 @@ def test_block_if_maintenance_active_projectpublic_not_approved(
 def test_block_if_maintenance_active_projectprivate_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -508,7 +508,7 @@ def test_block_if_maintenance_active_projectprivate_not_approved(
 def test_block_if_maintenance_active_createproject_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
 
@@ -531,7 +531,7 @@ def test_block_if_maintenance_active_createproject_not_approved(
 def test_block_if_maintenance_active_projectusers_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
 
@@ -550,7 +550,7 @@ def test_block_if_maintenance_active_projectusers_not_approved(
 def test_block_if_maintenance_active_projectstatus_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -572,7 +572,7 @@ def test_block_if_maintenance_active_projectstatus_not_approved(
 def test_block_if_maintenance_active_projectaccess_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -594,7 +594,7 @@ def test_block_if_maintenance_active_projectaccess_not_approved(
 def test_block_if_maintenance_active_adduser_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -617,7 +617,7 @@ def test_block_if_maintenance_active_adduser_not_approved(
 def test_block_if_maintenance_active_deleteuser_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -639,7 +639,7 @@ def test_block_if_maintenance_active_deleteuser_not_approved(
 def test_block_if_maintenance_active_deleteself_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["delete_me_researcher"]).token(client)
 
@@ -663,7 +663,7 @@ def test_block_if_maintenance_active_deleteself_not_approved(
 def test_block_if_maintenance_active_revokeaccess_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
 
@@ -688,7 +688,7 @@ def test_block_if_maintenance_active_revokeaccess_not_approved(
 def test_block_if_maintenance_active_useractivation_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
 
@@ -709,7 +709,7 @@ def test_block_if_maintenance_active_useractivation_not_approved(
 
 
 def test_block_if_maintenance_active_hotp_not_approved(client: flask.testing.FlaskClient) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["researcher"]).as_tuple()
 
@@ -728,7 +728,7 @@ def test_block_if_maintenance_active_hotp_not_approved(client: flask.testing.Fla
 
 
 def test_block_if_maintenance_active_totp_not_approved(client: flask.testing.FlaskClient) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
 
@@ -748,7 +748,7 @@ def test_block_if_maintenance_active_totp_not_approved(client: flask.testing.Fla
 def test_block_if_maintenance_active_listusers_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["superadmin"]).token(client)
 
@@ -765,7 +765,7 @@ def test_block_if_maintenance_active_listusers_not_approved(
 def test_block_if_maintenance_active_finduser_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["superadmin"]).token(client)
 
@@ -784,7 +784,7 @@ def test_block_if_maintenance_active_finduser_not_approved(
 def test_block_if_maintenance_active_deactivatetotp_not_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["superadmin"]).token(client)
 
@@ -803,7 +803,7 @@ def test_block_if_maintenance_active_deactivatetotp_not_approved(
 
 
 def test_block_if_maintenance_active_usage_not_approved(client: flask.testing.FlaskClient) -> None:
-    """Certain endpoints should be blocked if maintenance is not active."""
+    """Certain endpoints should be blocked if maintenance is active."""
     # Auth before maintenance on
     token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
 

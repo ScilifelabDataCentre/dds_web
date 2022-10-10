@@ -613,7 +613,7 @@ def block_if_maintenance():
                 if not (req_args and (project_id := req_args.get("project"))):
                     raise MaintenanceOngoingException()
 
-                # Request requires an busy project
+                # Request requires a busy project
                 if not models.Project.query.filter_by(
                     public_id=project_id, busy=True
                 ).one_or_none():
