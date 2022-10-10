@@ -310,7 +310,7 @@ def create_app(testing=False, database_uri=None):
 @flask.cli.with_appcontext
 def fill_db_wrapper(db_type):
     from dds_web.database import models
-    
+
     if db_type != "production":
         maintenance_rows: models.Maintenance = models.Maintenance.query.all()
         if len(maintenance_rows) > 1:
