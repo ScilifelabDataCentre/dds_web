@@ -1095,8 +1095,8 @@ def test_list_invites(client):
         for key in ["Email", "Role", "Projects", "Created", "Unit"]:
             assert key in entry
         if entry["Role"] in ("Unit Admin", "Unit Personnel"):
-            assert entry["Unit"] == "Unit 1
-"            assert isinstance(entry["Projects"], list)
+            assert entry["Unit"] == "Unit 1"
+            assert isinstance(entry["Projects"], list)
         elif entry["Role"] in ("Unit Admin", "Unit Personnel"):
             assert entry["Projects"] == "----"
     assert response.json.get("keys", []) == ["Email", "Unit", "Role", "Projects", "Created"]
