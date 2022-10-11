@@ -28,6 +28,9 @@ import dds_web.utils
 def fill_db():
     """Fills the database with initial entries used for development."""
 
+    maintenance_row = models.Maintenance.query.first()
+    maintenance_row.active = False
+
     # Foreign key/relationship updates:
     # The model with the row db.relationship should append the row of the model with foreign key
 
