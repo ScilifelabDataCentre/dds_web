@@ -156,3 +156,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 - Bug fix: Fix the Invite.projects database model ([#1290](https://github.com/ScilifelabDataCentre/dds_web/pull/1290))
 - New endpoint: ListInvites - list invites ([#1294](https://github.com/ScilifelabDataCentre/dds_web/pull/1294))
+
+## Sprint (2022-10-14 - 2022-10-28)
+
+- Return name of project creator from UserProjects ([#1303](https://github.com/ScilifelabDataCentre/dds_web/pull/1303))
