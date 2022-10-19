@@ -492,6 +492,7 @@ class UserProjects(flask_restful.Resource):
                 "PI": p.pi,
                 "Status": p.current_status,
                 "Last updated": p.date_updated if p.date_updated else p.date_created,
+                "Created by": p.creator.name,
             }
 
             # Get proj size and update total size
