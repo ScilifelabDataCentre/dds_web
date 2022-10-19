@@ -472,8 +472,20 @@ class UserProjects(flask_restful.Resource):
             "Unit Personnel",
         ]
 
+        # Get info for projects
+        get_all = flask.request.json.get("show_all", False) if flask.request.json else False
+        all_filters = (
+            [] if get_all else [models.Project.is_active == True]
+        )  # Default is to only get active projects
+        all_filters.append(
+            models.Project.public_id.in_([x.public_id for x in current_user.projects])
+        )
+
+        # Apply the filters
+        user_projects = models.Project.query.filter(sqlalchemy.and_(*all_filters)).all()
+
         # Get info for all projects
-        for p in current_user.projects:
+        for p in user_projects:
             project_info = {
                 "Project ID": p.public_id,
                 "Title": p.title,
