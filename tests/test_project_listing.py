@@ -5,6 +5,7 @@ import http
 import unittest
 
 # Own
+from dds_web import db
 from dds_web.database import models
 import tests
 
@@ -55,6 +56,46 @@ def test_list_proj_unit_user(client):
     assert "public_project_id" == public_project.get("Project ID")
     assert "Cost" in public_project.keys() and public_project["Cost"] is not None
     assert "Usage" in public_project.keys() and public_project["Usage"] is not None
+
+
+def test_list_only_active_projects_unit_user(client):
+    """Unit admin should be able to list only active projects without --show-all flag"""
+
+    # set one of the project as inactive
+    inactive_project: models.Project = models.Project.query.first()
+    inactive_project.is_active = False
+    db.session.commit()
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.LIST_PROJ,
+        headers=token,
+        json={"usage": True},
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert len(response.json.get("project_info")) == 4
+
+
+def test_list_all_projects_unit_user(client):
+    """Unit admin should be able to list inactive projects with the --show-all flag"""
+
+    # set one of the project as inactive
+    inactive_project: models.Project = models.Project.query.first()
+    inactive_project.is_active = False
+    db.session.commit()
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.LIST_PROJ,
+        headers=token,
+        json={"usage": True, "show_all": True},
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert len(response.json.get("project_info")) == 5
 
 
 def test_proj_private_successful(client):
