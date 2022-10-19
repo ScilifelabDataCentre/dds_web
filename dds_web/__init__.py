@@ -271,6 +271,11 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(update_uploaded_file_with_log)
         app.cli.add_command(lost_files_s3_db)
 
+        # Make version available inside jinja templates:
+        @app.template_filter("dds_version")
+        def dds_version_filter(_):
+            return os.environ.get("DDS_VERSION", "Unknown")
+
         with app.app_context():  # Everything in here has access to sessions
             from dds_web.database import models
 
