@@ -19,6 +19,10 @@ RUN apk add jpeg-dev zlib-dev libjpeg
 RUN apk add tzdata
 ENV TZ="UCT"
 
+# Extract version from Github during build
+ARG version
+ENV DDS_VERSION=$version
+
 # Copy the content to a code folder in container
 COPY ./requirements.txt /code/requirements.txt
 
