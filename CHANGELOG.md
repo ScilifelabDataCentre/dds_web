@@ -161,3 +161,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 - Limit projects listing to active projects only; a `--show-all` flag can be used for listing all projects, active and inactive ([#1302](https://github.com/ScilifelabDataCentre/dds_web/pull/1302))
 - Return name of project creator from UserProjects ([#1303](https://github.com/ScilifelabDataCentre/dds_web/pull/1303))
+- Add version to the footer of the web pages ([#1304](https://github.com/ScilifelabDataCentre/dds_web/pull/1304))
