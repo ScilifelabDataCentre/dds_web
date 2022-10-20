@@ -158,8 +158,9 @@
               <tr>
                 <td class="content-block"
                   style="font-family: arial, sans-serif; vertical-align: top; padding-top: 10px; font-size: 12px; color: #999999; text-align: center;">
-                  <span class="apple-link" style="color: #999999; font-size: 14px; text-align: center;">SciLifeLab Data
-                    Delivery System</span>
+                  <a href="{{ url_for('pages.home', _external=True) }}" class="apple-link" style="color: #999999; font-size: 14px; text-align: center;">
+		    SciLifeLab Data Delivery System
+		  </a>
                 </td>
               </tr>
               <tr>
@@ -175,6 +176,11 @@
                   style="font-family: arial, sans-serif; vertical-align: top; padding-bottom: 10px; font-size: 12px; color: #999999; text-align: center;">
                   <span class="apple-link" style="color: #999999; font-size: 12px; text-align: center;">Contact: <a
                       href="mailto: datacentre@scilifelab.se">datacentre@scilifelab.se</a></span>
+                </td>
+              </tr>
+              <tr>
+                <td class="content-block" style="font-family: arial, sans-serif; vertical-align: top; padding-bottom: 10px; font-size: 10px; color: #999999; text-align: center;">
+		  Sent from <a href="{{ url_for('pages.home', _external=True) }}" class="apple-link" style="color: #999999">{{ url_for('pages.home', _external=True) }}</a>.
                 </td>
               </tr>
             </table>
