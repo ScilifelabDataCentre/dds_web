@@ -8,5 +8,27 @@
     <p>The document can be found on GitHub or downloaded as a PDF.</p> 
     <p class="lead"><a class="btn btn-info" href="https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Troubleshooting.pdf" target="_blank">Read on GitHub</a>&nbsp;<a class="btn btn-info" href="https://github.com/ScilifelabDataCentre/dds_web/raw/master/doc/Troubleshooting.pdf">Download the PDF</a>&nbsp;</p>
     <br>
+    <p><em>If</em> the troubleshooting document does not help you with solving the issue, <strong>please:</strong></p>
+    <ol>
+        <li>Verify that you have the latest CLI version installed (if the issue is related to the CLI). Open a terminal window and run <code>dds --version</code> and compare the displayed version to the latest one. The latest version can be found at <a href="https://pypi.org/project/dds-cli/">PyPi</a>.</li>
+        <li>Look through the CLI documentation <a href="https://scilifelabdatacentre.github.io/dds_cli/">here</a>.</li>
+        <li>Read through the sections in the <a href="https://delivery.scilifelab.se/technical">technical overview</a> relevant to your issue and check the topics below for possible solutions.</li>
+    </ol>
+    <br>
+    <p><em>If</em> the issue persists and the provided information and checks above did not help, contact the Data Centre and <strong>provide the following information</strong>:</p>
+    <ul>
+        <li>Did the error / issue occurr in the web interface or the CLI?</li>
+        <li>Web:</li>
+        <ul>
+            <li>What did you attempt to do?</li>
+            <li>When did this message / error appear? </li>
+            <li>Screenshot of the web page with the error.</li>
+        </ul>
+        <li>CLI</li>
+        <ul>
+            <li>What command did you run? Please copy and paste the command so that we get the exact command.</li>
+            <li>Copy and paste the full output that the terminal displayed after you ran the command. </li>
+        </ul>
+    </ul>
 </div>
 {% endblock %}
