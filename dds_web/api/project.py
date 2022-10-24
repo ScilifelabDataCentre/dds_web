@@ -949,3 +949,28 @@ class ProjectBusy(flask_restful.Resource):
             "ok": True,
             "message": f"Project {project_id} was set to {'busy' if set_to_busy else 'not busy'}.",
         }
+
+
+class ProjectInfo(flask_restful.Resource):
+    """Get information for a specific project."""
+
+    @auth.login_required
+    @logging_bind_request
+    @handle_validation_errors
+    def get(self):
+        # Get the specified project
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        # Construct a dict with info items
+        project_info = {
+            "Project ID": project.public_id,
+            "Created by": project.created_by,
+            "Status": project.current_status,
+            "Last updated": project.date_updated,
+            "Size": project.size,
+            "Title": project.title,
+            "Description": project.description,
+        }
+
+        return_info = {"project_info": project_info}
+        return return_info
