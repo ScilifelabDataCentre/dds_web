@@ -36,7 +36,6 @@ import werkzeug
 
 from dds_web.scheduled_tasks import scheduler
 
-
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
 ####################################################################################################
@@ -190,11 +189,11 @@ def create_app(testing=False, database_uri=None):
         @app.before_request
         def prepare():
             """Populate flask globals for template rendering"""
-            from dds_web.utils import verify_cli_version
-            from dds_web.utils import get_active_motds
+            from dds_web.utils import verify_cli_version, get_active_motds, block_if_maintenance
 
             # Verify cli version compatible
             if "api/v1" in flask.request.path:
+                block_if_maintenance()
                 verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
 
             # Get message of the day
@@ -272,6 +271,11 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(update_uploaded_file_with_log)
         app.cli.add_command(lost_files_s3_db)
 
+        # Make version available inside jinja templates:
+        @app.template_filter("dds_version")
+        def dds_version_filter(_):
+            return os.environ.get("DDS_VERSION", "Unknown")
+
         with app.app_context():  # Everything in here has access to sessions
             from dds_web.database import models
 
@@ -311,21 +315,6 @@ def create_app(testing=False, database_uri=None):
 @flask.cli.with_appcontext
 def fill_db_wrapper(db_type):
     from dds_web.database import models
-
-    maintenance_active: bool = db_type == "production"
-    flask.current_app.logger.info(
-        f"Setting maintenance as {'active' if maintenance_active else 'inactive'}..."
-    )
-
-    old_maintenance: models.Maintenance = models.Maintenance.query.all()
-    if len(old_maintenance) > 1:
-        for row in old_maintenance[1::]:
-            db.session.delete(row)
-        old_maintenance[0].active = maintenance_active
-    else:
-        new_maintenance: models.Maintenance = models.Maintenance(active=maintenance_active)
-        db.session.add(new_maintenance)
-    db.session.commit()
 
     if db_type == "production":
         username = flask.current_app.config["SUPERADMIN_USERNAME"]

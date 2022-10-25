@@ -436,6 +436,17 @@ def __setup_invite(unit_name, invite_email):
     return invite
 
 
+def test_invite_custom_properties(client):
+    """Confirm that the custom model properties are functional."""
+    unit_name = "Unit 1"
+    invite_email = "proj_invite@example.com"
+    invite = __setup_invite(unit_name, invite_email)
+
+    project = models.Project.query.first()
+    project_invite = models.ProjectInviteKeys(invite=invite, project=project, key="asd".encode())
+    assert invite.projects == [project]
+
+
 def test_delete_invite(client):
     """
     Invite row deleted
@@ -571,6 +582,9 @@ def test_delete_version(client):
 def test_new_maintenance_active(client: flask.testing.FlaskClient) -> None:
     """Create a new maintenance row."""
     # Verify no maintenance row yet
+    assert models.Maintenance.query.count() == 1
+    models.Maintenance.query.delete()
+    db.session.commit()
     assert models.Maintenance.query.count() == 0
 
     # Create row
@@ -586,6 +600,9 @@ def test_new_maintenance_active(client: flask.testing.FlaskClient) -> None:
 def test_new_maintenance_inactive(client: flask.testing.FlaskClient) -> None:
     """Create a new maintenance row."""
     # Verify no maintenance row yet
+    assert models.Maintenance.query.count() == 1
+    models.Maintenance.query.delete()
+    db.session.commit()
     assert models.Maintenance.query.count() == 0
 
     # Create row

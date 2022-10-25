@@ -1044,3 +1044,92 @@ def test_invite_users_should_have_different_timestamps(client):
         new_time_2,
         new_time_3,
     ]
+
+
+def test_list_invites(client):
+    """
+    Confirm that users can list relevant invites
+
+    * Researcher who do not own any projects cannot see invites
+    * Researcher who own a project can see invites for that project
+    * Unit admin|personnel can see invites to any projects owned by the unit, and invites to the unit
+    * Superadmin can see any invites
+    * All invites contain columns for email, role, created_at, public_id
+    * Invites for unit admin|personnel also includes unit column for superadmin
+    """
+
+    def invite_user(user_data: str, as_user: str) -> dict:
+        params = "?"
+        if "project" in user_data:
+            params += f"project={user_data['project']}&"
+        return client.post(
+            tests.DDSEndpoint.USER_ADD + params,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS[as_user]).token(client),
+            json=user_data,
+        )
+
+    def get_list(as_user) -> dict:
+        return client.get(
+            tests.DDSEndpoint.LIST_INVITES,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS[as_user]).token(client),
+        )
+
+    unit_invite = dict(new_unit_user)
+    unit_invite["unit"] = "Unit 1"
+    invite_user(unit_invite, "unitadmin")
+    unit_invite["unit"] = "The league of the extinct gentlemen"
+    invite_user(unit_invite, "superadmin")
+    invite_user(new_super_admin, "superadmin")
+
+    researcher_to_project = dict(first_new_user_existing_project)
+    invite_user(researcher_to_project, "unitadmin")
+    researcher_to_project["project"] = "second_public_project_id"
+    invite_user(researcher_to_project, "unitadmin")
+    researcher_to_project["project"] = "unit2testing"
+    invite_user(researcher_to_project, "unitadmin")
+
+    response = get_list("superadmin")
+    assert "invites" in response.json
+    assert len(response.json["invites"]) == 5
+    for entry in response.json["invites"]:
+        for key in ["Email", "Role", "Projects", "Created", "Unit"]:
+            assert key in entry
+        if entry["Role"] in ("Unit Admin", "Unit Personnel"):
+            assert entry["Unit"] == "Unit 1"
+            assert isinstance(entry["Projects"], list)
+        elif entry["Role"] in ("Unit Admin", "Unit Personnel"):
+            assert entry["Projects"] == "----"
+    assert response.json.get("keys", []) == ["Email", "Unit", "Role", "Projects", "Created"]
+
+    response = get_list("unitadmin")
+    assert "invites" in response.json
+    assert len(response.json["invites"]) == 2
+    for entry in response.json["invites"]:
+        for key in ["Email", "Role", "Projects", "Created"]:
+            assert key in entry
+        if entry["Role"] in ("Unit Admin", "Unit Personnel"):
+            assert len(entry["Projects"]) == 5
+            assert isinstance(entry["Projects"], list)
+        elif entry["Role"] == "Researcher":
+            assert len(entry["Projects"]) == 2
+            assert isinstance(entry["Projects"], list)
+        elif entry["Role"] == "Superadmin":  # Should never happen
+            assert False
+        assert "Unit" not in entry
+    assert response.json.get("keys", []) == ["Email", "Role", "Projects", "Created"]
+
+    response = get_list("projectowner")
+    assert "invites" in response.json
+    assert len(response.json["invites"]) == 1
+    for entry in response.json["invites"]:
+        for key in ["Email", "Role", "Projects", "Created"]:
+            assert key in entry
+        assert "Unit" not in entry
+        assert len(entry["Projects"]) == 1
+        assert isinstance(entry["Projects"], list)
+    assert response.json.get("keys", []) == ["Email", "Role", "Projects", "Created"]
+
+    response = get_list("researchuser")
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    assert not response.json.get("invites")
+    assert not response.json.get("keys")

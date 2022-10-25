@@ -423,3 +423,12 @@ class VersionMismatchError(LoggedHTTPException):
     ):
         super().__init__(message)
         general_logger.warning(message)
+
+
+class MaintenanceOngoingException(LoggedHTTPException):
+
+    code = http.HTTPStatus.SERVICE_UNAVAILABLE
+
+    def __init__(self, message="Maintenance of DDS is ongoing."):
+        """Inform that maintenance is ongoing."""
+        super().__init__(message)

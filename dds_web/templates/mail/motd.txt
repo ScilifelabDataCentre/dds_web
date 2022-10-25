@@ -2,4 +2,6 @@ Important information to all DDS users:
 
 {{ motd }}
 
-This email cannot be replied to. If you need to get in contact with us regarding the DDS, please send an email to datacentre@scilifelab.se.
+This email cannot be replied to. You received this email because you have an account in the Data Delivery System (DDS) at {{ url_for('pages.home', _external=True) }}.
+
+If you no longer need to use DDS, you can stop receiving these emails by deleting your account.

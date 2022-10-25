@@ -2,8 +2,37 @@
 {% block body %}
 <div class="container p-0" style="margin-top: 30px; font-size: medium;">
     <h2>Troubleshooting the DDS</h2>
-    <p>The troubleshooting document provides answers to previously asked questions and possible solutions to issues that have been reported. The document can be found on GitHub or downloaded as a PDF.</p>
+    </br>
+    <h4>Experiencing issues with the DDS?</h4>
+    <p>Please <strong>read the troubleshooting document</strong> which provides answers to previously asked questions and possible solutions to issues that have been reported. </p>
+    <p>The document can be found on GitHub or downloaded as a PDF.</p> 
     <p class="lead"><a class="btn btn-info" href="https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Troubleshooting.pdf" target="_blank">Read on GitHub</a>&nbsp;<a class="btn btn-info" href="https://github.com/ScilifelabDataCentre/dds_web/raw/master/doc/Troubleshooting.pdf">Download the PDF</a>&nbsp;</p>
     <br>
+    <h4>Did the troubleshooting document not help?</h4>
+    <p>Please <strong>go through the following steps</strong>:</p>
+    <ol>
+        <li>If the issue is related to the CLI, <strong>verify</strong> that you have the latest version installed: Open a terminal window, run <code>dds --version</code> and compare the displayed version to the latest one. The latest version can be found at <a href="https://pypi.org/project/dds-cli/">PyPi</a>.</li>
+        <li><strong>Look at</strong> the CLI documentation <a href="https://scilifelabdatacentre.github.io/dds_cli/">here</a>.</li>
+        <li><strong>Read</strong> through the sections in the <a href="https://delivery.scilifelab.se/technical">technical overview</a> relevant to your issue and check the topics below for possible solutions.</li>
+    </ol>
+    <br>
+    <h4>Does the issue persist and / or the provided information not help?</h4>
+    <p>If you're a data producer, using the DDS for data deliveries to your users: contact the Data Centre.</p>
+    <p>If you're a data recipient, using the DDS to download your data from a data producing SciLifeLab unit: contact the SciLifeLab unit responsible for delivering the data to you.</p>
+    <p>Please <strong>provide the following information</strong>:</p>
+    <ul>
+        <li>Did the error / issue occurr in the web interface or the CLI?</li>
+        <li>Web:</li>
+        <ul>
+            <li>What did you attempt to do?</li>
+            <li>When did this message / error appear? </li>
+            <li>Screenshot of the web page with the error.</li>
+        </ul>
+        <li>CLI</li>
+        <ul>
+            <li>What command did you run? Please copy and paste the command so that we get the exact command.</li>
+            <li>Copy and paste the full output that the terminal displayed after you ran the command. </li>
+        </ul>
+    </ul>
 </div>
 {% endblock %}

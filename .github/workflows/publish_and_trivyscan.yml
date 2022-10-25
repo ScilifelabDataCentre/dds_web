@@ -13,6 +13,13 @@ jobs:
     if: github.repository == 'ScilifelabDataCentre/dds_web'
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    concurrency:
+      group: ${{ github.ref }}-docker-trivy
+      cancel-in-progress: true
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -61,5 +68,6 @@ jobs:
           file: Dockerfiles/backend.Dockerfile
           context: .
           push: true
+          build-args: version=${{ github.ref_name }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

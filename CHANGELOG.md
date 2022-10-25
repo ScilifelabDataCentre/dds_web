@@ -1,6 +1,6 @@
 # Data Delivery System Web / API: Changelog
 
-Please add a _short_ line describing the PR you make, if the PR implements a specific feature or functionality, or refactor. Not needed if you add very small and unnoticable changes.
+Please add a _short_ line describing the PR you make, if the PR implements a specific feature or functionality, or refactor. Not needed if you add very small and unnoticable changes. Not needed when PR includes _only_ tests for already existing feature.
 
 ## Sprint (2022-02-09 - 2022-02-23)
 
@@ -151,3 +151,16 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - New table: `Maintenance`, for keeping track of DDS maintenance mode ([#1284](https://github.com/ScilifelabDataCentre/dds_web/pull/1284))
 - New endpoint: SetMaintenance - set maintenance mode to on or off ([#1286](https://github.com/ScilifelabDataCentre/dds_web/pull/1286))
 - New endpoint: AnyProjectsBusy - check if any projects are busy in DDS ([#1288](https://github.com/ScilifelabDataCentre/dds_web/pull/1288))
+
+## Sprint (2022-09-30 - 2022-10-14)
+
+- Bug fix: Fix the Invite.projects database model ([#1290](https://github.com/ScilifelabDataCentre/dds_web/pull/1290))
+- New endpoint: ListInvites - list invites ([#1294](https://github.com/ScilifelabDataCentre/dds_web/pull/1294))
+
+## Sprint (2022-10-14 - 2022-10-28)
+
+- Limit projects listing to active projects only; a `--show-all` flag can be used for listing all projects, active and inactive ([#1302](https://github.com/ScilifelabDataCentre/dds_web/pull/1302))
+- Return name of project creator from UserProjects ([#1303](https://github.com/ScilifelabDataCentre/dds_web/pull/1303))
+- Add version to the footer of the web pages ([#1304](https://github.com/ScilifelabDataCentre/dds_web/pull/1304))
+- Add link to the dds instance to the end of all emails ([#1305](https://github.com/ScilifelabDataCentre/dds_web/pull/1305))
+- Troubleshooting steps added to web page ([#1309](https://github.com/ScilifelabDataCentre/dds_web/pull/1309))

@@ -29,6 +29,7 @@ from dds_web.database.models import (
     Version,
     Identifier,
     DeletionRequest,
+    Maintenance,
 )
 import dds_web.utils
 from dds_web import create_app, db
@@ -48,6 +49,9 @@ def fill_basic_db(db):
     """
     Fill the database with basic data.
     """
+    maintenance_row = Maintenance.query.first()
+    maintenance_row.active = False
+    db.session.commit()
 
     units, users, projects = add_data_to_db()
     db.session.add_all(units)

@@ -1254,3 +1254,99 @@ class Users(flask_restful.Resource):
             "keys": keys,
             "empty": not users_to_return,
         }
+
+
+class InvitedUsers(flask_restful.Resource):
+    """Provide a list of invited users."""
+
+    @auth.login_required
+    def get(self):
+        current_user = auth.current_user()
+
+        # columns to return, map to displayed column names
+        key_map = {
+            "email": "Email",
+            "role": "Role",
+            "created_at": "Created",
+            "projects": "Projects",
+        }
+        key_order = [key_map["email"], key_map["role"], key_map["projects"], key_map["created_at"]]
+        if current_user.role == "Super Admin":
+            key_map["unit"] = "Unit"
+            key_order.insert(1, "Unit")
+
+        def row_to_dict(entry) -> dict:
+            """Convert a db row to a dict, extracting only wanted columns."""
+            hit = {}
+            for key in key_map.keys():
+                hit[key_map[key]] = getattr(entry, key) or ""
+            # represent projects with public_id
+            hit["Projects"] = [project.public_id for project in hit["Projects"]]
+            # represent unit with name
+            if hit.get("Unit"):
+                hit["Unit"] = hit["Unit"].name
+            return hit
+
+        if current_user.role == "Super Admin":
+            # superadmin can see all invites
+            raw_invites = models.Invite.query.all()
+            hits = []
+            for inv in raw_invites:
+                entry = row_to_dict(inv)
+                if inv.role == "Super Admin":
+                    entry["Projects"] = "----"
+                hits.append(entry)
+
+        elif current_user.role in ("Unit Admin", "Unit Personnel"):
+            # unit users can see all invites to the unit and any projects it owns
+            # start by getting all invites, then filter by project and unit
+            unit = current_user.unit
+            unit_projects = set(proj.id for proj in unit.projects)
+            unit_projects_pubid = set(proj.public_id for proj in unit.projects)
+            raw_invites = models.Invite.query.all()
+            hits = []
+            for inv in raw_invites:
+                if inv.role == "Researcher" and set(proj.id for proj in inv.projects).intersection(
+                    unit_projects
+                ):
+                    entry = row_to_dict(inv)
+                    # do not list projects the unit does not own
+                    entry["Projects"] = [
+                        project for project in entry["Projects"] if project in unit_projects_pubid
+                    ]
+                    hits.append(entry)
+                elif inv.role in ("Unit Admin", "Unit Personnel") and inv.unit == unit:
+                    hits.append(row_to_dict(inv))
+
+        elif current_user.role == "Researcher":
+            # researchers can see invitations to projects where they are the owner
+            project_connections = (
+                models.ProjectUsers.query.filter_by(user_id=current_user.username)
+                .filter_by(owner=1)
+                .all()
+            )
+
+            if not project_connections:
+                raise ddserr.RoleException(
+                    message="You need to have the role 'Project Owner' in at least one project to be able to list any invites."
+                )
+            # use set intersection to find overlaps between projects for invite and current_user
+            user_projects = set(entry.project.id for entry in project_connections)
+            user_projects_pubid = set(entry.project.public_id for entry in project_connections)
+            raw_invites = models.Invite.query.all()
+            hits = []
+            for inv in raw_invites:
+                if inv.role == "Researcher" and set(proj.id for proj in inv.projects).intersection(
+                    user_projects
+                ):
+                    entry = row_to_dict(inv)
+                    # do not list projects the current user does not own
+                    entry["Projects"] = [
+                        project for project in entry["Projects"] if project in user_projects_pubid
+                    ]
+                    hits.append(entry)
+        else:
+            # in case further roles are defined in the future
+            raw_hits = []
+
+        return {"invites": hits, "keys": key_order}
