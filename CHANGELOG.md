@@ -163,3 +163,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Return name of project creator from UserProjects ([#1303](https://github.com/ScilifelabDataCentre/dds_web/pull/1303))
 - Add version to the footer of the web pages ([#1304](https://github.com/ScilifelabDataCentre/dds_web/pull/1304))
 - Add link to the dds instance to the end of all emails ([#1305](https://github.com/ScilifelabDataCentre/dds_web/pull/1305))
+- Troubleshooting steps added to web page ([#1309](https://github.com/ScilifelabDataCentre/dds_web/pull/1309))
