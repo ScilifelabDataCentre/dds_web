@@ -25,6 +25,7 @@ from dds_web.api.dds_decorators import (
     dbsession,
     json_required,
     handle_validation_errors,
+    handle_db_error,
 )
 from dds_web.errors import (
     AccessDeniedError,
@@ -956,15 +957,17 @@ class ProjectInfo(flask_restful.Resource):
 
     @auth.login_required
     @logging_bind_request
-    @handle_validation_errors
+    @handle_db_error
     def get(self):
-        # Get the specified project
-        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
 
         # Construct a dict with info items
         project_info = {
             "Project ID": project.public_id,
-            "Created by": project.created_by,
+            "Created by": project.creator.name if project.creator else "Former User",
             "Status": project.current_status,
             "Last updated": project.date_updated,
             "Size": project.size,
