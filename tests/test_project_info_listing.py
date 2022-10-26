@@ -41,8 +41,8 @@ def test_list_proj_info_without_project(client):
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token)
     response_json = response.json
-    assert "project" in response_json
-    assert "Project ID required." in response_json["project"].get("message")
+    # assert "project" in response_json
+    assert "Missing required information: 'project'" in response_json.get("message")
 
 
 def test_list_proj_info_access_granted(client):
