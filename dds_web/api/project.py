@@ -25,6 +25,7 @@ from dds_web.api.dds_decorators import (
     dbsession,
     json_required,
     handle_validation_errors,
+    handle_db_error,
 )
 from dds_web.errors import (
     AccessDeniedError,
@@ -949,3 +950,30 @@ class ProjectBusy(flask_restful.Resource):
             "ok": True,
             "message": f"Project {project_id} was set to {'busy' if set_to_busy else 'not busy'}.",
         }
+
+
+class ProjectInfo(flask_restful.Resource):
+    """Get information for a specific project."""
+
+    @auth.login_required
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
+
+        # Construct a dict with info items
+        project_info = {
+            "Project ID": project.public_id,
+            "Created by": project.creator.name if project.creator else "Former User",
+            "Status": project.current_status,
+            "Last updated": project.date_updated,
+            "Size": project.size,
+            "Title": project.title,
+            "Description": project.description,
+        }
+
+        return_info = {"project_info": project_info}
+        return return_info
