@@ -26,7 +26,7 @@ proj_query_restricted = {"project": "restricted_project_id"}
 
 
 def test_list_proj_info_no_token(client):
-    """Token required to list rmation"""
+    """Token required to list project information"""
 
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=tests.DEFAULT_HEADER)
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
@@ -41,7 +41,6 @@ def test_list_proj_info_without_project(client):
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token)
     response_json = response.json
-    # assert "project" in response_json
     assert "Missing required information: 'project'" in response_json.get("message")
 
 
@@ -51,7 +50,8 @@ def test_list_proj_info_access_granted(client):
     token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token, query_string=proj_query)
     assert response.status_code == http.HTTPStatus.OK
-    project_info = response.json.get("project_info")
+    response_json = response.json
+    project_info = response_json.get("project_info")
 
     assert "public_project_id" == project_info.get("Project ID")
     # check that endpoint returns dictionary and not a list
@@ -64,7 +64,8 @@ def test_list_proj_info_unit_user(client):
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token, query_string=proj_query)
     assert response.status_code == http.HTTPStatus.OK
-    project_info = response.json.get("project_info")
+    response_json = response.json
+    project_info = response_json.get("project_info")
 
     assert "public_project_id" == project_info.get("Project ID")
     assert (
@@ -80,7 +81,8 @@ def test_list_proj_info_returned_items(client):
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token, query_string=proj_query)
     assert response.status_code == http.HTTPStatus.OK
-    project_info = response.json.get("project_info")
+    response_json = response.json
+    project_info = response_json.get("project_info")
 
     assert all(item in project_info for item in proj_info_items)
 
@@ -91,6 +93,8 @@ def test_list_project_info_by_researchuser_not_in_project(client):
     token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser2"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, query_string=proj_query, headers=token)
     assert response.status_code == http.HTTPStatus.FORBIDDEN
+    response_json = response.json
+    assert "Project access denied" in response_json.get("message")
 
 
 def test_list_proj_info_public_insufficient_credentials(client):
