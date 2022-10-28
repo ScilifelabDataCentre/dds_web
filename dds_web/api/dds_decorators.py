@@ -35,7 +35,6 @@ action_logger = structlog.getLogger("actions")
 # DECORATORS ########################################################################## DECORATORS #
 ####################################################################################################
 
-
 def handle_validation_errors(func):
     @functools.wraps(func)
     def handle_error(*args, **kwargs):

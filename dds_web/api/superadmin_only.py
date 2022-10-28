@@ -5,7 +5,9 @@
 ####################################################################################################
 
 # Standard library
+import functools
 import os
+from time import process_time_ns
 import typing
 
 # Installed
@@ -16,6 +18,7 @@ import flask_mail
 
 # Own modules
 from dds_web import auth, db, mail
+from dds_web.api import dds_decorators
 from dds_web.database import models
 from dds_web.api.dds_decorators import json_required, logging_bind_request, handle_db_error
 from dds_web import utils
@@ -140,6 +143,8 @@ class MOTD(flask_restful.Resource):
         return {"message": "The MOTD was successfully deactivated in the database."}
 
 
+
+
 class SendMOTD(flask_restful.Resource):
     """Send a MOTD to all users in database."""
 
@@ -168,17 +173,15 @@ class SendMOTD(flask_restful.Resource):
         html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
 
         # Setup email connection
+        import threading
+
+        start_time = process_time_ns()
         with mail.connect() as conn:
             # Email users
-            for user in utils.page_query(db.session.query(models.User)):
-                primary_email = user.primary_email
-                if not primary_email:
-                    flask.current_app.logger.warning(
-                        f"No primary email found for user '{user.username}'."
-                    )
-                    continue
+            user_emails = db.session.query(models.Email).filter(models.Email.primary == True).with_entities(models.Email.email)
+            for email in utils.page_query(user_emails):
                 msg = flask_mail.Message(
-                    subject=subject, recipients=[primary_email], body=body, html=html
+                    subject=subject, recipients=[email[0]], body=body, html=html
                 )
                 msg.attach(
                     "scilifelab_logo.png",
@@ -194,7 +197,13 @@ class SendMOTD(flask_restful.Resource):
                 )
                 # Send email
                 utils.send_email_with_retry(msg=msg, obj=conn)
+            
+        end_time = process_time_ns()
 
+        # 184261050
+        # 255691735
+
+        flask.current_app.logger.info(f"Time taken: {end_time-start_time}")
         return {"message": f"MOTD '{motd_id}' has been sent to the users."}
 
 
