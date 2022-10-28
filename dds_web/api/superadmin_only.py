@@ -143,8 +143,6 @@ class MOTD(flask_restful.Resource):
         return {"message": "The MOTD was successfully deactivated in the database."}
 
 
-
-
 class SendMOTD(flask_restful.Resource):
     """Send a MOTD to all users in database."""
 
@@ -178,7 +176,11 @@ class SendMOTD(flask_restful.Resource):
         start_time = process_time_ns()
         with mail.connect() as conn:
             # Email users
-            user_emails = db.session.query(models.Email).filter(models.Email.primary == True).with_entities(models.Email.email)
+            user_emails = (
+                db.session.query(models.Email)
+                .filter(models.Email.primary == True)
+                .with_entities(models.Email.email)
+            )
             for email in utils.page_query(user_emails):
                 msg = flask_mail.Message(
                     subject=subject, recipients=[email[0]], body=body, html=html
@@ -197,7 +199,7 @@ class SendMOTD(flask_restful.Resource):
                 )
                 # Send email
                 utils.send_email_with_retry(msg=msg, obj=conn)
-            
+
         end_time = process_time_ns()
 
         # 184261050
