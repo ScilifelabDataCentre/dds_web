@@ -92,7 +92,7 @@ def set_available_to_expired():
                     scheduler.app.logger.error(f"Error for project '{proj}': {errors[unit][proj]} ")
 
 
-@scheduler.task("cron", id="expired_to_archived", hour=0, minute=1, misfire_grace_time=3600)
+@scheduler.task("cron", id="expired_to_archived", hour=1, minute=1, misfire_grace_time=3600)
 # @scheduler.task("interval", id="expired_to_archived", seconds=15, misfire_grace_time=1)
 def set_expired_to_archived():
     """Search for expired projects whose deadlines are past and archive them"""
