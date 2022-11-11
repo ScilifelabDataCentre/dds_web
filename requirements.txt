@@ -3,7 +3,6 @@ aniso8601==9.0.1
 APScheduler==3.9.1
 argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
-Authlib==0.15.5
 blinker==1.4
 boto3==1.20.47
 botocore==1.23.47

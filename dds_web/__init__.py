@@ -19,7 +19,6 @@ import flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
-from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
@@ -50,7 +49,6 @@ mail = flask_mail.Mail()
 ma = Marshmallow()
 
 # Authentication
-oauth = auth_flask_client.OAuth()
 basic_auth = HTTPBasicAuth()
 auth = HTTPTokenAuth()
 
@@ -255,16 +253,6 @@ def create_app(testing=False, database_uri=None):
 
         # Initialize migrations
         migrate.init_app(app, db)
-
-        # initialize OIDC
-        oauth.init_app(app)
-        oauth.register(
-            "default_login",
-            client_secret=app.config.get("OIDC_CLIENT_SECRET"),
-            client_id=app.config.get("OIDC_CLIENT_ID"),
-            server_metadata_url=app.config.get("OIDC_ACCESS_TOKEN_URL"),
-            client_kwargs={"scope": "openid profile email"},
-        )
 
         app.cli.add_command(fill_db_wrapper)
         app.cli.add_command(create_new_unit)
