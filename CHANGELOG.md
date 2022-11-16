@@ -165,3 +165,8 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Add link to the dds instance to the end of all emails ([#1305](https://github.com/ScilifelabDataCentre/dds_web/pull/1305))
 - Troubleshooting steps added to web page ([#1309](https://github.com/ScilifelabDataCentre/dds_web/pull/1309))
 - Bug: Return instead of project creator if user has been deleted ([#1311](https://github.com/ScilifelabDataCentre/dds_web/pull/1311))
+- New endpoint: ProjectInfo - display project information ([#1310](https://github.com/ScilifelabDataCentre/dds_web/pull/1310))
+
+## Sprint (2022-11-11 - 2022-11-25)
+
+- Link to "How do I get my user account?" from the login form ([#1318](https://github.com/ScilifelabDataCentre/dds_web/pull/1318))
