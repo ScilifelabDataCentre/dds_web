@@ -1,12 +1,12 @@
-# License: `jwcrypto`
+# License: `dominate`
 
-**Link:** https://github.com/latchset/jwcrypto/blob/master/LICENSE
+**Link:** https://github.com/Knio/dominate/blob/master/LICENSE.txt
 
-_GNU Lesser General Public License v3 (LGPL-3.0)_
+_GNU Lesser General Public License v3.0_
 
 ***
 
-                   GNU LESSER GENERAL PUBLIC LICENSE
+		   GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
