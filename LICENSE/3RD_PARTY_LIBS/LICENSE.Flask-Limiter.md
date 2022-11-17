@@ -1,10 +1,10 @@
 # License: `Flask-Limiter`
 
-**Link:** https://github.com/alisaifee/flask-limiter/blob/master/LICENSE.txt 
+**Link:** https://github.com/alisaifee/flask-limiter/blob/master/LICENSE.txt
 
 _MIT License_
 
-***
+---
 
 Copyright (c) 2022 Ali-Akber Saifee
 
@@ -26,4 +26,4 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-***
+---
