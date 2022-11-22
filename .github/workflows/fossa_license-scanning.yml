@@ -12,3 +12,7 @@ jobs:
       - uses: fossas/fossa-action@main # Use a specific version if locking is preferred
         with:
           api-key: ${{secrets.FOSSA_API_KEY}}
+      - uses: actions/upload-artifact@v3
+          with:
+            name: fossa.debug.json.gz
+            path: ./fossa.debug.json.gz
