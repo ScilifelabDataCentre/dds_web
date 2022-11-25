@@ -76,6 +76,7 @@ migrate = flask_migrate.Migrate()
 
 def setup_logging(app):
     """Setup loggers"""
+    
     dictConfig(
         {
             "version": 1,
