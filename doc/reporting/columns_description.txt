@@ -1,0 +1,16 @@
+- Description / clarification of what the column names in the dds-reporting_start-20221130.csv file mean -
+
+"Date"
+The date after which the numbers have been collected / calculated.
+
+"Units using DDS in production"
+Number of SciLifeLab units fully using the DDS in production. Does not include the test instance. Does not include units that do not or cannot (e.g. for legal reasons) deliver all their produced data via the DDS.
+
+"Researchers"
+Number of accounts with the role "Researcher". Includes accounts with the subrole "Project Owner". Users involved in projects connected to units not in production have been excluded. 
+
+"Unit users"
+Number of account with one of the roles "Unit Personnel" / "Unit Admin". Users associated with / employed at the units which are using the DDS in production.
+
+"Total number of users"
+The total number of users using the DDS in production. Super Admins, i.e. members of the SciLifeLab Data Centre are excluded.
