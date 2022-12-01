@@ -981,7 +981,6 @@ class ProjectInfo(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     @json_required
-    @handle_validation_errors
     def put(self):
         """Update Project information."""
         # Get project ID, project and verify access
@@ -995,13 +994,13 @@ class ProjectInfo(flask_restful.Resource):
         new_description = json_input.get("description")
         new_pi = json_input.get("pi")
 
-        # valide the PI email address
-        pi_validator = marshmallow.validate.Email(error="bla")
-        try:
-            pi_validator(new_pi)
-        except marshmallow.ValidationError as err:
-            message = str(err)
-            raise DDSArgumentError(message="The PI email is invalid")
+        # if new PI,validate email address
+        if new_pi:
+            pi_validator = marshmallow.validate.Email(error="The PI email is invalid")
+            try:
+                pi_validator(new_pi)
+            except marshmallow.ValidationError as err:
+                raise DDSArgumentError(str(err))
 
         # current date for date_updated
         curr_date = dds_web.utils.current_time()
@@ -1016,10 +1015,16 @@ class ProjectInfo(flask_restful.Resource):
         project.date_updated = curr_date
         db.session.commit()
 
-        return_message = {}
-        return_message["message"] = f"{project.public_id} info was successfully updated."
-        return_message["title"] = project.title
-        return_message["description"] = project.description
-        return_message["pi"] = project.pi
+        # return_message = {}
+        return_message = {
+            "message": f"{project.public_id} info was successfully updated.",
+            "title": project.title,
+            "description": project.description,
+            "pi": project.pi,
+        }
+        # return_message["message"] = f"{project.public_id} info was successfully updated."
+        # return_message["title"] = project.title
+        # return_message["description"] = project.description
+        # return_message["pi"] = project.pi
 
         return return_message
