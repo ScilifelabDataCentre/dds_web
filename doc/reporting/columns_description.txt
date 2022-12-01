@@ -13,4 +13,4 @@ Number of accounts with the role "Researcher". Includes accounts with the subrol
 Number of account with one of the roles "Unit Personnel" / "Unit Admin". Users associated with / employed at the units which are using the DDS in production.
 
 "Total number of users"
-The total number of users using the DDS in production.
+The total number of users using the DDS in production. Super Admins, i.e. members of the SciLifeLab Data Centre are excluded.
