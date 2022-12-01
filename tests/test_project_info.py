@@ -147,4 +147,3 @@ def test_change_proj_info_without_json(client):
 #     # assert response.status_code == http.HTTPStatus.OK
 #     response_json = response.json
 #     assert "all good" == response_json.get("message")
-    
