@@ -597,7 +597,10 @@ def block_if_maintenance():
                 "/proj/busy/any",
             ]
         ]
-        approved_endpoints: typing.List = project_required_endpoints + admin_endpoints
+        authentication_endpoints: typing.List = [
+            f"/api/v1{x}" for x in ["/user/encrypted_token","/user/second_factor"]
+        ]
+        approved_endpoints: typing.List = project_required_endpoints + admin_endpoints + authentication_endpoints
 
         # Request not to accepted endpoint
         # OR request to accepted endpoint but project not specified or busy
