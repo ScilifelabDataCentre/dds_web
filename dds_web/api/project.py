@@ -994,6 +994,32 @@ class ProjectInfo(flask_restful.Resource):
         new_description = json_input.get("description")
         new_pi = json_input.get("pi")
 
+        # if new title,validate title
+        if new_title:
+            title_validator = marshmallow.validate.And(
+            marshmallow.validate.Length(min=1), dds_web.utils.contains_disallowed_characters,
+            error={
+                "required": {"message": "Title is required."},
+                "null": {"message": "Title is required."},
+            })
+            try:
+                title_validator(new_title)
+            except marshmallow.ValidationError as err:
+                raise DDSArgumentError(str(err))
+
+        # if new description,validate description
+        if new_description:
+            description_validator = marshmallow.validate.And(
+            marshmallow.validate.Length(min=1), dds_web.utils.contains_unicode_emojis,
+            error={
+                "required": {"message": "A project description is required."},
+                "null": {"message": "A project description is required."},
+            })
+            try:
+                description_validator(new_description)
+            except marshmallow.ValidationError as err:
+                raise DDSArgumentError(str(err))
+
         # if new PI,validate email address
         if new_pi:
             pi_validator = marshmallow.validate.Email(error="The PI email is invalid")
