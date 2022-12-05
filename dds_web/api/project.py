@@ -978,7 +978,7 @@ class ProjectInfo(flask_restful.Resource):
         return_info = {"project_info": project_info}
         return return_info
 
-    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     @json_required
     def put(self):
