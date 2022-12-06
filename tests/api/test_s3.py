@@ -59,8 +59,12 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
         assert response_json[x] == y
 
     # Unit Admin, incorrect unit --> No
-    unit_admin_no_access: models.UnitUser = unit_users_no_access.filter(models.UnitUser.is_admin == True).first()
-    unit_admin_no_access_token = UserAuth(USER_CREDENTIALS[unit_admin_no_access.username]).token(client)
+    unit_admin_no_access: models.UnitUser = unit_users_no_access.filter(
+        models.UnitUser.is_admin == True
+    ).first()
+    unit_admin_no_access_token = UserAuth(USER_CREDENTIALS[unit_admin_no_access.username]).token(
+        client
+    )
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=unit_admin_no_access_token,
@@ -83,8 +87,12 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
         assert response_json[x] == y
 
     # Unit Personnel, incorrect unit --> No
-    unit_personnel_no_access: models.UnitUser = unit_users_no_access.filter(models.UnitUser.is_admin == False).first()
-    unit_personnel_no_access_token = UserAuth(USER_CREDENTIALS[unit_personnel_no_access.username]).token(client)
+    unit_personnel_no_access: models.UnitUser = unit_users_no_access.filter(
+        models.UnitUser.is_admin == False
+    ).first()
+    unit_personnel_no_access_token = UserAuth(
+        USER_CREDENTIALS[unit_personnel_no_access.username]
+    ).token(client)
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=unit_personnel_no_access_token,
