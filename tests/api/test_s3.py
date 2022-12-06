@@ -58,18 +58,15 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
         assert x in response_json
         assert response_json[x] == y
 
-    # # Unit Admin, incorrect unit --> No
-    # unit_admin_no_access: models.UnitUser = unit_users_no_access.filter(models.UnitUser.is_admin == True).first()
-    # assert unit_admin_no_access
-    # print(unit_admin_no_access.username)
-    # unit_admin_no_access_token: UserAuth(USER_CREDENTIALS[unit_admin_no_access.username]).token(client)
-    # assert unit_admin_no_access_token
-    # response = client.get(
-    #     DDSEndpoint.S3KEYS,
-    #     headers=unit_admin_no_access_token,
-    #     query_string={"project": "public_project_id"},
-    # )
-    # assert response.status_code == http.HTTPStatus.FORBIDDEN
+    # Unit Admin, incorrect unit --> No
+    unit_admin_no_access: models.UnitUser = unit_users_no_access.filter(models.UnitUser.is_admin == True).first()
+    unit_admin_no_access_token = UserAuth(USER_CREDENTIALS[unit_admin_no_access.username]).token(client)
+    response = client.get(
+        DDSEndpoint.S3KEYS,
+        headers=unit_admin_no_access_token,
+        query_string={"project": "public_project_id"},
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     # Unit Personnel, correct unit --> Yes
     unit_personnel: models.UnitUser = unit_users.filter(models.UnitUser.is_admin == False).first()
@@ -85,15 +82,15 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
         assert x in response_json
         assert response_json[x] == y
 
-    # # Unit Personnel, incorrect unit --> No
-    # unit_personnel_no_access: models.UnitUser = unit_users_no_access.filter(models.UnitUser.is_admin == False).first()
-    # unit_personnel_no_access_token: UserAuth(USER_CREDENTIALS[unit_personnel_no_access.username]).token(client)
-    # response = client.get(
-    #     DDSEndpoint.S3KEYS,
-    #     headers=unit_personnel_no_access_token,
-    #     query_string={"project": "public_project_id"},
-    # )
-    # assert response.status_code == http.HTTPStatus.FORBIDDEN
+    # Unit Personnel, incorrect unit --> No
+    unit_personnel_no_access: models.UnitUser = unit_users_no_access.filter(models.UnitUser.is_admin == False).first()
+    unit_personnel_no_access_token = UserAuth(USER_CREDENTIALS[unit_personnel_no_access.username]).token(client)
+    response = client.get(
+        DDSEndpoint.S3KEYS,
+        headers=unit_personnel_no_access_token,
+        query_string={"project": "public_project_id"},
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     # Researcher --> No
     researcher: models.ResearchUser = project.researchusers[0].researchuser
