@@ -230,7 +230,7 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
 # block_if_maintenance - should be blocked in init by before_request
 
 
-def test_block_if_maintenance_active_encryptedtoken_approved(
+def test_block_if_maintenance_active_encryptedtoken_researcher_blocked(
     client: flask.testing.FlaskClient,
 ) -> None:
     """Certain endpoints should be blocked if maintenance is active."""
@@ -247,8 +247,26 @@ def test_block_if_maintenance_active_encryptedtoken_approved(
             headers=DEFAULT_HEADER,
         )
         assert mock_mail_send.call_count == 1
-    assert response.status_code == http.HTTPStatus.OK
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
 
+def test_block_if_maintenance_active_encryptedtoken_super_admin_approved(
+    client: flask.testing.FlaskClient,
+) -> None:
+    """Certain endpoints should be blocked if maintenance is active."""
+    # Get maintenance row and set to active
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    maintenance.active = True
+    db.session.commit()
+
+    # Try encrypted token - "/user/encrypted_token"
+    with patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        response = client.get(
+            DDSEndpoint.ENCRYPTED_TOKEN,
+            auth=("superadmin", "password"),
+            headers=DEFAULT_HEADER,
+        )
+        assert mock_mail_send.call_count == 1
+    assert response.status_code == http.HTTPStatus.OK
 
 def test_block_if_maintenance_active_secondfactor_approved(
     client: flask.testing.FlaskClient,
