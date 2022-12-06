@@ -397,9 +397,9 @@ def verify_password(username, password):
 
     if user and user.is_active and user.verify_password(input_password=password):
         # Only authenticate if Super Admin
-        maintenance_active: models.Maintenance = models.Maintenance.query.first()
-        flask.current_app.logger.info(f"Maintenance active: {maintenance_active}")
-        if maintenance_active and user.role != "Super Admin":
+        maintenance: models.Maintenance = models.Maintenance.query.first()
+        flask.current_app.logger.info(f"Maintenance active: {maintenance.active}")
+        if maintenance.active and user.role != "Super Admin":
             raise MaintenanceOngoingException()
 
         if not user.totp_enabled:
