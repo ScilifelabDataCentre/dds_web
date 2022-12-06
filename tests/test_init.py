@@ -249,6 +249,7 @@ def test_block_if_maintenance_active_encryptedtoken_researcher_blocked(
         assert mock_mail_send.call_count == 0
     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
 
+
 def test_block_if_maintenance_active_encryptedtoken_super_admin_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
@@ -267,6 +268,7 @@ def test_block_if_maintenance_active_encryptedtoken_super_admin_approved(
         )
         assert mock_mail_send.call_count == 1
     assert response.status_code == http.HTTPStatus.OK
+
 
 def test_block_if_maintenance_active_secondfactor_approved(
     client: flask.testing.FlaskClient,
