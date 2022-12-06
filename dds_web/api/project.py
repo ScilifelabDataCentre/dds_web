@@ -980,7 +980,9 @@ class ProjectInfo(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @dbsession
     @json_required
+    @handle_validation_errors
     def put(self):
         """Update Project information."""
         # Get project ID, project and verify access
@@ -994,67 +996,32 @@ class ProjectInfo(flask_restful.Resource):
         new_description = json_input.get("description")
         new_pi = json_input.get("pi")
 
-        # if new title,validate title
+        # Validate items 
         if new_title:
-            title_validator = marshmallow.validate.And(
-                marshmallow.validate.Length(min=1),
-                dds_web.utils.contains_disallowed_characters,
-                error={
-                    "required": {"message": "Title is required."},
-                    "null": {"message": "Title is required."},
-                },
-            )
-            try:
-                title_validator(new_title)
-            except marshmallow.ValidationError as err:
-                raise DDSArgumentError(str(err))
-
-        # if new description,validate description
+            dds_web.utils.validate_project_title(title=new_title)
         if new_description:
-            description_validator = marshmallow.validate.And(
-                marshmallow.validate.Length(min=1),
-                dds_web.utils.contains_unicode_emojis,
-                error={
-                    "required": {"message": "A project description is required."},
-                    "null": {"message": "A project description is required."},
-                },
-            )
-            try:
-                description_validator(new_description)
-            except marshmallow.ValidationError as err:
-                raise DDSArgumentError(str(err))
-
-        # if new PI,validate email address
+            dds_web.utils.validate_project_description(description=new_description)
         if new_pi:
-            pi_validator = marshmallow.validate.Email(error="The PI email is invalid")
-            try:
-                pi_validator(new_pi)
-            except marshmallow.ValidationError as err:
-                raise DDSArgumentError(str(err))
+            dds_web.utils.validate_project_pi(principal_investigator=new_pi)
 
-        # current date for date_updated
+        # Get current time
         curr_date = dds_web.utils.current_time()
 
-        # update the items
+        # Update items
         if new_title:
             project.title = new_title
         if new_description:
             project.description = new_description
         if new_pi:
             project.pi = new_pi
+
+        # The project is update now - update field
         project.date_updated = curr_date
         db.session.commit()
 
-        # return_message = {}
-        return_message = {
+        return {
             "message": f"{project.public_id} info was successfully updated.",
             "title": project.title,
             "description": project.description,
             "pi": project.pi,
         }
-        # return_message["message"] = f"{project.public_id} info was successfully updated."
-        # return_message["title"] = project.title
-        # return_message["description"] = project.description
-        # return_message["pi"] = project.pi
-
-        return return_message

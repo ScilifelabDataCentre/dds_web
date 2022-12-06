@@ -195,6 +195,34 @@ def valid_user_role(specified_role):
         "Researcher",
     ]
 
+def validate_project_title(title: str) -> None:
+    """Validate project title.
+    
+    Should contain valid characters and be at least 1 character long.
+    """
+    if not title: 
+        raise marshmallow.validate.ValidationError("A project title is required.")
+    
+    contains_disallowed_characters(indata=title)
+
+def validate_project_description(description: str) -> None:
+    """Validate project description.
+    
+    Should contain valid characters and be at least 1 character long.
+    """
+    if not description:
+        raise marshmallow.validate.ValidationError("A project description is required.")
+
+    contains_unicode_emojis(indata=description)
+
+def validate_project_pi(principal_investigator: str) -> None:
+    """Validate PI email."""
+    if not principal_investigator:
+        raise marshmallow.validate.ValidationError("A principal investigator (email address) is required.")
+
+    email_validator = marshmallow.validate.Email(error="The PI email is invalid.")
+    email_validator(principal_investigator)
+
 
 # wtforms ################################################################################ wtforms #
 

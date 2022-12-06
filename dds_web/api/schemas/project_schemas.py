@@ -66,35 +66,13 @@ class CreateProjectSchema(marshmallow.Schema):
         unknown = marshmallow.EXCLUDE
 
     title = marshmallow.fields.String(
-        required=True,
-        allow_none=False,
-        validate=marshmallow.validate.And(
-            marshmallow.validate.Length(min=1), dds_web.utils.contains_disallowed_characters
-        ),
-        error_messages={
-            "required": {"message": "Title is required."},
-            "null": {"message": "Title is required."},
-        },
+        validate=dds_web.utils.validate_project_title,
     )
     description = marshmallow.fields.String(
-        required=True,
-        allow_none=False,
-        validate=marshmallow.validate.And(
-            marshmallow.validate.Length(min=1), dds_web.utils.contains_unicode_emojis
-        ),
-        error_messages={
-            "required": {"message": "A project description is required."},
-            "null": {"message": "A project description is required."},
-        },
+        validate=dds_web.utils.validate_project_description,
     )
     pi = marshmallow.fields.String(
-        required=True,
-        allow_none=False,
-        validate=marshmallow.validate.Email(error="The PI email is invalid."),
-        error_messages={
-            "required": {"message": "A principal investigator is required."},
-            "null": {"message": "A principal investigator is required."},
-        },
+        validate=dds_web.utils.validate_project_pi,
     )
     non_sensitive = marshmallow.fields.Boolean(required=False, default=False)
     date_created = custom_fields.MyDateTimeField(required=False)
