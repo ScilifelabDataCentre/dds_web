@@ -44,11 +44,6 @@ class Config(object):
     # Devel settings
     TEMPLATES_AUTO_RELOAD = True
 
-    # OIDC
-    OIDC_CLIENT_ID = ""
-    OIDC_CLIENT_SECRET = ""
-    OIDC_ACCESS_TOKEN_URL = ""
-
     MAIL_SERVER = "mailcatcher"
     MAIL_PORT = 1025
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
