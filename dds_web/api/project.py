@@ -996,7 +996,7 @@ class ProjectInfo(flask_restful.Resource):
         new_description = json_input.get("description")
         new_pi = json_input.get("pi")
 
-        # Validate items 
+        # Validate items
         if new_title:
             dds_web.utils.validate_project_title(title=new_title)
         if new_description:
