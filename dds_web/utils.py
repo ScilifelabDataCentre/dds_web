@@ -582,10 +582,7 @@ def block_if_maintenance():
 
     # Possibly block request if maintenance ongoing / planned
     if maintenance.active:
-        # Endpoints accepting requests during active maintenance / planned
-        project_required_endpoints: typing.List = [
-            f"/api/v1{resource}" for resource in ["/file/new", "/file/update", "/proj/busy"]
-        ]
+        # Endpoints accepting requests during active maintenance
         admin_endpoints: typing.List = [
             f"/api/v1{x}"
             for x in [
@@ -601,7 +598,7 @@ def block_if_maintenance():
             f"/api/v1{x}" for x in ["/user/encrypted_token", "/user/second_factor"]
         ]
         approved_endpoints: typing.List = (
-            project_required_endpoints + admin_endpoints + authentication_endpoints
+            admin_endpoints + authentication_endpoints
         )
 
         # Request not to accepted endpoint
@@ -610,16 +607,3 @@ def block_if_maintenance():
         if current_endpoint not in approved_endpoints:
             # Request not accepted during maintenance
             raise MaintenanceOngoingException()
-        else:
-            # Request accepted during maintenance but...
-            req_args = flask.request.args
-            if current_endpoint in project_required_endpoints:
-                # Request requires a project
-                if not (req_args and (project_id := req_args.get("project"))):
-                    raise MaintenanceOngoingException()
-
-                # Request requires a busy project
-                if not models.Project.query.filter_by(
-                    public_id=project_id, busy=True
-                ).one_or_none():
-                    raise MaintenanceOngoingException()
