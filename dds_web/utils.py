@@ -586,6 +586,7 @@ def block_if_maintenance():
         admin_endpoints: typing.List = [
             f"/api/v1{x}"
             for x in [
+                "/user/encrypted_token", "/user/second_factor",
                 "/user/info",
                 "/maintenance",
                 "/unit/info/all",
@@ -594,16 +595,10 @@ def block_if_maintenance():
                 "/proj/busy/any",
             ]
         ]
-        authentication_endpoints: typing.List = [
-            f"/api/v1{x}" for x in ["/user/encrypted_token", "/user/second_factor"]
-        ]
-        approved_endpoints: typing.List = (
-            admin_endpoints + authentication_endpoints
-        )
 
         # Request not to accepted endpoint
         # OR request to accepted endpoint but project not specified or busy
         current_endpoint: str = flask.request.path
-        if current_endpoint not in approved_endpoints:
+        if current_endpoint not in admin_endpoints:
             # Request not accepted during maintenance
             raise MaintenanceOngoingException()
