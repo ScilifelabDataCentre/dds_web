@@ -19,7 +19,9 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
     )
 
     # Get users with no access to project
-    unit_users_no_access = db.session.query(models.UnitUser).filter(models.UnitUser.unit_id != project.unit_id)
+    unit_users_no_access = db.session.query(models.UnitUser).filter(
+        models.UnitUser.unit_id != project.unit_id
+    )
 
     # Returned info - expected
     expected_return: typing.Dict = {
