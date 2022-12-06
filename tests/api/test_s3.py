@@ -13,19 +13,13 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
     # Get project
     project: models.Project = models.Project.query.first()
 
-    # Get users with access
+    # Get users with access to project
     unit_users = db.session.query(models.UnitUser).filter(
         models.UnitUser.unit_id == project.unit_id
     )
-    unit_admin: models.UnitUser = unit_users.filter(models.UnitUser.is_admin == True).first()
-    unit_personnel: models.UnitUser = unit_users.filter(models.UnitUser.is_admin == False).first()
-    researcher: models.ResearchUser = project.researchusers[0].researchuser
 
-    # Authenticate different users
-    super_admin_token = UserAuth(USER_CREDENTIALS["superadmin"]).token(client)
-    unit_admin_token = UserAuth(USER_CREDENTIALS[unit_admin.username]).token(client)
-    unit_personnel_token = UserAuth(USER_CREDENTIALS[unit_personnel.username]).token(client)
-    researcher_token = UserAuth(USER_CREDENTIALS[researcher.username]).token(client)
+    # Get users with no access to project
+    unit_users_no_access = db.session.query(models.UnitUser).filter(models.UnitUser.unit_id != project.unit_id)
 
     # Returned info - expected
     expected_return: typing.Dict = {
@@ -40,6 +34,7 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
 
     # Try s3info - "/s3/proj"
     # Super Admin: No
+    super_admin_token = UserAuth(USER_CREDENTIALS["superadmin"]).token(client)
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=super_admin_token,
@@ -47,7 +42,9 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
-    # Unit Admin: Yes
+    # Unit Admin, correct unit: Yes
+    unit_admin: models.UnitUser = unit_users.filter(models.UnitUser.is_admin == True).first()
+    unit_admin_token = UserAuth(USER_CREDENTIALS[unit_admin.username]).token(client)
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=unit_admin_token,
@@ -59,7 +56,19 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
         assert x in response_json
         assert response_json[x] == y
 
-    # Unit Personnel: Yes
+    # Unit Admin, incorrect unit: No
+    unit_admin_no_access: models.UnitUser = unit_users_no_access.filter(models.UnitUser.is_admin == True).first()
+    unit_admin_no_access_token: UserAuth(USER_CREDENTIALS[unit_admin_no_access.username]).token(client)
+    response = client.get(
+        DDSEndpoint.S3KEYS,
+        headers=unit_admin_no_access_token,
+        query_string={"project": "public_project_id"},
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # Unit Personnel, correct unit: Yes
+    unit_personnel: models.UnitUser = unit_users.filter(models.UnitUser.is_admin == False).first()
+    unit_personnel_token = UserAuth(USER_CREDENTIALS[unit_personnel.username]).token(client)
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=unit_personnel_token,
@@ -71,7 +80,19 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
         assert x in response_json
         assert response_json[x] == y
 
+    # Unit Personnel, incorrect unit: No
+    unit_personnel_no_access: models.UnitUser = unit_users_no_access.filter(models.UnitUser.is_admin == False).first()
+    unit_personnel_no_access_token: UserAuth(USER_CREDENTIALS[unit_personnel_no_access.username]).token(client)
+    response = client.get(
+        DDSEndpoint.S3KEYS,
+        headers=unit_personnel_no_access_token,
+        query_string={"project": "public_project_id"},
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
     # Researcher: No
+    researcher: models.ResearchUser = project.researchusers[0].researchuser
+    researcher_token = UserAuth(USER_CREDENTIALS[researcher.username]).token(client)
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=researcher_token,
