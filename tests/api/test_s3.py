@@ -1,19 +1,22 @@
 import flask
-import http 
+import http
 import sqlalchemy
-import typing 
+import typing
 
 from tests import DDSEndpoint, DEFAULT_HEADER, UserAuth, USER_CREDENTIALS
 from dds_web.database import models
 from dds_web import db
 
+
 def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
     """Only Unit Admin and Unit Personnel can get this info."""
-    # Get project 
+    # Get project
     project: models.Project = models.Project.query.first()
 
     # Get users with access
-    unit_users = db.session.query(models.UnitUser).filter(models.UnitUser.unit_id == project.unit_id)
+    unit_users = db.session.query(models.UnitUser).filter(
+        models.UnitUser.unit_id == project.unit_id
+    )
     unit_admin: models.UnitUser = unit_users.filter(models.UnitUser.is_admin == True).first()
     unit_personnel: models.UnitUser = unit_users.filter(models.UnitUser.is_admin == False).first()
     researcher: models.ResearchUser = project.researchusers[0].researchuser
@@ -26,10 +29,13 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
 
     # Returned info - expected
     expected_return: typing.Dict = {
-        "safespring_project": project.responsible_unit.safespring_name, 
+        "safespring_project": project.responsible_unit.safespring_name,
         "url": project.responsible_unit.safespring_endpoint,
-        "keys": {"access_key": project.responsible_unit.safespring_access, "secret_key": project.responsible_unit.safespring_secret}, 
-        "bucket": project.bucket
+        "keys": {
+            "access_key": project.responsible_unit.safespring_access,
+            "secret_key": project.responsible_unit.safespring_secret,
+        },
+        "bucket": project.bucket,
     }
 
     # Try s3info - "/s3/proj"
@@ -37,7 +43,7 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=super_admin_token,
-        query_string={"project": "public_project_id"},  
+        query_string={"project": "public_project_id"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
 
@@ -45,7 +51,7 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=unit_admin_token,
-        query_string={"project": "public_project_id"},  
+        query_string={"project": "public_project_id"},
     )
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
@@ -57,7 +63,7 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=unit_personnel_token,
-        query_string={"project": "public_project_id"},  
+        query_string={"project": "public_project_id"},
     )
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
@@ -69,6 +75,6 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=researcher_token,
-        query_string={"project": "public_project_id"},  
+        query_string={"project": "public_project_id"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
