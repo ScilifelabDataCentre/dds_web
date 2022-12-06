@@ -246,7 +246,7 @@ def test_block_if_maintenance_active_encryptedtoken_researcher_blocked(
             auth=("researchuser", "password"),
             headers=DEFAULT_HEADER,
         )
-        assert mock_mail_send.call_count == 1
+        assert mock_mail_send.call_count == 0
     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
 
 def test_block_if_maintenance_active_encryptedtoken_super_admin_approved(
