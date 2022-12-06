@@ -586,7 +586,8 @@ def block_if_maintenance():
         admin_endpoints: typing.List = [
             f"/api/v1{x}"
             for x in [
-                "/user/encrypted_token", "/user/second_factor",
+                "/user/encrypted_token",
+                "/user/second_factor",
                 "/user/info",
                 "/maintenance",
                 "/unit/info/all",
