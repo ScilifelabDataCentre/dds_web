@@ -23,7 +23,6 @@ from dds_web.errors import (
     AccessDeniedError,
     InviteError,
     TokenMissingError,
-    MaintenanceOngoingException,
 )
 from dds_web.database import models
 import dds_web.utils
