@@ -230,24 +230,29 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
 # block_if_maintenance - should be blocked in init by before_request
 
 
-def test_block_if_maintenance_active_encryptedtoken_researcher_blocked(
+def test_block_if_maintenance_active_encryptedtoken_blocked(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
+    """Non-authenticated users should not be able to authenticate during maintenance.
+    
+    Exception: Super Admins.
+    """
     # Get maintenance row and set to active
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
     db.session.commit()
-
-    # Try encrypted token - "/user/encrypted_token"
-    with patch.object(flask_mail.Mail, "send") as mock_mail_send:
-        response = client.get(
-            DDSEndpoint.ENCRYPTED_TOKEN,
-            auth=("researchuser", "password"),
-            headers=DEFAULT_HEADER,
-        )
-        assert mock_mail_send.call_count == 0
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    
+    # Researcher, Unit Personnel, Unit Admin
+    for user in ["researcher", "unituser", "unitadmin"]:
+        with patch.object(flask_mail.Mail, "send") as mock_mail_send:
+            response = client.get(
+                DDSEndpoint.ENCRYPTED_TOKEN,
+                auth=UserAuth(USER_CREDENTIALS[user]).as_tuple(),
+                headers=DEFAULT_HEADER,
+            )
+            assert mock_mail_send.call_count == 0
+    
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
 
 
 def test_block_if_maintenance_active_encryptedtoken_super_admin_approved(
@@ -263,579 +268,728 @@ def test_block_if_maintenance_active_encryptedtoken_super_admin_approved(
     with patch.object(flask_mail.Mail, "send") as mock_mail_send:
         response = client.get(
             DDSEndpoint.ENCRYPTED_TOKEN,
-            auth=("superadmin", "password"),
+            auth=UserAuth(USER_CREDENTIALS["superadmin"]).as_tuple(),
             headers=DEFAULT_HEADER,
         )
         assert mock_mail_send.call_count == 1
     assert response.status_code == http.HTTPStatus.OK
 
 
-def test_block_if_maintenance_active_secondfactor_approved(
+def test_block_if_maintenance_inactive_approved(
     client: flask.testing.FlaskClient,
 ) -> None:
-    """Requests with wrong 2FA should be blocked if maintenance is active."""
-    # Get maintenance row and set to active
+    """All should be allowed to authenticate with basic auth when maintenance not ongoing."""
+    # Maintenance should be off
     maintenance: models.Maintenance = models.Maintenance.query.first()
+    assert not maintenance.active 
+    
+    # Try authenticating all
+    for user in ["superadmin", "unitadmin", "unituser", "researcher"]:
+        with patch.object(flask_mail.Mail, "send") as mock_mail_send:
+            response = client.get(
+                DDSEndpoint.ENCRYPTED_TOKEN,
+                auth=UserAuth(USER_CREDENTIALS[user]).as_tuple(),
+                headers=DEFAULT_HEADER,
+            )
+            assert mock_mail_send.call_count == 1
+        assert response.status_code == http.HTTPStatus.OK
+
+
+def test_block_if_maintenance_inactive_first_ok_second_blocked(
+    client: flask.testing.FlaskClient,
+) -> None:
+    """Block second factor for all but Super Admins if maintenance started after basic auth."""
+    # Maintenance should be off
+    maintenance: models.Maintenance = models.Maintenance.query.first()
+    assert not maintenance.active 
+    
+    # All but Super Admin: Basic auth OK, second factor FAIL
+    for user in ["unitadmin", "unituser", "researcher"]:
+        # Maintenance not active during basic auth
+        maintenance.active = False
+        db.session.commit()
+
+        # Perform basic auth
+        basic_auth = UserAuth(USER_CREDENTIALS[user])
+        hotp_value = basic_auth.fetch_hotp()
+        partial_token = basic_auth.partial_token(client)
+
+        # Maintenance active during 2fa
+        maintenance.active = True
+        db.session.commit()
+
+        # Attempt 2fa
+        response = client.get(
+            DDSEndpoint.SECOND_FACTOR,
+            headers=partial_token,
+            json={"HOTP": hotp_value.decode()},
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+
+    # Super Admin:
+    # Maintenance not active during basic auth
+    maintenance.active = False
+    db.session.commit()
+
+    # Perform basic auth
+    basic_auth = UserAuth(USER_CREDENTIALS["superadmin"])
+    hotp_value = basic_auth.fetch_hotp()
+    partial_token = basic_auth.partial_token(client)
+
+    # Maintenance active during 2fa
     maintenance.active = True
     db.session.commit()
 
-    # Try second factor - "/user/second_factor"
+    # Attempt 2fa
     response = client.get(
         DDSEndpoint.SECOND_FACTOR,
-        headers={"Authorization": f"Bearer made.up.token.long.version", **DEFAULT_HEADER},
-        json={"TOTP": "somrthing"},
+        headers=partial_token,
+        json={"HOTP": hotp_value.decode()},
     )
-    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    assert response.status_code == http.HTTPStatus.OK
 
-
-def test_block_if_maintenance_active_s3proj_not_approved(client: flask.testing.FlaskClient) -> None:
+def test_block_if_maintenance_active_none_approved_users(client: flask.testing.FlaskClient) -> None:
     """More requests to be blocked if maintenance is active."""
-    # Get maintenance row and set to active
+    # Get maintenance row
     maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
+    
+    for user in ["researcher", "unituser", "unitadmin"]:
+        maintenance.active = False
+        db.session.commit()
 
-    # Try s3info - "/s3/proj"
-    response = client.get(
-        DDSEndpoint.S3KEYS,
-        headers=DEFAULT_HEADER,
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        # Perform authentication
+        user_auth = UserAuth(USER_CREDENTIALS[user])
+        token = user_auth.token(client)
+        
+        maintenance.active = True
+        db.session.commit()
+        
+        # S3info - "/s3/proj"
+        response = client.get(
+            DDSEndpoint.S3KEYS,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
+        # NewFile - "/file/new"
+        # post
+        response = client.post(
+            DDSEndpoint.FILE_NEW,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+        # put
+        response = client.put(
+            DDSEndpoint.FILE_NEW,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-def test_block_if_maintenance_active_fileslist_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """More requests to be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["researchuser"]).token(client)
+        # MatchFiles - "/file/match"
+        response = client.get(
+            DDSEndpoint.FILE_MATCH,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
+        # ListFiles - "/files/list"
+        response = client.get(
+            DDSEndpoint.LIST_FILES,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # Try list files - "/files/list"
-    response = client.get(
-        DDSEndpoint.LIST_FILES,
-        headers=token,
-        query_string={"project": "public_project_id"},
-        json={"show_size": True},
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        # RemoveFile - "/file/rm"
+        response = client.delete(
+            DDSEndpoint.REMOVE_FILE,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
+        # RemoveDir - "/file/rmdir"
+        response = client.delete(
+            DDSEndpoint.REMOVE_FOLDER,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-def test_block_if_maintenance_active_filematch_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """More requests to be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/file/match"
-    response = client.get(
-        DDSEndpoint.FILE_MATCH,
-        headers=token,
-        query_string={"project": "file_testing_project"},
-        json=["non_existent_file"],
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_removefile_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # Try remove file - "/file/rm"
-    from tests.test_files_new import FIRST_NEW_FILE
-
-    response = client.delete(
-        DDSEndpoint.REMOVE_FILE,
-        headers=token,
-        query_string={"project": "file_testing_project"},
-        json=[FIRST_NEW_FILE["name"]],
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_removedir_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/file/rmdir"
-    from tests.test_files_new import FIRST_NEW_FILE
-
-    response = client.delete(
-        DDSEndpoint.REMOVE_FOLDER,
-        headers=token,
-        query_string={"project": "file_testing_project"},
-        json=[FIRST_NEW_FILE["subpath"]],
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_fileinfo_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["researchuser"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/file/info"
-    with patch("dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url") as mock_url:
-        mock_url.return_value = "url"
+        # FileInfo - "/file/info"
         response = client.get(
             DDSEndpoint.FILE_INFO,
             headers=token,
-            query_string={"project": "public_project_id"},
-            json=["filename1"],
         )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-
-def test_block_if_maintenance_active_fileallinfo_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["researchuser"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/file/all/info"
-    with patch("dds_web.api.api_s3_connector.ApiS3Connector.generate_get_url") as mock_url:
-        mock_url.return_value = "url"
+        # FileInfoAll - "/file/all/info"
         response = client.get(
             DDSEndpoint.FILE_INFO_ALL,
             headers=token,
-            query_string={"project": "public_project_id"},
         )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
+        # UpdateFile - "/file/update"
+        response = client.put(
+            DDSEndpoint.FILE_UPDATE,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+    
+        # NewFile - "/file/new"
+        response = client.post(
+            DDSEndpoint.FILE_NEW,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-def test_block_if_maintenance_active_projectlist_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
+        # UserProjects - "/proj/list"
+        response = client.get(
+            DDSEndpoint.LIST_PROJ,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
+        # RemoveContents - "/proj/rm"
+        response = client.delete(
+            DDSEndpoint.REMOVE_PROJ_CONT,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # "/proj/list"
-    response = client.get(
-        DDSEndpoint.LIST_PROJ,
-        headers=token,
-        json={"usage": True},
-        content_type="application/json",
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        # GetPublic - "/proj/public"
+        response = client.get(
+            DDSEndpoint.PROJ_PUBLIC,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
+        # GetPrivate - "/proj/private"
+        response = client.get(
+            DDSEndpoint.PROJ_PRIVATE,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-def test_block_if_maintenance_active_removeprojectcontents_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
+        # CreateProject - "/proj/create"
+        response = client.post(
+            DDSEndpoint.PROJECT_CREATE,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
+        # ProjectUsers - "/proj/users"
+        response = client.get(
+            DDSEndpoint.LIST_PROJ_USERS,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # "/proj/rm"
-    response = client.delete(
-        DDSEndpoint.REMOVE_PROJ_CONT,
-        headers=token,
-        query_string={"project": "file_testing_project"},
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        # ProjectStatus - "/proj/status"
+        # get
+        response = client.get(
+            DDSEndpoint.PROJECT_STATUS,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+        # post 
+        response = client.post(
+            DDSEndpoint.PROJECT_STATUS,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
+        # ProjectAccess - "/proj/access"
+        response = client.post(
+            DDSEndpoint.PROJECT_ACCESS,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-def test_block_if_maintenance_active_projectpublic_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
+        # ProjectBusy - "/proj/busy"
+        response = client.put(
+            DDSEndpoint.PROJECT_BUSY,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
+        # ProjectInfo - "/proj/info"
+        response = client.get(
+            DDSEndpoint.PROJECT_INFO,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # "/proj/public"
-    response = client.get(
-        DDSEndpoint.PROJ_PUBLIC, query_string={"project": "public_project_id"}, headers=token
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        # RetrieveUserInfo - "/user/info"
+        response = client.get(
+            DDSEndpoint.USER_INFO,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
+        # AddUser - "/user/add"
+        response = client.post(
+            DDSEndpoint.USER_ADD,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-def test_block_if_maintenance_active_projectprivate_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
+        # DeleteUser - "/user/delete"
+        response = client.delete(
+            DDSEndpoint.USER_DELETE,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/proj/private"
-    response = client.get(
-        DDSEndpoint.PROJ_PRIVATE,
-        query_string={"project": "public_project_id"},
-        headers=token,
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_createproject_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/proj/create"
-    from tests.test_project_creation import proj_data
-
-    response = client.post(
-        DDSEndpoint.PROJECT_CREATE,
-        headers=token,
-        json=proj_data,
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_projectusers_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/proj/users"
-    response = client.get(
-        DDSEndpoint.LIST_PROJ_USERS, query_string={"project": "public_project_id"}, headers=token
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_projectstatus_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/proj/status"
-    response = client.post(
-        DDSEndpoint.PROJECT_STATUS,
-        headers=token,
-        query_string={"project": "public_project_id"},
-        json={"new_status": "Available"},
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_projectaccess_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/proj/access"
-    response = client.post(
-        DDSEndpoint.PROJECT_ACCESS,
-        headers=token,
-        query_string={"project": "public_project_id"},
-        json={"email": "unituser1@mailtrap.io"},
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_adduser_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/user/add"
-    from tests.api.test_user import first_new_user
-
-    response = client.post(
-        DDSEndpoint.USER_ADD,
-        headers=token,
-        json=first_new_user,
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_deleteuser_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/user/delete"
-    invited_user_row = models.Invite.query.first()
-    response = client.delete(
-        DDSEndpoint.USER_DELETE,
-        headers=token,
-        json={"email": invited_user_row.email, "is_invite": True},
-    )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_deleteself_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["delete_me_researcher"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/user/delete_self"
-    with patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        # DeleteUserSelf - "/file/new"
         response = client.delete(
             DDSEndpoint.USER_DELETE_SELF,
             headers=token,
-            json=None,
         )
-        # One email for partial token but no new for deletion confirmation
-        assert mock_mail_send.call_count == 0
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
+        # RemoveUserAssociation - "/user/access/revoke"
+        response = client.post(
+            DDSEndpoint.REMOVE_USER_FROM_PROJ,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-def test_block_if_maintenance_active_revokeaccess_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
+        # UserActivation - "/user/activation"
+        response = client.post(
+            DDSEndpoint.USER_ACTIVATION,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-    # Get maintenance row and set to active
+        # RequestHOTPActivation - "/user/hotp/activate"
+        response = client.post(
+            DDSEndpoint.HOTP_ACTIVATION,
+            auth=user_auth.as_tuple(),
+            headers=DEFAULT_HEADER,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # RequestTOTPActivation - "/user/totp/activate"
+        response = client.post(
+            DDSEndpoint.TOTP_ACTIVATION,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # Users - "/users"
+        response = client.get(
+            DDSEndpoint.LIST_USERS,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # InvitedUsers - "/user/invites"
+        response = client.get(
+            DDSEndpoint.LIST_INVITES,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # SetMaintenance - "/maintenance"
+        response = client.put(
+            DDSEndpoint.MAINTENANCE,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # AllUnits - "/unit/info/all"
+        response = client.get(
+            DDSEndpoint.LIST_UNITS_ALL,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # MOTD - "/motd"
+        # get
+        response = client.get(
+            DDSEndpoint.MOTD,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        # post
+        response = client.post(
+            DDSEndpoint.MOTD,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # SendMOTD - "/motd/send"
+        response = client.post(
+            DDSEndpoint.MOTD_SEND,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # FindUser - "/user/find"
+        response = client.get(
+            DDSEndpoint.USER_FIND,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # ResetTwoFactor - "/user/totp/deactivate"
+        response = client.put(
+            DDSEndpoint.TOTP_DEACTIVATE,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # AnyProjectBusy - "/proj/busy/any"
+        response = client.get(
+            DDSEndpoint.PROJECT_BUSY_ANY,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+        # ShowUsage - "/usage"
+        response = client.get(
+            DDSEndpoint.USAGE,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
+def test_block_if_maintenance_active_superadmin_ok(client: flask.testing.FlaskClient) -> None:
+    """Super Admins should not be blocked during maintenance."""
+    # Get maintenance row
     maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
+    maintenance.active = False
     db.session.commit()
 
-    # "/user/access/revoke"
-    from tests.test_project_creation import proj_data_with_existing_users
+    # Perform authentication
+    user_auth = UserAuth(USER_CREDENTIALS["superadmin"])
+    token = user_auth.token(client)
+    
+    maintenance.active = True
+    db.session.commit()
+    
+    # S3info - "/s3/proj"
+    response = client.get(
+        DDSEndpoint.S3KEYS,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
-    email = proj_data_with_existing_users["users_to_add"][0]["email"]
+    # NewFile - "/file/new"
+    # post
+    response = client.post(
+        DDSEndpoint.FILE_NEW,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    # put
+    response = client.put(
+        DDSEndpoint.FILE_NEW,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # MatchFiles - "/file/match"
+    response = client.get(
+        DDSEndpoint.FILE_MATCH,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # ListFiles - "/files/list"
+    response = client.get(
+        DDSEndpoint.LIST_FILES,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # RemoveFile - "/file/rm"
+    response = client.delete(
+        DDSEndpoint.REMOVE_FILE,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # RemoveDir - "/file/rmdir"
+    response = client.delete(
+        DDSEndpoint.REMOVE_FOLDER,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # FileInfo - "/file/info"
+    response = client.get(
+        DDSEndpoint.FILE_INFO,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # FileInfoAll - "/file/all/info"
+    response = client.get(
+        DDSEndpoint.FILE_INFO_ALL,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # UpdateFile - "/file/update"
+    response = client.put(
+        DDSEndpoint.FILE_UPDATE,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # NewFile - "/file/new"
+    response = client.post(
+        DDSEndpoint.FILE_NEW,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # UserProjects - "/proj/list"
+    response = client.get(
+        DDSEndpoint.LIST_PROJ,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # RemoveContents - "/proj/rm"
+    response = client.delete(
+        DDSEndpoint.REMOVE_PROJ_CONT,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # GetPublic - "/proj/public"
+    response = client.get(
+        DDSEndpoint.PROJ_PUBLIC,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # GetPrivate - "/proj/private"
+    response = client.get(
+        DDSEndpoint.PROJ_PRIVATE,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # CreateProject - "/proj/create"
+    response = client.post(
+        DDSEndpoint.PROJECT_CREATE,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # ProjectUsers - "/proj/users"
+    response = client.get(
+        DDSEndpoint.LIST_PROJ_USERS,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # ProjectStatus - "/proj/status"
+    # get
+    response = client.get(
+        DDSEndpoint.PROJECT_STATUS,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    # post 
+    response = client.post(
+        DDSEndpoint.PROJECT_STATUS,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # ProjectAccess - "/proj/access"
+    response = client.post(
+        DDSEndpoint.PROJECT_ACCESS,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # ProjectBusy - "/proj/busy"
+    response = client.put(
+        DDSEndpoint.PROJECT_BUSY,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # ProjectInfo - "/proj/info"
+    response = client.get(
+        DDSEndpoint.PROJECT_INFO,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # RetrieveUserInfo - "/user/info"
+    response = client.get(
+        DDSEndpoint.USER_INFO,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # AddUser - "/user/add"
+    response = client.post(
+        DDSEndpoint.USER_ADD,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # DeleteUser - "/user/delete"
+    response = client.delete(
+        DDSEndpoint.USER_DELETE,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # DeleteUserSelf - "/file/new"
+    response = client.delete(
+        DDSEndpoint.USER_DELETE_SELF,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+    # RemoveUserAssociation - "/user/access/revoke"
     response = client.post(
         DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=token,
-        query_string={"project": "public_project_id"},
-        json={"email": email},
     )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
-
-def test_block_if_maintenance_active_useractivation_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unitadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/user/activation"
-    from tests.test_user_activation import unituser
-
+    # UserActivation - "/user/activation"
     response = client.post(
         DDSEndpoint.USER_ACTIVATION,
         headers=token,
-        json={**unituser, "action": "reactivate"},
     )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
-
-def test_block_if_maintenance_active_hotp_not_approved(client: flask.testing.FlaskClient) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["researcher"]).as_tuple()
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/user/hotp/activate"
+    # RequestHOTPActivation - "/user/hotp/activate"
     response = client.post(
         DDSEndpoint.HOTP_ACTIVATION,
+        auth=user_auth.as_tuple(),
         headers=DEFAULT_HEADER,
-        auth=token,
     )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.status_code == http.HTTPStatus.OK
 
-
-def test_block_if_maintenance_active_totp_not_approved(client: flask.testing.FlaskClient) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/user/totp/activate"
+    # RequestTOTPActivation - "/user/totp/activate"
     response = client.post(
         DDSEndpoint.TOTP_ACTIVATION,
         headers=token,
     )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.status_code == http.HTTPStatus.OK
 
-
-def test_block_if_maintenance_active_listusers_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["superadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/users"
-    response = client.get(DDSEndpoint.LIST_USERS, headers=token)
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-
-
-def test_block_if_maintenance_active_finduser_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["superadmin"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/user/find"
-    response: werkzeug.test.WrapperTestResponse = client.get(
-        DDSEndpoint.USER_FIND, headers=token, json={"username": models.User.query.first().username}
+    # Users - "/users"
+    response = client.get(
+        DDSEndpoint.LIST_USERS,
+        headers=token,
     )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.status_code == http.HTTPStatus.OK
 
+    # InvitedUsers - "/user/invites"
+    response = client.get(
+        DDSEndpoint.LIST_INVITES,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
 
-def test_block_if_maintenance_active_deactivatetotp_not_approved(
-    client: flask.testing.FlaskClient,
-) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["superadmin"]).token(client)
+    # SetMaintenance - "/maintenance"
+    response = client.put(
+        DDSEndpoint.MAINTENANCE,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
+    # AllUnits - "/unit/info/all"
+    response = client.get(
+        DDSEndpoint.LIST_UNITS_ALL,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
 
-    # "/user/totp/deactivate"
-    response: werkzeug.test.WrapperTestResponse = client.put(
+    # MOTD - "/motd"
+    # get
+    response = client.get(
+        DDSEndpoint.MOTD,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # post
+    response = client.post(
+        DDSEndpoint.MOTD,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # SendMOTD - "/motd/send"
+    response = client.post(
+        DDSEndpoint.MOTD_SEND,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # FindUser - "/user/find"
+    response = client.get(
+        DDSEndpoint.USER_FIND,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # ResetTwoFactor - "/user/totp/deactivate"
+    response = client.put(
         DDSEndpoint.TOTP_DEACTIVATE,
         headers=token,
-        json={"username": models.User.query.first().username},
     )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
+    # AnyProjectBusy - "/proj/busy/any"
+    response = client.get(
+        DDSEndpoint.PROJECT_BUSY_ANY,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
 
-def test_block_if_maintenance_active_usage_not_approved(client: flask.testing.FlaskClient) -> None:
-    """Certain endpoints should be blocked if maintenance is active."""
-    # Auth before maintenance on
-    token = UserAuth(USER_CREDENTIALS["unituser"]).token(client)
-
-    # Get maintenance row and set to active
-    maintenance: models.Maintenance = models.Maintenance.query.first()
-    maintenance.active = True
-    db.session.commit()
-
-    # "/usage"
+    # ShowUsage - "/usage"
     response = client.get(
         DDSEndpoint.USAGE,
         headers=token,
-        content_type="application/json",
     )
-    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.status_code == http.HTTPStatus.FORBIDDEN

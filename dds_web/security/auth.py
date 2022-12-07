@@ -239,6 +239,9 @@ def verify_token(token):
     if not user:
         raise AccessDeniedError(message="Invalid token. Try reauthenticating.")
 
+    # Block all users but Super Admins during maintenance
+    dds_web.utils.block_if_maintenance(user=user)
+
     if user.password_reset:
         token_expired = claims.get("exp")
         token_issued = datetime.datetime.fromtimestamp(token_expired) - MFA_EXPIRES_IN
@@ -402,11 +405,8 @@ def verify_password(username, password):
     user = models.User.query.get(username)
 
     if user and user.is_active and user.verify_password(input_password=password):
-        # Only authenticate if Super Admin
-        maintenance: models.Maintenance = models.Maintenance.query.first()
-        flask.current_app.logger.info(f"Maintenance active: {maintenance.active}")
-        if maintenance.active and user.role != "Super Admin":
-            raise MaintenanceOngoingException()
+        # Block all users but Super Admins during maintenance
+        dds_web.utils.block_if_maintenance(user=user)
 
         if not user.totp_enabled:
             send_hotp_email(user)
