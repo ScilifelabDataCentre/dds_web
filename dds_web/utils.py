@@ -575,16 +575,19 @@ def calculate_version_period_usage(version):
 
 
 # maintenance check
-def block_if_maintenance(user = None):
+def block_if_maintenance(user=None):
     """Block API requests if maintenance is ongoing and projects are busy."""
     # Get maintenance row
     maintenance: models.Maintenance = models.Maintenance.query.first()
 
     # Possibly block request if maintenance ongoing / planned
     if maintenance.active:
-        if not user: 
+        if not user:
             # Endpoints accepting requests during active maintenance - only login for non-logged in users
-            admin_endpoints: typing.List = ["/api/v1/user/encrypted_token", "/api/v1/user/second_factor"]
+            admin_endpoints: typing.List = [
+                "/api/v1/user/encrypted_token",
+                "/api/v1/user/second_factor",
+            ]
 
             # Request not to accepted endpoint
             # OR request to accepted endpoint but project not specified or busy
@@ -595,4 +598,3 @@ def block_if_maintenance(user = None):
         else:
             if user.role != "Super Admin":
                 raise MaintenanceOngoingException()
-                

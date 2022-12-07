@@ -234,14 +234,14 @@ def test_block_if_maintenance_active_encryptedtoken_blocked(
     client: flask.testing.FlaskClient,
 ) -> None:
     """Non-authenticated users should not be able to authenticate during maintenance.
-    
+
     Exception: Super Admins.
     """
     # Get maintenance row and set to active
     maintenance: models.Maintenance = models.Maintenance.query.first()
     maintenance.active = True
     db.session.commit()
-    
+
     # Researcher, Unit Personnel, Unit Admin
     for user in ["researcher", "unituser", "unitadmin"]:
         with patch.object(flask_mail.Mail, "send") as mock_mail_send:
@@ -251,7 +251,7 @@ def test_block_if_maintenance_active_encryptedtoken_blocked(
                 headers=DEFAULT_HEADER,
             )
             assert mock_mail_send.call_count == 0
-    
+
         assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
 
 
@@ -281,8 +281,8 @@ def test_block_if_maintenance_inactive_approved(
     """All should be allowed to authenticate with basic auth when maintenance not ongoing."""
     # Maintenance should be off
     maintenance: models.Maintenance = models.Maintenance.query.first()
-    assert not maintenance.active 
-    
+    assert not maintenance.active
+
     # Try authenticating all
     for user in ["superadmin", "unitadmin", "unituser", "researcher"]:
         with patch.object(flask_mail.Mail, "send") as mock_mail_send:
@@ -301,8 +301,8 @@ def test_block_if_maintenance_inactive_first_ok_second_blocked(
     """Block second factor for all but Super Admins if maintenance started after basic auth."""
     # Maintenance should be off
     maintenance: models.Maintenance = models.Maintenance.query.first()
-    assert not maintenance.active 
-    
+    assert not maintenance.active
+
     # All but Super Admin: Basic auth OK, second factor FAIL
     for user in ["unitadmin", "unituser", "researcher"]:
         # Maintenance not active during basic auth
@@ -348,11 +348,12 @@ def test_block_if_maintenance_inactive_first_ok_second_blocked(
     )
     assert response.status_code == http.HTTPStatus.OK
 
+
 def test_block_if_maintenance_active_none_approved_users(client: flask.testing.FlaskClient) -> None:
     """More requests to be blocked if maintenance is active."""
     # Get maintenance row
     maintenance: models.Maintenance = models.Maintenance.query.first()
-    
+
     for user in ["researcher", "unituser", "unitadmin"]:
         maintenance.active = False
         db.session.commit()
@@ -360,10 +361,10 @@ def test_block_if_maintenance_active_none_approved_users(client: flask.testing.F
         # Perform authentication
         user_auth = UserAuth(USER_CREDENTIALS[user])
         token = user_auth.token(client)
-        
+
         maintenance.active = True
         db.session.commit()
-        
+
         # S3info - "/s3/proj"
         response = client.get(
             DDSEndpoint.S3KEYS,
@@ -443,7 +444,7 @@ def test_block_if_maintenance_active_none_approved_users(client: flask.testing.F
         )
         assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
         assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
-    
+
         # NewFile - "/file/new"
         response = client.post(
             DDSEndpoint.FILE_NEW,
@@ -508,7 +509,7 @@ def test_block_if_maintenance_active_none_approved_users(client: flask.testing.F
         )
         assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
         assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
-        # post 
+        # post
         response = client.post(
             DDSEndpoint.PROJECT_STATUS,
             headers=token,
@@ -692,6 +693,7 @@ def test_block_if_maintenance_active_none_approved_users(client: flask.testing.F
         assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
         assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
+
 def test_block_if_maintenance_active_superadmin_ok(client: flask.testing.FlaskClient) -> None:
     """Super Admins should not be blocked during maintenance."""
     # Get maintenance row
@@ -702,10 +704,10 @@ def test_block_if_maintenance_active_superadmin_ok(client: flask.testing.FlaskCl
     # Perform authentication
     user_auth = UserAuth(USER_CREDENTIALS["superadmin"])
     token = user_auth.token(client)
-    
+
     maintenance.active = True
     db.session.commit()
-    
+
     # S3info - "/s3/proj"
     response = client.get(
         DDSEndpoint.S3KEYS,
@@ -832,7 +834,7 @@ def test_block_if_maintenance_active_superadmin_ok(client: flask.testing.FlaskCl
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    # post 
+    # post
     response = client.post(
         DDSEndpoint.PROJECT_STATUS,
         headers=token,
