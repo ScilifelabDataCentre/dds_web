@@ -321,8 +321,21 @@ def reporting_units_and_users():
     from dds_web import errors, utils
     from dds_web.database.models import User, Unit
 
+    # Get current date
+    current_date: str = utils.timestamp(ts_format="%Y-%m-%d")
+
+    # Location of reporting file
+    reporting_file: pathlib.Path = pathlib.Path("doc/reporting/dds-reporting.csv")
+
     # App context required
     with scheduler.app.app_context():
+        # Get email address
+        recipient: str = scheduler.app.config.get("MAIL_DDS")
+        default_subject: str = "DDS Unit / User report"
+        default_body: str = f"This email contains the DDS unit- and user statistics. The data was collected on: {current_date}."
+        error_subject: str = f"Error in {default_subject}"
+        error_body: str = "The cronjob 'reporting' experienced issues"
+
         # Get units and count them
         units: flask_sqlalchemy.BaseQuery = Unit.query
         num_units: int = units.count()
@@ -336,16 +349,26 @@ def reporting_units_and_users():
 
         # Verify that sum is correct
         if sum([num_superadmins, num_unit_users, num_researchers]) != num_users_total:
-            # TODO: Possibly email us here
-            raise Exception("Total number of users does not match user types.")
-
-        # Get current date
-        current_date: str = utils.timestamp(ts_format="%Y-%m-%d")
+            error: str = "Sum of number of users incorrect."
+            # Send email about error
+            sum_error_msg: flask_mail.Message = flask_mail.Message(
+                subject=error_subject,
+                recipients=[recipient],
+                body=f"{error_body}: {error}",
+            )
+            utils.send_email_with_retry(msg=sum_error_msg)
+            raise Exception(error)
 
         # Define csv file and verify that it exists
-        reporting_file: pathlib.Path = pathlib.Path("doc/reporting/dds-reporting.csv")
         if not reporting_file.exists():
-            # TODO: Possibly email us here
+            error: str = "Could not find the csv file."
+            # Send email about error
+            file_error_msg: flask_mail.Message = flask_mail.Message(
+                subject=error_subject,
+                recipients=[recipient],
+                body=f"{error_body}: {error}",
+            )
+            utils.send_email_with_retry(msg=file_error_msg)
             raise Exception("Could not find there csv file for reporting.")
 
         # Add row with new info
@@ -356,10 +379,10 @@ def reporting_units_and_users():
             )
 
         # Create email
-        msg = flask_mail.Message(
-            subject=f"DDS Unit / User report",
-            recipients=["delivery@scilifelab.se"],
-            body=f"This email contains the DDS unit- and user statistics. The data was collected on: {current_date}.",
+        msg: flask_mail.Message = flask_mail.Message(
+            subject=default_subject,
+            recipients=[recipient],
+            body=default_body,
         )
         with reporting_file.open(mode="r") as file:  # Attach file
             msg.attach(filename=reporting_file.name, content_type="text/csv", data=file.read())
