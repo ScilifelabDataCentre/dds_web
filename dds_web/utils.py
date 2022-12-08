@@ -575,46 +575,26 @@ def calculate_version_period_usage(version):
 
 
 # maintenance check
-def block_if_maintenance():
+def block_if_maintenance(user=None):
     """Block API requests if maintenance is ongoing and projects are busy."""
     # Get maintenance row
     maintenance: models.Maintenance = models.Maintenance.query.first()
 
     # Possibly block request if maintenance ongoing / planned
     if maintenance.active:
-        # Endpoints accepting requests during active maintenance / planned
-        project_required_endpoints: typing.List = [
-            f"/api/v1{resource}" for resource in ["/file/new", "/file/update", "/proj/busy"]
-        ]
-        admin_endpoints: typing.List = [
-            f"/api/v1{x}"
-            for x in [
-                "/user/info",
-                "/maintenance",
-                "/unit/info/all",
-                "/motd",
-                "/motd/send",
-                "/proj/busy/any",
+        if not user:
+            # Endpoints accepting requests during active maintenance - only login for non-logged in users
+            admin_endpoints: typing.List = [
+                "/api/v1/user/encrypted_token",
+                "/api/v1/user/second_factor",
             ]
-        ]
-        approved_endpoints: typing.List = project_required_endpoints + admin_endpoints
 
-        # Request not to accepted endpoint
-        # OR request to accepted endpoint but project not specified or busy
-        current_endpoint: str = flask.request.path
-        if current_endpoint not in approved_endpoints:
-            # Request not accepted during maintenance
-            raise MaintenanceOngoingException()
+            # Request not to accepted endpoint
+            # OR request to accepted endpoint but project not specified or busy
+            current_endpoint: str = flask.request.path
+            if current_endpoint not in admin_endpoints:
+                # Request not accepted during maintenance
+                raise MaintenanceOngoingException()
         else:
-            # Request accepted during maintenance but...
-            req_args = flask.request.args
-            if current_endpoint in project_required_endpoints:
-                # Request requires a project
-                if not (req_args and (project_id := req_args.get("project"))):
-                    raise MaintenanceOngoingException()
-
-                # Request requires a busy project
-                if not models.Project.query.filter_by(
-                    public_id=project_id, busy=True
-                ).one_or_none():
-                    raise MaintenanceOngoingException()
+            if user.role != "Super Admin":
+                raise MaintenanceOngoingException()

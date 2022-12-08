@@ -193,7 +193,6 @@ def create_app(testing=False, database_uri=None):
 
             # Verify cli version compatible
             if "api/v1" in flask.request.path:
-                block_if_maintenance()
                 verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
 
             # Get message of the day
