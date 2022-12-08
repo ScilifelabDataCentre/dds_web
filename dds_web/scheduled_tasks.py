@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import typing
 
 import flask_apscheduler
 import flask
@@ -304,3 +305,53 @@ def quarterly_usage():
             flask.current_app.logger.exception(err)
             db.session.rollback()
             raise
+
+
+# @scheduler.task(
+#     "cron", id="reporting", day="1", hour=0, minute=1
+# )
+@scheduler.task("interval", id="reporting", seconds=20, misfire_grace_time=1)
+def reporting_units_and_users():
+    """At the start of every month, get number of units and users."""
+    # Imports
+    import flask_sqlalchemy
+    import sqlalchemy
+    from dds_web import db
+    from dds_web import errors
+    from dds_web.database.models import User, Unit
+
+    # App context required
+    with scheduler.app.app_context():
+        # Get units
+        units: flask_sqlalchemy.BaseQuery = Unit.query
+        scheduler.app.logger.debug(f"Units: {units} ({type(units)})")
+        
+        # Count units
+        num_units: int = units.count()
+        scheduler.app.logger.debug(f"Number of Units: {num_units}")
+
+        # Get users
+        users: flask_sqlalchemy.BaseQuery = User.query
+        scheduler.app.logger.debug(f"Type: {users} ({type(users)})")
+
+        # Count all users
+        num_users_total: int = users.count()
+        scheduler.app.logger.debug(f"Total number of users: {num_users_total}")
+
+        # Count Super Admins
+        num_superadmins: int = users.filter_by(type="superadmin").count()
+        scheduler.app.logger.debug(f"Number of super admins: {num_superadmins}")
+
+        # Count Unit Admins / Personnel
+        num_unit_users: int = users.filter_by(type="unituser").count()
+        scheduler.app.logger.debug(f"Number of unit users: {num_unit_users}")
+
+        # Count researchers
+        num_researchers: int = users.filter_by(type="researchuser").count()
+        scheduler.app.logger.debug(f"Number of researchers: {num_researchers}")
+
+        # Verify correct
+        if (num_superadmins+num_unit_users+num_researchers) != num_users_total:
+            raise errors.DatabaseError(message="Total number of users does not match user types.", pass_message=True)
+
+        
