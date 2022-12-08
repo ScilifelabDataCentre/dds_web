@@ -310,48 +310,57 @@ def quarterly_usage():
 # @scheduler.task(
 #     "cron", id="reporting", day="1", hour=0, minute=1
 # )
-@scheduler.task("interval", id="reporting", seconds=20, misfire_grace_time=1)
+@scheduler.task("interval", id="reporting", seconds=30, misfire_grace_time=1)
 def reporting_units_and_users():
     """At the start of every month, get number of units and users."""
     # Imports
+    import csv
+    import flask_mail
     import flask_sqlalchemy
-    import sqlalchemy
-    from dds_web import db
-    from dds_web import errors
+    import pathlib
+    from dds_web import errors, utils
     from dds_web.database.models import User, Unit
 
     # App context required
     with scheduler.app.app_context():
-        # Get units
+        # Get units and count them
         units: flask_sqlalchemy.BaseQuery = Unit.query
-        scheduler.app.logger.debug(f"Units: {units} ({type(units)})")
-        
-        # Count units
         num_units: int = units.count()
-        scheduler.app.logger.debug(f"Number of Units: {num_units}")
 
-        # Get users
+        # Count users
         users: flask_sqlalchemy.BaseQuery = User.query
-        scheduler.app.logger.debug(f"Type: {users} ({type(users)})")
+        num_users_total: int = users.count()  # All users
+        num_superadmins: int = users.filter_by(type="superadmin").count()  # Super Admins
+        num_unit_users: int = users.filter_by(type="unituser").count()  # Unit Admins / Personnel
+        num_researchers: int = users.filter_by(type="researchuser").count()  # Researchers
 
-        # Count all users
-        num_users_total: int = users.count()
-        scheduler.app.logger.debug(f"Total number of users: {num_users_total}")
+        # Verify that sum is correct
+        if sum([num_superadmins, num_unit_users, num_researchers]) != num_users_total:
+            # TODO: Possibly email us here
+            raise Exception("Total number of users does not match user types.")
 
-        # Count Super Admins
-        num_superadmins: int = users.filter_by(type="superadmin").count()
-        scheduler.app.logger.debug(f"Number of super admins: {num_superadmins}")
+        # Get current date
+        current_date: str = utils.timestamp(ts_format="%Y-%m-%d")
 
-        # Count Unit Admins / Personnel
-        num_unit_users: int = users.filter_by(type="unituser").count()
-        scheduler.app.logger.debug(f"Number of unit users: {num_unit_users}")
+        # Define csv file and verify that it exists
+        reporting_file: pathlib.Path = pathlib.Path("doc/reporting/dds-reporting.csv")
+        if not reporting_file.exists():
+            # TODO: Possibly email us here
+            raise Exception("Could not find there csv file for reporting.")
 
-        # Count researchers
-        num_researchers: int = users.filter_by(type="researchuser").count()
-        scheduler.app.logger.debug(f"Number of researchers: {num_researchers}")
+        # Add row with new info
+        with reporting_file.open(mode="a") as repfile:
+            writer = csv.writer(repfile)
+            writer.writerow(
+                [current_date, num_units, num_researchers, num_unit_users, num_users_total]
+            )
 
-        # Verify correct
-        if (num_superadmins+num_unit_users+num_researchers) != num_users_total:
-            raise errors.DatabaseError(message="Total number of users does not match user types.", pass_message=True)
-
-        
+        # Create email
+        msg = flask_mail.Message(
+            subject=f"DDS Unit / User report",
+            recipients=["delivery@scilifelab.se"],
+            body=f"This email contains the DDS unit- and user statistics. The data was collected on: {current_date}.",
+        )
+        with reporting_file.open(mode="r") as file:  # Attach file
+            msg.attach(filename=reporting_file.name, content_type="text/csv", data=file.read())
+        utils.send_email_with_retry(msg=msg)  # Send
