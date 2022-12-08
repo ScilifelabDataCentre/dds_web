@@ -174,3 +174,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-11-25 - 2022-12-09)
 
 - Changed support email ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1324))
+- Cronjob: Get number of units and users for reporting ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1335))
