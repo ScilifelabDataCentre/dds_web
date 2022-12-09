@@ -176,3 +176,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Changed support email ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1324))
 - Allow Super Admin login during maintenance ([#1333](https://github.com/ScilifelabDataCentre/dds_web/pull/1333))
 - Add ability to change project info via ProjectInfo endpoint ([#1331](https://github.com/ScilifelabDataCentre/dds_web/pull/1331))
+
