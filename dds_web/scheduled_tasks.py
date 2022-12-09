@@ -369,7 +369,7 @@ def reporting_units_and_users():
                 body=f"{error_body}: {error}",
             )
             utils.send_email_with_retry(msg=file_error_msg)
-            raise Exception("Could not find there csv file for reporting.")
+            raise Exception(error)
 
         # Add row with new info
         with reporting_file.open(mode="a") as repfile:
