@@ -325,6 +325,9 @@ def reporting_units_and_users():
     # Location of reporting file
     reporting_file: pathlib.Path = pathlib.Path("doc/reporting/dds-reporting.csv")
 
+    # Error default
+    error: str = None
+
     # App context required
     with scheduler.app.app_context():
         # Get email address
@@ -348,18 +351,11 @@ def reporting_units_and_users():
         # Verify that sum is correct
         if sum([num_superadmins, num_unit_users, num_researchers]) != num_users_total:
             error: str = "Sum of number of users incorrect."
-            # Send email about error
-            sum_error_msg: flask_mail.Message = flask_mail.Message(
-                subject=error_subject,
-                recipients=[recipient],
-                body=f"{error_body}: {error}",
-            )
-            utils.send_email_with_retry(msg=sum_error_msg)
-            raise Exception(error)
-
         # Define csv file and verify that it exists
-        if not reporting_file.exists():
+        elif not reporting_file.exists():
             error: str = "Could not find the csv file."
+
+        if error:
             # Send email about error
             file_error_msg: flask_mail.Message = flask_mail.Message(
                 subject=error_subject,
