@@ -307,10 +307,8 @@ def quarterly_usage():
             raise
 
 
-# @scheduler.task(
-#     "cron", id="reporting", day="1", hour=0, minute=1
-# )
-@scheduler.task("interval", id="reporting", seconds=30, misfire_grace_time=1)
+# @scheduler.task("interval", id="reporting", seconds=30, misfire_grace_time=1)
+@scheduler.task("cron", id="reporting", day="1", hour=0, minute=1)
 def reporting_units_and_users():
     """At the start of every month, get number of units and users."""
     # Imports
