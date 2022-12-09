@@ -981,6 +981,7 @@ class ProjectInfo(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
+    @dbsession
     @json_required
     def put(self):
         """Update Project information."""
@@ -1053,9 +1054,5 @@ class ProjectInfo(flask_restful.Resource):
             "description": project.description,
             "pi": project.pi,
         }
-        # return_message["message"] = f"{project.public_id} info was successfully updated."
-        # return_message["title"] = project.title
-        # return_message["description"] = project.description
-        # return_message["pi"] = project.pi
 
         return return_message
