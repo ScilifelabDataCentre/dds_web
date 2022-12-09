@@ -973,6 +973,7 @@ class ProjectInfo(flask_restful.Resource):
             "Size": project.size,
             "Title": project.title,
             "Description": project.description,
+            "PI": project.pi
         }
 
         return_info = {"project_info": project_info}
