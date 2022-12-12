@@ -158,6 +158,7 @@ def test_reporting_units_and_users(client: flask.testing.FlaskClient, fs: FakeFi
     num_unit_users: int = models.UnitUser.query.count()
     num_researchers: int = models.ResearchUser.query.count()
     num_superadmins: int = models.SuperAdmin.query.count()
+    num_users_excl_superadmins: int = num_users_total - num_superadmins
 
     # Expected new row:
     new_row: typing.List = [
@@ -165,7 +166,7 @@ def test_reporting_units_and_users(client: flask.testing.FlaskClient, fs: FakeFi
         num_units,
         num_researchers,
         num_unit_users,
-        num_users_total,
+        num_users_excl_superadmins,
     ]
 
     # Check csv file contents
