@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import typing
 
 import flask_apscheduler
 import flask
@@ -347,6 +346,7 @@ def reporting_units_and_users():
         num_superadmins: int = users.filter_by(type="superadmin").count()  # Super Admins
         num_unit_users: int = users.filter_by(type="unituser").count()  # Unit Admins / Personnel
         num_researchers: int = users.filter_by(type="researchuser").count()  # Researchers
+        num_users_excl_superadmins: int = num_users_total - num_superadmins
 
         # Verify that sum is correct
         if sum([num_superadmins, num_unit_users, num_researchers]) != num_users_total:
@@ -369,7 +369,7 @@ def reporting_units_and_users():
         with reporting_file.open(mode="a") as repfile:
             writer = csv.writer(repfile)
             writer.writerow(
-                [current_date, num_units, num_researchers, num_unit_users, num_users_total]
+                [current_date, num_units, num_researchers, num_unit_users, num_users_excl_superadmins]
             )
 
         # Create email
