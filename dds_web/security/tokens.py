@@ -54,7 +54,7 @@ def encrypted_jwt_token(
             expires_in=expires_in,
             additional_claims=additional_claims,
         ),
-        expected_type="JWE"
+        expected_type="JWE",
     )
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
     token.make_encrypted_token(key)
