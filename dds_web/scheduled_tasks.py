@@ -369,7 +369,13 @@ def reporting_units_and_users():
         with reporting_file.open(mode="a") as repfile:
             writer = csv.writer(repfile)
             writer.writerow(
-                [current_date, num_units, num_researchers, num_unit_users, num_users_excl_superadmins]
+                [
+                    current_date,
+                    num_units,
+                    num_researchers,
+                    num_unit_users,
+                    num_users_excl_superadmins,
+                ]
             )
 
         # Create email
