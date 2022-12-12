@@ -54,6 +54,7 @@ def encrypted_jwt_token(
             expires_in=expires_in,
             additional_claims=additional_claims,
         ),
+        expected_type="JWE"
     )
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
     token.make_encrypted_token(key)
@@ -99,7 +100,7 @@ def __signed_jwt_token(
         data["sen_con"] = sensitive_content
 
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
-    token = jwt.JWT(header={"alg": "HS256"}, claims=data, algs=["HS256"])
+    token = jwt.JWT(header={"alg": "HS256"}, claims=data, algs=["HS256"], expected_type="JWS")
     token.make_signed_token(key)
     return token.serialize()
 

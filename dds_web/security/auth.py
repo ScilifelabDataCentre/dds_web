@@ -369,7 +369,7 @@ def decrypt_token(token):
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
     # Decrypt token
     try:
-        decrypted_token = jwt.JWT(key=key, jwt=token)
+        decrypted_token = jwt.JWT(key=key, jwt=token, expected_type="JWE")
     except ValueError as exc:
         # "Token format unrecognized"
         raise AuthenticationError(message="Invalid token") from exc
@@ -387,7 +387,7 @@ def verify_token_signature(token):
 
     # Verify token
     try:
-        jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
+        jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"], expected_type="JWS")
         return json.loads(jwttoken.claims)
     except jwt.JWTExpired as exc:
         # jwt dependency uses a 60 seconds leeway to check exp
