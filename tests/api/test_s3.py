@@ -109,3 +109,24 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
         query_string={"project": "public_project_id"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+def test_s3_info_errors(client: flask.testing.FlaskClient) -> None:
+    """Test errors e.g. SQLAlchemyError and if no info is returned."""
+    # Get user
+    unituser: models.UnitUser = models.UnitUser.query.first()
+    assert unituser
+
+    # Authenticate user
+    token = UserAuth(
+        USER_CREDENTIALS[unituser.username]
+    ).token(client)
+
+    # Get project
+    project: models.Project = unituser.unit.projects[0]
+
+    # Attempt to get S3 info
+    response = client.get(
+        DDSEndpoint.S3KEYS,
+        headers=token,
+        query_string={"project": project.public_id},
+    )

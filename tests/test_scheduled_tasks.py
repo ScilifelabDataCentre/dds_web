@@ -1,9 +1,8 @@
 from datetime import timedelta
-
 import flask
-
 from unittest import mock
 from unittest.mock import MagicMock
+import typing
 
 from dds_web import db
 from dds_web.database import models
