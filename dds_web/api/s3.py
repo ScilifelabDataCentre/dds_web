@@ -54,7 +54,7 @@ class S3Info(flask_restful.Resource):
             ) from sqlerr
 
         if any(x is None for x in [url, keys, bucketname]):
-            raise S3ProjectNotFoundError("No s3 info returned!")
+            raise S3ProjectNotFoundError(message="No s3 info returned!")
 
         return {
             "safespring_project": sfsp_proj,

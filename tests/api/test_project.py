@@ -66,7 +66,7 @@ def test_project(module_client):
     return project_id
 
 
-def mock_sqlalchemyerror():
+def mock_sqlalchemyerror(_):
     raise sqlalchemy.exc.SQLAlchemyError()
 
 

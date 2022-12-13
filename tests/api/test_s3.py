@@ -2,10 +2,16 @@ import flask
 import http
 import sqlalchemy
 import typing
+from unittest.mock import patch
 
 from tests import DDSEndpoint, DEFAULT_HEADER, UserAuth, USER_CREDENTIALS
+from tests.api.test_project import mock_sqlalchemyerror
 from dds_web.database import models
 from dds_web import db
+
+
+def mock_get_s3_info_none(_):
+    return None, None, None, None
 
 
 def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
@@ -124,8 +130,56 @@ def test_s3_info_errors(client: flask.testing.FlaskClient) -> None:
     project: models.Project = unituser.unit.projects[0]
 
     # Attempt to get S3 info
+    with patch("dds_web.api.s3.ApiS3Connector.get_s3_info", mock_sqlalchemyerror):
+        response = client.get(
+            DDSEndpoint.S3KEYS,
+            headers=token,
+            query_string={"project": project.public_id},
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+        assert "Could not get cloud information" in response.json.get("message")
+
+    with patch("dds_web.api.s3.ApiS3Connector.get_s3_info", mock_get_s3_info_none):
+        response = client.get(
+            DDSEndpoint.S3KEYS,
+            headers=token,
+            query_string={"project": project.public_id},
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+        assert "No s3 info returned!" in response.json.get("message")
+
+
+def test_s3info_ok(client: flask.testing.FlaskClient) -> None:
+    """Get S3 info."""
+    # Get user
+    unituser: models.UnitUser = models.UnitUser.query.first()
+    assert unituser
+
+    # Authenticate user
+    token = UserAuth(USER_CREDENTIALS[unituser.username]).token(client)
+
+    # Get project
+    project: models.Project = unituser.unit.projects[0]
+
+    # Get s3 info
     response = client.get(
         DDSEndpoint.S3KEYS,
         headers=token,
         query_string={"project": project.public_id},
     )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Verify info
+    response_json = response.json
+    safespring_project = response_json.get("safespring_project")
+    url = response_json.get("url")
+    keys = response_json.get("keys")
+    bucket = response_json.get("bucket")
+    assert all([safespring_project, url, keys, bucket])
+    assert safespring_project == project.responsible_unit.safespring_name
+    assert url == project.responsible_unit.safespring_endpoint
+    assert keys == {
+        "access_key": project.responsible_unit.safespring_access,
+        "secret_key": project.responsible_unit.safespring_secret,
+    }
+    assert bucket == project.bucket
