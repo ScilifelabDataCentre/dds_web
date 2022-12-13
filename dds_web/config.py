@@ -56,6 +56,7 @@ class Config(object):
     MAIL_USE_TLS = False
     MAIL_USE_SSL = False
     MAIL_DEFAULT_SENDER = ("SciLifeLab DDS", "dds@example.com")
+    MAIL_DDS = "delivery@scilifelab.se"
 
     TOKEN_ENDPOINT_ACCESS_LIMIT = "10/hour"
     RATELIMIT_STORAGE_URI = os.environ.get(

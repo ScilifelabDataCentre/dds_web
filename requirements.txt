@@ -8,7 +8,7 @@ blinker==1.4
 boto3==1.20.47
 botocore==1.23.47
 cachetools==5.2.0
-certifi==2021.10.8
+certifi==2022.12.07
 cffi==1.15.0
 charset-normalizer==2.0.11
 click==8.0.3
@@ -35,7 +35,7 @@ idna==3.3
 itsdangerous==2.0.1
 Jinja2==3.0.3
 jmespath==0.10.0
-jwcrypto==1.0
+jwcrypto==1.4.2
 limits==2.3.2
 Mako==1.2.2
 MarkupSafe==2.0.1
