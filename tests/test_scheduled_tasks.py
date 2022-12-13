@@ -25,13 +25,11 @@ from dds_web.scheduled_tasks import (
     reporting_units_and_users,
 )
 
-from typing import List
-
 # set_available_to_expired
 
 
 def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
-    units: List = db.session.query(models.Unit).all()
+    units: typing.List = db.session.query(models.Unit).all()
     # Set project statuses to Available
     # and deadline to now to be able to test cronjob functionality
     for unit in units:
@@ -54,7 +52,7 @@ def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
 
     set_available_to_expired()
 
-    units: List = db.session.query(models.Unit).all()
+    units: typing.List = db.session.query(models.Unit).all()
 
     i: int = 0
     j: int = 0
@@ -71,7 +69,7 @@ def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
 
 @mock.patch("boto3.session.Session")
 def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient) -> None:
-    units: List = db.session.query(models.Unit).all()
+    units: typing.List = db.session.query(models.Unit).all()
 
     for unit in units:
         for project in unit.projects:
@@ -86,7 +84,7 @@ def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient
 
     set_expired_to_archived()
 
-    units: List = db.session.query(models.Unit).all()
+    units: typing.List = db.session.query(models.Unit).all()
 
     i: int = 0
     j: int = 0
