@@ -174,3 +174,11 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2022-11-25 - 2022-12-09)
 
 - Changed support email ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1324))
+- Allow Super Admin login during maintenance ([#1333](https://github.com/ScilifelabDataCentre/dds_web/pull/1333))
+
+## Sprint (2022-12-09 - 2022-12-23)
+
+- Dependency: Bump `certifi` due to CVE-2022-23491 ([#1337](https://github.com/ScilifelabDataCentre/dds_web/pull/1337))
+- Dependency: Bump `jwcrypto` due to CVE-2022-3102 ([#1339](https://github.com/ScilifelabDataCentre/dds_web/pull/1339))
+- Cronjob: Get number of units and users for reporting ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1335))
+- Add ability to change project information via ProjectInfo endpoint ([#1331](https://github.com/ScilifelabDataCentre/dds_web/pull/1331))

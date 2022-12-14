@@ -18,7 +18,12 @@ import structlog
 
 # Own modules
 from dds_web import basic_auth, auth, mail
-from dds_web.errors import AuthenticationError, AccessDeniedError, InviteError, TokenMissingError
+from dds_web.errors import (
+    AuthenticationError,
+    AccessDeniedError,
+    InviteError,
+    TokenMissingError,
+)
 from dds_web.database import models
 import dds_web.utils
 
@@ -233,6 +238,9 @@ def verify_token(token):
     if not user:
         raise AccessDeniedError(message="Invalid token. Try reauthenticating.")
 
+    # Block all users but Super Admins during maintenance
+    dds_web.utils.block_if_maintenance(user=user)
+
     if user.password_reset:
         token_expired = claims.get("exp")
         token_issued = datetime.datetime.fromtimestamp(token_expired) - MFA_EXPIRES_IN
@@ -361,7 +369,7 @@ def decrypt_token(token):
     key = jwk.JWK.from_password(flask.current_app.config.get("SECRET_KEY"))
     # Decrypt token
     try:
-        decrypted_token = jwt.JWT(key=key, jwt=token)
+        decrypted_token = jwt.JWT(key=key, jwt=token, expected_type="JWE")
     except ValueError as exc:
         # "Token format unrecognized"
         raise AuthenticationError(message="Invalid token") from exc
@@ -379,7 +387,7 @@ def verify_token_signature(token):
 
     # Verify token
     try:
-        jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"])
+        jwttoken = jwt.JWT(key=key, jwt=token, algs=["HS256"], expected_type="JWS")
         return json.loads(jwttoken.claims)
     except jwt.JWTExpired as exc:
         # jwt dependency uses a 60 seconds leeway to check exp
@@ -396,6 +404,9 @@ def verify_password(username, password):
     user = models.User.query.get(username)
 
     if user and user.is_active and user.verify_password(input_password=password):
+        # Block all users but Super Admins during maintenance
+        dds_web.utils.block_if_maintenance(user=user)
+
         if not user.totp_enabled:
             send_hotp_email(user)
         return user
