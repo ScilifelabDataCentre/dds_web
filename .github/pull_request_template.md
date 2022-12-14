@@ -4,20 +4,27 @@
 
 # Description
 
-- [ ] Add a summary of the changes and the related issue
-- [ ] Add motivation and context regarding why the change is needed
-- [ ] List / describe any dependencies or other changes required for this change
-- [ ] Fixes [link to issue / Jira issue ID]
+- [ ] Summary of the changes and the related issue:
+- [ ] Motivation and context regarding why the change is needed:
+- [ ] List / description of any dependencies or other changes required for this change:
+- Fixes an issue in GitHub / Jira:
+  - [ ] Yes: _[link to GitHub issue / Jira task ID]_
+  - [ ] No
 
 ## Type of change
 
+- [ ] Bug fix
+  - [ ] Breaking: _Describe_
+  - [ ] Non-breaking
 - [ ] Documentation
-- [ ] Workflow
+- [ ] New feature
+  - [ ] Breaking: _Describe_
+  - [ ] Non-breaking
 - [ ] Security Alert fix
-- [ ] Bug fix (non-breaking)
-- [ ] New feature (non-breaking)
-- [ ] Breaking change (breaking, will cause existing functionality to not work as expected)
-- [ ] Tests (only)
+- [ ] Tests **(only)**
+- [ ] Workflow
+
+_"Breaking": The change will cause existing functionality to not work as expected._
 
 # Checklist:
 
@@ -30,7 +37,9 @@
 - [ ] Code change
   - [ ] Self-review of code done
   - [ ] Comments added, particularly in hard-to-understand areas
-  - [ ] Documentation is updated
+  - Documentation update
+    - [ ] Done
+    - [ ] Not needed
 
 ## Repository / Releases
 
@@ -40,18 +49,18 @@
   - [ ] The [version](../dds_web/version.py) is updated
     - [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x)
       - [ ] I have made the corresponding changes to the CLI version
-  - [ ] Backward compatible
+  - Backward compatible
     - [ ] Yes: The code works together with `dds_cli/master` branch
     - [ ] No: The code **does not** entirely / at all work together with the `dds_cli/master` branch. _Please add detailed and clear information about the broken features_
 
 ## Checks
 
-- [ ] Formatting: Black & Prettier checks pass
 - [ ] CodeQL passes
-- [ ] Tests
+- [ ] Formatting: Black & Prettier checks pass
+- Tests
   - [ ] I have added tests for the new code
   - [ ] The tests pass
-- [ ] Trivy / Snyk:
+- Trivy / Snyk:
   - [ ] There are no new security alerts
   - [ ] This PR fixes new security alerts
   - [ ] Security alerts have been dismissed
