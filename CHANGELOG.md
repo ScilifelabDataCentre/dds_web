@@ -182,3 +182,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Dependency: Bump `jwcrypto` due to CVE-2022-3102 ([#1339](https://github.com/ScilifelabDataCentre/dds_web/pull/1339))
 - Cronjob: Get number of units and users for reporting ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1335))
 - Add ability to change project information via ProjectInfo endpoint ([#1331](https://github.com/ScilifelabDataCentre/dds_web/pull/1331))
+- Fix the reporting file path ([1345](https://github.com/ScilifelabDataCentre/dds_web/pull/1345))
