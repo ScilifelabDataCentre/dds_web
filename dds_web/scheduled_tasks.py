@@ -322,7 +322,7 @@ def reporting_units_and_users():
     current_date: str = utils.timestamp(ts_format="%Y-%m-%d")
 
     # Location of reporting file
-    reporting_file: pathlib.Path = pathlib.Path("doc/reporting/dds-reporting.csv")
+    reporting_file: pathlib.Path = pathlib.Path("/code/doc/reporting/dds-reporting.csv")
 
     # Error default
     error: str = None
