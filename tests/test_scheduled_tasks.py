@@ -124,7 +124,7 @@ def test_quarterly_usage(client: flask.testing.FlaskClient) -> None:
 def test_reporting_units_and_users(client: flask.testing.FlaskClient, fs: FakeFilesystem) -> None:
     """Test that the reporting is giving correct values."""
     # Create reporting file
-    reporting_file: pathlib.Path = pathlib.Path("doc/reporting/dds-reporting.csv")
+    reporting_file: pathlib.Path = pathlib.Path("/code/doc/reporting/dds-reporting.csv")
     assert not fs.exists(reporting_file)
     fs.create_file(reporting_file)
     assert fs.exists(reporting_file)
