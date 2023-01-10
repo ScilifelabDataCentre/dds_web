@@ -21,11 +21,11 @@ on:
   schedule:
     - cron: "0 7,13 * * *"
 
-permissions:
-  contents: read
-
 jobs:
   snyk-code-check:
+    permissions:
+      contents: read
+      security-events: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
