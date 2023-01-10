@@ -23,7 +23,7 @@ on:
     - cron: "0 7,13 * * *"
 
 jobs:
-  snyk-code-check:
+  snyk:
     permissions:
       contents: read
       security-events: write
