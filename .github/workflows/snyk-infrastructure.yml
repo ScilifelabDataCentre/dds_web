@@ -14,12 +14,12 @@ name: Snyk Infrastructure as Code
 
 on:
   push:
-    branches: [ "dev", master ]
+    branches: ["dev", master]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "dev" ]
+    branches: ["dev"]
   schedule:
-    - cron: '0 7,13 * * *'
+    - cron: "0 7,13 * * *"
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/python@master
-        continue-on-error: true  # To make sure that SARIF upload gets called
+        continue-on-error: true # To make sure that SARIF upload gets called
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
