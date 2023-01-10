@@ -183,3 +183,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Cronjob: Get number of units and users for reporting ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1335))
 - Add ability to change project information via ProjectInfo endpoint ([#1331](https://github.com/ScilifelabDataCentre/dds_web/pull/1331))
 - Fix the reporting file path ([1345](https://github.com/ScilifelabDataCentre/dds_web/pull/1345))
+- Workflow: Scan with Snyk on PR and schedule ([#1349](https://github.com/ScilifelabDataCentre/dds_web/pull/1349))
