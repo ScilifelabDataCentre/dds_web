@@ -197,7 +197,7 @@ class Unit(db.Model):
     days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
     days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
-    quota = db.Column(db.Integer, unique=False, nullable=True)
+    quota = db.Column(db.Integer, unique=False, nullable=False)
     warning_level = db.Column(db.Integer, unique=False, nullable=False, default=80)
 
     # Relationships
