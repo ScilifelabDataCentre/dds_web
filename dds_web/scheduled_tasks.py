@@ -387,29 +387,3 @@ def reporting_units_and_users():
         with reporting_file.open(mode="r") as file:  # Attach file
             msg.attach(filename=reporting_file.name, content_type="text/csv", data=file.read())
         utils.send_email_with_retry(msg=msg)  # Send
-
-@scheduler.task("interval", id="monitor_usage", seconds=10, misfire_grace_time=1)
-# @scheduler.task("cron", id="monitor_usage", hour=0, minute=1)
-def monitor_usage():
-    """At the start of each day, check the units storage usage and compare with chosen quota."""
-    scheduler.app.logger.debug("Task: Monitoring usage...")
-
-    # Imports
-    # Own
-    from dds_web.database import models
-
-    # Run task
-    with scheduler.app.app_context():
-        for unit in models.Unit.query:
-            scheduler.app.logger.debug(f"Unit: {unit}")
-
-            # Get info from database
-            quota: int = unit.quota
-            warn_after: int = unit.warning_level
-            current_usage: int = unit.size 
-
-            scheduler.app.logger.debug(f"Quota: {quota}")
-            scheduler.app.logger.debug(f"Warn after: {warn_after}")
-            scheduler.app.logger.debug(f"Current usage: {current_usage}")
-
-            # 
