@@ -6,15 +6,11 @@
 
 # Standard library
 import logging
-import datetime
 import pathlib
 import sys
-import re
 import os
-import typing
 
 # Installed
-import click
 import flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
