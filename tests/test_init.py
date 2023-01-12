@@ -1,4 +1,4 @@
-from dds_web import fill_db_wrapper, create_new_unit, update_uploaded_file_with_log
+from dds_web.commands import fill_db_wrapper, create_new_unit, update_uploaded_file_with_log
 import click.testing
 import pytest
 from dds_web import db
