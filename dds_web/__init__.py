@@ -276,6 +276,7 @@ def create_app(testing=False, database_uri=None):
 
         # Add commands - cronjobs
         from dds_web import commands
+
         app.cli.add_command(commands.monitor_usage)
 
         # Make version available inside jinja templates:
