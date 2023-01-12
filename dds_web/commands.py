@@ -79,6 +79,8 @@ def fill_db_wrapper(db_type):
 @click.option("--safespring_secret", "-ss", type=str, required=True)
 @click.option("--days_in_available", "-da", type=int, required=False, default=90)
 @click.option("--days_in_expired", "-de", type=int, required=False, default=30)
+@click.option("--quota", "-q", type=int, required=True)
+@click.option("--warn-at", "-w", type=int, required=False, default=80)
 @flask.cli.with_appcontext
 def create_new_unit(
     name,
@@ -92,6 +94,8 @@ def create_new_unit(
     safespring_secret,
     days_in_available,
     days_in_expired,
+    quota,
+    warn_at
 ):
     """Create a new unit.
 
@@ -130,6 +134,8 @@ def create_new_unit(
         safespring_secret=safespring_secret,
         days_in_available=days_in_available,
         days_in_expired=days_in_expired,
+        quota=quota,
+        warning_level=warn_at,
     )
     db.session.add(new_unit)
     db.session.commit()
