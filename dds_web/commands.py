@@ -17,6 +17,7 @@ import sqlalchemy
 # Own
 from dds_web import db
 
+
 @click.command("init-db")
 @click.argument("db_type", type=click.Choice(["production", "dev-small", "dev-big"]))
 @flask.cli.with_appcontext
@@ -352,7 +353,7 @@ def monitor_usage():
     # Own
     from dds_web.database import models
     from dds_web import utils
-    
+
     # Email rescipient
     recipient: str = flask.current_app.config.get("MAIL_DDS")
     default_subject: str = "DDS: Usage quota warning!"
@@ -397,4 +398,3 @@ def monitor_usage():
                 body=message,
             )
             utils.send_email_with_retry(msg=msg)
-            
