@@ -610,4 +610,4 @@ def convert_from_bytes(num_bytes: int, convert_to: str, base: int = 10):
     if base == 2:
         base_magnitude = 1024
 
-    return num_bytes / (base_magnitude**magnitudes[convert_to])
+    return num_bytes / (base_magnitude ** magnitudes[convert_to])

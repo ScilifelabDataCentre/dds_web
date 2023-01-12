@@ -383,7 +383,7 @@ def monitor_usage():
         perc_used = current_usage / quota
 
         flask.current_app.logger.debug(f"Percentage used of quota: {perc_used}")
-        
+
         # Email if the unit is using more
         if perc_used > warn_after:
             # Email settings
