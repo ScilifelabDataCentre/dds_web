@@ -274,10 +274,10 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(update_uploaded_file_with_log)
         app.cli.add_command(lost_files_s3_db)
 
-        # Add commands - cronjobs
-        from dds_web import commands
+        # Add flask commands - cronjobs
+        from dds_web.commands import monitor_usage
 
-        app.cli.add_command(commands.monitor_usage)
+        app.cli.add_command(monitor_usage)
 
         # Make version available inside jinja templates:
         @app.template_filter("dds_version")
