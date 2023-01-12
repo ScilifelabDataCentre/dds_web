@@ -11,6 +11,7 @@ import datetime
 # Installed
 import click
 import flask
+import flask_mail
 import sqlalchemy
 
 # Own
@@ -342,14 +343,13 @@ def lost_files_s3_db(action_type: str):
 @flask.cli.with_appcontext
 def monitor_usage():
     """Check the units storage usage and compare with chosen quota."""
+    # Imports
+    # Own
+    from dds_web.database import models
 
     # Email rescipient
     recipient: str = flask.current_app.config.get("MAIL_DDS")
     default_subject: str = "DDS: Usage quota warning!"
-
-    # Imports
-    # Own
-    from dds_web.database import models
 
     # Run task
     for unit in models.Unit.query:
@@ -379,6 +379,9 @@ def monitor_usage():
         # Email if the unit is using more
         if perc_used > warn_after:
             # Email settings
-            flask.current_app.logger.debug(
-                f"The percentage is above the warning level: {perc_used}. "
+            message: str = "A SciLifeLab Unit using the DDS is approaching their "
+            msg: flask_mail.Message = flask_mail.Message(
+                subject=default_subject,
+                recipients=[recipient],
+                body=message,
             )

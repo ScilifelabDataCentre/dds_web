@@ -267,7 +267,7 @@ def create_app(testing=False, database_uri=None):
             create_new_unit,
             update_uploaded_file_with_log,
             lost_files_s3_db,
-            monitor_usage
+            monitor_usage,
         )
 
         # Add flask commands - general
