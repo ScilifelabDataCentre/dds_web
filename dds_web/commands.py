@@ -373,16 +373,17 @@ def monitor_usage():
 
         # TODO: Check if 0 and then skip the next steps
 
-        # Calculate usage in TB
-        current_usage_tb = current_usage / 1e12  # 1 TB = 1 000 000 000 000
+        # # Calculate usage in TB
+        # current_usage_tb = current_usage / 1e12  # 1 TB = 1 000 000 000 000
 
-        flask.current_app.logger.debug(f"Current usage in TB: {current_usage_tb}")
+        # flask.current_app.logger.debug(f"Current usage in TB: {current_usage_tb}")
 
         # Calculate percentage of quota
-        perc_used = current_usage_tb / quota
+        # perc_used = current_usage_tb / quota
+        perc_used = current_usage / quota
 
         flask.current_app.logger.debug(f"Percentage used of quota: {perc_used}")
-
+        
         # Email if the unit is using more
         if perc_used > warn_after:
             # Email settings
@@ -390,7 +391,7 @@ def monitor_usage():
                 "A SciLifeLab Unit is approaching the allocated data quota.\n"
                 f"Affected unit: {unit.name}\n"
                 f"Quota: {quota}\n"
-                f"Current usage: {current_usage_tb} TB ({perc_used}%)"
+                f"Current usage: {current_usage} TB ({perc_used}%)"
             )
             msg: flask_mail.Message = flask_mail.Message(
                 subject=default_subject,
