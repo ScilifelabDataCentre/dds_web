@@ -26,7 +26,7 @@ def upgrade():
     # 1. Load table - need to load columns in order to use
     unit_table = sa.sql.table("units", sa.sql.column("quota", mysql.INTEGER))
     # 2. Update column value
-    op.execute(unit_table.update().values(quota=100*1e12))
+    op.execute(unit_table.update().values(quota=100 * 1e12))
 
     # ### end Alembic commands ###
 
