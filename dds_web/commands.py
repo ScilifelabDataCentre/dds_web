@@ -95,7 +95,7 @@ def create_new_unit(
     days_in_available,
     days_in_expired,
     quota,
-    warn_at
+    warn_at,
 ):
     """Create a new unit.
 
