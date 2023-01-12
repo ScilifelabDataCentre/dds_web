@@ -90,7 +90,7 @@ def fill_db():
         external_display_name="Unit 1 external",
         contact_email="support@example.com",
         internal_ref="someunit",
-        quota=1,
+        quota=1e12,
         safespring_endpoint=current_app.config.get("SAFESPRING_URL"),
         safespring_name=current_app.config.get("DDS_SAFESPRING_PROJECT"),
         safespring_access=current_app.config.get("DDS_SAFESPRING_ACCESS"),

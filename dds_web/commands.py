@@ -373,13 +373,7 @@ def monitor_usage():
 
         # TODO: Check if 0 and then skip the next steps
 
-        # # Calculate usage in TB
-        # current_usage_tb = current_usage / 1e12  # 1 TB = 1 000 000 000 000
-
-        # flask.current_app.logger.debug(f"Current usage in TB: {current_usage_tb}")
-
         # Calculate percentage of quota
-        # perc_used = current_usage_tb / quota
         perc_used = current_usage / quota
 
         flask.current_app.logger.debug(f"Percentage used of quota: {perc_used}")
