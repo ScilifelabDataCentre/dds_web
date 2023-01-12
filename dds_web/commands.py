@@ -17,7 +17,6 @@ import sqlalchemy
 # Own
 from dds_web import db
 
-
 @click.command("init-db")
 @click.argument("db_type", type=click.Choice(["production", "dev-small", "dev-big"]))
 @flask.cli.with_appcontext
@@ -352,7 +351,8 @@ def monitor_usage():
     # Imports
     # Own
     from dds_web.database import models
-
+    from dds_web import utils
+    
     # Email rescipient
     recipient: str = flask.current_app.config.get("MAIL_DDS")
     default_subject: str = "DDS: Usage quota warning!"
@@ -385,9 +385,16 @@ def monitor_usage():
         # Email if the unit is using more
         if perc_used > warn_after:
             # Email settings
-            message: str = "A SciLifeLab Unit using the DDS is approaching their "
+            message: str = (
+                "A SciLifeLab Unit is approaching the allocated data quota.\n"
+                f"Affected unit: {unit.name}\n"
+                f"Quota: {quota}\n"
+                f"Current usage: {current_usage_tb} TB ({perc_used}%)"
+            )
             msg: flask_mail.Message = flask_mail.Message(
                 subject=default_subject,
                 recipients=[recipient],
                 body=message,
             )
+            utils.send_email_with_retry(msg=msg)
+            
