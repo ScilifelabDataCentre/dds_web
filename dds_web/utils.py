@@ -606,7 +606,7 @@ def convert_from_bytes(num_bytes: int, convert_to: str, base: int = 10):
     magnitudes: typing.Dict = {"KB": 1, "MB": 2, "GB": 3, "TB": 4, "PB": 5}
 
     # Default is 1000 but base 2 changes to 1024
-    base_magnitude: int = 1e3
+    base_magnitude: int = 1000
     if base == 2:
         base_magnitude = 1024
 
