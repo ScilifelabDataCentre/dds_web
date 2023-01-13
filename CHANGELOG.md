@@ -176,11 +176,15 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Changed support email ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1324))
 - Allow Super Admin login during maintenance ([#1333](https://github.com/ScilifelabDataCentre/dds_web/pull/1333))
 
-## Sprint (2022-12-09 - 2022-12-23)
+## Sprint (2022-12-09 - 2023-01-09) - Longer sprint due to Christmas
 
 - Dependency: Bump `certifi` due to CVE-2022-23491 ([#1337](https://github.com/ScilifelabDataCentre/dds_web/pull/1337))
 - Dependency: Bump `jwcrypto` due to CVE-2022-3102 ([#1339](https://github.com/ScilifelabDataCentre/dds_web/pull/1339))
 - Cronjob: Get number of units and users for reporting ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1335))
 - Add ability to change project information via ProjectInfo endpoint ([#1331](https://github.com/ScilifelabDataCentre/dds_web/pull/1331))
 - Fix the reporting file path ([1345](https://github.com/ScilifelabDataCentre/dds_web/pull/1345))
+
+## Sprint (2023-01-09 - 2023-01-20)
+
+- Refactoring: Move flask commands to own module `commands.py` ([#1351](https://github.com/ScilifelabDataCentre/dds_web/pull/1351))
 - Workflow: Scan with Snyk on PR and schedule ([#1349](https://github.com/ScilifelabDataCentre/dds_web/pull/1349))
