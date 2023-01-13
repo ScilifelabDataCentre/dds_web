@@ -349,34 +349,43 @@ def lost_files_s3_db(action_type: str):
 @flask.cli.with_appcontext
 def monitor_usage():
     """Check the units storage usage and compare with chosen quota."""
+    flask.current_app.logger.info("Starting: Checking unit quotas and usage...")
+
     # Imports
     # Own
     from dds_web.database import models
-    from dds_web import utils
+    from dds_web.utils import convert_from_bytes, send_email_with_retry
 
-    # Email rescipient
+    # Email settings
     recipient: str = flask.current_app.config.get("MAIL_DDS")
     default_subject: str = "DDS: Usage quota warning!"
 
     # Run task
     for unit in models.Unit.query:
-        flask.current_app.logger.debug(f"Unit: {unit}")
+        flask.current_app.logger.info(f"Checking quotas and usage for: {unit.name}")
 
         # Get info from database
         quota: int = unit.quota
         warn_after: int = unit.warning_level
         current_usage: int = unit.size
 
-        flask.current_app.logger.debug(f"Quota: {quota}")
-        flask.current_app.logger.debug(f"Warn after: {warn_after}")
-        flask.current_app.logger.debug(f"Current usage: {current_usage}")
-
-        # TODO: Check if 0 and then skip the next steps
+        # Check if 0 and then skip the next steps
+        if not current_usage: 
+            flask.current_app.logger.info(f"{unit.name} usage: {current_usage} bytes. Skipping percentage calculation.")
+            continue
 
         # Calculate percentage of quota
         perc_used = current_usage / quota
-
-        flask.current_app.logger.debug(f"Percentage used of quota: {perc_used}")
+        
+        # Information to log and potentially send
+        info_string: str = (
+            f"- Quota:{quota} bytes\n"
+            f"- Warning level: {warn_after*quota} bytes ({warn_after}%)\n"
+            f"- Current usage: {current_usage} bytes ({perc_used})\n"
+        )
+        flask.current_app.logger.debug(
+            f"Monitoring the usage for unit '{unit.name}' showed the following:\n" + info_string
+        )
 
         # Email if the unit is using more
         if perc_used > warn_after:
@@ -384,12 +393,11 @@ def monitor_usage():
             message: str = (
                 "A SciLifeLab Unit is approaching the allocated data quota.\n"
                 f"Affected unit: {unit.name}\n"
-                f"Quota: {quota}\n"
-                f"Current usage: {current_usage} TB ({perc_used}%)"
+                f"{info_string}"
             )
             msg: flask_mail.Message = flask_mail.Message(
                 subject=default_subject,
                 recipients=[recipient],
                 body=message,
             )
-            utils.send_email_with_retry(msg=msg)
+            send_email_with_retry(msg=msg)
