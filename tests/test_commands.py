@@ -5,25 +5,29 @@ import typing
 from unittest.mock import patch
 import os
 
-# Installed 
+# Installed
 import click
 from pyfakefs.fake_filesystem import FakeFilesystem
 
 # Own
 from dds_web.commands import fill_db_wrapper, create_new_unit, update_uploaded_file_with_log
-from dds_web.database import models 
-from dds_web import db 
+from dds_web.database import models
+from dds_web import db
 
 # Tools
+
 
 def mock_commit():
     return
 
+
 def mock_no_project():
     return None
 
+
 def mock_unit_size():
     return 100
+
 
 # fill_db_wrapper
 
@@ -182,7 +186,9 @@ def test_create_new_unit_success(client, runner) -> None:
         result: click.testing.Result = runner.invoke(create_new_unit, command_options)
         # assert f"Unit '{correct_unit['name']}' created" in result.output
 
+
 # update_uploaded_file_with_log
+
 
 def test_update_uploaded_file_with_log_nonexisting_project(client, runner) -> None:
     """Add file info to non existing project."""
@@ -219,6 +225,7 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
     result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
     assert result.exit_code == 1
 
+
 # monitor_usage
 
 # usage = 0 --> check log
@@ -226,10 +233,12 @@ def test_monitor_usage_no_usage(client):
     """"""
     # with patch("dds_web.database.models.Unit.size", mock_unit_size):
 
+
 # percentage below warning level --> check log + no email
 def test_monitor_usage_no_email(client):
     """"""
 
-# percentage above warning level --> check log + email sent 
+
+# percentage above warning level --> check log + email sent
 def test_monitor_usage_warning_sent(client):
     """"""

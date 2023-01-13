@@ -370,13 +370,15 @@ def monitor_usage():
         current_usage: int = unit.size
 
         # Check if 0 and then skip the next steps
-        if not current_usage: 
-            flask.current_app.logger.info(f"{unit.name} usage: {current_usage} bytes. Skipping percentage calculation.")
+        if not current_usage:
+            flask.current_app.logger.info(
+                f"{unit.name} usage: {current_usage} bytes. Skipping percentage calculation."
+            )
             continue
 
         # Calculate percentage of quota
         perc_used = current_usage / quota
-        
+
         # Information to log and potentially send
         info_string: str = (
             f"- Quota:{quota} bytes\n"
