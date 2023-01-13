@@ -22,6 +22,8 @@ def mock_commit():
 def mock_no_project():
     return None
 
+def mock_unit_size():
+    return 100
 
 # fill_db_wrapper
 
@@ -219,5 +221,15 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
 
 # monitor_usage
 
-def test_monitor_usage(client):
+# usage = 0 --> check log
+def test_monitor_usage_no_usage(client):
+    """"""
+    # with patch("dds_web.database.models.Unit.size", mock_unit_size):
+
+# percentage below warning level --> check log + no email
+def test_monitor_usage_no_email(client):
+    """"""
+
+# percentage above warning level --> check log + email sent 
+def test_monitor_usage_warning_sent(client):
     """"""
