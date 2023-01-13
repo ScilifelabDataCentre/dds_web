@@ -354,7 +354,7 @@ def monitor_usage():
     # Imports
     # Own
     from dds_web.database import models
-    from dds_web.utils import convert_from_bytes, send_email_with_retry
+    import dds_web.utils
 
     # Email settings
     recipient: str = flask.current_app.config.get("MAIL_DDS")
@@ -400,4 +400,4 @@ def monitor_usage():
                 recipients=[recipient],
                 body=message,
             )
-            send_email_with_retry(msg=msg)
+            dds_web.utils.send_email_with_retry(msg=msg)

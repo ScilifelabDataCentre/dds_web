@@ -216,3 +216,8 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
     # Run command
     result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
     assert result.exit_code == 1
+
+# monitor_usage
+
+def test_monitor_usage(client):
+    """"""
