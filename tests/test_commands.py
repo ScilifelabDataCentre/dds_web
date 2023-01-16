@@ -17,9 +17,11 @@ from dds_web import db
 
 # Tools
 
+
 @pytest.fixture
 def runner() -> click.testing.CliRunner:
     return click.testing.CliRunner()
+
 
 def mock_commit():
     return

@@ -10,9 +10,6 @@ import flask
 import flask_mail
 
 
-
-
-
 # block_if_maintenance - should be blocked in init by before_request
 
 
