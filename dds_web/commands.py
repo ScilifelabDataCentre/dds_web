@@ -383,7 +383,7 @@ def monitor_usage():
         info_string: str = (
             f"- Quota:{quota} bytes\n"
             f"- Warning level: {warn_after*quota} bytes ({warn_after}%)\n"
-            f"- Current usage: {current_usage} bytes ({perc_used})\n"
+            f"- Current usage: {current_usage} bytes ({perc_used}%)\n"
         )
         flask.current_app.logger.debug(
             f"Monitoring the usage for unit '{unit.name}' showed the following:\n" + info_string

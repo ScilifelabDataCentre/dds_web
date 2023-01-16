@@ -198,7 +198,7 @@ class Unit(db.Model):
     counter = db.Column(db.Integer, unique=False, nullable=True)
     days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
     quota = db.Column(db.BigInteger, unique=False, nullable=False)
-    warning_level = db.Column(db.Integer, unique=False, nullable=False, default=80)
+    warning_level = db.Column(db.Float, unique=False, nullable=False, default=0.8)
 
     # Relationships
     users = db.relationship("UnitUser", back_populates="unit")
