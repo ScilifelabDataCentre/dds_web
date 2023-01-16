@@ -244,38 +244,50 @@ def test_monitor_usage_no_usage(client, cli_runner, capfd):
             _: click.testing.Result = cli_runner.invoke(monitor_usage)
             # Verify no email has been sent and stoud contains logging info
             assert mock_mail_send.call_count == 0
+    # Logging ends up in stderr
     _, err = capfd.readouterr()
     for unit in models.Unit.query.all():
-        assert f"{unit.name} usage: 0 bytes. Skipping percenta ge calculation." in err
+        assert f"{unit.name} usage: 0 bytes. Skipping percentage calculation." in err
             
 
 
-# # percentage below warning level --> check log + no email
-# def test_monitor_usage_no_email(client, runner, caplog: LogCaptureFixture):
-#     """"""
-#     unit: models.Unit = models.Unit.query.first()
-#     unit_quota: int = unit.quota
-#     unit_warning_level: float = unit.warning_level
-#     max_level: float = unit_quota * unit_warning_level 
+# percentage below warning level --> check log + no email
+def test_monitor_usage_no_email(client, cli_runner, capfd):
+    """No email should be sent if the usage is below the warning level."""
+    # TODO: Change, should not be one unit here and many at the end
+    # Get unit info
+    unit: models.Unit = models.Unit.query.first()
+    unit_quota: int = unit.quota
+    unit_warning_level: float = unit.warning_level
+    max_level: float = unit_quota * unit_warning_level 
 
-#     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
-#         mock_size.return_value = max_level - 1
-#         with caplog.at_level(logging.INFO):
-#             with patch.object(flask_mail.Mail, "send") as mock_mail_send:
-#                 result: click.testing.Result = runner.invoke(monitor_usage)
-#                 assert mock_mail_send.call_count == 0
+    # Mock the size property of the Unit table 
+    with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
+        mock_size.return_value = max_level - 1
+        # Mock emails - only check if function call
+        with patch.object(flask_mail.Mail, "send") as mock_mail_send:
+            # Run command 
+            _: click.testing.Result = cli_runner.invoke(monitor_usage)
+            # Verify no email has been sent and stoud contains logging info
+            assert mock_mail_send.call_count == 0
+    # Logging ends up in stderr
+    _, err = capfd.readouterr()
+    for unit in models.Unit.query.all():
+        assert f"Monitoring the usage for unit '{unit.name}' showed the following:\n" in err 
 
-# # percentage above warning level --> check log + email sent
-# def test_monitor_usage_warning_sent(client, runner, caplog: LogCaptureFixture):
-#     """"""
-#     unit: models.Unit = models.Unit.query.first()
-#     unit_quota: int = unit.quota
-#     unit_warning_level: float = unit.warning_level
-#     max_level: float = unit_quota * unit_warning_level 
+# percentage above warning level --> check log + email sent
+def test_monitor_usage_warning_sent(client, cli_runner, capfd):
+    """An email should be sent if the usage is above the warning level."""
+    unit: models.Unit = models.Unit.query.first()
+    unit_quota: int = unit.quota
+    unit_warning_level: float = unit.warning_level
+    max_level: float = unit_quota * unit_warning_level 
 
-#     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
-#         mock_size.return_value = max_level + 100
-#         with caplog.at_level(logging.INFO):
-#             with patch.object(flask_mail.Mail, "send") as mock_mail_send:
-#                 result: click.testing.Result = runner.invoke(monitor_usage)
-#                 assert mock_mail_send.call_count == 1
+    with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
+        mock_size.return_value = max_level + 100
+        with patch.object(flask_mail.Mail, "send") as mock_mail_send:
+            result: click.testing.Result = cli_runner.invoke(monitor_usage)
+            assert mock_mail_send.call_count == 2 # 2 because client and cli_runner both run
+    _, err = capfd.readouterr()
+    for unit in models.Unit.query.all():
+        assert f"Monitoring the usage for unit '{unit.name}' showed the following:\n" in err 
