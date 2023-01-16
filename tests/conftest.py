@@ -13,6 +13,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 import boto3
 from requests_mock.mocker import Mocker
 import requests_cache
+import click 
 
 # Own
 from dds_web.database.models import (
@@ -540,3 +541,18 @@ def disable_requests_cache():
     """
     with unittest.mock.patch("requests_cache.CachedSession", requests.Session):
         yield
+
+@pytest.fixture
+def runner() -> click.testing.CliRunner:
+    return click.testing.CliRunner()
+
+@pytest.fixture()
+def cli_test_app():
+    from dds_web import create_app
+    from tests import conftest
+    cli_test_app = create_app(testing=True, database_uri=conftest.DATABASE_URI_BASE)
+    yield cli_test_app
+    
+@pytest.fixture()
+def cli_runner(cli_test_app):
+    return cli_test_app.test_cli_runner()

@@ -20,22 +20,6 @@ from dds_web.database import models
 from dds_web import db
 
 # Tools
-
-
-@pytest.fixture
-def runner() -> click.testing.CliRunner:
-    return click.testing.CliRunner()
-
-@pytest.fixture()
-def cli_test_app():
-    from dds_web import create_app
-    from tests import conftest
-    cli_test_app = create_app(testing=True, database_uri=conftest.DATABASE_URI_BASE)
-    yield cli_test_app
-    
-@pytest.fixture()
-def runner(cli_test_app):
-    return cli_test_app.test_cli_runner()
     
 def mock_commit():
     return
@@ -249,7 +233,7 @@ def mock_unit_size():
 # monitor_usage
 
 # usage = 0 --> check log
-def test_monitor_usage_no_usage(runner):
+def test_monitor_usage_no_usage(client, cli_runner, capfd):
     """If a unit has no uploaded data, there's no need to do the calculations or send email warning."""
     # Mock the size property of the Unit table 
     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
@@ -257,10 +241,13 @@ def test_monitor_usage_no_usage(runner):
         # Mock emails - only check if function call
         with patch.object(flask_mail.Mail, "send") as mock_mail_send:
             # Run command 
-            result: click.testing.Result = runner.invoke(monitor_usage)
+            _: click.testing.Result = cli_runner.invoke(monitor_usage)
             # Verify no email has been sent and stoud contains logging info
-        assert "usage: 0 bytes. Skipping percentage calculation." in result.stdout
-        assert mock_mail_send.call_count == 0
+            assert mock_mail_send.call_count == 0
+    _, err = capfd.readouterr()
+    for unit in models.Unit.query.all():
+        assert f"{unit.name} usage: 0 bytes. Skipping percenta ge calculation." in err
+            
 
 
 # # percentage below warning level --> check log + no email
