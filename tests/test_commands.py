@@ -4,6 +4,7 @@
 import typing
 from unittest.mock import patch
 import os
+import pytest
 
 # Installed
 import click
@@ -16,6 +17,9 @@ from dds_web import db
 
 # Tools
 
+@pytest.fixture
+def runner() -> click.testing.CliRunner:
+    return click.testing.CliRunner()
 
 def mock_commit():
     return

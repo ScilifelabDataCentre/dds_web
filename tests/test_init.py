@@ -10,9 +10,7 @@ import flask
 import flask_mail
 
 
-@pytest.fixture
-def runner() -> click.testing.CliRunner:
-    return click.testing.CliRunner()
+
 
 
 # block_if_maintenance - should be blocked in init by before_request
