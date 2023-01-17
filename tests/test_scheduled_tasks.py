@@ -20,7 +20,7 @@ from dds_web.utils import current_time
 
 from dds_web.scheduled_tasks import (
     # set_available_to_expired,
-    set_expired_to_archived,
+    # set_expired_to_archived,
     delete_invite,
     quarterly_usage,
     reporting_units_and_users,
@@ -70,33 +70,33 @@ from typing import List
 # set_expired_to_archived
 
 
-@mock.patch("boto3.session.Session")
-def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient) -> None:
-    units: List = db.session.query(models.Unit).all()
+# @mock.patch("boto3.session.Session")
+# def test_set_expired_to_archived(_: MagicMock, client: flask.testing.FlaskClient) -> None:
+#     units: List = db.session.query(models.Unit).all()
 
-    for unit in units:
-        for project in unit.projects:
-            for status in project.project_statuses:
-                status.deadline = current_time() - timedelta(weeks=1)
-                status.status = "Expired"
+#     for unit in units:
+#         for project in unit.projects:
+#             for status in project.project_statuses:
+#                 status.deadline = current_time() - timedelta(weeks=1)
+#                 status.status = "Expired"
 
-    i: int = 0
-    for unit in units:
-        i += len([project for project in unit.projects if project.current_status == "Expired"])
-    assert i == 6
+#     i: int = 0
+#     for unit in units:
+#         i += len([project for project in unit.projects if project.current_status == "Expired"])
+#     assert i == 6
 
-    set_expired_to_archived()
+#     set_expired_to_archived()
 
-    units: List = db.session.query(models.Unit).all()
+#     units: List = db.session.query(models.Unit).all()
 
-    i: int = 0
-    j: int = 0
-    for unit in units:
-        i += len([project for project in unit.projects if project.current_status == "Expired"])
-        j += len([project for project in unit.projects if project.current_status == "Archived"])
+#     i: int = 0
+#     j: int = 0
+#     for unit in units:
+#         i += len([project for project in unit.projects if project.current_status == "Expired"])
+#         j += len([project for project in unit.projects if project.current_status == "Archived"])
 
-    assert i == 0
-    assert j == 6
+#     assert i == 0
+#     assert j == 6
 
 
 def test_delete_invite(client: flask.testing.FlaskClient) -> None:

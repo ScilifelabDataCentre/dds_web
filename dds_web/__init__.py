@@ -267,6 +267,7 @@ def create_app(testing=False, database_uri=None):
             update_uploaded_file_with_log,
             lost_files_s3_db,
             set_available_to_expired,
+            set_expired_to_archived,
         )
 
         app.cli.add_command(fill_db_wrapper)
@@ -276,6 +277,7 @@ def create_app(testing=False, database_uri=None):
 
         # Add flask commands - cronjobs
         app.cli.add_command(set_available_to_expired)
+        app.cli.add_command(set_expired_to_archived)
 
         # Make version available inside jinja templates:
         @app.template_filter("dds_version")
