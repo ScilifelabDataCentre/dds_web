@@ -336,3 +336,92 @@ def lost_files_s3_db(action_type: str):
 
     else:
         flask.current_app.logger.info("Found no lost files")
+
+
+@click.command("set_available_to_expired")
+@flask.cli.with_appcontext
+def set_available_to_expired():
+
+    """Search for available projects whose deadlines are past and expire them"""
+    flask.current_app.logger.info("Task: Checking for Expiring projects.")
+    
+    # Imports
+    # Installed
+    import sqlalchemy
+    
+    # Own
+    from dds_web import db
+    from dds_web.database import models
+    from dds_web.errors import DatabaseError
+    from dds_web.api.project import ProjectStatus
+    from dds_web.utils import current_time, page_query
+
+    # with scheduler.app.app_context():
+    expire = ProjectStatus()
+
+    errors = {}
+
+    try:
+        for unit in db.session.query(models.Unit).with_for_update().all():
+            errors[unit.name] = {}
+
+            days_in_expired = unit.days_in_expired
+
+            for project in page_query(
+                db.session.query(models.Project)
+                .filter(
+                    sqlalchemy.and_(
+                        models.Project.is_active == 1, models.Project.unit_id == unit.id
+                    )
+                )
+                .with_for_update()
+            ):
+
+                if (
+                    project.current_status == "Available"
+                    and project.current_deadline <= current_time()
+                ):
+                    flask.current_app.logger.debug("Handling expiring project")
+                    flask.current_app.logger.debug(
+                        "Project: %s has status %s and expires on: %s",
+                        project.public_id,
+                        project.current_status,
+                        project.current_deadline,
+                    )
+                    new_status_row = expire.expire_project(
+                        project=project,
+                        current_time=current_time(),
+                        deadline_in=days_in_expired,
+                    )
+
+                    project.project_statuses.append(new_status_row)
+
+                    try:
+                        db.session.commit()
+                        flask.current_app.logger.debug(
+                            "Project: %s has status Expired now!", project.public_id
+                        )
+                    except (
+                        sqlalchemy.exc.OperationalError,
+                        sqlalchemy.exc.SQLAlchemyError,
+                    ) as err:
+                        flask.current_app.logger.exception(err)
+                        db.session.rollback()
+                        errors[unit.name][project.public_id] = str(err)
+                    continue
+                else:
+                    flask.current_app.logger.debug(
+                        "Nothing to do for Project: %s", project.public_id
+                    )
+    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        flask.current_app.logger.exception(err)
+        db.session.rollback()
+        raise
+
+    for unit, projects in errors.items():
+        if projects:
+            flask.current_app.logger.error(
+                f"Following projects of Unit '{unit}' encountered issues during expiration process:"
+            )
+            for proj in errors[unit].keys():
+                flask.current_app.logger.error(f"Error for project '{proj}': {errors[unit][proj]} ")

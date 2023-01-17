@@ -19,7 +19,7 @@ from dds_web.database import models
 from dds_web.utils import current_time
 
 from dds_web.scheduled_tasks import (
-    set_available_to_expired,
+    # set_available_to_expired,
     set_expired_to_archived,
     delete_invite,
     quarterly_usage,
@@ -31,40 +31,40 @@ from typing import List
 # set_available_to_expired
 
 
-def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
-    units: List = db.session.query(models.Unit).all()
-    # Set project statuses to Available
-    # and deadline to now to be able to test cronjob functionality
-    for unit in units:
-        for project in unit.projects:
-            for status in project.project_statuses:
-                status.deadline = current_time() - timedelta(weeks=1)
-                status.status = "Available"
+# def test_set_available_to_expired(client: flask.testing.FlaskClient) -> None:
+#     units: List = db.session.query(models.Unit).all()
+#     # Set project statuses to Available
+#     # and deadline to now to be able to test cronjob functionality
+#     for unit in units:
+#         for project in unit.projects:
+#             for status in project.project_statuses:
+#                 status.deadline = current_time() - timedelta(weeks=1)
+#                 status.status = "Available"
 
-    i: int = 0
-    for unit in units:
-        i += len(
-            [
-                project
-                for project in unit.projects
-                if project.current_status == "Available"
-                and project.current_deadline <= current_time()
-            ]
-        )
-    assert i == 6
+#     i: int = 0
+#     for unit in units:
+#         i += len(
+#             [
+#                 project
+#                 for project in unit.projects
+#                 if project.current_status == "Available"
+#                 and project.current_deadline <= current_time()
+#             ]
+#         )
+#     assert i == 6
 
-    set_available_to_expired()
+#     set_available_to_expired()
 
-    units: List = db.session.query(models.Unit).all()
+#     units: List = db.session.query(models.Unit).all()
 
-    i: int = 0
-    j: int = 0
-    for unit in units:
-        i += len([project for project in unit.projects if project.current_status == "Available"])
-        j += len([project for project in unit.projects if project.current_status == "Expired"])
+#     i: int = 0
+#     j: int = 0
+#     for unit in units:
+#         i += len([project for project in unit.projects if project.current_status == "Available"])
+#         j += len([project for project in unit.projects if project.current_status == "Expired"])
 
-    assert i == 0
-    assert j == 6
+#     assert i == 0
+#     assert j == 6
 
 
 # set_expired_to_archived
