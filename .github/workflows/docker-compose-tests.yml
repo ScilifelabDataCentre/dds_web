@@ -1,3 +1,7 @@
+# Pytest
+# Runs all test in the dds_web by executing the docker compose yml files for testing.
+# The actual pytest command is not in this file. 
+
 name: Tests
 
 on:

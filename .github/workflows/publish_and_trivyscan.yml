@@ -1,4 +1,11 @@
----
+# Trivy
+# Trivy is a comprehensive and versatile security scanner. Trivy has scanners that look for 
+# security issues, and targets where it can find those issues. 
+# 
+# This action publishes a docker image and then runs the trivy security scan on that image.
+# Potential security issues will be uploaded to the security tab in the repository. 
+#
+# https://github.com/aquasecurity/trivy
 name: Publish Docker Image and run Trivy Security Scan
 on:
   pull_request:
