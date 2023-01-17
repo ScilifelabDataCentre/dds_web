@@ -15,12 +15,18 @@ from pyfakefs.fake_filesystem import FakeFilesystem
 import flask_mail
 
 # Own
-from dds_web.commands import fill_db_wrapper, create_new_unit, update_uploaded_file_with_log, monitor_usage
+from dds_web.commands import (
+    fill_db_wrapper,
+    create_new_unit,
+    update_uploaded_file_with_log,
+    monitor_usage,
+)
 from dds_web.database import models
 from dds_web import db
 
 # Tools
-    
+
+
 def mock_commit():
     return
 
@@ -235,12 +241,12 @@ def mock_unit_size():
 # usage = 0 --> check log
 def test_monitor_usage_no_usage(client, cli_runner, capfd):
     """If a unit has no uploaded data, there's no need to do the calculations or send email warning."""
-    # Mock the size property of the Unit table 
+    # Mock the size property of the Unit table
     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
-        mock_size.return_value = 0 # Test size = 0
+        mock_size.return_value = 0  # Test size = 0
         # Mock emails - only check if function call
         with patch.object(flask_mail.Mail, "send") as mock_mail_send:
-            # Run command 
+            # Run command
             _: click.testing.Result = cli_runner.invoke(monitor_usage)
             # Verify no email has been sent and stoud contains logging info
             assert mock_mail_send.call_count == 0
@@ -248,7 +254,6 @@ def test_monitor_usage_no_usage(client, cli_runner, capfd):
     _, err = capfd.readouterr()
     for unit in models.Unit.query.all():
         assert f"{unit.name} usage: 0 bytes. Skipping percentage calculation." in err
-            
 
 
 # percentage below warning level --> check log + no email
@@ -259,21 +264,22 @@ def test_monitor_usage_no_email(client, cli_runner, capfd):
     unit: models.Unit = models.Unit.query.first()
     unit_quota: int = unit.quota
     unit_warning_level: float = unit.warning_level
-    max_level: float = unit_quota * unit_warning_level 
+    max_level: float = unit_quota * unit_warning_level
 
-    # Mock the size property of the Unit table 
+    # Mock the size property of the Unit table
     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
         mock_size.return_value = max_level - 1
         # Mock emails - only check if function call
         with patch.object(flask_mail.Mail, "send") as mock_mail_send:
-            # Run command 
+            # Run command
             _: click.testing.Result = cli_runner.invoke(monitor_usage)
             # Verify no email has been sent and stoud contains logging info
             assert mock_mail_send.call_count == 0
     # Logging ends up in stderr
     _, err = capfd.readouterr()
     for unit in models.Unit.query.all():
-        assert f"Monitoring the usage for unit '{unit.name}' showed the following:\n" in err 
+        assert f"Monitoring the usage for unit '{unit.name}' showed the following:\n" in err
+
 
 # percentage above warning level --> check log + email sent
 def test_monitor_usage_warning_sent(client, cli_runner, capfd):
@@ -281,13 +287,13 @@ def test_monitor_usage_warning_sent(client, cli_runner, capfd):
     unit: models.Unit = models.Unit.query.first()
     unit_quota: int = unit.quota
     unit_warning_level: float = unit.warning_level
-    max_level: float = unit_quota * unit_warning_level 
+    max_level: float = unit_quota * unit_warning_level
 
     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
         mock_size.return_value = max_level + 100
         with patch.object(flask_mail.Mail, "send") as mock_mail_send:
             result: click.testing.Result = cli_runner.invoke(monitor_usage)
-            assert mock_mail_send.call_count == 2 # 2 because client and cli_runner both run
+            assert mock_mail_send.call_count == 2  # 2 because client and cli_runner both run
     _, err = capfd.readouterr()
     for unit in models.Unit.query.all():
-        assert f"Monitoring the usage for unit '{unit.name}' showed the following:\n" in err 
+        assert f"Monitoring the usage for unit '{unit.name}' showed the following:\n" in err
