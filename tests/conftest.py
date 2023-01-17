@@ -548,7 +548,7 @@ def runner() -> click.testing.CliRunner:
     return click.testing.CliRunner()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def cli_test_app():
     from dds_web import create_app
     from tests import conftest
