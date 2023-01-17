@@ -548,12 +548,12 @@ def runner() -> click.testing.CliRunner:
     return click.testing.CliRunner()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def cli_test_app():
     from dds_web import create_app
     from tests import conftest
 
-    cli_test_app = create_app(testing=True, database_uri=conftest.DATABASE_URI_BASE)
+    cli_test_app = create_app(testing=True, database_uri=DATABASE_URI)
     yield cli_test_app
 
 

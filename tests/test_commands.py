@@ -241,6 +241,8 @@ def mock_unit_size():
 # usage = 0 --> check log
 def test_monitor_usage_no_usage(client, cli_runner, capfd):
     """If a unit has no uploaded data, there's no need to do the calculations or send email warning."""
+    unit = models.Unit.query.first()
+    assert unit
     # Mock the size property of the Unit table
     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
         mock_size.return_value = 0  # Test size = 0
