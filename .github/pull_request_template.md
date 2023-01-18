@@ -60,7 +60,7 @@ _Add information on additional changes required for the PR changes to work, both
 - [Changelog](../CHANGELOG.md)
   - [ ] Added
   - [ ] Not needed (E.g. PR contains _only_ tests)
-- Rebase / Update / Merge _from_ base branch
+- Rebase / Update / Merge _from_ base branch (the branch from which the current is forked) 
   - [ ] Done
   - [ ] Not needed
 - Blocking PRs
