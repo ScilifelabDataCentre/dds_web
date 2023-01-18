@@ -298,4 +298,7 @@ def test_monitor_usage_warning_sent(client, cli_runner, capfd):
             assert mock_mail_send.call_count == 2  # 2 because client and cli_runner both run
     _, err = capfd.readouterr()
     for unit in models.Unit.query.all():
-        assert f"Monitoring the usage for unit '{unit.name}' showed the following:\n" in err
+        assert (
+            f"A SciLifeLab Unit is approaching the allocated data quota.\nAffected unit: {unit.name}\n"
+            in err
+        )
