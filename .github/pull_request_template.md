@@ -10,19 +10,17 @@
 > _Tick all relevant items._
 -->
 
-# Description
-
-### **1. This PR contains the following changes...**
+## **1. This PR contains the following changes...**
 
 _Add a summary of the changes and the related issue._
 
-### **2. The following additional changes are required for this to work**
+## **2. The following additional changes are required for this to work**
 
 _Add information on additional changes required for the PR changes to work, both locally and in the deployments._
 
 > E.g. Does the deployment setup need anything for this to work?
 
-### **3. The PR fixes the following GitHub issue / Jira task**
+## **3. The PR fixes the following GitHub issue / Jira task**
 
 <!-- Comment out the item which does not apply here.-->
 
@@ -30,7 +28,7 @@ _Add information on additional changes required for the PR changes to work, both
 - [ ] Jira task (ID, `DDS-xxxx`):
 - [ ] The PR does not fix a specific GitHub issue or Jira task
 
-### **4. What _type of change(s)_ does the PR contain?**
+## **4. What _type of change(s)_ does the PR contain?**
 
 <!--
 - "Breaking": The change will cause existing functionality to not work as expected.
@@ -51,7 +49,7 @@ _Add information on additional changes required for the PR changes to work, both
 - [ ] Tests **(only)**
 - [ ] Workflow
 
-# Checklist to go through...
+## **5. Checklist**
 
 <!-- Comment out the items which do not apply here.-->
 
@@ -97,7 +95,7 @@ _Add information on additional changes required for the PR changes to work, both
 - [ ] Yes: The code works together with `dds_cli/master` branch
 - [ ] No: The code **does not** entirely / at all work together with the `dds_cli/master` branch. _Please add detailed and clear information about the broken features_
 
-# Actions / Scans
+## **6. Actions / Scans**
 
 <!-- Go through all checkboxes. All actions must pass before merging is allowed.-->
 
