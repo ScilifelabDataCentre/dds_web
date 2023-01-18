@@ -105,7 +105,7 @@ _Add information on additional changes required for the PR changes to work, both
 - **Prettier**: General code formatter. Our use case: MD and yaml mainly.
   Run `npx prettier --write .` locally to execute formatting.
   - [ ] Passed
-- **Tests**: Pytest to that verify functionality works as expected.
+- **Tests**: Pytest to verify that functionality works as expected.
   - [ ] New tests added
   - [ ] No new tests
   - [ ] Passed
