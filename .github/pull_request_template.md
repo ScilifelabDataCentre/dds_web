@@ -97,7 +97,7 @@ _Add information on additional changes required for the PR changes to work, both
 - [ ] Yes: The code works together with `dds_cli/master` branch
 - [ ] No: The code **does not** entirely / at all work together with the `dds_cli/master` branch. _Please add detailed and clear information about the broken features_
 
-### **6. Actions / Scans**
+# Actions / Scans
 
 <!-- Go through all checkboxes. All actions must pass before merging is allowed.-->
 
