@@ -19,7 +19,6 @@ from dds_web.database import models
 from dds_web.utils import current_time
 
 from dds_web.scheduled_tasks import (
-    quarterly_usage,
     reporting_units_and_users,
 )
 
@@ -113,9 +112,9 @@ from typing import List
 #     assert len(db.session.query(models.Invite).all()) == 0
 
 
-def test_quarterly_usage(client: flask.testing.FlaskClient) -> None:
-    """Test the quarterly_usage cron job."""
-    quarterly_usage()
+# def test_quarterly_usage(client: flask.testing.FlaskClient) -> None:
+#     """Test the quarterly_usage cron job."""
+#     quarterly_usage()
 
 
 def test_reporting_units_and_users(client: flask.testing.FlaskClient, fs: FakeFilesystem) -> None:

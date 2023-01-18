@@ -556,3 +556,86 @@ def delete_invites():
 
     for invite, error in errors.items():
         flask.current_app.logger.error(f"{invite} not deleted: {error}")
+
+
+@click.command("quartely-usage")
+@flask.cli.with_appcontext
+def quarterly_usage():
+    """Get the monthly usage for the units"""
+
+    flask.current_app.logger.debug("Task: Collecting usage information from database.")
+    import sqlalchemy
+
+    from dds_web import db
+    from dds_web.database import models
+    from dds_web.utils import (
+        current_time,
+        page_query,
+        # calculate_period_usage,
+        calculate_version_period_usage,
+    )
+
+    try:
+        # 1. Get projects where is_active = False
+        # .. a. Check if the versions are all time_deleted == time_invoiced
+        # .. b. Yes --> Set new column to True ("done")
+        flask.current_app.logger.info("Marking projects as 'done'....")
+        for unit, project in page_query(
+            db.session.query(models.Unit, models.Project)
+            .join(models.Project)
+            .filter(models.Project.is_active == False)
+        ):
+            # Get number of versions in project that have been fully included in usage calcs
+            num_done = (
+                db.session.query(models.Project, models.Version)
+                .join(models.Version)
+                .filter(
+                    sqlalchemy.and_(
+                        models.Project.id == project.id,
+                        models.Version.time_deleted == models.Version.time_invoiced,
+                    )
+                )
+                .count()
+            )
+
+            # Check if there are any versions that are not fully included
+            # If not, project is done and should not be included in any more usage calculations in billing
+            if num_done == len(project.file_versions):
+                project.done = True
+
+            db.session.commit()
+
+        # 2. Get project where done = False
+        for unit, project in page_query(
+            db.session.query(models.Unit, models.Project)
+            .join(models.Project)
+            .filter(models.Project.done == False)
+        ):
+            project_byte_hours: int = 0
+            for version in project.file_versions:
+                # Skipp deleted and already invoiced versions
+                if version.time_deleted == version.time_invoiced and [
+                    version.time_deleted,
+                    version.time_invoiced,
+                ] != [None, None]:
+                    continue
+                version_bhours = calculate_version_period_usage(version=version)
+                project_byte_hours += version_bhours
+            flask.current_app.logger.info(
+                f"Project {project.public_id} byte hours: {project_byte_hours}"
+            )
+
+            # Create a record in usage table
+            new_record = models.Usage(
+                project_id=project.id,
+                usage=project_byte_hours,
+                cost=0,
+                time_collected=current_time(),
+            )
+            db.session.add(new_record)
+            db.session.commit()
+
+    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        flask.current_app.logger.exception(err)
+        db.session.rollback()
+        raise
