@@ -28,6 +28,7 @@ _Add information on additional changes required for the PR changes to work, both
 
 - [ ] GitHub issue (link):
 - [ ] Jira task (ID, `DDS-xxxx`):
+- [ ] The PR does not fix a specific GitHub issue or Jira task
 
 ### **4. What _type of change(s)_ does the PR contain?**
 
@@ -56,24 +57,32 @@ _Add information on additional changes required for the PR changes to work, both
 
 ### **Always**
 
-<!-- Always go through the following items. If they do not apply, comment them out -->
+<!-- Always go through the following items. -->
 
-| Item                                       | Options                                               | Note                                                                |
-| ------------------------------------------ | ----------------------------------------------------- | ------------------------------------------------------------------- |
-| [Changelog](../CHANGELOG.md)               | <ul><li>- [ ] Added</li></ul>                         | Not needed when PR includes _only_ tests.                           |
-| Rebase / Update / Merge _from_ base branch | <ul><li>- [ ] Done</li><li>- [ ] Not needed</li></ul> |                                                                     |
-| Blocking PRs                               | <ul><li>- [ ] Merged</li></ul>                        | Must be checked if functionality in current PR relies on another PR |
-| PR to `master` branch                      | <ul><li>- [ ] Yes</li><li>- [ ] No</li></ul>          | If **Yes**: Go through the section [PR to master](#pr-to-master)    |
+- [Changelog](../CHANGELOG.md)
+  - [ ] Added
+  - [ ] Not needed (E.g. PR contains _only_ tests) 
+- Rebase / Update / Merge _from_ base branch
+  - [ ] Done
+  - [ ] Not needed
+- Blocking PRs
+  - [ ] Merged
+  - [ ] No blocking PRs
+- PR to `master` branch
+  - [ ] Yes: Go to the section [PR to master](#pr-to-master)
+  - [ ] No
 
 ### If PR consists of **code change(s)**
 
 <!-- If the PR contains code changes, the following need to be checked.-->
 
-| Item                      | Options                                                    | Note                                               |
-| ------------------------- | ---------------------------------------------------------- | -------------------------------------------------- |
-| Self-review done          | <ul><li>- [ ] Yes</li></ul>                                | Checked item required for all code changes         |
-| Comments, docstrings etc. | <ul><li>- [ ] Added</li></ul>                              | Particularly important in hard-to-understand areas |
-| Documentation             | <ul><li>- [ ] Updated </li><li> - [ ] Not needed</li></ul> |                                                    |
+- Self review
+  - [ ] Done
+- Comments, docstrings, etc
+  - [ ] Added / Updated
+- Documentation 
+  - [ ] Updated
+  - [ ] Update not needed
 
 ### If PR is to **master**
 
@@ -90,11 +99,30 @@ _Add information on additional changes required for the PR changes to work, both
 
 ### **6. Actions / Scans**
 
-| Action   | What                                                      | Note                                                                                               | OK                       |
-| -------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------ |
-| Black    | Python code formatter. Does not execute.                  |                                                                                                    | <ul><li>- [ ] </li></ul> |
-| Prettier | General code formatter. Our use case: MD and yaml mainly. |                                                                                                    | <ul><li>- [ ] </li></ul> |
-| Tests    | Pytest to that verify functionality works as expected.    | New tests... <ul><li>- [ ] Added </li><li> - [ ] Not needed </li></ul>                             | <ul><li>- [ ] </li></ul> |
-| CodeQL   | Scan for security vulnerabilities, bugs, errors           |                                                                                                    | <ul><li>- [ ] </li></ul> |
-| Trivy    | Security scanner                                          | Alert(s) fixed <ul><li> - [ ] Yes: _What?_ </li><li> - [ ] No (incl. dismissed): _Why?_ </li></ul> | <ul><li>- [ ] </li></ul> |
-| Snyk     | Security scanner                                          | Alert(s) fixed <ul><li> - [ ] Yes: _What?_ </li><li> - [ ] No (incl. dismissed): _Why?_ </li></ul> | <ul><li>- [ ] </li></ul> |
+Go through all checkboxes. All actions must pass before merging is allowed.
+
+- **Black**: Python code formatter. Does not execute. Only tests.
+    Run `black .` locally to execute formatting.
+    - [ ] Passed
+- **Prettier**: General code formatter. Our use case: MD and yaml mainly.
+    Run `npx prettier --write .` locally to execute formatting.
+    - [ ] Passed
+- **Tests**: Pytest to that verify functionality works as expected.
+  - [ ] New tests added
+  - [ ] No new tests
+  - [ ] Passed
+- **CodeQL**: Scan for security vulnerabilities, bugs, errors
+  - [ ] New alerts: _Go through them and either fix, dismiss och ignore. Add reasoning in items below._
+  - [ ] Alerts fixed: _What?_
+  - [ ] Alerts ignored / dismissed: _Why?_ 
+  - [ ] Passed
+- **Trivy**: Security scanner
+  - [ ] New alerts: _Go through them and either fix, dismiss och ignore. Add reasoning in items below._
+  - [ ] Alerts fixed: _What?_
+  - [ ] Alerts ignored / dismissed: _Why?_ 
+  - [ ] Passed
+- **Snyk**: Security scanner
+  - [ ] New alerts: _Go through them and either fix, dismiss och ignore. Add reasoning in items below._
+  - [ ] Alerts fixed: _What?_
+  - [ ] Alerts ignored / dismissed: _Why?_ 
+  - [ ] Passed
