@@ -1,67 +1,96 @@
-> **Before submitting the PR, please go through the sections below and fill in what you can. If there are any items that are irrelevant for the current PR, remove the row. If a relevant option is missing, please add it as an item and add a PR comment informing that the new option should be included into this template.**
-
-> **All _relevant_ items should be ticked before the PR is merged**
-
+<!--
+> **Before _submitting_ PR:**
+>
+> - Fill in and tick fields
+> - _Remove all rows_ that are not relevant for the current PR
+>   - Revelant option missing? Add it as an item and add a PR comment informing that the new option should be included into this template.
+>
+> **Before _merging_ PR:** 
+> 
+> _Tick all relevant items._
+-->
 # Description
 
-- [ ] Summary of the changes and the related issue:
-- [ ] Motivation and context regarding why the change is needed:
-- [ ] List / description of any dependencies or other changes required for this change:
-- Fixes an issue in GitHub / Jira:
-  - [ ] Yes: _[link to GitHub issue / Jira task ID]_
-  - [ ] No
+### **This PR contains the following changes...**
 
-## Type of change
+_Add a summary of the changes and the related issue._
 
-- [ ] Bug fix
-  - [ ] Breaking: _Describe_
-  - [ ] Non-breaking
-- [ ] Documentation
+### **The following additional changes are required for this to work**
+
+_Add information on additional changes required for the PR changes to work, both locally and in the deployments._
+> E.g. Does the deployment setup need anything for this to work?
+
+### **The PR fixes the following GitHub issue / Jira task**
+
+<!-- Comment out the item which does not apply here.-->
+
+- [ ] GitHub issue (link): 
+- [ ] Jira task (ID, `DDS-xxxx`): 
+
+### **What _type of change(s)_ does the PR contain?**
+
+<!-- 
+- "Breaking": The change will cause existing functionality to not work as expected.
+- Workflow: E.g. a new github action or changes to this PR template. Anything that alters our or the codes workflow.
+-->
+
 - [ ] New feature
-  - [ ] Breaking: _Describe_
+  - [ ] Breaking: _Please describe the reason for the break and how we can fix it._
+  - [ ] Non-breaking
+- [ ] Database change
+  - [ ] Migration _included in PR_
+  - [ ] Migration _not needed_ 
+- [ ] Bug fix
+  - [ ] Breaking: _Please describe the reason for the break and how we can fix it._
   - [ ] Non-breaking
 - [ ] Security Alert fix
+- [ ] Documentation
 - [ ] Tests **(only)**
 - [ ] Workflow
 
-_"Breaking": The change will cause existing functionality to not work as expected._
-
 # Checklist:
 
-## General
+<!-- Comment out the items which do not apply here.-->
 
-- [ ] [Changelog](../CHANGELOG.md): New row added. Not needed when PR includes _only_ tests.
-- [ ] Database schema has changed
-  - [ ] A new migration is included in the PR
-  - [ ] The change does not require a migration
-- [ ] Code change
-  - [ ] Self-review of code done
-  - [ ] Comments added, particularly in hard-to-understand areas
-  - Documentation update
-    - [ ] Done
-    - [ ] Not needed
+### **Always**
 
-## Repository / Releases
+| Item                                       | Options                                                     | Note                                                                |
+|--------------------------------------------|-----------------------------------|---------------------------------------------------------------------|
+| [Changelog](../CHANGELOG.md)               | - [ ] Added                       | Not needed when PR includes _only_ tests.                           |
+| Rebase / Update / Merge _from_ base branch | - [ ] Done <br> - [ ] Not needed  |                                                                     | 
+| Blocking PRs                               | - [ ] Merged                      | Must be checked if functionality in current PR relies on another PR |
+| PR to `master` branch                      | - [ ] Yes <br> - [ ] No           | If **Yes**: Go through the section [PR to master](#pr-to-master)    |
 
-- [ ] Blocking PRs have been merged
-- [ ] Rebase / update of branch done
-- [ ] PR to `master` branch (Product Owner / Scrum Master)
-  - [ ] The [version](../dds_web/version.py) is updated
-    - [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x)
-      - [ ] I have made the corresponding changes to the CLI version
-  - Backward compatible
-    - [ ] Yes: The code works together with `dds_cli/master` branch
-    - [ ] No: The code **does not** entirely / at all work together with the `dds_cli/master` branch. _Please add detailed and clear information about the broken features_
+### **Code change**
 
-## Checks
+| Item                         | Options                               | Note                                               |
+|------------------------------|---------------------------------------|----------------------------------------------------|
+| Self-review done             | - [ ] Yes                             | Checked item required for all code changes         |
+| Comments, docstrings etc.    | - [ ] Added                           | Particularly important in hard-to-understand areas |
+| Documentation                | - [ ] Updated <br> - [ ] Not needed   |                                                    |
 
-- [ ] CodeQL passes
-- [ ] Formatting: Black & Prettier checks pass
-- Tests
-  - [ ] I have added tests for the new code
-  - [ ] The tests pass
-- Trivy / Snyk:
-  - [ ] There are no new security alerts
-  - [ ] This PR fixes new security alerts
-  - [ ] Security alerts have been dismissed
-  - [ ] PR will be merged with new security alerts; This is why: _Please add a short description here_
+### **PR to master**
+
+- [ ] I have followed steps 1-5 in [the release instructions](../docs/procedures/new_release.md)
+- [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x)
+- [ ] I have made the corresponding changes to the CLI version
+
+**Backward compatibility**
+
+Is this version backward compatible? 
+
+- [ ] Yes: The code works together with `dds_cli/master` branch
+- [ ] No: The code **does not** entirely / at all work together with the `dds_cli/master` branch. _Please add detailed and clear information about the broken features_
+
+
+## Actions / Scans
+
+| Action   | What                                                      | Note                                                                            | OK    |
+|----------|-----------------------------------------------------------|---------------------------------------------------------------------------------|-------|
+| Black    | Python code formatter. Does not execute.                  |                                                                                 | - [ ] |
+| Prettier | General code formatter. Our use case: MD and yaml mainly. |                                                                                 | - [ ] |
+| Tests    | Pytest to that verify functionality works as expected.    | New tests... <br> - [ ] Added <br> - [ ] Not needed                             | - [ ] |
+| CodeQL   | Scan for security vulnerabilities, bugs, errors           |                                                                                 | - [ ] |
+| Trivy    | Security scanner                                          | Alert(s) fixed <br> - [ ] Yes: _What?_ <br> - [ ] No (incl. dismissed): _Why?_  | - [ ] |
+| Snyk     | Security scanner                                          | Alert(s) fixed <br> - [ ] Yes: _What?_ <br> - [ ] No (incl. dismissed): _Why?_  | - [ ] |
+
