@@ -99,7 +99,7 @@ _Add information on additional changes required for the PR changes to work, both
 
 ### **6. Actions / Scans**
 
-Go through all checkboxes. All actions must pass before merging is allowed.
+<!-- Go through all checkboxes. All actions must pass before merging is allowed.-->
 
 - **Black**: Python code formatter. Does not execute. Only tests.
     Run `black .` locally to execute formatting.
