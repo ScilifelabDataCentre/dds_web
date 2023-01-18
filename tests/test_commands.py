@@ -241,8 +241,6 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
 # usage = 0 --> check log
 def test_monitor_usage_no_usage(client, cli_runner, capfd):
     """If a unit has no uploaded data, there's no need to do the calculations or send email warning."""
-    unit = models.Unit.query.first()
-    assert unit
     # Mock the size property of the Unit table
     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
         mock_size.return_value = 0  # Test size = 0
@@ -261,16 +259,9 @@ def test_monitor_usage_no_usage(client, cli_runner, capfd):
 # percentage below warning level --> check log + no email
 def test_monitor_usage_no_email(client, cli_runner, capfd):
     """No email should be sent if the usage is below the warning level."""
-    # TODO: Change, should not be one unit here and many at the end
-    # Get unit info
-    unit: models.Unit = models.Unit.query.first()
-    unit_quota: int = unit.quota
-    unit_warning_level: float = unit.warning_level
-    max_level: float = unit_quota * unit_warning_level
-
     # Mock the size property of the Unit table
     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
-        mock_size.return_value = max_level - 1
+        mock_size.return_value = 1
         # Mock emails - only check if function call
         with patch.object(flask_mail.Mail, "send") as mock_mail_send:
             # Run command
@@ -286,18 +277,17 @@ def test_monitor_usage_no_email(client, cli_runner, capfd):
 # percentage above warning level --> check log + email sent
 def test_monitor_usage_warning_sent(client, cli_runner, capfd):
     """An email should be sent if the usage is above the warning level."""
-    unit: models.Unit = models.Unit.query.first()
-    unit_quota: int = unit.quota
-    unit_warning_level: float = unit.warning_level
-    max_level: float = unit_quota * unit_warning_level
-
-    with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
-        mock_size.return_value = max_level + 100
-        with patch.object(flask_mail.Mail, "send") as mock_mail_send:
-            result: click.testing.Result = cli_runner.invoke(monitor_usage)
-            assert mock_mail_send.call_count == 2  # 2 because client and cli_runner both run
-    _, err = capfd.readouterr()
     for unit in models.Unit.query.all():
+        unit_quota: int = unit.quota
+        unit_warning_level: float = unit.warning_level
+        max_level: float = unit_quota * unit_warning_level
+
+        with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
+            mock_size.return_value = max_level + 100
+            with patch.object(flask_mail.Mail, "send") as mock_mail_send:
+                result: click.testing.Result = cli_runner.invoke(monitor_usage)
+                assert mock_mail_send.call_count == 2  # 2 because client and cli_runner both run
+        _, err = capfd.readouterr()
         assert (
             f"A SciLifeLab Unit is approaching the allocated data quota.\nAffected unit: {unit.name}\n"
             in err
