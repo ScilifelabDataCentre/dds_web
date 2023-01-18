@@ -270,6 +270,7 @@ def create_app(testing=False, database_uri=None):
             set_expired_to_archived,
             delete_invites,
             quarterly_usage,
+            reporting_units_and_users,
         )
 
         app.cli.add_command(fill_db_wrapper)
@@ -282,6 +283,7 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(set_expired_to_archived)
         app.cli.add_command(delete_invites)
         app.cli.add_command(quarterly_usage)
+        app.cli.add_command(reporting_units_and_users)
 
         # Make version available inside jinja templates:
         @app.template_filter("dds_version")
