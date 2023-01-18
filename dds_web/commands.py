@@ -391,15 +391,13 @@ def monitor_usage():
 
         # Email if the unit is using more
         if perc_used > warn_after:
-            flask.current_app.logger.info(
-                f"Sending quota warning email regarding unit '{unit.name}'..."
-            )
             # Email settings
             message: str = (
                 "A SciLifeLab Unit is approaching the allocated data quota.\n"
                 f"Affected unit: {unit.name}\n"
                 f"{info_string}"
             )
+            flask.current_app.logger.info(message)
             msg: flask_mail.Message = flask_mail.Message(
                 subject=default_subject,
                 recipients=[recipient],
