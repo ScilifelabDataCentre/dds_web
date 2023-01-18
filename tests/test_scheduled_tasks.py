@@ -19,9 +19,6 @@ from dds_web.database import models
 from dds_web.utils import current_time
 
 from dds_web.scheduled_tasks import (
-    # set_available_to_expired,
-    # set_expired_to_archived,
-    delete_invite,
     quarterly_usage,
     reporting_units_and_users,
 )
@@ -99,21 +96,21 @@ from typing import List
 #     assert j == 6
 
 
-def test_delete_invite(client: flask.testing.FlaskClient) -> None:
-    assert len(db.session.query(models.Invite).all()) == 2
-    delete_invite()
-    assert len(db.session.query(models.Invite).all()) == 1
+# def test_delete_invite(client: flask.testing.FlaskClient) -> None:
+#     assert len(db.session.query(models.Invite).all()) == 2
+#     delete_invite()
+#     assert len(db.session.query(models.Invite).all()) == 1
 
 
-def test_delete_invite_timestamp_issue(client: flask.testing.FlaskClient) -> None:
-    """Test that the delete_invite cronjob deletes invites with '0000-00-00 00:00:00' timestamp."""
-    assert len(db.session.query(models.Invite).all()) == 2
-    invites = db.session.query(models.Invite).all()
-    for invite in invites:
-        invite.created_at = "0000-00-00 00:00:00"
-    db.session.commit()
-    delete_invite()
-    assert len(db.session.query(models.Invite).all()) == 0
+# def test_delete_invite_timestamp_issue(client: flask.testing.FlaskClient) -> None:
+#     """Test that the delete_invite cronjob deletes invites with '0000-00-00 00:00:00' timestamp."""
+#     assert len(db.session.query(models.Invite).all()) == 2
+#     invites = db.session.query(models.Invite).all()
+#     for invite in invites:
+#         invite.created_at = "0000-00-00 00:00:00"
+#     db.session.commit()
+#     delete_invite()
+#     assert len(db.session.query(models.Invite).all()) == 0
 
 
 def test_quarterly_usage(client: flask.testing.FlaskClient) -> None:

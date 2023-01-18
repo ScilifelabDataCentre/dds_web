@@ -433,7 +433,11 @@ def set_expired_to_archived():
 
     flask.current_app.logger.debug("Task: Checking for projects to archive.")
 
+    # Imports
+    # Installed
     import sqlalchemy
+
+    # Own
     from dds_web import db
     from dds_web.database import models
     from dds_web.errors import DatabaseError
@@ -504,3 +508,51 @@ def set_expired_to_archived():
             )
             for proj in errors[unit].keys():
                 flask.current_app.logger.error(f"Error for project '{proj}': {errors[unit][proj]} ")
+
+
+@click.command("delete-invites")
+@flask.cli.with_appcontext
+def delete_invites():
+    """Delete invites older than a week"""
+
+    flask.current_app.logger.debug("Task: Checking for invites to delete.")
+
+    # Imports
+    # Installed
+    from datetime import datetime, timedelta
+    from sqlalchemy.exc import OperationalError, SQLAlchemyError
+
+    # Own
+    from dds_web import db
+    from dds_web.database import models
+    from dds_web.errors import DatabaseError
+    from dds_web.utils import current_time
+
+    expiration: datetime.datetime = current_time()
+    errors: Dict = {}
+
+    try:
+        invites: list = db.session.query(models.Invite).all()
+        for invite in invites:
+            invalid_invite = invite.created_at == "0000-00-00 00:00:00"
+            if invalid_invite or (invite.created_at + timedelta(weeks=1)) < expiration:
+                try:
+                    db.session.delete(invite)
+                    db.session.commit()
+                    if invalid_invite:
+                        flask.current_app.logger.warning(
+                            "Invite with created_at = 0000-00-00 00:00:00 deleted."
+                        )
+                    else:
+                        flask.current_app.logger.debug("Invite deleted.")
+                except (OperationalError, SQLAlchemyError) as err:
+                    errors[invite] = str(err)
+                    flask.current_app.logger.exception(err)
+                    db.session.rollback()
+                    continue
+    except (OperationalError, SQLAlchemyError) as err:
+        flask.current_app.logger.exception(err)
+        raise
+
+    for invite, error in errors.items():
+        flask.current_app.logger.error(f"{invite} not deleted: {error}")

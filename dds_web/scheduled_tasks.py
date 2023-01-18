@@ -9,52 +9,6 @@ from typing import Dict
 scheduler = flask_apscheduler.APScheduler()
 
 
-@scheduler.task("cron", id="delete_invite", hour=0, minute=1, misfire_grace_time=3600)
-# @scheduler.task("interval", id="delete_invite", seconds=15, misfire_grace_time=1)
-
-
-def delete_invite():
-    """Delete invite older than a week"""
-
-    scheduler.app.logger.debug("Task: Checking for invites to delete.")
-
-    from sqlalchemy.exc import OperationalError, SQLAlchemyError
-    from dds_web import db
-    from dds_web.database import models
-    from dds_web.errors import DatabaseError
-    from dds_web.utils import current_time
-
-    with scheduler.app.app_context():
-        expiration: datetime.datetime = current_time()
-        errors: Dict = {}
-
-        try:
-            invites: list = db.session.query(models.Invite).all()
-            for invite in invites:
-                invalid_invite = invite.created_at == "0000-00-00 00:00:00"
-                if invalid_invite or (invite.created_at + timedelta(weeks=1)) < expiration:
-                    try:
-                        db.session.delete(invite)
-                        db.session.commit()
-                        if invalid_invite:
-                            scheduler.app.logger.warning(
-                                "Invite with created_at = 0000-00-00 00:00:00 deleted."
-                            )
-                        else:
-                            scheduler.app.logger.debug("Invite deleted.")
-                    except (OperationalError, SQLAlchemyError) as err:
-                        errors[invite] = str(err)
-                        scheduler.app.logger.exception(err)
-                        db.session.rollback()
-                        continue
-        except (OperationalError, SQLAlchemyError) as err:
-            scheduler.app.logger.exception(err)
-            raise
-
-        for invite, error in errors.items():
-            scheduler.app.logger.error(f"{invite} not deleted: {error}")
-
-
 @scheduler.task(
     "cron", id="get_quarterly_usage", month="Jan,Apr,Jul,Oct", day="1", hour=0, minute=1
 )
