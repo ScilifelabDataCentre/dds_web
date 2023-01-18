@@ -61,7 +61,7 @@ _Add information on additional changes required for the PR changes to work, both
 
 - [Changelog](../CHANGELOG.md)
   - [ ] Added
-  - [ ] Not needed (E.g. PR contains _only_ tests) 
+  - [ ] Not needed (E.g. PR contains _only_ tests)
 - Rebase / Update / Merge _from_ base branch
   - [ ] Done
   - [ ] Not needed
@@ -80,7 +80,7 @@ _Add information on additional changes required for the PR changes to work, both
   - [ ] Done
 - Comments, docstrings, etc
   - [ ] Added / Updated
-- Documentation 
+- Documentation
   - [ ] Updated
   - [ ] Update not needed
 
@@ -102,11 +102,11 @@ _Add information on additional changes required for the PR changes to work, both
 <!-- Go through all checkboxes. All actions must pass before merging is allowed.-->
 
 - **Black**: Python code formatter. Does not execute. Only tests.
-    Run `black .` locally to execute formatting.
-    - [ ] Passed
+  Run `black .` locally to execute formatting.
+  - [ ] Passed
 - **Prettier**: General code formatter. Our use case: MD and yaml mainly.
-    Run `npx prettier --write .` locally to execute formatting.
-    - [ ] Passed
+  Run `npx prettier --write .` locally to execute formatting.
+  - [ ] Passed
 - **Tests**: Pytest to that verify functionality works as expected.
   - [ ] New tests added
   - [ ] No new tests
@@ -114,15 +114,15 @@ _Add information on additional changes required for the PR changes to work, both
 - **CodeQL**: Scan for security vulnerabilities, bugs, errors
   - [ ] New alerts: _Go through them and either fix, dismiss och ignore. Add reasoning in items below._
   - [ ] Alerts fixed: _What?_
-  - [ ] Alerts ignored / dismissed: _Why?_ 
+  - [ ] Alerts ignored / dismissed: _Why?_
   - [ ] Passed
 - **Trivy**: Security scanner
   - [ ] New alerts: _Go through them and either fix, dismiss och ignore. Add reasoning in items below._
   - [ ] Alerts fixed: _What?_
-  - [ ] Alerts ignored / dismissed: _Why?_ 
+  - [ ] Alerts ignored / dismissed: _Why?_
   - [ ] Passed
 - **Snyk**: Security scanner
   - [ ] New alerts: _Go through them and either fix, dismiss och ignore. Add reasoning in items below._
   - [ ] Alerts fixed: _What?_
-  - [ ] Alerts ignored / dismissed: _Why?_ 
+  - [ ] Alerts ignored / dismissed: _Why?_
   - [ ] Passed
