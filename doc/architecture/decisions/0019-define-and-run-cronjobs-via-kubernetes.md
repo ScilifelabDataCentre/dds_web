@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Prior to this decision, the DDS has defined the cronjobs in a module within the app, and they have been run via Flask-APScheduler. This worked without any issues for a while, but when the deployment setup on the cluster changed we started getting errors during for example the project status transitions which are run every day at midnight. After some investigating we noticed that the issues are due to the DDS running on two pods, with two threads each, leading to multiple executions of the same cronjobs simultaneously. I order to avoid these issues now and in the future, we are now defining the current cronjobs as Flask commands and setting up the cronjobs in k8s.
+Prior to this decision, the DDS has defined the cronjobs in a module within the app, and they have been run via Flask-APScheduler. This worked without any issues for a while, but when the deployment setup on the cluster changed we started getting errors during for example the project status transitions which are run every day at midnight. After some investigating we noticed that the issues are due to there being two replicas with two worker processes each, giving a total of four cronjobs which run simultaneously. I order to avoid these issues now and in the future, we are now defining the current cronjobs as Flask commands and setting up the cronjobs in k8s.
 
 ## Decision
 
