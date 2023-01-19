@@ -261,6 +261,7 @@ def create_app(testing=False, database_uri=None):
             client_kwargs={"scope": "openid profile email"},
         )
 
+        # Import flask commands - all
         from dds_web.commands import (
             fill_db_wrapper,
             create_new_unit,
@@ -271,8 +272,10 @@ def create_app(testing=False, database_uri=None):
             delete_invites,
             quarterly_usage,
             reporting_units_and_users,
+            monitor_usage,
         )
 
+        # Add flask commands - general
         app.cli.add_command(fill_db_wrapper)
         app.cli.add_command(create_new_unit)
         app.cli.add_command(update_uploaded_file_with_log)
@@ -284,6 +287,7 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(delete_invites)
         app.cli.add_command(quarterly_usage)
         app.cli.add_command(reporting_units_and_users)
+        app.cli.add_command(monitor_usage)
 
         # Make version available inside jinja templates:
         @app.template_filter("dds_version")

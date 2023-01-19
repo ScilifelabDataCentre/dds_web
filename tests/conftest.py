@@ -13,6 +13,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 import boto3
 from requests_mock.mocker import Mocker
 import requests_cache
+import click
 
 # Own
 from dds_web.database.models import (
@@ -119,6 +120,7 @@ def demo_data():
             external_display_name="Display Name",
             contact_email="support@example.com",
             internal_ref="someunit",
+            quota=10**9,
             safespring_endpoint="endpoint",
             safespring_name="dds.example.com",
             safespring_access="access",
@@ -130,6 +132,7 @@ def demo_data():
             external_display_name="Retraction guaranteed",
             contact_email="tloteg@mailtrap.io",
             internal_ref="Unit to test user deletion",
+            quota=10**9,
             safespring_endpoint="endpoint",
             safespring_name="dds.example.com",
             safespring_access="access",
@@ -538,3 +541,22 @@ def disable_requests_cache():
     """
     with unittest.mock.patch("requests_cache.CachedSession", requests.Session):
         yield
+
+
+@pytest.fixture
+def runner() -> click.testing.CliRunner:
+    return click.testing.CliRunner()
+
+
+@pytest.fixture()
+def cli_test_app():
+    from dds_web import create_app
+    from tests import conftest
+
+    cli_test_app = create_app(testing=True, database_uri=DATABASE_URI)
+    yield cli_test_app
+
+
+@pytest.fixture()
+def cli_runner(cli_test_app):
+    return cli_test_app.test_cli_runner()

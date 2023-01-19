@@ -187,3 +187,5 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2023-01-09 - 2023-01-20)
 
 - Refactoring: Move flask commands to own module `commands.py` ([#1351](https://github.com/ScilifelabDataCentre/dds_web/pull/1351))
+- Workflow: Scan with Snyk on PR and schedule ([#1349](https://github.com/ScilifelabDataCentre/dds_web/pull/1349))
+- Flask command (cronjob): Monitor unit usage and warn if above level ([#1350](https://github.com/ScilifelabDataCentre/dds_web/pull/1350))
