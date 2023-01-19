@@ -12,7 +12,7 @@ Prior to this decision, the DDS has defined the cronjobs in a module within the 
 
 ## Decision
 
-Change the current cronjobs to Flask commands. Set up k8s cronjobs to run the Flask commands. All future cronjobs should be setup in this way; There should be no cronjobs defined within the DDS app.
+Change the current cronjobs to Flask commands. Set up k8s cronjobs to run the Flask commands. All future cronjobs should be configured in this way; There should be no cronjobs defined within the DDS app.
 
 ## Consequences
 
