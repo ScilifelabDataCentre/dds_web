@@ -30,8 +30,6 @@ import sqlalchemy
 import structlog
 import werkzeug
 
-from dds_web.scheduled_tasks import scheduler
-
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
 ####################################################################################################
@@ -308,11 +306,6 @@ def create_app(testing=False, database_uri=None):
             app.register_blueprint(api_blueprint, url_prefix="/api/v1")
             app.register_blueprint(pages, url_prefix="")
             app.register_blueprint(auth_blueprint, url_prefix="")
-
-            # Set-up the scheduler
-            app.config["SCHEDULER_JOBSTORES"] = {"default": SQLAlchemyJobStore(engine=db.engine)}
-            scheduler.init_app(app)
-            scheduler.start()
 
             ENCRYPTION_KEY_BIT_LENGTH = 256
             ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)
