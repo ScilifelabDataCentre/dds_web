@@ -11,6 +11,7 @@ import datetime
 # Installed
 import click
 import flask
+import flask_mail
 import sqlalchemy
 
 # Own
@@ -78,6 +79,8 @@ def fill_db_wrapper(db_type):
 @click.option("--safespring_secret", "-ss", type=str, required=True)
 @click.option("--days_in_available", "-da", type=int, required=False, default=90)
 @click.option("--days_in_expired", "-de", type=int, required=False, default=30)
+@click.option("--quota", "-q", type=int, required=True)
+@click.option("--warn-at", "-w", type=int, required=False, default=80)
 @flask.cli.with_appcontext
 def create_new_unit(
     name,
@@ -91,6 +94,8 @@ def create_new_unit(
     safespring_secret,
     days_in_available,
     days_in_expired,
+    quota,
+    warn_at,
 ):
     """Create a new unit.
 
@@ -129,6 +134,8 @@ def create_new_unit(
         safespring_secret=safespring_secret,
         days_in_available=days_in_available,
         days_in_expired=days_in_expired,
+        quota=quota,
+        warning_level=warn_at,
     )
     db.session.add(new_unit)
     db.session.commit()
@@ -336,3 +343,64 @@ def lost_files_s3_db(action_type: str):
 
     else:
         flask.current_app.logger.info("Found no lost files")
+
+
+@click.command("monitor-usage")
+@flask.cli.with_appcontext
+def monitor_usage():
+    """Check the units storage usage and compare with chosen quota."""
+    flask.current_app.logger.info("Starting: Checking unit quotas and usage...")
+
+    # Imports
+    # Own
+    from dds_web.database import models
+    import dds_web.utils
+
+    # Email settings
+    recipient: str = flask.current_app.config.get("MAIL_DDS")
+    default_subject: str = "DDS: Usage quota warning!"
+
+    # Run task
+    for unit in models.Unit.query:
+        flask.current_app.logger.info(f"Checking quotas and usage for: {unit.name}")
+
+        # Get info from database
+        quota: int = unit.quota
+        warn_after: int = unit.warning_level
+        current_usage: int = unit.size
+
+        # Check if 0 and then skip the next steps
+        if not current_usage:
+            flask.current_app.logger.info(
+                f"{unit.name} usage: {current_usage} bytes. Skipping percentage calculation."
+            )
+            continue
+
+        # Calculate percentage of quota
+        perc_used = round((current_usage / quota) * 100, 3)
+
+        # Information to log and potentially send
+        info_string: str = (
+            f"- Quota:{quota} bytes\n"
+            f"- Warning level: {warn_after*quota} bytes ({warn_after}%)\n"
+            f"- Current usage: {current_usage} bytes ({perc_used}%)\n"
+        )
+        flask.current_app.logger.debug(
+            f"Monitoring the usage for unit '{unit.name}' showed the following:\n" + info_string
+        )
+
+        # Email if the unit is using more
+        if perc_used > warn_after:
+            # Email settings
+            message: str = (
+                "A SciLifeLab Unit is approaching the allocated data quota.\n"
+                f"Affected unit: {unit.name}\n"
+                f"{info_string}"
+            )
+            flask.current_app.logger.info(message)
+            msg: flask_mail.Message = flask_mail.Message(
+                subject=default_subject,
+                recipients=[recipient],
+                body=message,
+            )
+            dds_web.utils.send_email_with_retry(msg=msg)

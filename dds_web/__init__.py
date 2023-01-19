@@ -261,17 +261,23 @@ def create_app(testing=False, database_uri=None):
             client_kwargs={"scope": "openid profile email"},
         )
 
+        # Import flask commands - all
         from dds_web.commands import (
             fill_db_wrapper,
             create_new_unit,
             update_uploaded_file_with_log,
             lost_files_s3_db,
+            monitor_usage,
         )
 
+        # Add flask commands - general
         app.cli.add_command(fill_db_wrapper)
         app.cli.add_command(create_new_unit)
         app.cli.add_command(update_uploaded_file_with_log)
         app.cli.add_command(lost_files_s3_db)
+
+        # Add flask commands - cronjobs
+        app.cli.add_command(monitor_usage)
 
         # Make version available inside jinja templates:
         @app.template_filter("dds_version")
