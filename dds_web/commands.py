@@ -734,6 +734,8 @@ def reporting_units_and_users():
     with reporting_file.open(mode="r") as file:  # Attach file
         msg.attach(filename=reporting_file.name, content_type="text/csv", data=file.read())
     utils.send_email_with_retry(msg=msg)  # Send
+
+
 @click.command("monitor-usage")
 @flask.cli.with_appcontext
 def monitor_usage():
