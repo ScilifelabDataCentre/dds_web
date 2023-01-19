@@ -19,7 +19,6 @@ import flask_mail
 from flask.testing import FlaskClient
 import requests_mock
 import werkzeug
-import typing
 
 # Variables
 
