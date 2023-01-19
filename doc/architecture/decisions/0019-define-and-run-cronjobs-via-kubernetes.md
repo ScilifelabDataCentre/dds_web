@@ -16,4 +16,4 @@ Change the current cronjobs to Flask commands. Set up k8s cronjobs to run the Fl
 
 ## Consequences
 
-The cronjobs defined in k8s will start up a new pod at a certain time, run the specific command, and then shut down the pod. Therefore there will be more than 2 pods whenever a cronjob is run, and each cronjob will only be executed once, resulting in the avoidance of the deadlocks and duplicate errors that we are currently experiencing.
+The cronjobs defined in k8s will start up a new pod at a certain time, run the specific command, and then shut down the pod. Therefore, there will be more than 2 pods whenever a cronjob is run, and each cronjob will only be executed once, resulting in the avoidance of the deadlocks and duplicate errors that we are currently experiencing.
