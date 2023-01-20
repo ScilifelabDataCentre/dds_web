@@ -25,6 +25,7 @@ from dds_web.commands import (
     monitor_usage,
     set_available_to_expired,
     set_expired_to_archived,
+    delete_invites,
 )
 from dds_web.database import models
 from dds_web import db
@@ -369,3 +370,23 @@ def test_set_expired_to_archived(_: MagicMock, client, cli_runner):
 
     assert i == 0
     assert j == 6
+
+
+# delete invites
+
+
+def test_delete_invite(client, cli_runner):
+    assert len(db.session.query(models.Invite).all()) == 2
+    cli_runner.invoke(delete_invites)
+    assert len(db.session.query(models.Invite).all()) == 1
+
+
+def test_delete_invite_timestamp_issue(client, cli_runner):
+    """Test that the delete_invite cronjob deletes invites with '0000-00-00 00:00:00' timestamp."""
+    assert len(db.session.query(models.Invite).all()) == 2
+    invites = db.session.query(models.Invite).all()
+    for invite in invites:
+        invite.created_at = "0000-00-00 00:00:00"
+    db.session.commit()
+    cli_runner.invoke(delete_invites)
+    assert len(db.session.query(models.Invite).all()) == 0
