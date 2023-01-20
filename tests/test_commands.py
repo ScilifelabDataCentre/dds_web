@@ -8,6 +8,7 @@ import os
 import pytest
 from _pytest.logging import LogCaptureFixture
 import logging
+from datetime import timedelta
 
 # Installed
 import click
@@ -20,9 +21,11 @@ from dds_web.commands import (
     create_new_unit,
     update_uploaded_file_with_log,
     monitor_usage,
+    set_available_to_expired,
 )
 from dds_web.database import models
 from dds_web import db
+from dds_web.utils import current_time
 
 # Tools
 
@@ -292,3 +295,42 @@ def test_monitor_usage_warning_sent(client, cli_runner, capfd):
             f"A SciLifeLab Unit is approaching the allocated data quota.\nAffected unit: {unit.name}\n"
             in err
         )
+
+
+# set_available_to_expired
+
+
+def test_set_available_to_expired(client, cli_runner):
+    units: List = db.session.query(models.Unit).all()
+    # Set project statuses to Available
+    # and deadline to now to be able to test cronjob functionality
+    for unit in units:
+        for project in unit.projects:
+            for status in project.project_statuses:
+                status.deadline = current_time() - timedelta(weeks=1)
+                status.status = "Available"
+
+    i: int = 0
+    for unit in units:
+        i += len(
+            [
+                project
+                for project in unit.projects
+                if project.current_status == "Available"
+                and project.current_deadline <= current_time()
+            ]
+        )
+    assert i == 6
+
+    cli_runner.invoke(set_available_to_expired)
+
+    units: List = db.session.query(models.Unit).all()
+
+    i: int = 0
+    j: int = 0
+    for unit in units:
+        i += len([project for project in unit.projects if project.current_status == "Available"])
+        j += len([project for project in unit.projects if project.current_status == "Expired"])
+
+    assert i == 0
+    assert j == 6

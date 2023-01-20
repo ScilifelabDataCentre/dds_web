@@ -20,7 +20,8 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
 import flask_migrate
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+
+# from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 
 # import flask_qrcode
 from werkzeug.middleware.proxy_fix import ProxyFix
