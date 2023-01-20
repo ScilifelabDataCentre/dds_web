@@ -2,8 +2,10 @@
 
 # Standard
 import typing
+from unittest import mock
 from unittest.mock import patch
 from unittest.mock import PropertyMock
+from unittest.mock import MagicMock
 import os
 import pytest
 from _pytest.logging import LogCaptureFixture
@@ -22,6 +24,7 @@ from dds_web.commands import (
     update_uploaded_file_with_log,
     monitor_usage,
     set_available_to_expired,
+    set_expired_to_archived,
 )
 from dds_web.database import models
 from dds_web import db
@@ -331,6 +334,38 @@ def test_set_available_to_expired(client, cli_runner):
     for unit in units:
         i += len([project for project in unit.projects if project.current_status == "Available"])
         j += len([project for project in unit.projects if project.current_status == "Expired"])
+
+    assert i == 0
+    assert j == 6
+
+
+# set_expired_to_archived
+
+
+@mock.patch("boto3.session.Session")
+def test_set_expired_to_archived(_: MagicMock, client, cli_runner):
+    units: List = db.session.query(models.Unit).all()
+
+    for unit in units:
+        for project in unit.projects:
+            for status in project.project_statuses:
+                status.deadline = current_time() - timedelta(weeks=1)
+                status.status = "Expired"
+
+    i: int = 0
+    for unit in units:
+        i += len([project for project in unit.projects if project.current_status == "Expired"])
+    assert i == 6
+
+    cli_runner.invoke(set_expired_to_archived)
+
+    units: List = db.session.query(models.Unit).all()
+
+    i: int = 0
+    j: int = 0
+    for unit in units:
+        i += len([project for project in unit.projects if project.current_status == "Expired"])
+        j += len([project for project in unit.projects if project.current_status == "Archived"])
 
     assert i == 0
     assert j == 6
