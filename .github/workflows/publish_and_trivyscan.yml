@@ -46,7 +46,6 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            scilifelabdatacentre/dds-backend
             ghcr.io/scilifelabdatacentre/dds-backend
       - name: Ensure lowercase name
         run: echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
