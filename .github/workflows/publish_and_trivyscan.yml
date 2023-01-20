@@ -1,3 +1,7 @@
+# GHCR: 
+# GitHub Container Repository
+# Images from ghcr are used when deploying prod and dev.
+#
 # Trivy
 # Trivy is a comprehensive and versatile security scanner. Trivy has scanners that look for
 # security issues, and targets where it can find those issues.
@@ -6,7 +10,7 @@
 # Potential security issues will be uploaded to the security tab in the repository.
 #
 # https://github.com/aquasecurity/trivy
-name: Publish Docker Image and run Trivy Security Scan
+name: Publish Docker Image to GHCR and run Trivy Security Scan
 on:
   pull_request:
   push:
