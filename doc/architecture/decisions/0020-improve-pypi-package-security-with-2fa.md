@@ -98,3 +98,13 @@ Both generating the checksum and signing the package needs to occur prior to pub
 
 - Users will have the option to choose which installation method they want to use and if they want to verify the package integrity prior to running it.
 - 2FA will reduce the risk of a breach and thereby prevent an unauthorized entity creating a new API key on our account. A new API key would allow the unauthorized entity to impersonate the SciLifeLab Data Centre and publish a new, fake, and possibly harmful version of the CLI.
+
+## Relevant links
+
+* https://pypi.org/project/dds-cli/#files
+* https://peps.python.org/pep-0541/
+* https://github.com/pypa/gh-action-pypi-publish/discussions/67
+* https://security.stackexchange.com/questions/79326/which-security-measures-does-pypi-and-similar-third-party-software-repositories
+* https://pip.pypa.io/en/stable/topics/secure-installs/
+* https://security.stackexchange.com/questions/175425/pip-verify-packet-integrity
+* https://github.com/pypi/warehouse/issues/3356
