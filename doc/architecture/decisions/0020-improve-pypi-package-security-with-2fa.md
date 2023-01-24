@@ -101,10 +101,10 @@ Both generating the checksum and signing the package needs to occur prior to pub
 
 ## Relevant links
 
-* https://pypi.org/project/dds-cli/#files
-* https://peps.python.org/pep-0541/
-* https://github.com/pypa/gh-action-pypi-publish/discussions/67
-* https://security.stackexchange.com/questions/79326/which-security-measures-does-pypi-and-similar-third-party-software-repositories
-* https://pip.pypa.io/en/stable/topics/secure-installs/
-* https://security.stackexchange.com/questions/175425/pip-verify-packet-integrity
-* https://github.com/pypi/warehouse/issues/3356
+- https://pypi.org/project/dds-cli/#files
+- https://peps.python.org/pep-0541/
+- https://github.com/pypa/gh-action-pypi-publish/discussions/67
+- https://security.stackexchange.com/questions/79326/which-security-measures-does-pypi-and-similar-third-party-software-repositories
+- https://pip.pypa.io/en/stable/topics/secure-installs/
+- https://security.stackexchange.com/questions/175425/pip-verify-packet-integrity
+- https://github.com/pypi/warehouse/issues/3356
