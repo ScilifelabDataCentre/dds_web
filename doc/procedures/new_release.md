@@ -66,6 +66,8 @@
                   Please redeploy the production instance of the DDS.
                   Image: <Name of the latest release / tag, e.g. v1.1.0 >
 
+                  Fill in the [manual log](https://scilifelab.atlassian.net/wiki/spaces/deliveryportal/pages/2318565390/Production) on Confluence.
+
     - **New feature** or bug that does not need an immediate fix
 
       Cluster maintenance is performed the first Wednesday (that is a work day) of every month. The DDS is redeployed during this as well. However, we still need to inform the users of the upcoming upgrade, and the sysadmins of which image they should deploy.
@@ -82,3 +84,5 @@
               During the next cluster maintenance (`<Weekday, Day / Month, Time>`), please redeploy the production instance of the DDS.
 
               Image: <Name of the latest release / tag, e.g. v1.1.0 >
+
+              Fill in the [manual log](https://scilifelab.atlassian.net/wiki/spaces/deliveryportal/pages/2318565390/Production) on Confluence.
