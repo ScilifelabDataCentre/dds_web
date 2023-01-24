@@ -20,7 +20,7 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
 import flask_migrate
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+
 
 # import flask_qrcode
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -29,8 +29,6 @@ from flask_limiter.util import get_remote_address
 import sqlalchemy
 import structlog
 import werkzeug
-
-from dds_web.scheduled_tasks import scheduler
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -267,6 +265,11 @@ def create_app(testing=False, database_uri=None):
             create_new_unit,
             update_uploaded_file_with_log,
             lost_files_s3_db,
+            set_available_to_expired,
+            set_expired_to_archived,
+            delete_invites,
+            quarterly_usage,
+            reporting_units_and_users,
             monitor_usage,
         )
 
@@ -277,6 +280,11 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(lost_files_s3_db)
 
         # Add flask commands - cronjobs
+        app.cli.add_command(set_available_to_expired)
+        app.cli.add_command(set_expired_to_archived)
+        app.cli.add_command(delete_invites)
+        app.cli.add_command(quarterly_usage)
+        app.cli.add_command(reporting_units_and_users)
         app.cli.add_command(monitor_usage)
 
         # Make version available inside jinja templates:
@@ -298,11 +306,6 @@ def create_app(testing=False, database_uri=None):
             app.register_blueprint(api_blueprint, url_prefix="/api/v1")
             app.register_blueprint(pages, url_prefix="")
             app.register_blueprint(auth_blueprint, url_prefix="")
-
-            # Set-up the scheduler
-            app.config["SCHEDULER_JOBSTORES"] = {"default": SQLAlchemyJobStore(engine=db.engine)}
-            scheduler.init_app(app)
-            scheduler.start()
 
             ENCRYPTION_KEY_BIT_LENGTH = 256
             ENCRYPTION_KEY_CHAR_LENGTH = int(ENCRYPTION_KEY_BIT_LENGTH / 8)

@@ -2,17 +2,23 @@
 
 # Standard
 import typing
+from unittest import mock
 from unittest.mock import patch
 from unittest.mock import PropertyMock
+from unittest.mock import MagicMock
 import os
 import pytest
 from _pytest.logging import LogCaptureFixture
 import logging
+from datetime import datetime, timedelta
+import pathlib
+import csv
 
 # Installed
 import click
 from pyfakefs.fake_filesystem import FakeFilesystem
 import flask_mail
+import freezegun
 
 # Own
 from dds_web.commands import (
@@ -20,9 +26,15 @@ from dds_web.commands import (
     create_new_unit,
     update_uploaded_file_with_log,
     monitor_usage,
+    set_available_to_expired,
+    set_expired_to_archived,
+    delete_invites,
+    quarterly_usage,
+    reporting_units_and_users,
 )
 from dds_web.database import models
 from dds_web import db
+from dds_web.utils import current_time
 
 # Tools
 
@@ -292,3 +304,195 @@ def test_monitor_usage_warning_sent(client, cli_runner, capfd):
             f"A SciLifeLab Unit is approaching the allocated data quota.\nAffected unit: {unit.name}\n"
             in err
         )
+
+
+# set_available_to_expired
+
+
+def test_set_available_to_expired(client, cli_runner):
+    units: List = db.session.query(models.Unit).all()
+    # Set project statuses to Available
+    # and deadline to now to be able to test cronjob functionality
+    for unit in units:
+        for project in unit.projects:
+            for status in project.project_statuses:
+                status.deadline = current_time() - timedelta(weeks=1)
+                status.status = "Available"
+
+    i: int = 0
+    for unit in units:
+        i += len(
+            [
+                project
+                for project in unit.projects
+                if project.current_status == "Available"
+                and project.current_deadline <= current_time()
+            ]
+        )
+    assert i == 6
+
+    cli_runner.invoke(set_available_to_expired)
+
+    units: List = db.session.query(models.Unit).all()
+
+    i: int = 0
+    j: int = 0
+    for unit in units:
+        i += len([project for project in unit.projects if project.current_status == "Available"])
+        j += len([project for project in unit.projects if project.current_status == "Expired"])
+
+    assert i == 0
+    assert j == 6
+
+
+# set_expired_to_archived
+
+
+@mock.patch("boto3.session.Session")
+def test_set_expired_to_archived(_: MagicMock, client, cli_runner):
+    units: List = db.session.query(models.Unit).all()
+
+    for unit in units:
+        for project in unit.projects:
+            for status in project.project_statuses:
+                status.deadline = current_time() - timedelta(weeks=1)
+                status.status = "Expired"
+
+    i: int = 0
+    for unit in units:
+        i += len([project for project in unit.projects if project.current_status == "Expired"])
+    assert i == 6
+
+    cli_runner.invoke(set_expired_to_archived)
+
+    units: List = db.session.query(models.Unit).all()
+
+    i: int = 0
+    j: int = 0
+    for unit in units:
+        i += len([project for project in unit.projects if project.current_status == "Expired"])
+        j += len([project for project in unit.projects if project.current_status == "Archived"])
+
+    assert i == 0
+    assert j == 6
+
+
+# delete invites
+
+
+def test_delete_invite(client, cli_runner):
+    assert len(db.session.query(models.Invite).all()) == 2
+    cli_runner.invoke(delete_invites)
+    assert len(db.session.query(models.Invite).all()) == 1
+
+
+def test_delete_invite_timestamp_issue(client, cli_runner):
+    """Test that the delete_invite cronjob deletes invites with '0000-00-00 00:00:00' timestamp."""
+    assert len(db.session.query(models.Invite).all()) == 2
+    invites = db.session.query(models.Invite).all()
+    for invite in invites:
+        invite.created_at = "0000-00-00 00:00:00"
+    db.session.commit()
+    cli_runner.invoke(delete_invites)
+    assert len(db.session.query(models.Invite).all()) == 0
+
+
+# quarterly usage
+
+
+def test_quarterly_usage(client, cli_runner):
+    """Test the quarterly_usage cron job."""
+    cli_runner.invoke(quarterly_usage)
+
+
+# reporting units and users
+
+
+def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
+    """Test that the reporting is giving correct values."""
+    # Create reporting file
+    reporting_file: pathlib.Path = pathlib.Path("/code/doc/reporting/dds-reporting.csv")
+    assert not fs.exists(reporting_file)
+    fs.create_file(reporting_file)
+    assert fs.exists(reporting_file)
+
+    # Rows for csv
+    header: typing.List = [
+        "Date",
+        "Units using DDS in production",
+        "Researchers",
+        "Unit users",
+        "Total number of users",
+    ]
+    first_row: typing.List = [f"2022-12-10", 2, 108, 11, 119]
+
+    # Fill reporting file with headers and one row
+    with reporting_file.open(mode="a") as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(header)  # Header - Columns
+        writer.writerow(first_row)  # First row
+
+    time_now = datetime(year=2022, month=12, day=10, hour=10, minute=54, second=10)
+    with freezegun.freeze_time(time_now):
+        # Run scheduled job now
+        with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+            result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+            assert not result.exception, "Raised an unwanted exception."
+            assert mock_mail_send.call_count == 1
+
+    # Check correct numbers
+    num_units: int = models.Unit.query.count()
+    num_users_total: int = models.User.query.count()
+    num_unit_users: int = models.UnitUser.query.count()
+    num_researchers: int = models.ResearchUser.query.count()
+    num_superadmins: int = models.SuperAdmin.query.count()
+    num_users_excl_superadmins: int = num_users_total - num_superadmins
+
+    # Expected new row:
+    new_row: typing.List = [
+        f"{time_now.year}-{time_now.month}-{time_now.day}",
+        num_units,
+        num_researchers,
+        num_unit_users,
+        num_users_excl_superadmins,
+    ]
+
+    # Check csv file contents
+    with reporting_file.open(mode="r") as result:
+        reader = csv.reader(result)
+        line: int = 0
+        for row in reader:
+            if line == 0:
+                assert row == header
+            elif line == 1:
+                assert row == [str(x) for x in first_row]
+            elif line == 2:
+                assert row == [str(x) for x in new_row]
+            line += 1
+
+    # Delete file to test error
+    fs.remove(reporting_file)
+    assert not fs.exists(reporting_file)
+
+    # Test no file found
+    with freezegun.freeze_time(time_now):
+        # Run scheduled job now
+        with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+            # with pytest.raises(Exception) as err:
+            result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+            assert result.exception, "Did not raise exception."
+            assert str(result.exception) == "Could not find the csv file."
+            assert mock_mail_send.call_count == 1
+
+    # Change total number of users to test error
+    with mock.patch("dds_web.commands.sum") as mocker:
+        mocker.return_value = num_users_total + 1
+        # Test incorrect number of users
+        with freezegun.freeze_time(time_now):
+            # Run scheduled job now
+            with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+                # with pytest.raises(Exception) as err:
+                result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+                assert result.exception, "Did not raise exception."
+                assert str(result.exception) == "Sum of number of users incorrect."
+                assert mock_mail_send.call_count == 1
