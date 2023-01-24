@@ -528,7 +528,7 @@ def set_expired_to_archived():
 def delete_invites():
     """
     Delete invites older than a week.
-    SHould be run evry day at around 00:01.
+    Should be run evry day at around 00:01.
     """
 
     flask.current_app.logger.debug("Task: Checking for invites to delete.")
