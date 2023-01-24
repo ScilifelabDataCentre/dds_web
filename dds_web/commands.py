@@ -349,7 +349,7 @@ def lost_files_s3_db(action_type: str):
 @flask.cli.with_appcontext
 def set_available_to_expired():
     """
-    Search for available projects whose deadlines are past and expire them. 
+    Search for available projects whose deadlines are past and expire them.
     Should be run every day at around 00:01.
     """
 

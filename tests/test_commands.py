@@ -436,7 +436,8 @@ def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
     with freezegun.freeze_time(time_now):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-            cli_runner.invoke(reporting_units_and_users)
+            result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+            assert not result.exception, "Raised an unwanted exception."
             assert mock_mail_send.call_count == 1
 
     # Check correct numbers
@@ -477,19 +478,21 @@ def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
     with freezegun.freeze_time(time_now):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-            with pytest.raises(Exception) as err:
-                cli_runner.invoke(reporting_units_and_users)
-                assert mock_mail_send.call_count == 1
-            assert str(err.value) == "Could not find the csv file."
+            # with pytest.raises(Exception) as err:
+            result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+            assert result.exception, "Did not raise exception."
+            assert str(result.exception) == "Could not find the csv file."
+            assert mock_mail_send.call_count == 1
 
     # Change total number of users to test error
-    with mock.patch("dds_web.scheduled_tasks.sum") as mocker:
+    with mock.patch("dds_web.commands.sum") as mocker:
         mocker.return_value = num_users_total + 1
         # Test incorrect number of users
         with freezegun.freeze_time(time_now):
             # Run scheduled job now
             with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-                with pytest.raises(Exception) as err:
-                    cli_runner.invoke(reporting_units_and_users)
-                    assert mock_mail_send.call_count == 1
-                assert str(err.value) == "Sum of number of users incorrect."
+                # with pytest.raises(Exception) as err:
+                result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+                assert result.exception, "Did not raise exception."
+                assert str(result.exception) == "Sum of number of users incorrect."
+                assert mock_mail_send.call_count == 1
