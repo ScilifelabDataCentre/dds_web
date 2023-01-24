@@ -19,7 +19,7 @@ In order to mitigate this threat, we decided to investigate the following possib
 - Provide a checksum for the package published on PyPI and recommend that the users installing `dds-cli` also verify the integrity of the package
 - Cryptographically sign the package published on PyPI and allow users installing `dds-cli` to verify the packages origin
 
-Both generating the checksum and signing the package needs to occur prior to publishing the CLI to PyPi.
+Both generating the checksum and signing the package needs to occur prior to publishing the CLI to PyPI.
 
 ### Providing a checksum
 
