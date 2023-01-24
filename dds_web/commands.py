@@ -348,8 +348,11 @@ def lost_files_s3_db(action_type: str):
 @click.command("set-available-to-expired")
 @flask.cli.with_appcontext
 def set_available_to_expired():
+    """
+    Search for available projects whose deadlines are past and expire them. 
+    Should be run every day at around 00:01.
+    """
 
-    """Search for available projects whose deadlines are past and expire them"""
     flask.current_app.logger.info("Task: Checking for Expiring projects.")
 
     # Imports
@@ -436,7 +439,10 @@ def set_available_to_expired():
 @click.command("set-expired-to-archived")
 @flask.cli.with_appcontext
 def set_expired_to_archived():
-    """Search for expired projects whose deadlines are past and archive them"""
+    """
+    Search for expired projects whose deadlines are past and archive them.
+    Should be run every day at around 01:01.
+    """
 
     flask.current_app.logger.debug("Task: Checking for projects to archive.")
 
@@ -520,7 +526,10 @@ def set_expired_to_archived():
 @click.command("delete-invites")
 @flask.cli.with_appcontext
 def delete_invites():
-    """Delete invites older than a week"""
+    """
+    Delete invites older than a week.
+    SHould be run evry day at around 00:01.
+    """
 
     flask.current_app.logger.debug("Task: Checking for invites to delete.")
 
@@ -568,7 +577,10 @@ def delete_invites():
 @click.command("quartely-usage")
 @flask.cli.with_appcontext
 def quarterly_usage():
-    """Get the monthly usage for the units"""
+    """
+    Get the monthly usage for the units
+    Should be run on the 1st of Jan,Apr,Jul,Oct at around 00:01.
+    """
 
     flask.current_app.logger.debug("Task: Collecting usage information from database.")
 
@@ -655,7 +667,10 @@ def quarterly_usage():
 @click.command("reporting-units-and-users")
 @flask.cli.with_appcontext
 def reporting_units_and_users():
-    """At the start of every month, get number of units and users."""
+    """
+    At the start of every month, get number of units and users.
+    Should be run on the 1st of each month, at around 00:01.
+    """
     # Imports
     # # Installed
     import csv
@@ -739,7 +754,10 @@ def reporting_units_and_users():
 @click.command("monitor-usage")
 @flask.cli.with_appcontext
 def monitor_usage():
-    """Check the units storage usage and compare with chosen quota."""
+    """
+    Check the units storage usage and compare with chosen quota.
+    Should be run on the 1st of each month, at around 00:01.
+    """
     flask.current_app.logger.info("Starting: Checking unit quotas and usage...")
 
     # Imports
