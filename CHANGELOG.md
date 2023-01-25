@@ -193,3 +193,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2023-01-20 - 2023-02-03)
 
 - Workflow: Do not publish to DockerHub anymore ([#1357](https://github.com/ScilifelabDataCentre/dds_web/pull/1357))
+- Refactoring: move cronjobs previously handled by APScheduler to flask commands ([#1355](https://github.com/ScilifelabDataCentre/dds_web/pull/1355))

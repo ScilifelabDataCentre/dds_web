@@ -345,10 +345,419 @@ def lost_files_s3_db(action_type: str):
         flask.current_app.logger.info("Found no lost files")
 
 
+@click.command("set-available-to-expired")
+@flask.cli.with_appcontext
+def set_available_to_expired():
+    """
+    Search for available projects whose deadlines are past and expire them.
+    Should be run every day at around 00:01.
+    """
+
+    flask.current_app.logger.info("Task: Checking for Expiring projects.")
+
+    # Imports
+    # Installed
+    import sqlalchemy
+
+    # Own
+    from dds_web import db
+    from dds_web.database import models
+    from dds_web.errors import DatabaseError
+    from dds_web.api.project import ProjectStatus
+    from dds_web.utils import current_time, page_query
+
+    expire = ProjectStatus()
+
+    errors = {}
+
+    try:
+        for unit in db.session.query(models.Unit).with_for_update().all():
+            errors[unit.name] = {}
+
+            days_in_expired = unit.days_in_expired
+
+            for project in page_query(
+                db.session.query(models.Project)
+                .filter(
+                    sqlalchemy.and_(
+                        models.Project.is_active == 1, models.Project.unit_id == unit.id
+                    )
+                )
+                .with_for_update()
+            ):
+
+                if (
+                    project.current_status == "Available"
+                    and project.current_deadline <= current_time()
+                ):
+                    flask.current_app.logger.debug("Handling expiring project")
+                    flask.current_app.logger.debug(
+                        "Project: %s has status %s and expires on: %s",
+                        project.public_id,
+                        project.current_status,
+                        project.current_deadline,
+                    )
+                    new_status_row = expire.expire_project(
+                        project=project,
+                        current_time=current_time(),
+                        deadline_in=days_in_expired,
+                    )
+
+                    project.project_statuses.append(new_status_row)
+
+                    try:
+                        db.session.commit()
+                        flask.current_app.logger.debug(
+                            "Project: %s has status Expired now!", project.public_id
+                        )
+                    except (
+                        sqlalchemy.exc.OperationalError,
+                        sqlalchemy.exc.SQLAlchemyError,
+                    ) as err:
+                        flask.current_app.logger.exception(err)
+                        db.session.rollback()
+                        errors[unit.name][project.public_id] = str(err)
+                    continue
+                else:
+                    flask.current_app.logger.debug(
+                        "Nothing to do for Project: %s", project.public_id
+                    )
+    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        flask.current_app.logger.exception(err)
+        db.session.rollback()
+        raise
+
+    for unit, projects in errors.items():
+        if projects:
+            flask.current_app.logger.error(
+                f"Following projects of Unit '{unit}' encountered issues during expiration process:"
+            )
+            for proj in errors[unit].keys():
+                flask.current_app.logger.error(f"Error for project '{proj}': {errors[unit][proj]} ")
+
+
+@click.command("set-expired-to-archived")
+@flask.cli.with_appcontext
+def set_expired_to_archived():
+    """
+    Search for expired projects whose deadlines are past and archive them.
+    Should be run every day at around 01:01.
+    """
+
+    flask.current_app.logger.debug("Task: Checking for projects to archive.")
+
+    # Imports
+    # Installed
+    import sqlalchemy
+
+    # Own
+    from dds_web import db
+    from dds_web.database import models
+    from dds_web.errors import DatabaseError
+    from dds_web.utils import current_time, page_query
+    from dds_web.api.project import ProjectStatus
+
+    archive = ProjectStatus()
+    errors = {}
+
+    try:
+        for unit in db.session.query(models.Unit).with_for_update().all():
+            errors[unit.name] = {}
+
+            for project in page_query(
+                db.session.query(models.Project)
+                .filter(
+                    sqlalchemy.and_(
+                        models.Project.is_active == 1, models.Project.unit_id == unit.id
+                    )
+                )
+                .with_for_update()
+            ):
+
+                if (
+                    project.current_status == "Expired"
+                    and project.current_deadline <= current_time()
+                ):
+                    flask.current_app.logger.debug("Handling project to archive")
+                    flask.current_app.logger.debug(
+                        "Project: %s has status %s and expired on: %s",
+                        project.public_id,
+                        project.current_status,
+                        project.current_deadline,
+                    )
+                    new_status_row, delete_message = archive.archive_project(
+                        project=project,
+                        current_time=current_time(),
+                    )
+                    flask.current_app.logger.debug(delete_message.strip())
+                    project.project_statuses.append(new_status_row)
+
+                    try:
+                        db.session.commit()
+                        flask.current_app.logger.debug(
+                            "Project: %s has status Archived now!", project.public_id
+                        )
+                    except (
+                        sqlalchemy.exc.OperationalError,
+                        sqlalchemy.exc.SQLAlchemyError,
+                    ) as err:
+                        flask.current_app.logger.exception(err)
+                        db.session.rollback()
+                        errors[unit.name][project.public_id] = str(err)
+                    continue
+                else:
+                    flask.current_app.logger.debug(
+                        "Nothing to do for Project: %s", project.public_id
+                    )
+    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        flask.current_app.logger.exception(err)
+        db.session.rollback()
+        raise
+
+    for unit, projects in errors.items():
+        if projects:
+            flask.current_app.logger.error(
+                f"Following projects of Unit '{unit}' encountered issues during archival process:"
+            )
+            for proj in errors[unit].keys():
+                flask.current_app.logger.error(f"Error for project '{proj}': {errors[unit][proj]} ")
+
+
+@click.command("delete-invites")
+@flask.cli.with_appcontext
+def delete_invites():
+    """
+    Delete invites older than a week.
+    Should be run evry day at around 00:01.
+    """
+
+    flask.current_app.logger.debug("Task: Checking for invites to delete.")
+
+    # Imports
+    # Installed
+    from datetime import datetime, timedelta
+    from sqlalchemy.exc import OperationalError, SQLAlchemyError
+
+    # Own
+    from dds_web import db
+    from dds_web.database import models
+    from dds_web.errors import DatabaseError
+    from dds_web.utils import current_time
+
+    expiration: datetime.datetime = current_time()
+    errors: Dict = {}
+
+    try:
+        invites: list = db.session.query(models.Invite).all()
+        for invite in invites:
+            invalid_invite = invite.created_at == "0000-00-00 00:00:00"
+            if invalid_invite or (invite.created_at + timedelta(weeks=1)) < expiration:
+                try:
+                    db.session.delete(invite)
+                    db.session.commit()
+                    if invalid_invite:
+                        flask.current_app.logger.warning(
+                            "Invite with created_at = 0000-00-00 00:00:00 deleted."
+                        )
+                    else:
+                        flask.current_app.logger.debug("Invite deleted.")
+                except (OperationalError, SQLAlchemyError) as err:
+                    errors[invite] = str(err)
+                    flask.current_app.logger.exception(err)
+                    db.session.rollback()
+                    continue
+    except (OperationalError, SQLAlchemyError) as err:
+        flask.current_app.logger.exception(err)
+        raise
+
+    for invite, error in errors.items():
+        flask.current_app.logger.error(f"{invite} not deleted: {error}")
+
+
+@click.command("quartely-usage")
+@flask.cli.with_appcontext
+def quarterly_usage():
+    """
+    Get the monthly usage for the units
+    Should be run on the 1st of Jan,Apr,Jul,Oct at around 00:01.
+    """
+
+    flask.current_app.logger.debug("Task: Collecting usage information from database.")
+
+    # Imports
+    # Installed
+    import sqlalchemy
+
+    # Own
+    from dds_web import db
+    from dds_web.database import models
+    from dds_web.utils import (
+        current_time,
+        page_query,
+        # calculate_period_usage,
+        calculate_version_period_usage,
+    )
+
+    try:
+        # 1. Get projects where is_active = False
+        # .. a. Check if the versions are all time_deleted == time_invoiced
+        # .. b. Yes --> Set new column to True ("done")
+        flask.current_app.logger.info("Marking projects as 'done'....")
+        for unit, project in page_query(
+            db.session.query(models.Unit, models.Project)
+            .join(models.Project)
+            .filter(models.Project.is_active == False)
+        ):
+            # Get number of versions in project that have been fully included in usage calcs
+            num_done = (
+                db.session.query(models.Project, models.Version)
+                .join(models.Version)
+                .filter(
+                    sqlalchemy.and_(
+                        models.Project.id == project.id,
+                        models.Version.time_deleted == models.Version.time_invoiced,
+                    )
+                )
+                .count()
+            )
+
+            # Check if there are any versions that are not fully included
+            # If not, project is done and should not be included in any more usage calculations in billing
+            if num_done == len(project.file_versions):
+                project.done = True
+
+            db.session.commit()
+
+        # 2. Get project where done = False
+        for unit, project in page_query(
+            db.session.query(models.Unit, models.Project)
+            .join(models.Project)
+            .filter(models.Project.done == False)
+        ):
+            project_byte_hours: int = 0
+            for version in project.file_versions:
+                # Skipp deleted and already invoiced versions
+                if version.time_deleted == version.time_invoiced and [
+                    version.time_deleted,
+                    version.time_invoiced,
+                ] != [None, None]:
+                    continue
+                version_bhours = calculate_version_period_usage(version=version)
+                project_byte_hours += version_bhours
+            flask.current_app.logger.info(
+                f"Project {project.public_id} byte hours: {project_byte_hours}"
+            )
+
+            # Create a record in usage table
+            new_record = models.Usage(
+                project_id=project.id,
+                usage=project_byte_hours,
+                cost=0,
+                time_collected=current_time(),
+            )
+            db.session.add(new_record)
+            db.session.commit()
+
+    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        flask.current_app.logger.exception(err)
+        db.session.rollback()
+        raise
+
+
+@click.command("reporting-units-and-users")
+@flask.cli.with_appcontext
+def reporting_units_and_users():
+    """
+    At the start of every month, get number of units and users.
+    Should be run on the 1st of each month, at around 00:01.
+    """
+    # Imports
+    # # Installed
+    import csv
+    import flask_mail
+    import flask_sqlalchemy
+    import pathlib
+
+    # Own
+    from dds_web import errors, utils
+    from dds_web.database.models import User, Unit
+
+    # Get current date
+    current_date: str = utils.timestamp(ts_format="%Y-%m-%d")
+
+    # Location of reporting file
+    reporting_file: pathlib.Path = pathlib.Path("/code/doc/reporting/dds-reporting.csv")
+
+    # Error default
+    error: str = None
+
+    # Get email address
+    recipient: str = flask.current_app.config.get("MAIL_DDS")
+    default_subject: str = "DDS Unit / User report"
+    default_body: str = f"This email contains the DDS unit- and user statistics. The data was collected on: {current_date}."
+    error_subject: str = f"Error in {default_subject}"
+    error_body: str = "The cronjob 'reporting' experienced issues"
+
+    # Get units and count them
+    units: flask_sqlalchemy.BaseQuery = Unit.query
+    num_units: int = units.count()
+
+    # Count users
+    users: flask_sqlalchemy.BaseQuery = User.query
+    num_users_total: int = users.count()  # All users
+    num_superadmins: int = users.filter_by(type="superadmin").count()  # Super Admins
+    num_unit_users: int = users.filter_by(type="unituser").count()  # Unit Admins / Personnel
+    num_researchers: int = users.filter_by(type="researchuser").count()  # Researchers
+    num_users_excl_superadmins: int = num_users_total - num_superadmins
+
+    # Verify that sum is correct
+    if sum([num_superadmins, num_unit_users, num_researchers]) != num_users_total:
+        error: str = "Sum of number of users incorrect."
+    # Define csv file and verify that it exists
+    elif not reporting_file.exists():
+        error: str = "Could not find the csv file."
+
+    if error:
+        # Send email about error
+        file_error_msg: flask_mail.Message = flask_mail.Message(
+            subject=error_subject,
+            recipients=[recipient],
+            body=f"{error_body}: {error}",
+        )
+        utils.send_email_with_retry(msg=file_error_msg)
+        raise Exception(error)
+
+    # Add row with new info
+    with reporting_file.open(mode="a") as repfile:
+        writer = csv.writer(repfile)
+        writer.writerow(
+            [
+                current_date,
+                num_units,
+                num_researchers,
+                num_unit_users,
+                num_users_excl_superadmins,
+            ]
+        )
+
+    # Create email
+    msg: flask_mail.Message = flask_mail.Message(
+        subject=default_subject,
+        recipients=[recipient],
+        body=default_body,
+    )
+    with reporting_file.open(mode="r") as file:  # Attach file
+        msg.attach(filename=reporting_file.name, content_type="text/csv", data=file.read())
+    utils.send_email_with_retry(msg=msg)  # Send
+
+
 @click.command("monitor-usage")
 @flask.cli.with_appcontext
 def monitor_usage():
-    """Check the units storage usage and compare with chosen quota."""
+    """
+    Check the units storage usage and compare with chosen quota.
+    Should be run on the 1st of each month, at around 00:01.
+    """
     flask.current_app.logger.info("Starting: Checking unit quotas and usage...")
 
     # Imports
