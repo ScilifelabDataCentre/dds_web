@@ -696,12 +696,6 @@ class UnitUser(User):
         """Get the unit projects."""
 
         return self.unit.projects
-
-    def num_personnel():
-        return UnitUser.query.filter_by(is_admin=False).count()
-    
-    def num_admins():
-        return UnitUser.query.filter_by(is_admin=True).count()
         
 class SuperAdmin(User):
     """
@@ -1070,7 +1064,6 @@ class Reporting(db.Model):
     date = db.Column(db.DateTime(), unique=True, nullable=False, default=datetime.date.today)
     units_in_prod = db.Column(db.Integer, unique=False, nullable=False, default=Unit.query.count)
     researchusers = db.Column(db.Integer, unique=False, nullable=False, default=ResearchUser.query.count)
-    unit_personnel = db.Column(db.Integer, unique=False, nullable=False, default=UnitUser.num_personnel)
-    unit_admins = db.Column(db.Integer, unique=False, nullable=False, default=UnitUser.num_admins)
+    unitusers = db.Column(db.Integer, unique=False, nullable=False, default=UnitUser.query.count)
     superadmins = db.Column(db.Integer, unique=False, nullable=False, default=SuperAdmin.query.count)
     total_users = db.Column(db.Integer, unique=False, nullable=False, default=User.query.count)

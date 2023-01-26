@@ -682,15 +682,33 @@ def reporting_units_and_users():
     from dds_web import errors, utils
     from dds_web.database.models import User, Unit, Reporting
 
+    # New reporting row - numbers are automatically set
     new_reporting_row = Reporting()
     db.session.add(new_reporting_row)
     db.session.commit()
+    
+    # Get all reporting rows
+    reporting_all_rows = Reporting.query.all()
+
+    # Create reporting file
+    reporting_file: pathlib.Path = pathlib.Path("dds-reporting.csv")
+    with reporting_file.open(mode="w") as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(
+            [
+                "Date",
+                "Units using DDS in production",
+                "Researchers",
+                "Unit users",
+                "Total number of users"
+            ]
+        )
+        [writer.writerow([row.date, row.units_in_prod, row.researchusers, row.unitusers, row.total_users]) for row in reporting_all_rows]
 
     # Get current date
     current_date: str = utils.timestamp(ts_format="%Y-%m-%d")
 
-    # Location of reporting file
-    reporting_file: pathlib.Path = pathlib.Path("/code/doc/reporting/dds-reporting.csv")
+
 
     # Error default
     error: str = None
