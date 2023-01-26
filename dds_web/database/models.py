@@ -1063,7 +1063,7 @@ class Reporting(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.DateTime(), unique=True, nullable=False, default=datetime.date.today)
-    units_in_prod = db.Column(db.Integer, unique=False, nullable=False, default=Unit.query.count)
+    units = db.Column(db.Integer, unique=False, nullable=False, default=Unit.query.count)
     researchusers = db.Column(
         db.Integer, unique=False, nullable=False, default=ResearchUser.query.count
     )
