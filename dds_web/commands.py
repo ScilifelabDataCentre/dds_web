@@ -677,7 +677,7 @@ def reporting_units_and_users():
 
     # Own
     import dds_web.utils
-    from dds_web.database.models import Reporting
+    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting
 
     # Get current time
     current_time = dds_web.utils.timestamp(ts_format="%Y-%m-%d")
@@ -691,7 +691,18 @@ def reporting_units_and_users():
 
     # New reporting row - numbers are automatically set
     try:
-        new_reporting_row = Reporting()
+        unit_count = Unit.query.count()
+        researchuser_count = ResearchUser.query.count()
+        unituser_count = UnitUser.query.count()
+        superadmin_count = SuperAdmin.query.count()
+        total_user_count = User.query.count()
+        new_reporting_row = Reporting(
+            unit_count=unit_count,
+            researchuser_count=researchuser_count,
+            unituser_count=unituser_count,
+            superadmin_count=superadmin_count,
+            total_user_count=total_user_count,
+        )
         db.session.add(new_reporting_row)
         db.session.commit()
     except BaseException as err:  # We want to know if there's any error

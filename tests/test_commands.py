@@ -410,47 +410,26 @@ def test_quarterly_usage(client, cli_runner):
 
 def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
     """Test that the reporting is giving correct values."""
-    # # Create reporting file
-    # reporting_file: pathlib.Path = pathlib.Path("/code/doc/reporting/dds-reporting.csv")
-    # assert not fs.exists(reporting_file)
-    # fs.create_file(reporting_file)
-    # assert fs.exists(reporting_file)
+    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting
 
-    # # Rows for csv
-    # header: typing.List = [
-    #     "Date",
-    #     "Units using DDS in production",
-    #     "Researchers",
-    #     "Unit users",
-    #     "Total number of users",
-    # ]
-    # first_row: typing.List = [f"2022-12-10", 2, 108, 11, 119]
+    def verify_reporting_row(row, time_date):
+        """Verify correct values in reporting row."""
+        assert row.date.date() == datetime.date(time_date)
+        assert row.unit_count == Unit.query.count()
+        assert row.researchuser_count == ResearchUser.query.count()
+        assert row.unituser_count == UnitUser.query.count()
+        assert row.superadmin_count == SuperAdmin.query.count()
+        assert row.total_user_count == User.query.count()
+        assert row.total_user_count == sum(
+            [row.researchuser_count, row.unituser_count, row.superadmin_count]
+        )
 
-    # # Fill reporting file with headers and one row
-    # with reporting_file.open(mode="a") as csv_file:
-    #     writer = csv.writer(csv_file)
-    #     writer.writerow(header)  # Header - Columns
-    #     writer.writerow(first_row)  # First row
-
-    def verify_reporting_row(row, time_now):
-        """Check that the row values in the reporting table are correct."""
-        assert row.id == 1
-        assert row.date == datetime.date(time_now)
-        assert row.units == Unit.query.count()
-        assert row.researchusers == ResearchUser.query.count()
-        assert row.unitusers == UnitUser.query.count()
-        assert row.superadmins == SuperAdmin.query.count()
-        assert row.total_users == User.query.count()
-        assert row.total_users == sum([row.researchusers, row.unitusers, row.superadmins])
-
-    # Verify that there are no rows in the reporting database
-    from dds_web.database.models import Reporting, Unit, UnitUser, ResearchUser, SuperAdmin, User
-
+    # Verify that there are no reporting rows
     assert Reporting.query.count() == 0
 
     # Run successful command - new row should be created
-    time_now = datetime(year=2022, month=12, day=10, hour=10, minute=54, second=10)
-    with freezegun.freeze_time(time_now):
+    first_time = datetime(year=2022, month=12, day=10, hour=10, minute=54, second=10)
+    with freezegun.freeze_time(first_time):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
             result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
@@ -459,11 +438,11 @@ def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
 
     # Verify that there's now a reporting row
     assert Reporting.query.count() == 1
-    first_row = Reporting.query.first()
-    verify_reporting_row(row=first_row, time_now=time_now)
+    row = Reporting.query.first()
+    verify_reporting_row(row=row, time_date=first_time)
 
     # Check that an exception is raised if the command is run on the same day
-    with freezegun.freeze_time(time_now):
+    with freezegun.freeze_time(first_time):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
             # with pytest.raises(Exception) as err:
@@ -473,8 +452,8 @@ def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
             assert mock_mail_send.call_count == 1
 
     # Verify that the next day works
-    time_now = datetime(year=2022, month=12, day=11, hour=10, minute=54, second=10)
-    with freezegun.freeze_time(time_now):
+    second_time = datetime(year=2022, month=12, day=11, hour=10, minute=54, second=10)
+    with freezegun.freeze_time(second_time):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
             result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
@@ -485,4 +464,4 @@ def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
     assert Reporting.query.count() == 2
     reporting_rows = Reporting.query.all()
     for row in reporting_rows:
-        verify_reporting_row(row=row, time_now=time_now)
+        verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)

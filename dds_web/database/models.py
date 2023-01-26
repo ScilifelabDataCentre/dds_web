@@ -1063,12 +1063,8 @@ class Reporting(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.DateTime(), unique=True, nullable=False, default=datetime.date.today)
-    units = db.Column(db.Integer, unique=False, nullable=False, default=Unit.query.count)
-    researchusers = db.Column(
-        db.Integer, unique=False, nullable=False, default=ResearchUser.query.count
-    )
-    unitusers = db.Column(db.Integer, unique=False, nullable=False, default=UnitUser.query.count)
-    superadmins = db.Column(
-        db.Integer, unique=False, nullable=False, default=SuperAdmin.query.count
-    )
-    total_users = db.Column(db.Integer, unique=False, nullable=False, default=User.query.count)
+    unit_count = db.Column(db.Integer, unique=False, nullable=False)
+    researchuser_count = db.Column(db.Integer, unique=False, nullable=False)
+    unituser_count = db.Column(db.Integer, unique=False, nullable=False)
+    superadmin_count = db.Column(db.Integer, unique=False, nullable=False)
+    total_user_count = db.Column(db.Integer, unique=False, nullable=False)
