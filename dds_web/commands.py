@@ -680,7 +680,11 @@ def reporting_units_and_users():
 
     # Own
     from dds_web import errors, utils
-    from dds_web.database.models import User, Unit
+    from dds_web.database.models import User, Unit, Reporting
+
+    new_reporting_row = Reporting()
+    db.session.add(new_reporting_row)
+    db.session.commit()
 
     # Get current date
     current_date: str = utils.timestamp(ts_format="%Y-%m-%d")

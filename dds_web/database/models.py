@@ -697,7 +697,12 @@ class UnitUser(User):
 
         return self.unit.projects
 
-
+    def num_personnel():
+        return UnitUser.query.filter_by(is_admin=False).count()
+    
+    def num_admins():
+        return UnitUser.query.filter_by(is_admin=True).count()
+        
 class SuperAdmin(User):
     """
     Data model for super admin user accounts (Data Centre).
@@ -1051,3 +1056,21 @@ class Maintenance(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     active = db.Column(db.Boolean, nullable=False, default=True)
+
+
+class Reporting(db.Model):
+    """Keep track of number of users and units."""
+
+    # Table setup
+    __tablename__ = "reporting"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    date = db.Column(db.DateTime(), unique=True, nullable=False, default=datetime.date.today)
+    units_in_prod = db.Column(db.Integer, unique=False, nullable=False, default=Unit.query.count)
+    researchusers = db.Column(db.Integer, unique=False, nullable=False, default=ResearchUser.query.count)
+    unit_personnel = db.Column(db.Integer, unique=False, nullable=False, default=UnitUser.num_personnel)
+    unit_admins = db.Column(db.Integer, unique=False, nullable=False, default=UnitUser.num_admins)
+    superadmins = db.Column(db.Integer, unique=False, nullable=False, default=SuperAdmin.query.count)
+    total_users = db.Column(db.Integer, unique=False, nullable=False, default=User.query.count)
