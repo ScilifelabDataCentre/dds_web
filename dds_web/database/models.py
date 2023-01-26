@@ -696,7 +696,8 @@ class UnitUser(User):
         """Get the unit projects."""
 
         return self.unit.projects
-        
+
+
 class SuperAdmin(User):
     """
     Data model for super admin user accounts (Data Centre).
@@ -1063,7 +1064,11 @@ class Reporting(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.DateTime(), unique=True, nullable=False, default=datetime.date.today)
     units_in_prod = db.Column(db.Integer, unique=False, nullable=False, default=Unit.query.count)
-    researchusers = db.Column(db.Integer, unique=False, nullable=False, default=ResearchUser.query.count)
+    researchusers = db.Column(
+        db.Integer, unique=False, nullable=False, default=ResearchUser.query.count
+    )
     unitusers = db.Column(db.Integer, unique=False, nullable=False, default=UnitUser.query.count)
-    superadmins = db.Column(db.Integer, unique=False, nullable=False, default=SuperAdmin.query.count)
+    superadmins = db.Column(
+        db.Integer, unique=False, nullable=False, default=SuperAdmin.query.count
+    )
     total_users = db.Column(db.Integer, unique=False, nullable=False, default=User.query.count)

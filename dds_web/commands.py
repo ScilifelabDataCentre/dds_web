@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import datetime
+import tempfile
 
 # Installed
 import click
@@ -679,98 +680,40 @@ def reporting_units_and_users():
     import pathlib
 
     # Own
-    from dds_web import errors, utils
+    import dds_web.utils
     from dds_web.database.models import User, Unit, Reporting
 
-    # New reporting row - numbers are automatically set
-    new_reporting_row = Reporting()
-    db.session.add(new_reporting_row)
-    db.session.commit()
-    
-    # Get all reporting rows
-    reporting_all_rows = Reporting.query.all()
-
-    # Create reporting file
-    reporting_file: pathlib.Path = pathlib.Path("dds-reporting.csv")
-    with reporting_file.open(mode="w") as csv_file:
-        writer = csv.writer(csv_file)
-        writer.writerow(
-            [
-                "Date",
-                "Units using DDS in production",
-                "Researchers",
-                "Unit users",
-                "Total number of users"
-            ]
-        )
-        [writer.writerow([row.date, row.units_in_prod, row.researchusers, row.unitusers, row.total_users]) for row in reporting_all_rows]
-
-    # Get current date
-    current_date: str = utils.timestamp(ts_format="%Y-%m-%d")
-
-
-
-    # Error default
-    error: str = None
+    # Get current time
+    current_time = dds_web.utils.timestamp(ts_format="%Y-%m-%d")
 
     # Get email address
     recipient: str = flask.current_app.config.get("MAIL_DDS")
-    default_subject: str = "DDS Unit / User report"
-    default_body: str = f"This email contains the DDS unit- and user statistics. The data was collected on: {current_date}."
-    error_subject: str = f"Error in {default_subject}"
-    error_body: str = "The cronjob 'reporting' experienced issues"
+    error_subject: str = "[CRONJOB] Error during collection of DDS unit- and user statistics."
+    error_body: str = (
+        f"The cronjob 'reporting' experienced issues. Please see logs. Time: {current_time}."
+    )
 
-    # Get units and count them
-    units: flask_sqlalchemy.BaseQuery = Unit.query
-    num_units: int = units.count()
-
-    # Count users
-    users: flask_sqlalchemy.BaseQuery = User.query
-    num_users_total: int = users.count()  # All users
-    num_superadmins: int = users.filter_by(type="superadmin").count()  # Super Admins
-    num_unit_users: int = users.filter_by(type="unituser").count()  # Unit Admins / Personnel
-    num_researchers: int = users.filter_by(type="researchuser").count()  # Researchers
-    num_users_excl_superadmins: int = num_users_total - num_superadmins
-
-    # Verify that sum is correct
-    if sum([num_superadmins, num_unit_users, num_researchers]) != num_users_total:
-        error: str = "Sum of number of users incorrect."
-    # Define csv file and verify that it exists
-    elif not reporting_file.exists():
-        error: str = "Could not find the csv file."
-
-    if error:
+    # New reporting row - numbers are automatically set
+    try:
+        new_reporting_row = Reporting()
+        db.session.add(new_reporting_row)
+        db.session.commit()
+    except BaseException as err:  # We want to know if there's any error
+        flask.current_app.logger.warning(
+            f"Exception raised during reporting cronjob. Preparing email. Error: {err}"
+        )
         # Send email about error
         file_error_msg: flask_mail.Message = flask_mail.Message(
             subject=error_subject,
             recipients=[recipient],
-            body=f"{error_body}: {error}",
+            body=error_body,
         )
-        utils.send_email_with_retry(msg=file_error_msg)
-        raise Exception(error)
-
-    # Add row with new info
-    with reporting_file.open(mode="a") as repfile:
-        writer = csv.writer(repfile)
-        writer.writerow(
-            [
-                current_date,
-                num_units,
-                num_researchers,
-                num_unit_users,
-                num_users_excl_superadmins,
-            ]
+        dds_web.utils.send_email_with_retry(msg=file_error_msg)
+        raise
+    else:
+        flask.current_app.logger.info(
+            f"Unit- and user statistis collected successfully: {current_time}"
         )
-
-    # Create email
-    msg: flask_mail.Message = flask_mail.Message(
-        subject=default_subject,
-        recipients=[recipient],
-        body=default_body,
-    )
-    with reporting_file.open(mode="r") as file:  # Attach file
-        msg.attach(filename=reporting_file.name, content_type="text/csv", data=file.read())
-    utils.send_email_with_retry(msg=msg)  # Send
 
 
 @click.command("monitor-usage")
