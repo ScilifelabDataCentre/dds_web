@@ -7,7 +7,6 @@ import os
 import re
 import sys
 import datetime
-import tempfile
 
 # Installed
 import click
@@ -673,15 +672,12 @@ def reporting_units_and_users():
     Should be run on the 1st of each month, at around 00:01.
     """
     # Imports
-    # # Installed
-    import csv
+    # Installed
     import flask_mail
-    import flask_sqlalchemy
-    import pathlib
 
     # Own
     import dds_web.utils
-    from dds_web.database.models import User, Unit, Reporting
+    from dds_web.database.models import Reporting
 
     # Get current time
     current_time = dds_web.utils.timestamp(ts_format="%Y-%m-%d")
