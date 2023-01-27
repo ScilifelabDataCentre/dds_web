@@ -410,89 +410,58 @@ def test_quarterly_usage(client, cli_runner):
 
 def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
     """Test that the reporting is giving correct values."""
-    # Create reporting file
-    reporting_file: pathlib.Path = pathlib.Path("/code/doc/reporting/dds-reporting.csv")
-    assert not fs.exists(reporting_file)
-    fs.create_file(reporting_file)
-    assert fs.exists(reporting_file)
+    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting
 
-    # Rows for csv
-    header: typing.List = [
-        "Date",
-        "Units using DDS in production",
-        "Researchers",
-        "Unit users",
-        "Total number of users",
-    ]
-    first_row: typing.List = [f"2022-12-10", 2, 108, 11, 119]
+    def verify_reporting_row(row, time_date):
+        """Verify correct values in reporting row."""
+        assert row.date.date() == datetime.date(time_date)
+        assert row.unit_count == Unit.query.count()
+        assert row.researchuser_count == ResearchUser.query.count()
+        assert row.unituser_count == UnitUser.query.count()
+        assert row.superadmin_count == SuperAdmin.query.count()
+        assert row.total_user_count == User.query.count()
+        assert row.total_user_count == sum(
+            [row.researchuser_count, row.unituser_count, row.superadmin_count]
+        )
 
-    # Fill reporting file with headers and one row
-    with reporting_file.open(mode="a") as csv_file:
-        writer = csv.writer(csv_file)
-        writer.writerow(header)  # Header - Columns
-        writer.writerow(first_row)  # First row
+    # Verify that there are no reporting rows
+    assert Reporting.query.count() == 0
 
-    time_now = datetime(year=2022, month=12, day=10, hour=10, minute=54, second=10)
-    with freezegun.freeze_time(time_now):
+    # Run successful command - new row should be created
+    first_time = datetime(year=2022, month=12, day=10, hour=10, minute=54, second=10)
+    with freezegun.freeze_time(first_time):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
             result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
             assert not result.exception, "Raised an unwanted exception."
-            assert mock_mail_send.call_count == 1
+            assert mock_mail_send.call_count == 0
 
-    # Check correct numbers
-    num_units: int = models.Unit.query.count()
-    num_users_total: int = models.User.query.count()
-    num_unit_users: int = models.UnitUser.query.count()
-    num_researchers: int = models.ResearchUser.query.count()
-    num_superadmins: int = models.SuperAdmin.query.count()
-    num_users_excl_superadmins: int = num_users_total - num_superadmins
+    # Verify that there's now a reporting row
+    assert Reporting.query.count() == 1
+    row = Reporting.query.first()
+    verify_reporting_row(row=row, time_date=first_time)
 
-    # Expected new row:
-    new_row: typing.List = [
-        f"{time_now.year}-{time_now.month}-{time_now.day}",
-        num_units,
-        num_researchers,
-        num_unit_users,
-        num_users_excl_superadmins,
-    ]
-
-    # Check csv file contents
-    with reporting_file.open(mode="r") as result:
-        reader = csv.reader(result)
-        line: int = 0
-        for row in reader:
-            if line == 0:
-                assert row == header
-            elif line == 1:
-                assert row == [str(x) for x in first_row]
-            elif line == 2:
-                assert row == [str(x) for x in new_row]
-            line += 1
-
-    # Delete file to test error
-    fs.remove(reporting_file)
-    assert not fs.exists(reporting_file)
-
-    # Test no file found
-    with freezegun.freeze_time(time_now):
+    # Check that an exception is raised if the command is run on the same day
+    with freezegun.freeze_time(first_time):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
             # with pytest.raises(Exception) as err:
             result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
             assert result.exception, "Did not raise exception."
-            assert str(result.exception) == "Could not find the csv file."
+            assert "Duplicate entry" in str(result.exception)
             assert mock_mail_send.call_count == 1
 
-    # Change total number of users to test error
-    with mock.patch("dds_web.commands.sum") as mocker:
-        mocker.return_value = num_users_total + 1
-        # Test incorrect number of users
-        with freezegun.freeze_time(time_now):
-            # Run scheduled job now
-            with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-                # with pytest.raises(Exception) as err:
-                result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
-                assert result.exception, "Did not raise exception."
-                assert str(result.exception) == "Sum of number of users incorrect."
-                assert mock_mail_send.call_count == 1
+    # Verify that the next day works
+    second_time = datetime(year=2022, month=12, day=11, hour=10, minute=54, second=10)
+    with freezegun.freeze_time(second_time):
+        # Run scheduled job now
+        with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+            result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+            assert not result.exception, "Raised an unwanted exception."
+            assert mock_mail_send.call_count == 0
+
+    # Verify that there's now a reporting row
+    assert Reporting.query.count() == 2
+    reporting_rows = Reporting.query.all()
+    for row in reporting_rows:
+        verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)
