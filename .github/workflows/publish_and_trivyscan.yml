@@ -10,7 +10,9 @@
 # Potential security issues will be uploaded to the security tab in the repository.
 #
 # https://github.com/aquasecurity/trivy
-name: Publish Docker Image to GHCR and run Trivy Security Scan
+# ---------------------------------------
+# Publish Docker Image to GHCR and run Trivy Security Scan
+name: GHCR and Trivy Scan
 on:
   pull_request:
   push:
@@ -22,7 +24,7 @@ on:
 jobs:
   push_to_registry:
     if: github.repository == 'ScilifelabDataCentre/dds_web'
-    name: Push Docker image to Docker Hub
+    name: Push image
     runs-on: ubuntu-latest
     permissions:
       contents: read

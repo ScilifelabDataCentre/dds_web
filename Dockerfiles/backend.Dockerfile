@@ -45,7 +45,7 @@ RUN apk add mariadb-client
 ###################
 ## BUILD FRONTEND
 ###################
-FROM node:16 as nodebuilder
+FROM node:18 as nodebuilder
 COPY ./dds_web/static /build
 WORKDIR /build
 RUN npm install -g npm@latest --quiet
