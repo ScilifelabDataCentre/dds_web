@@ -176,10 +176,23 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Changed support email ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1324))
 - Allow Super Admin login during maintenance ([#1333](https://github.com/ScilifelabDataCentre/dds_web/pull/1333))
 
-## Sprint (2022-12-09 - 2022-12-23)
+## Sprint (2022-12-09 - 2023-01-09) - Longer sprint due to Christmas
 
 - Dependency: Bump `certifi` due to CVE-2022-23491 ([#1337](https://github.com/ScilifelabDataCentre/dds_web/pull/1337))
 - Dependency: Bump `jwcrypto` due to CVE-2022-3102 ([#1339](https://github.com/ScilifelabDataCentre/dds_web/pull/1339))
 - Cronjob: Get number of units and users for reporting ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1335))
 - Add ability to change project information via ProjectInfo endpoint ([#1331](https://github.com/ScilifelabDataCentre/dds_web/pull/1331))
 - Fix the reporting file path ([1345](https://github.com/ScilifelabDataCentre/dds_web/pull/1345))
+
+## Sprint (2023-01-09 - 2023-01-20)
+
+- Refactoring: Move flask commands to own module `commands.py` ([#1351](https://github.com/ScilifelabDataCentre/dds_web/pull/1351))
+- Workflow: Scan with Snyk on PR and schedule ([#1349](https://github.com/ScilifelabDataCentre/dds_web/pull/1349))
+- Flask command (cronjob): Monitor unit usage and warn if above level ([#1350](https://github.com/ScilifelabDataCentre/dds_web/pull/1350))
+
+## Sprint (2023-01-20 - 2023-02-03)
+
+- Workflow: Do not publish to DockerHub anymore ([#1357](https://github.com/ScilifelabDataCentre/dds_web/pull/1357))
+- Refactoring: move cronjobs previously handled by APScheduler to flask commands ([#1355](https://github.com/ScilifelabDataCentre/dds_web/pull/1355))
+- Bug: Fix type issue in 0c9c237cced5 (latest) migration ([#1360](https://github.com/ScilifelabDataCentre/dds_web/pull/1360))
+- Database: New `Reporting` table for saving unit / user stats every month ([#1363](https://github.com/ScilifelabDataCentre/dds_web/pull/1363))
