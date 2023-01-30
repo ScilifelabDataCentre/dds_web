@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:18
 RUN mkdir /build
 WORKDIR /build
 RUN npm install -g npm@latest --quiet
