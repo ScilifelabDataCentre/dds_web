@@ -24,7 +24,7 @@ on:
 jobs:
   push_to_registry:
     if: github.repository == 'ScilifelabDataCentre/dds_web'
-    name: Push Docker image to Docker Hub
+    name: Push image
     runs-on: ubuntu-latest
     permissions:
       contents: read
