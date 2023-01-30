@@ -1,5 +1,18 @@
----
-name: Publish Docker Image and run Trivy Security Scan
+# GHCR:
+# GitHub Container Repository
+# Images from ghcr are used when deploying prod and dev.
+#
+# Trivy
+# Trivy is a comprehensive and versatile security scanner. Trivy has scanners that look for
+# security issues, and targets where it can find those issues.
+#
+# This action publishes a docker image and then runs the trivy security scan on that image.
+# Potential security issues will be uploaded to the security tab in the repository.
+#
+# https://github.com/aquasecurity/trivy
+# ---------------------------------------
+# Publish Docker Image to GHCR and run Trivy Security Scan
+name: GHCR and Trivy Scan
 on:
   pull_request:
   push:
@@ -11,7 +24,7 @@ on:
 jobs:
   push_to_registry:
     if: github.repository == 'ScilifelabDataCentre/dds_web'
-    name: Push Docker image to Docker Hub
+    name: Push image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,11 +36,6 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Log in to Github Container Repository
         uses: docker/login-action@v2
         with:
@@ -39,7 +47,6 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            scilifelabdatacentre/dds-backend
             ghcr.io/scilifelabdatacentre/dds-backend
       - name: Ensure lowercase name
         run: echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
