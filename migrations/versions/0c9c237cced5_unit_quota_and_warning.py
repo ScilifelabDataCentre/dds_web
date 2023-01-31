@@ -24,9 +24,13 @@ def upgrade():
 
     # Update existing columns
     # 1. Load table - need to load columns in order to use
-    unit_table = sa.sql.table("units", sa.sql.column("quota", mysql.BIGINT))
+    unit_table = sa.sql.table(
+        "units", sa.sql.column("quota", mysql.BIGINT), sa.sql.column("warning_level", mysql.FLOAT)
+    )
     # 2. Update column value - set value to 100 TB
     op.execute(unit_table.update().values(quota=100 * (10**12)))
+    # 3. Update column value - set value to 0.80
+    op.execute(unit_table.update().values(warning_level=0.8))
 
     # ### end Alembic commands ###
 
