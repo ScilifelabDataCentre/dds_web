@@ -6,7 +6,10 @@
 name: Trivy - branch scan
 on:
   pull_request:
-  push: [dev, master]
+  push:
+    branches:
+      - master
+      - dev
 jobs:
   scan:
     permissions:
