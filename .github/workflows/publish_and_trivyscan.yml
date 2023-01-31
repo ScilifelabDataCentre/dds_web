@@ -15,6 +15,7 @@
 name: GHCR and Trivy Scan
 on:
   workflow_dispatch:
+    branches: [dev]
   pull_request:
   push:
     branches:
