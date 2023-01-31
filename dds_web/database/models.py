@@ -197,6 +197,8 @@ class Unit(db.Model):
     days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
     days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
+    quota = db.Column(db.BigInteger, unique=False, nullable=False)
+    warning_level = db.Column(db.Float, unique=False, nullable=False, default=0.8)
 
     # Relationships
     users = db.relationship("UnitUser", back_populates="unit")
@@ -1049,3 +1051,20 @@ class Maintenance(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     active = db.Column(db.Boolean, nullable=False, default=True)
+
+
+class Reporting(db.Model):
+    """Keep track of number of users and units."""
+
+    # Table setup
+    __tablename__ = "reporting"
+    __table_args__ = {"extend_existing": True}
+
+    # Columns
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    date = db.Column(db.DateTime(), unique=True, nullable=False, default=datetime.date.today)
+    unit_count = db.Column(db.Integer, unique=False, nullable=False)
+    researchuser_count = db.Column(db.Integer, unique=False, nullable=False)
+    unituser_count = db.Column(db.Integer, unique=False, nullable=False)
+    superadmin_count = db.Column(db.Integer, unique=False, nullable=False)
+    total_user_count = db.Column(db.Integer, unique=False, nullable=False)
