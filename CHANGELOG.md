@@ -196,3 +196,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Refactoring: move cronjobs previously handled by APScheduler to flask commands ([#1355](https://github.com/ScilifelabDataCentre/dds_web/pull/1355))
 - Bug: Fix type issue in 0c9c237cced5 (latest) migration ([#1360](https://github.com/ScilifelabDataCentre/dds_web/pull/1360))
 - Database: New `Reporting` table for saving unit / user stats every month ([#1363](https://github.com/ScilifelabDataCentre/dds_web/pull/1363))
+- Version bump: 2.2.6 ([#1375](https://github.com/ScilifelabDataCentre/dds_web/pull/1375))
