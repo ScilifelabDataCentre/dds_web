@@ -215,7 +215,6 @@ class ProjectContentSchema(ProjectRequiredSchema):
     get_all = marshmallow.fields.Boolean(required=False, default=False)
 
     def find_contents(self, project, contents):
-
         # All contents
         all_contents_query = models.File.query.filter(
             models.File.project_id == sqlalchemy.func.binary(project.id)

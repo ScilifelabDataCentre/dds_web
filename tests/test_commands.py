@@ -250,6 +250,7 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
 
 # monitor_usage
 
+
 # usage = 0 --> check log
 def test_monitor_usage_no_usage(client, cli_runner, capfd):
     """If a unit has no uploaded data, there's no need to do the calculations or send email warning."""

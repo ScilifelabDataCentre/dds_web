@@ -44,6 +44,7 @@ from dds_web.version import __version__
 
 # General ################################################################################ General #
 
+
 # Cannot have type hint for return due to models.Project giving circular import
 def collect_project(project_id: str):
     """Get project object from database."""

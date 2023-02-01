@@ -385,7 +385,6 @@ def set_available_to_expired():
                 )
                 .with_for_update()
             ):
-
                 if (
                     project.current_status == "Available"
                     and project.current_deadline <= current_time()
@@ -473,7 +472,6 @@ def set_expired_to_archived():
                 )
                 .with_for_update()
             ):
-
                 if (
                     project.current_status == "Expired"
                     and project.current_deadline <= current_time()
