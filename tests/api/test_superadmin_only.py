@@ -33,6 +33,7 @@ users: typing.Dict = {
 # TESTS #################################################################################### TESTS #
 ####################################################################################################
 
+
 # Tools ############################################################################################
 def get_token(username: str, client: flask.testing.FlaskClient) -> typing.Dict:
     return tests.UserAuth(tests.USER_CREDENTIALS[username]).token(client)

@@ -303,7 +303,6 @@ def confirm_2fa():
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
 
     if form.validate_on_submit():
-
         if user.totp_enabled:
             twofactor_value = form.totp.data
             twofactor_verify = user.verify_TOTP
@@ -637,7 +636,6 @@ def confirm_self_deletion(token):
     s = itsdangerous.URLSafeTimedSerializer(flask.current_app.config.get("SECRET_KEY"))
 
     try:
-
         # Get email from token, overwrite the one from login if applicable
         email = s.loads(token, salt="email-delete", max_age=604800)
 
@@ -655,7 +653,6 @@ def confirm_self_deletion(token):
         ).first()
 
     except itsdangerous.exc.SignatureExpired as exc:
-
         email = db_tools.remove_user_self_deletion_request(flask_login.current_user)
         raise ddserr.UserDeletionError(
             message=f"Deletion request for {email} has expired. Please login to the DDS and request deletion anew."

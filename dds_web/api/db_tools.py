@@ -23,7 +23,6 @@ from dds_web.errors import (
 
 
 def remove_user_self_deletion_request(user):
-
     try:
         request_row = models.DeletionRequest.query.filter(
             models.DeletionRequest.requester_id == user.username
