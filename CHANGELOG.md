@@ -199,3 +199,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Version bump: 2.2.6 ([#1375](https://github.com/ScilifelabDataCentre/dds_web/pull/1375))
 - Workflow: Add option to publish dev image manually ([#1376](https://github.com/ScilifelabDataCentre/dds_web/pull/1376))
 - Workflow: Scan branch with trivy ([#1377](https://github.com/ScilifelabDataCentre/dds_web/pull/1377))
+- Bug: Add value to `Unit.warning_level` for existing units ([#1378](https://github.com/ScilifelabDataCentre/dds_web/pull/1379))

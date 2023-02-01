@@ -3,6 +3,7 @@ import http
 from dds_web.database import models
 from dds_web import db
 
+
 # verify_token
 def test_verify_token_user_not_exists_after_deletion(client):
     """Log in, delete, log out. Should give exception."""
