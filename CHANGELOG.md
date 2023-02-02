@@ -197,5 +197,6 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Bug: Fix type issue in 0c9c237cced5 (latest) migration ([#1360](https://github.com/ScilifelabDataCentre/dds_web/pull/1360))
 - Database: New `Reporting` table for saving unit / user stats every month ([#1363](https://github.com/ScilifelabDataCentre/dds_web/pull/1363))
 - Version bump: 2.2.6 ([#1375](https://github.com/ScilifelabDataCentre/dds_web/pull/1375))
-- Workflox: Add option to publish dev image manually ([#1376](https://github.com/ScilifelabDataCentre/dds_web/pull/1376))
+- Workflow: Add option to publish dev image manually ([#1376](https://github.com/ScilifelabDataCentre/dds_web/pull/1376))
 - Bug: Add value to `Unit.warning_level` for existing units ([#1378](https://github.com/ScilifelabDataCentre/dds_web/pull/1379))
+- Workflow: Add option to run trivy on dev and master branches manually ([#1380](https://github.com/ScilifelabDataCentre/dds_web/pull/1380))
