@@ -7,6 +7,6 @@ coverage:
     project:
       default:
         threshold: 5%
-    patch: off
+    patch: false
 ignore:
   - "dds_web/development/*"
