@@ -65,7 +65,6 @@ def test_del_self_nouser(client):
 def test_del_self(client):
     """Request self deletion."""
     with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-
         response = client.delete(
             tests.DDSEndpoint.USER_DELETE_SELF,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_researcher"]).token(client),

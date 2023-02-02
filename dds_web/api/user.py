@@ -44,6 +44,7 @@ from dds_web.security.auth import get_user_roles_common
 # initiate bound logger
 action_logger = structlog.getLogger("actions")
 
+
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
@@ -962,7 +963,6 @@ class SecondFactor(flask_restful.Resource):
     @auth.login_required
     @handle_validation_errors
     def get(self):
-
         token_schemas.TokenSchema().load(flask.request.json)
 
         token_claims = dds_web.security.auth.obtain_current_encrypted_token_claims()
@@ -1038,7 +1038,6 @@ class RequestHOTPActivation(flask_restful.Resource):
     # Using Basic auth since TOTP might have been lost, will still need access to email
     @basic_auth.login_required
     def post(self):
-
         user = auth.current_user()
         json_info = flask.request.json
 
@@ -1136,7 +1135,6 @@ class ShowUsage(flask_restful.Resource):
         # Project (bucket) specific info
         usage = {}
         for p in unit_info.projects:
-
             # Define fields in usage dict
             usage[p.public_id] = {"gbhours": 0.0, "cost": 0.0}
 

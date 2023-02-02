@@ -39,10 +39,9 @@ action_logger = structlog.getLogger("actions")
 def handle_validation_errors(func):
     @functools.wraps(func)
     def handle_error(*args, **kwargs):
-
         try:
             result = func(*args, **kwargs)
-        except (marshmallow.exceptions.ValidationError) as valerr:
+        except marshmallow.exceptions.ValidationError as valerr:
             if "_schema" in valerr.messages:
                 return valerr.messages["_schema"][0], 400
             else:
@@ -56,7 +55,6 @@ def handle_validation_errors(func):
 def json_required(func):
     @functools.wraps(func)
     def verify_json(*args, **kwargs):
-
         if not flask.request.json:
             raise MissingJsonError(message="Required data missing from request!")
 
@@ -68,7 +66,6 @@ def json_required(func):
 def args_required(func):
     @functools.wraps(func)
     def verify_args(*args, **kwargs):
-
         if not flask.request.args:
             raise DDSArgumentError(message="Required information missing from request!")
 
@@ -80,7 +77,6 @@ def args_required(func):
 def dbsession(func):
     @functools.wraps(func)
     def make_commit(*args, **kwargs):
-
         # Run function, catch errors
         try:
             result = func(*args, **kwargs)
@@ -106,7 +102,6 @@ def dbsession(func):
 def handle_db_error(func):
     @functools.wraps(func)
     def perform_get(*args, **kwargs):
-
         # Run function, catch errors
         try:
             result = func(*args, **kwargs)
@@ -134,7 +129,6 @@ def connect_cloud(func):
 
     @functools.wraps(func)
     def init_resource(self, *args, **kwargs):
-
         try:
             _, self.keys, self.url, self.bucketname = self.get_s3_info()
             # Connect to service
@@ -190,7 +184,6 @@ def logging_bind_request(func):
             project=flask.request.args.get("project") if flask.request.args else None,
             user=get_username_or_request_ip(),
         ):
-
             try:
                 value = func(*args, **kwargs)
 

@@ -46,6 +46,7 @@ from dds_web.security.project_user_keys import obtain_project_private_key, share
 from dds_web.security.auth import get_user_roles_common
 from dds_web.api.files import check_eligibility_for_deletion
 
+
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
@@ -546,7 +547,6 @@ class UserProjects(flask_restful.Resource):
 
     @staticmethod
     def project_usage(project):
-
         # Calculate approximate cost per gbhour: kr per gb per month / (days * hours)
         cost_gbhour = 0.09 / (30 * 24)
         bhours = 0.0

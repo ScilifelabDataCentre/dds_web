@@ -784,7 +784,6 @@ def test_new_file_publickey_wrong_length(client):
 
 
 def test_new_file_salt_wrong_length(client):
-
     project_1 = project_row(project_id="file_testing_project")
     assert project_1
 
@@ -801,7 +800,6 @@ def test_new_file_salt_wrong_length(client):
 
 
 def test_new_file_checksum_wrong_length(client):
-
     project_1 = project_row(project_id="file_testing_project")
     assert project_1
 

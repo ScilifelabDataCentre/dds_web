@@ -10,7 +10,6 @@ import flask
 
 
 class LoggedHTTPExceptionTest(errors.LoggedHTTPException):
-
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 

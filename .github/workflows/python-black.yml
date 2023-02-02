@@ -3,20 +3,13 @@
 # https://github.com/psf/black
 # This does not format the code, this only detects and informs on issues.
 # To format with black, run `black .` locally in the repository.
-name: Lint Python
-on:
-  push:
-    paths:
-      - "**.py"
-  pull_request:
-    paths:
-      - "**.py"
+name: Black - Lint Python
+
+on: [push, pull_request]
 
 jobs:
-  PythonLint:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Check code lints with Black
-        uses: psf/black@stable
+      - uses: psf/black@stable

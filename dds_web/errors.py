@@ -159,7 +159,6 @@ class DatabaseError(LoggedHTTPException):
         pass_message=False,
         project=None,
     ):
-
         general_logger.error(message)
 
         if project:
@@ -178,7 +177,6 @@ class EmptyProjectException(LoggedHTTPException):
     code = http.HTTPStatus.BAD_REQUEST
 
     def __init__(self, project, username=None, message="The project is empty."):
-
         if not username:
             username = auth.current_user()
         structlog.threadlocal.bind_threadlocal(user=username)
@@ -195,7 +193,6 @@ class DeletionError(LoggedHTTPException):
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
     def __init__(self, project, message, alt_message=None, pass_message=False):
-
         if project:
             structlog.threadlocal.bind_threadlocal(project=project)
 
@@ -209,7 +206,6 @@ class NoSuchProjectError(LoggedHTTPException):
     code = http.HTTPStatus.BAD_REQUEST  # 400
 
     def __init__(self, project, message="The specified project does not exist."):
-
         if project:
             structlog.threadlocal.bind_threadlocal(project=project)
 
@@ -271,7 +267,6 @@ class JwtTokenGenerationError(LoggedHTTPException):
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
     def __init__(self, message="Error during JWT Token generation.", pass_message=False):
-
         general_logger.warning(message)
 
         super().__init__(
@@ -366,7 +361,6 @@ class UserDeletionError(LoggedHTTPException):
     code = http.HTTPStatus.BAD_REQUEST
 
     def __init__(self, message="User deletion failed.", alt_message=None):
-
         general_logger.warning(message)
         super().__init__(alt_message or message)
 
@@ -394,28 +388,23 @@ class NoSuchFileError(LoggedHTTPException):
 
 
 class TooManyRequestsError(LoggedHTTPException):
-
     code = http.HTTPStatus.TOO_MANY_REQUESTS
     description = "Too many authentication requests in one hour"
 
     def __init__(self):
-
         super().__init__(self.description)
         general_logger.warning(self.description)
 
 
 class RoleException(LoggedHTTPException):
-
     code = http.HTTPStatus.FORBIDDEN
 
     def __init__(self, message="Invalid role."):
-
         super().__init__(message)
         general_logger.warning(message)
 
 
 class VersionMismatchError(LoggedHTTPException):
-
     code = http.HTTPStatus.FORBIDDEN
 
     def __init__(
@@ -426,7 +415,6 @@ class VersionMismatchError(LoggedHTTPException):
 
 
 class MaintenanceOngoingException(LoggedHTTPException):
-
     code = http.HTTPStatus.SERVICE_UNAVAILABLE
 
     def __init__(self, message="Maintenance of DDS is ongoing."):

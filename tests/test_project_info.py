@@ -25,6 +25,7 @@ proj_query_restricted = {"project": "restricted_project_id"}
 
 # TESTS #################################################################################### TESTS #
 
+
 # Info listing
 def test_list_proj_info_no_token(client):
     """Token required to list project information"""
