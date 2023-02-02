@@ -20,6 +20,4 @@ jobs:
           config_data: |
             extends: default
             rules:
-              line-length:
-                max: 100
-                level: warning
+              line-length: disable
