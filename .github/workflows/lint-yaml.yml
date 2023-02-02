@@ -9,10 +9,12 @@
 # -----------------------------------------------------------------
 name: Yamllint - Lint Yaml
 on: [push]
-rules:
-  line-length:
-    max: 100
-    level: warning
+config_data:
+  extends: default
+  rules:
+    line-length:
+      max: 100
+      level: warning
 jobs:
   lint:
     runs-on: ubuntu-latest
