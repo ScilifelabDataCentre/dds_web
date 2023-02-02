@@ -11,10 +11,10 @@ on:
       - dev
   schedule:
     # - cron: "*/5 * * * *"
-    cron: "0 7,13 * * *"
-    branches:
-      - master
-      - dev
+    - cron: "0 7,13 * * *"
+      branches:
+        - master
+        - dev
 
 jobs:
   scan:
