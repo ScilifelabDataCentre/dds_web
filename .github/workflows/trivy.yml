@@ -5,9 +5,17 @@
 # ---------------------------------
 name: trivy
 on:
+  workflow_dispatch:
+    branches:
+      - master
+      - dev
   schedule:
     # - cron: "*/5 * * * *"
-    - cron: "0 7,13 * * *"
+    cron: "0 7,13 * * *"
+    branches:
+      - master
+      - dev
+
 jobs:
   scan:
     permissions:
