@@ -1,8 +1,8 @@
-# Prettier
+# Prettier: Format code.
 # Prettier is a code formatter. We mostly use it for the markdown files.
 # https://prettier.io/
 ---
-name: Lint with Prettier
+name: Prettier
 on: [push, pull_request]
 
 jobs:

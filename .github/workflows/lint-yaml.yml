@@ -1,4 +1,4 @@
-# Yamtllint - Lint Yaml files.
+# Yamtllint: Lint Yaml files.
 # A linter for YAML files. Checks for:
 # - syntax validity
 # - weirdnesses like key repetition and cosmetic problems such as:
@@ -7,7 +7,7 @@
 #   - indentation
 # etc.
 ---
-name: Yamllint - Lint Yaml
+name: Yamllint
 on: [push]
 jobs:
   lint:
