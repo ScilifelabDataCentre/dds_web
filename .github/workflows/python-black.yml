@@ -1,10 +1,10 @@
-# Lint Python - Black
+# Black: Python linter
 # This action lints python using black - a python code formatter.
 # https://github.com/psf/black
 # This does not format the code, this only detects and informs on issues.
 # To format with black, run `black .` locally in the repository.
 ---
-name: Black - Lint Python
+name: Black
 
 on: [push, pull_request]
 
