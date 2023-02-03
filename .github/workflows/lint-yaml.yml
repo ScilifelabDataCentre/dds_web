@@ -17,6 +17,8 @@ jobs:
       - name: yaml-lint
         uses: ibiqlik/action-yamllint@v3
         with:
-          rules:
-            line-length:
-              max: 120
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                max: 120
