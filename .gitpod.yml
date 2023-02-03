@@ -43,8 +43,8 @@ vscode:
     - ms-azuretools.vscode-docker
     - ms-python.python
     - esbenp.prettier-vscode # Linting and style checking
+    # Display TODO and FIXME in a tree view in the activity bar
     - Gruntfuggly.todo-tree
-    # ^ Display TODO and FIXME in a tree view in the activity bar
 
 github:
   prebuilds:
