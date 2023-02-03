@@ -17,7 +17,8 @@ services:
     # Test to see if the database is accessible.
     # Backend waits for this with 'condition: service_healthy'
     healthcheck:
-      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      test: |
+        mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
       interval: 10s
       timeout: 5s
       retries: 5
