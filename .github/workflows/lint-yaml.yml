@@ -6,7 +6,7 @@
 #   - trailing spaces
 #   - indentation
 # etc.
-# -----------------------------------------------------------------
+---
 name: Yamllint - Lint Yaml
 on: [push]
 jobs:
