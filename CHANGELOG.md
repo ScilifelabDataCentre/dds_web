@@ -200,3 +200,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Workflow: Add option to publish dev image manually ([#1376](https://github.com/ScilifelabDataCentre/dds_web/pull/1376))
 - Bug: Add value to `Unit.warning_level` for existing units ([#1378](https://github.com/ScilifelabDataCentre/dds_web/pull/1379))
 - Workflow: Add option to run trivy on dev and master branches manually ([#1380](https://github.com/ScilifelabDataCentre/dds_web/pull/1380))
+
+## Sprint (23-02-03 - 2023-02-17)
+
+- Workflow: Scan with yamllint ([#1385](https://github.com/ScilifelabDataCentre/dds_web/pull/1385))
