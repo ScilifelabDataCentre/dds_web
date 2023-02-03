@@ -21,21 +21,21 @@ tasks:
       docker exec -it dds_cli sh
 
 ports:
-  - port: 5000  # backend
+  - port: 5000 # backend
     onOpen: open-preview
     visibility: public
-  - port: 1080  # mailcatcher
+  - port: 1080 # mailcatcher
     # Can't have more than one preview at once currently :(
     # open-browser is blocked by Chrome pop-up blocker
     onOpen: ignore
     visibility: public
-  - port: 9000  # minio
+  - port: 9000 # minio
     onOpen: ignore
     visibility: public
-  - port: 9001  # minio
+  - port: 9001 # minio
     onOpen: ignore
     visibility: public
-  - port: 3306  # db
+  - port: 3306 # db
     onOpen: ignore
     visibility: public
 
@@ -43,8 +43,8 @@ vscode:
   extensions:
     - ms-azuretools.vscode-docker
     - ms-python.python
-    - esbenp.prettier-vscode  # Linting and style checking
-    - Gruntfuggly.todo-tree  
+    - esbenp.prettier-vscode # Linting and style checking
+    - Gruntfuggly.todo-tree
     # ^ Display TODO and FIXME in a tree view in the activity bar
 
 github:
