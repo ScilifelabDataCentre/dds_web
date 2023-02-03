@@ -59,7 +59,7 @@ github:
     pullRequestsFromForks: true
     # add a check to pull requests (defaults to true)
     addCheck: true
-    # add a "Review in Gitpod" button as a comment to pull requests (defaults to false)
+    # add a "Review in Gitpod" button as a comment to PR (default: false)
     addComment: false
-    # add a "Review in Gitpod" button to the pull request's description (defaults to false)
+    # add a "Review in Gitpod" button to the PR's description (default: false)
     addBadge: true
