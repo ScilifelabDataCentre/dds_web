@@ -204,3 +204,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (23-02-03 - 2023-02-17)
 
 - Workflow: Scan with yamllint ([#1385](https://github.com/ScilifelabDataCentre/dds_web/pull/1385))
+- Improve logging of delete-invites flask command ([#1386](https://github.com/ScilifelabDataCentre/dds_web/pull/1386))
