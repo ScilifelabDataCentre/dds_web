@@ -559,7 +559,7 @@ def delete_invites():
                         )
                     else:
                         flask.current_app.logger.debug(
-                            f"Invite deleted: email: {invite.email}, created at {invite.created_at}."
+                            f"Invite deleted: {invite.email} (created at {invite.created_at})."
                         )
                 except (OperationalError, SQLAlchemyError) as err:
                     errors[invite] = str(err)
