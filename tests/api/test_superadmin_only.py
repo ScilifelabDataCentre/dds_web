@@ -646,7 +646,7 @@ def test_set_maintenance_no_json(client: flask.testing.FlaskClient) -> None:
     )
     assert isinstance(response, werkzeug.test.TestResponse)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    
+
     assert "Required data missing from request" in response.json.get("message")
 
 

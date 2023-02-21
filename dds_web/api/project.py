@@ -467,7 +467,11 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        usage_arg = flask.request.get_json(silent=True).get("usage") if flask.request.get_json(silent=True) else False
+        usage_arg = (
+            flask.request.get_json(silent=True).get("usage")
+            if flask.request.get_json(silent=True)
+            else False
+        )
         usage = bool(usage_arg) and current_user.role in [
             "Super Admin",
             "Unit Admin",
@@ -475,7 +479,11 @@ class UserProjects(flask_restful.Resource):
         ]
 
         # Get info for projects
-        get_all = flask.request.get_json(silent=True).get("show_all", False) if flask.request.get_json(silent=True) else False
+        get_all = (
+            flask.request.get_json(silent=True).get("show_all", False)
+            if flask.request.get_json(silent=True)
+            else False
+        )
         all_filters = (
             [] if get_all else [models.Project.is_active == True]
         )  # Default is to only get active projects
