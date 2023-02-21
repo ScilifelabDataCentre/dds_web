@@ -56,7 +56,7 @@ class AddUser(flask_restful.Resource):
     def post(self):
         """Associate existing users or unanswered invites with projects or create invites"""
         args = flask.request.args
-        json_info = flask.request.json
+        json_info = flask.request.get_json(silent=True)
 
         # Verify valid role (should also catch None)
         role = json_info.get("role")
@@ -631,7 +631,7 @@ class UserActivation(flask_restful.Resource):
     @handle_validation_errors
     def post(self):
         # Verify that user specified
-        json_input = flask.request.json
+        json_input = flask.request.get_json(silent=True)
 
         if "email" not in json_input:
             raise ddserr.DDSArgumentError(message="User email missing.")
@@ -745,7 +745,7 @@ class DeleteUser(flask_restful.Resource):
         """Delete user or invite in the DDS."""
         current_user = auth.current_user()
 
-        json_info = flask.request.json
+        json_info = flask.request.get_json(silent=True)
         if json_info:
             is_invite = json_info.pop("is_invite", False)
             if is_invite:
@@ -870,7 +870,7 @@ class RemoveUserAssociation(flask_restful.Resource):
     def post(self):
         """Remove a user from a project"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-        json_input = flask.request.json
+        json_input = flask.request.get_json(silent=True)
 
         if not (user_email := json_input.get("email")):
             raise ddserr.DDSArgumentError(message="User email missing.")
@@ -961,9 +961,10 @@ class SecondFactor(flask_restful.Resource):
     """Take in and verify an authentication one-time code entered by an authenticated user with basic credentials"""
 
     @auth.login_required
+    @json_required
     @handle_validation_errors
     def get(self):
-        token_schemas.TokenSchema().load(flask.request.json)
+        token_schemas.TokenSchema().load(flask.request.get_json(silent=True))
 
         token_claims = dds_web.security.auth.obtain_current_encrypted_token_claims()
 
@@ -1039,7 +1040,7 @@ class RequestHOTPActivation(flask_restful.Resource):
     @basic_auth.login_required
     def post(self):
         user = auth.current_user()
-        json_info = flask.request.json
+        json_info = flask.request.get_json(silent=True)
 
         if not user.totp_enabled:
             return {
@@ -1215,7 +1216,7 @@ class Users(flask_restful.Resource):
 
         # Super Admins can list users in units or all users,
         if auth.current_user().role == "Super Admin":
-            json_input = flask.request.json
+            json_input = flask.request.get_json(silent=True)
 
             # The unit public ID must be specified if there is any json input
             if json_input and json_input.get("unit"):

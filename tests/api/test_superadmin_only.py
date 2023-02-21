@@ -641,10 +641,12 @@ def test_set_maintenance_no_json(client: flask.testing.FlaskClient) -> None:
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
 
     # Attempt request
-    response: werkzeug.test.WrapperTestResponse = client.put(
-        tests.DDSEndpoint.MAINTENANCE, headers=token
+    response: werkzeug.test.TestResponse = client.put(
+        tests.DDSEndpoint.MAINTENANCE, headers=token, json=None
     )
+    assert isinstance(response, werkzeug.test.TestResponse)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    
     assert "Required data missing from request" in response.json.get("message")
 
 

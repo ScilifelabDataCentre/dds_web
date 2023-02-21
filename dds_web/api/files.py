@@ -88,7 +88,7 @@ class NewFile(flask_restful.Resource):
 
         # Create new files
         new_file = file_schemas.NewFileSchema().load(
-            {**flask.request.json, "project": project.public_id}
+            {**flask.request.get_json(silent=True), "project": project.public_id}
         )
 
         try:
@@ -119,7 +119,7 @@ class NewFile(flask_restful.Resource):
         # Verify that projet has correct status for upload
         check_eligibility_for_upload(status=project.current_status)
 
-        file_info = flask.request.json
+        file_info = flask.request.get_json(silent=True)
         if not all(x in file_info for x in ["name", "name_in_bucket", "subpath", "size"]):
             raise DDSArgumentError("Information is missing, cannot add file to database.")
 
@@ -217,7 +217,7 @@ class MatchFiles(flask_restful.Resource):
         # Get files specified
         try:
             matching_files = (
-                models.File.query.filter(models.File.name.in_(flask.request.json))
+                models.File.query.filter(models.File.name.in_(flask.request.get_json(silent=True)))
                 .filter(models.File.project_id == sqlalchemy.func.binary(project.id))
                 .all()
             )
@@ -255,7 +255,7 @@ class ListFiles(flask_restful.Resource):
                 message="The project status must be 'Available'. Please wait for unit to release the data."
             )
 
-        extra_args = flask.request.json
+        extra_args = flask.request.get_json(silent=True)
         if extra_args is None:
             extra_args = {}
 
@@ -420,7 +420,7 @@ class RemoveFile(flask_restful.Resource):
 
         # Delete file(s) from db and cloud
         not_removed_dict, not_exist_list = self.delete_multiple(
-            project=project, files=flask.request.json
+            project=project, files=flask.request.get_json(silent=True)
         )
 
         # Return deleted and not deleted files
@@ -537,7 +537,7 @@ class RemoveDir(flask_restful.Resource):
         not_removed, not_exist = ({}, [])
         fail_type = None
         with ApiS3Connector(project=project) as s3conn:
-            for folder_name in flask.request.json:
+            for folder_name in flask.request.get_json(silent=True):
                 # Get all files in the folder
                 files = self.get_files_for_deletion(project=project, folder=folder_name)
                 if not files:
@@ -650,7 +650,7 @@ class FileInfo(flask_restful.Resource):
         # Get project contents
         input_ = {
             "project": project.public_id,
-            **{"requested_items": flask.request.json, "url": True},
+            **{"requested_items": flask.request.get_json(silent=True), "url": True},
         }
         (
             found_files,
@@ -700,7 +700,7 @@ class UpdateFile(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Get file name from request from CLI
-        file_name = flask.request.json.get("name")
+        file_name = flask.request.get_json(silent=True).get("name")
         if not file_name:
             raise DDSArgumentError("No file name specified. Cannot update file.")
 

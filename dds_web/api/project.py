@@ -69,7 +69,7 @@ class ProjectStatus(flask_restful.Resource):
             return_info["current_deadline"] = project.current_deadline
 
         # Get status history
-        json_input = flask.request.json
+        json_input = flask.request.get_json(silent=True)
         if json_input and json_input.get("history"):
             history = []
             for pstatus in project.project_statuses:
@@ -102,7 +102,7 @@ class ProjectStatus(flask_restful.Resource):
 
         try:
             # Check if valid status
-            json_input = flask.request.json
+            json_input = flask.request.get_json(silent=True)
             new_status = json_input.get("new_status")
             if not new_status:
                 raise DDSArgumentError(
@@ -467,7 +467,7 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
-        usage_arg = flask.request.json.get("usage") if flask.request.json else False
+        usage_arg = flask.request.get_json(silent=True).get("usage") if flask.request.get_json(silent=True) else False
         usage = bool(usage_arg) and current_user.role in [
             "Super Admin",
             "Unit Admin",
@@ -475,7 +475,7 @@ class UserProjects(flask_restful.Resource):
         ]
 
         # Get info for projects
-        get_all = flask.request.json.get("show_all", False) if flask.request.json else False
+        get_all = flask.request.get_json(silent=True).get("show_all", False) if flask.request.get_json(silent=True) else False
         all_filters = (
             [] if get_all else [models.Project.is_active == True]
         )  # Default is to only get active projects
@@ -543,6 +543,7 @@ class UserProjects(flask_restful.Resource):
                 "cost": total_cost_db,
             }
 
+        flask.current_app.logger.info(return_info)
         return return_info
 
     @staticmethod
@@ -646,7 +647,7 @@ class CreateProject(flask_restful.Resource):
     @handle_validation_errors
     def post(self):
         """Create a new project."""
-        p_info = flask.request.json
+        p_info = flask.request.get_json(silent=True)
 
         # Verify enough number of Unit Admins or return message
         force_create = p_info.pop("force", False)
@@ -814,7 +815,7 @@ class ProjectAccess(flask_restful.Resource):
     def post(self):
         """Give access to user."""
         # Verify that user specified
-        json_input = flask.request.json
+        json_input = flask.request.get_json(silent=True)
 
         if "email" not in json_input:
             raise DDSArgumentError(message="User email missing.")
@@ -924,7 +925,7 @@ class ProjectBusy(flask_restful.Resource):
         dds_web.utils.verify_project_access(project=project)
 
         # Get busy or not busy
-        set_to_busy = flask.request.json.get("busy")
+        set_to_busy = flask.request.get_json(silent=True).get("busy")
         if set_to_busy is None:
             raise DDSArgumentError(message="Missing information about setting busy or not busy.")
 
@@ -991,7 +992,7 @@ class ProjectInfo(flask_restful.Resource):
         dds_web.utils.verify_project_access(project=project)
 
         # get the now info items
-        json_input = flask.request.json
+        json_input = flask.request.get_json(silent=True)
         new_title = json_input.get("title")
         new_description = json_input.get("description")
         new_pi = json_input.get("pi")

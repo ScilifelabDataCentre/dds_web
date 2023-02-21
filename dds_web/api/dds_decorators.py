@@ -55,7 +55,7 @@ def handle_validation_errors(func):
 def json_required(func):
     @functools.wraps(func)
     def verify_json(*args, **kwargs):
-        if not flask.request.json:
+        if not flask.request.get_json(silent=True):
             raise MissingJsonError(message="Required data missing from request!")
 
         return func(*args, **kwargs)
