@@ -645,7 +645,6 @@ def test_set_maintenance_no_json(client: flask.testing.FlaskClient) -> None:
         tests.DDSEndpoint.MAINTENANCE, headers=token, json=None
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-
     assert "Required data missing from request" in response.json.get("message")
 
 
