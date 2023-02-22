@@ -700,7 +700,8 @@ class UpdateFile(flask_restful.Resource):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
         # Get file name from request from CLI
-        file_name = flask.request.get_json(silent=True).get("name")
+        request_json = flask.request.get_json(silent=True)
+        file_name = request_json.get("name") if request_json else None
         if not file_name:
             raise DDSArgumentError("No file name specified. Cannot update file.")
 

@@ -467,9 +467,11 @@ class UserProjects(flask_restful.Resource):
         total_cost_db = 0.0
         total_size = 0
 
+        # Get json input from request
+        request_json = flask.request.get_json(silent=True)
         usage_arg = (
-            flask.request.get_json(silent=True).get("usage")
-            if flask.request.get_json(silent=True)
+            request_json.get("usage")
+            if request_json
             else False
         )
         usage = bool(usage_arg) and current_user.role in [
@@ -480,8 +482,8 @@ class UserProjects(flask_restful.Resource):
 
         # Get info for projects
         get_all = (
-            flask.request.get_json(silent=True).get("show_all", False)
-            if flask.request.get_json(silent=True)
+            request_json.get("show_all", False)
+            if request_json
             else False
         )
         all_filters = (
@@ -933,7 +935,8 @@ class ProjectBusy(flask_restful.Resource):
         dds_web.utils.verify_project_access(project=project)
 
         # Get busy or not busy
-        set_to_busy = flask.request.get_json(silent=True).get("busy")
+        request_json = flask.request.get_json(silent=True)
+        set_to_busy = request_json.get("busy") if request_json else None
         if set_to_busy is None:
             raise DDSArgumentError(message="Missing information about setting busy or not busy.")
 
