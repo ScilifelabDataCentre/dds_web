@@ -201,6 +201,10 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Bug: Add value to `Unit.warning_level` for existing units ([#1378](https://github.com/ScilifelabDataCentre/dds_web/pull/1379))
 - Workflow: Add option to run trivy on dev and master branches manually ([#1380](https://github.com/ScilifelabDataCentre/dds_web/pull/1380))
 
-## Sprint (23-02-03 - 2023-02-17)
+## Sprint (2023-02-03 - 2023-02-17)
 
 - Workflow: Scan with yamllint ([#1385](https://github.com/ScilifelabDataCentre/dds_web/pull/1385))
+
+## Sprint (2023-02-17 - 2023-03-03)
+
+- Move Rotating log file maximum size and backup count to config variables ([#1388](https://github.com/ScilifelabDataCentre/dds_web/pull/1388))
