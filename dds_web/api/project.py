@@ -103,7 +103,7 @@ class ProjectStatus(flask_restful.Resource):
         try:
             # Check if valid status
             json_input = flask.request.get_json(silent=True)
-            new_status = json_input.get("new_status")
+            new_status = json_input.get("new_status") if json_input else None
             if not new_status:
                 raise DDSArgumentError(
                     message="No status transition provided. Specify the new status."
