@@ -56,7 +56,7 @@ class AddUser(flask_restful.Resource):
     def post(self):
         """Associate existing users or unanswered invites with projects or create invites"""
         args = flask.request.args
-        json_info = flask.request.get_json(silent=True)
+        json_info = flask.request.get_json(silent=True) # Verified by json_required
 
         # Verify valid role (should also catch None)
         role = json_info.get("role")
@@ -632,7 +632,7 @@ class UserActivation(flask_restful.Resource):
     def post(self):
         # Verify that user specified
         json_input = flask.request.get_json(silent=True)
-
+ 
         if "email" not in json_input:
             raise ddserr.DDSArgumentError(message="User email missing.")
 
@@ -870,7 +870,7 @@ class RemoveUserAssociation(flask_restful.Resource):
     def post(self):
         """Remove a user from a project"""
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-        json_input = flask.request.get_json(silent=True)
+        json_input = flask.request.get_json(silent=True) # Verified by json_required
 
         if not (user_email := json_input.get("email")):
             raise ddserr.DDSArgumentError(message="User email missing.")
@@ -964,7 +964,7 @@ class SecondFactor(flask_restful.Resource):
     @json_required
     @handle_validation_errors
     def get(self):
-        token_schemas.TokenSchema().load(flask.request.get_json(silent=True))
+        token_schemas.TokenSchema().load(flask.request.get_json(silent=True)) # Verified by json_required
 
         token_claims = dds_web.security.auth.obtain_current_encrypted_token_claims()
 

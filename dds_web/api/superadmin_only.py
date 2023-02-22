@@ -79,9 +79,8 @@ class MOTD(flask_restful.Resource):
     @handle_db_error
     def post(self):
         """Add a MOTD."""
-
         curr_date = utils.current_time()
-        json_input = flask.request.get_json(silent=True)
+        json_input = flask.request.get_json(silent=True) # Verified by json_required
         motd = json_input.get("message")
         if not motd:
             raise ddserr.DDSArgumentError(message="No MOTD specified.")
@@ -118,7 +117,7 @@ class MOTD(flask_restful.Resource):
     def put(self):
         """Deactivate MOTDs."""
         # Get motd id
-        json_input = flask.request.get_json(silent=True)
+        json_input = flask.request.get_json(silent=True) # Verified by json_required
         motd_id = json_input.get("motd_id")
         if not motd_id:
             raise ddserr.DDSArgumentError(message="No MOTD for deactivation specified.")
@@ -150,9 +149,9 @@ class SendMOTD(flask_restful.Resource):
     def post(self):
         """Send MOTD as email to users."""
         # Get request info
-        request_json = flask.request.get_json(silent=True)
+        request_json = flask.request.get_json(silent=True) # Verified by json_required
         # Get MOTD ID
-        motd_id: int = request_json.get("motd_id") if request_json else None
+        motd_id: int = request_json.get("motd_id")
         if not motd_id or not isinstance(motd_id, int):  # The id starts at 1 - ok to not accept 0
             raise ddserr.DDSArgumentError(
                 message="Please specify the ID of the MOTD you want to send."
@@ -210,10 +209,10 @@ class FindUser(flask_restful.Resource):
     def get(self):
         """Return users or a confirmation on if one exists."""
         # Get request info
-        request_json = flask.request.get_json(silent=True)
+        request_json = flask.request.get_json(silent=True) # Verified by json_required
 
         # Get username from request
-        user_to_find = request_json.get("username") if request_json else None
+        user_to_find = request_json.get("username")
         if not user_to_find:
             raise ddserr.DDSArgumentError(
                 message="Username required to check existence of account."
@@ -234,10 +233,10 @@ class ResetTwoFactor(flask_restful.Resource):
     def put(self):
         """Change totp to hotp."""
         # Get request json
-        request_json = flask.request.get_json(silent=True)
+        request_json = flask.request.get_json(silent=True) # Verified by json_required
 
         # Check that username is specified
-        username: str = request_json.get("username") if request_json else None
+        username: str = request_json.get("username")
         if not username:
             raise ddserr.DDSArgumentError(message="Username required to reset 2FA to HOTP")
 
@@ -267,7 +266,7 @@ class SetMaintenance(flask_restful.Resource):
     def put(self):
         """Change the Maintenance mode."""
         # Get desired maintenance mode
-        json_input = flask.request.get_json(silent=True)
+        json_input = flask.request.get_json(silent=True) # Verified by json_required
         setting = json_input.get("state")
         if not setting:
             raise ddserr.DDSArgumentError(message="Please, specify an argument: on or off")
