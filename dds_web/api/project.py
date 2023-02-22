@@ -103,7 +103,7 @@ class ProjectStatus(flask_restful.Resource):
         try:
             # Check if valid status
             json_input = flask.request.get_json(silent=True)
-            new_status = json_input.get("new_status") if json_input else None
+            new_status = json_input.get("new_status")  # Already checked by json_required
             if not new_status:
                 raise DDSArgumentError(
                     message="No status transition provided. Specify the new status."
@@ -545,7 +545,6 @@ class UserProjects(flask_restful.Resource):
                 "cost": total_cost_db,
             }
 
-        flask.current_app.logger.info(return_info)
         return return_info
 
     @staticmethod
@@ -928,7 +927,7 @@ class ProjectBusy(flask_restful.Resource):
 
         # Get busy or not busy
         request_json = flask.request.get_json(silent=True)
-        set_to_busy = request_json.get("busy") if request_json else None
+        set_to_busy = request_json.get("busy")  # Already checked by json_required
         if set_to_busy is None:
             raise DDSArgumentError(message="Missing information about setting busy or not busy.")
 

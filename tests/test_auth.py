@@ -18,8 +18,6 @@ def test_verify_token_user_not_exists_after_deletion(client):
     response = client.get(
         tests.DDSEndpoint.LIST_FILES, headers=token, query_string={"project": "public_project_id"}
     )
-    print(response, flush=True)
-    print(response.text, flush=True)
     assert response.status_code == http.HTTPStatus.OK
 
     # Delete user
