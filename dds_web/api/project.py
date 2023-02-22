@@ -469,11 +469,7 @@ class UserProjects(flask_restful.Resource):
 
         # Get json input from request
         request_json = flask.request.get_json(silent=True)
-        usage_arg = (
-            request_json.get("usage")
-            if request_json
-            else False
-        )
+        usage_arg = request_json.get("usage") if request_json else False
         usage = bool(usage_arg) and current_user.role in [
             "Super Admin",
             "Unit Admin",
@@ -481,11 +477,7 @@ class UserProjects(flask_restful.Resource):
         ]
 
         # Get info for projects
-        get_all = (
-            request_json.get("show_all", False)
-            if request_json
-            else False
-        )
+        get_all = request_json.get("show_all", False) if request_json else False
         all_filters = (
             [] if get_all else [models.Project.is_active == True]
         )  # Default is to only get active projects
