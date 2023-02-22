@@ -209,9 +209,8 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 - Move Rotating log file maximum size and backup count to config variables ([#1388](https://github.com/ScilifelabDataCentre/dds_web/pull/1388))
 - Dependencies bumped ([#1387](https://github.com/ScilifelabDataCentre/dds_web/pull/1387))
-    - Werkzeug: 2.0.3 --> 2.2.3
-    - MarkupSafe: 2.0.1 --> 2.1.1
-    - Flask-Login: 0.5.0 --> 0.6.2
-    - Flask: 2.0.2 --> 2.0.3
-    - Cryptography: 36.0.1 --> 39.0.1
-    
+    - Werkzeug: 2.0.3 --> 2.2.3 (CVE-2023-25577)
+    - MarkupSafe: 2.0.1 --> 2.1.1 (prior bumps)
+    - Flask-Login: 0.5.0 --> 0.6.2 (prior bumps)
+    - Flask: 2.0.2 --> 2.0.3 (prior bumps)
+    - Cryptography: 36.0.1 --> 39.0.1 (CVE-2023-0286)
