@@ -85,14 +85,14 @@ def setup_logging(app):
                     "class": "logging.handlers.RotatingFileHandler",
                     "filename": pathlib.Path(app.config.get("LOGS_DIR")) / pathlib.Path("dds.log"),
                     "formatter": "general",
-                    "maxBytes": 0x100000,
-                    "backupCount": 15,
+                    "maxBytes": app.config.get("LOG_MAX_SIZE"),
+                    "backupCount": app.config.get("LOG_BACKUP_COUNT"),
                 },
                 "actions": {
                     "level": logging.INFO,
                     "class": "logging.handlers.RotatingFileHandler",
-                    "maxBytes": 0x100000,
-                    "backupCount": 15,
+                    "maxBytes": app.config.get("LOG_MAX_SIZE"),
+                    "backupCount": app.config.get("LOG_BACKUP_COUNT"),
                     "filename": pathlib.Path(app.config.get("LOGS_DIR"))
                     / pathlib.Path("actions.log"),
                     "formatter": "default",
