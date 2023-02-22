@@ -76,6 +76,5 @@ class Config(object):
     REVERSE_PROXY = False  # Behind a reverse proxy, use X_Forwarded-For to get the ip
 
     # Logging setup
-    LOG_MAX_SIZE = os.environ.get("LOG_MAX_SIZE", 0x100000) 
+    LOG_MAX_SIZE = os.environ.get("LOG_MAX_SIZE", 0x100000)
     LOG_BACKUP_COUNT = os.environ.get("LOG_BACKUP_COUNT", 15)
-    
