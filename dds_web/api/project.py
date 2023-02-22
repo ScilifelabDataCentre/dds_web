@@ -995,7 +995,7 @@ class ProjectInfo(flask_restful.Resource):
         dds_web.utils.verify_project_access(project=project)
 
         # get the now info items
-        json_input = flask.request.get_json(silent=True) # Already checked by json_required
+        json_input = flask.request.get_json(silent=True)  # Already checked by json_required
         new_title = json_input.get("title")
         new_description = json_input.get("description")
         new_pi = json_input.get("pi")
