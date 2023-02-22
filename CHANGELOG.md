@@ -208,3 +208,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 ## Sprint (2023-02-17 - 2023-03-03)
 
 - Move Rotating log file maximum size and backup count to config variables ([#1388](https://github.com/ScilifelabDataCentre/dds_web/pull/1388))
+- Workflow: Scan branch with trivy ([#1377](https://github.com/ScilifelabDataCentre/dds_web/pull/1377))

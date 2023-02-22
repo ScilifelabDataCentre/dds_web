@@ -1,18 +1,15 @@
-# Trivy:
-# Trivy (pronunciation) is a comprehensive and versatile security scanner.
-# Trivy has scanners that look for security issues,
-# and targets where it can find those issues.
+# Trivy: Scan of current branch
+# Trivy is a comprehensive and versatile security scanner.
+# Trivy has scanners that look for security issues, and targets where it can find those issues.
 # https://github.com/aquasecurity/trivy
----
-name: Trivy
+# ---------------------------------
+name: Trivy - branch scan
 on:
-  workflow_dispatch:
+  pull_request:
+  push:
     branches:
       - master
       - dev
-  schedule:
-    # - cron: "*/5 * * * *"
-    - cron: "0 7,13 * * *"
 jobs:
   scan:
     permissions:
@@ -24,13 +21,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Ensure lowercase name
-        run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
-
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.7.1
+        uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:latest"
+          scan-type: "fs"
+          ignore-unfixed: true
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
