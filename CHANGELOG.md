@@ -215,3 +215,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
   - Flask-Login: 0.5.0 --> 0.6.2 (prior bumps)
   - Flask: 2.0.2 --> 2.0.3 (prior bumps)
   - Cryptography: 36.0.1 --> 39.0.1 (CVE-2023-0286)
+- Npm vulnerability fixed: CVE-2022-25881 ([#1390](https://github.com/ScilifelabDataCentre/dds_web/pull/1390))
