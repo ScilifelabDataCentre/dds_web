@@ -6,11 +6,9 @@
 # ---------------------------------
 name: Trivy - ghcr image scan - master
 on:
-  # pull_request:
   workflow_dispatch:
     branches:
       - master
-      - dev
   schedule:
     - cron: "0 7,15 * * *"
 jobs:
