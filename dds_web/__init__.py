@@ -146,6 +146,7 @@ def setup_logging(app):
             # If some value is in bytes, decode it to a unicode str.
             structlog.processors.UnicodeDecoder(),
             # Wrap each log row under the parent key "action": {"action": <json dict rendered below>}
+            # Why: To enable filtering of the action logs
             action_wrapper,
             # Render the final event dict as JSON.
             structlog.processors.JSONRenderer(),
