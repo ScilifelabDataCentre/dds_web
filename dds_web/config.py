@@ -74,3 +74,7 @@ class Config(object):
     SUPERADMIN_EMAIL = os.environ.get("DDS_SUPERADMIN_EMAIL", "superadmin@example.com")
 
     REVERSE_PROXY = False  # Behind a reverse proxy, use X_Forwarded-For to get the ip
+
+    # Logging setup; 0 means no log rotation
+    LOG_MAX_SIZE = os.environ.get("LOG_MAX_SIZE", 0x100000)
+    LOG_BACKUP_COUNT = os.environ.get("LOG_BACKUP_COUNT", 15)
