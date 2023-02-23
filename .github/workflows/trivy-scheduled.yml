@@ -6,7 +6,7 @@
 # ---------------------------------
 name: Trivy - ghcr image scan
 on:
-  pr:
+  pull_request:
   workflow_dispatch:
     branches:
       - master
