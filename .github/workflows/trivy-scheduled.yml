@@ -30,7 +30,7 @@ jobs:
       - name: Run Trivy on latest release image
         uses: aquasecurity/trivy-action@0.7.1
         with:
-          image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:latest"
+          image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:dev"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
@@ -54,4 +54,3 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy-dev
-          
