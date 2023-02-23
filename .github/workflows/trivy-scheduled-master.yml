@@ -9,9 +9,7 @@ on:
   workflow_dispatch:
     branches:
       - master
-      - dev
   schedule:
-    # - cron: "*/5 * * * *"
     - cron: "0 7,13 * * *"
 jobs:
   scan:
