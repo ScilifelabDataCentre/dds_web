@@ -71,6 +71,9 @@ migrate = flask_migrate.Migrate()
 def setup_logging(app):
     """Setup loggers"""
 
+    def action_wrapper(_, _, event_dict):
+        return {"action": event_dict}
+
     dictConfig(
         {
             "version": 1,
@@ -142,6 +145,8 @@ def setup_logging(app):
             structlog.processors.format_exc_info,
             # If some value is in bytes, decode it to a unicode str.
             structlog.processors.UnicodeDecoder(),
+            # Wrap each log row under the parent key "action": {"action": <json dict rendered below>}
+            action_wrapper,
             # Render the final event dict as JSON.
             structlog.processors.JSONRenderer(),
         ],
