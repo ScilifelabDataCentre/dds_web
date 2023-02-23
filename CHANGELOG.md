@@ -219,3 +219,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Logging: Configure action-logging to wrap json with parent key "action" ([https://github.com/ScilifelabDataCentre/dds_web/pull/1393](https://github.com/ScilifelabDataCentre/dds_web/pull/1393))
 - Workflow: Schedule trivy scan for both dev images and latest release ([#1392](https://github.com/ScilifelabDataCentre/dds_web/pull/1392))
 - Improve logging of delete-invites flask command ([#1386](https://github.com/ScilifelabDataCentre/dds_web/pull/1386))
+- Workflow: Schedule trivy scan for dev and latest separately ([#1395](https://github.com/ScilifelabDataCentre/dds_web/pull/1395))

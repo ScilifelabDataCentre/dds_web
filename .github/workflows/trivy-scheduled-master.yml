@@ -4,15 +4,13 @@
 # and targets where it can find those issues.
 # https://github.com/aquasecurity/trivy
 # ---------------------------------
-name: Trivy - ghcr image scan
+name: Trivy - ghcr image scan - master
 on:
-  # pull_request:
   workflow_dispatch:
     branches:
       - master
-      - dev
   schedule:
-    - cron: "0 7,13 * * *"
+    - cron: "0 7,15 * * *"
 jobs:
   scan:
     permissions:
@@ -23,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: master
 
       - name: Ensure lowercase name
         run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
@@ -40,17 +40,3 @@ jobs:
         with:
           sarif_file: "trivy-results-master.sarif"
           category: trivy-master
-
-      - name: Run Trivy on latest dev image
-        uses: aquasecurity/trivy-action@0.7.1
-        with:
-          image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:dev"
-          format: "sarif"
-          output: "trivy-results-dev.sarif"
-          severity: "CRITICAL,HIGH"
-
-      - name: Upload Trivy scan results to dev branch GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: "trivy-results-dev.sarif"
-          category: trivy-dev
