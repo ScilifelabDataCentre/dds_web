@@ -71,7 +71,7 @@ migrate = flask_migrate.Migrate()
 def setup_logging(app):
     """Setup loggers"""
 
-    def action_wrapper(_, _, event_dict):
+    def action_wrapper(_, __, event_dict):
         return {"action": event_dict}
 
     dictConfig(
