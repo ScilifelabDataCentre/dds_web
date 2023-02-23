@@ -4,7 +4,7 @@
 # and targets where it can find those issues.
 # https://github.com/aquasecurity/trivy
 # ---------------------------------
-name: Trivy - ghcr image scan
+name: Trivy - ghcr image scan - master
 on:
   # pull_request:
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v3
         with: 
           ref: master
-          
+
       - name: Ensure lowercase name
         run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
 
