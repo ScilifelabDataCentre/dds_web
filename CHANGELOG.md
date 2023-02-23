@@ -217,4 +217,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
   - Cryptography: 36.0.1 --> 39.0.1 (CVE-2023-0286)
 - Npm vulnerability fixed: CVE-2022-25881 ([#1390](https://github.com/ScilifelabDataCentre/dds_web/pull/1390))
 - Logging: Configure action-logging to wrap json with parent key "action" ([https://github.com/ScilifelabDataCentre/dds_web/pull/1393](https://github.com/ScilifelabDataCentre/dds_web/pull/1393))
-- Workflow: Schedule scan for both dev images and latest release ([#1392](https://github.com/ScilifelabDataCentre/dds_web/pull/1392))
+- Workflow: Schedule trivy scan for both dev images and latest release ([#1392](https://github.com/ScilifelabDataCentre/dds_web/pull/1392))
