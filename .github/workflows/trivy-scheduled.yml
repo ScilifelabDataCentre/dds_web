@@ -39,7 +39,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: "trivy-results.sarif"
-          category: trivy
+          category: trivy-master
 
       - name: Run Trivy on latest dev image
         uses: aquasecurity/trivy-action@0.7.1
@@ -53,4 +53,4 @@ jobs:
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: "trivy-results.sarif"
-          category: trivy
+          category: trivy-dev
