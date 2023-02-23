@@ -17,9 +17,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with: 
+        with:
           ref: fix-trivy-scan
-          
+
       - name: Ensure lowercase name
         run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
 
