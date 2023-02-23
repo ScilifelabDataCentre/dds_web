@@ -7,8 +7,6 @@
 name: Trivy - ghcr image scan
 on:
   pr:
-    branches:
-      - dev
   workflow_dispatch:
     branches:
       - master
