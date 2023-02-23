@@ -28,11 +28,11 @@ jobs:
         with:
           image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:latest"
           format: "sarif"
-          output: "trivy-results-master.sarif"
+          output: "trivy-results-branch.sarif"
           severity: "CRITICAL,HIGH"
 
       - name: Upload Trivy scan results to master branch GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: "trivy-results-master.sarif"
-          category: trivy-master
+          sarif_file: "trivy-results-branch.sarif"
+          category: trivy-branch
