@@ -547,6 +547,7 @@ def delete_invites():
 
     try:
         invites: list = db.session.query(models.Invite).all()
+        any_deleted: bool = False
         for invite in invites:
             invalid_invite = invite.created_at == "0000-00-00 00:00:00"
             if invalid_invite or (invite.created_at + timedelta(weeks=1)) < expiration:
@@ -558,12 +559,17 @@ def delete_invites():
                             "Invite with created_at = 0000-00-00 00:00:00 deleted."
                         )
                     else:
-                        flask.current_app.logger.debug("Invite deleted.")
+                        flask.current_app.logger.debug(
+                            f"Invite deleted: {invite.email} (created at {invite.created_at})."
+                        )
+                    any_deleted = True
                 except (OperationalError, SQLAlchemyError) as err:
                     errors[invite] = str(err)
                     flask.current_app.logger.exception(err)
                     db.session.rollback()
                     continue
+        if not any_deleted:
+            flask.current_app.logger.info("No invites for deletion.")
     except (OperationalError, SQLAlchemyError) as err:
         flask.current_app.logger.exception(err)
         raise

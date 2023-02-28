@@ -71,6 +71,9 @@ migrate = flask_migrate.Migrate()
 def setup_logging(app):
     """Setup loggers"""
 
+    def action_wrapper(_, __, event_dict):
+        return {"action": event_dict}
+
     dictConfig(
         {
             "version": 1,
@@ -85,14 +88,14 @@ def setup_logging(app):
                     "class": "logging.handlers.RotatingFileHandler",
                     "filename": pathlib.Path(app.config.get("LOGS_DIR")) / pathlib.Path("dds.log"),
                     "formatter": "general",
-                    "maxBytes": 0x100000,
-                    "backupCount": 15,
+                    "maxBytes": app.config.get("LOG_MAX_SIZE"),
+                    "backupCount": app.config.get("LOG_BACKUP_COUNT"),
                 },
                 "actions": {
                     "level": logging.INFO,
                     "class": "logging.handlers.RotatingFileHandler",
-                    "maxBytes": 0x100000,
-                    "backupCount": 15,
+                    "maxBytes": app.config.get("LOG_MAX_SIZE"),
+                    "backupCount": app.config.get("LOG_BACKUP_COUNT"),
                     "filename": pathlib.Path(app.config.get("LOGS_DIR"))
                     / pathlib.Path("actions.log"),
                     "formatter": "default",
@@ -142,6 +145,9 @@ def setup_logging(app):
             structlog.processors.format_exc_info,
             # If some value is in bytes, decode it to a unicode str.
             structlog.processors.UnicodeDecoder(),
+            # Wrap each log row under the parent key "action": {"action": <json dict rendered below>}
+            # Why: To enable filtering of the action logs
+            action_wrapper,
             # Render the final event dict as JSON.
             structlog.processors.JSONRenderer(),
         ],

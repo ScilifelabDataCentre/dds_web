@@ -1,17 +1,16 @@
-# Trivy:
+# Trivy: Scan remote image on GHCR on schedule
 # Trivy (pronunciation) is a comprehensive and versatile security scanner.
-# Trivy has scanners that look for security issues, and targets where it can find those issues.
+# Trivy has scanners that look for security issues,
+# and targets where it can find those issues.
 # https://github.com/aquasecurity/trivy
 # ---------------------------------
-name: trivy
+name: Trivy - ghcr image scan - master
 on:
   workflow_dispatch:
     branches:
       - master
-      - dev
   schedule:
-    # - cron: "*/5 * * * *"
-    - cron: "0 7,13 * * *"
+    - cron: "0 7,15 * * *"
 jobs:
   scan:
     permissions:
@@ -22,20 +21,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: master
 
       - name: Ensure lowercase name
         run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy on latest release image
         uses: aquasecurity/trivy-action@0.7.1
         with:
           image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:latest"
           format: "sarif"
-          output: "trivy-results.sarif"
+          output: "trivy-results-master.sarif"
           severity: "CRITICAL,HIGH"
 
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Upload Trivy scan results to master branch GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: "trivy-results.sarif"
-          category: trivy
+          sarif_file: "trivy-results-master.sarif"
+          category: trivy-master

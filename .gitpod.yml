@@ -43,7 +43,8 @@ vscode:
     - ms-azuretools.vscode-docker
     - ms-python.python
     - esbenp.prettier-vscode # Linting and style checking
-    - Gruntfuggly.todo-tree # Display TODO and FIXME in a tree view in the activity bar
+    # Display TODO and FIXME in a tree view in the activity bar
+    - Gruntfuggly.todo-tree
 
 github:
   prebuilds:
@@ -57,7 +58,7 @@ github:
     pullRequestsFromForks: true
     # add a check to pull requests (defaults to true)
     addCheck: true
-    # add a "Review in Gitpod" button as a comment to pull requests (defaults to false)
+    # add a "Review in Gitpod" button as a comment to PR (default: false)
     addComment: false
-    # add a "Review in Gitpod" button to the pull request's description (defaults to false)
+    # add a "Review in Gitpod" button to the PR's description (default: false)
     addBadge: true
