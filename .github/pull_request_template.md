@@ -68,8 +68,7 @@ _Add information on additional changes required for the PR changes to work, both
   - [ ] No blocking PRs
 - PR to `master` branch
   - [ ] Yes: Read [the release instructions](../doc/procedures/new_release.md)
-    - [ ] I have followed steps 1-5.
-    - [ ] I have read and checked the relevant boxes in step 6.
+    - [ ] I have followed steps 1-6.
   - [ ] No
 
 ### If PR consists of **code change(s)**
