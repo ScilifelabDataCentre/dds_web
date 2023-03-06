@@ -171,6 +171,7 @@ def test_register_weak_password(registry_form_data, client):
     user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
     assert user is None
 
+
 def test_register_nonlatin1_username(registry_form_data, client):
     """Username can only contain latin 1 encodable characters.
 
@@ -178,7 +179,7 @@ def test_register_nonlatin1_username(registry_form_data, client):
     """
     form_data = registry_form_data
 
-    form_data["username"] = "user_€" # € is invalid
+    form_data["username"] = "user_€"  # € is invalid
 
     # Request should work
     response = client.post(
