@@ -171,6 +171,35 @@ def test_register_weak_password(registry_form_data, client):
     user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
     assert user is None
 
+def test_register_nonlatin1_username(registry_form_data, client):
+    """Username can only contain latin 1 encodable characters.
+
+    Requests package does not allow non-latin1 encodable characters.
+    """
+    form_data = registry_form_data
+
+    form_data["username"] = "user_€" # € is invalid
+
+    # Request should work
+    response = client.post(
+        tests.DDSEndpoint.USER_NEW,
+        json=form_data,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
+    )
+    assert response.status == "200 OK"
+    assert flask.request.path == tests.DDSEndpoint.USER_NEW
+
+    # Invite should be kept and user should not be created
+    invite = models.Invite.query.filter_by(
+        email="existing_invite_email@mailtrap.io", role="Researcher"
+    ).one_or_none()
+    assert invite is not None
+
+    # No user should be created
+    user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
+    assert user is None
+
 
 def test_register_nonlatin1_password(registry_form_data, client):
     """Password can only contain latin 1 encodable characters.
