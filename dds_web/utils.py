@@ -304,12 +304,7 @@ def verify_enough_unit_admins(unit_id: str, force_create: bool = False):
 
 def valid_chars_in_username(indata):
     """Check if the username contains only valid characters."""
-    try:
-        contains_only_latin1(indata=indata)
-    except marshmallow.ValidationError:
-        return False
-    else:
-        return bool(re.search(r"^[a-zA-Z0-9_\.-]+$", indata))
+    return bool(re.search(r"^[a-zA-Z0-9_\.-]+$", indata))
 
 
 def email_in_db(email):
