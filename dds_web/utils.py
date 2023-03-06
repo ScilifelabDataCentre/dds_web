@@ -120,18 +120,18 @@ def contains_digit_or_specialchar(indata):
             "Required: at least one digit OR a special character (#?!@$%^&*-)."
         )
 
+
 def contains_only_latin1(indata):
     """Verify that the password contains characters that can be encoded to latin-1.
-    
+
     Non latin-1 chars cannot be passed to requests.
     """
-    try: 
+    try:
         indata.encode("latin1")
     except UnicodeEncodeError as err:
-        raise marshmallow.ValidationError(
-            "Contains invalid characters."
-        )
-    
+        raise marshmallow.ValidationError("Contains invalid characters.")
+
+
 def contains_disallowed_characters(indata):
     """Indatas like <f0><9f><98><80> cause issues in Project names etc."""
     disallowed = re.findall(r"[^(\w\s)]+", indata)
