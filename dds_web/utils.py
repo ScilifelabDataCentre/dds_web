@@ -120,7 +120,18 @@ def contains_digit_or_specialchar(indata):
             "Required: at least one digit OR a special character (#?!@$%^&*-)."
         )
 
-
+def contains_only_latin1(indata):
+    """Verify that the password contains characters that can be encoded to latin-1.
+    
+    Non latin-1 chars cannot be passed to requests.
+    """
+    try: 
+        indata.encode("latin1")
+    except UnicodeEncodeError as err:
+        raise marshmallow.ValidationError(
+            "Contains invalid characters."
+        )
+    
 def contains_disallowed_characters(indata):
     """Indatas like <f0><9f><98><80> cause issues in Project names etc."""
     disallowed = re.findall(r"[^(\w\s)]+", indata)
@@ -220,6 +231,7 @@ def password_contains_valid_characters():
             contains_uppercase,
             contains_lowercase,
             contains_digit_or_specialchar,
+            contains_only_latin1,
         ]
         for val in validators:
             try:
@@ -292,7 +304,12 @@ def verify_enough_unit_admins(unit_id: str, force_create: bool = False):
 
 def valid_chars_in_username(indata):
     """Check if the username contains only valid characters."""
-    return bool(re.search(r"^[a-zA-Z0-9_\.-]+$", indata))
+    try:
+        contains_only_latin1(indata=indata)
+    except marshmallow.ValidationError:
+        return False
+    else:
+        return bool(re.search(r"^[a-zA-Z0-9_\.-]+$", indata))
 
 
 def email_in_db(email):
