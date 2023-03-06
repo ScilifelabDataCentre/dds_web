@@ -67,7 +67,9 @@ _Add information on additional changes required for the PR changes to work, both
   - [ ] Merged
   - [ ] No blocking PRs
 - PR to `master` branch
-  - [ ] Yes: Go to the section [PR to master](#pr-to-master)
+  - [ ] Yes: Read [the release instructions](../doc/procedures/new_release.md)
+    - [ ] I have followed steps 1-5.
+    - [ ] I have read and checked the relevant boxes in step 6.
   - [ ] No
 
 ### If PR consists of **code change(s)**
@@ -81,19 +83,6 @@ _Add information on additional changes required for the PR changes to work, both
 - Documentation
   - [ ] Updated
   - [ ] Update not needed
-
-### If PR is to **master**
-
-<!-- Is your PR to the master branch? The following items need to be checked off. -->
-
-- [ ] I have followed steps 1-5 in [the release instructions](../doc/procedures/new_release.md)
-- [ ] I am bumping the major version (e.g. 1.x.x to 2.x.x)
-- [ ] I have made the corresponding changes to the CLI version
-
-**Is this version _backward compatible?_**
-
-- [ ] Yes: The code works together with `dds_cli/master` branch
-- [ ] No: The code **does not** entirely / at all work together with the `dds_cli/master` branch. _Please add detailed and clear information about the broken features_
 
 ## **6. Actions / Scans**
 
