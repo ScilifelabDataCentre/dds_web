@@ -762,12 +762,13 @@ def monitor_usage():
             continue
 
         # Calculate percentage of quota
-        perc_used = round((current_usage / quota) * 100, 3)
+        fraction_used = current_usage / quota
+        perc_used = round(fraction_used * 100, 3)
 
         # Information to log and potentially send
         info_string: str = (
             f"- Quota:{quota} bytes\n"
-            f"- Warning level: {warn_after*quota} bytes ({warn_after}%)\n"
+            f"- Warning level: {warn_after*quota} bytes ({warn_after*100}%)\n"
             f"- Current usage: {current_usage} bytes ({perc_used}%)\n"
         )
         flask.current_app.logger.debug(
@@ -775,7 +776,7 @@ def monitor_usage():
         )
 
         # Email if the unit is using more
-        if perc_used > warn_after:
+        if fraction_used > warn_after:
             # Email settings
             message: str = (
                 "A SciLifeLab Unit is approaching the allocated data quota.\n"
