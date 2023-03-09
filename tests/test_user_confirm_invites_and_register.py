@@ -89,6 +89,7 @@ def test_register_no_form(client):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
+
 @pytest.fixture()
 def registry_form_data(client):
     invite = models.Invite.query.filter_by(
