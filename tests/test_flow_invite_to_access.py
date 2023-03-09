@@ -54,7 +54,7 @@ def perform_invite(client, inviting_user, email, role=None, project=None):
             call_args = mock_token_method.call_args
             invite_token = encrypted_jwt_token(*call_args.args, **call_args.kwargs)
 
-    if response.status != http.HTTPStatus.OK:
+    if response.status_code != http.HTTPStatus.OK:
         if DEBUG:
             print(response.status_code)
         raise ValueError(f"Invitation failed: {response.data}")
