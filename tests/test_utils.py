@@ -188,6 +188,22 @@ def test_contains_digit_or_specialchar_no_char():
     utils.contains_digit_or_specialchar(indata="Thereisnodigitorchar1")
 
 
+# contains_only_latin1
+
+
+def test_contains_only_latin1_invalid():
+    """Non latin 1 encodable characters should raise a validation error with specific message."""
+    with pytest.raises(marshmallow.ValidationError) as err:
+        utils.contains_only_latin1(indata="testing€")
+    assert "Contains invalid characters." in str(err.value)
+
+
+def test_contains_only_latin1_ok():
+    """Only latin 1 encodable characters should be allowed and give no exceptions."""
+    returned = utils.contains_only_latin1(indata="testing")
+    assert returned is None
+
+
 # contains_disallowed_characters
 
 
