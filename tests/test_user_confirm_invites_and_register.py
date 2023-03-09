@@ -1,4 +1,5 @@
 import tests
+import http
 import flask
 import pytest
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -24,7 +25,7 @@ def test_confirm_invite_no_token(client):
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "404 NOT FOUND"
+    assert response.status_code == http.HTTPStatus.NOT_FOUND
 
 
 def test_confirm_invite_invalid_token(client):
@@ -35,7 +36,7 @@ def test_confirm_invite_invalid_token(client):
         headers=tests.DEFAULT_HEADER,
     )
 
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     # index redirects to login
     assert flask.request.path == flask.url_for("pages.home")
 
@@ -56,7 +57,7 @@ def test_confirm_invite_expired_token(client):
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     # index redirects to login
     assert flask.request.path == flask.url_for("pages.home")
 
@@ -75,7 +76,7 @@ def test_confirm_invite_valid_token(client):
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert b"Create account" in response.data
 
 
@@ -86,8 +87,7 @@ def test_register_no_form(client):
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "400 BAD REQUEST"
-
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
 @pytest.fixture()
 def registry_form_data(client):
@@ -106,7 +106,7 @@ def registry_form_data(client):
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert b"Create account" in response.data
 
     form_token = flask.g.csrf_token
@@ -133,7 +133,7 @@ def test_register_no_token_in_session(registry_form_data, client):
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.INDEX
 
     # Invite should be kept and user should not be created
@@ -158,7 +158,7 @@ def test_register_weak_password(registry_form_data, client):
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.USER_NEW
 
     # Invite should be kept and user should not be created
@@ -188,7 +188,7 @@ def test_register_nonlatin1_username(registry_form_data, client):
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.USER_NEW
 
     # Invite should be kept and user should not be created
@@ -218,7 +218,7 @@ def test_register_nonlatin1_password(registry_form_data, client):
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert flask.request.path == tests.DDSEndpoint.USER_NEW
 
     # Invite should be kept and user should not be created
@@ -239,7 +239,7 @@ def test_successful_registration(registry_form_data, client):
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
 
     invite = models.Invite.query.filter_by(
         email="existing_invite_email@mailtrap.io", role="Researcher"
@@ -271,7 +271,7 @@ def test_successful_registration_should_transfer_keys(registry_form_data, client
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
 
     invite = models.Invite.query.filter_by(
         email="existing_invite_email@mailtrap.io", role="Researcher"
@@ -305,7 +305,7 @@ def test_invite_key_verification_fails_with_no_setup(client):
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert b"Create account" in response.data
 
     form_token = flask.g.csrf_token
@@ -326,7 +326,7 @@ def test_invite_key_verification_fails_with_no_setup(client):
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
 
     invite = models.Invite.query.filter_by(
         email="existing_invite_email@mailtrap.io", role="Researcher"
@@ -362,7 +362,7 @@ def test_invite_key_verification_fails_with_wrong_valid_key(client):
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert b"Create account" in response.data
 
     form_token = flask.g.csrf_token
@@ -383,7 +383,7 @@ def test_invite_key_verification_fails_with_wrong_valid_key(client):
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
 
     invite = models.Invite.query.filter_by(
         email="existing_invite_email@mailtrap.io", role="Researcher"
@@ -419,7 +419,7 @@ def test_invite_key_verification_fails_with_wrong_invalid_key(client):
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
     assert b"Create account" in response.data
 
     form_token = flask.g.csrf_token
@@ -440,7 +440,7 @@ def test_invite_key_verification_fails_with_wrong_invalid_key(client):
         follow_redirects=True,
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
 
     invite = models.Invite.query.filter_by(
         email="existing_invite_email@mailtrap.io", role="Researcher"
