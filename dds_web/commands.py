@@ -762,8 +762,8 @@ def monitor_usage():
             continue
 
         # Calculate percentage of quota
-        fraction_used = current_usage / quota
-        perc_used = round(fraction_used * 100, 3)
+        perc_used_decimal = current_usage / quota
+        perc_used = round(perc_used_decimal * 100, 3)
 
         # Information to log and potentially send
         info_string: str = (
@@ -776,7 +776,7 @@ def monitor_usage():
         )
 
         # Email if the unit is using more
-        if fraction_used > warn_after:
+        if perc_used_decimal > warn_after:
             # Email settings
             message: str = (
                 "A SciLifeLab Unit is approaching the allocated data quota.\n"
