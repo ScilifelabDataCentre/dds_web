@@ -24,7 +24,13 @@
 
 6.  Create a PR from `dev` to `master`
 
-    - _Backward compatibility:_ Check whether or not the dds_cli master branch works with the code in the PR. There’s an item in the PR comment regarding this; note if the dds_web changes work with the previous version of the dds_cli. If something might break - give detailed information about what. **This information should also be included in the MOTD.**
+    - Are you bumping the major version (e.g. 1.x.x to 2.x.x)?
+      - Yes: Add this info to the PR.
+    - Do the changes affect the CLI in any way?
+      - Yes:
+        - Add how the CLI is affected in the PR.
+        - Make the corresponding changes to the CLI and create a PR _before_ you merge this PR.
+    - _Backward compatibility:_ Check whether or not the dds_cli master branch works with the code in the PR. Note if the dds_web changes work with the previous version of the dds_cli. If something might break - give detailed information about what. **This information should also be included in the MOTD.**
     - All changes should be approved in the PRs to dev so reviewing the changes a second time in this PR is not necessary. Instead, the team should look through the code just to see if something looks weird.
     - All sections and checks in the PR template should be filled in and checked. Follow the instruction in the PR description field.
     - There should be at least one approval of the PR.
