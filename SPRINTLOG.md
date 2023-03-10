@@ -2,7 +2,7 @@
 
 Please add a _short_ line describing the PR you make, if the PR implements a specific feature or functionality, or refactor. Not needed if you add very small and unnoticable changes. Not needed when PR includes _only_ tests for already existing feature.
 
-## Sprint (2022-02-09 - 2022-02-23)
+## 2022-02-09 - 2022-02-23
 
 - Secure operations that require cryptographic keys are protected for each user with the user's password ([#889](https://github.com/ScilifelabDataCentre/dds_web/pull/889))
 - Implemented the functionality to add project to the invites of a new user as outlined in [issue 887](https://github.com/scilifelabdatacentre/dds_web/issues/887) ([PR888](https://github.com/ScilifelabDataCentre/dds_web/pull/888)).
@@ -20,7 +20,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Changed `is_sensitive` to `non_sensitive` and set to default False ([#913](https://github.com/ScilifelabDataCentre/dds_web/pull/913))
 - Rearrangement and clean up of the token ([910](https://github.com/ScilifelabDataCentre/dds_web/pull/910))
 
-## Sprint (2022-02-23 - 2022-03-09)
+## 2022-02-23 - 2022-03-09
 
 - Add landing page after password reset ([#931](https://github.com/ScilifelabDataCentre/dds_web/pull/931))
 - Add endpoint for health check (intended for readinessProbe) ([#933](https://github.com/ScilifelabDataCentre/dds_web/pull/933))
@@ -42,7 +42,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Fix regex for listing and deleting files [#1029](https://github.com/scilifelabdatacentre/dds_web/issues/1029)
 - Hides the "Size" and "total_size" variables according to the role and project status ([#1032](https://github.com/ScilifelabDataCentre/dds_web/pull/1032)).
 
-## Sprint (2022-03-09 - 2022-03-23)
+## 2022-03-09 - 2022-03-23
 
 - Introduce a separate error message if someone tried to add an unit user to projects individually. ([#1039](https://github.com/ScilifelabDataCentre/dds_web/pull/1039))
 - Catch KeyNotFoundError when user tries to give access to a project they themselves do not have access to ([#1045](https://github.com/ScilifelabDataCentre/dds_web/pull/1045))
@@ -63,7 +63,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Catch OperationalError if there is a database malfunction in `files.py` ([#1089](https://github.com/ScilifelabDataCentre/dds_web/pull/1089))
 - Switched the validation for the principal investigator from string to email ([#1084](https://github.com/ScilifelabDataCentre/dds_web/pull/1084)).
 
-## Sprint (2022-03-23 - 2022-04-06)
+## 2022-03-23 - 2022-04-06
 
 - Add link in navbar to the installation documentation ([#1112](https://github.com/ScilifelabDataCentre/dds_web/pull/1112))
 - Change from apscheduler to flask-apscheduler - solves the app context issue ([#1109](https://github.com/ScilifelabDataCentre/dds_web/pull/1109))
@@ -73,7 +73,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Cronjob: Scheduled task for changing project status from Expired to Archived ([#1115](https://github.com/ScilifelabDataCentre/dds_web/pull/1115))
 - Add a Flask command for finding and deleting "lost files" (files that exist only in db or s3) ([#1124](https://github.com/ScilifelabDataCentre/dds_web/pull/1124))
 
-## Sprint (2022-04-06 - 2022-04-20)
+## 2022-04-06 - 2022-04-20
 
 - New endpoint for adding a message of the day to the database ([#1136](https://github.com/ScilifelabDataCentre/dds_web/pull/1136))
 - Patch: Custom error for PI email validation ([#1146](https://github.com/ScilifelabDataCentre/dds_web/pull/1146))
@@ -82,13 +82,13 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Checkbox in registration form and policy to agree to ([#1151](https://github.com/ScilifelabDataCentre/dds_web/pull/1151))
 - Patch: Add checks for valid public_id when creating new unit to avoid bucket name errors ([#1154](https://github.com/ScilifelabDataCentre/dds_web/pull/1154))
 
-## Sprint (2022-04-20 - 2022-05-04)
+## 2022-04-20 - 2022-05-04
 
 - Renamed `api/units.py` to `api/superadmin_only.py` to reflect that it's only Super Admin accessible resources ([#1159](https://github.com/ScilifelabDataCentre/dds_web/pull/1159))
 - Add unit tests for the "set_available_to_expired" and "set_expired_to_archived" functions ([#1158](https://github.com/ScilifelabDataCentre/dds_web/pull/1158))
 - DC Branding: SciLifeLab logo + "Data Delivery System" in nav bar & DC branding in footer ([#1160](https://github.com/ScilifelabDataCentre/dds_web/pull/1160))
 
-## Sprint (2022-05-04 - 2022-05-18)
+## 2022-05-04 - 2022-05-18
 
 - `adr-tools` to document architecture decisions ([#1161](https://github.com/ScilifelabDataCentre/dds_web/pull/1161))
 - Bug: API returning float again and CLI `--size` flag works again ([#1162](https://github.com/ScilifelabDataCentre/dds_web/pull/1162))
@@ -100,7 +100,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - New `add-missing-buckets` argument option to the `lost-files` flask command ([#1174](https://github.com/ScilifelabDataCentre/dds_web/pull/1174))
 - Bug: Corrected `lost-files` logic and message ([#1176](https://github.com/ScilifelabDataCentre/dds_web/pull/1176))
 
-## Sprint (2022-05-18 - 2022-06-01)
+## 2022-05-18 - 2022-06-01
 
 - Allow all characters but unicode (e.g. emojis) in project description ([#1178](https://github.com/ScilifelabDataCentre/dds_web/pull/1178))
 - Cronjob: Scheduled task for monthly usage data ([#1181](https://github.com/ScilifelabDataCentre/dds_web/pull/1181))
@@ -108,12 +108,12 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - New tests for `dds_web/utils.py` ([#1188](https://github.com/ScilifelabDataCentre/dds_web/pull/1188))
 - Removed FontAwesome from web ([#1192](https://github.com/ScilifelabDataCentre/dds_web/pull/1192))
 
-## Sprint (2022-06-01 - 2022-06-15)
+## 2022-06-01 - 2022-06-15
 
 - Change FontAwesome source link to own license ([#1194](https://github.com/ScilifelabDataCentre/dds_web/pull/1194))
 - Display MOTD on web ([#1196](https://github.com/ScilifelabDataCentre/dds_web/pull/1196))
 
-## Sprint (2022-06-15 - 2022-06-29)
+## 2022-06-15 - 2022-06-29
 
 - Get MOTD from API ([#1198](https://github.com/ScilifelabDataCentre/dds_web/pull/1198))
 - New endpoint for listing all users ([#1204](https://github.com/ScilifelabDataCentre/dds_web/pull/1204))
@@ -126,7 +126,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Raise AccessDeniedError with message when token specified but user not existent ([#1235](https://github.com/ScilifelabDataCentre/dds_web/pull/1235))
 - Display multiple MOTDS ([#1212](https://github.com/ScilifelabDataCentre/dds_web/pull/1212))
 
-## Sprint (2022-08-18 - 2022-09-02)
+## 2022-08-18 - 2022-09-02
 
 - Allow Super Admins to deactivate user 2FA via authenticator app ([#1247](https://github.com/ScilifelabDataCentre/dds_web/pull/1247))
 - Get troubleshooting document from Confluence ([#1244](https://github.com/ScilifelabDataCentre/dds_web/pull/1244))
@@ -135,7 +135,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Technical Overview moved to repository ([#1250](https://github.com/ScilifelabDataCentre/dds_web/pull/1253))
 - Troubleshooting document moved to repository and buttons added to web to link and download ([#1255](https://github.com/ScilifelabDataCentre/dds_web/pull/1255))
 
-## Sprint (2022-09-02 - 2022-09-16)
+## 2022-09-02 - 2022-09-16
 
 - Add storage usage information in the Units listing table for Super Admin ([#1264](https://github.com/ScilifelabDataCentre/dds_web/pull/1264))
 - New endpoint for setting project as busy / not busy ([#1266](https://github.com/ScilifelabDataCentre/dds_web/pull/1266))
@@ -145,19 +145,19 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Added trivy when publishing to dockerhub ([#1276](https://github.com/ScilifelabDataCentre/dds_web/pull/1276))
 - Bug fix: Cost value displayed by the --usage flag fixed ([#1274](https://github.com/ScilifelabDataCentre/dds_web/pull/1274))
 
-## Sprint (2022-09-16 - 2022-09-30)
+## 2022-09-16 - 2022-09-30
 
 - New endpoint: SendMOTD - send important information to users ([#1283](https://github.com/ScilifelabDataCentre/dds_web/pull/1283))
 - New table: `Maintenance`, for keeping track of DDS maintenance mode ([#1284](https://github.com/ScilifelabDataCentre/dds_web/pull/1284))
 - New endpoint: SetMaintenance - set maintenance mode to on or off ([#1286](https://github.com/ScilifelabDataCentre/dds_web/pull/1286))
 - New endpoint: AnyProjectsBusy - check if any projects are busy in DDS ([#1288](https://github.com/ScilifelabDataCentre/dds_web/pull/1288))
 
-## Sprint (2022-09-30 - 2022-10-14)
+## 2022-09-30 - 2022-10-14
 
 - Bug fix: Fix the Invite.projects database model ([#1290](https://github.com/ScilifelabDataCentre/dds_web/pull/1290))
 - New endpoint: ListInvites - list invites ([#1294](https://github.com/ScilifelabDataCentre/dds_web/pull/1294))
 
-## Sprint (2022-10-14 - 2022-10-28)
+## 2022-10-14 - 2022-10-28
 
 - Limit projects listing to active projects only; a `--show-all` flag can be used for listing all projects, active and inactive ([#1302](https://github.com/ScilifelabDataCentre/dds_web/pull/1302))
 - Return name of project creator from UserProjects ([#1303](https://github.com/ScilifelabDataCentre/dds_web/pull/1303))
@@ -167,16 +167,16 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Bug: Return instead of project creator if user has been deleted ([#1311](https://github.com/ScilifelabDataCentre/dds_web/pull/1311))
 - New endpoint: ProjectInfo - display project information ([#1310](https://github.com/ScilifelabDataCentre/dds_web/pull/1310))
 
-## Sprint (2022-11-11 - 2022-11-25)
+## 2022-11-11 - 2022-11-25
 
 - Link to "How do I get my user account?" from the login form ([#1318](https://github.com/ScilifelabDataCentre/dds_web/pull/1318))
 
-## Sprint (2022-11-25 - 2022-12-09)
+## 2022-11-25 - 2022-12-09
 
 - Changed support email ([#1324](https://github.com/ScilifelabDataCentre/dds_web/pull/1324))
 - Allow Super Admin login during maintenance ([#1333](https://github.com/ScilifelabDataCentre/dds_web/pull/1333))
 
-## Sprint (2022-12-09 - 2023-01-09) - Longer sprint due to Christmas
+## 2022-12-09 - 2023-01-09: Longer sprint due to Christmas
 
 - Dependency: Bump `certifi` due to CVE-2022-23491 ([#1337](https://github.com/ScilifelabDataCentre/dds_web/pull/1337))
 - Dependency: Bump `jwcrypto` due to CVE-2022-3102 ([#1339](https://github.com/ScilifelabDataCentre/dds_web/pull/1339))
@@ -184,13 +184,13 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Add ability to change project information via ProjectInfo endpoint ([#1331](https://github.com/ScilifelabDataCentre/dds_web/pull/1331))
 - Fix the reporting file path ([1345](https://github.com/ScilifelabDataCentre/dds_web/pull/1345))
 
-## Sprint (2023-01-09 - 2023-01-20)
+## 2023-01-09 - 2023-01-20
 
 - Refactoring: Move flask commands to own module `commands.py` ([#1351](https://github.com/ScilifelabDataCentre/dds_web/pull/1351))
 - Workflow: Scan with Snyk on PR and schedule ([#1349](https://github.com/ScilifelabDataCentre/dds_web/pull/1349))
 - Flask command (cronjob): Monitor unit usage and warn if above level ([#1350](https://github.com/ScilifelabDataCentre/dds_web/pull/1350))
 
-## Sprint (2023-01-20 - 2023-02-03)
+## 2023-01-20 - 2023-02-03
 
 - Workflow: Do not publish to DockerHub anymore ([#1357](https://github.com/ScilifelabDataCentre/dds_web/pull/1357))
 - Refactoring: move cronjobs previously handled by APScheduler to flask commands ([#1355](https://github.com/ScilifelabDataCentre/dds_web/pull/1355))
@@ -201,11 +201,11 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Bug: Add value to `Unit.warning_level` for existing units ([#1378](https://github.com/ScilifelabDataCentre/dds_web/pull/1379))
 - Workflow: Add option to run trivy on dev and master branches manually ([#1380](https://github.com/ScilifelabDataCentre/dds_web/pull/1380))
 
-## Sprint (2023-02-03 - 2023-02-17)
+## 2023-02-03 - 2023-02-17
 
 - Workflow: Scan with yamllint ([#1385](https://github.com/ScilifelabDataCentre/dds_web/pull/1385))
 
-## Sprint (2023-02-17 - 2023-03-03)
+## 2023-02-17 - 2023-03-03
 
 - Move Rotating log file maximum size and backup count to config variables ([#1388](https://github.com/ScilifelabDataCentre/dds_web/pull/1388))
 - Workflow: Scan branch with trivy ([#1377](https://github.com/ScilifelabDataCentre/dds_web/pull/1377))
@@ -221,7 +221,7 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Improve logging of delete-invites flask command ([#1386](https://github.com/ScilifelabDataCentre/dds_web/pull/1386))
 - Workflow: Schedule trivy scan for dev and latest separately ([#1395](https://github.com/ScilifelabDataCentre/dds_web/pull/1395))
 
-# Sprint (2023-03-03 - 2023-03-17)
+# 2023-03-03 - 2023-03-17
 
 - PR template restructured ([#1403](https://github.com/ScilifelabDataCentre/dds_web/pull/1403))
 - Only allow latin1-encodable usernames and passwords ([#1402](https://github.com/ScilifelabDataCentre/dds_web/pull/1402))
