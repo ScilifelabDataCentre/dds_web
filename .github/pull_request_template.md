@@ -29,7 +29,7 @@
 
 ## Checklist
 
-- [Changelog](../CHANGELOG.md)
+- [Sprintlog](../SPRINTLOG.md)
   - [ ] Added
   - [ ] Not needed (E.g. PR contains _only_ tests)
 - Rebase / Update / Merge _from_ base branch (the branch from which the current is forked)
@@ -40,7 +40,7 @@
   - [ ] No blocking PRs
 - PR to `master` branch
   - [ ] Yes: Read [the release instructions](../doc/procedures/new_release.md)
-    - [ ] I have followed steps 1-6.
+    - [ ] I have followed steps 1-7.
   - [ ] No
 
 ## Actions / Scans

@@ -9,7 +9,13 @@
     3. _The change is in the API:_ Confirm that the development instance works together with the CLI
 
 2.  Fork a new branch from `dev`
-3.  Update the version in [`version.py`](../../dds_web/version.py)
+3.  Update the version [changelog](../../CHANGELOG.rst)
+
+    - The new version should be at the top of the page
+    - List the changes that the users will / may notice
+    - Do not add information regarding workflow (e.g. GitHub Actions) etc
+
+4.  Update the version in [`version.py`](../../dds_web/version.py)
 
     - _Minor changes, e.g. bug fix_: Minor version upgrade, e.g. `1.0.1 --> 1.0.2`
     - _Small changes, e.g. new feature_: Mid version upgrade, e.g. `1.1.0 --> 1.2.0`
@@ -17,12 +23,12 @@
 
       > Will break if CLI version not bumped as well
 
-4.  Push version change to branch
-5.  Create a new PR from `<your-branch>` to `dev`
+5.  Push version change to branch
+6.  Create a new PR from `<your-branch>` to `dev`
 
     Wait for approval and merge by Product Owner or admin.
 
-6.  Create a PR from `dev` to `master`
+7.  Create a PR from `dev` to `master`
 
     - Are you bumping the major version (e.g. 1.x.x to 2.x.x)?
       - Yes: Add this info to the PR.
@@ -36,7 +42,7 @@
     - There should be at least one approval of the PR.
     - _Everything looks ok and there's at least one approval?_ Merge it.
 
-7.  [Draft a new release](https://github.com/ScilifelabDataCentre/dds_web/releases)
+8.  [Draft a new release](https://github.com/ScilifelabDataCentre/dds_web/releases)
 
     1. `Choose a tag` &rarr; `Find or create a new tag` &rarr; Fill in the new version, e.g. if the new version is `1.0.0`, you should fill in `v1.0.0`.
     2. `Target` should be set to `master`
@@ -49,7 +55,7 @@
 
        An image of the web / api will be published to the [GitHub Container Registry](https://codefresh.io/csdp-docs/docs/integrations/container-registries/github-cr/)
 
-8.  Perform redeployment
+9.  Perform redeployment
 
     The method for this _depends on the situation_ / size of and reason for the upgrade.
 
