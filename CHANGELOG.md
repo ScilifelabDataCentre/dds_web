@@ -221,7 +221,8 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Improve logging of delete-invites flask command ([#1386](https://github.com/ScilifelabDataCentre/dds_web/pull/1386))
 - Workflow: Schedule trivy scan for dev and latest separately ([#1395](https://github.com/ScilifelabDataCentre/dds_web/pull/1395))
 
-## Sprint (2023-03-03 - 2023-03-17)
+# Sprint (2023-03-03 - 2023-03-17)
 
 - PR template restructured ([#1403](https://github.com/ScilifelabDataCentre/dds_web/pull/1403))
 - Only allow latin1-encodable usernames and passwords ([#1402](https://github.com/ScilifelabDataCentre/dds_web/pull/1402))
+- Bug: Corrected calculation of used storage space in `monitor_usage` command ([#1404](https://github.com/ScilifelabDataCentre/dds_web/pull/1404))
