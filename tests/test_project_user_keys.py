@@ -40,6 +40,7 @@ def __padding():
 
 
 def verify_list_items_not_equal(lst):
+    """Confirm that none of the items matches another."""
     for a, b in itertools.combinations(lst, 2):
         assert a != b
 
