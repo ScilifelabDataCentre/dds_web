@@ -7,10 +7,12 @@ from typing import no_type_check
 import pytest
 import sqlalchemy
 import flask
+import argon2 
 
 # Own
 from dds_web import db
 from dds_web.database import models
+from dds_web.config import Config
 
 # TESTS #################################################################################### TESTS #
 
@@ -232,6 +234,65 @@ def __setup_user(username):
 
     return user
 
+
+def test_verify_password_rehash_not_needed(client, capfd):
+    """Verify that rehashing is not needed when settings are the same."""
+    # Get user
+    user = models.User.query.first()
+    username = user.username
+    password = "password"
+
+    # Get config
+    config = Config()
+
+    # Check correct password
+    assert user.verify_password(input_password=password)
+
+    # Check stderr for logging output
+    _, err = capfd.readouterr()
+    assert "The Argon2id settings have changed; The password requires a rehash." not in err
+    
+    # Check incorrect password
+    assert not user.verify_password(input_password="password1")
+
+    # Hash and set new password
+    pw_hasher = argon2.PasswordHasher(
+        time_cost=config.ARGON_TIME_COST_PW,
+        memory_cost=config.ARGON_MEMORY_COST_PW,
+        parallelism=config.ARGON_PARALLELISM_PW,
+        hash_len=config.ARGON_HASH_LENGTH_PW,
+        type=config.ARGON_TYPE_PW,
+    )
+    password_hash_1 = user._password_hash
+    password_hash_2 = pw_hasher.hash(password)
+    assert password_hash_1 != password_hash_2
+    user._password_hash = password_hash_2
+    db.session.commit()
+
+    # Verify password again and check that no rehashing is required
+    user = models.User.query.filter_by(username=username).first()
+    user.verify_password(input_password=password)
+    # Check stderr for logging output
+    _, err = capfd.readouterr()
+    assert "The Argon2id settings have changed; The password requires a rehash." not in err
+    
+
+def test_verify_password_rehash_needed(client, capfd):
+    """Verify that rehashing is needed when settings are changed."""
+    # Get user
+    user = models.User.query.first()
+
+    # Get config
+    config = Config()
+
+    # Change settings -- time cost
+    pw_hasher = argon2.PasswordHasher(
+        time_cost=config.ARGON_TIME_COST_PW,
+        memory_cost=config.ARGON_MEMORY_COST_PW,
+        parallelism=config.ARGON_PARALLELISM_PW,
+        hash_len=config.ARGON_HASH_LENGTH_PW,
+        type=config.ARGON_TYPE_PW,
+    )
 
 def test_delete_user__researcher(client):
     """
