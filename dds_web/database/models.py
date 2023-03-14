@@ -428,11 +428,11 @@ class User(flask_login.UserMixin, db.Model):
     def password(self, plaintext_password):
         """Generate the password hash and save in db."""
         pw_hasher = argon2.PasswordHasher(
-            time_cost=2,
-            memory_cost=flask.current_app.config["ARGON_KD_MEMORY_COST"],
-            parallelism=8,
-            hash_len=32,
-            type=argon2.Type.ID,
+            time_cost=flask.current_app.config["ARGON_TIME_COST_PW"],
+            memory_cost=flask.current_app.config["ARGON_MEMORY_COST_PW"],
+            parallelism=flask.current_app.config["ARGON_PARALLELISM_PW"],
+            hash_len=flask.current_app.config["ARGON_HASH_LENGTH_PW"],
+            type=flask.current_app.config["ARGON_TYPE_PW"],
         )
         self._password_hash = pw_hasher.hash(plaintext_password)
 
@@ -448,11 +448,11 @@ class User(flask_login.UserMixin, db.Model):
         """Verifies that the specified password matches the encoded password in the database."""
         # Setup Argon2 hasher
         password_hasher = argon2.PasswordHasher(
-            time_cost=2,
-            memory_cost=flask.current_app.config["ARGON_KD_MEMORY_COST"],
-            parallelism=8,
-            hash_len=32,
-            type=argon2.Type.ID,
+            time_cost=flask.current_app.config["ARGON_TIME_COST_PW"],
+            memory_cost=flask.current_app.config["ARGON_MEMORY_COST_PW"],
+            parallelism=flask.current_app.config["ARGON_PARALLELISM_PW"],
+            hash_len=flask.current_app.config["ARGON_HASH_LENGTH_PW"],
+            type=flask.current_app.config["ARGON_TYPE_PW"],
         )
 
         # Verify the input password

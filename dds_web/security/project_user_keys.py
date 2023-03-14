@@ -27,11 +27,11 @@ def __derive_key(user, password):
     derived_key = argon2.low_level.hash_secret_raw(
         secret=password.encode(),
         salt=user.kd_salt,
-        time_cost=2,
-        memory_cost=flask.current_app.config["ARGON_KD_MEMORY_COST"],
-        parallelism=8,
-        hash_len=32,
-        type=argon2.Type.ID,
+        time_cost=flask.current_app.config["ARGON_TIME_COST_KD"],
+        memory_cost=flask.current_app.config["ARGON_MEMORY_COST_KD"],
+        parallelism=flask.current_app.config["ARGON_PARALLELISM_KD"],
+        hash_len=flask.current_app.config["ARGON_HASH_LENGTH_KD"],
+        type=flask.current_app.config["ARGON_TYPE_KD"],
     )
 
     if len(derived_key) != 32:
