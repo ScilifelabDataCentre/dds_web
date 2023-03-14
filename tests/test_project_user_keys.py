@@ -2,6 +2,7 @@ import http
 import uuid
 import argon2
 import itertools
+import typing
 
 import pytest
 from cryptography.hazmat.primitives import serialization
@@ -39,7 +40,7 @@ def __padding():
     )
 
 
-def verify_list_items_not_equal(lst):
+def verify_list_items_not_equal(lst: typing.List):
     """Confirm that none of the items matches another."""
     for a, b in itertools.combinations(lst, 2):
         assert a != b
