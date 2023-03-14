@@ -427,7 +427,13 @@ class User(flask_login.UserMixin, db.Model):
     @password.setter
     def password(self, plaintext_password):
         """Generate the password hash and save in db."""
-        pw_hasher = argon2.PasswordHasher(hash_len=32)
+        pw_hasher = argon2.PasswordHasher(
+            time_cost=2,
+            memory_cost=flask.current_app.config["ARGON_KD_MEMORY_COST"],
+            parallelism=8,
+            hash_len=32,
+            type=argon2.Type.ID,
+        )
         self._password_hash = pw_hasher.hash(plaintext_password)
 
         # User key pair should only be set from here if the password is lost
@@ -441,7 +447,13 @@ class User(flask_login.UserMixin, db.Model):
     def verify_password(self, input_password):
         """Verifies that the specified password matches the encoded password in the database."""
         # Setup Argon2 hasher
-        password_hasher = argon2.PasswordHasher(hash_len=32)
+        password_hasher = argon2.PasswordHasher(
+            time_cost=2,
+            memory_cost=flask.current_app.config["ARGON_KD_MEMORY_COST"],
+            parallelism=8,
+            hash_len=32,
+            type=argon2.Type.ID,
+        )
 
         # Verify the input password
         try:
@@ -456,6 +468,9 @@ class User(flask_login.UserMixin, db.Model):
 
         # Rehash password if needed, e.g. if parameters are not up to date
         if password_hasher.check_needs_rehash(self._password_hash):
+            flask.current_app.logger.info(
+                "The Argon2id settings have changed; The password requires a rehash."
+            )
             try:
                 self.password = input_password
                 db.session.commit()
