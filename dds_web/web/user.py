@@ -463,7 +463,9 @@ def request_reset_password():
                 flask.current_app.logger.info(f"Sending password reset email to: {form.email.data}")
                 dds_web.utils.send_reset_email(email_row=email, token=token)
             else:
-                flask.flash("Your account is deactivated. You cannot reset your password.", "warning")
+                flask.flash(
+                    "Your account is deactivated. You cannot reset your password.", "warning"
+                )
 
         flask.flash(
             "If the specified email address is registered to a DDS account, "
