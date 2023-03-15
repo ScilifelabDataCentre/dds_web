@@ -294,6 +294,31 @@ def test_verify_password_rehash_needed(client, capfd):
     config = Config()
 
     # ------------------------------------------------------
+    # Change settings -- only hash_len set
+    pw_hasher_0 = argon2.PasswordHasher(
+        hash_len=config.ARGON_HASH_LENGTH_PW,
+    )
+    password_hash_0 = pw_hasher_0.hash(password)
+
+    # Verify that not identical
+    assert password_hash_0 != password_hash_original
+
+    # Set user password hash
+    user._password_hash = password_hash_0
+    db.session.commit()
+
+    # Get user again
+    user = models.User.query.filter_by(username=username).first()
+
+    # Verify password
+    user.verify_password(input_password=password)
+
+    # Verify that rehash happened
+    _, err = capfd.readouterr()
+    assert "The Argon2id settings have changed; The password requires a rehash." in err
+    assert user._password_hash != password_hash_0
+
+    # ------------------------------------------------------
     # Change settings -- time cost
     pw_hasher_1 = argon2.PasswordHasher(
         time_cost=config.ARGON_TIME_COST_PW + 1,
@@ -305,7 +330,7 @@ def test_verify_password_rehash_needed(client, capfd):
     password_hash_1 = pw_hasher_1.hash(password)
 
     # Verify that not identical
-    assert password_hash_1 != password_hash_original
+    assert password_hash_1 != password_hash_0
 
     # Set user password hash
     user._password_hash = password_hash_1
