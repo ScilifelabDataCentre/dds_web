@@ -7,7 +7,7 @@ from typing import no_type_check
 import pytest
 import sqlalchemy
 import flask
-import argon2 
+import argon2
 
 # Own
 from dds_web import db
@@ -251,7 +251,7 @@ def test_verify_password_rehash_not_needed(client, capfd):
     # Check stderr for logging output
     _, err = capfd.readouterr()
     assert "The Argon2id settings have changed; The password requires a rehash." not in err
-    
+
     # Check incorrect password
     assert not user.verify_password(input_password="password1")
 
@@ -275,24 +275,169 @@ def test_verify_password_rehash_not_needed(client, capfd):
     # Check stderr for logging output
     _, err = capfd.readouterr()
     assert "The Argon2id settings have changed; The password requires a rehash." not in err
-    
+
 
 def test_verify_password_rehash_needed(client, capfd):
     """Verify that rehashing is needed when settings are changed."""
-    # Get user
+    # Get user and set password
     user = models.User.query.first()
+    username = user.username
+    password = "password"
+    user.password = password
+    db.session.commit()
+
+    # Get user again
+    user = models.User.query.filter_by(username=username).first()
+    password_hash_original = user._password_hash
 
     # Get config
     config = Config()
 
+    # ------------------------------------------------------
     # Change settings -- time cost
-    pw_hasher = argon2.PasswordHasher(
-        time_cost=config.ARGON_TIME_COST_PW,
+    pw_hasher_1 = argon2.PasswordHasher(
+        time_cost=config.ARGON_TIME_COST_PW + 1,
         memory_cost=config.ARGON_MEMORY_COST_PW,
         parallelism=config.ARGON_PARALLELISM_PW,
         hash_len=config.ARGON_HASH_LENGTH_PW,
         type=config.ARGON_TYPE_PW,
     )
+    password_hash_1 = pw_hasher_1.hash(password)
+
+    # Verify that not identical
+    assert password_hash_1 != password_hash_original
+
+    # Set user password hash
+    user._password_hash = password_hash_1
+    db.session.commit()
+
+    # Get user again
+    user = models.User.query.filter_by(username=username).first()
+
+    # Verify password
+    user.verify_password(input_password=password)
+
+    # Verify that rehash happened
+    _, err = capfd.readouterr()
+    assert "The Argon2id settings have changed; The password requires a rehash." in err
+    assert user._password_hash != password_hash_1
+
+    # ------------------------------------------------------
+    # Change settings -- memory cost
+    pw_hasher_2 = argon2.PasswordHasher(
+        time_cost=config.ARGON_TIME_COST_PW,
+        memory_cost=0x40000,
+        parallelism=config.ARGON_PARALLELISM_PW,
+        hash_len=config.ARGON_HASH_LENGTH_PW,
+        type=config.ARGON_TYPE_PW,
+    )
+    password_hash_2 = pw_hasher_2.hash(password)
+
+    # Verify that not identical
+    assert password_hash_2 != password_hash_1
+
+    # Set user password hash
+    user._password_hash = password_hash_2
+    db.session.commit()
+
+    # Get user again
+    user = models.User.query.filter_by(username=username).first()
+
+    # Verify password
+    user.verify_password(input_password=password)
+
+    # Verify that rehash happened
+    _, err = capfd.readouterr()
+    assert "The Argon2id settings have changed; The password requires a rehash." in err
+    assert user._password_hash != password_hash_2
+
+    # ------------------------------------------------------
+    # Change settings -- parallelism
+    pw_hasher_3 = argon2.PasswordHasher(
+        time_cost=config.ARGON_TIME_COST_PW,
+        memory_cost=config.ARGON_MEMORY_COST_PW,
+        parallelism=4,
+        hash_len=config.ARGON_HASH_LENGTH_PW,
+        type=config.ARGON_TYPE_PW,
+    )
+    password_hash_3 = pw_hasher_3.hash(password)
+
+    # Verify that not identical
+    assert password_hash_3 != password_hash_2
+
+    # Set user password hash
+    user._password_hash = password_hash_3
+    db.session.commit()
+
+    # Get user again
+    user = models.User.query.filter_by(username=username).first()
+
+    # Verify password
+    user.verify_password(input_password=password)
+
+    # Verify that rehash happened
+    _, err = capfd.readouterr()
+    assert "The Argon2id settings have changed; The password requires a rehash." in err
+    assert user._password_hash != password_hash_3
+
+    # ------------------------------------------------------
+    # Change settings -- hash len
+    pw_hasher_4 = argon2.PasswordHasher(
+        time_cost=config.ARGON_TIME_COST_PW,
+        memory_cost=config.ARGON_MEMORY_COST_PW,
+        parallelism=config.ARGON_PARALLELISM_PW,
+        hash_len=16,
+        type=config.ARGON_TYPE_PW,
+    )
+    password_hash_4 = pw_hasher_4.hash(password)
+
+    # Verify that not identical
+    assert password_hash_4 != password_hash_3
+
+    # Set user password hash
+    user._password_hash = password_hash_4
+    db.session.commit()
+
+    # Get user again
+    user = models.User.query.filter_by(username=username).first()
+
+    # Verify password
+    user.verify_password(input_password=password)
+
+    # Verify that rehash happened
+    _, err = capfd.readouterr()
+    assert "The Argon2id settings have changed; The password requires a rehash." in err
+    assert user._password_hash != password_hash_4
+
+    # ------------------------------------------------------
+    # Change settings -- type
+    pw_hasher_5 = argon2.PasswordHasher(
+        time_cost=config.ARGON_TIME_COST_PW,
+        memory_cost=config.ARGON_MEMORY_COST_PW,
+        parallelism=config.ARGON_PARALLELISM_PW,
+        hash_len=config.ARGON_HASH_LENGTH_PW,
+        type=argon2.Type.I,
+    )
+    password_hash_5 = pw_hasher_5.hash(password)
+
+    # Verify that not identical
+    assert password_hash_5 != password_hash_4
+
+    # Set user password hash
+    user._password_hash = password_hash_5
+    db.session.commit()
+
+    # Get user again
+    user = models.User.query.filter_by(username=username).first()
+
+    # Verify password
+    user.verify_password(input_password=password)
+
+    # Verify that rehash happened
+    _, err = capfd.readouterr()
+    assert "The Argon2id settings have changed; The password requires a rehash." in err
+    assert user._password_hash != password_hash_5
+
 
 def test_delete_user__researcher(client):
     """
