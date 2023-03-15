@@ -435,35 +435,42 @@ def request_reset_password():
     form = forms.RequestResetForm()
     if form.validate_on_submit():
         email = models.Email.query.filter_by(email=form.email.data).first()
-        if email.user.is_active:
-            token = dds_web.security.tokens.encrypted_jwt_token(
-                username=email.user.username,
-                sensitive_content=None,
-                expires_in=datetime.timedelta(
-                    seconds=3600,
-                ),
-                additional_claims={"rst": "pwd"},
-            )
-
-            # Create row in password reset table
-            ongoing_password_reset = models.PasswordReset.query.filter_by(
-                email=email.email
-            ).one_or_none()
-            if ongoing_password_reset:
-                ongoing_password_reset.issued = dds_web.utils.current_time()
-                ongoing_password_reset.valid = True
-            else:
-                new_password_reset = models.PasswordReset(
-                    user=email.user, email=email.email, issued=dds_web.utils.current_time()
+        if email:
+            if email.user.is_active:
+                token = dds_web.security.tokens.encrypted_jwt_token(
+                    username=email.user.username,
+                    sensitive_content=None,
+                    expires_in=datetime.timedelta(
+                        seconds=3600,
+                    ),
+                    additional_claims={"rst": "pwd"},
                 )
-                db.session.add(new_password_reset)
-            db.session.commit()
 
-            dds_web.utils.send_reset_email(email_row=email, token=token)
-            flask.flash("An email has been sent with instructions to reset your password.")
-            return flask.redirect(flask.url_for("auth_blueprint.login"))
+                # Create row in password reset table
+                ongoing_password_reset = models.PasswordReset.query.filter_by(
+                    email=email.email
+                ).one_or_none()
+                if ongoing_password_reset:
+                    ongoing_password_reset.issued = dds_web.utils.current_time()
+                    ongoing_password_reset.valid = True
+                else:
+                    new_password_reset = models.PasswordReset(
+                        user=email.user, email=email.email, issued=dds_web.utils.current_time()
+                    )
+                    db.session.add(new_password_reset)
+                db.session.commit()
 
-        flask.flash("Your account is deactivated. You cannot reset your password.", "warning")
+                flask.current_app.logger.info(f"Sending password reset email to: {form.email.data}")
+                dds_web.utils.send_reset_email(email_row=email, token=token)
+            else:
+                flask.flash("Your account is deactivated. You cannot reset your password.", "warning")
+
+        flask.flash(
+            "If the specified email address is registered to a DDS account, "
+            "you should receive an email with instructions on how to reset your password. "
+            f"You specified the following email address: {form.email.data}"
+        )
+        return flask.redirect(flask.url_for("auth_blueprint.login"))
 
     # Show form
     return flask.render_template("user/request_reset_password.html", form=form)

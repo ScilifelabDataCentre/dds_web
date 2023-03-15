@@ -126,7 +126,6 @@ class RequestResetForm(flask_wtf.FlaskForm):
         validators=[
             wtforms.validators.DataRequired(),
             wtforms.validators.Email(),
-            utils.email_taken_wtforms(),
         ],
     )
     submit = wtforms.SubmitField("Request Password Reset")
