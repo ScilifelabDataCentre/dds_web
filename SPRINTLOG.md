@@ -226,3 +226,4 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - PR template restructured ([#1403](https://github.com/ScilifelabDataCentre/dds_web/pull/1403))
 - Only allow latin1-encodable usernames and passwords ([#1402](https://github.com/ScilifelabDataCentre/dds_web/pull/1402))
 - Bug: Corrected calculation of used storage space in `monitor_usage` command ([#1404](https://github.com/ScilifelabDataCentre/dds_web/pull/1404))
+- Config: Define Argon2 settings in `config.py` and use same settings (as default) during password-hashing as in key-derivation for private key access ([#1406](https://github.com/ScilifelabDataCentre/dds_web/pull/1406))
