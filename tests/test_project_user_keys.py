@@ -1,5 +1,8 @@
 import http
 import uuid
+import argon2
+import itertools
+import typing
 
 import pytest
 from cryptography.hazmat.primitives import serialization
@@ -37,9 +40,134 @@ def __padding():
     )
 
 
+def verify_list_items_not_equal(lst: typing.List):
+    """Confirm that none of the items matches another."""
+    for a, b in itertools.combinations(lst, 2):
+        assert a != b
+
+
+def test_derive_key_ok(client):
+    """Test the key derivation with the same settings for argon2."""
+    from dds_web.security.project_user_keys import __derive_key
+    from dds_web.config import Config
+
+    # Get config
+    config = Config()
+
+    # Get user
+    user = models.User.query.first()
+    password = "password"
+
+    # Derive key
+    derived_key_1 = argon2.low_level.hash_secret_raw(
+        secret=password.encode(),
+        salt=user.kd_salt,
+        time_cost=config.ARGON_TIME_COST_KD,
+        memory_cost=config.ARGON_MEMORY_COST_KD,
+        parallelism=config.ARGON_PARALLELISM_KD,
+        hash_len=config.ARGON_HASH_LENGTH_KD,
+        type=config.ARGON_TYPE_KD,
+    )
+
+    derived_key_2 = __derive_key(user, password)
+    assert derived_key_1 == derived_key_2
+
+
+def test_derive_key_changed_settings(client):
+    """Test the key derivation with changed settings."""
+    from dds_web.security.project_user_keys import __derive_key
+    from dds_web.config import Config
+
+    # Get config
+    config = Config()
+
+    # Get user
+    user = models.User.query.first()
+    password = "password"
+
+    # Derive key - correct
+    derived_key_1 = __derive_key(user, password)
+
+    # Derive key - changed time cost
+    derived_key_2 = argon2.low_level.hash_secret_raw(
+        secret=password.encode(),
+        salt=user.kd_salt,
+        time_cost=3,
+        memory_cost=config.ARGON_MEMORY_COST_KD,
+        parallelism=config.ARGON_PARALLELISM_KD,
+        hash_len=config.ARGON_HASH_LENGTH_KD,
+        type=config.ARGON_TYPE_KD,
+    )
+    verify_list_items_not_equal(lst=[derived_key_1, derived_key_2])
+
+    # Derive key - changed memory cost
+    derived_key_3 = argon2.low_level.hash_secret_raw(
+        secret=password.encode(),
+        salt=user.kd_salt,
+        time_cost=config.ARGON_TIME_COST_KD,
+        memory_cost=0x40000,
+        parallelism=config.ARGON_PARALLELISM_KD,
+        hash_len=config.ARGON_HASH_LENGTH_KD,
+        type=config.ARGON_TYPE_KD,
+    )
+
+    verify_list_items_not_equal(lst=[derived_key_1, derived_key_2, derived_key_3])
+
+    # Derive key - changed parallelism
+    derived_key_4 = argon2.low_level.hash_secret_raw(
+        secret=password.encode(),
+        salt=user.kd_salt,
+        time_cost=config.ARGON_TIME_COST_KD,
+        memory_cost=config.ARGON_MEMORY_COST_KD,
+        parallelism=4,
+        hash_len=config.ARGON_HASH_LENGTH_KD,
+        type=config.ARGON_TYPE_KD,
+    )
+
+    verify_list_items_not_equal(lst=[derived_key_1, derived_key_2, derived_key_3, derived_key_4])
+
+    # Derive key - changed hash len
+    derived_key_5 = argon2.low_level.hash_secret_raw(
+        secret=password.encode(),
+        salt=user.kd_salt,
+        time_cost=config.ARGON_TIME_COST_KD,
+        memory_cost=config.ARGON_MEMORY_COST_KD,
+        parallelism=config.ARGON_PARALLELISM_KD,
+        hash_len=16,
+        type=config.ARGON_TYPE_KD,
+    )
+
+    verify_list_items_not_equal(
+        lst=[derived_key_1, derived_key_2, derived_key_3, derived_key_4, derived_key_5]
+    )
+
+    # Derive key - changed type
+    derived_key_6 = argon2.low_level.hash_secret_raw(
+        secret=password.encode(),
+        salt=user.kd_salt,
+        time_cost=config.ARGON_TIME_COST_KD,
+        memory_cost=config.ARGON_MEMORY_COST_KD,
+        parallelism=config.ARGON_PARALLELISM_KD,
+        hash_len=config.ARGON_HASH_LENGTH_KD,
+        type=argon2.Type.I,
+    )
+
+    verify_list_items_not_equal(
+        lst=[
+            derived_key_1,
+            derived_key_2,
+            derived_key_3,
+            derived_key_4,
+            derived_key_5,
+            derived_key_6,
+        ]
+    )
+
+
 def test_user_key_setup_error_with_salt(client):
     # user is created without a password, so salt will be missing
     user = models.User(username="testuser")
+
     with pytest.raises(KeySetupError) as error:
         generate_user_key_pair(user, "password")
 
