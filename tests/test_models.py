@@ -294,7 +294,7 @@ def test_verify_password_rehash_needed(client, capfd):
     config = Config()
 
     # ------------------------------------------------------
-    # Change settings -- only hash_len set
+    # Set hash length to previous setting -- as a start point for testing changes
     pw_hasher_0 = argon2.PasswordHasher(
         hash_len=config.ARGON_HASH_LENGTH_PW,
     )
