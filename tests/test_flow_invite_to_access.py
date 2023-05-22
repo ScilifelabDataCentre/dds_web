@@ -1,7 +1,7 @@
 import unittest
 
 import flask
-
+import http
 import tests
 from dds_web.database import models
 import dds_web.api.user
@@ -54,7 +54,7 @@ def perform_invite(client, inviting_user, email, role=None, project=None):
             call_args = mock_token_method.call_args
             invite_token = encrypted_jwt_token(*call_args.args, **call_args.kwargs)
 
-    if response.status != "200 OK":
+    if response.status_code != http.HTTPStatus.OK:
         if DEBUG:
             print(response.status_code)
         raise ValueError(f"Invitation failed: {response.data}")
@@ -71,7 +71,7 @@ def get_private(client, project, auth_token):
         headers=auth_token,
     )
     assert (
-        response.status == "200 OK"
+        response.status_code == http.HTTPStatus.OK
     ), f"Unable to fetch project private key for project: {project}, response: {response.data}"
 
 
@@ -106,7 +106,7 @@ def invite_confirm_register_and_get_private(
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status == "200 OK"
+    assert response.status_code == http.HTTPStatus.OK
 
     # Complete registration
     form_token = flask.g.csrf_token
@@ -124,7 +124,7 @@ def invite_confirm_register_and_get_private(
             headers=tests.DEFAULT_HEADER,
         )
 
-        assert response.status == "200 OK"
+        assert response.status_code == http.HTTPStatus.OK
 
         user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
 
@@ -137,7 +137,7 @@ def invite_confirm_register_and_get_private(
             follow_redirects=True,
             headers=tests.DEFAULT_HEADER,
         )
-        assert response.status == "200 OK"
+        assert response.status_code == http.HTTPStatus.OK
 
         user = models.User.query.filter_by(username=form_data["username"]).one_or_none()
 
