@@ -228,3 +228,16 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 - Bug: Corrected calculation of used storage space in `monitor_usage` command ([#1404](https://github.com/ScilifelabDataCentre/dds_web/pull/1404))
 - Config: Define Argon2 settings in `config.py` and use same settings (as default) during password-hashing as in key-derivation for private key access ([#1406](https://github.com/ScilifelabDataCentre/dds_web/pull/1406))
 - Bug: Display same message during password reset independent on if the email address is registered to an account or not ([#1408](https://github.com/ScilifelabDataCentre/dds_web/pull/1408))
+
+# 2023-03-17 - 2023-03-31
+
+_Nothing merged in CLI during this sprint_
+
+# 2023-03-31 - 2023-04-14
+
+_Nothing merged in CLI during this sprint_
+
+# 2023-04-14 - 2023-04-28
+
+- Documentation: Minor update of Technical Overview ((#1411)[https://github.com/ScilifelabDataCentre/dds_web/pull/1411])
+- Documentation: Account roles and their permissions ((#1412)[https://github.com/ScilifelabDataCentre/dds_web/pull/1412])
