@@ -75,7 +75,7 @@ class Config(object):
     ARGON_HASH_LENGTH_KD = 32
     ARGON_TYPE_KD = argon2.Type.ID
     # Passwords - Check if specific settings, otherwise set as above
-    ARGON_TIME_COST_PW = os.environ.get("ARGON_TIME_COST_PW", 2)
+    ARGON_TIME_COST_PW = os.environ.get("ARGON_TIME_COST_PW", ARGON_TIME_COST_KD)
     ARGON_MEMORY_COST_PW = os.environ.get("ARGON_MEMORY_COST_PW", ARGON_MEMORY_COST_KD)
     ARGON_PARALLELISM_PW = os.environ.get("ARGON_PARALLELISM_PW", ARGON_PARALLELISM_KD)
     ARGON_HASH_LENGTH_PW = os.environ.get("ARGON_HASH_LENGTH_PW", ARGON_HASH_LENGTH_KD)
