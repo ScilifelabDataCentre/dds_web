@@ -705,7 +705,7 @@ def collect_stats():
     try:
         # User stats
         unit_count = Unit.query.count()
-        researchuser_count = ResearchUser.query.count()
+        researcher_count = ResearchUser.query.count()
         unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
         unit_admin_count = UnitUser.query.filter_by(is_admin=True).count()
         superadmin_count = SuperAdmin.query.count()
@@ -719,7 +719,7 @@ def collect_stats():
         # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
-            researchuser_count=researchuser_count,
+            researcher_count=researcher_count,
             unit_personnel_count=unit_personnel_count,
             unit_admin_count=unit_admin_count,
             superadmin_count=superadmin_count,
