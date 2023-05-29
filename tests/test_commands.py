@@ -432,7 +432,15 @@ def test_quarterly_usage(client, cli_runner):
 
 def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
     """Test that the reporting is giving correct values."""
-    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting, ProjectUsers
+    from dds_web.database.models import (
+        Unit,
+        UnitUser,
+        ResearchUser,
+        SuperAdmin,
+        User,
+        Reporting,
+        ProjectUsers,
+    )
 
     def verify_reporting_row(row, time_date):
         """Verify correct values in reporting row."""
@@ -457,7 +465,6 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             .distinct()
             .count()
         )
-
 
     # Verify that there are no reporting rows
     assert Reporting.query.count() == 0
