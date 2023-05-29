@@ -439,11 +439,11 @@ def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
         assert row.date.date() == datetime.date(time_date)
         assert row.unit_count == Unit.query.count()
         assert row.researchuser_count == ResearchUser.query.count()
-        assert row.unituser_count == UnitUser.query.count()
+        assert row.unit_personnel_count == UnitUser.query.count()
         assert row.superadmin_count == SuperAdmin.query.count()
         assert row.total_user_count == User.query.count()
         assert row.total_user_count == sum(
-            [row.researchuser_count, row.unituser_count, row.superadmin_count]
+            [row.researchuser_count, row.unit_personnel_count, row.superadmin_count]
         )
 
     # Verify that there are no reporting rows

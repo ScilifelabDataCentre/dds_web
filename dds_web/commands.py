@@ -668,9 +668,9 @@ def quarterly_usage():
         raise
 
 
-@click.command("reporting-units-and-users")
+@click.command("stats")
 @flask.cli.with_appcontext
-def reporting_units_and_users():
+def collect_stats():
     """
     At the start of every month, get number of units and users.
     Should be run on the 1st of each month, at around 00:01.
@@ -692,18 +692,18 @@ def reporting_units_and_users():
     error_body: str = (
         f"The cronjob 'reporting' experienced issues. Please see logs. Time: {current_time}."
     )
-
+    
     # New reporting row - numbers are automatically set
     try:
         unit_count = Unit.query.count()
         researchuser_count = ResearchUser.query.count()
-        unituser_count = UnitUser.query.count()
+        unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
         new_reporting_row = Reporting(
             unit_count=unit_count,
             researchuser_count=researchuser_count,
-            unituser_count=unituser_count,
+            unit_personnel_count=unit_personnel_count,
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
         )
