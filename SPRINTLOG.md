@@ -244,5 +244,7 @@ _Nothing merged in CLI during this sprint_
 
 # 2023-05-26 - 2023-06-09
 
-- Command: Save number of Unit Personnel instead of total number of unit users ([#1417](https://github.com/ScilifelabDataCentre/dds_web/pull/1417))
-- Command: Save number of Unit Admins ([#1419](https://github.com/ScilifelabDataCentre/dds_web/pull/1419))
+- Command:
+  - Save number of Unit Personnel instead of total number of unit users ([#1417](https://github.com/ScilifelabDataCentre/dds_web/pull/1417))
+  - Save number of Unit Admins ([#1419](https://github.com/ScilifelabDataCentre/dds_web/pull/1419))
+  - Change `researchuser_count` column name to `researcher_count` in Reporting table ([#1420](https://github.com/ScilifelabDataCentre/dds_web/pull/1420))
