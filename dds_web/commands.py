@@ -698,12 +698,14 @@ def collect_stats():
         unit_count = Unit.query.count()
         researchuser_count = ResearchUser.query.count()
         unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
+        unit_admin_count = UnitUser.query.filter_by(is_admin=True).count()
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
         new_reporting_row = Reporting(
             unit_count=unit_count,
             researchuser_count=researchuser_count,
             unit_personnel_count=unit_personnel_count,
+            unit_admin_count=unit_admin_count,
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
         )
