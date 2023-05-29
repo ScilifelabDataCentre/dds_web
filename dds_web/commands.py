@@ -692,7 +692,7 @@ def collect_stats():
     error_body: str = (
         f"The cronjob 'reporting' experienced issues. Please see logs. Time: {current_time}."
     )
-    
+
     # New reporting row - numbers are automatically set
     try:
         unit_count = Unit.query.count()
