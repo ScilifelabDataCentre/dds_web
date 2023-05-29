@@ -430,7 +430,7 @@ def test_quarterly_usage(client, cli_runner):
 # reporting units and users
 
 
-def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
+def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
     """Test that the reporting is giving correct values."""
     from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting
 
