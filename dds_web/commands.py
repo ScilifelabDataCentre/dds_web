@@ -681,7 +681,15 @@ def collect_stats():
 
     # Own
     import dds_web.utils
-    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting, ProjectUsers
+    from dds_web.database.models import (
+        Unit,
+        UnitUser,
+        ResearchUser,
+        SuperAdmin,
+        User,
+        Reporting,
+        ProjectUsers,
+    )
 
     # Get current time
     current_time = dds_web.utils.timestamp(ts_format="%Y-%m-%d")
@@ -704,7 +712,12 @@ def collect_stats():
         total_user_count: int = User.query.count()
 
         # Unique project owners
-        flask.current_app.logger.debug(ProjectUsers.query.filter_by(owner=True).with_entities(ProjectUsers.user_id).distinct().count())
+        project_owner_unique_count: int = (
+            ProjectUsers.query.filter_by(owner=True)
+            .with_entities(ProjectUsers.user_id)
+            .distinct()
+            .count()
+        )
 
         # Add to database
         new_reporting_row = Reporting(
@@ -713,7 +726,8 @@ def collect_stats():
             unit_personnel_count=unit_personnel_count,
             unit_admin_count=unit_admin_count,
             superadmin_count=superadmin_count,
-            total_user_count=total_user_count,   
+            total_user_count=total_user_count,
+            project_owner_unique_count=project_owner_unique_count,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
