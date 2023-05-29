@@ -668,9 +668,9 @@ def quarterly_usage():
         raise
 
 
-@click.command("reporting-units-and-users")
+@click.command("stats")
 @flask.cli.with_appcontext
-def reporting_units_and_users():
+def collect_stats():
     """
     At the start of every month, get number of units and users.
     Should be run on the 1st of each month, at around 00:01.
