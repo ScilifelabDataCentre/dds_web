@@ -454,6 +454,7 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             [row.researchuser_count, row.unit_personnel_count, row.superadmin_count]
         )
         assert row.total_project_count == Project.query.count()
+        assert row.active_project_count == Project.query.filter_by(is_active=True).count()
 
     # Verify that there are no reporting rows
     assert Reporting.query.count() == 0
