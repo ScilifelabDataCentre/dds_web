@@ -681,7 +681,15 @@ def collect_stats():
 
     # Own
     import dds_web.utils
-    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting
+    from dds_web.database.models import (
+        Unit,
+        UnitUser,
+        ResearchUser,
+        SuperAdmin,
+        User,
+        Reporting,
+        Project,
+    )
 
     # Get current time
     current_time = dds_web.utils.timestamp(ts_format="%Y-%m-%d")
@@ -702,7 +710,10 @@ def collect_stats():
         unit_admin_count = UnitUser.query.filter_by(is_admin=True).count()
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
-
+        
+        # Project count
+        total_project_count = Project.query.count()
+        
         # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
@@ -711,6 +722,7 @@ def collect_stats():
             unit_admin_count=unit_admin_count,
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
+            total_project_count=total_project_count,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
