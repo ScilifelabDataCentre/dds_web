@@ -241,3 +241,7 @@ _Nothing merged in CLI during this sprint_
 
 - Documentation: Minor update of Technical Overview ((#1411)[https://github.com/ScilifelabDataCentre/dds_web/pull/1411])
 - Documentation: Account roles and their permissions ((#1412)[https://github.com/ScilifelabDataCentre/dds_web/pull/1412])
+
+# 2023-05-26 - 2023-06-09
+
+- Command: Save number of Unit Personnel instead of total number of unit users ([#1417](https://github.com/ScilifelabDataCentre/dds_web/pull/1417))
