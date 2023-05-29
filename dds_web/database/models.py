@@ -1080,7 +1080,7 @@ class Reporting(db.Model):
     date = db.Column(db.DateTime(), unique=True, nullable=False, default=datetime.date.today)
     unit_count = db.Column(db.Integer, unique=False, nullable=False)
     researcher_count = db.Column(db.Integer, unique=False, nullable=False)
-    project_owner_unique_count = db.Column(db.Integer, unique=False, nullable=False)
+    project_owner_unique_count = db.Column(db.Integer, unique=False, nullable=True)
     unit_personnel_count = db.Column(db.Integer, unique=False, nullable=False)
     unit_admin_count = db.Column(db.Integer, unique=False, nullable=True)
     superadmin_count = db.Column(db.Integer, unique=False, nullable=False)
