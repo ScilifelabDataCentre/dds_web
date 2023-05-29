@@ -710,10 +710,10 @@ def collect_stats():
         unit_admin_count = UnitUser.query.filter_by(is_admin=True).count()
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
-        
+
         # Project count
         total_project_count = Project.query.count()
-        
+
         # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
