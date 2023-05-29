@@ -446,14 +446,14 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         """Verify correct values in reporting row."""
         assert row.date.date() == datetime.date(time_date)
         assert row.unit_count == Unit.query.count()
-        assert row.researchuser_count == ResearchUser.query.count()
+        assert row.researcher_count == ResearchUser.query.count()
         assert row.unit_personnel_count == UnitUser.query.filter_by(is_admin=False).count()
         assert row.unit_admin_count == UnitUser.query.filter_by(is_admin=True).count()
         assert row.superadmin_count == SuperAdmin.query.count()
         assert row.total_user_count == User.query.count()
         assert row.total_user_count == sum(
             [
-                row.researchuser_count,
+                row.researcher_count,
                 row.unit_personnel_count,
                 row.unit_admin_count,
                 row.superadmin_count,
