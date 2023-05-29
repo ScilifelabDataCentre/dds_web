@@ -715,7 +715,7 @@ def collect_stats():
             unit_personnel_count=unit_personnel_count,
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
-            total_projects_count=total_project_count,
+            total_project_count=total_project_count,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
