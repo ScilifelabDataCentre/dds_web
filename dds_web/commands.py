@@ -700,19 +700,19 @@ def collect_stats():
     error_body: str = (
         f"The cronjob 'reporting' experienced issues. Please see logs. Time: {current_time}."
     )
-
+    
     # New reporting row - numbers are automatically set
     try:
         unit_count = Unit.query.count()
         researchuser_count = ResearchUser.query.count()
-        unituser_count = UnitUser.query.count()
+        unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
         total_project_count = Project.query.count()
         new_reporting_row = Reporting(
             unit_count=unit_count,
             researchuser_count=researchuser_count,
-            unituser_count=unituser_count,
+            unit_personnel_count=unit_personnel_count,
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
             total_projects_count=total_project_count,
