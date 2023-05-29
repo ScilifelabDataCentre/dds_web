@@ -1083,4 +1083,5 @@ class Reporting(db.Model):
     unit_personnel_count = db.Column(db.Integer, unique=False, nullable=False)
     superadmin_count = db.Column(db.Integer, unique=False, nullable=False)
     total_user_count = db.Column(db.Integer, unique=False, nullable=False)
+    total_project_count = db.Column(db.Integer, unique=False, nullable=True)
     active_project_count = db.Column(db.Integer, unique=False, nullable=False)
