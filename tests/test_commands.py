@@ -444,7 +444,12 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         assert row.superadmin_count == SuperAdmin.query.count()
         assert row.total_user_count == User.query.count()
         assert row.total_user_count == sum(
-            [row.researchuser_count, row.unit_personnel_count, row.unit_admin_count, row.superadmin_count]
+            [
+                row.researchuser_count,
+                row.unit_personnel_count,
+                row.unit_admin_count,
+                row.superadmin_count,
+            ]
         )
 
     # Verify that there are no reporting rows
