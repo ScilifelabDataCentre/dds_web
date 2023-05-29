@@ -681,7 +681,7 @@ def collect_stats():
 
     # Own
     import dds_web.utils
-    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting
+    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting, ProjectUsers
 
     # Get current time
     current_time = dds_web.utils.timestamp(ts_format="%Y-%m-%d")
@@ -695,13 +695,16 @@ def collect_stats():
 
     # New reporting row - numbers are automatically set
     try:
-        # User stats
-        unit_count = Unit.query.count()
-        researcher_count = ResearchUser.query.count()
-        unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
-        unit_admin_count = UnitUser.query.filter_by(is_admin=True).count()
-        superadmin_count = SuperAdmin.query.count()
-        total_user_count = User.query.count()
+        # User count
+        unit_count: int = Unit.query.count()
+        researcher_count: int = ResearchUser.query.count()
+        unit_personnel_count: int = UnitUser.query.filter_by(is_admin=False).count()
+        unit_admin_count: int = UnitUser.query.filter_by(is_admin=True).count()
+        superadmin_count: int = SuperAdmin.query.count()
+        total_user_count: int = User.query.count()
+
+        # Unique project owners
+        flask.current_app.logger.debug(ProjectUsers.query.filter_by(owner=True).with_entities(ProjectUsers.user_id).distinct().count())
 
         # Add to database
         new_reporting_row = Reporting(
@@ -710,7 +713,7 @@ def collect_stats():
             unit_personnel_count=unit_personnel_count,
             unit_admin_count=unit_admin_count,
             superadmin_count=superadmin_count,
-            total_user_count=total_user_count,
+            total_user_count=total_user_count,   
         )
         db.session.add(new_reporting_row)
         db.session.commit()
