@@ -440,20 +440,41 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         User,
         Reporting,
         Project,
+        ProjectUsers,
     )
 
     def verify_reporting_row(row, time_date):
         """Verify correct values in reporting row."""
         assert row.date.date() == datetime.date(time_date)
         assert row.unit_count == Unit.query.count()
-        assert row.researchuser_count == ResearchUser.query.count()
+        assert row.researcher_count == ResearchUser.query.count()
         assert row.unit_personnel_count == UnitUser.query.filter_by(is_admin=False).count()
+        assert row.unit_admin_count == UnitUser.query.filter_by(is_admin=True).count()
         assert row.superadmin_count == SuperAdmin.query.count()
         assert row.total_user_count == User.query.count()
-        assert row.total_user_count != sum(
-            [row.researchuser_count, row.unit_personnel_count, row.superadmin_count]
+        assert row.total_user_count == sum(
+            [
+                row.researcher_count,
+                row.unit_personnel_count,
+                row.unit_admin_count,
+                row.superadmin_count,
+            ]
+        )
+        assert row.project_owner_unique_count == (
+            ProjectUsers.query.filter_by(owner=True)
+            .with_entities(ProjectUsers.user_id)
+            .distinct()
+            .count()
         )
         assert row.total_project_count == Project.query.count()
+        assert row.active_project_count == Project.query.filter_by(is_active=True).count()
+        assert row.inactive_project_count == Project.query.filter_by(is_active=False).count()
+        assert row.total_project_count == sum(
+            [
+                row.active_project_count,
+                row.inactive_project_count,
+            ]
+        )
 
     # Verify that there are no reporting rows
     assert Reporting.query.count() == 0

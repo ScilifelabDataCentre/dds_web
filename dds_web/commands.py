@@ -689,6 +689,7 @@ def collect_stats():
         User,
         Reporting,
         Project,
+        ProjectUsers,
     )
 
     # Get current time
@@ -703,30 +704,45 @@ def collect_stats():
 
     # New reporting row - numbers are automatically set
     try:
-        # Unit count
-        unit_count = Unit.query.count()
-
-        # User count
-        researchuser_count = ResearchUser.query.count()
+        # User stats
+        researcher_count = ResearchUser.query.count()
         unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
+        unit_admin_count = UnitUser.query.filter_by(is_admin=True).count()
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
 
+        # Unique project owners
+        project_owner_unique_count: int = (
+            ProjectUsers.query.filter_by(owner=True)
+            .with_entities(ProjectUsers.user_id)
+            .distinct()
+            .count()
+        )
+
         # Project count
         total_project_count = Project.query.count()
+        active_project_count = Project.query.filter_by(is_active=True).count()
+        inactive_project_count = Project.query.filter_by(is_active=False).count()
+
+        # Unit count
+        unit_count = Unit.query.count()
 
         # Amount of data
         bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
         tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
-
-        # Save to DB
+          
+        # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
-            researchuser_count=researchuser_count,
+            researcher_count=researcher_count,
             unit_personnel_count=unit_personnel_count,
+            unit_admin_count=unit_admin_count,
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
+            project_owner_unique_count=project_owner_unique_count,
             total_project_count=total_project_count,
+            active_project_count=active_project_count,
+            inactive_project_count=inactive_project_count,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
