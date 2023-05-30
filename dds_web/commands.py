@@ -743,6 +743,7 @@ def collect_stats():
             total_project_count=total_project_count,
             active_project_count=active_project_count,
             inactive_project_count=inactive_project_count,
+            tb_stored_now=tb_stored_now,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
