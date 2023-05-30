@@ -1,7 +1,7 @@
 """change_researchuser_count_column
 
 Revision ID: 399801a80e7a
-Revises: e07c83ed0bda
+Revises: edde808b4556
 Create Date: 2023-05-29 09:37:31.007336
 
 """
