@@ -689,6 +689,7 @@ def collect_stats():
         User,
         Reporting,
         Project,
+        ProjectUsers,
     )
 
     # Get current time
@@ -711,6 +712,14 @@ def collect_stats():
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
 
+        # Unique project owners
+        project_owner_unique_count: int = (
+            ProjectUsers.query.filter_by(owner=True)
+            .with_entities(ProjectUsers.user_id)
+            .distinct()
+            .count()
+        )
+
         # Project count
         total_project_count = Project.query.count()
         active_project_count = Project.query.filter_by(is_active=True).count()
@@ -724,6 +733,7 @@ def collect_stats():
             unit_admin_count=unit_admin_count,
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
+            project_owner_unique_count=project_owner_unique_count,
             total_project_count=total_project_count,
             active_project_count=active_project_count,
             inactive_project_count=inactive_project_count,
