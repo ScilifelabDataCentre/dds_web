@@ -1087,3 +1087,4 @@ class Reporting(db.Model):
     total_user_count = db.Column(db.Integer, unique=False, nullable=False)
     total_project_count = db.Column(db.Integer, unique=False, nullable=True)
     active_project_count = db.Column(db.Integer, unique=False, nullable=True)
+    inactive_project_count = db.Column(db.Integer, unique=False, nullable=True)
