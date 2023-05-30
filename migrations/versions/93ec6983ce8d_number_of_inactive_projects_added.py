@@ -1,7 +1,7 @@
 """number_of_inactive_projects_added
 
 Revision ID: 93ec6983ce8d
-Revises: edde808b4556
+Revises: 399801a80e7a
 Create Date: 2023-05-30 08:47:53.926692
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
 revision = "93ec6983ce8d"
-down_revision = "edde808b4556"
+down_revision = "399801a80e7a"
 branch_labels = None
 depends_on = None
 
