@@ -440,6 +440,7 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         User,
         Reporting,
         ProjectUsers,
+        Project,
     )
 
     def verify_reporting_row(row, time_date):
@@ -465,6 +466,8 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             .distinct()
             .count()
         )
+        assert row.total_project_count == Project.query.count()
+        assert row.active_project_count == Project.query.filter_by(is_active=True).count()
 
     # Verify that there are no reporting rows
     assert Reporting.query.count() == 0

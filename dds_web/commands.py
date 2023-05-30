@@ -689,6 +689,7 @@ def collect_stats():
         User,
         Reporting,
         ProjectUsers,
+        Project,
     )
 
     # Get current time
@@ -719,6 +720,10 @@ def collect_stats():
             .count()
         )
 
+        # Project count
+        total_project_count = Project.query.count()
+        active_project_count = Project.query.filter_by(is_active=True).count()
+
         # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
@@ -728,6 +733,8 @@ def collect_stats():
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
             project_owner_unique_count=project_owner_unique_count,
+            total_project_count=total_project_count,
+            active_project_count=active_project_count,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
