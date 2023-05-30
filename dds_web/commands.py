@@ -705,7 +705,6 @@ def collect_stats():
     # New reporting row - numbers are automatically set
     try:
         # User stats
-        unit_count = Unit.query.count()
         researcher_count = ResearchUser.query.count()
         unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
         unit_admin_count = UnitUser.query.filter_by(is_admin=True).count()
@@ -724,6 +723,9 @@ def collect_stats():
         total_project_count = Project.query.count()
         active_project_count = Project.query.filter_by(is_active=True).count()
         inactive_project_count = Project.query.filter_by(is_active=False).count()
+
+        # Unit count
+        unit_count = Unit.query.count()
 
         # Add to database
         new_reporting_row = Reporting(
