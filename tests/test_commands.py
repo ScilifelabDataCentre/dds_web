@@ -439,6 +439,7 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         SuperAdmin,
         User,
         Reporting,
+        Project,
         ProjectUsers,
     )
 
@@ -464,6 +465,15 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             .with_entities(ProjectUsers.user_id)
             .distinct()
             .count()
+        )
+        assert row.total_project_count == Project.query.count()
+        assert row.active_project_count == Project.query.filter_by(is_active=True).count()
+        assert row.inactive_project_count == Project.query.filter_by(is_active=False).count()
+        assert row.total_project_count == sum(
+            [
+                row.active_project_count,
+                row.inactive_project_count,
+            ]
         )
 
     # Verify that there are no reporting rows

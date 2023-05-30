@@ -688,6 +688,7 @@ def collect_stats():
         SuperAdmin,
         User,
         Reporting,
+        Project,
         ProjectUsers,
     )
 
@@ -721,6 +722,19 @@ def collect_stats():
         # Unit count
         unit_count: int = Unit.query.count()
 
+        # Unique project owners
+        project_owner_unique_count: int = (
+            ProjectUsers.query.filter_by(owner=True)
+            .with_entities(ProjectUsers.user_id)
+            .distinct()
+            .count()
+        )
+
+        # Project count
+        total_project_count = Project.query.count()
+        active_project_count = Project.query.filter_by(is_active=True).count()
+        inactive_project_count = Project.query.filter_by(is_active=False).count()
+
         # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
@@ -730,6 +744,9 @@ def collect_stats():
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
             project_owner_unique_count=project_owner_unique_count,
+            total_project_count=total_project_count,
+            active_project_count=active_project_count,
+            inactive_project_count=inactive_project_count,
         )
         db.session.add(new_reporting_row)
         db.session.commit()

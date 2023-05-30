@@ -1,7 +1,7 @@
 """change_researchuser_count_column
 
 Revision ID: 399801a80e7a
-Revises: e07c83ed0bda
+Revises: edde808b4556
 Create Date: 2023-05-29 09:37:31.007336
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
 revision = "399801a80e7a"
-down_revision = "e07c83ed0bda"
+down_revision = "edde808b4556"
 branch_labels = None
 depends_on = None
 
