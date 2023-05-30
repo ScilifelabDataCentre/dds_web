@@ -440,6 +440,7 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         User,
         Reporting,
         Project,
+        ProjectUsers,
     )
 
     def verify_reporting_row(row, time_date):
@@ -458,6 +459,12 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
                 row.unit_admin_count,
                 row.superadmin_count,
             ]
+        )
+        assert row.project_owner_unique_count == (
+            ProjectUsers.query.filter_by(owner=True)
+            .with_entities(ProjectUsers.user_id)
+            .distinct()
+            .count()
         )
         assert row.total_project_count == Project.query.count()
         assert row.active_project_count == Project.query.filter_by(is_active=True).count()
