@@ -703,7 +703,7 @@ def collect_stats():
 
     # New reporting row - numbers are automatically set
     try:
-        # Unit count 
+        # Unit count
         unit_count = Unit.query.count()
 
         # User count
