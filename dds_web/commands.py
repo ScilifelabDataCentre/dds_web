@@ -703,12 +703,23 @@ def collect_stats():
 
     # New reporting row - numbers are automatically set
     try:
+        # Unit count 
         unit_count = Unit.query.count()
+
+        # User count
         researchuser_count = ResearchUser.query.count()
         unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
+
+        # Project count
         total_project_count = Project.query.count()
+
+        # Amount of data
+        bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
+        tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
+
+        # Save to DB
         new_reporting_row = Reporting(
             unit_count=unit_count,
             researchuser_count=researchuser_count,
