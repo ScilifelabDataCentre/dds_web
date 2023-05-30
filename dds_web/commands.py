@@ -724,9 +724,9 @@ def collect_stats():
         active_project_count = Project.query.filter_by(is_active=True).count()
         inactive_project_count = Project.query.filter_by(is_active=False).count()
 
-        # Unit count 
+        # Unit count
         unit_count = Unit.query.count()
-        
+
         # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
