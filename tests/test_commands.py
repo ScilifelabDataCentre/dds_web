@@ -448,10 +448,16 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         assert row.unit_count == Unit.query.count()
         assert row.researchuser_count == ResearchUser.query.count()
         assert row.unit_personnel_count == UnitUser.query.filter_by(is_admin=False).count()
+        assert row.unit_admin_count == UnitUser.query.filter_by(is_admin=True).count()
         assert row.superadmin_count == SuperAdmin.query.count()
         assert row.total_user_count == User.query.count()
-        assert row.total_user_count != sum(
-            [row.researchuser_count, row.unit_personnel_count, row.superadmin_count]
+        assert row.total_user_count == sum(
+            [
+                row.researchuser_count,
+                row.unit_personnel_count,
+                row.unit_admin_count,
+                row.superadmin_count,
+            ]
         )
         assert row.total_project_count == Project.query.count()
         assert row.active_project_count == Project.query.filter_by(is_active=True).count()
