@@ -475,7 +475,9 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
                 row.inactive_project_count,
             ]
         )
-        assert row.tb_stored_now == round(sum(proj.size for proj in Project.query) / 1000000000000, 2)
+        assert row.tb_stored_now == round(
+            sum(proj.size for proj in Project.query) / 1000000000000, 2
+        )
 
     # Verify that there are no reporting rows
     assert Reporting.query.count() == 0
@@ -518,4 +520,3 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
     reporting_rows = Reporting.query.all()
     for row in reporting_rows:
         verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)
-    
