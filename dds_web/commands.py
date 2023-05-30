@@ -730,7 +730,7 @@ def collect_stats():
         # Amount of data
         bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
         tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
-          
+
         # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
