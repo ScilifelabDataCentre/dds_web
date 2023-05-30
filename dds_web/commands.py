@@ -714,6 +714,7 @@ def collect_stats():
         # Project count
         total_project_count = Project.query.count()
         active_project_count = Project.query.filter_by(is_active=True).count()
+        inactive_project_count = Project.query.filter_by(is_active=False).count()
 
         # Add to database
         new_reporting_row = Reporting(
@@ -725,6 +726,7 @@ def collect_stats():
             total_user_count=total_user_count,
             total_project_count=total_project_count,
             active_project_count=active_project_count,
+            inactive_project_count=inactive_project_count,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
