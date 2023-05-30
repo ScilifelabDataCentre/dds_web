@@ -250,3 +250,4 @@ _Nothing merged in CLI during this sprint_
   - Save number of Unit Admins ([#1419](https://github.com/ScilifelabDataCentre/dds_web/pull/1419))
   - Save number of active projects ([#1423](https://github.com/ScilifelabDataCentre/dds_web/pull/1423))
   - Change `researchuser_count` column name to `researcher_count` in Reporting table ([#1420](https://github.com/ScilifelabDataCentre/dds_web/pull/1420))
+  - Save number of inactive projects ([#1426](https://github.com/ScilifelabDataCentre/dds_web/pull/1426))
