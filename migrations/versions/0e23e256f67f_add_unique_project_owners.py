@@ -1,7 +1,7 @@
 """add_unique_project_owners
 
 Revision ID: 0e23e256f67f
-Revises: 399801a80e7a
+Revises: 93ec6983ce8d
 Create Date: 2023-05-29 10:17:54.309735
 
 """
