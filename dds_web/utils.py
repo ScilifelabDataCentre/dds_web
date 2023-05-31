@@ -597,10 +597,10 @@ def bytehours_in_last_30days():
         for version in project.file_versions:
             # Current date and date 30 days ago
             now = current_time()
-            then = now - datetime.timedelta(days=30)
+            thirty_days_ago = now - datetime.timedelta(days=30)
 
             # 1. File uploaded after start (30 days ago)
-            if version.time_uploaded > then:
+            if version.time_uploaded > thirty_days_ago:
                 #   A. File not deleted --> now - uploaded
                 if not version.time_deleted:
                     byte_hours_sum += calculate_bytehours(
@@ -622,14 +622,14 @@ def bytehours_in_last_30days():
                 #   A. File not deleted --> now - start
                 if not version.time_deleted:
                     byte_hours_sum += calculate_bytehours(
-                        minuend=now, subtrahend=then, size_bytes=version.size_stored
+                        minuend=now, subtrahend=thirty_days_ago, size_bytes=version.size_stored
                     )
 
                 #   B. File deleted --> deleted - start
                 else:
                     byte_hours_sum += calculate_bytehours(
                         minuend=version.time_deleted,
-                        subtrahend=then,
+                        subtrahend=thirty_days_ago,
                         size_bytes=version.size_stored,
                     )
 
