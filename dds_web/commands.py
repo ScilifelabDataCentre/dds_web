@@ -727,6 +727,10 @@ def collect_stats():
         # Unit count
         unit_count = Unit.query.count()
 
+        # Amount of data
+        bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
+        tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
+
         # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
@@ -739,6 +743,7 @@ def collect_stats():
             total_project_count=total_project_count,
             active_project_count=active_project_count,
             inactive_project_count=inactive_project_count,
+            tb_stored_now=tb_stored_now,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
