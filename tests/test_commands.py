@@ -441,7 +441,9 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         Reporting,
         Project,
         ProjectUsers,
+        Version,
     )
+    from dds_web.utils import bytehours_in_last_30days, page_query
 
     def verify_reporting_row(row, time_date):
         """Verify correct values in reporting row."""
@@ -477,6 +479,9 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         )
         assert row.tb_stored_now == round(
             sum(proj.size for proj in Project.query) / 1000000000000, 2
+        )
+        assert row.tbhours == sum(
+            bytehours_in_last_30days(version=version) for version in page_query(Version.query)
         )
 
     # Verify that there are no reporting rows
