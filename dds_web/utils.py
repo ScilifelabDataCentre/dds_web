@@ -619,13 +619,13 @@ def bytehours_in_last_30days():
 
             # 2. File uploaded prior to start (30 days ago)
             else:
-                #   a. File not deleted --> now - start
+                #   A. File not deleted --> now - start
                 if not version.time_deleted:
                     byte_hours_sum += calculate_bytehours(
                         minuend=now, subtrahend=then, size_bytes=version.size_stored
                     )
 
-                #   b. File deleted --> deleted - start
+                #   B. File deleted --> deleted - start
                 else:
                     byte_hours_sum += calculate_bytehours(
                         minuend=version.time_deleted,
