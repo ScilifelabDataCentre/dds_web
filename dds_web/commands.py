@@ -734,8 +734,11 @@ def collect_stats():
         tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
 
         # TBHours
-        byte_hours_sum: float = sum(
-            bytehours_in_last_30days(version=version) for version in page_query(Version.query)
+        byte_hours_sum = sum(
+            bytehours_in_last_30days(version=version)
+            for version in page_query(Version.query)
+            if version.time_deleted is None
+            or version.time_deleted > (dds_web.utils.current_time() - datetime.timedelta(days=30))
         )
         tbhours = round(byte_hours_sum / 1e12, 2)
 

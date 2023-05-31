@@ -590,6 +590,7 @@ def calculate_version_period_usage(version):
 def bytehours_in_last_30days(version):
     """Calculate number of terrabyte hours stored in last 30 days."""
     # Current date and date 30 days ago
+    flask.current_app.logger.debug("Project: %s \t Version: %s", version.project_id, version.id)
     date_format = "%Y-%m-%d %H:%M:%S"  # No microseconds
     now = datetime.datetime.strptime(current_time().strftime(date_format), date_format)
     thirty_days_ago = now - datetime.timedelta(days=30)
@@ -623,11 +624,12 @@ def bytehours_in_last_30days(version):
 
         #   B. File deleted --> deleted - start
         else:
-            byte_hours += calculate_bytehours(
-                minuend=version.time_deleted,
-                subtrahend=thirty_days_ago,
-                size_bytes=version.size_stored,
-            )
+            if version.time_deleted > thirty_days_ago:
+                byte_hours += calculate_bytehours(
+                    minuend=version.time_deleted,
+                    subtrahend=thirty_days_ago,
+                    size_bytes=version.size_stored,
+                )
 
     return byte_hours
 
