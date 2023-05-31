@@ -540,12 +540,15 @@ def calculate_bytehours(
     """Calculate byte hours."""
     # Calculate the time difference as timedelta
     time_diff_timedelta = minuend - subtrahend
+    flask.current_app.logger.debug("Time diff: %s", time_diff_timedelta)
 
     # Convert the timedelta to hours
     hours_stored = time_diff_timedelta.total_seconds() / (60 * 60)
+    flask.current_app.logger.debug("Hours stored: %s", hours_stored)
 
     # Calculate the bytehours
     bytehours = hours_stored * size_bytes
+    flask.current_app.logger.debug("Byte hours: %s", bytehours)
 
     return bytehours
 
@@ -590,9 +593,11 @@ def calculate_version_period_usage(version):
 def bytehours_in_last_30days(version):
     """Calculate number of terrabyte hours stored in last 30 days."""
     # Current date and date 30 days ago
-    now = current_time()
+    date_format = "%Y-%m-%d %H:%M:%S"  # No microseconds
+    now = datetime.datetime.strptime(current_time().strftime(date_format), date_format)
     thirty_days_ago = now - datetime.timedelta(days=30)
-    byte_hours = 0
+    byte_hours: int = 0
+
     # 1. File uploaded after start (30 days ago)
     if version.time_uploaded > thirty_days_ago:
         #   A. File not deleted --> now - uploaded

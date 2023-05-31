@@ -690,6 +690,7 @@ def collect_stats():
         Reporting,
         Project,
         ProjectUsers,
+        Version,
     )
 
     # Get current time
@@ -730,11 +731,9 @@ def collect_stats():
         # TBHours
         from dds_web.utils import bytehours_in_last_30days, page_query
 
-        byte_hours_sum: float = 0
-        for project in page_query(Project.query):
-            for version in project.file_versions:
-                byte_hours_sum += bytehours_in_last_30days(version=version)
-
+        byte_hours_sum: float = sum(
+            bytehours_in_last_30days(version=version) for version in page_query(Version.query)
+        )
         tbhours = round(byte_hours_sum / 1e12, 2)
 
         # Add to database
