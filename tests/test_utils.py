@@ -995,6 +995,7 @@ url: str = "http://localhost"
 
 # bytehours_in_last_30days
 
+
 def test_bytehours_in_last_30days_1byte(client: flask.testing.FlaskClient):
     """Test that function calculates the correct number of TBHours."""
     # Imports
@@ -1012,7 +1013,7 @@ def test_bytehours_in_last_30days_1byte(client: flask.testing.FlaskClient):
     version_to_test.time_uploaded = time_uploaded
     version_id = version_to_test.id
     db.session.commit()
-    
+
     # 1b. Get same version
     version_to_test = models.Version.query.filter_by(id=version_id).first()
     assert version_to_test
@@ -1032,7 +1033,7 @@ def test_bytehours_in_last_30days_1byte(client: flask.testing.FlaskClient):
     version_to_test.time_deleted = time_deleted
     version_to_test.time_uploaded = time_uploaded
     db.session.commit()
-    
+
     # 2b. Get version again
     version_to_test = models.Version.query.filter_by(id=version_id).first()
 
@@ -1044,7 +1045,7 @@ def test_bytehours_in_last_30days_1byte(client: flask.testing.FlaskClient):
     # 3. 1 byte, before 30 days, not deleted --> 1*30days
     now = current_time()
     time_uploaded = now - datetime.timedelta(hours=1, days=30)
-    hours_since_30_days = 30 * 24 
+    hours_since_30_days = 30 * 24
     expected_bytehour = size_to_test * hours_since_30_days
 
     # 3a. Change time uploaded and not deleted
@@ -1078,6 +1079,7 @@ def test_bytehours_in_last_30days_1byte(client: flask.testing.FlaskClient):
     bytehours = bytehours_in_last_30days(version=version_to_test)
     assert round(bytehours) == expected_bytehour
 
+
 def test_bytehours_in_last_30days_1tb(client: flask.testing.FlaskClient):
     """Test that function calculates the correct number of TBHours."""
     # Imports
@@ -1095,7 +1097,7 @@ def test_bytehours_in_last_30days_1tb(client: flask.testing.FlaskClient):
     version_to_test.time_uploaded = time_uploaded
     version_id = version_to_test.id
     db.session.commit()
-    
+
     # 1b. Get same version
     version_to_test = models.Version.query.filter_by(id=version_id).first()
     assert version_to_test
@@ -1115,7 +1117,7 @@ def test_bytehours_in_last_30days_1tb(client: flask.testing.FlaskClient):
     version_to_test.time_deleted = time_deleted
     version_to_test.time_uploaded = time_uploaded
     db.session.commit()
-    
+
     # 2b. Get version again
     version_to_test = models.Version.query.filter_by(id=version_id).first()
 
@@ -1127,7 +1129,7 @@ def test_bytehours_in_last_30days_1tb(client: flask.testing.FlaskClient):
     # 3. 1 byte, before 30 days, not deleted --> 1*30days
     now = current_time()
     time_uploaded = now - datetime.timedelta(hours=1, days=30)
-    hours_since_30_days = 30 * 24 
+    hours_since_30_days = 30 * 24
     expected_bytehour = size_to_test * hours_since_30_days
 
     # 3a. Change time uploaded and not deleted
