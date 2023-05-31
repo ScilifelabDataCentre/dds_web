@@ -729,9 +729,7 @@ def collect_stats():
 
         # Amount of data
         bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
-        bytes_stored_now = 1230000000000
         tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
-        flask.current_app.logger.debug(tb_stored_now)
 
         # Add to database
         new_reporting_row = Reporting(
