@@ -587,6 +587,57 @@ def calculate_version_period_usage(version):
     return bytehours
 
 
+def bytehours_in_last_30days():
+    """Calculate number of terrabyte hours stored in last 30 days."""
+    # Sum of bytehours
+    byte_hours_sum: float = 0
+
+    # Iterate through projects and versions
+    for project in page_query(models.Project.query):
+        for version in project.file_versions:
+            # Current date and date 30 days ago
+            now = current_time()
+            then = now - datetime.timedelta(days=30)
+
+            # 1. File uploaded after start (30 days ago)
+            if version.time_uploaded > then:
+                #   A. File not deleted --> now - uploaded
+                if not version.time_deleted:
+                    byte_hours_sum += calculate_bytehours(
+                        minuend=now,
+                        subtrahend=version.time_uploaded,
+                        size_bytes=version.size_stored,
+                    )
+
+                #   B. File deleted --> deleted - uploaded
+                else:
+                    byte_hours_sum += calculate_bytehours(
+                        minuend=version.time_deleted,
+                        subtrahend=version.time_uploaded,
+                        size_bytes=version.size_stored,
+                    )
+
+            # 2. File uploaded prior to start (30 days ago)
+            else:
+                #   a. File not deleted --> now - start
+                if not version.time_deleted:
+                    byte_hours_sum += calculate_bytehours(
+                        minuend=now, subtrahend=then, size_bytes=version.size_stored
+                    )
+
+                #   b. File deleted --> deleted - start
+                else:
+                    byte_hours_sum += calculate_bytehours(
+                        minuend=version.time_deleted,
+                        subtrahend=then,
+                        size_bytes=version.size_stored,
+                    )
+
+    flask.current_app.logger.debug("Byte hours total: %s", byte_hours_sum)
+
+    return byte_hours_sum
+
+
 # maintenance check
 def block_if_maintenance(user=None):
     """Block API requests if maintenance is ongoing and projects are busy."""

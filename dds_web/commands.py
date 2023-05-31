@@ -17,6 +17,7 @@ import sqlalchemy
 # Own
 from dds_web import db
 
+
 @click.command("init-db")
 @click.argument("db_type", type=click.Choice(["production", "dev-small", "dev-big"]))
 @flask.cli.with_appcontext
@@ -726,48 +727,11 @@ def collect_stats():
         # Unit count
         unit_count = Unit.query.count()
 
-        # TBHours 
-        from dds_web.utils import page_query, current_time, calculate_bytehours
-        byte_hours_sum = 0
-        for project in page_query(Project.query):
-            for version in project.file_versions:
-                now = current_time()
-                flask.current_app.logger.debug("")
-                flask.current_app.logger.debug("Now: %s", now)
-                then = now - datetime.timedelta(days=30)
-                flask.current_app.logger.debug("Then: %s", then)
-                flask.current_app.logger.debug("Uploaded: %s", version.time_uploaded)
-                flask.current_app.logger.debug("Deleted: %s", version.time_deleted)
+        # TBHours
+        from dds_web.utils import bytehours_in_last_30days
 
-                # 1. file uploaded after start (30 days ago)
-                if version.time_uploaded > then:
-                    flask.current_app.logger.debug("Uploaded after 30 days ago")
-                    #   a. file not deleted --> now - uploaded 
-                    if not version.time_deleted:
-                        flask.current_app.logger.debug("Version not deleted")
-                        byte_hours_sum += calculate_bytehours(minuend=now, subtrahend=version.time_uploaded, size_bytes=version.size_stored)
-
-                    #   b. file deleted --> deleted - uploaded
-                    else:
-                        flask.current_app.logger.debug("Version deleted")
-                        byte_hours_sum += calculate_bytehours(minuend=version.time_deleted, subtrahend=version.time_uploaded, size_bytes=version.size_stored)
-
-                # 2. file uploaded before start (30 days ago)
-                else:
-                    flask.current_app.logger.debug("Uploaded before 30 days ago")
-                    #   a. file not deleted --> now - start
-                    if not version.time_deleted:
-                        flask.current_app.logger.debug("Version not deleted")
-                        byte_hours_sum += calculate_bytehours(minuend=now, subtrahend=then, size_bytes=version.size_stored)
-
-                    #   b. file deleted --> deleted - start
-                    else:
-                        flask.current_app.logger.debug("Version deleted")
-                        byte_hours_sum += calculate_bytehours(minuend=version.time_deleted, subtrahend=then, size_bytes=version.size_stored)
-        flask.current_app.logger.debug("Byte hours total: %s", byte_hours_sum)
-
-        tbhours = round(byte_hours_sum / 1e12, 2)
-        flask.current_app.logger.debug("TBHours total: %s", tbhours)
+        bytehours = bytehours_in_last_30days()
+        tbhours = round(bytehours / 1e12, 2)
 
         # Add to database
         new_reporting_row = Reporting(
