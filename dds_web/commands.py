@@ -731,7 +731,9 @@ def collect_stats():
         # Amount of data
         bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
         tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
-        bytes_stored_since_start = sum(version.size_stored for version in Version.query.all())
+        bytes_stored_since_start = sum(
+            version.size_stored for version in dds_web.utils.page_query(Version.query)
+        )
         tb_stored_since_start: float = round(bytes_stored_since_start / 1e12, 2)
 
         # Add to database
