@@ -540,15 +540,12 @@ def calculate_bytehours(
     """Calculate byte hours."""
     # Calculate the time difference as timedelta
     time_diff_timedelta = minuend - subtrahend
-    flask.current_app.logger.debug("Time diff: %s", time_diff_timedelta)
 
     # Convert the timedelta to hours
     hours_stored = time_diff_timedelta.total_seconds() / (60 * 60)
-    flask.current_app.logger.debug("Hours stored: %s", hours_stored)
 
     # Calculate the bytehours
     bytehours = hours_stored * size_bytes
-    flask.current_app.logger.debug("Byte hours: %s", bytehours)
 
     return bytehours
 
