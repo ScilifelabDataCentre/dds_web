@@ -480,8 +480,10 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         assert row.tb_stored_now == round(
             sum(proj.size for proj in Project.query) / 1000000000000, 2
         )
-        assert row.tbhours == sum(
-            bytehours_in_last_30days(version=version) for version in page_query(Version.query)
+        assert row.tbhours == round(
+            sum(bytehours_in_last_30days(version=version) for version in page_query(Version.query))
+            / 1e12,
+            2,
         )
 
     # Verify that there are no reporting rows
