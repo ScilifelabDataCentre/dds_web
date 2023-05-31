@@ -728,10 +728,13 @@ def collect_stats():
         unit_count = Unit.query.count()
 
         # TBHours
-        from dds_web.utils import bytehours_in_last_30days
-
-        bytehours = bytehours_in_last_30days()
-        tbhours = round(bytehours / 1e12, 2)
+        from dds_web.utils import bytehours_in_last_30days, page_query
+        byte_hours_sum: float = 0
+        for project in page_query(Project.query):
+            for version in project.file_versions:
+                byte_hours_sum += bytehours_in_last_30days(version=version)
+        
+        tbhours = round(byte_hours_sum / 1e12, 2)
 
         # Add to database
         new_reporting_row = Reporting(
