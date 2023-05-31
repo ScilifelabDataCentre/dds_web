@@ -681,6 +681,7 @@ def collect_stats():
 
     # Own
     import dds_web.utils
+    from dds_web.utils import bytehours_in_last_30days, page_query
     from dds_web.database.models import (
         Unit,
         UnitUser,
@@ -728,13 +729,16 @@ def collect_stats():
         # Unit count
         unit_count = Unit.query.count()
 
+        # Amount of data
+        bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
+        tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
+          
         # TBHours
-        from dds_web.utils import bytehours_in_last_30days, page_query
-
         byte_hours_sum: float = sum(
             bytehours_in_last_30days(version=version) for version in page_query(Version.query)
         )
         tbhours = round(byte_hours_sum / 1e12, 2)
+
 
         # Add to database
         new_reporting_row = Reporting(
@@ -748,6 +752,7 @@ def collect_stats():
             total_project_count=total_project_count,
             active_project_count=active_project_count,
             inactive_project_count=inactive_project_count,
+            tb_stored_now=tb_stored_now,
             tbhours=tbhours,
         )
         db.session.add(new_reporting_row)
