@@ -678,6 +678,7 @@ def collect_stats():
     # Imports
     # Installed
     import flask_mail
+    from sqlalchemy.sql import func
 
     # Own
     import dds_web.utils
