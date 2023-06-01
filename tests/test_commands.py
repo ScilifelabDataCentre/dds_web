@@ -441,7 +441,17 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         Reporting,
         Project,
         ProjectUsers,
+        Version,
     )
+    import dds_web.utils
+
+    # Set size to test to 2TB
+    size_to_test = 2 * 1e12
+    # Get version and change size stored
+    version_to_test = models.Version.query.filter_by(time_deleted=None).first()
+    version_to_test.size_stored = size_to_test
+    version_id = version_to_test.id
+    db.session.commit()
 
     def verify_reporting_row(row, time_date):
         """Verify correct values in reporting row."""
@@ -477,6 +487,10 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         )
         assert row.tb_stored_now == round(
             sum(proj.size for proj in Project.query) / 1000000000000, 2
+        )
+        assert (
+            row.tb_uploaded_since_start * 1e12
+            == Version.query.filter_by(id=version_id).first().size_stored
         )
 
     # Verify that there are no reporting rows
