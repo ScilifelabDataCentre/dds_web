@@ -622,7 +622,7 @@ def bytehours_in_last_30days(version):
                 minuend=now, subtrahend=thirty_days_ago, size_bytes=version.size_stored
             )
 
-        #   B. File deleted --> deleted - start
+        #   B. File deleted --> deleted - thirty_days_ago
         else:
             if version.time_deleted > thirty_days_ago:
                 byte_hours += calculate_bytehours(
