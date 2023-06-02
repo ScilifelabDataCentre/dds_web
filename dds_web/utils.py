@@ -609,17 +609,9 @@ def format_timestamp(
 def bytehours_in_last_month(version):
     """Calculate number of terrabyte hours stored in last month."""
     # Current date and date a month ago
-    flask.current_app.logger.debug("Project: %s \t Version: %s", version.project_id, version.id)
-    # date_format = "%Y-%m-%d %H:%M:%S"  # No microseconds
     now = format_timestamp(timestamp_object=current_time())
-    flask.current_app.logger.debug("Now: %s", now)
-    # now = datetime.datetime.strptime(current_time().strftime(date_format), date_format)
-
     a_month_ago = now - relativedelta(months=1)
-    flask.current_app.logger.debug("A month ago: %s", a_month_ago)
     byte_hours: int = 0
-
-    flask.current_app.logger.debug("In function - Time uploaded: %s", version.time_uploaded)
 
     # 1. File uploaded after start (a month ago)
     if version.time_uploaded > a_month_ago:
@@ -655,7 +647,7 @@ def bytehours_in_last_month(version):
                     subtrahend=a_month_ago,
                     size_bytes=version.size_stored,
                 )
-    flask.current_app.logger.debug(f"Bytehours: {byte_hours}")
+
     return byte_hours
 
 
