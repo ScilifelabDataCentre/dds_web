@@ -595,6 +595,11 @@ def format_timestamp(
     if not timestamp_string and not timestamp_object:
         return
 
+    if timestamp_string and timestamp_format != "%Y-%m-%d %H:%M:%S":
+        raise ValueError(
+            "Timestamp strings need to contain year, month, day, hour, minute and seconds."
+        )
+
     if timestamp_object:
         timestamp_string = timestamp_object.strftime(timestamp_format)
 

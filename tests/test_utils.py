@@ -994,6 +994,95 @@ def test_calculate_version_period_usage_new_version(client: flask.testing.FlaskC
     assert existing_version.time_invoiced
 
 
+# format_timestamp
+
+
+def test_format_timestamp_no_timestamp(client: flask.testing.FlaskClient):
+    """No timestamp can be formatted if no timestamp is entered."""
+    from dds_web.utils import format_timestamp
+
+    timestamp = format_timestamp()
+    assert timestamp is None
+
+
+def test_format_timestamp_timestamp_object(client: flask.testing.FlaskClient):
+    """Verify working timestamp object formatting."""
+    from dds_web.utils import format_timestamp, current_time
+
+    # 1. No passed in format
+    # Verify that timestamp has a microseconds part
+    now = current_time()
+    assert now.microsecond != 0
+
+    # Verify that timestamp does not have a microseconds part after formatting
+    formatted = format_timestamp(timestamp_object=now)
+    assert formatted.microsecond == 0
+
+    # Verify that the two timestamps are not equal
+    assert formatted != now
+
+    # Verify that the timestamps have equal parts
+    assert formatted.year == now.year
+    assert formatted.month == now.month
+    assert formatted.day == now.day
+    assert formatted.hour == now.hour
+    assert formatted.minute == now.minute
+    assert formatted.second == now.second
+
+    # 2. Passed in format
+    # Verify that timestamp does not have minute, second or microsecond parts after formatting
+    formatted_2 = format_timestamp(timestamp_object=now, timestamp_format="%Y-%m-%d %H")
+    assert formatted_2.minute == 0
+    assert formatted_2.second == 0
+    assert formatted_2.microsecond == 0
+
+    # Verify that the two timestamps are now equal
+    # Verify that the two timestamps are not equal
+    assert formatted_2 != now
+
+    # Verify that the timestamps have equal parts
+    assert formatted_2.year == now.year
+    assert formatted_2.month == now.month
+    assert formatted_2.day == now.day
+    assert formatted_2.hour == now.hour
+
+
+def test_format_timestamp_timestamp_string(client: flask.testing.FlaskClient):
+    """Verify working timestamp string formatting."""
+    from dds_web.utils import format_timestamp, current_time
+
+    # 1. No passed in format
+    now = current_time()
+    now_as_string = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Verify that timestamp has a microseconds part
+    assert now.microsecond != 0
+
+    # # Verify that timestamp does not have a microseconds part after formatting
+    formatted = format_timestamp(timestamp_string=now_as_string)
+    assert formatted.microsecond == 0
+
+    # Verify that the two timestamps are not equal
+    assert formatted != now
+
+    # Verify that the timestamps have equal parts
+    assert formatted.year == now.year
+    assert formatted.month == now.month
+    assert formatted.day == now.day
+    assert formatted.hour == now.hour
+    assert formatted.minute == now.minute
+    assert formatted.second == now.second
+
+    # 2. Passed in format
+    # Verify that timestamp does not have minute, second or microsecond parts after formatting
+    with pytest.raises(ValueError) as err:
+        format_timestamp(timestamp_string=now_as_string, timestamp_format="%H:%M:%S")
+    assert (
+        str(err.value)
+        == "Timestamp strings need to contain year, month, day, hour, minute and seconds."
+    )
+
+
 # bytehours_in_last_30days
 
 
@@ -1103,7 +1192,7 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
 
     # 4c. Test bytehours
     bytehours = bytehours_in_last_month(version=version_to_test)
-    assert bytehours == expected_bytehour
+    assert int(bytehours) == expected_bytehour
     print(f"Expected: {expected_bytehour}", flush=True)
     print(f"Result: {bytehours}", flush=True)
     print("")
