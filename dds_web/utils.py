@@ -12,6 +12,7 @@ import typing
 import urllib.parse
 import time
 import smtplib
+from dateutil.relativedelta import relativedelta 
 
 # Installed
 from contextlib import contextmanager
@@ -586,18 +587,33 @@ def calculate_version_period_usage(version):
 
     return bytehours
 
+def format_timestamp(timestamp_string: str = None, timestamp_object = None, timestamp_format: str = "%Y-%m-%d %H:%M:%S"):
+    """Change timestamp format."""
+    if not timestamp_string and not timestamp_object: 
+        return 
+    
+    if timestamp_object: 
+        timestamp_string = timestamp_object.strftime(timestamp_format)
 
-def bytehours_in_last_30days(version):
-    """Calculate number of terrabyte hours stored in last 30 days."""
-    # Current date and date 30 days ago
+    return datetime.datetime.strptime(timestamp_string, timestamp_format)
+
+def bytehours_in_last_month(version):
+    """Calculate number of terrabyte hours stored in last month."""
+    # Current date and date a month ago
     flask.current_app.logger.debug("Project: %s \t Version: %s", version.project_id, version.id)
-    date_format = "%Y-%m-%d %H:%M:%S"  # No microseconds
-    now = datetime.datetime.strptime(current_time().strftime(date_format), date_format)
-    thirty_days_ago = now - datetime.timedelta(days=30)
+    # date_format = "%Y-%m-%d %H:%M:%S"  # No microseconds
+    now = format_timestamp(timestamp_object=current_time())
+    flask.current_app.logger.debug("Now: %s", now)
+    # now = datetime.datetime.strptime(current_time().strftime(date_format), date_format)
+
+    a_month_ago = now - relativedelta(months=1)
+    flask.current_app.logger.debug("A month ago: %s", a_month_ago)
     byte_hours: int = 0
 
-    # 1. File uploaded after start (30 days ago)
-    if version.time_uploaded > thirty_days_ago:
+    flask.current_app.logger.debug("In function - Time uploaded: %s", version.time_uploaded)
+
+    # 1. File uploaded after start (a month ago)
+    if version.time_uploaded > a_month_ago:
         #   A. File not deleted --> now - uploaded
         if not version.time_deleted:
             byte_hours = calculate_bytehours(
@@ -614,23 +630,23 @@ def bytehours_in_last_30days(version):
                 size_bytes=version.size_stored,
             )
 
-    # 2. File uploaded prior to start (30 days ago)
+    # 2. File uploaded prior to start (a month ago)
     else:
         #   A. File not deleted --> now - thirty_days_ago
         if not version.time_deleted:
             byte_hours += calculate_bytehours(
-                minuend=now, subtrahend=thirty_days_ago, size_bytes=version.size_stored
+                minuend=now, subtrahend=a_month_ago, size_bytes=version.size_stored
             )
 
         #   B. File deleted --> deleted - thirty_days_ago
         else:
-            if version.time_deleted > thirty_days_ago:
+            if version.time_deleted > a_month_ago:
                 byte_hours += calculate_bytehours(
                     minuend=version.time_deleted,
-                    subtrahend=thirty_days_ago,
+                    subtrahend=a_month_ago,
                     size_bytes=version.size_stored,
                 )
-
+    flask.current_app.logger.debug(f"Bytehours: {byte_hours}")
     return byte_hours
 
 
