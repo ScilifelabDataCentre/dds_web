@@ -1059,7 +1059,8 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
     print(f"Time uploaded: {time_uploaded}")
     print(f"Relativedelta 1 month 1 hour: {relativedelta(months=1, hours=1)}")
 
-    hours_since_month = (now - time_uploaded).total_seconds() / (60 * 60)
+    time_a_month_ago = now - relativedelta(months=1)
+    hours_since_month = (now - time_a_month_ago).total_seconds() / (60 * 60)
     print(f"Hours since month: {hours_since_month}")
 
     expected_bytehour = size_to_test * hours_since_month
@@ -1076,28 +1077,35 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
     # 3c. Test bytehours
     bytehours = bytehours_in_last_month(version=version_to_test)
     print(f"Bytehours: {bytehours}")
-    assert int(bytehours) == expected_bytehour
+    assert bytehours == expected_bytehour
 
-    # # ---
-    # # 4. 1 byte, before 30 days, deleted an hour ago --> 1 hour less than a month
-    # time_deleted = current_time() - datetime.timedelta(hours=1)
-    # time_uploaded = now - datetime.timedelta(hours=1, days=30)
-    # hours_since_30_days = 30 * 24 - 1
-    # expected_bytehour = size_to_test * hours_since_30_days
+    # ---
+    # 4. 1 byte, before 30 days, deleted an hour ago --> 1 hour less than a month
+    print(f"Test 4 -- Size: {size_to_test}")
+    time_deleted = format_timestamp(timestamp_object=current_time()) - relativedelta(hours=1)
+    print(f"Time deleted: {time_deleted}")
+    time_uploaded = now - relativedelta(months=1, hours=1)
+    print(f"Time uploaded : {time_uploaded}")
+    time_a_month_ago = now - relativedelta(months=1)
+    print(f"Time a month ago: {time_a_month_ago}")
+    hours_since_month = (time_deleted - time_a_month_ago).total_seconds() / (60 * 60)
+    print(f"Hours since month: {hours_since_month}")
+    expected_bytehour = size_to_test * hours_since_month
+    print(f"Expected: {expected_bytehour}")
 
-    # # 4a. Change time deleted and uploaded
-    # version_to_test.time_uploaded = time_uploaded
-    # version_to_test.time_deleted = time_deleted
-    # db.session.commit()
+    # 4a. Change time deleted and uploaded
+    version_to_test.time_uploaded = time_uploaded
+    version_to_test.time_deleted = time_deleted
+    db.session.commit()
 
-    # # 4b. Get version again
-    # version_to_test = models.Version.query.filter_by(id=version_id).first()
+    # 4b. Get version again
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
 
-    # # 4c. Test bytehours
-    # bytehours = bytehours_in_last_30days(version=version_to_test)
-    # assert int(bytehours) == expected_bytehour
-    # print(f"Expected: {expected_bytehour}", flush=True)
-    # print(f"Result: {bytehours}", flush=True)
+    # 4c. Test bytehours
+    bytehours = bytehours_in_last_month(version=version_to_test)
+    assert bytehours == expected_bytehour
+    print(f"Expected: {expected_bytehour}", flush=True)
+    print(f"Result: {bytehours}", flush=True)
     print("")
 
 
