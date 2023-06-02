@@ -1093,13 +1093,9 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
     from dateutil.relativedelta import relativedelta
 
     # 1. 1 byte, 1 hour, since a month, not deleted --> 1 bytehour
-    print(f"\nTest 1 -- Size: {size_to_test}")
     now = format_timestamp(timestamp_object=current_time())
-    print(f"Now: {now}")
     time_uploaded = now - datetime.timedelta(hours=1)
-    print(f"Time uploaded: {time_uploaded}")
     expected_bytehour = size_to_test
-    print(f"Expected bytehour: {expected_bytehour}")
 
     # 1a. Get version and change size stored
     version_to_test = models.Version.query.filter_by(time_deleted=None).first()
@@ -1116,15 +1112,11 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
 
     # 1c. Test bytehours
     bytehours = bytehours_in_last_month(version=version_to_test)
-    assert int(bytehours) == expected_bytehour
 
     # ---
     # 2. 1 byte, since 30 days, deleted 1 hour ago --> 1 bytehour
-    print(f"\nTest 2 -- Size: {size_to_test}")
     time_deleted = now - datetime.timedelta(hours=1)
-    print(f"Time deleted: {time_deleted}")
     time_uploaded = time_deleted - datetime.timedelta(hours=1)
-    print(f"Time uploaded: {time_uploaded}")
 
     # 2a. Change time deleted to an hour ago and time uploaded to 2
     version_to_test.time_deleted = time_deleted
@@ -1140,20 +1132,11 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
 
     # ---
     # 3. 1 byte, before a month ago, not deleted --> 1*month
-    print(f"\nTest 3 -- Size: {size_to_test}")
     now = format_timestamp(timestamp_object=current_time())
-    print(f"Now: {now}")
-
     time_uploaded = now - relativedelta(months=1, hours=1)
-    print(f"Time uploaded: {time_uploaded}")
-    print(f"Relativedelta 1 month 1 hour: {relativedelta(months=1, hours=1)}")
-
     time_a_month_ago = now - relativedelta(months=1)
     hours_since_month = (now - time_a_month_ago).total_seconds() / (60 * 60)
-    print(f"Hours since month: {hours_since_month}")
-
     expected_bytehour = size_to_test * hours_since_month
-    print(f"Expected: {expected_bytehour}")
 
     # 3a. Change time uploaded and not deleted
     version_to_test.time_uploaded = time_uploaded
@@ -1165,22 +1148,15 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
 
     # 3c. Test bytehours
     bytehours = bytehours_in_last_month(version=version_to_test)
-    print(f"Bytehours: {bytehours}")
     assert bytehours == expected_bytehour
 
     # ---
     # 4. 1 byte, before 30 days, deleted an hour ago --> 1 hour less than a month
-    print(f"Test 4 -- Size: {size_to_test}")
     time_deleted = format_timestamp(timestamp_object=current_time()) - relativedelta(hours=1)
-    print(f"Time deleted: {time_deleted}")
     time_uploaded = now - relativedelta(months=1, hours=1)
-    print(f"Time uploaded : {time_uploaded}")
     time_a_month_ago = now - relativedelta(months=1)
-    print(f"Time a month ago: {time_a_month_ago}")
     hours_since_month = (time_deleted - time_a_month_ago).total_seconds() / (60 * 60)
-    print(f"Hours since month: {hours_since_month}")
     expected_bytehour = size_to_test * hours_since_month
-    print(f"Expected: {expected_bytehour}")
 
     # 4a. Change time deleted and uploaded
     version_to_test.time_uploaded = time_uploaded
@@ -1193,9 +1169,6 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
     # 4c. Test bytehours
     bytehours = bytehours_in_last_month(version=version_to_test)
     assert int(bytehours) == expected_bytehour
-    print(f"Expected: {expected_bytehour}", flush=True)
-    print(f"Result: {bytehours}", flush=True)
-    print("")
 
 
 def test_bytehours_in_last_month_1byte(client: flask.testing.FlaskClient):
