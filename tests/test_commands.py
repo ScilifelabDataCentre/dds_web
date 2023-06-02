@@ -443,7 +443,7 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         ProjectUsers,
         Version,
     )
-    from dds_web.utils import bytehours_in_last_30days, page_query
+    from dds_web.utils import bytehours_in_last_month, page_query
 
     def verify_reporting_row(row, time_date):
         """Verify correct values in reporting row."""
@@ -481,7 +481,7 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             sum(proj.size for proj in Project.query) / 1000000000000, 2
         )
         assert row.tbhours == round(
-            sum(bytehours_in_last_30days(version=version) for version in page_query(Version.query))
+            sum(bytehours_in_last_month(version=version) for version in page_query(Version.query))
             / 1e12,
             2,
         )

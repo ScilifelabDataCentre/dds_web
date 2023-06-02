@@ -681,7 +681,7 @@ def collect_stats():
 
     # Own
     import dds_web.utils
-    from dds_web.utils import bytehours_in_last_30days, page_query
+    from dds_web.utils import bytehours_in_last_month, page_query
     from dds_web.database.models import (
         Unit,
         UnitUser,
@@ -735,7 +735,7 @@ def collect_stats():
 
         # TBHours
         byte_hours_sum = sum(
-            bytehours_in_last_30days(version=version)
+            bytehours_in_last_month(version=version)
             for version in page_query(Version.query)
             if version.time_deleted is None
             or version.time_deleted > (dds_web.utils.current_time() - datetime.timedelta(days=30))

@@ -1083,7 +1083,7 @@ def test_format_timestamp_timestamp_string(client: flask.testing.FlaskClient):
     )
 
 
-# bytehours_in_last_30days
+# bytehours_in_last_month
 
 
 def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
@@ -1198,16 +1198,16 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
     print("")
 
 
-def test_bytehours_in_last_30days_1byte(client: flask.testing.FlaskClient):
+def test_bytehours_in_last_month_1byte(client: flask.testing.FlaskClient):
     """Test that function calculates the correct number of TBHours."""
     run_bytehours_test(client=client, size_to_test=1)
 
 
-def test_bytehours_in_last_30days_1tb(client: flask.testing.FlaskClient):
+def test_bytehours_in_last_month_1tb(client: flask.testing.FlaskClient):
     """Test that function calculates the correct number of TBHours."""
     run_bytehours_test(client=client, size_to_test=1e12)
 
 
-def test_bytehours_in_last_30days_20tb(client: flask.testing.FlaskClient):
+def test_bytehours_in_last_month_20tb(client: flask.testing.FlaskClient):
     """Test that function calculates the correct number of TBHours."""
     run_bytehours_test(client=client, size_to_test=20 * 1e12)
