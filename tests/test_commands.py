@@ -441,7 +441,9 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         Reporting,
         Project,
         ProjectUsers,
+        Version,
     )
+    import dds_web.utils
 
     def verify_reporting_row(row, time_date):
         """Verify correct values in reporting row."""
@@ -477,6 +479,11 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         )
         assert row.tb_stored_now == round(
             sum(proj.size for proj in Project.query) / 1000000000000, 2
+        )
+        assert row.tb_uploaded_since_start == round(
+            sum(version.size_stored for version in dds_web.utils.page_query(Version.query))
+            / 1000000000000,
+            2,
         )
 
     # Verify that there are no reporting rows
