@@ -678,6 +678,7 @@ def collect_stats():
     # Imports
     # Installed
     import flask_mail
+    from sqlalchemy.sql import func
 
     # Own
     import dds_web.utils
@@ -732,6 +733,10 @@ def collect_stats():
         # Amount of data
         bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
         tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
+        bytes_uploaded_since_start = db.session.query(
+            func.sum(Version.size_stored).label("sum_bytes")
+        ).first()
+        tb_uploaded_since_start: float = round(int(bytes_uploaded_since_start.sum_bytes) / 1e12, 2)
 
         # TBHours
         byte_hours_sum = sum(
@@ -755,6 +760,7 @@ def collect_stats():
             active_project_count=active_project_count,
             inactive_project_count=inactive_project_count,
             tb_stored_now=tb_stored_now,
+            tb_uploaded_since_start=tb_uploaded_since_start,
             tbhours=tbhours,
         )
         db.session.add(new_reporting_row)
