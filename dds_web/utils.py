@@ -651,6 +651,21 @@ def bytehours_in_last_month(version):
     return byte_hours
 
 
+def bytehours_total(version):
+    """Calculate total number of byte hours for a specific version."""
+    # Current date
+    now = format_timestamp(timestamp_object=current_time())
+
+    # Calculate byte hours from uploaded to deleted or now depending on if deleted yet or not
+    byte_hours: int = calculate_bytehours(
+        minuend=version.time_deleted or now,
+        subtrahend=version.time_uploaded,
+        size_bytes=version.size_stored,
+    )
+
+    return byte_hours
+
+
 # maintenance check
 def block_if_maintenance(user=None):
     """Block API requests if maintenance is ongoing and projects are busy."""
