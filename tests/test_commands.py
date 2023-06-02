@@ -488,7 +488,7 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         )
         assert row.tbhours == round(
             sum(bytehours_in_last_month(version=version) for version in page_query(Version.query))
-            / 1e12, 
+            / 1e12,
             2,
         )
 
