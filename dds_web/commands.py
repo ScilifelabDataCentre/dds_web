@@ -682,7 +682,7 @@ def collect_stats():
 
     # Own
     import dds_web.utils
-    from dds_web.utils import bytehours_in_last_month, page_query, bytehours_total
+    from dds_web.utils import bytehours_in_last_month, page_query, calculate_bytehours
     from dds_web.database.models import (
         Unit,
         UnitUser,
@@ -750,8 +750,14 @@ def collect_stats():
         )
         tbhours = round(byte_hours_sum / 1e12, 2)
         # Since start
+        time_now = dds_web.utils.current_time()
         byte_hours_sum_total = sum(
-            bytehours_total(version=version) for version in page_query(Version.query)
+            calculate_bytehours(
+                minuend=version.time_deleted or time_now,
+                subtrahend=version.time_uploaded,
+                size_bytes=version.size_stored,
+            )
+            for version in page_query(Version.query)
         )
         tbhours_total = round(byte_hours_sum_total / 1e12, 2)
 

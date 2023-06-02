@@ -616,6 +616,7 @@ def bytehours_in_last_month(version):
     # 1. File uploaded after start (a month ago)
     if version.time_uploaded > a_month_ago:
         #   A. File not deleted --> now - uploaded
+
         if not version.time_deleted:
             byte_hours = calculate_bytehours(
                 minuend=now,
@@ -649,19 +650,6 @@ def bytehours_in_last_month(version):
                 )
 
     return byte_hours
-
-
-def bytehours_total(version):
-    """Calculate total number of byte hours for a specific version."""
-    # Current date
-    now = format_timestamp(timestamp_object=current_time())
-
-    # Calculate and return byte hours from uploaded to deleted or now depending on if deleted yet or not
-    return calculate_bytehours(
-        minuend=version.time_deleted or now,
-        subtrahend=version.time_uploaded,
-        size_bytes=version.size_stored,
-    )
 
 
 # maintenance check
