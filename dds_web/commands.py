@@ -676,7 +676,7 @@ def collect_stats():
     At the start of every month, get number of units and users.
     Should be run on the 1st of each month, at around 00:01.
     """
-    # Imports    
+    # Imports
     # Installed
     import flask_mail
     from sqlalchemy.sql import func
