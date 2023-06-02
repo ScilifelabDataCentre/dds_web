@@ -656,14 +656,12 @@ def bytehours_total(version):
     # Current date
     now = format_timestamp(timestamp_object=current_time())
 
-    # Calculate byte hours from uploaded to deleted or now depending on if deleted yet or not
-    byte_hours: int = calculate_bytehours(
+    # Calculate and return byte hours from uploaded to deleted or now depending on if deleted yet or not
+    return calculate_bytehours(
         minuend=version.time_deleted or now,
         subtrahend=version.time_uploaded,
         size_bytes=version.size_stored,
     )
-
-    return byte_hours
 
 
 # maintenance check

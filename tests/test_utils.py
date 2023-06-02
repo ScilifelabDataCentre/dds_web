@@ -19,6 +19,8 @@ import flask_mail
 from flask.testing import FlaskClient
 import requests_mock
 import werkzeug
+from dateutil.relativedelta import relativedelta
+
 
 # Variables
 
@@ -1090,7 +1092,6 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
     """Run checks to see that bytehours calc works."""
     # Imports
     from dds_web.utils import bytehours_in_last_month, current_time, format_timestamp
-    from dateutil.relativedelta import relativedelta
 
     # 1. 1 byte, 1 hour, since a month, not deleted --> 1 bytehour
     now = format_timestamp(timestamp_object=current_time())
@@ -1184,3 +1185,72 @@ def test_bytehours_in_last_month_1tb(client: flask.testing.FlaskClient):
 def test_bytehours_in_last_month_20tb(client: flask.testing.FlaskClient):
     """Test that function calculates the correct number of TBHours."""
     run_bytehours_test(client=client, size_to_test=20 * 1e12)
+
+
+# bytehours_total
+
+
+def test_bytehours_total(client: flask.testing.FlaskClient):
+    """Test that the total number of bytehours is correct for a version."""
+    # Imports
+    from dds_web.utils import current_time, format_timestamp, bytehours_total
+
+    # Get version to test
+    version_to_test = models.Version.query.first()
+    version_id = version_to_test.id
+
+    # 1. Deleted, size 1 byte
+    now = format_timestamp(timestamp_object=current_time())
+    version_to_test.time_uploaded = now - relativedelta(hours=1)
+    version_to_test.time_deleted = now
+    version_to_test.size_stored = 1
+
+    # Save info
+    db.session.commit()
+
+    # Get version to test
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # Verify one bytehour
+    bytehours = bytehours_total(version=version_to_test)
+    assert bytehours == 1
+
+    # 2. Not deleted, size 1 byte
+    version_to_test.time_deleted = None
+
+    # Save info
+    db.session.commit()
+
+    # Get version to test
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # Verify one bytehour
+    bytehours = bytehours_total(version=version_to_test)
+    assert bytehours == 1
+
+    # 3. Deleted, size 2 TB
+    version_to_test.time_deleted = now
+    version_to_test.size_stored = 2000000000000
+
+    # Save info
+    db.session.commit()
+
+    # Get version to test
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # Verify one bytehour
+    bytehours = bytehours_total(version=version_to_test)
+    assert bytehours == 2000000000000
+
+    # 4. Not deleted, size 2 TB
+    version_to_test.time_deleted = None
+
+    # Save info
+    db.session.commit()
+
+    # Get version to test
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # Verify one bytehour
+    bytehours = bytehours_total(version=version_to_test)
+    assert bytehours == 2000000000000
