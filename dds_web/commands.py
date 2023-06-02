@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import datetime
+from dateutil.relativedelta import relativedelta
 
 # Installed
 import click
@@ -675,7 +676,7 @@ def collect_stats():
     At the start of every month, get number of units and users.
     Should be run on the 1st of each month, at around 00:01.
     """
-    # Imports
+    # Imports    
     # Installed
     import flask_mail
     from sqlalchemy.sql import func
@@ -743,7 +744,7 @@ def collect_stats():
             bytehours_in_last_month(version=version)
             for version in page_query(Version.query)
             if version.time_deleted is None
-            or version.time_deleted > (dds_web.utils.current_time() - datetime.timedelta(days=30))
+            or version.time_deleted > (dds_web.utils.current_time() - relativedelta(months=1))
         )
         tbhours = round(byte_hours_sum / 1e12, 2)
 
