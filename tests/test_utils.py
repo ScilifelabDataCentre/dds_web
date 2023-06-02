@@ -1001,7 +1001,7 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
     """Run checks to see that bytehours calc works."""
     # Imports
     from dds_web.utils import bytehours_in_last_month, current_time, format_timestamp
-    from dateutil.relativedelta import relativedelta 
+    from dateutil.relativedelta import relativedelta
 
     # 1. 1 byte, 1 hour, since a month, not deleted --> 1 bytehour
     print(f"\nTest 1 -- Size: {size_to_test}")

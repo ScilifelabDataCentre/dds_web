@@ -12,7 +12,7 @@ import typing
 import urllib.parse
 import time
 import smtplib
-from dateutil.relativedelta import relativedelta 
+from dateutil.relativedelta import relativedelta
 
 # Installed
 from contextlib import contextmanager
@@ -587,15 +587,19 @@ def calculate_version_period_usage(version):
 
     return bytehours
 
-def format_timestamp(timestamp_string: str = None, timestamp_object = None, timestamp_format: str = "%Y-%m-%d %H:%M:%S"):
+
+def format_timestamp(
+    timestamp_string: str = None, timestamp_object=None, timestamp_format: str = "%Y-%m-%d %H:%M:%S"
+):
     """Change timestamp format."""
-    if not timestamp_string and not timestamp_object: 
-        return 
-    
-    if timestamp_object: 
+    if not timestamp_string and not timestamp_object:
+        return
+
+    if timestamp_object:
         timestamp_string = timestamp_object.strftime(timestamp_format)
 
     return datetime.datetime.strptime(timestamp_string, timestamp_format)
+
 
 def bytehours_in_last_month(version):
     """Calculate number of terrabyte hours stored in last month."""
