@@ -1090,3 +1090,4 @@ class Reporting(db.Model):
     inactive_project_count = db.Column(db.Integer, unique=False, nullable=True)
     tb_stored_now = db.Column(db.Float, unique=False, nullable=True)
     tb_uploaded_since_start = db.Column(db.Float, unique=False, nullable=True)
+    tbhours = db.Column(db.Float, unique=False, nullable=True)
