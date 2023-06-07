@@ -1,6 +1,16 @@
 Changelog
 ==========
 
+.. _2.3.0: 
+
+2.3.0 - 2023-06-07
+~~~~~~~~~~~~~~~~~~~
+
+- Changed the reporting command (cronjob) and added statistics calculations: 
+    - Number of users in total and in different roles
+    - Number of projects: Total, active and non-active
+    - Amount of data (in TBs) currently stored and uploaded since start
+
 .. _2.2.62:
 
 2.2.62 - 2023-03-20
