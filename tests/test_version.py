@@ -2,4 +2,4 @@ from dds_web import version
 
 
 def test_version():
-    assert version.__version__ == "2.2.62"
+    assert version.__version__ == "2.3.0"

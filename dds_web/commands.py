@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import datetime
+from dateutil.relativedelta import relativedelta
 
 # Installed
 import click
@@ -746,7 +747,7 @@ def collect_stats():
             bytehours_in_last_month(version=version)
             for version in page_query(Version.query)
             if version.time_deleted is None
-            or version.time_deleted > (dds_web.utils.current_time() - datetime.timedelta(days=30))
+            or version.time_deleted > (dds_web.utils.current_time() - relativedelta(months=1))
         )
         tbhours = round(byte_hours_sum / 1e12, 2)
         # Since start
