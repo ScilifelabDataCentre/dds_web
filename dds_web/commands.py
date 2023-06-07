@@ -668,9 +668,9 @@ def quarterly_usage():
         raise
 
 
-@click.command("reporting-units-and-users")
+@click.command("stats")
 @flask.cli.with_appcontext
-def reporting_units_and_users():
+def collect_stats():
     """
     At the start of every month, get number of units and users.
     Should be run on the 1st of each month, at around 00:01.
@@ -678,10 +678,21 @@ def reporting_units_and_users():
     # Imports
     # Installed
     import flask_mail
+    from sqlalchemy.sql import func
 
     # Own
     import dds_web.utils
-    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting
+    from dds_web.database.models import (
+        Unit,
+        UnitUser,
+        ResearchUser,
+        SuperAdmin,
+        User,
+        Reporting,
+        Project,
+        ProjectUsers,
+        Version,
+    )
 
     # Get current time
     current_time = dds_web.utils.timestamp(ts_format="%Y-%m-%d")
@@ -695,17 +706,51 @@ def reporting_units_and_users():
 
     # New reporting row - numbers are automatically set
     try:
-        unit_count = Unit.query.count()
-        researchuser_count = ResearchUser.query.count()
-        unituser_count = UnitUser.query.count()
+        # User stats
+        researcher_count = ResearchUser.query.count()
+        unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
+        unit_admin_count = UnitUser.query.filter_by(is_admin=True).count()
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
+
+        # Unique project owners
+        project_owner_unique_count: int = (
+            ProjectUsers.query.filter_by(owner=True)
+            .with_entities(ProjectUsers.user_id)
+            .distinct()
+            .count()
+        )
+
+        # Project count
+        total_project_count = Project.query.count()
+        active_project_count = Project.query.filter_by(is_active=True).count()
+        inactive_project_count = Project.query.filter_by(is_active=False).count()
+
+        # Unit count
+        unit_count = Unit.query.count()
+
+        # Amount of data
+        bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
+        tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
+        bytes_uploaded_since_start = db.session.query(
+            func.sum(Version.size_stored).label("sum_bytes")
+        ).first()
+        tb_uploaded_since_start: float = round(int(bytes_uploaded_since_start.sum_bytes) / 1e12, 2)
+
+        # Add to database
         new_reporting_row = Reporting(
             unit_count=unit_count,
-            researchuser_count=researchuser_count,
-            unituser_count=unituser_count,
+            researcher_count=researcher_count,
+            unit_personnel_count=unit_personnel_count,
+            unit_admin_count=unit_admin_count,
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
+            project_owner_unique_count=project_owner_unique_count,
+            total_project_count=total_project_count,
+            active_project_count=active_project_count,
+            inactive_project_count=inactive_project_count,
+            tb_stored_now=tb_stored_now,
+            tb_uploaded_since_start=tb_uploaded_since_start,
         )
         db.session.add(new_reporting_row)
         db.session.commit()

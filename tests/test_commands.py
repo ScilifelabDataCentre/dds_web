@@ -30,7 +30,7 @@ from dds_web.commands import (
     set_expired_to_archived,
     delete_invites,
     quarterly_usage,
-    reporting_units_and_users,
+    collect_stats,
 )
 from dds_web.database import models
 from dds_web import db
@@ -430,20 +430,60 @@ def test_quarterly_usage(client, cli_runner):
 # reporting units and users
 
 
-def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
+def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
     """Test that the reporting is giving correct values."""
-    from dds_web.database.models import Unit, UnitUser, ResearchUser, SuperAdmin, User, Reporting
+    from dds_web.database.models import (
+        Unit,
+        UnitUser,
+        ResearchUser,
+        SuperAdmin,
+        User,
+        Reporting,
+        Project,
+        ProjectUsers,
+        Version,
+    )
+    import dds_web.utils
 
     def verify_reporting_row(row, time_date):
         """Verify correct values in reporting row."""
         assert row.date.date() == datetime.date(time_date)
         assert row.unit_count == Unit.query.count()
-        assert row.researchuser_count == ResearchUser.query.count()
-        assert row.unituser_count == UnitUser.query.count()
+        assert row.researcher_count == ResearchUser.query.count()
+        assert row.unit_personnel_count == UnitUser.query.filter_by(is_admin=False).count()
+        assert row.unit_admin_count == UnitUser.query.filter_by(is_admin=True).count()
         assert row.superadmin_count == SuperAdmin.query.count()
         assert row.total_user_count == User.query.count()
         assert row.total_user_count == sum(
-            [row.researchuser_count, row.unituser_count, row.superadmin_count]
+            [
+                row.researcher_count,
+                row.unit_personnel_count,
+                row.unit_admin_count,
+                row.superadmin_count,
+            ]
+        )
+        assert row.project_owner_unique_count == (
+            ProjectUsers.query.filter_by(owner=True)
+            .with_entities(ProjectUsers.user_id)
+            .distinct()
+            .count()
+        )
+        assert row.total_project_count == Project.query.count()
+        assert row.active_project_count == Project.query.filter_by(is_active=True).count()
+        assert row.inactive_project_count == Project.query.filter_by(is_active=False).count()
+        assert row.total_project_count == sum(
+            [
+                row.active_project_count,
+                row.inactive_project_count,
+            ]
+        )
+        assert row.tb_stored_now == round(
+            sum(proj.size for proj in Project.query) / 1000000000000, 2
+        )
+        assert row.tb_uploaded_since_start == round(
+            sum(version.size_stored for version in dds_web.utils.page_query(Version.query))
+            / 1000000000000,
+            2,
         )
 
     # Verify that there are no reporting rows
@@ -454,7 +494,7 @@ def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
     with freezegun.freeze_time(first_time):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-            result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+            result: click.testing.Result = cli_runner.invoke(collect_stats)
             assert not result.exception, "Raised an unwanted exception."
             assert mock_mail_send.call_count == 0
 
@@ -468,7 +508,7 @@ def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
             # with pytest.raises(Exception) as err:
-            result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+            result: click.testing.Result = cli_runner.invoke(collect_stats)
             assert result.exception, "Did not raise exception."
             assert "Duplicate entry" in str(result.exception)
             assert mock_mail_send.call_count == 1
@@ -478,7 +518,7 @@ def test_reporting_units_and_users(client, cli_runner, fs: FakeFilesystem):
     with freezegun.freeze_time(second_time):
         # Run scheduled job now
         with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
-            result: click.testing.Result = cli_runner.invoke(reporting_units_and_users)
+            result: click.testing.Result = cli_runner.invoke(collect_stats)
             assert not result.exception, "Raised an unwanted exception."
             assert mock_mail_send.call_count == 0
 

@@ -241,3 +241,17 @@ _Nothing merged in CLI during this sprint_
 
 - Documentation: Minor update of Technical Overview ((#1411)[https://github.com/ScilifelabDataCentre/dds_web/pull/1411])
 - Documentation: Account roles and their permissions ((#1412)[https://github.com/ScilifelabDataCentre/dds_web/pull/1412])
+
+# 2023-05-26 - 2023-06-09
+
+- Command:
+  - Save number of Unit Personnel instead of total number of unit users ([#1417](https://github.com/ScilifelabDataCentre/dds_web/pull/1417))
+  - Save total number of projects ([#1418](https://github.com/ScilifelabDataCentre/dds_web/pull/1418))
+  - Save number of Unit Admins ([#1419](https://github.com/ScilifelabDataCentre/dds_web/pull/1419))
+  - Save number of active projects ([#1423](https://github.com/ScilifelabDataCentre/dds_web/pull/1423))
+  - Change `researchuser_count` column name to `researcher_count` in Reporting table ([#1420](https://github.com/ScilifelabDataCentre/dds_web/pull/1420))
+  - Save number of inactive projects ([#1426](https://github.com/ScilifelabDataCentre/dds_web/pull/1426))
+  - Save number of unique Project Owners ([#1421](https://github.com/ScilifelabDataCentre/dds_web/pull/1421))
+  - Save amount of TB's currently stored in system ([#1424](https://github.com/ScilifelabDataCentre/dds_web/pull/1424))
+  - Save amount of TB's uploaded since start ([#1430](https://github.com/ScilifelabDataCentre/dds_web/pull/1430))
+- New version: 2.3.0 ([#1433](https://github.com/ScilifelabDataCentre/dds_web/pull/1433))
