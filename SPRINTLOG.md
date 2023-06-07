@@ -254,3 +254,4 @@ _Nothing merged in CLI during this sprint_
   - Save number of unique Project Owners ([#1421](https://github.com/ScilifelabDataCentre/dds_web/pull/1421))
   - Save amount of TB's currently stored in system ([#1424](https://github.com/ScilifelabDataCentre/dds_web/pull/1424))
   - Save amount of TB's uploaded since start ([#1430](https://github.com/ScilifelabDataCentre/dds_web/pull/1430))
+- New version: 2.3.0 ([#1433](https://github.com/ScilifelabDataCentre/dds_web/pull/1433))
