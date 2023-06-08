@@ -850,7 +850,7 @@ def test_statistics_return_none(client: flask.testing.FlaskClient) -> None:
 
     # Check response
     returned: typing.Dict = response.json.get("stats")
-    assert returned == {}
+    assert returned == []
 
 
 def test_statistics_return_rows(client: flask.testing.FlaskClient, cli_runner) -> None:
