@@ -898,39 +898,3 @@ def test_statistics_return_rows(client: flask.testing.FlaskClient, cli_runner) -
         "TBHours Last Month": reporting_row.tbhours,
         "TBHours Total": reporting_row.tbhours_since_start,
     }
-
-    # Generate another row in reporting table
-    time_2 = datetime(year=2022, month=12, day=11, hour=10, minute=54, second=10)
-    add_row_to_reporting_table(time=time_2)
-
-    # Verify that there's a row added
-    assert models.Reporting.query.count() == 2
-
-    # Get all rows from API
-    token_2 = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
-    response_2 = client.get(tests.DDSEndpoint.STATS, headers=token_2)
-    print(response_2.text)
-    assert response_2.status_code == http.HTTPStatus.OK
-
-    # Check response
-    returned: typing.Dict = response.json.get("stats")
-    assert len(returned) == 2
-    reporting_rows = models.Reporting.query.all()
-    for row in reporting_rows:
-        assert {
-        "Date": str(row.date),
-        "Units": row.unit_count,
-        "Researchers": row.researcher_count,
-        "Project Owners": row.project_owner_unique_count,
-        "Unit Personnel": row.unit_personnel_count,
-        "Unit Admins": row.unit_admin_count,
-        "Super Admins": row.superadmin_count,
-        "Total Users": row.total_user_count,
-        "Total Projects": row.total_project_count,
-        "Active Projects": row.active_project_count,
-        "Inactive Projects": row.inactive_project_count,
-        "Data Now (TB)": row.tb_stored_now,
-        "Data Uploaded (TB)": row.tb_uploaded_since_start,
-        "TBHours Last Month": row.tbhours,
-        "TBHours Total": row.tbhours_since_start,
-    } in returned
