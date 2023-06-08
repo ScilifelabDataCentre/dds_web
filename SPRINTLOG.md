@@ -257,3 +257,4 @@ _Nothing merged in CLI during this sprint_
   - Save number of TBHours stored in the last month ([#1431](https://github.com/ScilifelabDataCentre/dds_web/pull/1431))
   - Save number of TBHours stored in since start ([#1434](https://github.com/ScilifelabDataCentre/dds_web/pull/1434))
 - New version: 2.3.0 ([#1433](https://github.com/ScilifelabDataCentre/dds_web/pull/1433))
+- Dependency: Bump `requests` to 2.31.0 due to security vulnerability alert ([#1427](https://github.com/ScilifelabDataCentre/dds_web/pull/1427))
