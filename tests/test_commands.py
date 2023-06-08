@@ -491,13 +491,17 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             / 1e12,
             2,
         )
-        assert row.tbhours_since_start == sum(
-            calculate_bytehours(
-                minuend=version.time_deleted or time_date,
-                subtrahend=version.time_uploaded,
-                size_bytes=version.size_stored,
+        assert row.tbhours_since_start == round(
+            sum(
+                calculate_bytehours(
+                    minuend=version.time_deleted or time_date,
+                    subtrahend=version.time_uploaded,
+                    size_bytes=version.size_stored,
+                )
+                for version in page_query(Version.query)
             )
-            for version in page_query(Version.query)
+            / 1e12,
+            2,
         )
 
     # Verify that there are no reporting rows
