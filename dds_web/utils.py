@@ -621,22 +621,6 @@ def bytehours_in_last_month(version):
             size_bytes=version.size_stored,
         )
 
-        # #   A. File not deleted --> now - uploaded
-        # if not version.time_deleted:
-        #     byte_hours = calculate_bytehours(
-        #         minuend=now,
-        #         subtrahend=version.time_uploaded,
-        #         size_bytes=version.size_stored,
-        #     )
-
-        # #   B. File deleted --> deleted - uploaded
-        # else:
-        #     byte_hours += calculate_bytehours(
-        #         minuend=version.time_deleted,
-        #         subtrahend=version.time_uploaded,
-        #         size_bytes=version.size_stored,
-        #     )
-
     # 2. File uploaded prior to start (a month ago)
     else:
         byte_hours = calculate_bytehours(
@@ -644,21 +628,6 @@ def bytehours_in_last_month(version):
             subtrahend=a_month_ago,
             size_bytes=version.size_stored,
         )
-
-        # #   A. File not deleted --> now - thirty_days_ago
-        # if not version.time_deleted:
-        #     byte_hours += calculate_bytehours(
-        #         minuend=now, subtrahend=a_month_ago, size_bytes=version.size_stored
-        #     )
-
-        # #   B. File deleted --> deleted - thirty_days_ago
-        # else:
-        #     if version.time_deleted > a_month_ago:
-        #         byte_hours += calculate_bytehours(
-        #             minuend=version.time_deleted,
-        #             subtrahend=a_month_ago,
-        #             size_bytes=version.size_stored,
-        #         )
 
     return byte_hours
 
