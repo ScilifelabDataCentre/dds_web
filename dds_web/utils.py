@@ -12,6 +12,7 @@ import typing
 import urllib.parse
 import time
 import smtplib
+from dateutil.relativedelta import relativedelta
 
 # Installed
 from contextlib import contextmanager
@@ -585,6 +586,69 @@ def calculate_version_period_usage(version):
         version.time_invoiced = now
 
     return bytehours
+
+
+def format_timestamp(
+    timestamp_string: str = None, timestamp_object=None, timestamp_format: str = "%Y-%m-%d %H:%M:%S"
+):
+    """Change timestamp format."""
+    if not timestamp_string and not timestamp_object:
+        return
+
+    if timestamp_string and timestamp_format != "%Y-%m-%d %H:%M:%S":
+        raise ValueError(
+            "Timestamp strings need to contain year, month, day, hour, minute and seconds."
+        )
+
+    if timestamp_object:
+        timestamp_string = timestamp_object.strftime(timestamp_format)
+
+    return datetime.datetime.strptime(timestamp_string, timestamp_format)
+
+
+def bytehours_in_last_month(version):
+    """Calculate number of terrabyte hours stored in last month."""
+    # Current date and date a month ago
+    now = format_timestamp(timestamp_object=current_time())
+    a_month_ago = now - relativedelta(months=1)
+    byte_hours: int = 0
+
+    # 1. File uploaded after start (a month ago)
+    if version.time_uploaded > a_month_ago:
+        #   A. File not deleted --> now - uploaded
+        if not version.time_deleted:
+            byte_hours = calculate_bytehours(
+                minuend=now,
+                subtrahend=version.time_uploaded,
+                size_bytes=version.size_stored,
+            )
+
+        #   B. File deleted --> deleted - uploaded
+        else:
+            byte_hours += calculate_bytehours(
+                minuend=version.time_deleted,
+                subtrahend=version.time_uploaded,
+                size_bytes=version.size_stored,
+            )
+
+    # 2. File uploaded prior to start (a month ago)
+    else:
+        #   A. File not deleted --> now - thirty_days_ago
+        if not version.time_deleted:
+            byte_hours += calculate_bytehours(
+                minuend=now, subtrahend=a_month_ago, size_bytes=version.size_stored
+            )
+
+        #   B. File deleted --> deleted - thirty_days_ago
+        else:
+            if version.time_deleted > a_month_ago:
+                byte_hours += calculate_bytehours(
+                    minuend=version.time_deleted,
+                    subtrahend=a_month_ago,
+                    size_bytes=version.size_stored,
+                )
+
+    return byte_hours
 
 
 # maintenance check

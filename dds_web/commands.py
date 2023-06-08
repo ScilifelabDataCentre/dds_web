@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import datetime
+from dateutil.relativedelta import relativedelta
 
 # Installed
 import click
@@ -678,9 +679,11 @@ def collect_stats():
     # Imports
     # Installed
     import flask_mail
+    from sqlalchemy.sql import func
 
     # Own
     import dds_web.utils
+    from dds_web.utils import bytehours_in_last_month, page_query
     from dds_web.database.models import (
         Unit,
         UnitUser,
@@ -689,6 +692,8 @@ def collect_stats():
         User,
         Reporting,
         Project,
+        ProjectUsers,
+        Version,
     )
 
     # Get current time
@@ -704,16 +709,44 @@ def collect_stats():
     # New reporting row - numbers are automatically set
     try:
         # User stats
-        unit_count = Unit.query.count()
         researcher_count = ResearchUser.query.count()
         unit_personnel_count = UnitUser.query.filter_by(is_admin=False).count()
         unit_admin_count = UnitUser.query.filter_by(is_admin=True).count()
         superadmin_count = SuperAdmin.query.count()
         total_user_count = User.query.count()
 
+        # Unique project owners
+        project_owner_unique_count: int = (
+            ProjectUsers.query.filter_by(owner=True)
+            .with_entities(ProjectUsers.user_id)
+            .distinct()
+            .count()
+        )
+
         # Project count
         total_project_count = Project.query.count()
         active_project_count = Project.query.filter_by(is_active=True).count()
+        inactive_project_count = Project.query.filter_by(is_active=False).count()
+
+        # Unit count
+        unit_count = Unit.query.count()
+
+        # Amount of data
+        bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
+        tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
+        bytes_uploaded_since_start = db.session.query(
+            func.sum(Version.size_stored).label("sum_bytes")
+        ).first()
+        tb_uploaded_since_start: float = round(int(bytes_uploaded_since_start.sum_bytes) / 1e12, 2)
+
+        # TBHours
+        byte_hours_sum = sum(
+            bytehours_in_last_month(version=version)
+            for version in page_query(Version.query)
+            if version.time_deleted is None
+            or version.time_deleted > (dds_web.utils.current_time() - relativedelta(months=1))
+        )
+        tbhours = round(byte_hours_sum / 1e12, 2)
 
         # Add to database
         new_reporting_row = Reporting(
@@ -723,8 +756,13 @@ def collect_stats():
             unit_admin_count=unit_admin_count,
             superadmin_count=superadmin_count,
             total_user_count=total_user_count,
+            project_owner_unique_count=project_owner_unique_count,
             total_project_count=total_project_count,
             active_project_count=active_project_count,
+            inactive_project_count=inactive_project_count,
+            tb_stored_now=tb_stored_now,
+            tb_uploaded_since_start=tb_uploaded_since_start,
+            tbhours=tbhours,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
