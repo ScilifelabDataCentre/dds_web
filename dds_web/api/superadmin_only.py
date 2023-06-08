@@ -311,3 +311,37 @@ class AnyProjectsBusy(flask_restful.Resource):
             return_info.update({"projects": {p.public_id: p.date_updated for p in projects_busy}})
 
         return return_info
+
+
+class Statistics(flask_restful.Resource):
+    """Get rows from Reporting table."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        """Collect rows from reporting table and return them."""
+        stat_rows: typing.List = models.Reporting.query.all()
+        return {
+            "stats": [
+                {
+                    "Date": str(row.date),
+                    "Units": row.unit_count,
+                    "Researchers": row.researcher_count,
+                    "Project Owners": row.project_owner_unique_count,
+                    "Unit Personnel": row.unit_personnel_count,
+                    "Unit Admins": row.unit_admin_count,
+                    "Super Admins": row.superadmin_count,
+                    "Total Users": row.total_user_count,
+                    "Total Projects": row.total_project_count,
+                    "Active Projects": row.active_project_count,
+                    "Inactive Projects": row.inactive_project_count,
+                    "Data Now (TB)": row.tb_stored_now,
+                    "Data Uploaded (TB)": row.tb_uploaded_since_start,
+                    "TBHours Last Month": row.tbhours,
+                    "TBHours Total": row.tbhours_since_start,
+                }
+                for row in stat_rows
+                if stat_rows
+            ]
+        }

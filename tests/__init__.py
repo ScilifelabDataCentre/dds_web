@@ -229,5 +229,6 @@ class DDSEndpoint:
     MOTD_SEND = BASE_ENDPOINT + "/motd/send"
     USER_FIND = BASE_ENDPOINT + "/user/find"
     TOTP_DEACTIVATE = BASE_ENDPOINT + "/user/totp/deactivate"
+    STATS = BASE_ENDPOINT + "/stats"
 
     TIMEOUT = 5
