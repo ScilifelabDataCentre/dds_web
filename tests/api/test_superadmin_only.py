@@ -828,6 +828,7 @@ def test_anyprojectsbusy_false_list(client: flask.testing.FlaskClient) -> None:
     projects_returned: typing.Dict = response.json.get("projects")
     assert projects_returned is None
 
+
 def test_statistics_no_access(client: flask.testing.FlaskClient) -> None:
     """Verify that users that are not Super Admins cannot use this endpoint."""
     # Verify no access for researchers and unit users
