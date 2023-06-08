@@ -1091,3 +1091,4 @@ class Reporting(db.Model):
     tb_stored_now = db.Column(db.Float, unique=False, nullable=True)
     tb_uploaded_since_start = db.Column(db.Float, unique=False, nullable=True)
     tbhours = db.Column(db.Float, unique=False, nullable=True)
+    tbhours_since_start = db.Column(db.Float, unique=False, nullable=True)

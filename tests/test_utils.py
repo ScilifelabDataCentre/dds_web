@@ -19,6 +19,8 @@ import flask_mail
 from flask.testing import FlaskClient
 import requests_mock
 import werkzeug
+from dateutil.relativedelta import relativedelta
+
 
 # Variables
 
@@ -1090,7 +1092,6 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
     """Run checks to see that bytehours calc works."""
     # Imports
     from dds_web.utils import bytehours_in_last_month, current_time, format_timestamp
-    from dateutil.relativedelta import relativedelta
 
     # 1. 1 byte, 1 hour, since a month, not deleted --> 1 bytehour
     now = format_timestamp(timestamp_object=current_time())

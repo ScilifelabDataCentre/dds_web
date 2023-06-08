@@ -443,7 +443,7 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         ProjectUsers,
         Version,
     )
-    from dds_web.utils import bytehours_in_last_month, page_query
+    from dds_web.utils import bytehours_in_last_month, page_query, calculate_bytehours
     import dds_web.utils
 
     def verify_reporting_row(row, time_date):
@@ -488,6 +488,18 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         )
         assert row.tbhours == round(
             sum(bytehours_in_last_month(version=version) for version in page_query(Version.query))
+            / 1e12,
+            2,
+        )
+        assert row.tbhours_since_start == round(
+            sum(
+                calculate_bytehours(
+                    minuend=version.time_deleted or time_date,
+                    subtrahend=version.time_uploaded,
+                    size_bytes=version.size_stored,
+                )
+                for version in page_query(Version.query)
+            )
             / 1e12,
             2,
         )

@@ -683,7 +683,7 @@ def collect_stats():
 
     # Own
     import dds_web.utils
-    from dds_web.utils import bytehours_in_last_month, page_query
+    from dds_web.utils import bytehours_in_last_month, page_query, calculate_bytehours
     from dds_web.database.models import (
         Unit,
         UnitUser,
@@ -732,14 +732,17 @@ def collect_stats():
         unit_count = Unit.query.count()
 
         # Amount of data
+        # Currently stored
         bytes_stored_now: int = sum(proj.size for proj in Project.query.filter_by(is_active=True))
         tb_stored_now: float = round(bytes_stored_now / 1e12, 2)
+        # Uploaded since start
         bytes_uploaded_since_start = db.session.query(
             func.sum(Version.size_stored).label("sum_bytes")
         ).first()
         tb_uploaded_since_start: float = round(int(bytes_uploaded_since_start.sum_bytes) / 1e12, 2)
 
         # TBHours
+        # In last month
         byte_hours_sum = sum(
             bytehours_in_last_month(version=version)
             for version in page_query(Version.query)
@@ -747,6 +750,17 @@ def collect_stats():
             or version.time_deleted > (dds_web.utils.current_time() - relativedelta(months=1))
         )
         tbhours = round(byte_hours_sum / 1e12, 2)
+        # Since start
+        time_now = dds_web.utils.current_time()
+        byte_hours_sum_total = sum(
+            calculate_bytehours(
+                minuend=version.time_deleted or time_now,
+                subtrahend=version.time_uploaded,
+                size_bytes=version.size_stored,
+            )
+            for version in page_query(Version.query)
+        )
+        tbhours_total = round(byte_hours_sum_total / 1e12, 2)
 
         # Add to database
         new_reporting_row = Reporting(
@@ -763,6 +777,7 @@ def collect_stats():
             tb_stored_now=tb_stored_now,
             tb_uploaded_since_start=tb_uploaded_since_start,
             tbhours=tbhours,
+            tbhours_since_start=tbhours_total,
         )
         db.session.add(new_reporting_row)
         db.session.commit()
