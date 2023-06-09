@@ -56,7 +56,7 @@ services:
     environment:
       - DDS_VERSION=local-dev
       - DDS_APP_CONFIG=/code/dds_web/sensitive/dds_app.cfg
-      - FLASK_ENV=development
+      - FLASK_DEBUG=true
       - FLASK_APP=dds_web
       - DB_TYPE=${DDS_DB_TYPE}
       # - RATELIMIT_STORAGE_URI=redis://dds_redis
