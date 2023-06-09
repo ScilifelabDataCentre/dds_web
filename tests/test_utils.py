@@ -19,6 +19,8 @@ import flask_mail
 from flask.testing import FlaskClient
 import requests_mock
 import werkzeug
+from dateutil.relativedelta import relativedelta
+
 
 # Variables
 
@@ -992,3 +994,194 @@ def test_calculate_version_period_usage_new_version(client: flask.testing.FlaskC
     assert existing_version.size_stored == 10000
     assert bytehours < 10000.0
     assert existing_version.time_invoiced
+
+
+# format_timestamp
+
+
+def test_format_timestamp_no_timestamp(client: flask.testing.FlaskClient):
+    """No timestamp can be formatted if no timestamp is entered."""
+    from dds_web.utils import format_timestamp
+
+    timestamp = format_timestamp()
+    assert timestamp is None
+
+
+def test_format_timestamp_timestamp_object(client: flask.testing.FlaskClient):
+    """Verify working timestamp object formatting."""
+    from dds_web.utils import format_timestamp, current_time
+
+    # 1. No passed in format
+    # Verify that timestamp has a microseconds part
+    now = current_time()
+    assert now.microsecond != 0
+
+    # Verify that timestamp does not have a microseconds part after formatting
+    formatted = format_timestamp(timestamp_object=now)
+    assert formatted.microsecond == 0
+
+    # Verify that the two timestamps are not equal
+    assert formatted != now
+
+    # Verify that the timestamps have equal parts
+    assert formatted.year == now.year
+    assert formatted.month == now.month
+    assert formatted.day == now.day
+    assert formatted.hour == now.hour
+    assert formatted.minute == now.minute
+    assert formatted.second == now.second
+
+    # 2. Passed in format
+    # Verify that timestamp does not have minute, second or microsecond parts after formatting
+    formatted_2 = format_timestamp(timestamp_object=now, timestamp_format="%Y-%m-%d %H")
+    assert formatted_2.minute == 0
+    assert formatted_2.second == 0
+    assert formatted_2.microsecond == 0
+
+    # Verify that the two timestamps are now equal
+    # Verify that the two timestamps are not equal
+    assert formatted_2 != now
+
+    # Verify that the timestamps have equal parts
+    assert formatted_2.year == now.year
+    assert formatted_2.month == now.month
+    assert formatted_2.day == now.day
+    assert formatted_2.hour == now.hour
+
+
+def test_format_timestamp_timestamp_string(client: flask.testing.FlaskClient):
+    """Verify working timestamp string formatting."""
+    from dds_web.utils import format_timestamp, current_time
+
+    # 1. No passed in format
+    now = current_time()
+    now_as_string = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Verify that timestamp has a microseconds part
+    assert now.microsecond != 0
+
+    # # Verify that timestamp does not have a microseconds part after formatting
+    formatted = format_timestamp(timestamp_string=now_as_string)
+    assert formatted.microsecond == 0
+
+    # Verify that the two timestamps are not equal
+    assert formatted != now
+
+    # Verify that the timestamps have equal parts
+    assert formatted.year == now.year
+    assert formatted.month == now.month
+    assert formatted.day == now.day
+    assert formatted.hour == now.hour
+    assert formatted.minute == now.minute
+    assert formatted.second == now.second
+
+    # 2. Passed in format
+    # Verify that timestamp does not have minute, second or microsecond parts after formatting
+    with pytest.raises(ValueError) as err:
+        format_timestamp(timestamp_string=now_as_string, timestamp_format="%H:%M:%S")
+    assert (
+        str(err.value)
+        == "Timestamp strings need to contain year, month, day, hour, minute and seconds."
+    )
+
+
+# bytehours_in_last_month
+
+
+def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
+    """Run checks to see that bytehours calc works."""
+    # Imports
+    from dds_web.utils import bytehours_in_last_month, current_time, format_timestamp
+
+    # 1. 1 byte, 1 hour, since a month, not deleted --> 1 bytehour
+    now = format_timestamp(timestamp_object=current_time())
+    time_uploaded = now - datetime.timedelta(hours=1)
+    expected_bytehour = size_to_test
+
+    # 1a. Get version and change size stored
+    version_to_test = models.Version.query.filter_by(time_deleted=None).first()
+    version_to_test.size_stored = size_to_test
+    version_to_test.time_uploaded = time_uploaded
+    version_id = version_to_test.id
+    db.session.commit()
+
+    # 1b. Get same version
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+    assert version_to_test
+    assert version_to_test.size_stored == size_to_test
+    assert not version_to_test.time_deleted
+
+    # 1c. Test bytehours
+    bytehours = bytehours_in_last_month(version=version_to_test)
+
+    # ---
+    # 2. 1 byte, since 30 days, deleted 1 hour ago --> 1 bytehour
+    time_deleted = now - datetime.timedelta(hours=1)
+    time_uploaded = time_deleted - datetime.timedelta(hours=1)
+
+    # 2a. Change time deleted to an hour ago and time uploaded to 2
+    version_to_test.time_deleted = time_deleted
+    version_to_test.time_uploaded = time_uploaded
+    db.session.commit()
+
+    # 2b. Get version again
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # 2c. Test bytehours
+    bytehours = bytehours_in_last_month(version=version_to_test)
+    assert int(bytehours) == expected_bytehour
+
+    # ---
+    # 3. 1 byte, before a month ago, not deleted --> 1*month
+    now = format_timestamp(timestamp_object=current_time())
+    time_uploaded = now - relativedelta(months=1, hours=1)
+    time_a_month_ago = now - relativedelta(months=1)
+    hours_since_month = (now - time_a_month_ago).total_seconds() / (60 * 60)
+    expected_bytehour = size_to_test * hours_since_month
+
+    # 3a. Change time uploaded and not deleted
+    version_to_test.time_uploaded = time_uploaded
+    version_to_test.time_deleted = None
+    db.session.commit()
+
+    # 3b. Get version again
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # 3c. Test bytehours
+    bytehours = bytehours_in_last_month(version=version_to_test)
+    assert bytehours == expected_bytehour
+
+    # ---
+    # 4. 1 byte, before 30 days, deleted an hour ago --> 1 hour less than a month
+    time_deleted = format_timestamp(timestamp_object=current_time()) - relativedelta(hours=1)
+    time_uploaded = now - relativedelta(months=1, hours=1)
+    time_a_month_ago = now - relativedelta(months=1)
+    hours_since_month = (time_deleted - time_a_month_ago).total_seconds() / (60 * 60)
+    expected_bytehour = size_to_test * hours_since_month
+
+    # 4a. Change time deleted and uploaded
+    version_to_test.time_uploaded = time_uploaded
+    version_to_test.time_deleted = time_deleted
+    db.session.commit()
+
+    # 4b. Get version again
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # 4c. Test bytehours
+    bytehours = bytehours_in_last_month(version=version_to_test)
+    assert int(bytehours) == expected_bytehour
+
+
+def test_bytehours_in_last_month_1byte(client: flask.testing.FlaskClient):
+    """Test that function calculates the correct number of TBHours."""
+    run_bytehours_test(client=client, size_to_test=1)
+
+
+def test_bytehours_in_last_month_1tb(client: flask.testing.FlaskClient):
+    """Test that function calculates the correct number of TBHours."""
+    run_bytehours_test(client=client, size_to_test=1e12)
+
+
+def test_bytehours_in_last_month_20tb(client: flask.testing.FlaskClient):
+    """Test that function calculates the correct number of TBHours."""
+    run_bytehours_test(client=client, size_to_test=20 * 1e12)
