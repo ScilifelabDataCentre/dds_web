@@ -1158,6 +1158,7 @@ def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
     time_a_month_ago = now - relativedelta(months=1)
     hours_since_month = (time_deleted - time_a_month_ago).total_seconds() / (60 * 60)
     expected_bytehour = size_to_test * hours_since_month
+    print(expected_bytehour)
 
     # 4a. Change time deleted and uploaded
     version_to_test.time_uploaded = time_uploaded
