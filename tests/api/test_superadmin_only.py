@@ -7,16 +7,22 @@ import http
 import time
 import typing
 import unittest
+from datetime import datetime, timedelta
+from unittest import mock
+
 
 # Installed
 import flask
 import werkzeug
 import flask_mail
+import freezegun
+import click
 
 # Own
 from dds_web import db
 from dds_web.database import models
 import tests
+from dds_web.commands import collect_stats
 
 ####################################################################################################
 # CONFIG ################################################################################## CONFIG #
@@ -821,3 +827,74 @@ def test_anyprojectsbusy_false_list(client: flask.testing.FlaskClient) -> None:
     assert num == 0
     projects_returned: typing.Dict = response.json.get("projects")
     assert projects_returned is None
+
+
+def test_statistics_no_access(client: flask.testing.FlaskClient) -> None:
+    """Verify that users that are not Super Admins cannot use this endpoint."""
+    # Verify no access for researchers and unit users
+    for user in ["researcher", "unituser", "unitadmin"]:
+        token = tests.UserAuth(tests.USER_CREDENTIALS[user]).token(client)
+        response = client.get(tests.DDSEndpoint.STATS, headers=token)
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+def test_statistics_return_none(client: flask.testing.FlaskClient) -> None:
+    """There are no rows in the Reporting table."""
+    # Check that there are no rows
+    assert not models.Reporting.query.count()
+
+    # Get all rows from API
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
+    response = client.get(tests.DDSEndpoint.STATS, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Check response
+    returned: typing.Dict = response.json.get("stats")
+    assert returned == []
+
+
+def test_statistics_return_rows(client: flask.testing.FlaskClient, cli_runner) -> None:
+    """Verify list returned when there are rows in reporting table."""
+
+    def add_row_to_reporting_table(time):
+        """Run command to add a new row to the reporting table."""
+        with freezegun.freeze_time(time):
+            # Run scheduled job now
+            with mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+                result: click.testing.Result = cli_runner.invoke(collect_stats)
+                assert not result.exception, "Raised an unwanted exception."
+                assert mock_mail_send.call_count == 0
+
+    # Generate row in reporting table
+    time_1 = datetime(year=2022, month=12, day=10, hour=10, minute=54, second=10)
+    add_row_to_reporting_table(time=time_1)
+
+    # Verify that there's a row added
+    assert models.Reporting.query.count() == 1
+
+    # Get all rows from API
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
+    response = client.get(tests.DDSEndpoint.STATS, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Check response
+    returned: typing.Dict = response.json.get("stats")
+    assert len(returned) == 1
+    reporting_row = models.Reporting.query.first()
+    assert returned[0] == {
+        "Date": str(reporting_row.date),
+        "Units": reporting_row.unit_count,
+        "Researchers": reporting_row.researcher_count,
+        "Project Owners": reporting_row.project_owner_unique_count,
+        "Unit Personnel": reporting_row.unit_personnel_count,
+        "Unit Admins": reporting_row.unit_admin_count,
+        "Super Admins": reporting_row.superadmin_count,
+        "Total Users": reporting_row.total_user_count,
+        "Total Projects": reporting_row.total_project_count,
+        "Active Projects": reporting_row.active_project_count,
+        "Inactive Projects": reporting_row.inactive_project_count,
+        "Data Now (TB)": reporting_row.tb_stored_now,
+        "Data Uploaded (TB)": reporting_row.tb_uploaded_since_start,
+        "TBHours Last Month": reporting_row.tbhours,
+        "TBHours Total": reporting_row.tbhours_since_start,
+    }
