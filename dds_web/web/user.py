@@ -353,10 +353,12 @@ def confirm_2fa():
 )
 def login():
     """Initiate a login by validating username password and sending a authentication one-time code"""
+
     next_target = flask.request.args.get("next")
     # is_safe_url should check if the url is safe for redirects.
     if next_target and not dds_web.utils.is_safe_url(next_target):
         return flask.abort(400)
+
     # Redirect to next or index if user is already authenticated
     if flask_login.current_user.is_authenticated:
         return flask.redirect(next_target or flask.url_for("pages.home"))
@@ -388,6 +390,7 @@ def login():
         token_2fa_initiated = dds_web.security.tokens.jwt_token(
             user.username, expires_in=datetime.timedelta(minutes=15)
         )
+
         flask.session["2fa_initiated_token"] = token_2fa_initiated
         return flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next_target))
 
