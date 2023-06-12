@@ -54,16 +54,19 @@ def mock_unit_size():
 # fill_db_wrapper
 
 
-def test_fill_db_wrapper_production(client, runner) -> None:
+def test_fill_db_wrapper_production(client, runner, capfd) -> None:
     """Run init-db with the production argument."""
     result: click.testing.Result = runner.invoke(fill_db_wrapper, ["production"])
-    assert result.exit_code == 1
+    _, err = capfd.readouterr()
+    assert "already exists, not creating user" in err
 
 
-def test_fill_db_wrapper_devsmall(client, runner) -> None:
+def test_fill_db_wrapper_devsmall(client, runner, capfd) -> None:
     """Run init-db with the dev-small argument."""
     result: click.testing.Result = runner.invoke(fill_db_wrapper, ["dev-small"])
-    assert result.exit_code == 1
+    _, err = capfd.readouterr()
+    assert "Initializing development db" in err
+    assert "DB filled" not in err  # DB already filled, duplicates.
 
 
 # def test_fill_db_wrapper_devbig(client, runner) -> None:
@@ -212,7 +215,7 @@ def test_create_new_unit_success(client, runner) -> None:
 # update_uploaded_file_with_log
 
 
-def test_update_uploaded_file_with_log_nonexisting_project(client, runner) -> None:
+def test_update_uploaded_file_with_log_nonexisting_project(client, runner, capfd) -> None:
     """Add file info to non existing project."""
     # Create command options
     command_options: typing.List = [
@@ -226,12 +229,13 @@ def test_update_uploaded_file_with_log_nonexisting_project(client, runner) -> No
     assert db.session.query(models.Project).all()
     with patch("dds_web.database.models.Project.query.filter_by", mock_no_project):
         result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
-        assert result.exit_code == 1
+    _, err = capfd.readouterr()
+    assert "The project 'projectdoesntexist' doesn't exist." in err
 
 
-def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: FakeFilesystem) -> None:
+def test_update_uploaded_file_with_log_nonexisting_file(client, runner, capfd, fs: FakeFilesystem) -> None:
     """Attempt to read file which does not exist."""
-    # Verify that fake file does not exist
+    # Verify that fake file does not exist 
     non_existent_log_file: str = "this_is_not_a_file.json"
     assert not os.path.exists(non_existent_log_file)
 
@@ -245,7 +249,8 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
 
     # Run command
     result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
-    assert result.exit_code == 1
+    _, err = capfd.readouterr()
+    assert "The project 'projectdoesntexist' doesn't exist." in err 
 
 
 # monitor_usage

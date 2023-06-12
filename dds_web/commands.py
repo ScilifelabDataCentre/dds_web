@@ -31,7 +31,7 @@ def fill_db_wrapper(db_type):
         password = flask.current_app.config["SUPERADMIN_PASSWORD"]
         name = flask.current_app.config["SUPERADMIN_NAME"]
         existing_user = models.User.query.filter_by(username=username).one_or_none()
-
+        
         email = flask.current_app.config["SUPERADMIN_EMAIL"]
         existing_email = models.Email.query.filter_by(email=email).one_or_none()
 
