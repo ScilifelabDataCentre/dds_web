@@ -10,6 +10,8 @@ from dds_web.security.tokens import encrypted_jwt_token
 
 
 def successful_web_login(client: flask.testing.FlaskClient, user_auth: UserAuth):
+    print(flask.url_for("pages.home"), flush=True)
+
     response: werkzeug.test.WrapperTestResponse = client.get(
         DDSEndpoint.LOGIN, headers=DEFAULT_HEADER
     )
@@ -31,7 +33,7 @@ def successful_web_login(client: flask.testing.FlaskClient, user_auth: UserAuth)
         headers=DEFAULT_HEADER,
     )
     assert response.status_code == HTTPStatus.OK
-    assert flask.request.path == DDSEndpoint.CONFIRM_2FA
+    assert response.request.path == DDSEndpoint.CONFIRM_2FA
 
     form_token: str = flask.g.csrf_token
 
@@ -48,8 +50,8 @@ def successful_web_login(client: flask.testing.FlaskClient, user_auth: UserAuth)
         headers=DEFAULT_HEADER,
     )
     assert response.status_code == HTTPStatus.OK
-    assert flask.request.path == DDSEndpoint.INDEX
-    assert flask.request.path == flask.url_for("pages.home")
+    assert response.request.path == DDSEndpoint.INDEX
+    assert response.request.path == flask.url_for("pages.home")
 
     return form_token
 

@@ -79,7 +79,7 @@ class UserAuth:
         """Return a partial token that can be used to get a full token."""
         headers: Dict = {"Cache-Control": "no-cache", **DEFAULT_HEADER}
         response = client.get(DDSEndpoint.ENCRYPTED_TOKEN, headers=headers, auth=(self.as_tuple()))
-
+        print(f"response in partial token: {response}", flush=True)
         # Get response from api
         response_json = response.json
         token = response_json["token"]
@@ -123,7 +123,9 @@ class UserAuth:
         def set_session_cookie(client):
             app = flask.current_app
             val = app.session_interface.get_signing_serializer(app).dumps(dict(session))
+            print(f"session_cookie_name: {app.config['SESSION_COOKIE_NAME']}", flush=True)
             client.set_cookie("localhost", app.config["SESSION_COOKIE_NAME"], val)
+            print(f"session_cookie_name: {app.config['SESSION_COOKIE_NAME']}", flush=True)
 
         flask_login.login_user(user)
         set_session_cookie(client)
