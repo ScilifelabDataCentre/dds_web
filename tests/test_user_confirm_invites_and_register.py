@@ -38,7 +38,7 @@ def test_confirm_invite_invalid_token(client):
 
     assert response.status_code == http.HTTPStatus.OK
     # index redirects to login
-    assert flask.request.path == flask.url_for("pages.home")
+    assert response.request.path == flask.url_for("pages.home")
 
 
 def test_confirm_invite_expired_token(client):
@@ -59,7 +59,7 @@ def test_confirm_invite_expired_token(client):
     )
     assert response.status_code == http.HTTPStatus.OK
     # index redirects to login
-    assert flask.request.path == flask.url_for("pages.home")
+    assert response.request.path == flask.url_for("pages.home")
 
 
 def test_confirm_invite_valid_token(client):
@@ -135,7 +135,7 @@ def test_register_no_token_in_session(registry_form_data, client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert response.request.path == tests.DDSEndpoint.INDEX
 
     # Invite should be kept and user should not be created
     invite = models.Invite.query.filter_by(
@@ -160,7 +160,7 @@ def test_register_weak_password(registry_form_data, client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.USER_NEW
+    assert response.request.path == tests.DDSEndpoint.USER_NEW
 
     # Invite should be kept and user should not be created
     invite = models.Invite.query.filter_by(
@@ -190,7 +190,7 @@ def test_register_nonlatin1_username(registry_form_data, client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.USER_NEW
+    assert response.request.path == tests.DDSEndpoint.USER_NEW
 
     # Invite should be kept and user should not be created
     invite = models.Invite.query.filter_by(
@@ -220,7 +220,7 @@ def test_register_nonlatin1_password(registry_form_data, client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.USER_NEW
+    assert response.request.path == tests.DDSEndpoint.USER_NEW
 
     # Invite should be kept and user should not be created
     invite = models.Invite.query.filter_by(

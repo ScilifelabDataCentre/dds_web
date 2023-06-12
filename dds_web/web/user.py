@@ -353,22 +353,16 @@ def confirm_2fa():
 )
 def login():
     """Initiate a login by validating username password and sending a authentication one-time code"""
-    flask.current_app.logger.debug("I'm in.")
     next_target = flask.request.args.get("next")
-    flask.current_app.logger.debug("Next target is: %s", next_target)
     # is_safe_url should check if the url is safe for redirects.
     if next_target and not dds_web.utils.is_safe_url(next_target):
-        flask.current_app.logger.debug("Next target IS NOT safe redirect.")
         return flask.abort(400)
-    flask.current_app.logger.debug("Next target IS safe redirect.")
     # Redirect to next or index if user is already authenticated
     if flask_login.current_user.is_authenticated:
-        flask.current_app.logger.debug("User is authenticated.")
         return flask.redirect(next_target or flask.url_for("pages.home"))
 
     # Display greeting message, if applicable
     if next_target and re.search("confirm_deletion", next_target):
-        flask.current_app.logger.debug("Asking for deletion confirmation.")
         flask.flash("Please log in to confirm your account deletion.", "warning")
 
     # Check if for is filled in and correctly (post)
@@ -376,11 +370,9 @@ def login():
     if form.validate_on_submit():
         # Get user from database
         user = models.User.query.get(form.username.data)
-        flask.current_app.logger.debug("User: %s", user)
 
         # Unsuccessful login
         if not user or not user.verify_password(input_password=form.password.data):
-            flask.current_app.logger.debug("Login not working. Redirecting to %s", flask.url_for("auth_blueprint.login", next=next_target))
             flask.flash("Invalid username or password.", "warning")
             return flask.redirect(
                 flask.url_for("auth_blueprint.login", next=next_target)
@@ -388,22 +380,17 @@ def login():
 
         # Correct credentials still needs 2fa
         if not user.totp_enabled:
-            flask.current_app.logger.debug("Totp not enabled.")
             # Send 2fa token to user's email
             if dds_web.security.auth.send_hotp_email(user):
-                flask.current_app.logger.debug("Sending hotp.")
                 flask.flash("One-Time Code has been sent to your primary email.")
 
         # Generate signed token that indicates that the user has authenticated
         token_2fa_initiated = dds_web.security.tokens.jwt_token(
             user.username, expires_in=datetime.timedelta(minutes=15)
         )
-        flask.current_app.logger.debug("Token initiated.")
         flask.session["2fa_initiated_token"] = token_2fa_initiated
-        flask.current_app.logger.debug("Redirecting to %s", flask.url_for("auth_blueprint.confirm_2fa", next=next_target))
         return flask.redirect(flask.url_for("auth_blueprint.confirm_2fa", next=next_target))
 
-    flask.current_app.logger.debug("Rendering login template.")
     # Go to login form (get)
     return flask.render_template("user/login.html", form=form, next=next_target)
 

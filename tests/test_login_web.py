@@ -89,7 +89,7 @@ def test_cancel_2fa(client: flask.testing.FlaskClient):
         headers=DEFAULT_HEADER,
     )
     assert response.status_code == HTTPStatus.OK
-    assert flask.request.path == DDSEndpoint.CONFIRM_2FA
+    assert response.request.path == DDSEndpoint.CONFIRM_2FA
 
     second_factor_token: str = flask.session.get("2fa_initiated_token")
     assert second_factor_token is not None
@@ -101,7 +101,7 @@ def test_cancel_2fa(client: flask.testing.FlaskClient):
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert flask.request.path == DDSEndpoint.LOGIN
+    assert response.request.path == DDSEndpoint.LOGIN
 
     second_factor_token: str = flask.session.get("2fa_initiated_token")
     assert second_factor_token is None
@@ -125,7 +125,7 @@ def test_password_reset(client: flask.testing.FlaskClient):
         follow_redirects=True,
     )
     assert response.status_code == HTTPStatus.OK
-    assert flask.request.path == DDSEndpoint.USER_INFO
+    assert response.request.path == DDSEndpoint.USER_INFO
 
     form_token: str = flask.g.csrf_token
 
@@ -133,7 +133,7 @@ def test_password_reset(client: flask.testing.FlaskClient):
         DDSEndpoint.LOGOUT, follow_redirects=True, headers=headers
     )
     assert response.status_code == HTTPStatus.OK
-    assert flask.request.path == DDSEndpoint.INDEX
+    assert response.request.path == DDSEndpoint.INDEX
 
     response: werkzeug.test.WrapperTestResponse = client.post(
         DDSEndpoint.REQUEST_RESET_PASSWORD,
@@ -146,7 +146,7 @@ def test_password_reset(client: flask.testing.FlaskClient):
     )
     assert response.status_code == HTTPStatus.OK
     assert response.content_type == "text/html; charset=utf-8"
-    assert flask.request.path == DDSEndpoint.LOGIN
+    assert response.request.path == DDSEndpoint.LOGIN
 
     response: werkzeug.test.WrapperTestResponse = client.post(
         f"{DDSEndpoint.REQUEST_RESET_PASSWORD}/{token}",
@@ -160,7 +160,7 @@ def test_password_reset(client: flask.testing.FlaskClient):
     )
     assert response.status_code == HTTPStatus.OK
     assert response.content_type == "text/html; charset=utf-8"
-    assert flask.request.path == DDSEndpoint.PASSWORD_RESET_COMPLETED
+    assert response.request.path == DDSEndpoint.PASSWORD_RESET_COMPLETED
 
     with client.session_transaction() as session:
         session["reset_token"] = token
@@ -172,7 +172,7 @@ def test_password_reset(client: flask.testing.FlaskClient):
     )
     assert response.status_code == HTTPStatus.OK
     assert response.content_type == "text/html; charset=utf-8"
-    assert flask.request.path == DDSEndpoint.PASSWORD_RESET_COMPLETED
+    assert response.request.path == DDSEndpoint.PASSWORD_RESET_COMPLETED
 
     response: werkzeug.test.WrapperTestResponse = client.get(
         DDSEndpoint.USER_INFO,
@@ -180,7 +180,7 @@ def test_password_reset(client: flask.testing.FlaskClient):
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.content_type == "application/json"
-    assert flask.request.path == DDSEndpoint.USER_INFO
+    assert response.request.path == DDSEndpoint.USER_INFO
     assert (
         response.json.get("message")
         == "Password reset performed after last authentication. Start a new authenticated session to proceed."

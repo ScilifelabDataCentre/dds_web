@@ -292,7 +292,7 @@ def test_request_totp_activation(client):
         ),
         additional_claims={"act": "totp"},
     )
-    
+
     form_token = successful_web_login(client, user_auth)
 
     response = client.get(
