@@ -10,8 +10,6 @@ from dds_web.security.tokens import encrypted_jwt_token
 
 
 def successful_web_login(client: flask.testing.FlaskClient, user_auth: UserAuth):
-    print(flask.url_for("pages.home"), flush=True)
-
     response: werkzeug.test.WrapperTestResponse = client.get(
         DDSEndpoint.LOGIN, headers=DEFAULT_HEADER
     )
