@@ -235,7 +235,7 @@ def test_update_uploaded_file_with_log_nonexisting_project(client, runner, capfd
 
 def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: FakeFilesystem) -> None:
     """Attempt to read file which does not exist."""
-    # Verify that fake file does not exist 
+    # Verify that fake file does not exist
     non_existent_log_file: str = "this_is_not_a_file.json"
     assert not os.path.exists(non_existent_log_file)
 
@@ -250,7 +250,7 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
     # Run command
     result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
     # _, err = capfd.readouterr()
-    # assert "The project 'projectdoesntexist' doesn't exist." in err 
+    # assert "The project 'projectdoesntexist' doesn't exist." in err
 
 
 # monitor_usage
