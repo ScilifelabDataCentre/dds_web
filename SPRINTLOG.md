@@ -262,4 +262,4 @@ _Nothing merged in CLI during this sprint_
 
 # 2023-06-09 - 2023-06-23
 
-- Dependency: Bump `Flask` to 2.2.5 due to security vulnerability alert ([#1425](https://github.com/ScilifelabDataCentre/dds_web/pull/1425))
+- Dependency: Bump `Flask` to 2.2.5 due to security vulnerability alert(s) ([#1425](https://github.com/ScilifelabDataCentre/dds_web/pull/1425))
