@@ -782,6 +782,7 @@ def collect_stats():
         db.session.add(new_reporting_row)
         db.session.commit()
     except BaseException as err:  # We want to know if there's any error
+        db.session.rollback()
         flask.current_app.logger.warning(
             f"Exception raised during reporting cronjob. Preparing email. Error: {err}"
         )

@@ -123,7 +123,7 @@ class UserAuth:
         def set_session_cookie(client):
             app = flask.current_app
             val = app.session_interface.get_signing_serializer(app).dumps(dict(session))
-            client.set_cookie("localhost", app.session_cookie_name, val)
+            client.set_cookie("localhost", app.config["SESSION_COOKIE_NAME"], val)
 
         flask_login.login_user(user)
         set_session_cookie(client)

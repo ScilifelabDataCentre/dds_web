@@ -115,7 +115,7 @@ def test_reset_password_invalid_token_get(client):
     # Redirection status code
     assert response.status_code == http.HTTPStatus.OK
     # Incorrect token should redirect and not lead to form
-    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert response.request.path == tests.DDSEndpoint.INDEX
 
 
 def get_valid_reset_token(username, expires_in=3600):
@@ -150,7 +150,7 @@ def test_reset_password_invalid_token_post(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
+    assert response.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
 
     form_token = flask.g.csrf_token
     form_data = {
@@ -170,7 +170,7 @@ def test_reset_password_invalid_token_post(client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert response.request.path == tests.DDSEndpoint.INDEX
 
     # Just make sure no project user keys has been removed
     nr_proj_user_keys_after = models.ProjectUserKeys.query.count()
@@ -192,7 +192,7 @@ def test_reset_password_expired_token_get(client):
 
     assert response.status_code == http.HTTPStatus.OK
     # Incorrect token should redirect and not lead to form
-    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert response.request.path == tests.DDSEndpoint.INDEX
 
 
 def test_reset_password_expired_token_post_no_password_reset_row(client):
@@ -209,7 +209,7 @@ def test_reset_password_expired_token_post_no_password_reset_row(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert response.request.path == tests.DDSEndpoint.INDEX
 
 
 def test_reset_password_expired_token_post(client):
@@ -233,7 +233,7 @@ def test_reset_password_expired_token_post(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
+    assert response.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
 
     form_token = flask.g.csrf_token
     form_data = {
@@ -252,7 +252,7 @@ def test_reset_password_expired_token_post(client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert response.request.path == tests.DDSEndpoint.INDEX
 
     # Just make sure no project user keys has been removed
     nr_proj_user_keys_after = models.ProjectUserKeys.query.count()
@@ -284,7 +284,7 @@ def test_reset_password_researchuser_no_password_reset_row(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert response.request.path == tests.DDSEndpoint.INDEX
 
 
 def test_reset_password_researchuser(client):
@@ -314,7 +314,7 @@ def test_reset_password_researchuser(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
+    assert response.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
 
     form_token = flask.g.csrf_token
     form_data = {
@@ -331,7 +331,7 @@ def test_reset_password_researchuser(client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
+    assert response.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
 
     user = models.User.query.filter_by(username="researchuser").first()
 
@@ -373,7 +373,7 @@ def test_reset_password_project_owner_no_password_reset_row(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert response.request.path == tests.DDSEndpoint.INDEX
 
 
 def test_reset_password_project_owner(client):
@@ -403,7 +403,7 @@ def test_reset_password_project_owner(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
+    assert response.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
 
     form_token = flask.g.csrf_token
     form_data = {
@@ -420,7 +420,7 @@ def test_reset_password_project_owner(client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
+    assert response.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
 
     user = models.User.query.filter_by(username="projectowner").first()
 
@@ -462,7 +462,7 @@ def test_reset_password_unituser_no_password_reset_row(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.INDEX
+    assert response.request.path == tests.DDSEndpoint.INDEX
 
 
 def test_reset_password_unituser(client):
@@ -492,7 +492,7 @@ def test_reset_password_unituser(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
+    assert response.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
 
     form_token = flask.g.csrf_token
     form_data = {
@@ -509,7 +509,7 @@ def test_reset_password_unituser(client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
+    assert response.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
 
     user = models.User.query.filter_by(username="unituser").first()
 
@@ -558,7 +558,7 @@ def test_reset_password_unitadmin(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
+    assert response.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
 
     form_token = flask.g.csrf_token
     form_data = {
@@ -575,7 +575,7 @@ def test_reset_password_unitadmin(client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
+    assert response.request.path == tests.DDSEndpoint.PASSWORD_RESET_COMPLETED
 
     user = models.User.query.filter_by(username="unitadmin").first()
 
@@ -626,7 +626,7 @@ def test_reset_password_unitadmin_nonlatin1(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
+    assert response.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
 
     # Set new password info -- contains invalid char €
     form_token = flask.g.csrf_token
@@ -645,7 +645,7 @@ def test_reset_password_unitadmin_nonlatin1(client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
+    assert response.request.path == tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token
 
     # Get user
     user = models.User.query.filter_by(username="unitadmin").first()
