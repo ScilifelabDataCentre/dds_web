@@ -312,12 +312,56 @@ def list_lost_files(project_id: str):
                 list_lost_files_in_project(project=proj, resource=resource_unit)
 
 
+@lost_files_s3_db.command(name="add-missing-bucket")
+@click.option("--project-id", "-p", type=str, required=True)
+@flask.cli.with_appcontext
+def add_missing_bucket(project_id: str):
+    """Add project bucket if project is active and bucket is missing."""
+    # Imports
+    import boto3
+    from botocore.client import ClientError
+    from dds_web.database import models
+    import dds_web.utils
 
-
-
-
-
+    # Get project object
+    project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
+    if not project:
+        flask.current_app.logger.error(f"No such project: '{project_id}'")
+        sys.exit(1)
     
+    # Only create new bucket if project is active
+    if not project.is_active:
+        flask.current_app.logger.error(f"Project '{project_id}' is not an active project.")
+        sys.exit(1)
+
+    # Start s3 session
+    session = boto3.session.Session()
+
+    # Connect to S3
+    resource = session.resource(
+        service_name="s3",
+        endpoint_url=project.responsible_unit.safespring_endpoint,
+        aws_access_key_id=project.responsible_unit.safespring_access,
+        aws_secret_access_key=project.responsible_unit.safespring_secret,
+    )
+
+    # Check if bucket exists
+    try: 
+        resource.meta.client.head_bucket(Bucket=project.bucket)
+    except ClientError:
+        flask.current_app.logger.info(f"Project bucket is missing. Proceeding...")
+
+        valid, message = dds_web.utils.bucket_is_valid(bucket_name=project.bucket)
+        if not valid:
+            flask.current_app.logger.warning(
+                f"Invalid bucket name: '{project.bucket}'. No bucket Details: {message}. Bucket not created."
+            )
+        else:
+            resource.create_bucket(Bucket=project.bucket)
+            flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
+
+        
+
     
 @click.command("lost-files-old")
 @click.argument("action_type", type=click.Choice(["find", "list", "delete", "add-missing-buckets"]))
