@@ -229,133 +229,144 @@ def lost_files_s3_db():
 @flask.cli.with_appcontext
 def list_lost_files(project_id: str):
     """List lost files: Existing either in DB or S3, not in both."""
-    flask.current_app.logger.debug("Helly")
+    # Imports
+    from dds_web.database import models
 
-# @click.command("lost-files")
-# @click.argument("action_type", type=click.Choice(["find", "list", "delete", "add-missing-buckets"]))
-# @flask.cli.with_appcontext
-# def lost_files_s3_db(action_type: str):
-#     """Identify (and optionally delete) files that are present in S3 or in the db, but not both.
+    # Get project if option used 
+    if project_id:
+        project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
+        if not project:
+            flask.current_app.logger.error(f"No such project: '{project_id}'")
+            sys.exit(1)
 
-#     Args:
-#         action_type (str): "find", "list", or "delete"
-#     """
-#     from dds_web.database import models
-#     import boto3
-#     from dds_web.utils import bucket_is_valid
+        
+    
+    
+@click.command("lost-files-old")
+@click.argument("action_type", type=click.Choice(["find", "list", "delete", "add-missing-buckets"]))
+@flask.cli.with_appcontext
+def lost_files_s3_db_old(action_type: str):
+    """Identify (and optionally delete) files that are present in S3 or in the db, but not both.
 
-#     # Interate through the units
-#     for unit in models.Unit.query:
-#         session = boto3.session.Session()
+    Args:
+        action_type (str): "find", "list", or "delete"
+    """
+    from dds_web.database import models
+    import boto3
+    from dds_web.utils import bucket_is_valid
 
-#         # Connect to S3
-#         resource = session.resource(
-#             service_name="s3",
-#             endpoint_url=unit.safespring_endpoint,
-#             aws_access_key_id=unit.safespring_access,
-#             aws_secret_access_key=unit.safespring_secret,
-#         )
+    # Interate through the units
+    for unit in models.Unit.query:
+        session = boto3.session.Session()
 
-#         # Variables
-#         db_count = 0  # Files not found in s3
-#         s3_count = 0  # Files not found in db
+        # Connect to S3
+        resource = session.resource(
+            service_name="s3",
+            endpoint_url=unit.safespring_endpoint,
+            aws_access_key_id=unit.safespring_access,
+            aws_secret_access_key=unit.safespring_secret,
+        )
 
-#         # Iterate through unit projects
-#         for project in unit.projects:
-#             # Check for objects in bucket
-#             try:
-#                 s3_filenames = set(
-#                     entry.key for entry in resource.Bucket(project.bucket).objects.all()
-#                 )
-#             except resource.meta.client.exceptions.NoSuchBucket:
-#                 if project.is_active:
-#                     flask.current_app.logger.warning("Missing bucket %s", project.bucket)
-#                     # Create a missing bucket if argument chosen
-#                     if action_type == "add-missing-buckets":
-#                         valid, message = bucket_is_valid(bucket_name=project.bucket)
-#                         if not valid:
-#                             flask.current_app.logger.warning(
-#                                 f"Could not create bucket '{project.bucket}' for project '{project.public_id}': {message}"
-#                             )
-#                         else:
-#                             resource.create_bucket(Bucket=project.bucket)
-#                             flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
-#                 continue
+        # Variables
+        db_count = 0  # Files not found in s3
+        s3_count = 0  # Files not found in db
 
-#             # Get objects in project
-#             try:
-#                 db_filenames = set(entry.name_in_bucket for entry in project.files)
-#             except sqlalchemy.exc.OperationalError:
-#                 flask.current_app.logger.critical("Unable to connect to db")
+        # Iterate through unit projects
+        for project in unit.projects:
+            # Check for objects in bucket
+            try:
+                s3_filenames = set(
+                    entry.key for entry in resource.Bucket(project.bucket).objects.all()
+                )
+            except resource.meta.client.exceptions.NoSuchBucket:
+                if project.is_active:
+                    flask.current_app.logger.warning("Missing bucket %s", project.bucket)
+                    # Create a missing bucket if argument chosen
+                    if action_type == "add-missing-buckets":
+                        valid, message = bucket_is_valid(bucket_name=project.bucket)
+                        if not valid:
+                            flask.current_app.logger.warning(
+                                f"Could not create bucket '{project.bucket}' for project '{project.public_id}': {message}"
+                            )
+                        else:
+                            resource.create_bucket(Bucket=project.bucket)
+                            flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
+                continue
 
-#             # Differences
-#             diff_db = db_filenames.difference(s3_filenames)  # In db but not in S3
-#             diff_s3 = s3_filenames.difference(db_filenames)  # In S3 but not in db
+            # Get objects in project
+            try:
+                db_filenames = set(entry.name_in_bucket for entry in project.files)
+            except sqlalchemy.exc.OperationalError:
+                flask.current_app.logger.critical("Unable to connect to db")
 
-#             # List all files which are missing in either db of s3
-#             # or delete the files from the s3 if missing in db, or db if missing in s3
-#             if action_type == "list":
-#                 for file_entry in diff_db:
-#                     flask.current_app.logger.info(
-#                         "Entry %s (%s, %s) not found in S3", file_entry, project, unit
-#                     )
-#                 for file_entry in diff_s3:
-#                     flask.current_app.logger.info(
-#                         "Entry %s (%s, %s) not found in database", file_entry, project, unit
-#                     )
-#             elif action_type == "delete":
-#                 # s3 can only delete 1000 objects per request
-#                 batch_size = 1000
-#                 s3_to_delete = list(diff_s3)
-#                 for i in range(0, len(s3_to_delete), batch_size):
-#                     resource.meta.client.delete_objects(
-#                         Bucket=project.bucket,
-#                         Delete={
-#                             "Objects": [
-#                                 {"Key": entry} for entry in s3_to_delete[i : i + batch_size]
-#                             ]
-#                         },
-#                     )
+            # Differences
+            diff_db = db_filenames.difference(s3_filenames)  # In db but not in S3
+            diff_s3 = s3_filenames.difference(db_filenames)  # In S3 but not in db
 
-#                 db_entries = models.File.query.filter(
-#                     sqlalchemy.and_(
-#                         models.File.name_in_bucket.in_(diff_db),
-#                         models.File.project_id == project.id,
-#                     )
-#                 )
-#                 for db_entry in db_entries:
-#                     try:
-#                         for db_entry_version in db_entry.versions:
-#                             if db_entry_version.time_deleted is None:
-#                                 db_entry_version.time_deleted = datetime.datetime.utcnow()
-#                         db.session.delete(db_entry)
-#                         db.session.commit()
-#                     except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError):
-#                         db.session.rollback()
-#                         flask.current_app.logger.critical("Unable to delete the database entries")
-#                         sys.exit(1)
+            # List all files which are missing in either db of s3
+            # or delete the files from the s3 if missing in db, or db if missing in s3
+            if action_type == "list":
+                for file_entry in diff_db:
+                    flask.current_app.logger.info(
+                        "Entry %s (%s, %s) not found in S3", file_entry, project, unit
+                    )
+                for file_entry in diff_s3:
+                    flask.current_app.logger.info(
+                        "Entry %s (%s, %s) not found in database", file_entry, project, unit
+                    )
+            elif action_type == "delete":
+                # s3 can only delete 1000 objects per request
+                batch_size = 1000
+                s3_to_delete = list(diff_s3)
+                for i in range(0, len(s3_to_delete), batch_size):
+                    resource.meta.client.delete_objects(
+                        Bucket=project.bucket,
+                        Delete={
+                            "Objects": [
+                                {"Key": entry} for entry in s3_to_delete[i : i + batch_size]
+                            ]
+                        },
+                    )
 
-#             # update the counters at the end of the loop to have accurate numbers for delete
-#             s3_count += len(diff_s3)
-#             db_count += len(diff_db)
+                db_entries = models.File.query.filter(
+                    sqlalchemy.and_(
+                        models.File.name_in_bucket.in_(diff_db),
+                        models.File.project_id == project.id,
+                    )
+                )
+                for db_entry in db_entries:
+                    try:
+                        for db_entry_version in db_entry.versions:
+                            if db_entry_version.time_deleted is None:
+                                db_entry_version.time_deleted = datetime.datetime.utcnow()
+                        db.session.delete(db_entry)
+                        db.session.commit()
+                    except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError):
+                        db.session.rollback()
+                        flask.current_app.logger.critical("Unable to delete the database entries")
+                        sys.exit(1)
 
-#     # Print out information about actions performed in cronjob
-#     if s3_count or db_count:
-#         action_word = (
-#             "Found" if action_type in ("find", "list", "add-missing-buckets") else "Deleted"
-#         )
-#         flask.current_app.logger.info(
-#             "%s %d entries for lost files (%d in db, %d in s3)",
-#             action_word,
-#             s3_count + db_count,
-#             db_count,
-#             s3_count,
-#         )
-#         if action_type in ("find", "list", "add-missing-buckets"):
-#             sys.exit(1)
+            # update the counters at the end of the loop to have accurate numbers for delete
+            s3_count += len(diff_s3)
+            db_count += len(diff_db)
 
-#     else:
-#         flask.current_app.logger.info("Found no lost files")
+    # Print out information about actions performed in cronjob
+    if s3_count or db_count:
+        action_word = (
+            "Found" if action_type in ("find", "list", "add-missing-buckets") else "Deleted"
+        )
+        flask.current_app.logger.info(
+            "%s %d entries for lost files (%d in db, %d in s3)",
+            action_word,
+            s3_count + db_count,
+            db_count,
+            s3_count,
+        )
+        if action_type in ("find", "list", "add-missing-buckets"):
+            sys.exit(1)
+
+    else:
+        flask.current_app.logger.info("Found no lost files")
 
 
 @click.command("set-available-to-expired")
