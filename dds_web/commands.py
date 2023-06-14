@@ -234,27 +234,12 @@ def list_lost_files(project_id: str):
     from dds_web.database import models
     import dds_web.utils
 
-    # # Function for command to use
-    # def list_lost_files_in_project(project: models.Project):
-    #     """"""
-    # Get project if option used 
-    if project_id:
-        project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
-        if not project:
-            flask.current_app.logger.error(f"No such project: '{project_id}'")
-            sys.exit(1)
+    # Start of function
+    def list_lost_files_in_project(project: models.Project, resource):
+        """List lost files in project."""
+        s3_filenames: set = set()
+        db_filenames: set = set()
 
-        # Start s3 session
-        session = boto3.session.Session()
-
-        # Connect to S3
-        resource = session.resource(
-            service_name="s3",
-            endpoint_url=project.responsible_unit.safespring_endpoint,
-            aws_access_key_id=project.responsible_unit.safespring_access,
-            aws_secret_access_key=project.responsible_unit.safespring_secret,
-        )
-        
         # Get items in s3
         try:
             s3_filenames = set(
@@ -286,6 +271,49 @@ def list_lost_files(project_id: str):
                 )
         else: 
             flask.current_app.logger.info(f"No lost files in project '{project_id}'")
+    # End of function
+
+    if project_id:
+        # Get project if option used 
+        project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
+        if not project:
+            flask.current_app.logger.error(f"No such project: '{project_id}'")
+            sys.exit(1)
+
+        # Start s3 session
+        session = boto3.session.Session()
+
+        # Connect to S3
+        resource = session.resource(
+            service_name="s3",
+            endpoint_url=project.responsible_unit.safespring_endpoint,
+            aws_access_key_id=project.responsible_unit.safespring_access,
+            aws_secret_access_key=project.responsible_unit.safespring_secret,
+        )
+        
+        # List the lost files
+        list_lost_files_in_project(project=project, resource=resource)
+    else: 
+        # Interate through the units
+        for unit in models.Unit.query:
+            # Start s3 session
+            session = boto3.session.Session()
+
+            # Connect to S3
+            resource_unit = session.resource(
+                service_name="s3",
+                endpoint_url=unit.safespring_endpoint,
+                aws_access_key_id=unit.safespring_access,
+                aws_secret_access_key=unit.safespring_secret,
+            )
+
+            for proj in unit.projects:
+                # List the lost files
+                list_lost_files_in_project(project=proj, resource=resource_unit)
+
+
+
+
 
 
 
