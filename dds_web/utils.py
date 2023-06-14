@@ -675,3 +675,47 @@ def block_if_maintenance(user=None):
         else:
             if user.role != "Super Admin":
                 raise MaintenanceOngoingException()
+
+
+def list_lost_files_in_project(project, s3_resource):
+    """List lost files in project."""
+    s3_filenames: set = set()
+    db_filenames: set = set()
+
+    # Get items in s3
+    try:
+        s3_filenames = set(entry.key for entry in s3_resource.Bucket(project.bucket).objects.all())
+    except s3_resource.meta.client.exceptions.NoSuchBucket:
+        missing_expected: bool = not project.is_active
+        flask.current_app.logger.info(f"Project bucket is missing. Expected: {missing_expected}")
+
+    # Get items in db
+    try:
+        db_filenames = set(entry.name_in_bucket for entry in project.files)
+    except sqlalchemy.exc.OperationalError:
+        flask.current_app.logger.critical("Unable to connect to db")
+
+    # Differences
+    diff_db = db_filenames.difference(s3_filenames)  # In db but not in S3
+    diff_s3 = s3_filenames.difference(db_filenames)  # In S3 but not in db
+
+    # List items
+    if any([diff_db, diff_s3]):
+        for file_entry in diff_db:
+            flask.current_app.logger.info(
+                "Entry %s (%s, %s) not found in S3 (but found in db)",
+                file_entry,
+                project.public_id,
+                project.responsible_unit,
+            )
+        for file_entry in diff_s3:
+            flask.current_app.logger.info(
+                "Entry %s (%s, %s) not found in database (but found in s3)",
+                file_entry,
+                project.public_id,
+                project.responsible_unit,
+            )
+    else:
+        flask.current_app.logger.info(f"No lost files in project '{project.public_id}'")
+
+    return diff_db, diff_s3
