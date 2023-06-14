@@ -230,8 +230,13 @@ def lost_files_s3_db():
 def list_lost_files(project_id: str):
     """List lost files: Existing either in DB or S3, not in both."""
     # Imports
+    import boto3
     from dds_web.database import models
+    import dds_web.utils
 
+    # # Function for command to use
+    # def list_lost_files_in_project(project: models.Project):
+    #     """"""
     # Get project if option used 
     if project_id:
         project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
@@ -239,7 +244,51 @@ def list_lost_files(project_id: str):
             flask.current_app.logger.error(f"No such project: '{project_id}'")
             sys.exit(1)
 
+        # Start s3 session
+        session = boto3.session.Session()
+
+        # Connect to S3
+        resource = session.resource(
+            service_name="s3",
+            endpoint_url=project.responsible_unit.safespring_endpoint,
+            aws_access_key_id=project.responsible_unit.safespring_access,
+            aws_secret_access_key=project.responsible_unit.safespring_secret,
+        )
         
+        # Get items in s3
+        try:
+            s3_filenames = set(
+                entry.key for entry in resource.Bucket(project.bucket).objects.all()
+            )
+        except resource.meta.client.exceptions.NoSuchBucket:
+            missing_expected: bool = not project.is_active
+            flask.current_app.logger.info(f"Project bucket is missing. Expected: {missing_expected}")
+        
+        # Get items in db
+        try:
+            db_filenames = set(entry.name_in_bucket for entry in project.files)
+        except sqlalchemy.exc.OperationalError:
+            flask.current_app.logger.critical("Unable to connect to db")
+
+        # Differences
+        diff_db = db_filenames.difference(s3_filenames)  # In db but not in S3
+        diff_s3 = s3_filenames.difference(db_filenames)  # In S3 but not in db
+
+        # List items
+        if any([diff_db, diff_s3]):
+            for file_entry in diff_db:
+                flask.current_app.logger.info(
+                    "Entry %s (%s, %s) not found in S3 (but found in db)", file_entry, project_id, project.responsible_unit
+                )
+            for file_entry in diff_s3:
+                flask.current_app.logger.info(
+                    "Entry %s (%s, %s) not found in database (but found in s3)", file_entry, project_id, project.responsible_unit
+                )
+        else: 
+            flask.current_app.logger.info(f"No lost files in project '{project_id}'")
+
+
+
     
     
 @click.command("lost-files-old")
