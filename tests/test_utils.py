@@ -1350,7 +1350,10 @@ def test_list_lost_files_in_project_no_files_in_db(
     # Verify that message is not printed out
     assert f"No list files in project '{project.public_id}'" not in err
 
-def test_list_lost_files_in_project_overlap(client: flask.testing.FlaskClient, boto3_session, capfd):
+
+def test_list_lost_files_in_project_overlap(
+    client: flask.testing.FlaskClient, boto3_session, capfd
+):
     """Verify that only some files are printed out when some files exist in the database and s3, but not all."""
     # Imports
     from dds_web.utils import list_lost_files_in_project
@@ -1361,7 +1364,7 @@ def test_list_lost_files_in_project_overlap(client: flask.testing.FlaskClient, b
 
     # Get created testfiles
     fake_files_in_bucket = mock_items_in_bucket()
-    
+
     # Number of project files
     original_db_files = project.files
     num_proj_files = len(original_db_files)
@@ -1369,7 +1372,17 @@ def test_list_lost_files_in_project_overlap(client: flask.testing.FlaskClient, b
     # Create 15 few new files
     new_files = []
     for x in fake_files_in_bucket[:15]:
-        new_file = models.File(name=x.key, name_in_bucket=x.key, subpath=".", size_original=0, size_stored=0, compressed=True, public_key="X"*64, salt="X"*32, checksum="X"*64)
+        new_file = models.File(
+            name=x.key,
+            name_in_bucket=x.key,
+            subpath=".",
+            size_original=0,
+            size_stored=0,
+            compressed=True,
+            public_key="X" * 64,
+            salt="X" * 32,
+            checksum="X" * 64,
+        )
         new_files.append(new_file)
         project.files.append(new_file)
     db.session.commit()
@@ -1385,7 +1398,7 @@ def test_list_lost_files_in_project_overlap(client: flask.testing.FlaskClient, b
     # Verify that both contain entries
     assert in_db_but_not_in_s3
     assert in_s3_but_not_in_db
-    
+
     # Get logging output
     _, err = capfd.readouterr()
 
@@ -1397,14 +1410,14 @@ def test_list_lost_files_in_project_overlap(client: flask.testing.FlaskClient, b
                 f"Entry {x.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
                 in err
             )
-    
+
     # Verify that s3 files are printed
     for x in fake_files_in_bucket[15::]:
         assert (
             f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
             in err
         )
-    
+
     # Verify that the rest of the files are not printed
     for x in fake_files_in_bucket[:15]:
         assert (
