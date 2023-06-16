@@ -30,6 +30,28 @@ import sqlalchemy
 
 url: str = "http://localhost"
 
+# Mocking
+
+
+def mock_nosuchbucket(*_, **__):
+    raise botocore.exceptions.ClientError(
+        error_response={"Error": {"Code": "NoSuchBucket"}}, operation_name="Test"
+    )
+
+
+def mock_items_in_bucket():
+    class Object(object):
+        pass
+
+    list_of_items = []
+    for i in range(20):
+        obj = Object()
+        obj.key = f"testing{i}"
+        list_of_items.append(obj)
+
+    return list_of_items
+
+
 # collect_project
 
 
@@ -1192,25 +1214,6 @@ def test_bytehours_in_last_month_20tb(client: flask.testing.FlaskClient):
 
 
 # list_lost_files_in_project
-
-
-def mock_nosuchbucket(*_, **__):
-    raise botocore.exceptions.ClientError(
-        error_response={"Error": {"Code": "NoSuchBucket"}}, operation_name="Test"
-    )
-
-
-def mock_items_in_bucket():
-    class Object(object):
-        pass
-
-    list_of_items = []
-    for i in range(20):
-        obj = Object()
-        obj.key = f"testing{i}"
-        list_of_items.append(obj)
-
-    return list_of_items
 
 
 def test_list_lost_files_in_project_nosuchbucket(
