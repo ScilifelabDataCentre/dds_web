@@ -1224,7 +1224,7 @@ def test_list_lost_files_in_project_nosuchbucket(
         assert f"Project '{project.public_id}' bucket is missing" in err
         assert f"Expected: {not project.is_active}" in err
 
-def test_list_lost_files_in_project_nothing_in_s3(client: flask.testing.FlaskClient, boto3_session):
+def test_list_lost_files_in_project_nothing_in_s3(client: flask.testing.FlaskClient, boto3_session, capfd):
     """Verify that all files in db are printed since they do not exist in s3."""
     # Imports
     from dds_web.utils import list_lost_files_in_project
@@ -1234,6 +1234,16 @@ def test_list_lost_files_in_project_nothing_in_s3(client: flask.testing.FlaskCli
     assert project
 
     # Verify that exception is raised
-    list_lost_files_in_project(project=project, s3_resource=boto3_session)
+    in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(project=project, s3_resource=boto3_session)
 
-    # TODO: Assert stuff here
+    # Verify that in_s3_but_not_db is empty
+    assert not in_s3_but_not_in_db
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify that all files are listed
+    for f in project.files:
+        assert f.name_in_bucket in in_db_but_not_in_s3
+        assert f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)" in err
+        assert f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)" not in err
