@@ -265,7 +265,7 @@ def list_lost_files(project_id: str):
             sys.exit(1)
 
         # Print out message if no lost files
-        if not sum([len(in_db_but_not_in_s3_count), len(in_s3_but_not_in_db_count)]):
+        if not sum([len(in_db_but_not_in_s3), len(in_s3_but_not_in_db)]):
             flask.current_app.logger.info(f"No lost files in project '{project_id}'")
     else:
         # Interate through the units
@@ -350,6 +350,8 @@ def add_missing_bucket(project_id: str):
         else:
             resource.create_bucket(Bucket=project.bucket)
             flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
+    
+    flask.current_app.logger.info(f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket.")
 
 
 @lost_files_s3_db.command(name="delete")

@@ -1212,5 +1212,5 @@ def test_list_lost_files_in_project_nosuchbucket(client: flask.testing.FlaskClie
 
         # Verify that correct messages is printed
         _, err = capfd.readouterr()
-        assert "Project bucket is missing" in err
+        assert f"Project '{project.public_id}' bucket is missing" in err
         assert f"Expected: {not project.is_active}" in err
