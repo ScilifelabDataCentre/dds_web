@@ -261,7 +261,9 @@ def list_lost_files(project_id: str):
                 project=project, s3_resource=resource
             )
         except botocore.exceptions.ClientError:
-            flask.current_app.logger.error("Error occurred while listing files. Cancelling command.")
+            flask.current_app.logger.error(
+                "Error occurred while listing files. Cancelling command."
+            )
             sys.exit(1)
 
         # Print out message if no lost files
@@ -350,8 +352,10 @@ def add_missing_bucket(project_id: str):
         else:
             resource.create_bucket(Bucket=project.bucket)
             flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
-    
-    flask.current_app.logger.info(f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket.")
+
+    flask.current_app.logger.info(
+        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+    )
 
 
 @lost_files_s3_db.command(name="delete")

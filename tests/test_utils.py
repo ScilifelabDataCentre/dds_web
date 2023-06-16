@@ -1192,9 +1192,14 @@ url: str = "http://localhost"
 
 
 def mock_nosuchbucket(*_, **__):
-    raise botocore.exceptions.ClientError(error_response={"Error": {"Code": "NoSuchBucket"}}, operation_name='Test')
+    raise botocore.exceptions.ClientError(
+        error_response={"Error": {"Code": "NoSuchBucket"}}, operation_name="Test"
+    )
 
-def test_list_lost_files_in_project_nosuchbucket(client: flask.testing.FlaskClient, boto3_session, capfd):
+
+def test_list_lost_files_in_project_nosuchbucket(
+    client: flask.testing.FlaskClient, boto3_session, capfd
+):
     """Verify that nosuchbucket error is raised and therefore message printed."""
     # Imports
     import boto3
@@ -1202,7 +1207,7 @@ def test_list_lost_files_in_project_nosuchbucket(client: flask.testing.FlaskClie
 
     # Get project
     project = models.Project.query.first()
-    assert project 
+    assert project
 
     # Mock NoSuchBucket error
     with patch("boto3.session.Session.resource.meta.client.head_bucket", mock_nosuchbucket):
