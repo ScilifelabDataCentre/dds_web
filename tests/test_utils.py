@@ -1233,7 +1233,7 @@ def test_list_lost_files_in_project_nothing_in_s3(client: flask.testing.FlaskCli
     project = models.Project.query.first()
     assert project
 
-    # Verify that exception is raised
+    # Run listing
     in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(project=project, s3_resource=boto3_session)
 
     # Verify that in_s3_but_not_db is empty
@@ -1247,3 +1247,27 @@ def test_list_lost_files_in_project_nothing_in_s3(client: flask.testing.FlaskCli
         assert f.name_in_bucket in in_db_but_not_in_s3
         assert f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)" in err
         assert f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)" not in err
+
+def test_list_lost_files_in_project_s3anddb_empty(client: flask.testing.FlaskClient, boto3_session, capfd):
+    """Verify that there are no lost files because there are no files."""
+    # Imports
+    from dds_web.utils import list_lost_files_in_project
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Mock project.files -- no files
+    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+        mock_files.return_value = [] 
+
+        # Run listing
+        in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(project=project, s3_resource=boto3_session)
+
+        # Verify that both are empty
+        assert not in_db_but_not_in_s3
+        assert not in_s3_but_not_in_db
+
+    _, err = capfd.readouterr()
+    assert f"No lost files in project '{project.public_id}'" in err
+
