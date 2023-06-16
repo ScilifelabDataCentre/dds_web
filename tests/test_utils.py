@@ -2,7 +2,8 @@ import marshmallow
 from dds_web import utils
 import pytest
 from unittest.mock import patch
-from unittest.mock import MagicMock
+from unittest.mock import PropertyMock
+
 from dds_web import db
 from dds_web.database import models
 from dds_web.errors import (
@@ -23,6 +24,7 @@ import werkzeug
 from dateutil.relativedelta import relativedelta
 import boto3
 import botocore
+import sqlalchemy
 
 # Variables
 
@@ -1196,13 +1198,15 @@ def mock_nosuchbucket(*_, **__):
         error_response={"Error": {"Code": "NoSuchBucket"}}, operation_name="Test"
     )
 
+def mock_operationalerror(*args, **kwargs):
+    raise sqlalchemy.exc.OperationalError(args, kwargs)
+
 
 def test_list_lost_files_in_project_nosuchbucket(
     client: flask.testing.FlaskClient, boto3_session, capfd
 ):
     """Verify that nosuchbucket error is raised and therefore message printed."""
     # Imports
-    import boto3
     from dds_web.utils import list_lost_files_in_project
 
     # Get project
@@ -1219,3 +1223,17 @@ def test_list_lost_files_in_project_nosuchbucket(
         _, err = capfd.readouterr()
         assert f"Project '{project.public_id}' bucket is missing" in err
         assert f"Expected: {not project.is_active}" in err
+
+def test_list_lost_files_in_project_nothing_in_s3(client: flask.testing.FlaskClient, boto3_session):
+    """Verify that all files in db are printed since they do not exist in s3."""
+    # Imports
+    from dds_web.utils import list_lost_files_in_project
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Verify that exception is raised
+    list_lost_files_in_project(project=project, s3_resource=boto3_session)
+
+    # TODO: Assert stuff here
