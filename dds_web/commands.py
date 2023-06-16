@@ -14,6 +14,7 @@ import click
 import flask
 import flask_mail
 import sqlalchemy
+import botocore
 
 # Own
 from dds_web import db
@@ -255,9 +256,13 @@ def list_lost_files(project_id: str):
         )
 
         # List the lost files
-        in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
-            project=project, s3_resource=resource
-        )
+        try:
+            in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+                project=project, s3_resource=resource
+            )
+        except botocore.exceptions.ClientError:
+            flask.current_app.logger.error("Error occurred while listing files. Cancelling command.")
+            sys.exit(1)
 
         # Print out message if no lost files
         if not sum([len(in_db_but_not_in_s3_count), len(in_s3_but_not_in_db_count)]):
