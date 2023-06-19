@@ -47,7 +47,7 @@ def test_list_proj_info_without_project(client):
 
 
 def test_list_proj_info_access_granted(client):
-    """Researcher should be able to list project information, "Created by should be the Unit name" """
+    """Researcher should be able to list project information, "Created by" should be the Unit name """
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token, query_string=proj_query)
