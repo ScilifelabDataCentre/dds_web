@@ -424,7 +424,7 @@ class AddUser(flask_restful.Resource):
             unit = auth.current_user().unit
             unit_name = unit.external_display_name
             unit_email = unit.contact_email
-            sender_name = auth.current_user().name
+            sender_name = None
             subject_subject = unit_name
 
         else:
