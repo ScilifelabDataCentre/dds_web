@@ -19,7 +19,7 @@
         {% if unit_name is none %}
         The invite was sent to you by {{sender_name}}.
         {% else %}
-        The invite was sent to you by {{sender_name}} on behalf of {{unit_name}}{% if unit_email is not none %} (<a
+        The invite was sent to you on behalf of {{unit_name}}{% if unit_email is not none %} (<a
           href="mailto: {{unit_email}}">{{unit_email}}</a>){% endif %}.
         {% endif %}
         Please press the 'Sign Up' button to create your account:
