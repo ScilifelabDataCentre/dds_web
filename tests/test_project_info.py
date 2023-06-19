@@ -47,7 +47,7 @@ def test_list_proj_info_without_project(client):
 
 
 def test_list_proj_info_access_granted(client):
-    """Researcher should be able to list project information"""
+    """Researcher should be able to list project information, "Created by should be the Unit name" """
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token, query_string=proj_query)
@@ -56,6 +56,8 @@ def test_list_proj_info_access_granted(client):
     project_info = response_json.get("project_info")
 
     assert "public_project_id" == project_info.get("Project ID")
+    # check that Researcher gets Unit name as "Created by"
+    assert "Unit 1" == project_info.get("Created by")
     # check that endpoint returns dictionary and not a list
     assert isinstance(project_info, dict)
 
@@ -63,13 +65,15 @@ def test_list_proj_info_access_granted(client):
 def test_list_proj_info_unit_user(client):
     """Unit user should be able to list project information"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token, query_string=proj_query)
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
     project_info = response_json.get("project_info")
 
     assert "public_project_id" == project_info.get("Project ID")
+    # check that Unit admin gets personal name as "Created by"
+    assert "Unit User" == project_info.get("Created by")
     assert (
         "This is a test project. You will be able to upload to but NOT download"
         in project_info.get("Description")
@@ -78,13 +82,29 @@ def test_list_proj_info_unit_user(client):
 
 
 def test_list_proj_info_returned_items(client):
-    """Returned project information should contain certain items"""
+    """Test returned project information for unitadmin"""
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
     response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token, query_string=proj_query)
     assert response.status_code == http.HTTPStatus.OK
     response_json = response.json
     project_info = response_json.get("project_info")
+    # check that Unit admin gets personal name as "Created by"
+    assert "Unit User" == project_info.get("Created by")
+
+    assert all(item in project_info for item in proj_info_items)
+
+
+def test_list_proj_info_returned_items(client):
+    """Test returned project information for superadmin"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
+    response = client.get(tests.DDSEndpoint.PROJECT_INFO, headers=token, query_string=proj_query)
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    project_info = response_json.get("project_info")
+    # check that Super admin gets personal name as "Created by"
+    assert "Unit User" == project_info.get("Created by")
 
     assert all(item in project_info for item in proj_info_items)
 
