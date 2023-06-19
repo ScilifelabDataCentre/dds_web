@@ -971,7 +971,7 @@ class ProjectInfo(flask_restful.Resource):
         if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
             project_creator = project.responsible_unit.name
         else:
-            project_creator =project.creator.name
+            project_creator = project.creator.name
 
         # Construct a dict with info items
         project_info = {
