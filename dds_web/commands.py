@@ -345,21 +345,22 @@ def add_missing_bucket(project_id: str):
     try:
         resource.meta.client.head_bucket(Bucket=project.bucket)
     except ClientError:
-        flask.current_app.logger.info(f"Project bucket is missing. Proceeding...")
+        flask.current_app.logger.info("Project bucket is missing. Proceeding...")
 
         # Verify that bucket name is valid and if so create bucket
         valid, message = bucket_is_valid(bucket_name=project.bucket)
         if not valid:
             flask.current_app.logger.warning(
-                f"Invalid bucket name: '{project.bucket}'. No bucket Details: {message}. Bucket not created."
+                f"Invalid bucket name: '{project.bucket}'. Details: {message}. Bucket not created."
             )
+            sys.exit(1)
         else:
             resource.create_bucket(Bucket=project.bucket)
             flask.current_app.logger.info(f"Bucket '{project.bucket}' created.")
-
-    flask.current_app.logger.info(
-        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
-    )
+    else:
+        flask.current_app.logger.info(
+            f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+        )
 
 
 @lost_files_s3_db.command(name="delete")
