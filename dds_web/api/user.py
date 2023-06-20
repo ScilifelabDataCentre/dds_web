@@ -429,7 +429,6 @@ class AddUser(flask_restful.Resource):
         else:
             displayed_sender = auth.current_user().name
 
-
         # Fill in email subject with sentence subject
         if mail_type == "invite":
             subject = f"{displayed_sender} invites you to the SciLifeLab Data Delivery System"
