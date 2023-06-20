@@ -16,11 +16,10 @@
         The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple
         way.</p>
       <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">
-        <!-- {% if unit_name is none %} -->
-        <!-- You were added to this project by {{sender_name}}. -->
-        <!-- {% else %} -->
-        You were added to this project on behalf of {{unit_name}}{% if unit_email is not none %} (<a
-          href="mailto: {{unit_email}}">{{unit_email}}</a>){% endif %}.
+        {% if unit_email %}
+        You were added to this project on behalf of {{displayed_sender}} (<a href="mailto: {{unit_email}}">{{unit_email}}</a>).
+        {% else %}
+        You were added to this project by {{displayed_sender}}.
         {% endif %}
       </p>
       <p style="font-family: arial, sans-serif; font-size: 12px; font-weight: normal; margin: 0; Margin-top: 0px;">
