@@ -12,7 +12,7 @@ services:
       target: test
     command: >
       sh -c "COVERAGE_FILE=./coverage/.coverage pytest tests/test_auth.py -s -color=yes \
-      $DDS_PYTEST_ARGS --cov=./dds_web --cov-report=xml:coverage/report.xml"
+        $DDS_PYTEST_ARGS --cov=./dds_web --cov-report=xml:coverage/report.xml"
     restart: "no"
     volumes:
       - type: bind
