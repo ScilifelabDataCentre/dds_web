@@ -81,7 +81,7 @@ def test_list_proj_info_unit_user(client):
     assert "Size" in project_info.keys() and project_info["Size"] is not None
 
 
-def test_list_proj_info_returned_items(client):
+def test_list_proj_info_returned_items_unitadmin(client):
     """Test returned project information for unitadmin"""
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
@@ -95,7 +95,7 @@ def test_list_proj_info_returned_items(client):
     assert all(item in project_info for item in proj_info_items)
 
 
-def test_list_proj_info_returned_items(client):
+def test_list_proj_info_returned_items_superadmin(client):
     """Test returned project information for superadmin"""
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
