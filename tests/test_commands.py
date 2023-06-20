@@ -31,7 +31,7 @@ from dds_web.commands import (
     delete_invites,
     quarterly_usage,
     collect_stats,
-    lost_files_s3_db
+    lost_files_s3_db,
 )
 from dds_web.database import models
 from dds_web import db
@@ -257,13 +257,16 @@ def mock_unit_size():
 
 # lost_files_s3_db
 
+
 def test_lost_files_s3_db_no_command(client, cli_runner, capfd):
     """Test running the flask lost-files command without any subcommand."""
     _: click.testing.Result = cli_runner.invoke(lost_files_s3_db)
     _, err = capfd.readouterr()
     assert not err
 
+
 # lost_files_s3_db -- list_lost_files
+
 
 def test_list_lost_files_no_such_project(client, cli_runner, capfd):
     """flask lost-files ls: project specified, project doesnt exist."""
@@ -272,13 +275,16 @@ def test_list_lost_files_no_such_project(client, cli_runner, capfd):
     assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
 
     # Run command with non existent project
-    result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls", "--project-id", project_id])
-    assert result.exit_code == 1 # sys.exit(1)
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["ls", "--project-id", project_id]
+    )
+    assert result.exit_code == 1  # sys.exit(1)
 
     # Verify output
     _, err = capfd.readouterr()
     assert f"Searching for lost files in project '{project_id}'." in err
     assert f"No such project: '{project_id}'" in err
+
 
 def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_session, capfd):
     """flask lost-files ls: project specified, no lost files."""
@@ -290,8 +296,10 @@ def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_sess
     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
         mock_files.return_value = []
 
-        # Run command 
-        result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls", "--project-id", project.public_id])
+        # Run command
+        result: click.testing.Result = cli_runner.invoke(
+            lost_files_s3_db, ["ls", "--project-id", project.public_id]
+        )
         assert result.exit_code == 0
 
     # Verify output -- no lost files
@@ -299,14 +307,17 @@ def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_sess
     assert f"Searching for lost files in project '{project.public_id}'." in err
     assert f"No lost files in project '{project.public_id}'" in err
 
+
 def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
     """flask lost-files ls: project specified, lost files in s3."""
     # Get project
     project = models.Project.query.first()
     assert project
 
-    # Run command 
-    result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls", "--project-id", project.public_id])
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["ls", "--project-id", project.public_id]
+    )
     assert result.exit_code == 0
 
     # Verify output
@@ -322,13 +333,14 @@ def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_sess
             not in err
         )
 
+
 def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, capfd):
     """flask lost-files ls: no project specified, no lost files."""
     # Mock project.files -- no files
     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
         mock_files.return_value = []
 
-        # Run command 
+        # Run command
         result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
         assert result.exit_code == 0
 
@@ -340,9 +352,10 @@ def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, 
         assert f"Listing lost files in unit: {u.public_id}" in err
     assert f"No lost files for unit '{u.public_id}'" in err
 
+
 def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
     """flask lost-files ls: project specified, lost files in s3."""
-    # Run command 
+    # Run command
     result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
     assert result.exit_code == 0
 
@@ -360,6 +373,7 @@ def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_sess
                     f"Entry {f.name_in_bucket} ({p.public_id}, {u}) not found in database (but found in s3)"
                     not in err
                 )
+
 
 # # usage = 0 --> check log
 # def test_monitor_usage_no_usage(client, cli_runner, capfd):
@@ -655,4 +669,3 @@ def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_sess
 #     reporting_rows = Reporting.query.all()
 #     for row in reporting_rows:
 #         verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)
-
