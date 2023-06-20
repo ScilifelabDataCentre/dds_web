@@ -416,26 +416,24 @@ class AddUser(flask_restful.Resource):
             # userobj likely an invite
             recipients = [userobj.email]
 
-        unit_name = None
         unit_email = None
         project_id = None
         deadline = None
+
+        # Don't display unit admins or personnels name
         if auth.current_user().role in ["Unit Admin", "Unit Personnel"]:
             unit = auth.current_user().unit
-            unit_name = unit.external_display_name
             unit_email = unit.contact_email
-            sender_name = auth.current_user().name
-            subject_subject = unit_name
-
+            displayed_sender = unit.external_display_name
+        # Display name if Super admin or Project owners
         else:
-            sender_name = auth.current_user().name
-            subject_subject = sender_name
+            displayed_sender = auth.current_user().name
 
         # Fill in email subject with sentence subject
         if mail_type == "invite":
-            subject = f"{subject_subject} invites you to the SciLifeLab Data Delivery System"
+            subject = f"{displayed_sender} invites you to the SciLifeLab Data Delivery System"
         elif mail_type == "project_release":
-            subject = f"Project made available by {subject_subject} in the SciLifeLab Data Delivery System"
+            subject = f"Project made available by {displayed_sender} in the SciLifeLab Data Delivery System"
             project_id = project.public_id
             deadline = project.current_deadline.astimezone(datetime.timezone.utc).strftime(
                 "%Y-%m-%d %H:%M:%S %Z"
@@ -464,8 +462,7 @@ class AddUser(flask_restful.Resource):
         msg.body = flask.render_template(
             f"mail/{mail_type}.txt",
             link=link,
-            sender_name=sender_name,
-            unit_name=unit_name,
+            displayed_sender=displayed_sender,
             unit_email=unit_email,
             project_id=project_id,
             deadline=deadline,
@@ -473,8 +470,7 @@ class AddUser(flask_restful.Resource):
         msg.html = flask.render_template(
             f"mail/{mail_type}.html",
             link=link,
-            sender_name=sender_name,
-            unit_name=unit_name,
+            displayed_sender=displayed_sender,
             unit_email=unit_email,
             project_id=project_id,
             deadline=deadline,
