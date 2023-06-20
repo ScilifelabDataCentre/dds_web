@@ -238,6 +238,7 @@ def list_lost_files(project_id: str):
     from dds_web.utils import list_lost_files_in_project
 
     if project_id:
+        flask.current_app.logger.debug(f"Searching for lost files in project '{project_id}'.")
         # Get project if option used
         project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
         if not project:
@@ -270,6 +271,7 @@ def list_lost_files(project_id: str):
         if not sum([len(in_db_but_not_in_s3), len(in_s3_but_not_in_db)]):
             flask.current_app.logger.info(f"No lost files in project '{project_id}'")
     else:
+        flask.current_app.logger.debug("No project specified, searching for lost files in all units.")
         # Interate through the units
         for unit in models.Unit.query:
             flask.current_app.logger.info(f"Listing lost files in unit: {unit.public_id}")
