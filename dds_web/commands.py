@@ -296,9 +296,12 @@ def list_lost_files(project_id: str):
             # List files in all projects
             for proj in unit.projects:
                 # List the lost files
-                in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
-                    project=proj, s3_resource=resource_unit
-                )
+                try: 
+                    in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+                        project=proj, s3_resource=resource_unit
+                    )
+                except botocore.exceptions.ClientError:
+                    continue
 
                 # Add to sum
                 in_db_but_not_in_s3_count += len(in_db_but_not_in_s3)
