@@ -262,7 +262,7 @@ def list_lost_files(project_id: str):
                 project=project, s3_resource=resource
             )
         except (botocore.exceptions.ClientError, sqlalchemy.exc.OperationalError):
-            flask.current_app.logger.info("Command cancelled. Not listing files.")
+            flask.current_app.logger.info("Not listing files due to error above.")
             sys.exit(1)
 
         # Print out message if no lost files

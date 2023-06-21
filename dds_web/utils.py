@@ -688,7 +688,7 @@ def list_lost_files_in_project(project, s3_resource):
         s3_resource.meta.client.head_bucket(Bucket=project.bucket)
     except botocore.exceptions.ClientError:
         missing_expected: bool = not project.is_active
-        flask.current_app.logger.info(
+        flask.current_app.logger.error(
             f"Project '{project.public_id}' bucket is missing. Expected: {missing_expected}"
         )
         raise
@@ -723,5 +723,5 @@ def list_lost_files_in_project(project, s3_resource):
                 project.public_id,
                 project.responsible_unit,
             )
-            
+
     return diff_db, diff_s3
