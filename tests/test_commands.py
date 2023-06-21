@@ -375,7 +375,7 @@ def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_sess
                     f"Entry {f.name_in_bucket} ({p.public_id}, {u}) not found in database (but found in s3)"
                     not in err
                 )
-        assert f"Unit: {u.public_id}\t\tIn DB but not S3: {num_files}\tIn S3 but not DB: 0\n"
+        assert f"Lost files for unit: {u.public_id}\t\tIn DB but not S3: {num_files}\tIn S3 but not DB: 0\tProject errors: 0\n"
 
 
 # lost_files_s3_db -- add_missing_bucket

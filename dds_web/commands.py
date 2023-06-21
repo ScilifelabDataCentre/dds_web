@@ -273,11 +273,11 @@ def list_lost_files(project_id: str):
             "No project specified, searching for lost files in all units."
         )
 
-        num_proj_errors: int = 0
-
         # Interate through the units
         for unit in models.Unit.query:
             flask.current_app.logger.info(f"Listing lost files in unit: {unit.public_id}")
+
+            num_proj_errors: int = 0
 
             # Start s3 session
             session = boto3.session.Session()
@@ -302,6 +302,7 @@ def list_lost_files(project_id: str):
                         project=proj, s3_resource=resource_unit
                     )
                 except (botocore.exceptions.ClientError, sqlalchemy.exc.OperationalError):
+                    num_proj_errors += 1
                     continue
 
                 # Add to sum
@@ -312,9 +313,10 @@ def list_lost_files(project_id: str):
                 flask.current_app.logger.info(f"No lost files for unit '{unit.public_id}'")
 
             flask.current_app.logger.info(
-                f"Unit: {unit.public_id}\t"
+                f"Lost files for unit: {unit.public_id}\t"
                 f"\tIn DB but not S3: {in_db_but_not_in_s3_count}\t"
-                f"In S3 but not DB: {in_s3_but_not_in_db_count}\n"
+                f"In S3 but not DB: {in_s3_but_not_in_db_count}\t"
+                f"Project errors: {num_proj_errors}\n"
             )
 
 
