@@ -1231,7 +1231,9 @@ def test_list_lost_files_in_project_nosuchbucket(
     with patch("boto3.session.Session.resource.meta.client.head_bucket", mock_nosuchbucket):
         # Verify that exception is raised
         with pytest.raises(botocore.exceptions.ClientError):
-            list_lost_files_in_project(project=project, s3_resource=boto3_session)
+            in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(project=project, s3_resource=boto3_session)
+            assert not in_db_but_not_in_s3
+            assert not in_s3_but_not_in_db
 
         # Verify that correct messages is printed
         _, err = capfd.readouterr()
@@ -1301,8 +1303,8 @@ def test_list_lost_files_in_project_s3anddb_empty(
     # Get logging output
     _, err = capfd.readouterr()
 
-    # Verify message printed out
-    assert f"No lost files in project '{project.public_id}'" in err
+    # Verify no message printed out
+    assert not err
 
 
 def test_list_lost_files_in_project_no_files_in_db(
@@ -1350,9 +1352,6 @@ def test_list_lost_files_in_project_no_files_in_db(
             f"Entry {x.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
             not in err
         )
-
-    # Verify that message is not printed out
-    assert f"No list files in project '{project.public_id}'" not in err
 
 
 def test_list_lost_files_in_project_overlap(
