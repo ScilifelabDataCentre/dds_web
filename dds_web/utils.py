@@ -723,7 +723,5 @@ def list_lost_files_in_project(project, s3_resource):
                 project.public_id,
                 project.responsible_unit,
             )
-    else:
-        flask.current_app.logger.info(f"No lost files in project '{project.public_id}'")
-
+            
     return diff_db, diff_s3
