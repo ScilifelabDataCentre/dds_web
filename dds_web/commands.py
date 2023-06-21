@@ -300,7 +300,7 @@ def list_lost_files(project_id: str):
                     in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
                         project=proj, s3_resource=resource_unit
                     )
-                except botocore.exceptions.ClientError:
+                except (botocore.exceptions.ClientError, sqlalchemy.exc.OperationalError):
                     continue
 
                 # Add to sum
