@@ -265,9 +265,18 @@ def list_lost_files(project_id: str):
             flask.current_app.logger.info("Not listing files due to error above.")
             sys.exit(1)
 
+        # Number of lost files listed
+        num_lost_files: int = sum([len(in_db_but_not_in_s3), len(in_s3_but_not_in_db)])
+
         # Print out message if no lost files
-        if not sum([len(in_db_but_not_in_s3), len(in_s3_but_not_in_db)]):
+        if not num_lost_files:
             flask.current_app.logger.info(f"No lost files in project '{project_id}'")
+
+        flask.current_app.logger.info(
+            f"Lost files in project: {project_id}\t"
+            f"\tIn DB but not S3: {len(in_db_but_not_in_s3)}\t"
+            f"In S3 but not DB: {len(in_s3_but_not_in_db)}\n"
+        )
     else:
         flask.current_app.logger.debug(
             "No project specified, searching for lost files in all units."

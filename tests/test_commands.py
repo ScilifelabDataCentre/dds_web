@@ -333,6 +333,8 @@ def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_sess
             not in err
         )
 
+    assert f"Lost files in project: {project.public_id}\t\tIn DB but not S3: {len(len(project.files))}\tIn S3 but not DB: 0\n"
+
 
 def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, capfd):
     """flask lost-files ls: no project specified, no lost files."""

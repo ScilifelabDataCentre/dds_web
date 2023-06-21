@@ -1231,7 +1231,9 @@ def test_list_lost_files_in_project_nosuchbucket(
     with patch("boto3.session.Session.resource.meta.client.head_bucket", mock_nosuchbucket):
         # Verify that exception is raised
         with pytest.raises(botocore.exceptions.ClientError):
-            in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(project=project, s3_resource=boto3_session)
+            in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+                project=project, s3_resource=boto3_session
+            )
             assert not in_db_but_not_in_s3
             assert not in_s3_but_not_in_db
 
