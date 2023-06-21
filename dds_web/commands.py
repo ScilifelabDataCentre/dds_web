@@ -272,6 +272,9 @@ def list_lost_files(project_id: str):
         flask.current_app.logger.debug(
             "No project specified, searching for lost files in all units."
         )
+
+        num_proj_errors: int = 0
+
         # Interate through the units
         for unit in models.Unit.query:
             flask.current_app.logger.info(f"Listing lost files in unit: {unit.public_id}")
@@ -307,6 +310,12 @@ def list_lost_files(project_id: str):
 
             if not sum([in_db_but_not_in_s3_count, in_s3_but_not_in_db_count]):
                 flask.current_app.logger.info(f"No lost files for unit '{unit.public_id}'")
+
+            flask.current_app.logger.info(
+                f"Unit: {unit.public_id}\t"
+                f"\tIn DB but not S3: {in_db_but_not_in_s3_count}\t"
+                f"In S3 but not DB: {in_s3_but_not_in_db_count}\n"
+            )
 
 
 @lost_files_s3_db.command(name="add-missing-bucket")
