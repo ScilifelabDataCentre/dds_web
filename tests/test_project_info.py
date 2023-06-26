@@ -57,7 +57,7 @@ def test_list_proj_info_access_granted(client):
 
     assert "public_project_id" == project_info.get("Project ID")
     # check that Researcher gets Unit name as "Created by"
-    assert "Unit 1" == project_info.get("Created by")
+    assert "Display Name" == project_info.get("Created by")
     # check that endpoint returns dictionary and not a list
     assert isinstance(project_info, dict)
 
