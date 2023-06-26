@@ -30,7 +30,7 @@ def test_list_proj_no_token(client):
 
 
 def test_list_proj_access_granted_ls(client):
-    """Researcher should be able to list"""
+    """Researcher should be able to list, "Created by" should be the Unit name"""
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client)
     response = client.get(tests.DDSEndpoint.LIST_PROJ, headers=token)
@@ -38,10 +38,12 @@ def test_list_proj_access_granted_ls(client):
     response_json = response.json
     list_of_projects = response_json.get("project_info")
     assert "public_project_id" == list_of_projects[0].get("Project ID")
+    # check that Researcher gets Unit name as "Created by"
+    assert "Display Name" == list_of_projects[0].get("Created by")
 
 
-def test_list_proj_unit_user(client):
-    """Unit user should be able to list projects"""
+def test_list_proj_unit_admin(client):
+    """Unit admin should be able to list projects, "Created by" should be the creators name"""
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
     response = client.get(
@@ -56,6 +58,48 @@ def test_list_proj_unit_user(client):
     assert "public_project_id" == public_project.get("Project ID")
     assert "Cost" in public_project.keys() and public_project["Cost"] is not None
     assert "Usage" in public_project.keys() and public_project["Usage"] is not None
+    # check that Unit admin gets personal name as "Created by"
+    assert "Unit User" == public_project.get("Created by")
+
+
+def test_list_proj_unit_user(client):
+    """Unit user should be able to list projects, "Created by" should be the creators name"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.LIST_PROJ,
+        headers=token,
+        json={"usage": True},
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    public_project = response.json.get("project_info")[0]
+    assert "public_project_id" == public_project.get("Project ID")
+    assert "Cost" in public_project.keys() and public_project["Cost"] is not None
+    assert "Usage" in public_project.keys() and public_project["Usage"] is not None
+    # check that Unit admin gets personal name as "Created by"
+    assert "Unit User" == public_project.get("Created by")
+
+
+def test_list_proj_superadmin(client):
+    """Super admin should be able to list projects, "Created by" should be the creators name"""
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.get(
+        tests.DDSEndpoint.LIST_PROJ,
+        headers=token,
+        json={"usage": True},
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    public_project = response.json.get("project_info")[0]
+    assert "public_project_id" == public_project.get("Project ID")
+    assert "Cost" in public_project.keys() and public_project["Cost"] is not None
+    assert "Usage" in public_project.keys() and public_project["Usage"] is not None
+    # check that Unit admin gets personal name as "Created by"
+    assert "Unit User" == public_project.get("Created by")
 
 
 def test_list_only_active_projects_unit_user(client):
