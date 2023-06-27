@@ -266,3 +266,7 @@ _Nothing merged in CLI during this sprint_
 - Dependency: Bump `redis-py` to 4.5.5 due to security vulnerability alert(s) ([#1437](https://github.com/ScilifelabDataCentre/dds_web/pull/1437))
 - Change from personal name to unit name if / where it's displayed in emails ([#1439](https://github.com/ScilifelabDataCentre/dds_web/pull/1439))
 - Refactoring: `lost_files_s3_db` flask command changed to group with subcommands ([#1438](https://github.com/ScilifelabDataCentre/dds_web/pull/1438))
+
+# 2023-06-26 - 2023-07-14
+
+- Change display project info depending on the user role ([#1440](https://github.com/ScilifelabDataCentre/dds_web/pull/1440))
