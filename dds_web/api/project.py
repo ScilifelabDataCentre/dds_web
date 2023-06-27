@@ -494,7 +494,7 @@ class UserProjects(flask_restful.Resource):
 
         # Get info for all projects
         for p in user_projects:
-            project_creator = p.creator.name
+            project_creator = p.creator.name if p.creator else None
             if researcher:
                 project_creator = p.responsible_unit.external_display_name
 
