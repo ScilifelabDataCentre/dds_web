@@ -78,14 +78,14 @@ def test_list_proj_unit_user(client):
     assert "public_project_id" == public_project.get("Project ID")
     assert "Cost" in public_project.keys() and public_project["Cost"] is not None
     assert "Usage" in public_project.keys() and public_project["Usage"] is not None
-    # check that Unit admin gets personal name as "Created by"
+    # check that Unit user gets personal name as "Created by"
     assert "Unit User" == public_project.get("Created by")
 
 
 def test_list_proj_superadmin(client):
     """Super admin should be able to list projects, "Created by" should be the creators name"""
 
-    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
     response = client.get(
         tests.DDSEndpoint.LIST_PROJ,
         headers=token,
@@ -98,7 +98,7 @@ def test_list_proj_superadmin(client):
     assert "public_project_id" == public_project.get("Project ID")
     assert "Cost" in public_project.keys() and public_project["Cost"] is not None
     assert "Usage" in public_project.keys() and public_project["Usage"] is not None
-    # check that Unit admin gets personal name as "Created by"
+    # check that Super admin gets personal name as "Created by"
     assert "Unit User" == public_project.get("Created by")
 
 
