@@ -976,7 +976,7 @@ class ProjectInfo(flask_restful.Resource):
         dds_web.utils.verify_project_access(project=project)
 
         # if current user Researcher, show unit name instead of creator name
-        project_creator = project.creator.name
+        project_creator = project.creator.name if project.creator else None
         if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
             project_creator = project.responsible_unit.external_display_name
 
