@@ -10,6 +10,8 @@
 3.  Fork a new branch from `dev`
 4.  Update the version [changelog](../../CHANGELOG.rst)
 
+    **Tip:** Use the PR to `master` to see all changes since last release.
+    
     - The new version should be at the top of the page
     - List the changes that the users will / may notice
     - Do not add information regarding workflow (e.g. GitHub Actions) etc
