@@ -1,6 +1,25 @@
 Changelog
 ==========
 
+.. _2.3.1:
+
+2.3.1 - 2023-07-05
+~~~~~~~~~~~~~~~~~~~
+
+- Dependencies:
+    - `requests` from `2.27.1` to `2.31.0`
+    - `redis` from `4.4.4` to `4.5.5`
+    - `Flask` from `2.0.3` to `2.2.5`
+- Statistics:
+    - Number of TBHours stored in the last month calculated and stored in DB
+    - Number of TBHours stored since start calculated and stored in DB
+    - Endpoint `Statistics` to return rows stored in the Reporting table 
+- Full name of Unit Admins-, Personnel and Super Admins not shown to Researchers; Only display Unit name when...
+    - Listing projects
+    - Sending invites
+    - Releasing projects
+- Backend Flask command `lost-files` changed to group command with subcommands `ls`, `delete`, `add-missing-bucket`
+ 
 .. _2.3.0: 
 
 2.3.0 - 2023-06-07
