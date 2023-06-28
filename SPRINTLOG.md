@@ -270,3 +270,4 @@ _Nothing merged in CLI during this sprint_
 # 2023-06-26 - 2023-07-14
 
 - Change display project info depending on the user role ([#1440](https://github.com/ScilifelabDataCentre/dds_web/pull/1440))
+- New version: 2.4.0 ([]())
