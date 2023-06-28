@@ -39,7 +39,7 @@
   - [ ] Merged
   - [ ] No blocking PRs
 - PR to `master` branch
-  - [ ] Yes: Read [the release instructions](../doc/procedures/new_release.md)
+  - [ ] Yes: Read [the release instructions](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/procedures/new_release.md)
     - [ ] I have followed steps 1-8.
   - [ ] No
 
