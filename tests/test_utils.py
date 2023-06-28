@@ -2,6 +2,8 @@ import marshmallow
 from dds_web import utils
 import pytest
 from unittest.mock import patch
+from unittest.mock import PropertyMock
+
 from dds_web import db
 from dds_web.database import models
 from dds_web.errors import (
@@ -19,10 +21,36 @@ import flask_mail
 from flask.testing import FlaskClient
 import requests_mock
 import werkzeug
+from dateutil.relativedelta import relativedelta
+import boto3
+import botocore
+import sqlalchemy
 
 # Variables
 
 url: str = "http://localhost"
+
+# Mocking
+
+
+def mock_nosuchbucket(*_, **__):
+    raise botocore.exceptions.ClientError(
+        error_response={"Error": {"Code": "NoSuchBucket"}}, operation_name="Test"
+    )
+
+
+def mock_items_in_bucket():
+    class Object(object):
+        pass
+
+    list_of_items = []
+    for i in range(20):
+        obj = Object()
+        obj.key = f"testing{i}"
+        list_of_items.append(obj)
+
+    return list_of_items
+
 
 # collect_project
 
@@ -992,3 +1020,416 @@ def test_calculate_version_period_usage_new_version(client: flask.testing.FlaskC
     assert existing_version.size_stored == 10000
     assert bytehours < 10000.0
     assert existing_version.time_invoiced
+
+
+# format_timestamp
+
+
+def test_format_timestamp_no_timestamp(client: flask.testing.FlaskClient):
+    """No timestamp can be formatted if no timestamp is entered."""
+    from dds_web.utils import format_timestamp
+
+    timestamp = format_timestamp()
+    assert timestamp is None
+
+
+def test_format_timestamp_timestamp_object(client: flask.testing.FlaskClient):
+    """Verify working timestamp object formatting."""
+    from dds_web.utils import format_timestamp, current_time
+
+    # 1. No passed in format
+    # Verify that timestamp has a microseconds part
+    now = current_time()
+    assert now.microsecond != 0
+
+    # Verify that timestamp does not have a microseconds part after formatting
+    formatted = format_timestamp(timestamp_object=now)
+    assert formatted.microsecond == 0
+
+    # Verify that the two timestamps are not equal
+    assert formatted != now
+
+    # Verify that the timestamps have equal parts
+    assert formatted.year == now.year
+    assert formatted.month == now.month
+    assert formatted.day == now.day
+    assert formatted.hour == now.hour
+    assert formatted.minute == now.minute
+    assert formatted.second == now.second
+
+    # 2. Passed in format
+    # Verify that timestamp does not have minute, second or microsecond parts after formatting
+    formatted_2 = format_timestamp(timestamp_object=now, timestamp_format="%Y-%m-%d %H")
+    assert formatted_2.minute == 0
+    assert formatted_2.second == 0
+    assert formatted_2.microsecond == 0
+
+    # Verify that the two timestamps are now equal
+    # Verify that the two timestamps are not equal
+    assert formatted_2 != now
+
+    # Verify that the timestamps have equal parts
+    assert formatted_2.year == now.year
+    assert formatted_2.month == now.month
+    assert formatted_2.day == now.day
+    assert formatted_2.hour == now.hour
+
+
+def test_format_timestamp_timestamp_string(client: flask.testing.FlaskClient):
+    """Verify working timestamp string formatting."""
+    from dds_web.utils import format_timestamp, current_time
+
+    # 1. No passed in format
+    now = current_time()
+    now_as_string = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Verify that timestamp has a microseconds part
+    assert now.microsecond != 0
+
+    # # Verify that timestamp does not have a microseconds part after formatting
+    formatted = format_timestamp(timestamp_string=now_as_string)
+    assert formatted.microsecond == 0
+
+    # Verify that the two timestamps are not equal
+    assert formatted != now
+
+    # Verify that the timestamps have equal parts
+    assert formatted.year == now.year
+    assert formatted.month == now.month
+    assert formatted.day == now.day
+    assert formatted.hour == now.hour
+    assert formatted.minute == now.minute
+    assert formatted.second == now.second
+
+    # 2. Passed in format
+    # Verify that timestamp does not have minute, second or microsecond parts after formatting
+    with pytest.raises(ValueError) as err:
+        format_timestamp(timestamp_string=now_as_string, timestamp_format="%H:%M:%S")
+    assert (
+        str(err.value)
+        == "Timestamp strings need to contain year, month, day, hour, minute and seconds."
+    )
+
+
+# bytehours_in_last_month
+
+
+def run_bytehours_test(client: flask.testing.FlaskClient, size_to_test: int):
+    """Run checks to see that bytehours calc works."""
+    # Imports
+    from dds_web.utils import bytehours_in_last_month, current_time, format_timestamp
+
+    # 1. 1 byte, 1 hour, since a month, not deleted --> 1 bytehour
+    now = format_timestamp(timestamp_object=current_time())
+    time_uploaded = now - datetime.timedelta(hours=1)
+    expected_bytehour = size_to_test
+
+    # 1a. Get version and change size stored
+    version_to_test = models.Version.query.filter_by(time_deleted=None).first()
+    version_to_test.size_stored = size_to_test
+    version_to_test.time_uploaded = time_uploaded
+    version_id = version_to_test.id
+    db.session.commit()
+
+    # 1b. Get same version
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+    assert version_to_test
+    assert version_to_test.size_stored == size_to_test
+    assert not version_to_test.time_deleted
+
+    # 1c. Test bytehours
+    bytehours = bytehours_in_last_month(version=version_to_test)
+
+    # ---
+    # 2. 1 byte, since 30 days, deleted 1 hour ago --> 1 bytehour
+    time_deleted = now - datetime.timedelta(hours=1)
+    time_uploaded = time_deleted - datetime.timedelta(hours=1)
+
+    # 2a. Change time deleted to an hour ago and time uploaded to 2
+    version_to_test.time_deleted = time_deleted
+    version_to_test.time_uploaded = time_uploaded
+    db.session.commit()
+
+    # 2b. Get version again
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # 2c. Test bytehours
+    bytehours = bytehours_in_last_month(version=version_to_test)
+    assert int(bytehours) == expected_bytehour
+
+    # ---
+    # 3. 1 byte, before a month ago, not deleted --> 1*month
+    now = format_timestamp(timestamp_object=current_time())
+    time_uploaded = now - relativedelta(months=1, hours=1)
+    time_a_month_ago = now - relativedelta(months=1)
+    hours_since_month = (now - time_a_month_ago).total_seconds() / (60 * 60)
+    expected_bytehour = size_to_test * hours_since_month
+
+    # 3a. Change time uploaded and not deleted
+    version_to_test.time_uploaded = time_uploaded
+    version_to_test.time_deleted = None
+    db.session.commit()
+
+    # 3b. Get version again
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # 3c. Test bytehours
+    bytehours = bytehours_in_last_month(version=version_to_test)
+    assert bytehours == expected_bytehour
+
+    # ---
+    # 4. 1 byte, before 30 days, deleted an hour ago --> 1 hour less than a month
+    time_deleted = format_timestamp(timestamp_object=current_time()) - relativedelta(hours=1)
+    time_uploaded = now - relativedelta(months=1, hours=1)
+    time_a_month_ago = now - relativedelta(months=1)
+    hours_since_month = (time_deleted - time_a_month_ago).total_seconds() / (60 * 60)
+    expected_bytehour = size_to_test * hours_since_month
+
+    # 4a. Change time deleted and uploaded
+    version_to_test.time_uploaded = time_uploaded
+    version_to_test.time_deleted = time_deleted
+    db.session.commit()
+
+    # 4b. Get version again
+    version_to_test = models.Version.query.filter_by(id=version_id).first()
+
+    # 4c. Test bytehours
+    bytehours = bytehours_in_last_month(version=version_to_test)
+    assert int(bytehours) == expected_bytehour
+
+
+def test_bytehours_in_last_month_1byte(client: flask.testing.FlaskClient):
+    """Test that function calculates the correct number of TBHours."""
+    run_bytehours_test(client=client, size_to_test=1)
+
+
+def test_bytehours_in_last_month_1tb(client: flask.testing.FlaskClient):
+    """Test that function calculates the correct number of TBHours."""
+    run_bytehours_test(client=client, size_to_test=1e12)
+
+
+def test_bytehours_in_last_month_20tb(client: flask.testing.FlaskClient):
+    """Test that function calculates the correct number of TBHours."""
+    run_bytehours_test(client=client, size_to_test=20 * 1e12)
+
+
+# list_lost_files_in_project
+
+
+def test_list_lost_files_in_project_nosuchbucket(
+    client: flask.testing.FlaskClient, boto3_session, capfd
+):
+    """Verify that nosuchbucket error is raised and therefore message printed."""
+    # Imports
+    from dds_web.utils import list_lost_files_in_project
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Mock NoSuchBucket error
+    with patch("boto3.session.Session.resource.meta.client.head_bucket", mock_nosuchbucket):
+        # Verify that exception is raised
+        with pytest.raises(botocore.exceptions.ClientError):
+            in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+                project=project, s3_resource=boto3_session
+            )
+            assert not in_db_but_not_in_s3
+            assert not in_s3_but_not_in_db
+
+        # Verify that correct messages is printed
+        _, err = capfd.readouterr()
+        assert f"Project '{project.public_id}' bucket is missing" in err
+        assert f"Expected: {not project.is_active}" in err
+
+
+def test_list_lost_files_in_project_nothing_in_s3(
+    client: flask.testing.FlaskClient, boto3_session, capfd
+):
+    """Verify that all files in db are printed since they do not exist in s3."""
+    # Imports
+    from dds_web.utils import list_lost_files_in_project
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Run listing
+    in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+        project=project, s3_resource=boto3_session
+    )
+
+    # Verify that in_s3_but_not_db is empty
+    assert not in_s3_but_not_in_db
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify that all files are listed
+    for f in project.files:
+        assert f.name_in_bucket in in_db_but_not_in_s3
+        assert (
+            f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
+            in err
+        )
+        assert (
+            f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
+            not in err
+        )
+
+
+def test_list_lost_files_in_project_s3anddb_empty(
+    client: flask.testing.FlaskClient, boto3_session, capfd
+):
+    """Verify that there are no lost files because there are no files."""
+    # Imports
+    from dds_web.utils import list_lost_files_in_project
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Mock project.files -- no files
+    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+        mock_files.return_value = []
+
+        # Run listing
+        in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+            project=project, s3_resource=boto3_session
+        )
+
+        # Verify that both are empty
+        assert not in_db_but_not_in_s3
+        assert not in_s3_but_not_in_db
+
+    # Get logging output
+    _, err = capfd.readouterr()
+
+    # Verify no message printed out
+    assert not err
+
+
+def test_list_lost_files_in_project_no_files_in_db(
+    client: flask.testing.FlaskClient, boto3_session, capfd
+):
+    """Mock files in s3 and verify that only those are printed out."""
+    # Imports
+    from dds_web.utils import list_lost_files_in_project
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Mock project.files -- no files
+    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+        mock_files.return_value = []
+
+        # Mock files in s3
+        boto3_session.Bucket(project.bucket).objects.all = mock_items_in_bucket
+        # Get created testfiles
+        fake_files_in_bucket = mock_items_in_bucket()
+
+        # Run listing
+        in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+            project=project, s3_resource=boto3_session
+        )
+
+        # Verify that missing in database but exists in s3
+        assert not in_db_but_not_in_s3
+        assert in_s3_but_not_in_db
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify that all fake files are printed out
+    for x in fake_files_in_bucket:
+        assert (
+            f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
+            in err
+        )
+
+    # Verify that no file lines are printed out
+    for x in project.files:
+        assert (
+            f"Entry {x.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
+            not in err
+        )
+
+
+def test_list_lost_files_in_project_overlap(
+    client: flask.testing.FlaskClient, boto3_session, capfd
+):
+    """Verify that only some files are printed out when some files exist in the database and s3, but not all."""
+    # Imports
+    from dds_web.utils import list_lost_files_in_project
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Get created testfiles
+    fake_files_in_bucket = mock_items_in_bucket()
+
+    # Number of project files
+    original_db_files = project.files
+    num_proj_files = len(original_db_files)
+
+    # Create 15 few new files
+    new_files = []
+    for x in fake_files_in_bucket[:15]:
+        new_file = models.File(
+            name=x.key,
+            name_in_bucket=x.key,
+            subpath=".",
+            size_original=0,
+            size_stored=0,
+            compressed=True,
+            public_key="X" * 64,
+            salt="X" * 32,
+            checksum="X" * 64,
+        )
+        new_files.append(new_file)
+        project.files.append(new_file)
+    db.session.commit()
+
+    # Mock files in s3
+    boto3_session.Bucket(project.bucket).objects.all = mock_items_in_bucket
+
+    # Run listing
+    in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+        project=project, s3_resource=boto3_session
+    )
+
+    # Verify that both contain entries
+    assert in_db_but_not_in_s3
+    assert in_s3_but_not_in_db
+
+    # Get logging output
+    _, err = capfd.readouterr()
+
+    # Verify that original db files are printed
+    assert len(project.files) == num_proj_files + 15
+    for x in project.files:
+        if x not in new_files:
+            assert (
+                f"Entry {x.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
+                in err
+            )
+
+    # Verify that s3 files are printed
+    for x in fake_files_in_bucket[15::]:
+        assert (
+            f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
+            in err
+        )
+
+    # Verify that the rest of the files are not printed
+    for x in fake_files_in_bucket[:15]:
+        assert (
+            f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
+            not in err
+        )
+        assert (
+            f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
+            not in err
+        )

@@ -488,15 +488,23 @@ class UserProjects(flask_restful.Resource):
         # Apply the filters
         user_projects = models.Project.query.filter(sqlalchemy.and_(*all_filters)).all()
 
+        researcher = False
+        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+            researcher = True
+
         # Get info for all projects
         for p in user_projects:
+            project_creator = p.creator.name if p.creator else None
+            if researcher:
+                project_creator = p.responsible_unit.external_display_name
+
             project_info = {
                 "Project ID": p.public_id,
                 "Title": p.title,
                 "PI": p.pi,
                 "Status": p.current_status,
                 "Last updated": p.date_updated if p.date_updated else p.date_created,
-                "Created by": p.creator.name if p.creator else "Former User",
+                "Created by": project_creator or "Former User",
             }
 
             # Get proj size and update total size
@@ -967,10 +975,15 @@ class ProjectInfo(flask_restful.Resource):
         project = dds_web.utils.collect_project(project_id=project_id)
         dds_web.utils.verify_project_access(project=project)
 
+        # if current user Researcher, show unit name instead of creator name
+        project_creator = project.creator.name if project.creator else None
+        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+            project_creator = project.responsible_unit.external_display_name
+
         # Construct a dict with info items
         project_info = {
             "Project ID": project.public_id,
-            "Created by": project.creator.name if project.creator else "Former User",
+            "Created by": project_creator or "Former User",
             "Status": project.current_status,
             "Last updated": project.date_updated,
             "Size": project.size,

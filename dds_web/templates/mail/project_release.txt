@@ -1,10 +1,10 @@
 The project {{project_id}} is now available for your access in the SciLifeLab Data Delivery System (DDS).
 The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple way.
 
-{% if unit_name is none %}
-You were added to this project by {{sender_name}}.
+{% if unit_email %}
+You were added to this project on behalf of {{displayed_sender}} ({{unit_email}}).
 {% else %}
-You were added to this project by {{sender_name}} on behalf of {{unit_name}}{% if unit_email is not none %} ({{unit_email}}){% endif %}.
+You were added to this project by {{displayed_sender}}.
 {% endif %}
 
 The DDS CLI command 'dds ls -p {{project_id}}' can be used to list the files in this project.

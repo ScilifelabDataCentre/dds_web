@@ -12,8 +12,10 @@ import typing
 import urllib.parse
 import time
 import smtplib
+from dateutil.relativedelta import relativedelta
 
 # Installed
+import botocore
 from contextlib import contextmanager
 import flask
 from dds_web.errors import (
@@ -587,6 +589,69 @@ def calculate_version_period_usage(version):
     return bytehours
 
 
+def format_timestamp(
+    timestamp_string: str = None, timestamp_object=None, timestamp_format: str = "%Y-%m-%d %H:%M:%S"
+):
+    """Change timestamp format."""
+    if not timestamp_string and not timestamp_object:
+        return
+
+    if timestamp_string and timestamp_format != "%Y-%m-%d %H:%M:%S":
+        raise ValueError(
+            "Timestamp strings need to contain year, month, day, hour, minute and seconds."
+        )
+
+    if timestamp_object:
+        timestamp_string = timestamp_object.strftime(timestamp_format)
+
+    return datetime.datetime.strptime(timestamp_string, timestamp_format)
+
+
+def bytehours_in_last_month(version):
+    """Calculate number of terrabyte hours stored in last month."""
+    # Current date and date a month ago
+    now = format_timestamp(timestamp_object=current_time())
+    a_month_ago = now - relativedelta(months=1)
+    byte_hours: int = 0
+
+    # 1. File uploaded after start (a month ago)
+    if version.time_uploaded > a_month_ago:
+        #   A. File not deleted --> now - uploaded
+        if not version.time_deleted:
+            byte_hours = calculate_bytehours(
+                minuend=now,
+                subtrahend=version.time_uploaded,
+                size_bytes=version.size_stored,
+            )
+
+        #   B. File deleted --> deleted - uploaded
+        else:
+            byte_hours += calculate_bytehours(
+                minuend=version.time_deleted,
+                subtrahend=version.time_uploaded,
+                size_bytes=version.size_stored,
+            )
+
+    # 2. File uploaded prior to start (a month ago)
+    else:
+        #   A. File not deleted --> now - thirty_days_ago
+        if not version.time_deleted:
+            byte_hours += calculate_bytehours(
+                minuend=now, subtrahend=a_month_ago, size_bytes=version.size_stored
+            )
+
+        #   B. File deleted --> deleted - thirty_days_ago
+        else:
+            if version.time_deleted > a_month_ago:
+                byte_hours += calculate_bytehours(
+                    minuend=version.time_deleted,
+                    subtrahend=a_month_ago,
+                    size_bytes=version.size_stored,
+                )
+
+    return byte_hours
+
+
 # maintenance check
 def block_if_maintenance(user=None):
     """Block API requests if maintenance is ongoing and projects are busy."""
@@ -611,3 +676,52 @@ def block_if_maintenance(user=None):
         else:
             if user.role != "Super Admin":
                 raise MaintenanceOngoingException()
+
+
+def list_lost_files_in_project(project, s3_resource):
+    """List lost files in project."""
+    s3_filenames: set = set()
+    db_filenames: set = set()
+
+    # Check if bucket exists
+    try:
+        s3_resource.meta.client.head_bucket(Bucket=project.bucket)
+    except botocore.exceptions.ClientError:
+        missing_expected: bool = not project.is_active
+        flask.current_app.logger.error(
+            f"Project '{project.public_id}' bucket is missing. Expected: {missing_expected}"
+        )
+        raise
+
+    # Get items in s3
+    s3_filenames = set(entry.key for entry in s3_resource.Bucket(project.bucket).objects.all())
+
+    # Get items in db
+    try:
+        db_filenames = set(entry.name_in_bucket for entry in project.files)
+    except sqlalchemy.exc.OperationalError:
+        flask.current_app.logger.critical("Unable to connect to db")
+        raise
+
+    # Differences
+    diff_db = db_filenames.difference(s3_filenames)  # In db but not in S3
+    diff_s3 = s3_filenames.difference(db_filenames)  # In S3 but not in db
+
+    # List items
+    if any([diff_db, diff_s3]):
+        for file_entry in diff_db:
+            flask.current_app.logger.info(
+                "Entry %s (%s, %s) not found in S3 (but found in db)",
+                file_entry,
+                project.public_id,
+                project.responsible_unit,
+            )
+        for file_entry in diff_s3:
+            flask.current_app.logger.info(
+                "Entry %s (%s, %s) not found in database (but found in s3)",
+                file_entry,
+                project.public_id,
+                project.responsible_unit,
+            )
+
+    return diff_db, diff_s3

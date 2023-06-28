@@ -17,7 +17,7 @@ def test_get_user_change_password_without_login(client):
 
     # Because it redirects to login
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.LOGIN
+    assert response.request.path == tests.DDSEndpoint.LOGIN
 
 
 def test_unsuccessful_user_change_password_with_login_nonlatin1(client):
@@ -60,7 +60,7 @@ def test_unsuccessful_user_change_password_with_login_nonlatin1(client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.CHANGE_PASSWORD
+    assert response.request.path == tests.DDSEndpoint.CHANGE_PASSWORD
 
     # Password should not have changed, neither should other info
     assert user.verify_password("password")
@@ -115,7 +115,7 @@ def test_successful_user_change_password_with_login(client):
         headers=tests.DEFAULT_HEADER,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert flask.request.path == tests.DDSEndpoint.LOGIN
+    assert response.request.path == tests.DDSEndpoint.LOGIN
 
     assert not user.verify_password("password")
     assert user.verify_password("123$%^qweRTY")

@@ -31,6 +31,7 @@ from dds_web.commands import (
     delete_invites,
     quarterly_usage,
     collect_stats,
+    lost_files_s3_db,
 )
 from dds_web.database import models
 from dds_web import db
@@ -54,16 +55,19 @@ def mock_unit_size():
 # fill_db_wrapper
 
 
-def test_fill_db_wrapper_production(client, runner) -> None:
+def test_fill_db_wrapper_production(client, runner, capfd) -> None:
     """Run init-db with the production argument."""
     result: click.testing.Result = runner.invoke(fill_db_wrapper, ["production"])
-    assert result.exit_code == 1
+    _, err = capfd.readouterr()
+    assert "already exists, not creating user" in err
 
 
-def test_fill_db_wrapper_devsmall(client, runner) -> None:
+def test_fill_db_wrapper_devsmall(client, runner, capfd) -> None:
     """Run init-db with the dev-small argument."""
     result: click.testing.Result = runner.invoke(fill_db_wrapper, ["dev-small"])
-    assert result.exit_code == 1
+    _, err = capfd.readouterr()
+    assert "Initializing development db" in err
+    assert "DB filled" not in err  # DB already filled, duplicates.
 
 
 # def test_fill_db_wrapper_devbig(client, runner) -> None:
@@ -212,7 +216,7 @@ def test_create_new_unit_success(client, runner) -> None:
 # update_uploaded_file_with_log
 
 
-def test_update_uploaded_file_with_log_nonexisting_project(client, runner) -> None:
+def test_update_uploaded_file_with_log_nonexisting_project(client, runner, capfd) -> None:
     """Add file info to non existing project."""
     # Create command options
     command_options: typing.List = [
@@ -226,7 +230,8 @@ def test_update_uploaded_file_with_log_nonexisting_project(client, runner) -> No
     assert db.session.query(models.Project).all()
     with patch("dds_web.database.models.Project.query.filter_by", mock_no_project):
         result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
-        assert result.exit_code == 1
+    _, err = capfd.readouterr()
+    assert "The project 'projectdoesntexist' doesn't exist." in err
 
 
 def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: FakeFilesystem) -> None:
@@ -245,10 +250,284 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
 
     # Run command
     result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
+    # TODO: Add check for logging or change command to return or raise error. capfd does not work together with fs
+    # _, err = capfd.readouterr()
+    # assert "The project 'projectdoesntexist' doesn't exist." in result.stderr
+
+
+# lost_files_s3_db
+
+
+def test_lost_files_s3_db_no_command(client, cli_runner, capfd):
+    """Test running the flask lost-files command without any subcommand."""
+    _: click.testing.Result = cli_runner.invoke(lost_files_s3_db)
+    _, err = capfd.readouterr()
+    assert not err
+
+
+# lost_files_s3_db -- list_lost_files
+
+
+def test_list_lost_files_no_such_project(client, cli_runner, capfd):
+    """flask lost-files ls: project specified, project doesnt exist."""
+    # Project ID -- doesn't exist
+    project_id: str = "nonexistentproject"
+    assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
+
+    # Run command with non existent project
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["ls", "--project-id", project_id]
+    )
+    assert result.exit_code == 1  # sys.exit(1)
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert f"Searching for lost files in project '{project_id}'." in err
+    assert f"No such project: '{project_id}'" in err
+
+
+def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_session, capfd):
+    """flask lost-files ls: project specified, no lost files."""
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Mock project.files -- no files
+    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+        mock_files.return_value = []
+
+        # Run command
+        result: click.testing.Result = cli_runner.invoke(
+            lost_files_s3_db, ["ls", "--project-id", project.public_id]
+        )
+        assert result.exit_code == 0
+
+    # Verify output -- no lost files
+    _, err = capfd.readouterr()
+    assert f"Searching for lost files in project '{project.public_id}'." in err
+    assert f"No lost files in project '{project.public_id}'" in err
+
+
+def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
+    """flask lost-files ls: project specified, lost files in s3."""
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["ls", "--project-id", project.public_id]
+    )
+    assert result.exit_code == 0
+
+    # Verify output
+    _, err = capfd.readouterr()
+    # All files should be in db but not in s3
+    for f in project.files:
+        assert (
+            f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
+            in err
+        )
+        assert (
+            f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
+            not in err
+        )
+
+    assert f"Lost files in project: {project.public_id}\t\tIn DB but not S3: {len(len(project.files))}\tIn S3 but not DB: 0\n"
+
+
+def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, capfd):
+    """flask lost-files ls: no project specified, no lost files."""
+    # Mock project.files -- no files
+    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+        mock_files.return_value = []
+
+        # Run command
+        result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
+        assert result.exit_code == 0
+
+    # Verify output -- no lost files
+    _, err = capfd.readouterr()
+    assert "Searching for lost files in project" not in err
+    assert "No project specified, searching for lost files in all units." in err
+    for u in models.Unit.query.all():
+        assert f"Listing lost files in unit: {u.public_id}" in err
+    assert f"No lost files for unit '{u.public_id}'" in err
+
+
+def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
+    """flask lost-files ls: project specified, lost files in s3."""
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
+    assert result.exit_code == 0
+
+    # Verify output
+    _, err = capfd.readouterr()
+    # All files should be in db but not in s3
+    for u in models.Unit.query.all():
+        num_files: int = 0
+        for p in u.projects:
+            num_files += len(p.files)
+            for f in p.files:
+                assert (
+                    f"Entry {f.name_in_bucket} ({p.public_id}, {u}) not found in S3 (but found in db)"
+                    in err
+                )
+                assert (
+                    f"Entry {f.name_in_bucket} ({p.public_id}, {u}) not found in database (but found in s3)"
+                    not in err
+                )
+        assert f"Lost files for unit: {u.public_id}\t\tIn DB but not S3: {num_files}\tIn S3 but not DB: 0\tProject errors: 0\n"
+
+
+# lost_files_s3_db -- add_missing_bucket
+
+
+def test_add_missing_bucket_no_project(client, cli_runner):
+    """flask lost-files add-missing-bucket: no project specified (required)."""
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["add-missing-bucket"])
+
+    # Get output from result and verify that help message printed
+    assert result.exit_code == 2
+    assert "Missing option '--project-id' / '-p'." in result.stdout
+
+
+def test_add_missing_bucket_project_nonexistent(client, cli_runner, capfd):
+    """flask lost-files add-missing-bucket: no such project --> print out error."""
+    # Project -- doesn't exist
+    project_id: str = "nonexistentproject"
+    assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["add-missing-bucket", "--project-id", project_id]
+    )
     assert result.exit_code == 1
 
+    # Verify output
+    _, err = capfd.readouterr()
+    assert f"No such project: '{project_id}'" in err
 
-# monitor_usage
+
+def test_add_missing_bucket_project_inactive(client, cli_runner, capfd):
+    """flask lost-files add-missing-bucket: project specified, but inactive --> error message."""
+    # Get project
+    project: models.Project = models.Project.query.first()
+    assert project
+
+    # Set project as inactive
+    project.is_active = False
+    db.session.commit()
+    assert not project.is_active
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+    )
+    assert result.exit_code == 1
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert f"Project '{project.public_id}' is not an active project." in err
+
+
+def test_add_missing_bucket_not_missing(client, cli_runner, boto3_session, capfd):
+    """flask lost-files add-missing-bucket: project specified, not missing --> ok."""
+    from tests.test_utils import mock_nosuchbucket
+
+    # Get project
+    project: models.Project = models.Project.query.first()
+    assert project
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+    )
+    assert result.exit_code == 0
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert (
+        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+        in err
+    )
+
+
+# lost_files_s3_db -- delete_lost_files
+
+
+def test_delete_lost_files_no_project(client, cli_runner):
+    """flask lost-files delete: no project specified (required)."""
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["delete"])
+
+    # Get output from result and verify that help message printed
+    assert result.exit_code == 2
+    assert "Missing option '--project-id' / '-p'." in result.stdout
+
+
+def test_delete_lost_files_project_nonexistent(client, cli_runner, capfd):
+    """flask lost-files delete: no such project --> print out error."""
+    # Project -- doesn't exist
+    project_id: str = "nonexistentproject"
+    assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["delete", "--project-id", project_id]
+    )
+    assert result.exit_code == 1
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert f"No such project: '{project_id}'" in err
+
+
+def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd):
+    """flask lost-files delete: project specified and exists --> deleted files ok."""
+    # Get project
+    project: models.Project = models.Project.query.first()
+    assert project
+    num_project_files = len(project.files)
+    assert num_project_files > 0
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["delete", "--project-id", project.public_id]
+    )
+    assert result.exit_code == 0
+
+    # Verify output - files deleted
+    _, err = capfd.readouterr()
+    assert f"Files deleted from S3: 0" in err
+    assert f"Files deleted from DB: {num_project_files}" in err
+
+
+def test_delete_lost_files_sqlalchemyerror(client, cli_runner, boto3_session, capfd):
+    """flask lost-files delete: sqlalchemyerror during deletion."""
+    # Imports
+    from tests.api.test_project import mock_sqlalchemyerror
+
+    # Get project
+    project: models.Project = models.Project.query.first()
+    assert project
+    num_project_files = len(project.files)
+    assert num_project_files > 0
+
+    # Mock commit --> no delete
+    with patch("dds_web.db.session.commit", mock_sqlalchemyerror):
+        # Run command
+        result: click.testing.Result = cli_runner.invoke(
+            lost_files_s3_db, ["delete", "--project-id", project.public_id]
+        )
+        assert result.exit_code == 1
+
+    # Verify output - files deleted
+    _, err = capfd.readouterr()
+    assert "Unable to delete the database entries" in err
+    assert f"Files deleted from S3: 0" not in err
+    assert f"Files deleted from DB: 0" not in err
 
 
 # usage = 0 --> check log
@@ -443,6 +722,7 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         ProjectUsers,
         Version,
     )
+    from dds_web.utils import bytehours_in_last_month, page_query, calculate_bytehours
     import dds_web.utils
 
     def verify_reporting_row(row, time_date):
@@ -483,6 +763,23 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
         assert row.tb_uploaded_since_start == round(
             sum(version.size_stored for version in dds_web.utils.page_query(Version.query))
             / 1000000000000,
+            2,
+        )
+        assert row.tbhours == round(
+            sum(bytehours_in_last_month(version=version) for version in page_query(Version.query))
+            / 1e12,
+            2,
+        )
+        assert row.tbhours_since_start == round(
+            sum(
+                calculate_bytehours(
+                    minuend=version.time_deleted or time_date,
+                    subtrahend=version.time_uploaded,
+                    size_bytes=version.size_stored,
+                )
+                for version in page_query(Version.query)
+            )
+            / 1e12,
             2,
         )
 

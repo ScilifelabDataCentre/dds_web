@@ -90,6 +90,7 @@ api.add_resource(
     superadmin_only.ResetTwoFactor, "/user/totp/deactivate", endpoint="reset_user_hotp"
 )
 api.add_resource(superadmin_only.AnyProjectsBusy, "/proj/busy/any", endpoint="projects_busy_any")
+api.add_resource(superadmin_only.Statistics, "/stats", endpoint="stats")
 
 # Invoicing ############################################################################ Invoicing #
 api.add_resource(user.ShowUsage, "/usage", endpoint="usage")

@@ -254,4 +254,20 @@ _Nothing merged in CLI during this sprint_
   - Save number of unique Project Owners ([#1421](https://github.com/ScilifelabDataCentre/dds_web/pull/1421))
   - Save amount of TB's currently stored in system ([#1424](https://github.com/ScilifelabDataCentre/dds_web/pull/1424))
   - Save amount of TB's uploaded since start ([#1430](https://github.com/ScilifelabDataCentre/dds_web/pull/1430))
+  - Save number of TBHours stored in the last month ([#1431](https://github.com/ScilifelabDataCentre/dds_web/pull/1431))
+  - Save number of TBHours stored in since start ([#1434](https://github.com/ScilifelabDataCentre/dds_web/pull/1434))
 - New version: 2.3.0 ([#1433](https://github.com/ScilifelabDataCentre/dds_web/pull/1433))
+- Dependency: Bump `requests` to 2.31.0 due to security vulnerability alert ([#1427](https://github.com/ScilifelabDataCentre/dds_web/pull/1427))
+- Endpoint: Statistics; Return all rows stored in the Reporting table ([#1435](https://github.com/ScilifelabDataCentre/dds_web/pull/1435))
+
+# 2023-06-09 - 2023-06-23
+
+- Dependency: Bump `Flask` to 2.2.5 due to security vulnerability alert(s) ([#1425](https://github.com/ScilifelabDataCentre/dds_web/pull/1425))
+- Dependency: Bump `redis-py` to 4.5.5 due to security vulnerability alert(s) ([#1437](https://github.com/ScilifelabDataCentre/dds_web/pull/1437))
+- Change from personal name to unit name if / where it's displayed in emails ([#1439](https://github.com/ScilifelabDataCentre/dds_web/pull/1439))
+- Refactoring: `lost_files_s3_db` flask command changed to group with subcommands ([#1438](https://github.com/ScilifelabDataCentre/dds_web/pull/1438))
+
+# 2023-06-26 - 2023-07-14
+
+- Change display project info depending on the user role ([#1440](https://github.com/ScilifelabDataCentre/dds_web/pull/1440))
+- New version: 2.4.0 ([#1443](https://github.com/ScilifelabDataCentre/dds_web/pull/1443))

@@ -273,7 +273,6 @@ def test_request_totp_activation(client):
 
     user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
-    print(token)
     response = client.post(
         tests.DDSEndpoint.TOTP_ACTIVATION,
         headers=token,
