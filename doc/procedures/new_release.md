@@ -1,21 +1,20 @@
 # How to create a new release
 
-**Is the release planned for the next cluster maintenance?** Please read point 8 first.
-
-1.  Confirm that the development instance works
+1.  Create a PR from `dev` to `master`: "New release"
+2.  Confirm that the development instance works and that the newest changes have been deployed
 
     1. _In general_, e.g. that it's up and running
     2. _Specific feature has been added or changed:_ Confirm that it also works in the development instance
     3. _The change is in the API:_ Confirm that the development instance works together with the CLI
 
-2.  Fork a new branch from `dev`
-3.  Update the version [changelog](../../CHANGELOG.rst)
+3.  Fork a new branch from `dev`
+4.  Update the version [changelog](../../CHANGELOG.rst)
 
     - The new version should be at the top of the page
     - List the changes that the users will / may notice
     - Do not add information regarding workflow (e.g. GitHub Actions) etc
 
-4.  Update the version in [`version.py`](../../dds_web/version.py)
+5.  Update the version in [`version.py`](../../dds_web/version.py)
 
     - _Minor changes, e.g. bug fix_: Minor version upgrade, e.g. `1.0.1 --> 1.0.2`
     - _Small changes, e.g. new feature_: Mid version upgrade, e.g. `1.1.0 --> 1.2.0`
@@ -23,12 +22,12 @@
 
       > Will break if CLI version not bumped as well
 
-5.  Push version change to branch
-6.  Create a new PR from `<your-branch>` to `dev`
+6.  Push version change to branch
+7.  Create a new PR from `<your-branch>` to `dev`
 
     Wait for approval and merge by Product Owner or admin.
 
-7.  Create a PR from `dev` to `master`
+8.  Go back to the PR to `master` ("New release", step 1 above)
 
     - Are you bumping the major version (e.g. 1.x.x to 2.x.x)?
       - Yes: Add this info to the PR.
@@ -42,7 +41,7 @@
     - There should be at least one approval of the PR.
     - _Everything looks ok and there's at least one approval?_ Merge it.
 
-8.  [Draft a new release](https://github.com/ScilifelabDataCentre/dds_web/releases)
+9.  [Draft a new release](https://github.com/ScilifelabDataCentre/dds_web/releases)
 
     1. `Choose a tag` &rarr; `Find or create a new tag` &rarr; Fill in the new version, e.g. if the new version is `1.0.0`, you should fill in `v1.0.0`.
     2. `Target` should be set to `master`
@@ -55,7 +54,7 @@
 
        An image of the web / api will be published to the [GitHub Container Registry](https://codefresh.io/csdp-docs/docs/integrations/container-registries/github-cr/)
 
-9.  Perform redeployment
+10. Perform redeployment
 
     The method for this _depends on the situation_ / size of and reason for the upgrade.
 
