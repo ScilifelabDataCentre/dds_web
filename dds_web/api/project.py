@@ -489,7 +489,7 @@ class UserProjects(flask_restful.Resource):
         user_projects = models.Project.query.filter(sqlalchemy.and_(*all_filters)).all()
 
         researcher = False
-        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+        if current_user.role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
             researcher = True
 
         # Get info for all projects
