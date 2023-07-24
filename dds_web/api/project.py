@@ -39,6 +39,7 @@ from dds_web.errors import (
     ProjectBusyError,
     S3ConnectionError,
     NoSuchUserError,
+    VersionMismatchError,
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas, user_schemas
@@ -930,6 +931,12 @@ class ProjectBusy(flask_restful.Resource):
 
         TODO: Can remove from 2024. Will otherwise cause breaking changes for old CLI versions.
         """
+        raise VersionMismatchError(
+            message=(
+                "Your CLI version is trying to use functionality which is no longer in use. "
+                "Upgrade your version to the latest one and run your command again."
+            )
+        )
 
 
 class ProjectInfo(flask_restful.Resource):

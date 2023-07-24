@@ -1357,7 +1357,20 @@ def test_set_busy_invalid_version(module_client):
         )
         assert response.status_code == http.HTTPStatus.FORBIDDEN
         assert (
-            "You're using an old CLI version, please upgrade to the latest one."
+            "Your CLI version is trying to use functionality which is no longer in use. Upgrade your version to the latest one and run your command again."
+            in response.json.get("message")
+        )
+
+        token["X-CLI-Version"] = "2.1.9"
+        response = module_client.put(
+            tests.DDSEndpoint.PROJECT_BUSY,
+            headers=token,
+            query_string={"project": project.public_id},
+            json={"something": "notabool"},
+        )
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+        assert (
+            "Your CLI version is trying to use functionality which is no longer in use. Upgrade your version to the latest one and run your command again."
             in response.json.get("message")
         )
 
