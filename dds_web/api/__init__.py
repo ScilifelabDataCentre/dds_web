@@ -60,6 +60,7 @@ api.add_resource(project.CreateProject, "/proj/create", endpoint="create_project
 api.add_resource(project.ProjectUsers, "/proj/users", endpoint="list_project_users")
 api.add_resource(project.ProjectStatus, "/proj/status", endpoint="project_status")
 api.add_resource(project.ProjectAccess, "/proj/access", endpoint="project_access")
+api.add_resource(project.ProjectBusy, "/proj/busy", endpoint="project_busy")
 api.add_resource(project.ProjectInfo, "/proj/info", endpoint="project_info")
 
 # User management ################################################################ User management #
