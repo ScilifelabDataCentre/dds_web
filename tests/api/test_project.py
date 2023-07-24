@@ -1356,7 +1356,10 @@ def test_set_busy_invalid_version(module_client):
             json={"something": "notabool"},
         )
         assert response.status_code == http.HTTPStatus.FORBIDDEN
-        assert "You're using an old CLI version, please upgrade to the latest one." in response.json.get("message")
+        assert (
+            "You're using an old CLI version, please upgrade to the latest one."
+            in response.json.get("message")
+        )
 
 
 # Project usage
