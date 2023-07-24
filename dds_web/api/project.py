@@ -925,9 +925,9 @@ class ProjectBusy(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
     def put(self):
-        """OLD ENDPOINT. 
+        """OLD ENDPOINT.
         Previously set project status to busy.
-        
+
         TODO: Can remove from 2024. Will otherwise cause breaking changes for old CLI versions.
         """
 
