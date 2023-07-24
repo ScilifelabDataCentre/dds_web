@@ -922,7 +922,7 @@ class ProjectAccess(flask_restful.Resource):
 
 
 class ProjectBusy(flask_restful.Resource):
-    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
+    @auth.login_required
     @logging_bind_request
     def put(self):
         """OLD ENDPOINT.
