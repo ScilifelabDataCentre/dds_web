@@ -195,6 +195,12 @@ class Unit(db.Model):
     sto2_access = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     sto2_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
 
+    # New safespring storage
+    sto4_endpoint = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
+    sto4_name = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
+    sto4_access = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
+    sto4_secret = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
+
     days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
     days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
