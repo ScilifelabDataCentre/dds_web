@@ -1337,6 +1337,10 @@ def test_set_busy_no_token(module_client):
 
 def test_set_busy_invalid_version(module_client):
     """ProjectBusy endpoint is empty and should only return error message about invalid version."""
+    # Error messages
+    major_version_error: str = "You're using an old CLI version, please upgrade to the latest one."
+    busy_error: str = "Your CLI version is trying to use functionality which is no longer in use. Upgrade your version to the latest one and run your command again."
+
     for username in ["superadmin", "researchuser", "projectowner", "unituser", "unitadmin"]:
         # Get user
         user = models.User.query.filter_by(username=username).one_or_none()
@@ -1348,7 +1352,7 @@ def test_set_busy_invalid_version(module_client):
 
         # Authenticate and run
         token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client)
-        for version in [token["X-CLI-Version"], "1.9.9", "2.1.9"]:
+        for version, error_message in {token["X-CLI-Version"]: busy_error, "1.9.9": major_version_error , "2.1.9": busy_error}:
             token["X-CLI-Version"] = version
             response = module_client.put(
                 tests.DDSEndpoint.PROJECT_BUSY,
@@ -1357,10 +1361,7 @@ def test_set_busy_invalid_version(module_client):
                 json={"something": "notabool"},
             )
             assert response.status_code == http.HTTPStatus.FORBIDDEN
-            assert (
-                "Your CLI version is trying to use functionality which is no longer in use. Upgrade your version to the latest one and run your command again."
-                in response.json.get("message")
-            )
+            assert error_message in response.json.get("message")
 
 
 # Project usage
