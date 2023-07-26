@@ -91,10 +91,10 @@ def fill_db():
         contact_email="support@example.com",
         internal_ref="someunit",
         quota=10**9,  # 1 GB
-        safespring_endpoint=current_app.config.get("SAFESPRING_URL"),
-        safespring_name=current_app.config.get("DDS_SAFESPRING_PROJECT"),
-        safespring_access=current_app.config.get("DDS_SAFESPRING_ACCESS"),
-        safespring_secret=current_app.config.get("DDS_SAFESPRING_SECRET"),
+        sto2_endpoint=current_app.config.get("SAFESPRING_URL"),
+        sto2_name=current_app.config.get("DDS_SAFESPRING_PROJECT"),
+        sto2_access=current_app.config.get("DDS_SAFESPRING_ACCESS"),
+        sto2_secret=current_app.config.get("DDS_SAFESPRING_SECRET"),
     )
 
     unit_1.users.extend([unituser_1, unituser_2, unitadmin_1, unitadmin_2, unitadmin_3])

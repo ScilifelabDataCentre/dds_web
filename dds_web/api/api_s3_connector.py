@@ -55,10 +55,10 @@ class ApiS3Connector:
         endpoint, name, accesskey, secretkey = (
             models.Unit.query.filter_by(id=self.project.responsible_unit.id)
             .with_entities(
-                models.Unit.safespring_endpoint,
-                models.Unit.safespring_name,
-                models.Unit.safespring_access,
-                models.Unit.safespring_secret,
+                models.Unit.sto2_endpoint,
+                models.Unit.sto2_name,
+                models.Unit.sto2_access,
+                models.Unit.sto2_secret,
             )
             .one_or_none()
         )
