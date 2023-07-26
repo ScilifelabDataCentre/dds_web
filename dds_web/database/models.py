@@ -190,9 +190,7 @@ class Unit(db.Model):
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
 
     # Safespring storage
-    sto2_endpoint = db.Column(
-        db.String(255), unique=False, nullable=False
-    )  # unique=True later
+    sto2_endpoint = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     sto2_name = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     sto2_access = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
     sto2_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
