@@ -144,6 +144,16 @@ def create_new_unit(
 
     flask.current_app.logger.info(f"Unit '{name}' created")
 
+@click.command("update-unit")
+@click.option("--public_id", "-p", type=str, required=True)
+@click.option("--sto4-endpoint", "-se", type=str, required=True)
+@click.option("--sto4-name", "-sn", type=str, required=True)
+@click.option("--sto4-access", "-sa", type=str, required=True)
+@click.option("--sto4-secret", "-ss", type=str, required=True)
+@flask.cli.with_appcontext
+def update_unit(public_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
+    """Update unit info."""
+    
 
 @click.command("update-uploaded-file")
 @click.option("--project", "-p", type=str, required=True)
@@ -248,12 +258,25 @@ def list_lost_files(project_id: str):
         # Start s3 session
         session = boto3.session.Session()
 
+        # Check which Safespring storage location to use
+        # Use sto2 as default 
+        endpoint_url = project.responsible_unit.sto2_endpoint
+        aws_access_key_id = project.responsible_unit.sto2_access
+        aws_secret_access_key = project.responsible_unit.sto2_secret
+
+        # Use sto4 if project created after sto4 info added
+        sto4_endpoint_added = project.responsible_unit.sto4_start_time
+        if sto4_endpoint_added and project.date_created > sto4_endpoint_added: 
+            endpoint_url = project.responsible_unit.sto4_endpoint
+            aws_access_key_id = project.responsible_unit.sto4_access
+            aws_secret_access_key = project.responsible_unit.sto4_secret
+    
         # Connect to S3
         resource = session.resource(
             service_name="s3",
-            endpoint_url=project.responsible_unit.sto2_endpoint,
-            aws_access_key_id=project.responsible_unit.sto2_access,
-            aws_secret_access_key=project.responsible_unit.sto2_secret,
+            endpoint_url=endpoint_url,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
         )
 
         # List the lost files

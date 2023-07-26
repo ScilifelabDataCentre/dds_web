@@ -196,7 +196,7 @@ class Unit(db.Model):
     sto2_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
 
     # New safespring storage
-    sto4_start_date = db.Column(db.DateTime(), nullable=True)
+    sto4_start_time = db.Column(db.DateTime(), nullable=True)
     sto4_endpoint = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
     sto4_name = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
     sto4_access = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
