@@ -188,12 +188,15 @@ class Unit(db.Model):
     external_display_name = db.Column(db.String(255), unique=False, nullable=False)
     contact_email = db.Column(db.String(255), unique=False, nullable=True)
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
-    safespring_endpoint = db.Column(
+
+    # Safespring storage
+    sto2_endpoint = db.Column(
         db.String(255), unique=False, nullable=False
     )  # unique=True later
-    safespring_name = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
-    safespring_access = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
-    safespring_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
+    sto2_name = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
+    sto2_access = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
+    sto2_secret = db.Column(db.String(255), unique=False, nullable=False)  # unique=True later
+
     days_in_available = db.Column(db.Integer, unique=False, nullable=False, default=90)
     counter = db.Column(db.Integer, unique=False, nullable=True)
     days_in_expired = db.Column(db.Integer, unique=False, nullable=False, default=30)
