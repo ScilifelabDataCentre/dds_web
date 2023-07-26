@@ -1352,7 +1352,11 @@ def test_set_busy_invalid_version(module_client):
 
         # Authenticate and run
         token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client)
-        for version, error_message in {token["X-CLI-Version"]: busy_error, "1.9.9": major_version_error , "2.1.9": busy_error}:
+        for version, error_message in {
+            token["X-CLI-Version"]: busy_error,
+            "1.9.9": major_version_error,
+            "2.1.9": busy_error,
+        }:
             token["X-CLI-Version"] = version
             response = module_client.put(
                 tests.DDSEndpoint.PROJECT_BUSY,
