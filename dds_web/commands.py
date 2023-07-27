@@ -171,7 +171,7 @@ def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
         if not do_update:
             flask.current_app.logger.info(f"Cancelling sto4 update for unit '{unit_id}'.")
             return 
-
+    
     # Set sto4 info        
     unit.sto4_start_time = current_time()
     unit.sto4_endpoint = sto4_endpoint
