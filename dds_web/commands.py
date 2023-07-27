@@ -403,7 +403,7 @@ def list_lost_files(project_id: str):
                         )
                 except S3InfoNotFoundError as err:
                     flask.current_app.logger.error(str(err))
-                    sys.exit(1)
+                    continue
 
                 # Connect to S3
                 resource_unit = session.resource(

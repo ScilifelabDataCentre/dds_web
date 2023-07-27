@@ -670,17 +670,18 @@ def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, 
 
         # Run command
         result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
-        assert result.exit_code == 1
+        assert result.exit_code == 0
 
     # Verify output -- no lost files
     _, err = capfd.readouterr()
     assert "Searching for lost files in project" not in err
     assert "No project specified, searching for lost files in all units." in err
     for u in models.Unit.query.all():
+        assert f"Listing lost files in unit: {u.public_id}" in err
         for p in u.projects:
             assert f"Safespring location for project '{p.public_id}': sto2" not in err
             assert f"Safespring location for project '{p.public_id}': sto4" not in err
-    assert f"No lost files for unit '{u.public_id}'" not in err
+    assert f"No lost files for unit '{u.public_id}'" in err
     # ---------------------------------------------------------------------------------------
 
     # Use sto4 -- sto4_endpoint_added, project created after, and all info is available -----
@@ -746,7 +747,8 @@ def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, 
         assert f"Listing lost files in unit: {u.public_id}" in err
         for p in u.projects:
             if u.public_id == unit_no_sto4_endpoint_id:
-                assert f"Safespring location for project '{p.public_id}': sto2" in err
+                assert f"One or more sto4 variables are missing for unit {u.public_id}." in err
+                assert f"Safespring location for project '{p.public_id}': sto2" not in err
                 assert f"Safespring location for project '{p.public_id}': sto4" not in err
             else:
                 assert f"Safespring location for project '{p.public_id}': sto2" not in err
