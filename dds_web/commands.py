@@ -8,6 +8,7 @@ import re
 import sys
 import datetime
 from dateutil.relativedelta import relativedelta
+import gc
 
 # Installed
 import click
@@ -144,6 +145,11 @@ def create_new_unit(
 
     flask.current_app.logger.info(f"Unit '{name}' created")
 
+    del safespring_endpoint
+    del safespring_name
+    del safespring_access
+    del safespring_secret
+    gc.collect()
 
 @click.command("update-unit")
 @click.option("--unit-id", "-p", type=str, required=True)
@@ -184,6 +190,12 @@ def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
     db.session.commit()
 
     flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
+
+    del sto4_endpoint
+    del sto4_name
+    del sto4_access
+    del sto4_secret
+    gc.collect()
 
 
 @click.command("update-uploaded-file")
