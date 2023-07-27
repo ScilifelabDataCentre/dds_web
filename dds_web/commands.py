@@ -144,7 +144,8 @@ def create_new_unit(
     db.session.commit()
 
     flask.current_app.logger.info(f"Unit '{name}' created")
-
+    
+    # Clean up information
     del safespring_endpoint
     del safespring_name
     del safespring_access
@@ -191,6 +192,7 @@ def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
 
     flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
 
+    # Clean up information
     del sto4_endpoint
     del sto4_name
     del sto4_access
