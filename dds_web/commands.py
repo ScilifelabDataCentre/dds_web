@@ -145,14 +145,23 @@ def create_new_unit(
     flask.current_app.logger.info(f"Unit '{name}' created")
 
 @click.command("update-unit")
-@click.option("--public_id", "-p", type=str, required=True)
+@click.option("--unit-id", "-p", type=str, required=True)
 @click.option("--sto4-endpoint", "-se", type=str, required=True)
 @click.option("--sto4-name", "-sn", type=str, required=True)
 @click.option("--sto4-access", "-sa", type=str, required=True)
 @click.option("--sto4-secret", "-ss", type=str, required=True)
 @flask.cli.with_appcontext
-def update_unit(public_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
+def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
     """Update unit info."""
+    # Imports
+    from dds_web.database import models
+
+    # Get unit 
+    unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).one_or_none()
+    if not unit:
+        flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
+        return
+
     
 
 @click.command("update-uploaded-file")
