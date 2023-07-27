@@ -155,6 +155,8 @@ def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
     """Update unit info."""
     # Imports
     import rich.prompt
+    from dds_web import db 
+    from dds_web.utils import current_time
     from dds_web.database import models
 
     # Get unit 
@@ -169,8 +171,16 @@ def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
         if not do_update:
             flask.current_app.logger.info(f"Cancelling sto4 update for unit '{unit_id}'.")
             return 
-    
 
+    # Set sto4 info        
+    unit.sto4_start_time = current_time()
+    unit.sto4_endpoint = sto4_endpoint
+    unit.sto4_name = sto4_name
+    unit.sto4_access = sto4_access
+    unit.sto4_secret = sto4_secret
+    db.session.commit()
+    
+    flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
 
 
 
