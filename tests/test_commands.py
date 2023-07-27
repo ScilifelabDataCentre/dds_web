@@ -214,6 +214,7 @@ def test_create_new_unit_success(client, runner) -> None:
         result: click.testing.Result = runner.invoke(create_new_unit, command_options)
         # assert f"Unit '{correct_unit['name']}' created" in result.output
 
+
 # update_unit
 
 
