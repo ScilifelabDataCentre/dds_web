@@ -458,7 +458,7 @@ def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_sess
     project = models.Project.query.first()
     public_id = project.public_id
     assert project
-    
+
     # Use sto2 -- no sto4_endpoint_added date ---------------------------------------------
     project_unit = project.responsible_unit
     assert not project_unit.sto4_start_time
@@ -510,7 +510,14 @@ def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_sess
 
     assert project_unit.sto4_start_time
     assert project.date_created > project_unit.sto4_start_time
-    assert not all([project_unit.sto4_endpoint, project_unit.sto4_name, project_unit.sto4_access, project_unit.sto4_secret])
+    assert not all(
+        [
+            project_unit.sto4_endpoint,
+            project_unit.sto4_name,
+            project_unit.sto4_access,
+            project_unit.sto4_secret,
+        ]
+    )
 
     # Mock project.files -- no files
     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
@@ -526,7 +533,7 @@ def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_sess
     _, err = capfd.readouterr()
     assert f"Safespring location for project '{project.public_id}': sto2" in err
     assert f"Searching for lost files in project '{project.public_id}'." in err
-    assert f"No lost files in project '{project.public_id}'" in err 
+    assert f"No lost files in project '{project.public_id}'" in err
     # ---------------------------------------------------------------------------------------
 
     # Use sto4 -- sto4_endpoint_added, project created after, and all info is available -----
@@ -539,7 +546,14 @@ def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_sess
 
     assert project_unit.sto4_start_time
     assert project.date_created > project_unit.sto4_start_time
-    assert all([project_unit.sto4_endpoint, project_unit.sto4_name, project_unit.sto4_access, project_unit.sto4_secret])
+    assert all(
+        [
+            project_unit.sto4_endpoint,
+            project_unit.sto4_name,
+            project_unit.sto4_access,
+            project_unit.sto4_secret,
+        ]
+    )
 
     # Mock project.files -- no files
     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
@@ -556,7 +570,7 @@ def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_sess
     assert f"Safespring location for project '{project.public_id}': sto2" not in err
     assert f"Safespring location for project '{project.public_id}': sto4" in err
     assert f"Searching for lost files in project '{project.public_id}'." in err
-    assert f"No lost files in project '{project.public_id}'" in err 
+    assert f"No lost files in project '{project.public_id}'" in err
 
     # ---------------------------------------------------------------------------------------
 
@@ -710,7 +724,7 @@ def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, 
             u.sto4_name = "name"
             u.sto4_access = "access"
             u.sto4_secret = "secret"
-    
+
     unit_no_sto4_endpoint = models.Unit.query.first()
     unit_no_sto4_endpoint_id = unit_no_sto4_endpoint.public_id
     unit_no_sto4_endpoint.sto4_endpoint = None
@@ -734,7 +748,7 @@ def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, 
             if u.public_id == unit_no_sto4_endpoint_id:
                 assert f"Safespring location for project '{p.public_id}': sto2" in err
                 assert f"Safespring location for project '{p.public_id}': sto4" not in err
-            else: 
+            else:
                 assert f"Safespring location for project '{p.public_id}': sto2" not in err
                 assert f"Safespring location for project '{p.public_id}': sto4" in err
     assert f"No lost files for unit '{u.public_id}'" in err
