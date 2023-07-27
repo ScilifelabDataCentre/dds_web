@@ -302,7 +302,7 @@ def list_lost_files(project_id: str):
     def use_sto4(unit_object: models.Unit, project_object: models.Project) -> bool: 
         """Check if project is newer than sto4 info, in that case return True."""
         sto4_endpoint_added = unit_object.sto4_start_time
-        return sto4_endpoint_added and project.date_created > sto4_endpoint_added and all([unit_object.sto4_endpoint, unit_object.sto4_name, unit_object.sto4_access, unit_object.sto4_secret])
+        return sto4_endpoint_added and project_object.date_created > sto4_endpoint_added and all([unit_object.sto4_endpoint, unit_object.sto4_name, unit_object.sto4_access, unit_object.sto4_secret])
     
     if project_id:
         flask.current_app.logger.debug(f"Searching for lost files in project '{project_id}'.")
@@ -381,8 +381,10 @@ def list_lost_files(project_id: str):
                 # Check which Safespring storage location to use
                 # Use sto4 if roject created after sto4 info added
                 if use_sto4(unit_object=unit, project_object=proj):
+                    flask.current_app.logger.info(f"Safespring location for project '{proj.public_id}': sto4")
                     endpoint_url, _, aws_access_key_id, aws_secret_access_key = get_safespring_info(unit_object=unit, sto2=False)
                 else: 
+                    flask.current_app.logger.info(f"Safespring location for project '{proj.public_id}': sto2")
                     endpoint_url, _, aws_access_key_id, aws_secret_access_key = get_safespring_info(unit_object=unit, sto2=True)
 
                 # Connect to S3
