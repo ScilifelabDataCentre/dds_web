@@ -144,6 +144,7 @@ def create_new_unit(
 
     flask.current_app.logger.info(f"Unit '{name}' created")
 
+
 @click.command("update-unit")
 @click.option("--unit-id", "-p", type=str, required=True)
 @click.option("--sto4-endpoint", "-se", type=str, required=True)
@@ -155,33 +156,34 @@ def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
     """Update unit info."""
     # Imports
     import rich.prompt
-    from dds_web import db 
+    from dds_web import db
     from dds_web.utils import current_time
     from dds_web.database import models
 
-    # Get unit 
+    # Get unit
     unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).one_or_none()
     if not unit:
         flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
         return
-    
+
     # Warn user if sto4 info already exists
-    if unit.sto4_start_time: 
-        do_update = rich.prompt.Confirm.ask(f"Unit '{unit_id}' appears to have sto4 variables set already. Are you sure you want to overwrite them?")
+    if unit.sto4_start_time:
+        do_update = rich.prompt.Confirm.ask(
+            f"Unit '{unit_id}' appears to have sto4 variables set already. Are you sure you want to overwrite them?"
+        )
         if not do_update:
             flask.current_app.logger.info(f"Cancelling sto4 update for unit '{unit_id}'.")
-            return 
-    
-    # Set sto4 info        
+            return
+
+    # Set sto4 info
     unit.sto4_start_time = current_time()
     unit.sto4_endpoint = sto4_endpoint
     unit.sto4_name = sto4_name
     unit.sto4_access = sto4_access
     unit.sto4_secret = sto4_secret
     db.session.commit()
-    
-    flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
 
+    flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
 
 
 @click.command("update-uploaded-file")
@@ -288,18 +290,18 @@ def list_lost_files(project_id: str):
         session = boto3.session.Session()
 
         # Check which Safespring storage location to use
-        # Use sto2 as default 
+        # Use sto2 as default
         endpoint_url = project.responsible_unit.sto2_endpoint
         aws_access_key_id = project.responsible_unit.sto2_access
         aws_secret_access_key = project.responsible_unit.sto2_secret
 
         # Use sto4 if project created after sto4 info added
         sto4_endpoint_added = project.responsible_unit.sto4_start_time
-        if sto4_endpoint_added and project.date_created > sto4_endpoint_added: 
+        if sto4_endpoint_added and project.date_created > sto4_endpoint_added:
             endpoint_url = project.responsible_unit.sto4_endpoint
             aws_access_key_id = project.responsible_unit.sto4_access
             aws_secret_access_key = project.responsible_unit.sto4_secret
-    
+
         # Connect to S3
         resource = session.resource(
             service_name="s3",

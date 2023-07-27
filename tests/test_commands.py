@@ -216,6 +216,7 @@ def mock_unit_size():
 
 # update_unit
 
+
 def test_update_unit_no_such_unit(client, runner, capfd) -> None:
     """Try to update a non existent unit -> Error."""
     # Create command options
@@ -228,8 +229,8 @@ def test_update_unit_no_such_unit(client, runner, capfd) -> None:
         "name_sto4",
         "--sto4-access",
         "access_sto4",
-        "--sto4-secret", 
-        "secret_sto4"
+        "--sto4-secret",
+        "secret_sto4",
     ]
 
     # Run command
@@ -243,6 +244,7 @@ def test_update_unit_no_such_unit(client, runner, capfd) -> None:
     # Verify message
     assert f"There is no unit with the public ID '{command_options[1]}'." in err
 
+
 def test_update_unit_sto4_start_time_exists_mock_prompt_False(client, runner, capfd) -> None:
     """Start time already recorded. Answer no to prompt about update anyway. No changes should be made."""
     # Get existing unit
@@ -254,7 +256,12 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_False(client, runner, ca
     sto4_name_original = unit.sto4_name
     sto4_access_original = unit.sto4_access
     sto4_secret_original = unit.sto4_secret
-    sto4_info_original = [sto4_endpoint_original, sto4_name_original, sto4_access_original, sto4_secret_original]
+    sto4_info_original = [
+        sto4_endpoint_original,
+        sto4_name_original,
+        sto4_access_original,
+        sto4_secret_original,
+    ]
     assert sto4_info_original == [None, None, None, None]
 
     # Set sto4 start time
@@ -271,13 +278,13 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_False(client, runner, ca
         "name_sto4",
         "--sto4-access",
         "access_sto4",
-        "--sto4-secret", 
-        "secret_sto4"
+        "--sto4-secret",
+        "secret_sto4",
     ]
 
     # Run command
     # Mock rich prompt - False
-    with patch.object(rich.prompt.Confirm, 'ask', return_value=False) as mock_ask:
+    with patch.object(rich.prompt.Confirm, "ask", return_value=False) as mock_ask:
         result: click.testing.Result = runner.invoke(update_unit, command_options)
         assert result.exit_code == 0
         assert not result.output
@@ -293,7 +300,13 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_False(client, runner, ca
     # Verify no change in unit
     unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).first()
     assert unit
-    assert [unit.sto4_endpoint, unit.sto4_name, unit.sto4_access, unit.sto4_secret] == sto4_info_original
+    assert [
+        unit.sto4_endpoint,
+        unit.sto4_name,
+        unit.sto4_access,
+        unit.sto4_secret,
+    ] == sto4_info_original
+
 
 def test_update_unit_sto4_start_time_exists_mock_prompt_True(client, runner, capfd) -> None:
     """Start time already recorded. Answer yes to prompt about update anyway. Changes should be made."""
@@ -306,7 +319,12 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_True(client, runner, cap
     sto4_name_original = unit.sto4_name
     sto4_access_original = unit.sto4_access
     sto4_secret_original = unit.sto4_secret
-    sto4_info_original = [sto4_endpoint_original, sto4_name_original, sto4_access_original, sto4_secret_original]
+    sto4_info_original = [
+        sto4_endpoint_original,
+        sto4_name_original,
+        sto4_access_original,
+        sto4_secret_original,
+    ]
     assert sto4_info_original == [None, None, None, None]
 
     # Set sto4 start time
@@ -323,13 +341,13 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_True(client, runner, cap
         "name_sto4",
         "--sto4-access",
         "access_sto4",
-        "--sto4-secret", 
-        "secret_sto4"
+        "--sto4-secret",
+        "secret_sto4",
     ]
 
     # Run command
     # Mock rich prompt - True
-    with patch.object(rich.prompt.Confirm, 'ask', return_value=True) as mock_ask:
+    with patch.object(rich.prompt.Confirm, "ask", return_value=True) as mock_ask:
         result: click.testing.Result = runner.invoke(update_unit, command_options)
         assert result.exit_code == 0
         assert not result.output
@@ -345,8 +363,19 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_True(client, runner, cap
     # Verify change in unit
     unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).first()
     assert unit
-    assert [unit.sto4_endpoint, unit.sto4_name, unit.sto4_access, unit.sto4_secret] != sto4_info_original
-    assert [unit.sto4_endpoint, unit.sto4_name, unit.sto4_access, unit.sto4_secret] == [command_options[3], command_options[5], command_options[7], command_options[9]]
+    assert [
+        unit.sto4_endpoint,
+        unit.sto4_name,
+        unit.sto4_access,
+        unit.sto4_secret,
+    ] != sto4_info_original
+    assert [unit.sto4_endpoint, unit.sto4_name, unit.sto4_access, unit.sto4_secret] == [
+        command_options[3],
+        command_options[5],
+        command_options[7],
+        command_options[9],
+    ]
+
 
 # # update_uploaded_file_with_log
 
