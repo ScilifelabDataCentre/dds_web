@@ -154,6 +154,7 @@ def create_new_unit(
 def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
     """Update unit info."""
     # Imports
+    import rich.prompt
     from dds_web.database import models
 
     # Get unit 
@@ -161,8 +162,17 @@ def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
     if not unit:
         flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
         return
-
     
+    # Warn user if sto4 info already exists
+    if unit.sto4_start_time: 
+        do_update = rich.prompt.Confirm.ask(f"Unit '{unit_id}' appears to have sto4 variables set already. Are you sure you want to overwrite them?")
+        if not do_update:
+            flask.current_app.logger.info(f"Cancelling sto4 update for unit '{unit_id}'.")
+            return 
+    
+
+
+
 
 @click.command("update-uploaded-file")
 @click.option("--project", "-p", type=str, required=True)
