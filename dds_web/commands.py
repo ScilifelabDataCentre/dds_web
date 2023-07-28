@@ -309,14 +309,18 @@ def list_lost_files(project_id: str):
         # Use sto4 if project created after sto4 info added
         try:
             if use_sto4(unit_object=project.responsible_unit, project_object=project):
-                flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto4")
+                flask.current_app.logger.info(
+                    f"Safespring location for project '{project_id}': sto4"
+                )
                 endpoint_url, aws_access_key_id, aws_secret_access_key = (
                     project.responsible_unit.sto4_endpoint,
                     project.responsible_unit.sto4_access,
                     project.responsible_unit.sto4_secret,
                 )
             else:
-                flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto2")
+                flask.current_app.logger.info(
+                    f"Safespring location for project '{project_id}': sto2"
+                )
                 endpoint_url, aws_access_key_id, aws_secret_access_key = (
                     project.responsible_unit.sto2_endpoint,
                     project.responsible_unit.sto2_access,
@@ -455,6 +459,7 @@ def add_missing_bucket(project_id: str):
     from botocore.client import ClientError
     from dds_web.database import models
     from dds_web.utils import bucket_is_valid, use_sto4
+    from dds_web.errors import S3InfoNotFoundError
 
     # Get project object
     project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
@@ -471,20 +476,24 @@ def add_missing_bucket(project_id: str):
     session = boto3.session.Session()
 
     # Use sto4 if project created after sto4 info added
-    if use_sto4(unit_object=project.responsible_unit, project_object=project):
-        flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto4")
-        endpoint_url, aws_access_key_id, aws_secret_access_key = (
-            project.responsible_unit.sto4_endpoint,
-            project.responsible_unit.sto4_access,
-            project.responsible_unit.sto4_secret,
-        )
-    else:
-        flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto2")
-        endpoint_url, aws_access_key_id, aws_secret_access_key = (
-            project.responsible_unit.sto2_endpoint,
-            project.responsible_unit.sto2_access,
-            project.responsible_unit.sto2_secret,
-        )
+    try:
+        if use_sto4(unit_object=project.responsible_unit, project_object=project):
+            flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto4")
+            endpoint_url, aws_access_key_id, aws_secret_access_key = (
+                project.responsible_unit.sto4_endpoint,
+                project.responsible_unit.sto4_access,
+                project.responsible_unit.sto4_secret,
+            )
+        else:
+            flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto2")
+            endpoint_url, aws_access_key_id, aws_secret_access_key = (
+                project.responsible_unit.sto2_endpoint,
+                project.responsible_unit.sto2_access,
+                project.responsible_unit.sto2_secret,
+            )
+    except S3InfoNotFoundError as err:
+        flask.current_app.logger.error(str(err))
+        sys.exit(1)
 
     # Connect to S3
     resource = session.resource(
@@ -493,6 +502,11 @@ def add_missing_bucket(project_id: str):
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
     )
+
+    # Delete info
+    del endpoint_url
+    del aws_access_key_id
+    del aws_secret_access_key
 
     # Check if bucket exists
     try:
@@ -514,6 +528,9 @@ def add_missing_bucket(project_id: str):
         flask.current_app.logger.info(
             f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
         )
+
+    # Collect garbage
+    gc.collect()
 
 
 @lost_files_s3_db.command(name="delete")

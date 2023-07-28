@@ -24,7 +24,7 @@ from dds_web.errors import (
     DDSArgumentError,
     NoSuchProjectError,
     MaintenanceOngoingException,
-    S3InfoNotFoundError
+    S3InfoNotFoundError,
 )
 import flask_mail
 import flask_login
@@ -730,11 +730,19 @@ def list_lost_files_in_project(project, s3_resource):
 
 def use_sto4(unit_object, project_object) -> bool:
     """Check if project is newer than sto4 info, in that case return True."""
-    flask.current_app.logger.debug(f"unit: {unit_object}\tproject: {project_object}")
     sto4_endpoint_added = unit_object.sto4_start_time
     if sto4_endpoint_added and project_object.date_created > sto4_endpoint_added:
-        if not all([unit_object.sto4_endpoint, unit_object.sto4_name, unit_object.sto4_access, unit_object.sto4_secret]):
-            raise S3InfoNotFoundError(message=f"One or more sto4 variables are missing for unit {unit_object.public_id}.")
+        if not all(
+            [
+                unit_object.sto4_endpoint,
+                unit_object.sto4_name,
+                unit_object.sto4_access,
+                unit_object.sto4_secret,
+            ]
+        ):
+            raise S3InfoNotFoundError(
+                message=f"One or more sto4 variables are missing for unit {unit_object.public_id}."
+            )
         return True
 
     return False

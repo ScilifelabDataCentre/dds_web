@@ -1419,24 +1419,25 @@ def mock_items_in_bucket():
 #     # Verify that s3 files are printed
 #     for x in fake_files_in_bucket[15::]:
 #         assert (
-    #         f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
-    #         in err
-    #     )
+#         f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
+#         in err
+#     )
 
-    # # Verify that the rest of the files are not printed
-    # for x in fake_files_in_bucket[:15]:
-    #     assert (
-    #         f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
-    #         not in err
-    #     )
-    #     assert (
-    #         f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
-    #         not in err
-    #     )
+# # Verify that the rest of the files are not printed
+# for x in fake_files_in_bucket[:15]:
+#     assert (
+#         f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
+#         not in err
+#     )
+#     assert (
+#         f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
+#         not in err
+#     )
 
-# use_sto4 
+# use_sto4
 
-def test_use_sto4_return_false(client: flask.testing.FlaskClient): 
+
+def test_use_sto4_return_false(client: flask.testing.FlaskClient):
     """Test that use_sto4 returns False."""
     # Imports
     from dds_web.utils import use_sto4, current_time
@@ -1448,8 +1449,8 @@ def test_use_sto4_return_false(client: flask.testing.FlaskClient):
 
     # Get unit
     unit: models.Unit = project.responsible_unit
-    assert not unit.sto4_start_time 
-    
+    assert not unit.sto4_start_time
+
     # Run function
     result: bool = use_sto4(unit_object=unit, project_object=project)
     assert result is False
@@ -1459,7 +1460,7 @@ def test_use_sto4_return_false(client: flask.testing.FlaskClient):
     # Set sto4_start_time
     unit.sto4_start_time = current_time()
     db.session.commit()
-    
+
     # Verify
     assert project.date_created < unit.sto4_start_time
 
@@ -1483,11 +1484,12 @@ def test_use_sto4_return_false(client: flask.testing.FlaskClient):
     assert f"One or more sto4 variables are missing for unit {unit.public_id}." in str(err.value)
     # -------------------------------------------------------------------
 
-def test_use_sto4_return_true(client: flask.testing.FlaskClient): 
+
+def test_use_sto4_return_true(client: flask.testing.FlaskClient):
     """Test that use_sto4 returns False."""
     # Imports
     from dds_web.utils import use_sto4, current_time
-    
+
     # Get project
     project: models.Project = models.Project.query.first()
 

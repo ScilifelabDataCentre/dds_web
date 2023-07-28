@@ -421,439 +421,528 @@ def mock_unit_size():
 #     # assert "The project 'projectdoesntexist' doesn't exist." in result.stderr
 
 
-# lost_files_s3_db
+# # lost_files_s3_db
 
 
-def test_lost_files_s3_db_no_command(client, cli_runner, capfd):
-    """Test running the flask lost-files command without any subcommand."""
-    _: click.testing.Result = cli_runner.invoke(lost_files_s3_db)
-    _, err = capfd.readouterr()
-    assert not err
+# def test_lost_files_s3_db_no_command(client, cli_runner, capfd):
+#     """Test running the flask lost-files command without any subcommand."""
+#     _: click.testing.Result = cli_runner.invoke(lost_files_s3_db)
+#     _, err = capfd.readouterr()
+#     assert not err
 
 
-# lost_files_s3_db -- list_lost_files
+# # lost_files_s3_db -- list_lost_files
 
 
-def test_list_lost_files_no_such_project(client, cli_runner, capfd):
-    """flask lost-files ls: project specified, project doesnt exist."""
-    # Project ID -- doesn't exist
-    project_id: str = "nonexistentproject"
-    assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
-
-    # Run command with non existent project
-    result: click.testing.Result = cli_runner.invoke(
-        lost_files_s3_db, ["ls", "--project-id", project_id]
-    )
-    assert result.exit_code == 1  # sys.exit(1)
-
-    # Verify output
-    _, err = capfd.readouterr()
-    assert f"Searching for lost files in project '{project_id}'." in err
-    assert f"No such project: '{project_id}'" in err
-
-
-def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_session, capfd):
-    """flask lost-files ls: project specified, no lost files."""
-    # Get project
-    project = models.Project.query.first()
-    public_id = project.public_id
-    assert project
-
-    # Use sto2 -- no sto4_endpoint_added date ---------------------------------------------
-    project_unit = project.responsible_unit
-    assert not project_unit.sto4_start_time
-
-    # Mock project.files -- no files
-    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
-        mock_files.return_value = []
-
-        # Run command
-        result: click.testing.Result = cli_runner.invoke(
-            lost_files_s3_db, ["ls", "--project-id", public_id]
-        )
-        assert result.exit_code == 0
-
-    # Verify output -- no lost files
-    _, err = capfd.readouterr()
-    assert f"Safespring location for project '{public_id}': sto2" in err
-    assert f"Searching for lost files in project '{public_id}'." in err
-    assert f"No lost files in project '{public_id}'" in err
-    # ---------------------------------------------------------------------------------------
-
-    # Use sto2 -- sto4_endpoint_added but project created before ----------------------------
-    project_unit.sto4_start_time = current_time()
-    db.session.commit()
-
-    assert project_unit.sto4_start_time
-    assert project.date_created < project_unit.sto4_start_time
-
-    # Mock project.files -- no files
-    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
-        mock_files.return_value = []
-
-        # Run command
-        result: click.testing.Result = cli_runner.invoke(
-            lost_files_s3_db, ["ls", "--project-id", project.public_id]
-        )
-        assert result.exit_code == 0
-
-    # Verify output -- no lost files
-    _, err = capfd.readouterr()
-    assert f"Safespring location for project '{project.public_id}': sto2" in err
-    assert f"Searching for lost files in project '{project.public_id}'." in err
-    assert f"No lost files in project '{project.public_id}'" in err
-    # ---------------------------------------------------------------------------------------
-
-    # Use sto2 -- sto4_endpoint_added, project created after, but not all info is available --
-    project_unit.sto4_start_time = current_time() - relativedelta(hours=1)
-    db.session.commit()
-
-    assert project_unit.sto4_start_time
-    assert project.date_created > project_unit.sto4_start_time
-    assert not all(
-        [
-            project_unit.sto4_endpoint,
-            project_unit.sto4_name,
-            project_unit.sto4_access,
-            project_unit.sto4_secret,
-        ]
-    )
-
-    # Mock project.files -- no files
-    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
-        mock_files.return_value = []
-
-        # Run command
-        result: click.testing.Result = cli_runner.invoke(
-            lost_files_s3_db, ["ls", "--project-id", project.public_id]
-        )
-        assert result.exit_code == 1
-
-    # Verify output -- no lost files
-    _, err = capfd.readouterr()
-    assert f"One or more sto4 variables are missing for unit {project_unit.public_id}." in err
-    assert f"Safespring location for project '{project.public_id}': sto2" not in err
-    assert f"Searching for lost files in project '{project.public_id}'." in err
-    assert f"No lost files in project '{project.public_id}'" not in err
-    # ---------------------------------------------------------------------------------------
-
-    # Use sto4 -- sto4_endpoint_added, project created after, and all info is available -----
-    project_unit.sto4_start_time = current_time() - relativedelta(hours=1)
-    project_unit.sto4_endpoint = "endpoint"
-    project_unit.sto4_name = "name"
-    project_unit.sto4_access = "access"
-    project_unit.sto4_secret = "secret"
-    db.session.commit()
-
-    assert project_unit.sto4_start_time
-    assert project.date_created > project_unit.sto4_start_time
-    assert all(
-        [
-            project_unit.sto4_endpoint,
-            project_unit.sto4_name,
-            project_unit.sto4_access,
-            project_unit.sto4_secret,
-        ]
-    )
-
-    # Mock project.files -- no files
-    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
-        mock_files.return_value = []
-
-        # Run command
-        result: click.testing.Result = cli_runner.invoke(
-            lost_files_s3_db, ["ls", "--project-id", project.public_id]
-        )
-        assert result.exit_code == 0
-
-    # Verify output -- no lost files
-    _, err = capfd.readouterr()
-    assert f"Safespring location for project '{project.public_id}': sto2" not in err
-    assert f"Safespring location for project '{project.public_id}': sto4" in err
-    assert f"Searching for lost files in project '{project.public_id}'." in err
-    assert f"No lost files in project '{project.public_id}'" in err
-
-    # ---------------------------------------------------------------------------------------
-
-
-def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
-    """flask lost-files ls: project specified, lost files in s3."""
-    # Get project
-    project = models.Project.query.first()
-    assert project
-
-    # Run command
-    result: click.testing.Result = cli_runner.invoke(
-        lost_files_s3_db, ["ls", "--project-id", project.public_id]
-    )
-    assert result.exit_code == 0
-
-    # Verify output
-    _, err = capfd.readouterr()
-    # All files should be in db but not in s3
-    for f in project.files:
-        assert (
-            f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
-            in err
-        )
-        assert (
-            f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
-            not in err
-        )
-
-    assert f"Lost files in project: {project.public_id}\t\tIn DB but not S3: {len(project.files)}\tIn S3 but not DB: 0\n"
-
-
-def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, capfd):
-    """flask lost-files ls: no project specified, no lost files."""
-    # Use sto2 -- no sto4_endpoint_added date ---------------------------------------------
-    for u in models.Unit.query.all():
-        assert not u.sto4_start_time
-
-    # Mock project.files -- no files
-    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
-        mock_files.return_value = []
-
-        # Run command
-        result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
-        assert result.exit_code == 0
-
-    # Verify output -- no lost files
-    _, err = capfd.readouterr()
-    assert "Searching for lost files in project" not in err
-    assert "No project specified, searching for lost files in all units." in err
-    for u in models.Unit.query.all():
-        assert f"Listing lost files in unit: {u.public_id}" in err
-        for p in u.projects:
-            assert f"Safespring location for project '{p.public_id}': sto2" in err
-            assert f"Safespring location for project '{p.public_id}': sto4" not in err
-    assert f"No lost files for unit '{u.public_id}'" in err
-    # ---------------------------------------------------------------------------------------
-
-    # Use sto2 -- sto4_endpoint_added but project created before ----------------------------
-    for u in models.Unit.query.all():
-        u.sto4_start_time = current_time()
-        for p in u.projects:
-            assert p.date_created < u.sto4_start_time
-    db.session.commit()
-
-    # Mock project.files -- no files
-    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
-        mock_files.return_value = []
-
-        # Run command
-        result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
-        assert result.exit_code == 0
-
-    # Verify output -- no lost files
-    _, err = capfd.readouterr()
-    assert "Searching for lost files in project" not in err
-    assert "No project specified, searching for lost files in all units." in err
-    for u in models.Unit.query.all():
-        assert f"Listing lost files in unit: {u.public_id}" in err
-        for p in u.projects:
-            assert f"Safespring location for project '{p.public_id}': sto2" in err
-            assert f"Safespring location for project '{p.public_id}': sto4" not in err
-    assert f"No lost files for unit '{u.public_id}'" in err
-    # ---------------------------------------------------------------------------------------
-
-    # Use sto2 -- sto4_endpoint_added, project created after, but not all info is available --
-    for u in models.Unit.query.all():
-        u.sto4_start_time = current_time() - relativedelta(hours=1)
-        for p in u.projects:
-            assert p.date_created > u.sto4_start_time
-    db.session.commit()
-
-    # Mock project.files -- no files
-    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
-        mock_files.return_value = []
-
-        # Run command
-        result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
-        assert result.exit_code == 0
-
-    # Verify output -- no lost files
-    _, err = capfd.readouterr()
-    assert "Searching for lost files in project" not in err
-    assert "No project specified, searching for lost files in all units." in err
-    for u in models.Unit.query.all():
-        assert f"Listing lost files in unit: {u.public_id}" in err
-        for p in u.projects:
-            assert f"Safespring location for project '{p.public_id}': sto2" not in err
-            assert f"Safespring location for project '{p.public_id}': sto4" not in err
-    assert f"No lost files for unit '{u.public_id}'" in err
-    # ---------------------------------------------------------------------------------------
-
-    # Use sto4 -- sto4_endpoint_added, project created after, and all info is available -----
-    for u in models.Unit.query.all():
-        u.sto4_start_time = current_time() - relativedelta(hours=1)
-        for p in u.projects:
-            assert p.date_created > u.sto4_start_time
-            u.sto4_endpoint = "endpoint"
-            u.sto4_name = "name"
-            u.sto4_access = "access"
-            u.sto4_secret = "secret"
-
-    db.session.commit()
-
-    # Mock project.files -- no files
-    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
-        mock_files.return_value = []
-
-        # Run command
-        result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
-        assert result.exit_code == 0
-
-    # Verify output -- no lost files
-    _, err = capfd.readouterr()
-    assert "Searching for lost files in project" not in err
-    assert "No project specified, searching for lost files in all units." in err
-    for u in models.Unit.query.all():
-        assert f"Listing lost files in unit: {u.public_id}" in err
-        for p in u.projects:
-            assert f"Safespring location for project '{p.public_id}': sto2" not in err
-            assert f"Safespring location for project '{p.public_id}': sto4" in err
-    assert f"No lost files for unit '{u.public_id}'" in err
-    # ---------------------------------------------------------------------------------------
-
-    # Use sto4 for all but one --------------------------------------------------------------
-    for u in models.Unit.query.all():
-        u.sto4_start_time = current_time() - relativedelta(hours=1)
-        for p in u.projects:
-            assert p.date_created > u.sto4_start_time
-            u.sto4_endpoint = "endpoint"
-            u.sto4_name = "name"
-            u.sto4_access = "access"
-            u.sto4_secret = "secret"
-
-    unit_no_sto4_endpoint = models.Unit.query.first()
-    unit_no_sto4_endpoint_id = unit_no_sto4_endpoint.public_id
-    unit_no_sto4_endpoint.sto4_endpoint = None
-    db.session.commit()
-
-    # Mock project.files -- no files
-    with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
-        mock_files.return_value = []
-
-        # Run command
-        result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
-        assert result.exit_code == 0
-
-    # Verify output -- no lost files
-    _, err = capfd.readouterr()
-    assert "Searching for lost files in project" not in err
-    assert "No project specified, searching for lost files in all units." in err
-    for u in models.Unit.query.all():
-        assert f"Listing lost files in unit: {u.public_id}" in err
-        for p in u.projects:
-            if u.public_id == unit_no_sto4_endpoint_id:
-                assert f"One or more sto4 variables are missing for unit {u.public_id}." in err
-                assert f"Safespring location for project '{p.public_id}': sto2" not in err
-                assert f"Safespring location for project '{p.public_id}': sto4" not in err
-            else:
-                assert f"Safespring location for project '{p.public_id}': sto2" not in err
-                assert f"Safespring location for project '{p.public_id}': sto4" in err
-    assert f"No lost files for unit '{u.public_id}'" in err
-    # ---------------------------------------------------------------------------------------
-
-
-def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
-    """flask lost-files ls: project specified, lost files in s3."""
-    # Run command
-    result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
-    assert result.exit_code == 0
-
-    # Verify output
-    _, err = capfd.readouterr()
-    # All files should be in db but not in s3
-    for u in models.Unit.query.all():
-        num_files: int = 0
-        for p in u.projects:
-            num_files += len(p.files)
-            for f in p.files:
-                assert (
-                    f"Entry {f.name_in_bucket} ({p.public_id}, {u}) not found in S3 (but found in db)"
-                    in err
-                )
-                assert (
-                    f"Entry {f.name_in_bucket} ({p.public_id}, {u}) not found in database (but found in s3)"
-                    not in err
-                )
-        assert f"Lost files for unit: {u.public_id}\t\tIn DB but not S3: {num_files}\tIn S3 but not DB: 0\tProject errors: 0\n"
-
-
-# # lost_files_s3_db -- add_missing_bucket
-
-
-# def test_add_missing_bucket_no_project(client, cli_runner):
-#     """flask lost-files add-missing-bucket: no project specified (required)."""
-#     # Run command
-#     result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["add-missing-bucket"])
-
-#     # Get output from result and verify that help message printed
-#     assert result.exit_code == 2
-#     assert "Missing option '--project-id' / '-p'." in result.stdout
-
-
-# def test_add_missing_bucket_project_nonexistent(client, cli_runner, capfd):
-#     """flask lost-files add-missing-bucket: no such project --> print out error."""
-#     # Project -- doesn't exist
+# def test_list_lost_files_no_such_project(client, cli_runner, capfd):
+#     """flask lost-files ls: project specified, project doesnt exist."""
+#     # Project ID -- doesn't exist
 #     project_id: str = "nonexistentproject"
 #     assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
 
-#     # Run command
+#     # Run command with non existent project
 #     result: click.testing.Result = cli_runner.invoke(
-#         lost_files_s3_db, ["add-missing-bucket", "--project-id", project_id]
+#         lost_files_s3_db, ["ls", "--project-id", project_id]
 #     )
-#     assert result.exit_code == 1
+#     assert result.exit_code == 1  # sys.exit(1)
 
 #     # Verify output
 #     _, err = capfd.readouterr()
+#     assert f"Searching for lost files in project '{project_id}'." in err
 #     assert f"No such project: '{project_id}'" in err
 
 
-# def test_add_missing_bucket_project_inactive(client, cli_runner, capfd):
-#     """flask lost-files add-missing-bucket: project specified, but inactive --> error message."""
+# def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_session, capfd):
+#     """flask lost-files ls: project specified, no lost files."""
 #     # Get project
-#     project: models.Project = models.Project.query.first()
+#     project = models.Project.query.first()
+#     public_id = project.public_id
 #     assert project
 
-#     # Set project as inactive
-#     project.is_active = False
-#     db.session.commit()
-#     assert not project.is_active
+#     # Use sto2 -- no sto4_endpoint_added date ---------------------------------------------
+#     project_unit = project.responsible_unit
+#     assert not project_unit.sto4_start_time
 
-#     # Run command
-#     result: click.testing.Result = cli_runner.invoke(
-#         lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
-#     )
-#     assert result.exit_code == 1
+#     # Mock project.files -- no files
+#     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+#         mock_files.return_value = []
 
-#     # Verify output
+#         # Run command
+#         result: click.testing.Result = cli_runner.invoke(
+#             lost_files_s3_db, ["ls", "--project-id", public_id]
+#         )
+#         assert result.exit_code == 0
+
+#     # Verify output -- no lost files
 #     _, err = capfd.readouterr()
-#     assert f"Project '{project.public_id}' is not an active project." in err
+#     assert f"Safespring location for project '{public_id}': sto2" in err
+#     assert f"Searching for lost files in project '{public_id}'." in err
+#     assert f"No lost files in project '{public_id}'" in err
+#     # ---------------------------------------------------------------------------------------
+
+#     # Use sto2 -- sto4_endpoint_added but project created before ----------------------------
+#     project_unit.sto4_start_time = current_time()
+#     db.session.commit()
+
+#     assert project_unit.sto4_start_time
+#     assert project.date_created < project_unit.sto4_start_time
+
+#     # Mock project.files -- no files
+#     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+#         mock_files.return_value = []
+
+#         # Run command
+#         result: click.testing.Result = cli_runner.invoke(
+#             lost_files_s3_db, ["ls", "--project-id", project.public_id]
+#         )
+#         assert result.exit_code == 0
+
+#     # Verify output -- no lost files
+#     _, err = capfd.readouterr()
+#     assert f"Safespring location for project '{project.public_id}': sto2" in err
+#     assert f"Searching for lost files in project '{project.public_id}'." in err
+#     assert f"No lost files in project '{project.public_id}'" in err
+#     # ---------------------------------------------------------------------------------------
+
+#     # Use sto2 -- sto4_endpoint_added, project created after, but not all info is available --
+#     project_unit.sto4_start_time = current_time() - relativedelta(hours=1)
+#     db.session.commit()
+
+#     assert project_unit.sto4_start_time
+#     assert project.date_created > project_unit.sto4_start_time
+#     assert not all(
+#         [
+#             project_unit.sto4_endpoint,
+#             project_unit.sto4_name,
+#             project_unit.sto4_access,
+#             project_unit.sto4_secret,
+#         ]
+#     )
+
+#     # Mock project.files -- no files
+#     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+#         mock_files.return_value = []
+
+#         # Run command
+#         result: click.testing.Result = cli_runner.invoke(
+#             lost_files_s3_db, ["ls", "--project-id", project.public_id]
+#         )
+#         assert result.exit_code == 1
+
+#     # Verify output -- no lost files
+#     _, err = capfd.readouterr()
+#     assert f"One or more sto4 variables are missing for unit {project_unit.public_id}." in err
+#     assert f"Safespring location for project '{project.public_id}': sto2" not in err
+#     assert f"Searching for lost files in project '{project.public_id}'." in err
+#     assert f"No lost files in project '{project.public_id}'" not in err
+#     # ---------------------------------------------------------------------------------------
+
+#     # Use sto4 -- sto4_endpoint_added, project created after, and all info is available -----
+#     project_unit.sto4_start_time = current_time() - relativedelta(hours=1)
+#     project_unit.sto4_endpoint = "endpoint"
+#     project_unit.sto4_name = "name"
+#     project_unit.sto4_access = "access"
+#     project_unit.sto4_secret = "secret"
+#     db.session.commit()
+
+#     assert project_unit.sto4_start_time
+#     assert project.date_created > project_unit.sto4_start_time
+#     assert all(
+#         [
+#             project_unit.sto4_endpoint,
+#             project_unit.sto4_name,
+#             project_unit.sto4_access,
+#             project_unit.sto4_secret,
+#         ]
+#     )
+
+#     # Mock project.files -- no files
+#     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+#         mock_files.return_value = []
+
+#         # Run command
+#         result: click.testing.Result = cli_runner.invoke(
+#             lost_files_s3_db, ["ls", "--project-id", project.public_id]
+#         )
+#         assert result.exit_code == 0
+
+#     # Verify output -- no lost files
+#     _, err = capfd.readouterr()
+#     assert f"Safespring location for project '{project.public_id}': sto2" not in err
+#     assert f"Safespring location for project '{project.public_id}': sto4" in err
+#     assert f"Searching for lost files in project '{project.public_id}'." in err
+#     assert f"No lost files in project '{project.public_id}'" in err
+
+#     # ---------------------------------------------------------------------------------------
 
 
-# def test_add_missing_bucket_not_missing(client, cli_runner, boto3_session, capfd):
-#     """flask lost-files add-missing-bucket: project specified, not missing --> ok."""
-#     from tests.test_utils import mock_nosuchbucket
-
+# def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
+#     """flask lost-files ls: project specified, lost files in s3."""
 #     # Get project
-#     project: models.Project = models.Project.query.first()
+#     project = models.Project.query.first()
 #     assert project
 
 #     # Run command
 #     result: click.testing.Result = cli_runner.invoke(
-#         lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+#         lost_files_s3_db, ["ls", "--project-id", project.public_id]
 #     )
 #     assert result.exit_code == 0
 
 #     # Verify output
 #     _, err = capfd.readouterr()
-#     assert (
-#         f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
-#         in err
-#     )
+#     # All files should be in db but not in s3
+#     for f in project.files:
+#         assert (
+#             f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
+#             in err
+#         )
+#         assert (
+#             f"Entry {f.name_in_bucket} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
+#             not in err
+#         )
+
+#     assert f"Lost files in project: {project.public_id}\t\tIn DB but not S3: {len(project.files)}\tIn S3 but not DB: 0\n"
+
+
+# def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, capfd):
+#     """flask lost-files ls: no project specified, no lost files."""
+#     # Use sto2 -- no sto4_endpoint_added date ---------------------------------------------
+#     for u in models.Unit.query.all():
+#         assert not u.sto4_start_time
+
+#     # Mock project.files -- no files
+#     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+#         mock_files.return_value = []
+
+#         # Run command
+#         result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
+#         assert result.exit_code == 0
+
+#     # Verify output -- no lost files
+#     _, err = capfd.readouterr()
+#     assert "Searching for lost files in project" not in err
+#     assert "No project specified, searching for lost files in all units." in err
+#     for u in models.Unit.query.all():
+#         assert f"Listing lost files in unit: {u.public_id}" in err
+#         for p in u.projects:
+#             assert f"Safespring location for project '{p.public_id}': sto2" in err
+#             assert f"Safespring location for project '{p.public_id}': sto4" not in err
+#     assert f"No lost files for unit '{u.public_id}'" in err
+#     # ---------------------------------------------------------------------------------------
+
+#     # Use sto2 -- sto4_endpoint_added but project created before ----------------------------
+#     for u in models.Unit.query.all():
+#         u.sto4_start_time = current_time()
+#         for p in u.projects:
+#             assert p.date_created < u.sto4_start_time
+#     db.session.commit()
+
+#     # Mock project.files -- no files
+#     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+#         mock_files.return_value = []
+
+#         # Run command
+#         result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
+#         assert result.exit_code == 0
+
+#     # Verify output -- no lost files
+#     _, err = capfd.readouterr()
+#     assert "Searching for lost files in project" not in err
+#     assert "No project specified, searching for lost files in all units." in err
+#     for u in models.Unit.query.all():
+#         assert f"Listing lost files in unit: {u.public_id}" in err
+#         for p in u.projects:
+#             assert f"Safespring location for project '{p.public_id}': sto2" in err
+#             assert f"Safespring location for project '{p.public_id}': sto4" not in err
+#     assert f"No lost files for unit '{u.public_id}'" in err
+#     # ---------------------------------------------------------------------------------------
+
+#     # Use sto2 -- sto4_endpoint_added, project created after, but not all info is available --
+#     for u in models.Unit.query.all():
+#         u.sto4_start_time = current_time() - relativedelta(hours=1)
+#         for p in u.projects:
+#             assert p.date_created > u.sto4_start_time
+#     db.session.commit()
+
+#     # Mock project.files -- no files
+#     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+#         mock_files.return_value = []
+
+#         # Run command
+#         result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
+#         assert result.exit_code == 0
+
+#     # Verify output -- no lost files
+#     _, err = capfd.readouterr()
+#     assert "Searching for lost files in project" not in err
+#     assert "No project specified, searching for lost files in all units." in err
+#     for u in models.Unit.query.all():
+#         assert f"Listing lost files in unit: {u.public_id}" in err
+#         for p in u.projects:
+#             assert f"Safespring location for project '{p.public_id}': sto2" not in err
+#             assert f"Safespring location for project '{p.public_id}': sto4" not in err
+#     assert f"No lost files for unit '{u.public_id}'" in err
+#     # ---------------------------------------------------------------------------------------
+
+#     # Use sto4 -- sto4_endpoint_added, project created after, and all info is available -----
+#     for u in models.Unit.query.all():
+#         u.sto4_start_time = current_time() - relativedelta(hours=1)
+#         for p in u.projects:
+#             assert p.date_created > u.sto4_start_time
+#             u.sto4_endpoint = "endpoint"
+#             u.sto4_name = "name"
+#             u.sto4_access = "access"
+#             u.sto4_secret = "secret"
+
+#     db.session.commit()
+
+#     # Mock project.files -- no files
+#     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+#         mock_files.return_value = []
+
+#         # Run command
+#         result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
+#         assert result.exit_code == 0
+
+#     # Verify output -- no lost files
+#     _, err = capfd.readouterr()
+#     assert "Searching for lost files in project" not in err
+#     assert "No project specified, searching for lost files in all units." in err
+#     for u in models.Unit.query.all():
+#         assert f"Listing lost files in unit: {u.public_id}" in err
+#         for p in u.projects:
+#             assert f"Safespring location for project '{p.public_id}': sto2" not in err
+#             assert f"Safespring location for project '{p.public_id}': sto4" in err
+#     assert f"No lost files for unit '{u.public_id}'" in err
+#     # ---------------------------------------------------------------------------------------
+
+#     # Use sto4 for all but one --------------------------------------------------------------
+#     for u in models.Unit.query.all():
+#         u.sto4_start_time = current_time() - relativedelta(hours=1)
+#         for p in u.projects:
+#             assert p.date_created > u.sto4_start_time
+#             u.sto4_endpoint = "endpoint"
+#             u.sto4_name = "name"
+#             u.sto4_access = "access"
+#             u.sto4_secret = "secret"
+
+#     unit_no_sto4_endpoint = models.Unit.query.first()
+#     unit_no_sto4_endpoint_id = unit_no_sto4_endpoint.public_id
+#     unit_no_sto4_endpoint.sto4_endpoint = None
+#     db.session.commit()
+
+#     # Mock project.files -- no files
+#     with patch("dds_web.database.models.Project.files", new_callable=PropertyMock) as mock_files:
+#         mock_files.return_value = []
+
+#         # Run command
+#         result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
+#         assert result.exit_code == 0
+
+#     # Verify output -- no lost files
+#     _, err = capfd.readouterr()
+#     assert "Searching for lost files in project" not in err
+#     assert "No project specified, searching for lost files in all units." in err
+#     for u in models.Unit.query.all():
+#         assert f"Listing lost files in unit: {u.public_id}" in err
+#         for p in u.projects:
+#             if u.public_id == unit_no_sto4_endpoint_id:
+#                 assert f"One or more sto4 variables are missing for unit {u.public_id}." in err
+#                 assert f"Safespring location for project '{p.public_id}': sto2" not in err
+#                 assert f"Safespring location for project '{p.public_id}': sto4" not in err
+#             else:
+#                 assert f"Safespring location for project '{p.public_id}': sto2" not in err
+#                 assert f"Safespring location for project '{p.public_id}': sto4" in err
+#     assert f"No lost files for unit '{u.public_id}'" in err
+#     # ---------------------------------------------------------------------------------------
+
+
+# def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
+#     """flask lost-files ls: project specified, lost files in s3."""
+#     # Run command
+#     result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
+#     assert result.exit_code == 0
+
+#     # Verify output
+#     _, err = capfd.readouterr()
+#     # All files should be in db but not in s3
+#     for u in models.Unit.query.all():
+#         num_files: int = 0
+#         for p in u.projects:
+#             num_files += len(p.files)
+#             for f in p.files:
+#                 assert (
+#                     f"Entry {f.name_in_bucket} ({p.public_id}, {u}) not found in S3 (but found in db)"
+#                     in err
+#                 )
+#                 assert (
+#                     f"Entry {f.name_in_bucket} ({p.public_id}, {u}) not found in database (but found in s3)"
+#                     not in err
+#                 )
+#         assert f"Lost files for unit: {u.public_id}\t\tIn DB but not S3: {num_files}\tIn S3 but not DB: 0\tProject errors: 0\n"
+
+
+# lost_files_s3_db -- add_missing_bucket
+
+
+def test_add_missing_bucket_no_project(client, cli_runner):
+    """flask lost-files add-missing-bucket: no project specified (required)."""
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["add-missing-bucket"])
+
+    # Get output from result and verify that help message printed
+    assert result.exit_code == 2
+    assert "Missing option '--project-id' / '-p'." in result.stdout
+
+
+def test_add_missing_bucket_project_nonexistent(client, cli_runner, capfd):
+    """flask lost-files add-missing-bucket: no such project --> print out error."""
+    # Project -- doesn't exist
+    project_id: str = "nonexistentproject"
+    assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["add-missing-bucket", "--project-id", project_id]
+    )
+    assert result.exit_code == 1
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert f"No such project: '{project_id}'" in err
+
+
+def test_add_missing_bucket_project_inactive(client, cli_runner, capfd):
+    """flask lost-files add-missing-bucket: project specified, but inactive --> error message."""
+    # Get project
+    project: models.Project = models.Project.query.first()
+    assert project
+
+    # Set project as inactive
+    project.is_active = False
+    db.session.commit()
+    assert not project.is_active
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+    )
+    assert result.exit_code == 1
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert f"Project '{project.public_id}' is not an active project." in err
+
+
+def test_add_missing_bucket_not_missing(client, cli_runner, boto3_session, capfd):
+    """flask lost-files add-missing-bucket: project specified, not missing --> ok."""
+    from tests.test_utils import mock_nosuchbucket
+
+    # Get project
+    project: models.Project = models.Project.query.first()
+    assert project
+
+    # Use sto2 -- sto4_start_time not set --------------------------------------------
+    assert not project.responsible_unit.sto4_start_time
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+    )
+    assert result.exit_code == 0
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert (
+        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+        in err
+    )
+    assert f"Safespring location for project '{project.public_id}': sto2" in err
+    # ---------------------------------------------------------------------------------
+
+    # Use sto2 -- sto4_start_time set, but project created before ---------------------
+    # Set start time
+    project.responsible_unit.sto4_start_time = current_time()
+    db.session.commit()
+
+    # Verify
+    assert project.responsible_unit.sto4_start_time
+    assert project.date_created < project.responsible_unit.sto4_start_time
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+    )
+    assert result.exit_code == 0
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert (
+        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+        in err
+    )
+    assert f"Safespring location for project '{project.public_id}': sto2" in err
+    # ---------------------------------------------------------------------------------
+
+    # Use sto2 -- sto4_start_time set, project created after, but not all vars set ----
+    # Set start time
+    project.responsible_unit.sto4_start_time = current_time() - relativedelta(hours=1)
+    db.session.commit()
+
+    # Verify
+    unit = project.responsible_unit
+    assert unit.sto4_start_time
+    assert project.date_created > unit.sto4_start_time
+    assert not all([unit.sto4_endpoint, unit.sto4_name, unit.sto4_access, unit.sto4_secret])
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+    )
+    assert result.exit_code == 1
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert (
+        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+        not in err
+    )
+    assert f"Safespring location for project '{project.public_id}': sto2" not in err
+    assert f"Safespring location for project '{project.public_id}': sto4" not in err
+    assert f"One or more sto4 variables are missing for unit {unit.public_id}." in err
+
+    # ---------------------------------------------------------------------------------
+
+    # Use sto4 -- sto4_start_time set, project created after and all vars set
+    # Set start time
+    project.responsible_unit.sto4_endpoint = "endpoint"
+    project.responsible_unit.sto4_name = "name"
+    project.responsible_unit.sto4_access = "access"
+    project.responsible_unit.sto4_secret = "secret"
+    db.session.commit()
+
+    # Verify
+    unit = project.responsible_unit
+    assert unit.sto4_start_time
+    assert project.date_created > unit.sto4_start_time
+    assert all([unit.sto4_endpoint, unit.sto4_name, unit.sto4_access, unit.sto4_secret])
+
+    # Run command
+    result: click.testing.Result = cli_runner.invoke(
+        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+    )
+    assert result.exit_code == 0
+
+    # Verify output
+    _, err = capfd.readouterr()
+    assert (
+        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+        in err
+    )
+    assert f"Safespring location for project '{project.public_id}': sto2" not in err
+    assert f"Safespring location for project '{project.public_id}': sto4" in err
+    assert f"One or more sto4 variables are missing for unit {unit.public_id}." not in err
+    # ---------------------------------------------------------------------------------
 
 
 # # lost_files_s3_db -- delete_lost_files
