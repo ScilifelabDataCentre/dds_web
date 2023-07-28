@@ -54,8 +54,10 @@ class ApiS3Connector:
     def get_s3_info(self):
         """Get information required to connect to cloud."""
         # Check if to use sto4
-        use_sto4 = dds_web.utils.use_sto4(unit_object=self.project.responsible_unit, project_object=self.project)
-        
+        use_sto4 = dds_web.utils.use_sto4(
+            unit_object=self.project.responsible_unit, project_object=self.project
+        )
+
         endpoint, name, accesskey, secretkey = (
             models.Unit.query.filter_by(id=self.project.responsible_unit.id)
             .with_entities(
