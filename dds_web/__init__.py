@@ -277,7 +277,7 @@ def create_app(testing=False, database_uri=None):
             quarterly_usage,
             collect_stats,
             monitor_usage,
-            update_unit
+            update_unit,
         )
 
         # Add flask commands - general
