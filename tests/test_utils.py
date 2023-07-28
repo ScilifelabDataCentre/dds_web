@@ -1423,17 +1423,16 @@ def test_list_lost_files_in_project_overlap(
             in err
         )
 
-
-# Verify that the rest of the files are not printed
-for x in fake_files_in_bucket[:15]:
-    assert (
-        f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
-        not in err
-    )
-    assert (
-        f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
-        not in err
-    )
+    # Verify that the rest of the files are not printed
+    for x in fake_files_in_bucket[:15]:
+        assert (
+            f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in S3 (but found in db)"
+            not in err
+        )
+        assert (
+            f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
+            not in err
+        )
 
 # use_sto4
 
