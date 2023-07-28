@@ -782,28 +782,190 @@ def mock_unit_size():
 #         assert f"Lost files for unit: {u.public_id}\t\tIn DB but not S3: {num_files}\tIn S3 but not DB: 0\tProject errors: 0\n"
 
 
-# lost_files_s3_db -- add_missing_bucket
+# # lost_files_s3_db -- add_missing_bucket
 
 
-def test_add_missing_bucket_no_project(client, cli_runner):
-    """flask lost-files add-missing-bucket: no project specified (required)."""
+# def test_add_missing_bucket_no_project(client, cli_runner):
+#     """flask lost-files add-missing-bucket: no project specified (required)."""
+#     # Run command
+#     result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["add-missing-bucket"])
+
+#     # Get output from result and verify that help message printed
+#     assert result.exit_code == 2
+#     assert "Missing option '--project-id' / '-p'." in result.stdout
+
+
+# def test_add_missing_bucket_project_nonexistent(client, cli_runner, capfd):
+#     """flask lost-files add-missing-bucket: no such project --> print out error."""
+#     # Project -- doesn't exist
+#     project_id: str = "nonexistentproject"
+#     assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
+
+#     # Run command
+#     result: click.testing.Result = cli_runner.invoke(
+#         lost_files_s3_db, ["add-missing-bucket", "--project-id", project_id]
+#     )
+#     assert result.exit_code == 1
+
+#     # Verify output
+#     _, err = capfd.readouterr()
+#     assert f"No such project: '{project_id}'" in err
+
+
+# def test_add_missing_bucket_project_inactive(client, cli_runner, capfd):
+#     """flask lost-files add-missing-bucket: project specified, but inactive --> error message."""
+#     # Get project
+#     project: models.Project = models.Project.query.first()
+#     assert project
+
+#     # Set project as inactive
+#     project.is_active = False
+#     db.session.commit()
+#     assert not project.is_active
+
+#     # Run command
+#     result: click.testing.Result = cli_runner.invoke(
+#         lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+#     )
+#     assert result.exit_code == 1
+
+#     # Verify output
+#     _, err = capfd.readouterr()
+#     assert f"Project '{project.public_id}' is not an active project." in err
+
+
+# def test_add_missing_bucket_not_missing(client, cli_runner, boto3_session, capfd):
+#     """flask lost-files add-missing-bucket: project specified, not missing --> ok."""
+#     from tests.test_utils import mock_nosuchbucket
+
+#     # Get project
+#     project: models.Project = models.Project.query.first()
+#     assert project
+
+#     # Use sto2 -- sto4_start_time not set --------------------------------------------
+#     assert not project.responsible_unit.sto4_start_time
+
+#     # Run command
+#     result: click.testing.Result = cli_runner.invoke(
+#         lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+#     )
+#     assert result.exit_code == 0
+
+#     # Verify output
+#     _, err = capfd.readouterr()
+#     assert (
+#         f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+#         in err
+#     )
+#     assert f"Safespring location for project '{project.public_id}': sto2" in err
+#     # ---------------------------------------------------------------------------------
+
+#     # Use sto2 -- sto4_start_time set, but project created before ---------------------
+#     # Set start time
+#     project.responsible_unit.sto4_start_time = current_time()
+#     db.session.commit()
+
+#     # Verify
+#     assert project.responsible_unit.sto4_start_time
+#     assert project.date_created < project.responsible_unit.sto4_start_time
+
+#     # Run command
+#     result: click.testing.Result = cli_runner.invoke(
+#         lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+#     )
+#     assert result.exit_code == 0
+
+#     # Verify output
+#     _, err = capfd.readouterr()
+#     assert (
+#         f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+#         in err
+#     )
+#     assert f"Safespring location for project '{project.public_id}': sto2" in err
+#     # ---------------------------------------------------------------------------------
+
+#     # Use sto2 -- sto4_start_time set, project created after, but not all vars set ----
+#     # Set start time
+#     project.responsible_unit.sto4_start_time = current_time() - relativedelta(hours=1)
+#     db.session.commit()
+
+#     # Verify
+#     unit = project.responsible_unit
+#     assert unit.sto4_start_time
+#     assert project.date_created > unit.sto4_start_time
+#     assert not all([unit.sto4_endpoint, unit.sto4_name, unit.sto4_access, unit.sto4_secret])
+
+#     # Run command
+#     result: click.testing.Result = cli_runner.invoke(
+#         lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+#     )
+#     assert result.exit_code == 1
+
+#     # Verify output
+#     _, err = capfd.readouterr()
+#     assert (
+#         f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+#         not in err
+#     )
+#     assert f"Safespring location for project '{project.public_id}': sto2" not in err
+#     assert f"Safespring location for project '{project.public_id}': sto4" not in err
+#     assert f"One or more sto4 variables are missing for unit {unit.public_id}." in err
+
+#     # ---------------------------------------------------------------------------------
+
+#     # Use sto4 -- sto4_start_time set, project created after and all vars set
+#     # Set start time
+#     project.responsible_unit.sto4_endpoint = "endpoint"
+#     project.responsible_unit.sto4_name = "name"
+#     project.responsible_unit.sto4_access = "access"
+#     project.responsible_unit.sto4_secret = "secret"
+#     db.session.commit()
+
+#     # Verify
+#     unit = project.responsible_unit
+#     assert unit.sto4_start_time
+#     assert project.date_created > unit.sto4_start_time
+#     assert all([unit.sto4_endpoint, unit.sto4_name, unit.sto4_access, unit.sto4_secret])
+
+#     # Run command
+#     result: click.testing.Result = cli_runner.invoke(
+#         lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+#     )
+#     assert result.exit_code == 0
+
+#     # Verify output
+#     _, err = capfd.readouterr()
+#     assert (
+#         f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
+#         in err
+#     )
+#     assert f"Safespring location for project '{project.public_id}': sto2" not in err
+#     assert f"Safespring location for project '{project.public_id}': sto4" in err
+#     assert f"One or more sto4 variables are missing for unit {unit.public_id}." not in err
+#     # ---------------------------------------------------------------------------------
+
+
+# lost_files_s3_db -- delete_lost_files
+
+
+def test_delete_lost_files_no_project(client, cli_runner):
+    """flask lost-files delete: no project specified (required)."""
     # Run command
-    result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["add-missing-bucket"])
+    result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["delete"])
 
     # Get output from result and verify that help message printed
     assert result.exit_code == 2
     assert "Missing option '--project-id' / '-p'." in result.stdout
 
-
-def test_add_missing_bucket_project_nonexistent(client, cli_runner, capfd):
-    """flask lost-files add-missing-bucket: no such project --> print out error."""
+def test_delete_lost_files_project_nonexistent(client, cli_runner, capfd):
+    """flask lost-files delete: no such project --> print out error."""
     # Project -- doesn't exist
     project_id: str = "nonexistentproject"
     assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
 
     # Run command
     result: click.testing.Result = cli_runner.invoke(
-        lost_files_s3_db, ["add-missing-bucket", "--project-id", project_id]
+        lost_files_s3_db, ["delete", "--project-id", project_id]
     )
     assert result.exit_code == 1
 
@@ -812,80 +974,55 @@ def test_add_missing_bucket_project_nonexistent(client, cli_runner, capfd):
     assert f"No such project: '{project_id}'" in err
 
 
-def test_add_missing_bucket_project_inactive(client, cli_runner, capfd):
-    """flask lost-files add-missing-bucket: project specified, but inactive --> error message."""
+def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd):
+    """flask lost-files delete: project specified and exists --> deleted files ok."""
     # Get project
     project: models.Project = models.Project.query.first()
     assert project
+    num_project_files = len(project.files)
+    assert num_project_files > 0
 
-    # Set project as inactive
-    project.is_active = False
-    db.session.commit()
-    assert not project.is_active
-
-    # Run command
-    result: click.testing.Result = cli_runner.invoke(
-        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
-    )
-    assert result.exit_code == 1
-
-    # Verify output
-    _, err = capfd.readouterr()
-    assert f"Project '{project.public_id}' is not an active project." in err
-
-
-def test_add_missing_bucket_not_missing(client, cli_runner, boto3_session, capfd):
-    """flask lost-files add-missing-bucket: project specified, not missing --> ok."""
-    from tests.test_utils import mock_nosuchbucket
-
-    # Get project
-    project: models.Project = models.Project.query.first()
-    assert project
-
-    # Use sto2 -- sto4_start_time not set --------------------------------------------
+    # Use sto2 -- sto4_start_time not set -----------------------------------
     assert not project.responsible_unit.sto4_start_time
 
     # Run command
     result: click.testing.Result = cli_runner.invoke(
-        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+        lost_files_s3_db, ["delete", "--project-id", project.public_id]
     )
     assert result.exit_code == 0
 
-    # Verify output
+    # Verify output - files deleted
     _, err = capfd.readouterr()
-    assert (
-        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
-        in err
-    )
+    assert f"Files deleted from S3: 0" in err
+    assert f"Files deleted from DB: {num_project_files}" in err
     assert f"Safespring location for project '{project.public_id}': sto2" in err
-    # ---------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
-    # Use sto2 -- sto4_start_time set, but project created before ---------------------
-    # Set start time
+    # Use sto2 -- start_time set, but project created before -----------------
+    # Set start_time 
     project.responsible_unit.sto4_start_time = current_time()
     db.session.commit()
 
     # Verify
-    assert project.responsible_unit.sto4_start_time
-    assert project.date_created < project.responsible_unit.sto4_start_time
+    unit = project.responsible_unit
+    assert unit.sto4_start_time
+    assert project.date_created < unit.sto4_start_time
 
     # Run command
     result: click.testing.Result = cli_runner.invoke(
-        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+        lost_files_s3_db, ["delete", "--project-id", project.public_id]
     )
     assert result.exit_code == 0
 
-    # Verify output
+    # Verify output - files deleted
     _, err = capfd.readouterr()
-    assert (
-        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
-        in err
-    )
+    assert f"Files deleted from S3: 0" in err
+    assert f"Files deleted from DB: 0" in err # Already deleted
     assert f"Safespring location for project '{project.public_id}': sto2" in err
-    # ---------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
-    # Use sto2 -- sto4_start_time set, project created after, but not all vars set ----
-    # Set start time
+    # Use sto2 -- start_time set, project created after, but all vars not set
+    # Set start_time 
     project.responsible_unit.sto4_start_time = current_time() - relativedelta(hours=1)
     db.session.commit()
 
@@ -897,24 +1034,20 @@ def test_add_missing_bucket_not_missing(client, cli_runner, boto3_session, capfd
 
     # Run command
     result: click.testing.Result = cli_runner.invoke(
-        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+        lost_files_s3_db, ["delete", "--project-id", project.public_id]
     )
     assert result.exit_code == 1
 
-    # Verify output
+    # Verify output - files deleted
     _, err = capfd.readouterr()
-    assert (
-        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
-        not in err
-    )
+    assert f"Files deleted from S3: 0" not in err
+    assert f"Files deleted from DB: 0" not in err
     assert f"Safespring location for project '{project.public_id}': sto2" not in err
-    assert f"Safespring location for project '{project.public_id}': sto4" not in err
     assert f"One or more sto4 variables are missing for unit {unit.public_id}." in err
+    # ------------------------------------------------------------------------
 
-    # ---------------------------------------------------------------------------------
-
-    # Use sto4 -- sto4_start_time set, project created after and all vars set
-    # Set start time
+    # Use sto4 - start_time set, project created after and all vars set ------
+    # Set start_time 
     project.responsible_unit.sto4_endpoint = "endpoint"
     project.responsible_unit.sto4_name = "name"
     project.responsible_unit.sto4_access = "access"
@@ -929,96 +1062,43 @@ def test_add_missing_bucket_not_missing(client, cli_runner, boto3_session, capfd
 
     # Run command
     result: click.testing.Result = cli_runner.invoke(
-        lost_files_s3_db, ["add-missing-bucket", "--project-id", project.public_id]
+        lost_files_s3_db, ["delete", "--project-id", project.public_id]
     )
     assert result.exit_code == 0
 
-    # Verify output
+    # Verify output - files deleted
     _, err = capfd.readouterr()
-    assert (
-        f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
-        in err
-    )
+    assert f"Files deleted from S3: 0" in err
+    assert f"Files deleted from DB: 0" in err # Aldready deleted
     assert f"Safespring location for project '{project.public_id}': sto2" not in err
     assert f"Safespring location for project '{project.public_id}': sto4" in err
     assert f"One or more sto4 variables are missing for unit {unit.public_id}." not in err
-    # ---------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
+def test_delete_lost_files_sqlalchemyerror(client, cli_runner, boto3_session, capfd):
+    """flask lost-files delete: sqlalchemyerror during deletion."""
+    # Imports
+    from tests.api.test_project import mock_sqlalchemyerror
 
-# # lost_files_s3_db -- delete_lost_files
+    # Get project
+    project: models.Project = models.Project.query.first()
+    assert project
+    num_project_files = len(project.files)
+    assert num_project_files > 0
 
+    # Mock commit --> no delete
+    with patch("dds_web.db.session.commit", mock_sqlalchemyerror):
+        # Run command
+        result: click.testing.Result = cli_runner.invoke(
+            lost_files_s3_db, ["delete", "--project-id", project.public_id]
+        )
+        assert result.exit_code == 1
 
-# def test_delete_lost_files_no_project(client, cli_runner):
-#     """flask lost-files delete: no project specified (required)."""
-#     # Run command
-#     result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["delete"])
-
-#     # Get output from result and verify that help message printed
-#     assert result.exit_code == 2
-#     assert "Missing option '--project-id' / '-p'." in result.stdout
-
-
-# def test_delete_lost_files_project_nonexistent(client, cli_runner, capfd):
-#     """flask lost-files delete: no such project --> print out error."""
-#     # Project -- doesn't exist
-#     project_id: str = "nonexistentproject"
-#     assert not models.Project.query.filter_by(public_id=project_id).one_or_none()
-
-#     # Run command
-#     result: click.testing.Result = cli_runner.invoke(
-#         lost_files_s3_db, ["delete", "--project-id", project_id]
-#     )
-#     assert result.exit_code == 1
-
-#     # Verify output
-#     _, err = capfd.readouterr()
-#     assert f"No such project: '{project_id}'" in err
-
-
-# def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd):
-#     """flask lost-files delete: project specified and exists --> deleted files ok."""
-#     # Get project
-#     project: models.Project = models.Project.query.first()
-#     assert project
-#     num_project_files = len(project.files)
-#     assert num_project_files > 0
-
-#     # Run command
-#     result: click.testing.Result = cli_runner.invoke(
-#         lost_files_s3_db, ["delete", "--project-id", project.public_id]
-#     )
-#     assert result.exit_code == 0
-
-#     # Verify output - files deleted
-#     _, err = capfd.readouterr()
-#     assert f"Files deleted from S3: 0" in err
-#     assert f"Files deleted from DB: {num_project_files}" in err
-
-
-# def test_delete_lost_files_sqlalchemyerror(client, cli_runner, boto3_session, capfd):
-#     """flask lost-files delete: sqlalchemyerror during deletion."""
-#     # Imports
-#     from tests.api.test_project import mock_sqlalchemyerror
-
-#     # Get project
-#     project: models.Project = models.Project.query.first()
-#     assert project
-#     num_project_files = len(project.files)
-#     assert num_project_files > 0
-
-#     # Mock commit --> no delete
-#     with patch("dds_web.db.session.commit", mock_sqlalchemyerror):
-#         # Run command
-#         result: click.testing.Result = cli_runner.invoke(
-#             lost_files_s3_db, ["delete", "--project-id", project.public_id]
-#         )
-#         assert result.exit_code == 1
-
-#     # Verify output - files deleted
-#     _, err = capfd.readouterr()
-#     assert "Unable to delete the database entries" in err
-#     assert f"Files deleted from S3: 0" not in err
-#     assert f"Files deleted from DB: 0" not in err
+    # Verify output - files deleted
+    _, err = capfd.readouterr()
+    assert "Unable to delete the database entries" in err
+    assert f"Files deleted from S3: 0" not in err
+    assert f"Files deleted from DB: 0" not in err
 
 
 # # usage = 0 --> check log

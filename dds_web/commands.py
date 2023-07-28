@@ -541,7 +541,8 @@ def delete_lost_files(project_id: str):
     # Imports
     import boto3
     from dds_web.database import models
-    from dds_web.utils import list_lost_files_in_project
+    from dds_web.utils import list_lost_files_in_project, use_sto4
+    from dds_web.errors import S3InfoNotFoundError
 
     # Get project object
     project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
@@ -552,13 +553,38 @@ def delete_lost_files(project_id: str):
     # Start s3 session
     session = boto3.session.Session()
 
+    # Use sto4 if project created after sto4 info added
+    try:
+        if use_sto4(unit_object=project.responsible_unit, project_object=project):
+            flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto4")
+            endpoint_url, aws_access_key_id, aws_secret_access_key = (
+                project.responsible_unit.sto4_endpoint,
+                project.responsible_unit.sto4_access,
+                project.responsible_unit.sto4_secret,
+            )
+        else:
+            flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto2")
+            endpoint_url, aws_access_key_id, aws_secret_access_key = (
+                project.responsible_unit.sto2_endpoint,
+                project.responsible_unit.sto2_access,
+                project.responsible_unit.sto2_secret,
+            )
+    except S3InfoNotFoundError as err:
+        flask.current_app.logger.error(str(err))
+        sys.exit(1)
+
     # Connect to S3
     resource = session.resource(
         service_name="s3",
-        endpoint_url=project.responsible_unit.sto2_endpoint,
-        aws_access_key_id=project.responsible_unit.sto2_access,
-        aws_secret_access_key=project.responsible_unit.sto2_secret,
+        endpoint_url=endpoint_url,
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
     )
+
+    # Delete info
+    del endpoint_url
+    del aws_access_key_id
+    del aws_secret_access_key
 
     # Get list of lost files
     in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
@@ -598,6 +624,7 @@ def delete_lost_files(project_id: str):
     flask.current_app.logger.info(f"Files deleted from S3: {len(in_s3_but_not_in_db)}")
     flask.current_app.logger.info(f"Files deleted from DB: {len(in_db_but_not_in_s3)}")
 
+    gc.collect()
 
 @click.command("set-available-to-expired")
 @flask.cli.with_appcontext
