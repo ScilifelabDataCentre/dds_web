@@ -122,7 +122,7 @@ services:
       - cli
     command: server /data --console-address ":9003"
     ports:
-      - 127.0.0.1:9002:9002
+      - 127.0.0.1:9002:9000
       - 127.0.0.1:9003:9003
     environment:
       MINIO_ROOT_USER: minio2 # access key
