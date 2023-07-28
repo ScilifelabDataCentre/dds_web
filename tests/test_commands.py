@@ -957,6 +957,7 @@ def test_delete_lost_files_no_project(client, cli_runner):
     assert result.exit_code == 2
     assert "Missing option '--project-id' / '-p'." in result.stdout
 
+
 def test_delete_lost_files_project_nonexistent(client, cli_runner, capfd):
     """flask lost-files delete: no such project --> print out error."""
     # Project -- doesn't exist
@@ -999,7 +1000,7 @@ def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd):
     # ------------------------------------------------------------------------
 
     # Use sto2 -- start_time set, but project created before -----------------
-    # Set start_time 
+    # Set start_time
     project.responsible_unit.sto4_start_time = current_time()
     db.session.commit()
 
@@ -1017,12 +1018,12 @@ def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd):
     # Verify output - files deleted
     _, err = capfd.readouterr()
     assert f"Files deleted from S3: 0" in err
-    assert f"Files deleted from DB: 0" in err # Already deleted
+    assert f"Files deleted from DB: 0" in err  # Already deleted
     assert f"Safespring location for project '{project.public_id}': sto2" in err
     # ------------------------------------------------------------------------
 
     # Use sto2 -- start_time set, project created after, but all vars not set
-    # Set start_time 
+    # Set start_time
     project.responsible_unit.sto4_start_time = current_time() - relativedelta(hours=1)
     db.session.commit()
 
@@ -1047,7 +1048,7 @@ def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd):
     # ------------------------------------------------------------------------
 
     # Use sto4 - start_time set, project created after and all vars set ------
-    # Set start_time 
+    # Set start_time
     project.responsible_unit.sto4_endpoint = "endpoint"
     project.responsible_unit.sto4_name = "name"
     project.responsible_unit.sto4_access = "access"
@@ -1069,11 +1070,12 @@ def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd):
     # Verify output - files deleted
     _, err = capfd.readouterr()
     assert f"Files deleted from S3: 0" in err
-    assert f"Files deleted from DB: 0" in err # Aldready deleted
+    assert f"Files deleted from DB: 0" in err  # Aldready deleted
     assert f"Safespring location for project '{project.public_id}': sto2" not in err
     assert f"Safespring location for project '{project.public_id}': sto4" in err
     assert f"One or more sto4 variables are missing for unit {unit.public_id}." not in err
     # ------------------------------------------------------------------------
+
 
 def test_delete_lost_files_sqlalchemyerror(client, cli_runner, boto3_session, capfd):
     """flask lost-files delete: sqlalchemyerror during deletion."""

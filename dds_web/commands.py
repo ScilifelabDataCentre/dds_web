@@ -626,6 +626,7 @@ def delete_lost_files(project_id: str):
 
     gc.collect()
 
+
 @click.command("set-available-to-expired")
 @flask.cli.with_appcontext
 def set_available_to_expired():
