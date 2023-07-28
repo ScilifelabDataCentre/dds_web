@@ -308,24 +308,10 @@ def list_lost_files(project_id: str):
         # Check which Safespring storage location to use
         # Use sto4 if project created after sto4 info added
         try:
-            if use_sto4(unit_object=project.responsible_unit, project_object=project):
-                flask.current_app.logger.info(
-                    f"Safespring location for project '{project_id}': sto4"
-                )
-                endpoint_url, aws_access_key_id, aws_secret_access_key = (
-                    project.responsible_unit.sto4_endpoint,
-                    project.responsible_unit.sto4_access,
-                    project.responsible_unit.sto4_secret,
-                )
-            else:
-                flask.current_app.logger.info(
-                    f"Safespring location for project '{project_id}': sto2"
-                )
-                endpoint_url, aws_access_key_id, aws_secret_access_key = (
-                    project.responsible_unit.sto2_endpoint,
-                    project.responsible_unit.sto2_access,
-                    project.responsible_unit.sto2_secret,
-                )
+            sto4: bool = use_sto4(unit_object=project.responsible_unit, project_object=project)
+            flask.current_app.logger.info(
+                f"Safespring location for project '{project_id}': {'sto4' if sto4 else 'sto2'}"
+            )
         except S3InfoNotFoundError as err:
             flask.current_app.logger.error(str(err))
             sys.exit(1)
@@ -333,15 +319,16 @@ def list_lost_files(project_id: str):
         # Connect to S3
         resource = session.resource(
             service_name="s3",
-            endpoint_url=endpoint_url,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
+            endpoint_url=project.responsible_unit.sto4_endpoint
+            if sto4
+            else project.responsible_unit.sto2_endpoint,
+            aws_access_key_id=project.responsible_unit.sto4_access
+            if sto4
+            else project.responsible_unit.sto2_access,
+            aws_secret_access_key=project.responsible_unit.sto4_secret
+            if sto4
+            else project.responsible_unit.sto2_secret,
         )
-
-        # Clean up information
-        del endpoint_url
-        del aws_access_key_id
-        del aws_secret_access_key
 
         # List the lost files
         try:
@@ -387,24 +374,10 @@ def list_lost_files(project_id: str):
                 # Check which Safespring storage location to use
                 # Use sto4 if roject created after sto4 info added
                 try:
-                    if use_sto4(unit_object=unit, project_object=proj):
-                        flask.current_app.logger.info(
-                            f"Safespring location for project '{proj.public_id}': sto4"
-                        )
-                        endpoint_url, aws_access_key_id, aws_secret_access_key = (
-                            proj.responsible_unit.sto4_endpoint,
-                            proj.responsible_unit.sto4_access,
-                            proj.responsible_unit.sto4_secret,
-                        )
-                    else:
-                        flask.current_app.logger.info(
-                            f"Safespring location for project '{proj.public_id}': sto2"
-                        )
-                        endpoint_url, aws_access_key_id, aws_secret_access_key = (
-                            proj.responsible_unit.sto2_endpoint,
-                            proj.responsible_unit.sto2_access,
-                            proj.responsible_unit.sto2_secret,
-                        )
+                    sto4: bool = use_sto4(unit_object=unit, project_object=proj)
+                    flask.current_app.logger.info(
+                        f"Safespring location for project '{proj.public_id}': {'sto4' if sto4 else 'sto2'}"
+                    )
                 except S3InfoNotFoundError as err:
                     flask.current_app.logger.error(str(err))
                     continue
@@ -412,15 +385,16 @@ def list_lost_files(project_id: str):
                 # Connect to S3
                 resource_unit = session.resource(
                     service_name="s3",
-                    endpoint_url=endpoint_url,
-                    aws_access_key_id=aws_access_key_id,
-                    aws_secret_access_key=aws_secret_access_key,
+                    endpoint_url=proj.responsible_unit.sto4_endpoint
+                    if sto4
+                    else proj.responsible_unit.sto2_endpoint,
+                    aws_access_key_id=proj.responsible_unit.sto4_access
+                    if sto4
+                    else proj.responsible_unit.sto2_access,
+                    aws_secret_access_key=proj.responsible_unit.sto4_secret
+                    if sto4
+                    else proj.responsible_unit.sto2_secret,
                 )
-
-                # Clean up information
-                del endpoint_url
-                del aws_access_key_id
-                del aws_secret_access_key
 
                 # List the lost files
                 try:
@@ -444,9 +418,6 @@ def list_lost_files(project_id: str):
                 f"In S3 but not DB: {in_s3_but_not_in_db_count}\t"
                 f"Project errors: {num_proj_errors}\n"
             )
-
-    # Garbage collect
-    gc.collect()
 
 
 @lost_files_s3_db.command(name="add-missing-bucket")
@@ -477,20 +448,10 @@ def add_missing_bucket(project_id: str):
 
     # Use sto4 if project created after sto4 info added
     try:
-        if use_sto4(unit_object=project.responsible_unit, project_object=project):
-            flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto4")
-            endpoint_url, aws_access_key_id, aws_secret_access_key = (
-                project.responsible_unit.sto4_endpoint,
-                project.responsible_unit.sto4_access,
-                project.responsible_unit.sto4_secret,
-            )
-        else:
-            flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto2")
-            endpoint_url, aws_access_key_id, aws_secret_access_key = (
-                project.responsible_unit.sto2_endpoint,
-                project.responsible_unit.sto2_access,
-                project.responsible_unit.sto2_secret,
-            )
+        sto4 = use_sto4(unit_object=project.responsible_unit, project_object=project)
+        flask.current_app.logger.info(
+            f"Safespring location for project '{project_id}': {'sto4' if sto4 else 'sto2'}"
+        )
     except S3InfoNotFoundError as err:
         flask.current_app.logger.error(str(err))
         sys.exit(1)
@@ -498,15 +459,16 @@ def add_missing_bucket(project_id: str):
     # Connect to S3
     resource = session.resource(
         service_name="s3",
-        endpoint_url=endpoint_url,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
+        endpoint_url=project.responsible_unit.sto4_endpoint
+        if sto4
+        else project.responsible_unit.sto2_endpoint,
+        aws_access_key_id=project.responsible_unit.sto4_access
+        if sto4
+        else project.responsible_unit.sto2_access,
+        aws_secret_access_key=project.responsible_unit.sto4_secret
+        if sto4
+        else project.responsible_unit.sto2_secret,
     )
-
-    # Delete info
-    del endpoint_url
-    del aws_access_key_id
-    del aws_secret_access_key
 
     # Check if bucket exists
     try:
@@ -528,9 +490,6 @@ def add_missing_bucket(project_id: str):
         flask.current_app.logger.info(
             f"Bucket for project '{project.public_id}' found; Bucket not missing. Will not create bucket."
         )
-
-    # Collect garbage
-    gc.collect()
 
 
 @lost_files_s3_db.command(name="delete")
@@ -555,20 +514,10 @@ def delete_lost_files(project_id: str):
 
     # Use sto4 if project created after sto4 info added
     try:
-        if use_sto4(unit_object=project.responsible_unit, project_object=project):
-            flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto4")
-            endpoint_url, aws_access_key_id, aws_secret_access_key = (
-                project.responsible_unit.sto4_endpoint,
-                project.responsible_unit.sto4_access,
-                project.responsible_unit.sto4_secret,
-            )
-        else:
-            flask.current_app.logger.info(f"Safespring location for project '{project_id}': sto2")
-            endpoint_url, aws_access_key_id, aws_secret_access_key = (
-                project.responsible_unit.sto2_endpoint,
-                project.responsible_unit.sto2_access,
-                project.responsible_unit.sto2_secret,
-            )
+        sto4: bool = use_sto4(unit_object=project.responsible_unit, project_object=project)
+        flask.current_app.logger.info(
+            f"Safespring location for project '{project_id}': {'sto4' if sto4 else 'sto2'}"
+        )
     except S3InfoNotFoundError as err:
         flask.current_app.logger.error(str(err))
         sys.exit(1)
@@ -576,15 +525,16 @@ def delete_lost_files(project_id: str):
     # Connect to S3
     resource = session.resource(
         service_name="s3",
-        endpoint_url=endpoint_url,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
+        endpoint_url=project.responsible_unit.sto4_endpoint
+        if sto4
+        else project.responsible_unit.sto2_endpoint,
+        aws_access_key_id=project.responsible_unit.sto4_access
+        if sto4
+        else project.responsible_unit.sto2_access,
+        aws_secret_access_key=project.responsible_unit.sto4_secret
+        if sto4
+        else project.responsible_unit.sto2_secret,
     )
-
-    # Delete info
-    del endpoint_url
-    del aws_access_key_id
-    del aws_secret_access_key
 
     # Get list of lost files
     in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
@@ -623,8 +573,6 @@ def delete_lost_files(project_id: str):
 
     flask.current_app.logger.info(f"Files deleted from S3: {len(in_s3_but_not_in_db)}")
     flask.current_app.logger.info(f"Files deleted from DB: {len(in_db_but_not_in_s3)}")
-
-    gc.collect()
 
 
 @click.command("set-available-to-expired")
