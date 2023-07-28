@@ -154,7 +154,7 @@ def create_new_unit(
 
 
 @click.command("update-unit")
-@click.option("--unit-id", "-p", type=str, required=True)
+@click.option("--unit-id", "-u", type=str, required=True)
 @click.option("--sto4-endpoint", "-se", type=str, required=True)
 @click.option("--sto4-name", "-sn", type=str, required=True)
 @click.option("--sto4-access", "-sa", type=str, required=True)

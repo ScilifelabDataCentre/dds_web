@@ -120,9 +120,10 @@ services:
       - s3
       - full-dev
       - cli
-    command: server /data --console-address ":9002"
+    command: server /data --console-address ":9003"
     ports:
       - 127.0.0.1:9002:9002
+      - 127.0.0.1:9003:9003
     environment:
       MINIO_ROOT_USER: minio2 # access key
       MINIO_ROOT_PASSWORD: minioPassword2 # secret key
