@@ -12,6 +12,7 @@ import os
 # Own
 from dds_web import db
 from dds_web.database import models
+from dds_web.utils import current_time
 import tests
 
 
@@ -749,7 +750,87 @@ def test_create_project_invalid_characters(client, boto3_session):
 
 def test_create_project_sto2(client, boto3_session, capfd):
     """Create a project in sto2."""
+    # Make sure there are 3 unit admins
+    create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    # Use sto2 -- all sto4 vars not set ---------------------
+    unit: models.Unit = models.Unit.query.filter_by(id=1).first()
+    assert unit
+    assert not all(
+        [
+            unit.sto4_start_time,
+            unit.sto4_endpoint,
+            unit.sto4_name,
+            unit.sto4_access,
+            unit.sto4_secret,
+        ]
+    )
+
+    # Create project
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Verify that new project is created
+    new_project = (
+        db.session.query(models.Project)
+        .filter(models.Project.description == proj_data["description"])
+        .first()
+    )
+    assert new_project
+
+    # Verify logging
+    _, err = capfd.readouterr()
+    assert f"Safespring location for project '{new_project.public_id}': sto2" in err
 
 
 def test_create_project_sto4(client, boto3_session, capfd):
     """Create a project in sto4."""
+    # Make sure there are 3 unit admins
+    create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    # Use sto4
+    unit: models.Unit = models.Unit.query.filter_by(id=1).first()
+    assert unit
+    unit.sto4_start_time = current_time()
+    unit.sto4_endpoint = "endpoint"
+    unit.sto4_name = "name"
+    unit.sto4_access = "access"
+    unit.sto4_secret = "secret"
+    db.session.commit()
+    assert all(
+        [
+            unit.sto4_start_time,
+            unit.sto4_endpoint,
+            unit.sto4_name,
+            unit.sto4_access,
+            unit.sto4_secret,
+        ]
+    )
+
+    # Create project
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Verify that new project is created
+    new_project = (
+        db.session.query(models.Project)
+        .filter(models.Project.description == proj_data["description"])
+        .first()
+    )
+    assert new_project
+
+    # Verify logging
+    _, err = capfd.readouterr()
+    assert f"Safespring location for project '{new_project.public_id}': sto4" in err
