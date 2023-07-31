@@ -309,9 +309,6 @@ def list_lost_files(project_id: str):
         # Use sto4 if project created after sto4 info added
         try:
             sto4: bool = use_sto4(unit_object=project.responsible_unit, project_object=project)
-            flask.current_app.logger.info(
-                f"Safespring location for project '{project_id}': {'sto4' if sto4 else 'sto2'}"
-            )
         except S3InfoNotFoundError as err:
             flask.current_app.logger.error(str(err))
             sys.exit(1)
@@ -375,9 +372,6 @@ def list_lost_files(project_id: str):
                 # Use sto4 if roject created after sto4 info added
                 try:
                     sto4: bool = use_sto4(unit_object=unit, project_object=proj)
-                    flask.current_app.logger.info(
-                        f"Safespring location for project '{proj.public_id}': {'sto4' if sto4 else 'sto2'}"
-                    )
                 except S3InfoNotFoundError as err:
                     flask.current_app.logger.error(str(err))
                     continue
@@ -449,9 +443,6 @@ def add_missing_bucket(project_id: str):
     # Use sto4 if project created after sto4 info added
     try:
         sto4 = use_sto4(unit_object=project.responsible_unit, project_object=project)
-        flask.current_app.logger.info(
-            f"Safespring location for project '{project_id}': {'sto4' if sto4 else 'sto2'}"
-        )
     except S3InfoNotFoundError as err:
         flask.current_app.logger.error(str(err))
         sys.exit(1)
@@ -515,9 +506,6 @@ def delete_lost_files(project_id: str):
     # Use sto4 if project created after sto4 info added
     try:
         sto4: bool = use_sto4(unit_object=project.responsible_unit, project_object=project)
-        flask.current_app.logger.info(
-            f"Safespring location for project '{project_id}': {'sto4' if sto4 else 'sto2'}"
-        )
     except S3InfoNotFoundError as err:
         flask.current_app.logger.error(str(err))
         sys.exit(1)
