@@ -745,3 +745,9 @@ def test_create_project_invalid_characters(client, boto3_session):
         .first()
     )
     assert not new_project
+
+def test_create_project_sto2(client, boto3_session, capfd):
+    """Create a project in sto2."""
+
+def test_create_project_sto4(client, boto3_session, capfd):
+    """Create a project in sto4."""
