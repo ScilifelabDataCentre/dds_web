@@ -730,7 +730,7 @@ def list_lost_files_in_project(project, s3_resource):
 
 def use_sto4(unit_object, project_object) -> bool:
     """Check if project is newer than sto4 info, in that case return True."""
-    project_id: str = project_object.public_id
+    project_id_logging: str = f"Safespring location for project '{project_object.public_id}': "
     sto4_endpoint_added = unit_object.sto4_start_time
     if sto4_endpoint_added and project_object.date_created > sto4_endpoint_added:
         if not all(
@@ -744,12 +744,8 @@ def use_sto4(unit_object, project_object) -> bool:
             raise S3InfoNotFoundError(
                 message=f"One or more sto4 variables are missing for unit {unit_object.public_id}."
             )
-        flask.current_app.logger.info(
-            f"Safespring location for project '{project_id}': sto4"
-        )
+        flask.current_app.logger.info(f"{project_id_logging}sto4")
         return True
 
-    flask.current_app.logger.info(
-            f"Safespring location for project '{project_id}': sto2"
-        )
+    flask.current_app.logger.info(f"{project_id_logging}sto2")
     return False
