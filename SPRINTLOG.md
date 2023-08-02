@@ -272,3 +272,4 @@ _Nothing merged in CLI during this sprint_
 - Change display project info depending on the user role ([#1440](https://github.com/ScilifelabDataCentre/dds_web/pull/1440))
 - New version: 2.4.0 ([#1443](https://github.com/ScilifelabDataCentre/dds_web/pull/1443))
 - Bug fix: Web UI project listing fix ([#1445](https://github.com/ScilifelabDataCentre/dds_web/pull/1445))
+- Change message about project being busy with upload etc ([#1450](https://github.com/ScilifelabDataCentre/dds_web/pull/1450))
