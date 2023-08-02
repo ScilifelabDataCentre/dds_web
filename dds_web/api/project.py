@@ -94,7 +94,7 @@ class ProjectStatus(flask_restful.Resource):
         if project.busy:
             raise ProjectBusyError(
                 message=(
-                    f"The project '{project_id}' is currently busy with upload/download/deletion. "
+                    f"The status for the project '{project_id}' is already in the process of being changed. "
                     "Please try again later. \n\nIf you know the project is not busy, contact support."
                 )
             )
