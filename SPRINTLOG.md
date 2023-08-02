@@ -267,9 +267,10 @@ _Nothing merged in CLI during this sprint_
 - Change from personal name to unit name if / where it's displayed in emails ([#1439](https://github.com/ScilifelabDataCentre/dds_web/pull/1439))
 - Refactoring: `lost_files_s3_db` flask command changed to group with subcommands ([#1438](https://github.com/ScilifelabDataCentre/dds_web/pull/1438))
 
-# 2023-06-26 - 2023-07-14
+# 2023-06-26 - 2023-08-04 (Summer)
 
 - Change display project info depending on the user role ([#1440](https://github.com/ScilifelabDataCentre/dds_web/pull/1440))
 - New version: 2.4.0 ([#1443](https://github.com/ScilifelabDataCentre/dds_web/pull/1443))
 - Bug fix: Web UI project listing fix ([#1445](https://github.com/ScilifelabDataCentre/dds_web/pull/1445))
+- Documentation: Technical Overview, section Creating a Unit in the DDS ([#1449](https://github.com/ScilifelabDataCentre/dds_web/pull/1449))
 - Change message about project being busy with upload etc ([#1450](https://github.com/ScilifelabDataCentre/dds_web/pull/1450))
