@@ -246,7 +246,10 @@ def test_projectstatus_when_busy(module_client):
         json={"something": "something"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert f"The status for the project '{project.public_id}' is already in the process of being changed." in response.json.get("message")
+    assert (
+        f"The status for the project '{project.public_id}' is already in the process of being changed."
+        in response.json.get("message")
+    )
 
 
 def test_projectstatus_when_not_busy_but_invalid(module_client):
