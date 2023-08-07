@@ -275,6 +275,6 @@ _Nothing merged in CLI during this sprint_
 - Documentation: Technical Overview, section Creating a Unit in the DDS ([#1449](https://github.com/ScilifelabDataCentre/dds_web/pull/1449))
 - Empty endpoint: `ProjectBusy` ([#1446](https://github.com/ScilifelabDataCentre/dds_web/pull/1446))
 
-# 2023-08-04 - 2023-08-18 
+# 2023-08-04 - 2023-08-18
 
 - Dependency: Bump `certifi` to 2023.07.22 due to security vulnerability alert(s) ([#1452](https://github.com/ScilifelabDataCentre/dds_web/pull/1452))
