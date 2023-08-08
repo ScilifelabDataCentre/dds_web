@@ -25,10 +25,10 @@ class UnitFactory(factory.alchemy.SQLAlchemyModelFactory):
     external_display_name = "Display Name"
     contact_email = "support@example.com"
     internal_ref = factory.Sequence(lambda n: f"someunit {n}")
-    safespring_endpoint = "endpoint"
-    safespring_name = "dds.example.com"
-    safespring_access = "access"
-    safespring_secret = "secret"
+    sto2_endpoint = "endpoint"
+    sto2_name = "dds.example.com"
+    sto2_access = "access"
+    sto2_secret = "secret"
 
     @factory.post_generation
     def users(self, create, extracted, **kwargs):
