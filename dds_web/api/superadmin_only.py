@@ -345,3 +345,17 @@ class Statistics(flask_restful.Resource):
                 if stat_rows
             ]
         }
+
+class UserEmails(flask_restful.Resource):
+    """Get user emails."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @json_required
+    @handle_db_error
+    def get(self):
+        """Collect the user emails and return a list."""
+        # Get input 
+        json_input = flask.request.get_json(silent=True)  # Verified by json_required
+        all_emails: bool = json_input.get("all")
+        unit_public_id: str = json_input.get("unit")
