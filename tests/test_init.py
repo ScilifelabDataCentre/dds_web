@@ -308,14 +308,6 @@ def test_block_if_maintenance_active_none_approved_users(client: flask.testing.F
         assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
         assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
-        # ProjectBusy - "/proj/busy"
-        response = client.put(
-            DDSEndpoint.PROJECT_BUSY,
-            headers=token,
-        )
-        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
-        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
-
         # ProjectInfo - "/proj/info"
         response = client.get(
             DDSEndpoint.PROJECT_INFO,
@@ -627,13 +619,6 @@ def test_block_if_maintenance_active_superadmin_ok(client: flask.testing.FlaskCl
     # ProjectAccess - "/proj/access"
     response = client.post(
         DDSEndpoint.PROJECT_ACCESS,
-        headers=token,
-    )
-    assert response.status_code == http.HTTPStatus.FORBIDDEN
-
-    # ProjectBusy - "/proj/busy"
-    response = client.put(
-        DDSEndpoint.PROJECT_BUSY,
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN

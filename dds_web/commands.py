@@ -130,10 +130,10 @@ def create_new_unit(
         external_display_name=external_display_name,
         contact_email=contact_email,
         internal_ref=internal_ref or public_id,
-        safespring_endpoint=safespring_endpoint,
-        safespring_name=safespring_name,
-        safespring_access=safespring_access,
-        safespring_secret=safespring_secret,
+        sto2_endpoint=safespring_endpoint,
+        sto2_name=safespring_name,
+        sto2_access=safespring_access,
+        sto2_secret=safespring_secret,
         days_in_available=days_in_available,
         days_in_expired=days_in_expired,
         quota=quota,
@@ -251,9 +251,9 @@ def list_lost_files(project_id: str):
         # Connect to S3
         resource = session.resource(
             service_name="s3",
-            endpoint_url=project.responsible_unit.safespring_endpoint,
-            aws_access_key_id=project.responsible_unit.safespring_access,
-            aws_secret_access_key=project.responsible_unit.safespring_secret,
+            endpoint_url=project.responsible_unit.sto2_endpoint,
+            aws_access_key_id=project.responsible_unit.sto2_access,
+            aws_secret_access_key=project.responsible_unit.sto2_secret,
         )
 
         # List the lost files
@@ -294,9 +294,9 @@ def list_lost_files(project_id: str):
             # Connect to S3
             resource_unit = session.resource(
                 service_name="s3",
-                endpoint_url=unit.safespring_endpoint,
-                aws_access_key_id=unit.safespring_access,
-                aws_secret_access_key=unit.safespring_secret,
+                endpoint_url=unit.sto2_endpoint,
+                aws_access_key_id=unit.sto2_access,
+                aws_secret_access_key=unit.sto2_secret,
             )
 
             # Counts
@@ -357,9 +357,9 @@ def add_missing_bucket(project_id: str):
     # Connect to S3
     resource = session.resource(
         service_name="s3",
-        endpoint_url=project.responsible_unit.safespring_endpoint,
-        aws_access_key_id=project.responsible_unit.safespring_access,
-        aws_secret_access_key=project.responsible_unit.safespring_secret,
+        endpoint_url=project.responsible_unit.sto2_endpoint,
+        aws_access_key_id=project.responsible_unit.sto2_access,
+        aws_secret_access_key=project.responsible_unit.sto2_secret,
     )
 
     # Check if bucket exists
@@ -406,9 +406,9 @@ def delete_lost_files(project_id: str):
     # Connect to S3
     resource = session.resource(
         service_name="s3",
-        endpoint_url=project.responsible_unit.safespring_endpoint,
-        aws_access_key_id=project.responsible_unit.safespring_access,
-        aws_secret_access_key=project.responsible_unit.safespring_secret,
+        endpoint_url=project.responsible_unit.sto2_endpoint,
+        aws_access_key_id=project.responsible_unit.sto2_access,
+        aws_secret_access_key=project.responsible_unit.sto2_secret,
     )
 
     # Get list of lost files
