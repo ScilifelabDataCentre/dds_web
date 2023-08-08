@@ -93,7 +93,7 @@ def test_list_units_as_super_admin(client: flask.testing.FlaskClient) -> None:
             "Public ID": unit.public_id,
             "External Display Name": unit.external_display_name,
             "Contact Email": unit.contact_email,
-            "Safespring Endpoint": unit.safespring_endpoint,
+            "Safespring Endpoint": unit.sto2_endpoint,
             "Days In Available": unit.days_in_available,
             "Days In Expired": unit.days_in_expired,
             "Size": unit.size,
