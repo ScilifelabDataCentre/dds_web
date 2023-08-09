@@ -275,3 +275,4 @@ _Nothing merged in CLI during this sprint_
 - Documentation: Technical Overview, section Creating a Unit in the DDS ([#1449](https://github.com/ScilifelabDataCentre/dds_web/pull/1449))
 - Empty endpoint: `ProjectBusy` ([#1446](https://github.com/ScilifelabDataCentre/dds_web/pull/1446))
 - Rename storage-related columns in `Unit` table ([#1447](https://github.com/ScilifelabDataCentre/dds_web/pull/1447))
+- Endpoint: `UnitUserEmails`; Return primary emails for Unit Personnel- and Admins ([#1454](https://github.com/ScilifelabDataCentre/dds_web/pull/1454))
