@@ -9,7 +9,8 @@ import typing
 import unittest
 from datetime import datetime, timedelta
 from unittest import mock
-
+from unittest.mock import patch
+from unittest.mock import PropertyMock
 
 # Installed
 import flask
@@ -912,3 +913,21 @@ def test_unituseremails_accessdenied(client: flask.testing.FlaskClient) -> None:
             tests.DDSEndpoint.USER_EMAILS, headers=token
         )
         assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+def test_unituseremails_no_emails(client: flask.testing.FlaskClient) -> None: 
+    """Empty should be returned if no emails."""
+    # No users returned from query 
+    with patch("dds_web.database.models.UnitUser.query") as mock_users:
+        mock_users.return_value = []
+        
+        # Authenticate
+        token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+        # Call endpoint
+        response: werkzeug.test.WrapperTestResponse = client.get(
+            tests.DDSEndpoint.USER_EMAILS, headers=token
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        
+        # Verify response
+        assert response.json and response.json.get("empty") == True
