@@ -1433,3 +1433,80 @@ def test_list_lost_files_in_project_overlap(
             f"Entry {x.key} ({project.public_id}, {project.responsible_unit}) not found in database (but found in s3)"
             not in err
         )
+
+
+# use_sto4
+
+
+def test_use_sto4_return_false(client: flask.testing.FlaskClient):
+    """Test that use_sto4 returns False."""
+    # Imports
+    from dds_web.utils import use_sto4, current_time
+    from dds_web.errors import S3InfoNotFoundError
+
+    # Return False if sto4_start_time not set --------------------------
+    # Get project
+    project: models.Project = models.Project.query.first()
+
+    # Get unit
+    unit: models.Unit = project.responsible_unit
+    assert not unit.sto4_start_time
+
+    # Run function
+    result: bool = use_sto4(unit_object=unit, project_object=project)
+    assert result is False
+    # -------------------------------------------------------------------
+
+    # Return False if sto4_start_time is set, but project created before
+    # Set sto4_start_time
+    unit.sto4_start_time = current_time()
+    db.session.commit()
+
+    # Verify
+    assert project.date_created < unit.sto4_start_time
+
+    # Run function
+    result: bool = use_sto4(unit_object=unit, project_object=project)
+    assert result is False
+    # -------------------------------------------------------------------
+
+    # Return False if sto4_start_time is set, project created after,
+    # but not all variables are set
+    unit.sto4_start_time = current_time() - relativedelta(hours=1)
+    db.session.commit()
+
+    # Verify
+    assert project.date_created > unit.sto4_start_time
+
+    # Run function
+    with pytest.raises(S3InfoNotFoundError) as err:
+        result: bool = use_sto4(unit_object=unit, project_object=project)
+        assert result is False
+    assert f"One or more sto4 variables are missing for unit {unit.public_id}." in str(err.value)
+    # -------------------------------------------------------------------
+
+
+def test_use_sto4_return_true(client: flask.testing.FlaskClient):
+    """Test that use_sto4 returns False."""
+    # Imports
+    from dds_web.utils import use_sto4, current_time
+
+    # Get project
+    project: models.Project = models.Project.query.first()
+
+    # Unit
+    unit: models.Unit = project.responsible_unit
+
+    # Return True if sto4_start_time is set,
+    # project is created after sto4_start_time was added,
+    # and all variables are set
+    unit.sto4_start_time = current_time() - relativedelta(hours=1)
+    unit.sto4_endpoint = "endpoint"
+    unit.sto4_name = "name"
+    unit.sto4_access = "access"
+    unit.sto4_secret = "secret"
+    db.session.commit()
+
+    # Run function
+    result: bool = use_sto4(unit_object=unit, project_object=project)
+    assert result is True
