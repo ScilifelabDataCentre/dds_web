@@ -230,5 +230,6 @@ class DDSEndpoint:
     USER_FIND = BASE_ENDPOINT + "/user/find"
     TOTP_DEACTIVATE = BASE_ENDPOINT + "/user/totp/deactivate"
     STATS = BASE_ENDPOINT + "/stats"
+    USER_EMAILS = BASE_ENDPOINT + "/user/emails"
 
     TIMEOUT = 5
