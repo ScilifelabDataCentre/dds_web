@@ -47,7 +47,7 @@ class AllUnits(flask_restful.Resource):
                 "Public ID": u.public_id,
                 "External Display Name": u.external_display_name,
                 "Contact Email": u.contact_email,
-                "Safespring Endpoint": u.safespring_endpoint,
+                "Safespring Endpoint": u.sto2_endpoint,
                 "Days In Available": u.days_in_available,
                 "Days In Expired": u.days_in_expired,
                 "Size": u.size,

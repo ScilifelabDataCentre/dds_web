@@ -17,6 +17,7 @@ from dds_web.api.dds_decorators import (
 )
 
 from dds_web.database import models
+import dds_web.utils
 
 
 ####################################################################################################
@@ -51,14 +52,19 @@ class ApiS3Connector:
         return True
 
     def get_s3_info(self):
-        """Get information required to connect to cloud."""
+        """Get information required to connect to cloud storage."""
+        # Check if to use sto4
+        use_sto4 = dds_web.utils.use_sto4(
+            unit_object=self.project.responsible_unit, project_object=self.project
+        )
+
         endpoint, name, accesskey, secretkey = (
             models.Unit.query.filter_by(id=self.project.responsible_unit.id)
             .with_entities(
-                models.Unit.safespring_endpoint,
-                models.Unit.safespring_name,
-                models.Unit.safespring_access,
-                models.Unit.safespring_secret,
+                models.Unit.sto4_endpoint if use_sto4 else models.Unit.sto2_endpoint,
+                models.Unit.sto4_name if use_sto4 else models.Unit.sto2_name,
+                models.Unit.sto4_access if use_sto4 else models.Unit.sto2_access,
+                models.Unit.sto4_secret if use_sto4 else models.Unit.sto2_secret,
             )
             .one_or_none()
         )
