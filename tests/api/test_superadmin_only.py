@@ -902,6 +902,7 @@ def get_token(username: str, client: flask.testing.FlaskClient) -> typing.Dict:
 
 # UnitUserEmails
 
+
 def test_unituseremails_accessdenied(client: flask.testing.FlaskClient) -> None:
     """Only Super Admins can get the emails."""
     no_access_users: typing.Dict = users.copy()
@@ -914,12 +915,13 @@ def test_unituseremails_accessdenied(client: flask.testing.FlaskClient) -> None:
         )
         assert response.status_code == http.HTTPStatus.FORBIDDEN
 
-def test_unituseremails_no_emails(client: flask.testing.FlaskClient) -> None: 
+
+def test_unituseremails_no_emails(client: flask.testing.FlaskClient) -> None:
     """Empty should be returned if no emails."""
-    # No users returned from query 
+    # No users returned from query
     with patch("dds_web.database.models.UnitUser.query") as mock_users:
         mock_users.return_value = []
-        
+
         # Authenticate
         token: typing.Dict = get_token(username=users["Super Admin"], client=client)
 
@@ -928,9 +930,10 @@ def test_unituseremails_no_emails(client: flask.testing.FlaskClient) -> None:
             tests.DDSEndpoint.USER_EMAILS, headers=token
         )
         assert response.status_code == http.HTTPStatus.OK
-        
+
         # Verify response
         assert response.json and response.json.get("empty") == True
+
 
 def test_unituseremails_ok(client: flask.testing.FlaskClient) -> None:
     """Return user emails for unit users only."""
@@ -940,7 +943,9 @@ def test_unituseremails_ok(client: flask.testing.FlaskClient) -> None:
     # Emails that should not be returned
     researcher_emails = [user.primary_email for user in models.ResearchUser.query.all()]
     superadmin_emails = [user.primary_email for user in models.SuperAdmin.query.all()]
-    non_primary_emails = [email.email for email in models.Email.query.filter_by(primary=False).all()]
+    non_primary_emails = [
+        email.email for email in models.Email.query.filter_by(primary=False).all()
+    ]
 
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
@@ -950,7 +955,7 @@ def test_unituseremails_ok(client: flask.testing.FlaskClient) -> None:
         tests.DDSEndpoint.USER_EMAILS, headers=token
     )
     assert response.status_code == http.HTTPStatus.OK
-    
+
     # Verify response -------------------------------
 
     # There should be a json response
@@ -965,7 +970,7 @@ def test_unituseremails_ok(client: flask.testing.FlaskClient) -> None:
     assert len(emails) == len(unituser_emails)
     for e in unituser_emails:
         assert e in emails
-    
+
     # The list of should not contain any of the other emails
     for e in researcher_emails + superadmin_emails + non_primary_emails:
         assert e not in emails
