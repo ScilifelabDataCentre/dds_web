@@ -347,16 +347,21 @@ class Statistics(flask_restful.Resource):
         }
 
 
-class UserEmails(flask_restful.Resource):
-    """Get user emails."""
+class UnitUserEmails(flask_restful.Resource):
+    """Get emails for Unit Admins and Unit Personnel."""
 
     @auth.login_required(role=["Super Admin"])
     @logging_bind_request
-    @json_required
     @handle_db_error
     def get(self):
         """Collect the user emails and return a list."""
-        # Get input
-        json_input = flask.request.get_json(silent=True)  # Verified by json_required
-        all_emails: bool = json_input.get("all")
-        unit_public_id: str = json_input.get("unit")
+        # Get all emails connected to a Unit Admin or Personnel account
+        user_emails = [user.primary_email for user in models.UnitUser.query.all()]
+        flask.current_app.logger.debug(f"Emails: {user_emails}")
+
+        # Return empty if no emails
+        if not user_emails:
+            return {"empty": True}
+
+        # Return emails
+        return {"emails": user_emails}
