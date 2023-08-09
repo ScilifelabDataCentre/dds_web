@@ -8,6 +8,7 @@ import re
 import sys
 import datetime
 from dateutil.relativedelta import relativedelta
+import gc
 
 # Installed
 import click
@@ -130,10 +131,10 @@ def create_new_unit(
         external_display_name=external_display_name,
         contact_email=contact_email,
         internal_ref=internal_ref or public_id,
-        sto2_endpoint=safespring_endpoint,
-        sto2_name=safespring_name,
-        sto2_access=safespring_access,
-        sto2_secret=safespring_secret,
+        sto4_endpoint=safespring_endpoint,
+        sto4_name=safespring_name,
+        sto4_access=safespring_access,
+        sto4_secret=safespring_secret,
         days_in_available=days_in_available,
         days_in_expired=days_in_expired,
         quota=quota,
@@ -143,6 +144,61 @@ def create_new_unit(
     db.session.commit()
 
     flask.current_app.logger.info(f"Unit '{name}' created")
+
+    # Clean up information
+    del safespring_endpoint
+    del safespring_name
+    del safespring_access
+    del safespring_secret
+    gc.collect()
+
+
+@click.command("update-unit")
+@click.option("--unit-id", "-u", type=str, required=True)
+@click.option("--sto4-endpoint", "-se", type=str, required=True)
+@click.option("--sto4-name", "-sn", type=str, required=True)
+@click.option("--sto4-access", "-sa", type=str, required=True)
+@click.option("--sto4-secret", "-ss", type=str, required=True)
+@flask.cli.with_appcontext
+def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
+    """Update unit info."""
+    # Imports
+    import rich.prompt
+    from dds_web import db
+    from dds_web.utils import current_time
+    from dds_web.database import models
+
+    # Get unit
+    unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).one_or_none()
+    if not unit:
+        flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
+        return
+
+    # Warn user if sto4 info already exists
+    if unit.sto4_start_time:
+        do_update = rich.prompt.Confirm.ask(
+            f"Unit '{unit_id}' appears to have sto4 variables set already. Are you sure you want to overwrite them?"
+        )
+        if not do_update:
+            flask.current_app.logger.info(f"Cancelling sto4 update for unit '{unit_id}'.")
+            return
+
+    # Set sto4 info
+    unit.sto4_start_time = current_time()
+    unit.sto4_endpoint = sto4_endpoint
+    unit.sto4_name = sto4_name
+    unit.sto4_access = sto4_access
+    unit.sto4_secret = sto4_secret
+    db.session.commit()
+
+    flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
+
+    # Clean up information
+    del sto4_endpoint
+    del sto4_name
+    del sto4_access
+    del sto4_secret
+    gc.collect()
 
 
 @click.command("update-uploaded-file")
@@ -235,7 +291,8 @@ def list_lost_files(project_id: str):
     # Imports
     import boto3
     from dds_web.database import models
-    from dds_web.utils import list_lost_files_in_project
+    from dds_web.utils import list_lost_files_in_project, use_sto4
+    from dds_web.errors import S3InfoNotFoundError
 
     if project_id:
         flask.current_app.logger.debug(f"Searching for lost files in project '{project_id}'.")
@@ -248,12 +305,26 @@ def list_lost_files(project_id: str):
         # Start s3 session
         session = boto3.session.Session()
 
+        # Check which Safespring storage location to use
+        # Use sto4 if project created after sto4 info added
+        try:
+            sto4: bool = use_sto4(unit_object=project.responsible_unit, project_object=project)
+        except S3InfoNotFoundError as err:
+            flask.current_app.logger.error(str(err))
+            sys.exit(1)
+
         # Connect to S3
         resource = session.resource(
             service_name="s3",
-            endpoint_url=project.responsible_unit.sto2_endpoint,
-            aws_access_key_id=project.responsible_unit.sto2_access,
-            aws_secret_access_key=project.responsible_unit.sto2_secret,
+            endpoint_url=project.responsible_unit.sto4_endpoint
+            if sto4
+            else project.responsible_unit.sto2_endpoint,
+            aws_access_key_id=project.responsible_unit.sto4_access
+            if sto4
+            else project.responsible_unit.sto2_access,
+            aws_secret_access_key=project.responsible_unit.sto4_secret
+            if sto4
+            else project.responsible_unit.sto2_secret,
         )
 
         # List the lost files
@@ -291,20 +362,34 @@ def list_lost_files(project_id: str):
             # Start s3 session
             session = boto3.session.Session()
 
-            # Connect to S3
-            resource_unit = session.resource(
-                service_name="s3",
-                endpoint_url=unit.sto2_endpoint,
-                aws_access_key_id=unit.sto2_access,
-                aws_secret_access_key=unit.sto2_secret,
-            )
-
             # Counts
             in_db_but_not_in_s3_count: int = 0
             in_s3_but_not_in_db_count: int = 0
 
             # List files in all projects
             for proj in unit.projects:
+                # Check which Safespring storage location to use
+                # Use sto4 if roject created after sto4 info added
+                try:
+                    sto4: bool = use_sto4(unit_object=unit, project_object=proj)
+                except S3InfoNotFoundError as err:
+                    flask.current_app.logger.error(str(err))
+                    continue
+
+                # Connect to S3
+                resource_unit = session.resource(
+                    service_name="s3",
+                    endpoint_url=proj.responsible_unit.sto4_endpoint
+                    if sto4
+                    else proj.responsible_unit.sto2_endpoint,
+                    aws_access_key_id=proj.responsible_unit.sto4_access
+                    if sto4
+                    else proj.responsible_unit.sto2_access,
+                    aws_secret_access_key=proj.responsible_unit.sto4_secret
+                    if sto4
+                    else proj.responsible_unit.sto2_secret,
+                )
+
                 # List the lost files
                 try:
                     in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
@@ -338,7 +423,8 @@ def add_missing_bucket(project_id: str):
     import boto3
     from botocore.client import ClientError
     from dds_web.database import models
-    from dds_web.utils import bucket_is_valid
+    from dds_web.utils import bucket_is_valid, use_sto4
+    from dds_web.errors import S3InfoNotFoundError
 
     # Get project object
     project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
@@ -354,12 +440,25 @@ def add_missing_bucket(project_id: str):
     # Start s3 session
     session = boto3.session.Session()
 
+    # Use sto4 if project created after sto4 info added
+    try:
+        sto4 = use_sto4(unit_object=project.responsible_unit, project_object=project)
+    except S3InfoNotFoundError as err:
+        flask.current_app.logger.error(str(err))
+        sys.exit(1)
+
     # Connect to S3
     resource = session.resource(
         service_name="s3",
-        endpoint_url=project.responsible_unit.sto2_endpoint,
-        aws_access_key_id=project.responsible_unit.sto2_access,
-        aws_secret_access_key=project.responsible_unit.sto2_secret,
+        endpoint_url=project.responsible_unit.sto4_endpoint
+        if sto4
+        else project.responsible_unit.sto2_endpoint,
+        aws_access_key_id=project.responsible_unit.sto4_access
+        if sto4
+        else project.responsible_unit.sto2_access,
+        aws_secret_access_key=project.responsible_unit.sto4_secret
+        if sto4
+        else project.responsible_unit.sto2_secret,
     )
 
     # Check if bucket exists
@@ -392,7 +491,8 @@ def delete_lost_files(project_id: str):
     # Imports
     import boto3
     from dds_web.database import models
-    from dds_web.utils import list_lost_files_in_project
+    from dds_web.utils import list_lost_files_in_project, use_sto4
+    from dds_web.errors import S3InfoNotFoundError
 
     # Get project object
     project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
@@ -403,12 +503,25 @@ def delete_lost_files(project_id: str):
     # Start s3 session
     session = boto3.session.Session()
 
+    # Use sto4 if project created after sto4 info added
+    try:
+        sto4: bool = use_sto4(unit_object=project.responsible_unit, project_object=project)
+    except S3InfoNotFoundError as err:
+        flask.current_app.logger.error(str(err))
+        sys.exit(1)
+
     # Connect to S3
     resource = session.resource(
         service_name="s3",
-        endpoint_url=project.responsible_unit.sto2_endpoint,
-        aws_access_key_id=project.responsible_unit.sto2_access,
-        aws_secret_access_key=project.responsible_unit.sto2_secret,
+        endpoint_url=project.responsible_unit.sto4_endpoint
+        if sto4
+        else project.responsible_unit.sto2_endpoint,
+        aws_access_key_id=project.responsible_unit.sto4_access
+        if sto4
+        else project.responsible_unit.sto2_access,
+        aws_secret_access_key=project.responsible_unit.sto4_secret
+        if sto4
+        else project.responsible_unit.sto2_secret,
     )
 
     # Get list of lost files
