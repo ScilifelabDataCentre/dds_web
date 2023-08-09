@@ -931,3 +931,41 @@ def test_unituseremails_no_emails(client: flask.testing.FlaskClient) -> None:
         
         # Verify response
         assert response.json and response.json.get("empty") == True
+
+def test_unituseremails_ok(client: flask.testing.FlaskClient) -> None:
+    """Return user emails for unit users only."""
+    # Emails that should be returned
+    unituser_emails = [user.primary_email for user in models.UnitUser.query.all()]
+
+    # Emails that should not be returned
+    researcher_emails = [user.primary_email for user in models.ResearchUser.query.all()]
+    superadmin_emails = [user.primary_email for user in models.SuperAdmin.query.all()]
+    non_primary_emails = [email.email for email in models.Email.query.filter_by(primary=False).all()]
+
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+    # Call endpoint
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        tests.DDSEndpoint.USER_EMAILS, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    
+    # Verify response -------------------------------
+
+    # There should be a json response
+    json_response = response.json
+    assert json_response
+
+    # There should be emails in response
+    emails = json_response.get("emails")
+    assert emails
+
+    # The list of emails should contain all unit user primary emails
+    assert len(emails) == len(unituser_emails)
+    for e in unituser_emails:
+        assert e in emails
+    
+    # The list of should not contain any of the other emails
+    for e in researcher_emails + superadmin_emails + non_primary_emails:
+        assert e not in emails
