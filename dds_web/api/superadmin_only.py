@@ -346,6 +346,7 @@ class Statistics(flask_restful.Resource):
             ]
         }
 
+
 class UserEmails(flask_restful.Resource):
     """Get user emails."""
 
@@ -355,7 +356,7 @@ class UserEmails(flask_restful.Resource):
     @handle_db_error
     def get(self):
         """Collect the user emails and return a list."""
-        # Get input 
+        # Get input
         json_input = flask.request.get_json(silent=True)  # Verified by json_required
         all_emails: bool = json_input.get("all")
         unit_public_id: str = json_input.get("unit")
