@@ -52,7 +52,7 @@ class ApiS3Connector:
         return True
 
     def get_s3_info(self):
-        """Get information required to connect to cloud."""
+        """Get information required to connect to cloud storage."""
         # Check if to use sto4
         use_sto4 = dds_web.utils.use_sto4(
             unit_object=self.project.responsible_unit, project_object=self.project
