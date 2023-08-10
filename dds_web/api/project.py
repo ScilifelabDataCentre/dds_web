@@ -145,7 +145,7 @@ class ProjectStatus(flask_restful.Resource):
 
             try:
                 project.project_statuses.append(new_status_row)
-                project.busy = False
+                self.set_busy(project=project, busy=False)
                 db.session.commit()
             except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
                 flask.current_app.logger.exception(err)
