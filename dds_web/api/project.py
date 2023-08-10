@@ -148,7 +148,7 @@ class ProjectStatus(flask_restful.Resource):
                 flask.current_app.logger.info(
                     f"Setting busy status. Project: '{project.public_id}', Busy: False"
                 )
-                project.busy = False # TODO: Use set_busy instead? 
+                project.busy = False  # TODO: Use set_busy instead?
                 db.session.commit()
             except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
                 flask.current_app.logger.exception(err)
