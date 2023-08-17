@@ -345,3 +345,23 @@ class Statistics(flask_restful.Resource):
                 if stat_rows
             ]
         }
+
+
+class UnitUserEmails(flask_restful.Resource):
+    """Get emails for Unit Admins and Unit Personnel."""
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        """Collect the user emails and return a list."""
+        # Get all emails connected to a Unit Admin or Personnel account
+        user_emails = [user.primary_email for user in models.UnitUser.query.all()]
+
+        # Return empty if no emails
+        if not user_emails:
+            flask.current_app.logger.info("There are no primary emails to return.")
+            return {"empty": True}
+
+        # Return emails
+        return {"emails": user_emails}
