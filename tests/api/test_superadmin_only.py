@@ -9,7 +9,8 @@ import typing
 import unittest
 from datetime import datetime, timedelta
 from unittest import mock
-
+from unittest.mock import patch
+from unittest.mock import PropertyMock
 
 # Installed
 import flask
@@ -898,3 +899,79 @@ def test_statistics_return_rows(client: flask.testing.FlaskClient, cli_runner) -
         "TBHours Last Month": reporting_row.tbhours,
         "TBHours Total": reporting_row.tbhours_since_start,
     }
+
+
+# UnitUserEmails
+
+
+def test_unituseremails_accessdenied(client: flask.testing.FlaskClient) -> None:
+    """Only Super Admins can get the emails."""
+    no_access_users: typing.Dict = users.copy()
+    no_access_users.pop("Super Admin")
+
+    for u in no_access_users:
+        token: typing.Dict = get_token(username=users[u], client=client)
+        response: werkzeug.test.WrapperTestResponse = client.get(
+            tests.DDSEndpoint.USER_EMAILS, headers=token
+        )
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+def test_unituseremails_no_emails(client: flask.testing.FlaskClient) -> None:
+    """Empty should be returned if no emails."""
+    # No users returned from query
+    with patch("dds_web.database.models.UnitUser.query") as mock_users:
+        mock_users.return_value = []
+
+        # Authenticate
+        token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+        # Call endpoint
+        response: werkzeug.test.WrapperTestResponse = client.get(
+            tests.DDSEndpoint.USER_EMAILS, headers=token
+        )
+        assert response.status_code == http.HTTPStatus.OK
+
+        # Verify response
+        assert response.json and response.json.get("empty") == True
+
+
+def test_unituseremails_ok(client: flask.testing.FlaskClient) -> None:
+    """Return user emails for unit users only."""
+    # Emails that should be returned
+    unituser_emails = [user.primary_email for user in models.UnitUser.query.all()]
+
+    # Emails that should not be returned
+    researcher_emails = [user.primary_email for user in models.ResearchUser.query.all()]
+    superadmin_emails = [user.primary_email for user in models.SuperAdmin.query.all()]
+    non_primary_emails = [
+        email.email for email in models.Email.query.filter_by(primary=False).all()
+    ]
+
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+    # Call endpoint
+    response: werkzeug.test.WrapperTestResponse = client.get(
+        tests.DDSEndpoint.USER_EMAILS, headers=token
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Verify response -------------------------------
+
+    # There should be a json response
+    json_response = response.json
+    assert json_response
+
+    # There should be emails in response
+    emails = json_response.get("emails")
+    assert emails
+
+    # The list of emails should contain all unit user primary emails
+    assert len(emails) == len(unituser_emails)
+    for e in unituser_emails:
+        assert e in emails
+
+    # The list of should not contain any of the other emails
+    for e in researcher_emails + superadmin_emails + non_primary_emails:
+        assert e not in emails
