@@ -325,7 +325,7 @@ class Statistics(flask_restful.Resource):
         return {
             "stats": [
                 {
-                    "Date": str(row.date),
+                    "Date": str(row.date.date()),
                     "Units": row.unit_count,
                     "Researchers": row.researcher_count,
                     "Project Owners": row.project_owner_unique_count,
