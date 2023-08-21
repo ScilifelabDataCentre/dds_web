@@ -273,8 +273,19 @@ _Nothing merged in CLI during this sprint_
 - New version: 2.4.0 ([#1443](https://github.com/ScilifelabDataCentre/dds_web/pull/1443))
 - Bug fix: Web UI project listing fix ([#1445](https://github.com/ScilifelabDataCentre/dds_web/pull/1445))
 - Documentation: Technical Overview, section Creating a Unit in the DDS ([#1449](https://github.com/ScilifelabDataCentre/dds_web/pull/1449))
+
+# 2023-08-07 - 2023-08-18
+
 - Empty endpoint: `ProjectBusy` ([#1446](https://github.com/ScilifelabDataCentre/dds_web/pull/1446))
 
 # 2023-08-04 - 2023-08-18
+
+- Rename storage-related columns in `Unit` table ([#1447](https://github.com/ScilifelabDataCentre/dds_web/pull/1447))
+- Dependency: Bump `cryptography` to 41.0.3 due to security vulnerability alerts(s) ([#1451](https://github.com/ScilifelabDataCentre/dds_web/pull/1451))
+- Allow for change of storage location ([#1448](https://github.com/ScilifelabDataCentre/dds_web/pull/1448))
+- Endpoint: `UnitUserEmails`; Return primary emails for Unit Personnel- and Admins ([#1454](https://github.com/ScilifelabDataCentre/dds_web/pull/1454))
+- Change message about project being busy with upload etc ([#1450](https://github.com/ScilifelabDataCentre/dds_web/pull/1450))
+
+# 2023-08-21 - 2023-09-01
 
 - Dependency: Bump `certifi` to 2023.07.22 due to security vulnerability alert(s) ([#1452](https://github.com/ScilifelabDataCentre/dds_web/pull/1452))
