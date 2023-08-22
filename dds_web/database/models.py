@@ -1084,7 +1084,7 @@ class Reporting(db.Model):
     __table_args__ = {"extend_existing": True}
 
     # Columns
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, __doc__="ID for this row.")
     date = db.Column(db.DateTime(), unique=True, nullable=False, default=datetime.date.today)
     unit_count = db.Column(db.Integer, unique=False, nullable=False)
     researcher_count = db.Column(db.Integer, unique=False, nullable=False)
