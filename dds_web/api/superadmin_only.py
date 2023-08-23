@@ -322,7 +322,6 @@ class Statistics(flask_restful.Resource):
     def get(self):
         """Collect rows from reporting table and return them."""
         stat_rows: typing.List = models.Reporting.query.all()
-        flask.current_app.logger.debug(stat_rows[0].id.__doc__)
         return {
             "stats": [
                 {
