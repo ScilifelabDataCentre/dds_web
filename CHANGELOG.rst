@@ -10,10 +10,10 @@ version ?? - 2023-08-30
     - `certifi` from `2022.12.07` to `2023.07.22`
 - _New_ project buckets will be created at a new storage location if Unit information has been updated with storage keys and information.
 - Bug fixed: Listing projects via web interface works again
-- Documentation: Typo fixed in Technical Overview
 - Endpoint `ProjectBusy` is no longer usable; `dds-cli` versions prior to `2.2.0` will no longer work
 - New endpoint `UnitUserEmails`: Super Admins can get primary emails for Unit Admins- and Personnel. This is for emailing purposes.
 - Message about project being busy has been changed to a more accurate and understandable statement
+- Documentation: Typo fixed in Technical Overview
 
 .. _2.3.1:
 
