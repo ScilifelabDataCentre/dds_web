@@ -655,7 +655,6 @@ def test_set_maintenance_incorrect_method(client: flask.testing.FlaskClient) -> 
         assert response.status_code == http.HTTPStatus.METHOD_NOT_ALLOWED
 
 
-
 def test_set_maintenance_no_json(client: flask.testing.FlaskClient) -> None:
     """The request needs json in order to change Maintenance mode."""
     # Authenticate
