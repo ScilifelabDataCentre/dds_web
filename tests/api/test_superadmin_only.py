@@ -629,17 +629,31 @@ def test_set_maintenance_not_superadmin(client: flask.testing.FlaskClient) -> No
         assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
+def test_get_maintenance_status_not_superadmin(client: flask.testing.FlaskClient) -> None:
+    """Check Maintenance mode status using everything but Super Admin access."""
+    no_access_users: typing.Dict = users.copy()
+    no_access_users.pop("Super Admin")
+
+    for u in no_access_users:
+        token: typing.Dict = get_token(username=users[u], client=client)
+        response: werkzeug.test.WrapperTestResponse = client.get(
+            tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": "status"}
+        )
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
 def test_set_maintenance_incorrect_method(client: flask.testing.FlaskClient) -> None:
-    """Only put should be accepted."""
+    """Only put and get should be accepted."""
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
 
     # Attempt request
-    for method in [client.get, client.post, client.delete, client.patch]:
+    for method in [client.post, client.delete, client.patch]:
         response: werkzeug.test.WrapperTestResponse = method(
             tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": "on"}
         )
         assert response.status_code == http.HTTPStatus.METHOD_NOT_ALLOWED
+
 
 
 def test_set_maintenance_no_json(client: flask.testing.FlaskClient) -> None:
