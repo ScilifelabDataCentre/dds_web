@@ -285,6 +285,19 @@ class SetMaintenance(flask_restful.Resource):
 
         return {"message": f"Maintenance set to: {setting.upper()}"}
 
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        """Return current Maintenance mode."""
+        current_mode = models.Maintenance.query.first()
+        if not current_mode.active:
+            mode = "OFF"
+        else:
+            mode = "ON"
+
+        return {"message": f"Maintenanse mode is set to: {mode}"}
+
 
 class AnyProjectsBusy(flask_restful.Resource):
     """Check if any projects are busy."""
