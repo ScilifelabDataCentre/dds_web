@@ -1,9 +1,9 @@
 Changelog
 ==========
 
-.. _2.4.0:
+.. _2.5.0:
 
-version 2.4.0 - 2023-08-30
+version 2.5.0 - 2023-08-30
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Dependencies: 
@@ -16,9 +16,9 @@ version 2.4.0 - 2023-08-30
 - Message about project being busy has been changed to a more accurate and understandable statement
 - Documentation: Typo fixed in Technical Overview
 
-.. _2.3.1:
+.. _2.4.0:
 
-2.3.1 - 2023-07-05
+2.4.0 - 2023-07-05
 ~~~~~~~~~~~~~~~~~~~
 
 - Dependencies:
