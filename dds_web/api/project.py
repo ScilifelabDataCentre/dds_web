@@ -39,6 +39,7 @@ from dds_web.errors import (
     ProjectBusyError,
     S3ConnectionError,
     NoSuchUserError,
+    VersionMismatchError,
 )
 from dds_web.api.user import AddUser
 from dds_web.api.schemas import project_schemas, user_schemas
@@ -94,7 +95,7 @@ class ProjectStatus(flask_restful.Resource):
         if project.busy:
             raise ProjectBusyError(
                 message=(
-                    f"The project '{project_id}' is currently busy with upload/download/deletion. "
+                    f"The status for the project '{project_id}' is already in the process of being changed. "
                     "Please try again later. \n\nIf you know the project is not busy, contact support."
                 )
             )
@@ -144,8 +145,11 @@ class ProjectStatus(flask_restful.Resource):
 
             try:
                 project.project_statuses.append(new_status_row)
-                project.busy = False
+                project.busy = False  # TODO: Use set_busy instead?
                 db.session.commit()
+                flask.current_app.logger.info(
+                    f"Busy status set. Project: '{project.public_id}', Busy: False"
+                )
             except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
                 flask.current_app.logger.exception(err)
                 db.session.rollback()
@@ -489,7 +493,7 @@ class UserProjects(flask_restful.Resource):
         user_projects = models.Project.query.filter(sqlalchemy.and_(*all_filters)).all()
 
         researcher = False
-        if auth.current_user().role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
+        if current_user.role not in ["Super Admin", "Unit Admin", "Unit Personnel"]:
             researcher = True
 
         # Get info for all projects
@@ -922,45 +926,20 @@ class ProjectAccess(flask_restful.Resource):
 
 
 class ProjectBusy(flask_restful.Resource):
-    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
+    @auth.login_required
     @logging_bind_request
-    @dbsession
-    @json_required
     def put(self):
-        """Set project to busy / not busy."""
-        # Get project ID, project and verify access
-        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
-        project = dds_web.utils.collect_project(project_id=project_id)
-        dds_web.utils.verify_project_access(project=project)
+        """OLD ENDPOINT.
+        Previously set project status to busy.
 
-        # Get busy or not busy
-        request_json = flask.request.get_json(silent=True)
-        set_to_busy = request_json.get("busy")  # Already checked by json_required
-        if set_to_busy is None:
-            raise DDSArgumentError(message="Missing information about setting busy or not busy.")
-
-        if set_to_busy:
-            # Check if project is busy
-            if project.busy:
-                return {"ok": False, "message": "The project is already busy, cannot proceed."}
-
-            # Set project as busy
-            project.busy = True
-        else:
-            # Check if project is not busy
-            if not project.busy:
-                return {
-                    "ok": False,
-                    "message": "The project is already not busy, cannot proceed.",
-                }
-
-            # Set project to not busy
-            project.busy = False
-
-        return {
-            "ok": True,
-            "message": f"Project {project_id} was set to {'busy' if set_to_busy else 'not busy'}.",
-        }
+        TODO: Can remove from 2024. Will otherwise cause breaking changes for old CLI versions.
+        """
+        raise VersionMismatchError(
+            message=(
+                "Your CLI version is trying to use functionality which is no longer in use. "
+                "Upgrade your version to the latest one and run your command again."
+            )
+        )
 
 
 class ProjectInfo(flask_restful.Resource):

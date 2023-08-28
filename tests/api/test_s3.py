@@ -25,11 +25,11 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
 
     # Returned info - expected
     expected_return: typing.Dict = {
-        "safespring_project": project.responsible_unit.safespring_name,
-        "url": project.responsible_unit.safespring_endpoint,
+        "safespring_project": project.responsible_unit.sto2_name,
+        "url": project.responsible_unit.sto2_endpoint,
         "keys": {
-            "access_key": project.responsible_unit.safespring_access,
-            "secret_key": project.responsible_unit.safespring_secret,
+            "access_key": project.responsible_unit.sto2_access,
+            "secret_key": project.responsible_unit.sto2_secret,
         },
         "bucket": project.bucket,
     }

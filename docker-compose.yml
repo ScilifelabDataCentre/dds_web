@@ -113,6 +113,27 @@ services:
       #     source: ./minio-data
       #     target: /data
 
+  minio2: # Added in order to be able to test the new sto4 move
+    container_name: dds_minio_2
+    image: minio/minio:RELEASE.2022-02-24T22-12-01Z
+    profiles:
+      - s3
+      - full-dev
+      - cli
+    command: server /data --console-address ":9003"
+    ports:
+      - 127.0.0.1:9002:9000
+      - 127.0.0.1:9003:9003
+    environment:
+      MINIO_ROOT_USER: minio2 # access key
+      MINIO_ROOT_PASSWORD: minioPassword2 # secret key
+      # NOTE: Uncomment if you want to keep your data.
+      #     Mounts a folder into the container to make uploaded data persistent.
+      # volumes:
+      #   - type: bind
+      #     source: ./minio-data
+      #     target: /data
+
   mailcatcher:
     container_name: dds_mailcatcher
     image: sj26/mailcatcher:latest
