@@ -289,4 +289,5 @@ _Nothing merged in CLI during this sprint_
 # 2023-08-21 - 2023-09-01
 
 - Dependency: Bump `certifi` to 2023.07.22 due to security vulnerability alert(s) ([#1452](https://github.com/ScilifelabDataCentre/dds_web/pull/1452))
+- New version: 2.5.0 ([#1458](https://github.com/ScilifelabDataCentre/dds_web/pull/1458))
 - Only return date (not time) from `Statistics` endpoint ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1456))
