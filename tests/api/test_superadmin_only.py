@@ -674,7 +674,7 @@ def test_get_maintenance_status_no_json_required(client: flask.testing.FlaskClie
     # Attempt request
     response: werkzeug.test.TestResponse = client.get(tests.DDSEndpoint.MAINTENANCE, headers=token)
     assert response.status_code == http.HTTPStatus.OK
-    assert "Maintenanse mode is set to:" in response.json.get("message")
+    assert "Maintenance mode is set to:" in response.json.get("message")
 
 
 def test_set_maintenance_incorrect_state(client: flask.testing.FlaskClient) -> None:
@@ -718,7 +718,7 @@ def test_set_maintenance_on_ok(client: flask.testing.FlaskClient) -> None:
     # Verify that maintenance is set to ON using the get method
     response: werkzeug.test.TestResponse = client.get(tests.DDSEndpoint.MAINTENANCE, headers=token)
     assert response.status_code == http.HTTPStatus.OK
-    assert f"Maintenanse mode is set to: {setting.upper()}" in response.json.get("message")
+    assert f"Maintenance mode is set to: {setting.upper()}" in response.json.get("message")
 
 
 def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
@@ -745,7 +745,7 @@ def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
     # Verify that maintenance is set to OFF using the get method
     response: werkzeug.test.TestResponse = client.get(tests.DDSEndpoint.MAINTENANCE, headers=token)
     assert response.status_code == http.HTTPStatus.OK
-    assert f"Maintenanse mode is set to: {setting.upper()}" in response.json.get("message")
+    assert f"Maintenance mode is set to: {setting.upper()}" in response.json.get("message")
 
 
 # AnyProjectsBusy
