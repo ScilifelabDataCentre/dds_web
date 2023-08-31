@@ -256,7 +256,7 @@ class ResetTwoFactor(flask_restful.Resource):
         }
 
 
-class SetMaintenance(flask_restful.Resource):
+class MaintenanceMode(flask_restful.Resource):
     """Change the maintenance mode of the system."""
 
     @auth.login_required(role=["Super Admin"])
@@ -284,6 +284,15 @@ class SetMaintenance(flask_restful.Resource):
         db.session.commit()
 
         return {"message": f"Maintenance set to: {setting.upper()}"}
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        """Return current Maintenance mode."""
+        current_mode = models.Maintenance.query.first()
+
+        return {"message": f"Maintenance mode is set to: {'ON' if current_mode.active else 'OFF'}"}
 
 
 class AnyProjectsBusy(flask_restful.Resource):
