@@ -291,7 +291,8 @@ class SetMaintenance(flask_restful.Resource):
     def get(self):
         """Return current Maintenance mode."""
         current_mode = models.Maintenance.query.first()
-return {"message": f"Maintenance mode is set to: {'ON' if current_mode.active else 'OFF'}"}
+
+        return {"message": f"Maintenance mode is set to: {'ON' if current_mode.active else 'OFF'}"}
 
 
 class AnyProjectsBusy(flask_restful.Resource):
