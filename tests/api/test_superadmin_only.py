@@ -637,7 +637,7 @@ def test_get_maintenance_status_not_superadmin(client: flask.testing.FlaskClient
     for u in no_access_users:
         token: typing.Dict = get_token(username=users[u], client=client)
         response: werkzeug.test.WrapperTestResponse = client.get(
-            tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": "status"}
+            tests.DDSEndpoint.MAINTENANCE, headers=token
         )
         assert response.status_code == http.HTTPStatus.FORBIDDEN
 
