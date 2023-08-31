@@ -256,7 +256,7 @@ class ResetTwoFactor(flask_restful.Resource):
         }
 
 
-class SetMaintenance(flask_restful.Resource):
+class MaintenanceMode(flask_restful.Resource):
     """Change the maintenance mode of the system."""
 
     @auth.login_required(role=["Super Admin"])

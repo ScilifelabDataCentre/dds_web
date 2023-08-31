@@ -290,4 +290,4 @@ _Nothing merged in CLI during this sprint_
 
 - Dependency: Bump `certifi` to 2023.07.22 due to security vulnerability alert(s) ([#1452](https://github.com/ScilifelabDataCentre/dds_web/pull/1452))
 - New version: 2.5.0 ([#1458](https://github.com/ScilifelabDataCentre/dds_web/pull/1458))
-- Added check for Maintenance mode status in SetMaintenance endpoint ([#1459](https://github.com/ScilifelabDataCentre/dds_web/pull/1459))
+- Added check for Maintenance mode status in MaintenanceMode endpoint ([#1459](https://github.com/ScilifelabDataCentre/dds_web/pull/1459))
