@@ -899,6 +899,8 @@ def test_statistics_return_rows(client: flask.testing.FlaskClient, cli_runner) -
         "TBHours Last Month": reporting_row.tbhours,
         "TBHours Total": reporting_row.tbhours_since_start,
     }
+    returned_columns: typing.Dict = response.json.get("columns")
+    assert returned_columns
 
 
 # UnitUserEmails
