@@ -834,3 +834,37 @@ def test_create_project_sto4(client, boto3_session, capfd):
     # Verify logging
     _, err = capfd.readouterr()
     assert f"Safespring location for project '{new_project.public_id}': sto4" in err
+
+
+def test_create_project_with_credentials(client, boto3_session):
+    """Create project with correct credentials."""
+    # Create unit admins
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    time_before_run = datetime.datetime.utcnow()
+    time.sleep(1)
+
+    # Create project
+    from tests.api.test_project import mock_sqlalchemyerror
+    with unittest.mock.patch("dds_web.db.session.add", mock_sqlalchemyerror):
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+            json=proj_data,
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data["title"],
+        pi=proj_data["pi"],
+        description=proj_data["description"],
+    ).one_or_none()
+    assert not (
+        created_proj
+        and created_proj.date_created > time_before_run
+        and not created_proj.non_sensitive
+    )
