@@ -849,6 +849,7 @@ def test_create_project_with_credentials(client, boto3_session):
 
     # Create project
     from tests.api.test_project import mock_sqlalchemyerror
+
     with unittest.mock.patch("dds_web.db.session.add", mock_sqlalchemyerror):
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
