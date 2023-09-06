@@ -295,3 +295,4 @@ _Nothing merged in CLI during this sprint_
 # 2023-09-04 - 2023-09-15
 
 - Bug fix: Database rollback added on project creation failure ([#1461](https://github.com/ScilifelabDataCentre/dds_web/pull/1461))
+- Only return date (not time) from `Statistics` endpoint ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1456))
