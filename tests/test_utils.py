@@ -459,9 +459,9 @@ def test_verify_enough_unit_admins_less_than_3(client):
     assert num_admins == 1
 
     # Create another unit admin
-    from tests.api.test_project import create_unit_admins
+    from tests import test_project_creation
 
-    create_unit_admins(num_admins=1, unit_id=unit_id)
+    test_project_creation.create_unit_admins(num_admins=1, unit_id=unit_id)
 
     # Get number of admins
     num_admins = db.session.query(models.UnitUser).filter_by(is_admin=True, unit_id=unit_id).count()
@@ -486,9 +486,9 @@ def test_verify_enough_unit_admins_ok(client):
     assert num_admins == 1
 
     # Create another unit admin
-    from tests.api.test_project import create_unit_admins
+    from tests import test_project_creation
 
-    create_unit_admins(num_admins=2, unit_id=unit_id)
+    test_project_creation.create_unit_admins(num_admins=2, unit_id=unit_id)
 
     # Get number of admins
     num_admins = db.session.query(models.UnitUser).filter_by(is_admin=True, unit_id=unit_id).count()

@@ -4,7 +4,7 @@ import copy
 
 # Own
 import tests
-from tests.api.test_project import proj_data_with_existing_users, create_unit_admins
+from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
 from dds_web.database import models
 
 
