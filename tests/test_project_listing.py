@@ -29,6 +29,52 @@ def test_list_proj_no_token(client):
     assert "No token" in response_json.get("message")
 
 
+def test_deleted_user_when_listing_projects
+    """ Deleted users that created a project should be listed as 'Former User' """
+
+    token_unituser = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    
+    # 1st Create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=token,
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # next, delete the user that created it
+
+    email_to_delete = "unituser1@mailtrap.io"
+    test.create_delete_request(email_to_delete)
+    token_delete = test.get_deletion_token(email_to_delete)
+
+    client = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).fake_web_login(client)
+
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + token_delete,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+
+    # list the project
+    response = client.get(
+        tests.DDSEndpoint.LIST_PROJ,
+        headers=token_unitadmin,
+        json={"usage": True},
+        content_type="application/json",
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    public_project = response.json.get("project_info")[0]
+
+    # check that the name is Former User
+    assert "Former User" == public_project.get("Created by")
+    
+
+
 def test_list_proj_access_granted_ls(client):
     """Researcher should be able to list, "Created by" should be the Unit name"""
 
@@ -140,6 +186,9 @@ def test_list_all_projects_unit_user(client):
 
     assert response.status_code == http.HTTPStatus.OK
     assert len(response.json.get("project_info")) == 5
+
+
+
 
 
 def test_proj_private_successful(client):
