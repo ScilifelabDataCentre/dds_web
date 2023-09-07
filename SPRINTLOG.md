@@ -295,3 +295,4 @@ _Nothing merged in CLI during this sprint_
 # 2023-09-4 - 2023-09-15
 
 - Only return date (not time) from `Statistics` endpoint ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1456))
+- Set `sto2*` columns in `Unit` table to nullable ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1462))
