@@ -13,7 +13,11 @@ import tests.test_user_delete
 
 # CONFIG ################################################################################## CONFIG #
 
-proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
+proj_data = {
+    "pi": "researchuser@mailtrap.io",
+    "title": "Test proj",
+    "description": "A longer project description",
+}
 proj_query = {"project": "public_project_id"}
 proj_query_restricted = {"project": "restricted_project_id"}
 
