@@ -10,6 +10,7 @@ from dds_web.database import models
 import tests
 import tests.test_project_creation
 import tests.test_user_delete
+
 # CONFIG ################################################################################## CONFIG #
 
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
