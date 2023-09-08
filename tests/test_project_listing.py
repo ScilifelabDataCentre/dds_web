@@ -36,7 +36,7 @@ def test_deleted_user_when_listing_projects(client):
     token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
 
     # 1st Create project
-    response = module_client.post(
+    response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=token,
         json=proj_data,
