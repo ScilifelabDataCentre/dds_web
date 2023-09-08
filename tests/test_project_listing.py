@@ -49,9 +49,9 @@ def test_deleted_user_when_listing_projects(client):
     test.create_delete_request(email_to_delete)
     token_delete = test.get_deletion_token(email_to_delete)
 
-    client = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).fake_web_login(client)
+    client_login = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).fake_web_login(client)
 
-    response = client.get(
+    response = client_login.get(
         tests.DDSEndpoint.USER_CONFIRM_DELETE + token_delete,
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
