@@ -29,12 +29,12 @@ def test_list_proj_no_token(client):
     assert "No token" in response_json.get("message")
 
 
-def test_deleted_user_when_listing_projects
-    """ Deleted users that created a project should be listed as 'Former User' """
+def test_deleted_user_when_listing_projects(client):
+    """Deleted users that created a project should be listed as 'Former User'"""
 
     token_unituser = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
-    
+
     # 1st Create project
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
@@ -72,7 +72,6 @@ def test_deleted_user_when_listing_projects
 
     # check that the name is Former User
     assert "Former User" == public_project.get("Created by")
-    
 
 
 def test_list_proj_access_granted_ls(client):
@@ -186,9 +185,6 @@ def test_list_all_projects_unit_user(client):
 
     assert response.status_code == http.HTTPStatus.OK
     assert len(response.json.get("project_info")) == 5
-
-
-
 
 
 def test_proj_private_successful(client):
