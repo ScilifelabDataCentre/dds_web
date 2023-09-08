@@ -38,7 +38,7 @@ def test_deleted_user_when_listing_projects(client):
     # 1st Create project
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=token,
+        headers=token_unituser,
         json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.OK
