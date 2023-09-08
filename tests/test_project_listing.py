@@ -8,8 +8,8 @@ import unittest
 from dds_web import db
 from dds_web.database import models
 import tests
-
-
+import tests.test_project_creation
+import tests.test_user_delete
 # CONFIG ################################################################################## CONFIG #
 
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
@@ -37,7 +37,7 @@ def test_deleted_user_when_listing_projects(client):
 
     # 1st Create project
     # there has to be at least 3 unit admins
-    tests.create_unit_admins(num_admins=3)
+    tests.test_project_creation.create_unit_admins(num_admins=3)
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=token_unituser,
@@ -48,8 +48,8 @@ def test_deleted_user_when_listing_projects(client):
     # next, delete the user that created it
 
     email_to_delete = "unituser1@mailtrap.io"
-    test.create_delete_request(email_to_delete)
-    token_delete = test.get_deletion_token(email_to_delete)
+    tests.test_user_delete.create_delete_request(email_to_delete)
+    token_delete = tests.test_user_delete.get_deletion_token(email_to_delete)
 
     client_login = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).fake_web_login(client)
 
