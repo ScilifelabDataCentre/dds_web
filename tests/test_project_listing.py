@@ -36,6 +36,8 @@ def test_deleted_user_when_listing_projects(client):
     token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
 
     # 1st Create project
+    # there has to be at least 3 unit admins
+    test.create_unit_admins(num_admins=3)
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=token_unituser,
