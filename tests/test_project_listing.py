@@ -37,12 +37,13 @@ def test_list_proj_no_token(client):
 def test_deleted_user_when_listing_projects(client, boto3_session):
     """Deleted users that created a project should be listed as 'Former User'"""
 
-    token_unituser = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    token_unituser = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).token(client)
     token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
 
     # 1st Create project
     # there has to be at least 3 unit admins
     create_unit_admins(num_admins=3)
+
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=token_unituser,
@@ -52,11 +53,11 @@ def test_deleted_user_when_listing_projects(client, boto3_session):
 
     # next, delete the user that created it
 
-    email_to_delete = "unituser1@mailtrap.io"
+    email_to_delete = "unituser2@mailtrap.io"
     create_delete_request(email_to_delete)
-    get_deletion_token(email_to_delete)
+    token_delete = get_deletion_token(email_to_delete)
 
-    client_login = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).fake_web_login(client)
+    client_login = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).fake_web_login(client)
 
     response = client_login.get(
         tests.DDSEndpoint.USER_CONFIRM_DELETE + token_delete,
