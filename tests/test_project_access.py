@@ -405,3 +405,84 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
         project_id=project.id, user_id="unituser"
     ).first()
     assert user_project_key_row
+
+
+def test_fix_access_unitadmin_valid_email_unituser_no_project(client):
+    """Unit Admin giving access to unituser - ok. No project."""
+    # Get project from database
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    assert project
+
+    # Delete projectuserkey and verify that it's deleted for user
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser"
+    ).first()
+    if user_project_key_row:
+        db.session.delete(user_project_key_row)
+        db.session.commit()
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser"
+    ).first()
+    assert not user_project_key_row
+
+    # Fix access for user with no project specified
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_ACCESS,
+        headers=token,
+        json={"email": "unituser1@mailtrap.io"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Verify that the projectuserkey row is fixed
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser"
+    ).first()
+    assert user_project_key_row
+
+
+def test_fix_access_unitadmin_valid_email_researcher_no_projectuser_row(client):
+    """Unit Admin giving access to researcher where"""
+    # Get project from database
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    assert project
+
+    # Delete projectuserkey and verify that it's deleted for user
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    if user_project_key_row:
+        db.session.delete(user_project_key_row)
+        db.session.commit()
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    assert not user_project_key_row
+
+    # Delete projectuser row and verify that it's deleted for user
+    project_users_row = models.ProjectUsers.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    if project_users_row:
+        db.session.delete(project_users_row)
+        db.session.commit()
+    project_users_row = models.ProjectUsers.query.filter_by(
+        project_id=project.id, user_id="researchuser"
+    ).first()
+    assert not project_users_row
+
+    # Fix access for user with no project specified
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_ACCESS,
+        headers=token,
+        query_string={"project": project.public_id},
+        json={"email": "researchuser@mailtrap.io"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Verify that the projectuserkey row is fixed
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id="unituser"
+    ).first()
+    assert user_project_key_row
