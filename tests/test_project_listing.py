@@ -37,13 +37,11 @@ def test_list_proj_no_token(client):
 def test_deleted_user_when_listing_projects(client, boto3_session):
     """Deleted users that created a project should be listed as 'Former User'"""
 
-    token_unituser = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).token(client)
-    token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
-
     # 1st Create project
     # there has to be at least 3 unit admins
     create_unit_admins(num_admins=3)
 
+    token_unituser = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).token(client)
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=token_unituser,
@@ -67,19 +65,18 @@ def test_deleted_user_when_listing_projects(client, boto3_session):
 
     assert response.status_code == http.HTTPStatus.OK
 
+    token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
     # list the project
     response = client.get(
         tests.DDSEndpoint.LIST_PROJ,
         headers=token_unitadmin,
-        json={"usage": True},
-        content_type="application/json",
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    public_project = response.json.get("project_info")[0]
+    project = response.json.get("project_info")[-1]
 
     # check that the name is Former User
-    assert "Former User" == public_project.get("Created by")
+    assert "Former User" == project.get("Created by")
 
 
 def test_list_proj_access_granted_ls(client):
