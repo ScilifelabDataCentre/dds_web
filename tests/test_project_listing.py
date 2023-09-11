@@ -9,7 +9,7 @@ from dds_web import db
 from dds_web.database import models
 import tests
 from tests.test_project_creation import create_unit_admins
-from tests.test_user_delete import create_delete_request,get_deletion_token
+from tests.test_user_delete import create_delete_request, get_deletion_token
 
 # CONFIG ################################################################################## CONFIG #
 
@@ -34,7 +34,7 @@ def test_list_proj_no_token(client):
     assert "No token" in response_json.get("message")
 
 
-def test_deleted_user_when_listing_projects(client,boto3_session):
+def test_deleted_user_when_listing_projects(client, boto3_session):
     """Deleted users that created a project should be listed as 'Former User'"""
 
     token_unituser = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
