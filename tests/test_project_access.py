@@ -483,6 +483,6 @@ def test_fix_access_unitadmin_valid_email_researcher_no_projectuser_row(client):
 
     # Verify that the projectuserkey row is fixed
     user_project_key_row = models.ProjectUserKeys.query.filter_by(
-        project_id=project.id, user_id="unituser"
+        project_id=project.id, user_id="researchuser"
     ).first()
     assert user_project_key_row
