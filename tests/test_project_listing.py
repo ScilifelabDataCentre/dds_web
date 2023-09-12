@@ -3,6 +3,7 @@
 # Standard library
 import http
 import unittest
+import copy
 
 # Own
 from dds_web import db
@@ -37,13 +38,13 @@ def test_list_proj_no_token(client):
 def test_deleted_user_when_listing_projects(client):
     """Deleted users that created a project should be listed as 'Former User'"""
     # token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
-    token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    # token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
 
     # 1st Create project
     # there has to be at least 3 unit admins
     # create_unit_admins(num_admins=3)
 
-    token_unituser2 = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).token(client)
+    # token_unituser2 = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).token(client)
     # response = client.post(
     #    tests.DDSEndpoint.PROJECT_CREATE,
     #    headers=token_unituser,
@@ -57,7 +58,8 @@ def test_deleted_user_when_listing_projects(client):
     create_delete_request(email_to_delete)
     token_delete = get_deletion_token(email_to_delete)
 
-    client_login = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).fake_web_login(client)
+    client_login = copy.deepcopy(client)
+    client_login = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).fake_web_login(client_login)
 
     response = client_login.get(
         tests.DDSEndpoint.USER_CONFIRM_DELETE + token_delete,
@@ -67,7 +69,7 @@ def test_deleted_user_when_listing_projects(client):
 
     assert response.status_code == http.HTTPStatus.OK
 
-    # token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     # list the project
     response = client.get(
         tests.DDSEndpoint.LIST_PROJ,
