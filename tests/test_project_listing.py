@@ -20,11 +20,13 @@ proj_query_restricted = {"project": "restricted_project_id"}
 
 #################################### UTILITY FUNCTIONS ##################################
 
+
 def get_projects_user_is_creator(user):
     """get the projects where that user was the creator"""
 
     projects = models.Project.query.filter_by(created_by=user).all()
-    return [ project.__dict__.get("public_id") for project in projects ]
+    return [project.__dict__.get("public_id") for project in projects]
+
 
 # TESTS #################################################################################### TESTS #
 
@@ -42,9 +44,9 @@ def test_list_proj_no_token(client):
 def test_deleted_user_when_listing_projects(client):
     """Deleted users that created a project should be listed as 'Former User'"""
 
-    #user to delete
+    # user to delete
     email_to_delete = "unituser2@mailtrap.io"
-    user_to_delete = user_from_email(email_to_delete).__dict__['username']
+    user_to_delete = user_from_email(email_to_delete).__dict__["username"]
 
     # get the list of projects user was involved
     was_creator = get_projects_user_is_creator(user=user_to_delete)
