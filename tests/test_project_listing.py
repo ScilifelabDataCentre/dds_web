@@ -37,31 +37,15 @@ def test_list_proj_no_token(client):
 
 def test_deleted_user_when_listing_projects(client):
     """Deleted users that created a project should be listed as 'Former User'"""
-    # token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
-    # token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
 
-    # 1st Create project
-    # there has to be at least 3 unit admins
-    # create_unit_admins(num_admins=3)
-
-    # token_unituser2 = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).token(client)
-    # response = client.post(
-    #    tests.DDSEndpoint.PROJECT_CREATE,
-    #    headers=token_unituser,
-    #    json=proj_data,
-    # )
-    # assert response.status_code == http.HTTPStatus.OK
-
-    # next, delete the user that created it
-
+    # delete unituser 2
     email_to_delete = "unituser2@mailtrap.io"
     create_delete_request(email_to_delete)
     token_delete = get_deletion_token(email_to_delete)
 
-    client_login = copy.deepcopy(client)
-    client_login = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).fake_web_login(client_login)
+    client = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).fake_web_login(client)
 
-    response = client_login.get(
+    response = client.get(
         tests.DDSEndpoint.USER_CONFIRM_DELETE + token_delete,
         content_type="application/json",
         headers=tests.DEFAULT_HEADER,
@@ -69,18 +53,27 @@ def test_deleted_user_when_listing_projects(client):
 
     assert response.status_code == http.HTTPStatus.OK
 
+    # login again with unituser1 to list the projects
+    client = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).fake_web_login(client)
+
+    # requests to list projects
     token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
-    # list the project
     response = client.get(
         tests.DDSEndpoint.LIST_PROJ,
         headers=token_unituser1,
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    project = response.json.get("project_info")[1]
 
-    # check that the name is Former User
-    assert "Former User" == project.get("Created by")
+    # in Conftests.py it is specified the list of projects  
+    # unituser 2 created "unused_project_id" and "second_public_project_id"
+    projects = response.json.get("project_info")
+    for project in projects:
+        p_id = project.get("Project ID")
+        if p_id == "unused_project_id" or p_id == "second_public_project_id":
+            # check that the name is Former User
+            assert "Former User" == project.get("Created by")
+        
 
 
 def test_list_proj_access_granted_ls(client):
