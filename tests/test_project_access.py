@@ -442,7 +442,7 @@ def test_fix_access_unitadmin_valid_email_unituser_no_project(client):
 
 
 def test_fix_access_unitadmin_valid_email_researcher_no_projectuser_row(client):
-    """Unit Admin giving access to researcher where"""
+    """Unit Admin giving access to researcher where there is no row in ProjectUsers table."""
     # Get project from database
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     assert project
