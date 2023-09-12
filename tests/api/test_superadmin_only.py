@@ -917,7 +917,7 @@ def test_statistics_return_rows(client: flask.testing.FlaskClient, cli_runner) -
     assert len(returned) == 1
     reporting_row = models.Reporting.query.first()
     assert returned[0] == {
-        "Date": str(reporting_row.date),
+        "Date": str(reporting_row.date.date()),
         "Units": reporting_row.unit_count,
         "Researchers": reporting_row.researcher_count,
         "Project Owners": reporting_row.project_owner_unique_count,
@@ -933,6 +933,8 @@ def test_statistics_return_rows(client: flask.testing.FlaskClient, cli_runner) -
         "TBHours Last Month": reporting_row.tbhours,
         "TBHours Total": reporting_row.tbhours_since_start,
     }
+    returned_columns: typing.Dict = response.json.get("columns")
+    assert returned_columns
 
 
 # UnitUserEmails
