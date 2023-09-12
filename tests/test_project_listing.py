@@ -41,15 +41,15 @@ def test_deleted_user_when_listing_projects(client):
 
     # 1st Create project
     # there has to be at least 3 unit admins
-    #create_unit_admins(num_admins=3)
+    # create_unit_admins(num_admins=3)
 
     token_unituser2 = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).token(client)
-    #response = client.post(
+    # response = client.post(
     #    tests.DDSEndpoint.PROJECT_CREATE,
     #    headers=token_unituser,
     #    json=proj_data,
-    #)
-    #assert response.status_code == http.HTTPStatus.OK
+    # )
+    # assert response.status_code == http.HTTPStatus.OK
 
     # next, delete the user that created it
 
@@ -67,7 +67,7 @@ def test_deleted_user_when_listing_projects(client):
 
     assert response.status_code == http.HTTPStatus.OK
 
-    #token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    # token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     # list the project
     response = client.get(
         tests.DDSEndpoint.LIST_PROJ,
