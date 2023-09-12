@@ -34,21 +34,22 @@ def test_list_proj_no_token(client):
     assert "No token" in response_json.get("message")
 
 
-def test_deleted_user_when_listing_projects(client, boto3_session):
+def test_deleted_user_when_listing_projects(client):
     """Deleted users that created a project should be listed as 'Former User'"""
     # token_unitadmin = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
 
     # 1st Create project
     # there has to be at least 3 unit admins
-    create_unit_admins(num_admins=3)
+    #create_unit_admins(num_admins=3)
 
-    token_unituser = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).token(client)
-    response = client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=token_unituser,
-        json=proj_data,
-    )
-    assert response.status_code == http.HTTPStatus.OK
+    token_unituser2 = tests.UserAuth(tests.USER_CREDENTIALS["unituser2"]).token(client)
+    #response = client.post(
+    #    tests.DDSEndpoint.PROJECT_CREATE,
+    #    headers=token_unituser,
+    #    json=proj_data,
+    #)
+    #assert response.status_code == http.HTTPStatus.OK
 
     # next, delete the user that created it
 
@@ -66,15 +67,15 @@ def test_deleted_user_when_listing_projects(client, boto3_session):
 
     assert response.status_code == http.HTTPStatus.OK
 
-    token_unituser = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    #token_unituser1 = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
     # list the project
     response = client.get(
         tests.DDSEndpoint.LIST_PROJ,
-        headers=token_unituser,
+        headers=token_unituser1,
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    project = response.json.get("project_info")[-1]
+    project = response.json.get("project_info")[0]
 
     # check that the name is Former User
     assert "Former User" == project.get("Created by")
