@@ -65,7 +65,7 @@ def test_deleted_user_when_listing_projects(client):
 
     assert response.status_code == http.HTTPStatus.OK
 
-    # in Conftests.py it is specified the list of projects  
+    # in Conftests.py it is specified the list of projects
     # unituser 2 created "unused_project_id" and "second_public_project_id"
     projects = response.json.get("project_info")
     for project in projects:
@@ -73,7 +73,6 @@ def test_deleted_user_when_listing_projects(client):
         if p_id == "unused_project_id" or p_id == "second_public_project_id":
             # check that the name is Former User
             assert "Former User" == project.get("Created by")
-        
 
 
 def test_list_proj_access_granted_ls(client):
