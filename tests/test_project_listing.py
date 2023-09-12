@@ -75,7 +75,7 @@ def test_deleted_user_when_listing_projects(client):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    project = response.json.get("project_info")[0]
+    project = response.json.get("project_info")[1]
 
     # check that the name is Former User
     assert "Former User" == project.get("Created by")
