@@ -471,7 +471,7 @@ def test_fix_access_unitadmin_valid_email_researcher_no_projectuser_row(client):
     ).first()
     assert not project_users_row
 
-    # Fix access for user with no project specified
+    # Fix access for user, project specified
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
     response = client.post(
         tests.DDSEndpoint.PROJECT_ACCESS,
