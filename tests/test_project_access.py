@@ -462,16 +462,6 @@ def test_fix_access_unitadmin_valid_email_researcher_no_projectuser_row(client):
     _ = delete_project_user(
         project_id="public_project_id", user_id="researcher", table_to_use=models.ProjectUsers
     )
-    # project_users_row = models.ProjectUsers.query.filter_by(
-    #     project_id=project.id, user_id="researchuser"
-    # ).first()
-    # if project_users_row:
-    #     db.session.delete(project_users_row)
-    #     db.session.commit()
-    # project_users_row = models.ProjectUsers.query.filter_by(
-    #     project_id=project.id, user_id="researchuser"
-    # ).first()
-    # assert not project_users_row
 
     # Fix access for user, project specified
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
