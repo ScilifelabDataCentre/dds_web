@@ -96,7 +96,8 @@ def setup_logging(app):
                     "class": "logging.handlers.RotatingFileHandler",
                     "maxBytes": app.config.get("LOG_MAX_SIZE"),
                     "backupCount": app.config.get("LOG_BACKUP_COUNT"),
-                    "filename": pathlib.Path(app.config.get("LOGS_DIR")) / pathlib.Path("actions.log"),
+                    "filename": pathlib.Path(app.config.get("LOGS_DIR"))
+                    / pathlib.Path("actions.log"),
                     "formatter": "default",
                 },
                 "console": {
