@@ -46,7 +46,7 @@ def test_deleted_user_when_listing_projects(client):
 
     # user to delete
     email_to_delete = "unituser2@mailtrap.io"
-    user_to_delete = user_from_email(email_to_delete).__dict__["username"]
+    user_to_delete = user_from_email(email_to_delete).username
 
     # get the list of projects user was involved
     was_creator = get_projects_user_is_creator(user=user_to_delete)
