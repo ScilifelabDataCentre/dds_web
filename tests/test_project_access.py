@@ -15,6 +15,28 @@ import tests
 proj_query = {"project": "public_project_id"}
 # proj_query_restricted = {"project": "restricted_project_id"}
 
+
+# UTILITY FUNCTIONS ############################################################ UTILITY FUNCTIONS #
+
+def delete_project_user(project_id,user_id):
+    # Get project from database
+    project = models.Project.query.filter_by(public_id=project_id).one_or_none()
+    assert project
+
+    # Delete projectuserkey and verify that it's deleted for user
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id=user_id
+    ).first()
+    if user_project_key_row:
+        db.session.delete(user_project_key_row)
+        db.session.commit()
+    user_project_key_row = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id=user_id
+    ).first()
+    assert not user_project_key_row
+
+    return project
+
 # TESTS #################################################################################### TESTS #
 
 
@@ -409,21 +431,8 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
 
 def test_fix_access_unitadmin_valid_email_unituser_no_project(client):
     """Unit Admin giving access to unituser - ok. No project."""
-    # Get project from database
-    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
-    assert project
-
-    # Delete projectuserkey and verify that it's deleted for user
-    user_project_key_row = models.ProjectUserKeys.query.filter_by(
-        project_id=project.id, user_id="unituser"
-    ).first()
-    if user_project_key_row:
-        db.session.delete(user_project_key_row)
-        db.session.commit()
-    user_project_key_row = models.ProjectUserKeys.query.filter_by(
-        project_id=project.id, user_id="unituser"
-    ).first()
-    assert not user_project_key_row
+    # Remove ProjectUserKeys row for specific project and user
+    project: models.Project = delete_project_user(project_id="public_project_id", user_id="unituser")
 
     # Fix access for user with no project specified
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
@@ -443,21 +452,8 @@ def test_fix_access_unitadmin_valid_email_unituser_no_project(client):
 
 def test_fix_access_unitadmin_valid_email_researcher_no_projectuser_row(client):
     """Unit Admin giving access to researcher where there is no row in ProjectUsers table."""
-    # Get project from database
-    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
-    assert project
-
-    # Delete projectuserkey and verify that it's deleted for user
-    user_project_key_row = models.ProjectUserKeys.query.filter_by(
-        project_id=project.id, user_id="researchuser"
-    ).first()
-    if user_project_key_row:
-        db.session.delete(user_project_key_row)
-        db.session.commit()
-    user_project_key_row = models.ProjectUserKeys.query.filter_by(
-        project_id=project.id, user_id="researchuser"
-    ).first()
-    assert not user_project_key_row
+    # Remove ProjectUserKeys row for specific project and user
+    project: models.Project = delete_project_user(project_id="public_project_id", user_id="researchuser")
 
     # Delete projectuser row and verify that it's deleted for user
     project_users_row = models.ProjectUsers.query.filter_by(
