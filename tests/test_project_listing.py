@@ -25,7 +25,7 @@ def get_projects_user_is_creator(user):
     """get the projects where that user was the creator"""
 
     projects = models.Project.query.filter_by(created_by=user).all()
-    return [project.__dict__.get("public_id") for project in projects]
+    return [project.public_id for project in projects]
 
 
 # TESTS #################################################################################### TESTS #
