@@ -34,6 +34,7 @@ USER_CREDENTIALS = {
     "researchuser2": "researchuser2:password",
     "projectowner": "projectowner:password",
     "unituser": "unituser:password",
+    "unituser2": "unituser2:password",
     "unitadmin": "unitadmin:password",
     "superadmin": "superadmin:password",
     "delete_me_researcher": "delete_me_researcher:password",

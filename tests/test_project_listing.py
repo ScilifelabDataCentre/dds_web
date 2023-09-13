@@ -8,13 +8,25 @@ import unittest
 from dds_web import db
 from dds_web.database import models
 import tests
-
+from tests.test_project_creation import create_unit_admins
+from tests.test_user_delete import create_delete_request, get_deletion_token, user_from_email
 
 # CONFIG ################################################################################## CONFIG #
 
 proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
 proj_query = {"project": "public_project_id"}
 proj_query_restricted = {"project": "restricted_project_id"}
+
+
+#################################### UTILITY FUNCTIONS ##################################
+
+
+def get_projects_user_is_creator(user):
+    """get the projects where that user was the creator"""
+
+    projects = models.Project.query.filter_by(created_by=user).all()
+    return [project.public_id for project in projects]
+
 
 # TESTS #################################################################################### TESTS #
 
@@ -27,6 +39,45 @@ def test_list_proj_no_token(client):
     response_json = response.json
     assert response_json.get("message")
     assert "No token" in response_json.get("message")
+
+
+def test_deleted_user_when_listing_projects(client):
+    """Deleted users that created a project should be listed as 'Former User'"""
+
+    # user to delete
+    email_to_delete = "unituser2@mailtrap.io"
+    user_to_delete = user_from_email(email_to_delete).username
+
+    # get the list of projects user was involved
+    was_creator = get_projects_user_is_creator(user=user_to_delete)
+
+    # create the delete request for said user
+    create_delete_request(email_to_delete)
+    token_delete = get_deletion_token(email_to_delete)
+    client = tests.UserAuth(tests.USER_CREDENTIALS[user_to_delete]).fake_web_login(client)
+    response = client.get(
+        tests.DDSEndpoint.USER_CONFIRM_DELETE + token_delete,
+        content_type="application/json",
+        headers=tests.DEFAULT_HEADER,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # login again with a different user from the same unit to see the projects
+    client = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).fake_web_login(client)
+
+    # requests to list all projects
+    response = client.get(
+        tests.DDSEndpoint.LIST_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Compare the new list of projects and see if the creators name is different
+    projects = response.json.get("project_info")
+    for project in projects:
+        if project.get("Project ID") in was_creator:
+            # check that the name is Former User
+            assert "Former User" == project.get("Created by")
 
 
 def test_list_proj_access_granted_ls(client):
