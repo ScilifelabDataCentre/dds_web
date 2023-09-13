@@ -58,16 +58,16 @@ def mock_unit_size():
 # fill_db_wrapper
 
 
-def test_fill_db_wrapper_production(client, runner, capfd) -> None:
+def test_fill_db_wrapper_production(client, runner, capfd: LogCaptureFixture) -> None:
     """Run init-db with the production argument."""
-    result: click.testing.Result = runner.invoke(fill_db_wrapper, ["production"])
+    _: click.testing.Result = runner.invoke(fill_db_wrapper, ["production"])
     _, err = capfd.readouterr()
     assert "already exists, not creating user" in err
 
 
-def test_fill_db_wrapper_devsmall(client, runner, capfd) -> None:
+def test_fill_db_wrapper_devsmall(client, runner, capfd: LogCaptureFixture) -> None:
     """Run init-db with the dev-small argument."""
-    result: click.testing.Result = runner.invoke(fill_db_wrapper, ["dev-small"])
+    _: click.testing.Result = runner.invoke(fill_db_wrapper, ["dev-small"])
     _, err = capfd.readouterr()
     assert "Initializing development db" in err
     assert "DB filled" not in err  # DB already filled, duplicates.
@@ -98,16 +98,17 @@ correct_unit: typing.Dict = {
     "external_display_name": "newexternaldisplay",
     "contact_email": "newcontact@mail.com",
     "internal_ref": "newinternalref",
-    "sto2_endpoint": "newsafespringendpoint",
-    "sto2_name": "newsafespringname",
-    "sto2_access": "newsafespringaccess",
-    "sto2_secret": "newsafespringsecret",
+    "safespring_endpoint": "newsafespringendpoint",
+    "safespring_name": "newsafespringname",
+    "safespring_access": "newsafespringaccess",
+    "safespring_secret": "newsafespringsecret",
     "days_in_available": 45,
     "days_in_expired": 15,
+    "quota": 80,
 }
 
 
-def test_create_new_unit_public_id_too_long(client, runner) -> None:
+def test_create_new_unit_public_id_too_long(client, runner, capfd: LogCaptureFixture) -> None:
     """Create new unit, public_id too long."""
     # Change public_id
     incorrect_unit: typing.Dict = correct_unit.copy()
@@ -117,14 +118,21 @@ def test_create_new_unit_public_id_too_long(client, runner) -> None:
     command_options = create_command_options_from_dict(options=incorrect_unit)
 
     # Run command
-    result: click.testing.Result = runner.invoke(create_new_unit, command_options)
-    # assert "The 'public_id' can be a maximum of 50 characters" in result.output
+    _: click.testing.Result = runner.invoke(create_new_unit, command_options)
+
+    # Get log output
+    _, err = capfd.readouterr()
+    assert "The 'public_id' can be a maximum of 50 characters" in err
+
+    # Verify that unit doesn't exist
     assert (
         not db.session.query(models.Unit).filter(models.Unit.name == incorrect_unit["name"]).all()
     )
 
 
-def test_create_new_unit_public_id_incorrect_characters(client, runner) -> None:
+def test_create_new_unit_public_id_incorrect_characters(
+    client, runner, capfd: LogCaptureFixture
+) -> None:
     """Create new unit, public_id has invalid characters (here _)."""
     # Change public_id
     incorrect_unit: typing.Dict = correct_unit.copy()
@@ -134,14 +142,21 @@ def test_create_new_unit_public_id_incorrect_characters(client, runner) -> None:
     command_options = create_command_options_from_dict(options=incorrect_unit)
 
     # Run command
-    result: click.testing.Result = runner.invoke(create_new_unit, command_options)
-    # assert "The 'public_id' can only contain letters, numbers, dots (.) and hyphens (-)." in result.output
+    _: click.testing.Result = runner.invoke(create_new_unit, command_options)
+
+    # Get log output_
+    _, err = capfd.readouterr()
+    assert "The 'public_id' can only contain letters, numbers, dots (.) and hyphens (-)." in err
+
+    # Verify that unit doesn't exist
     assert (
         not db.session.query(models.Unit).filter(models.Unit.name == incorrect_unit["name"]).all()
     )
 
 
-def test_create_new_unit_public_id_starts_with_dot(client, runner) -> None:
+def test_create_new_unit_public_id_starts_with_dot(
+    client, runner, capfd: LogCaptureFixture
+) -> None:
     """Create new unit, public_id starts with invalid character (. or -)."""
     # Change public_id
     incorrect_unit: typing.Dict = correct_unit.copy()
@@ -151,8 +166,13 @@ def test_create_new_unit_public_id_starts_with_dot(client, runner) -> None:
     command_options = create_command_options_from_dict(options=incorrect_unit)
 
     # Run command
-    result: click.testing.Result = runner.invoke(create_new_unit, command_options)
-    # assert "The 'public_id' must begin with a letter or number." in result.output
+    _: click.testing.Result = runner.invoke(create_new_unit, command_options)
+
+    # Get log output
+    _, err = capfd.readouterr()
+    assert "The 'public_id' must begin with a letter or number." in err
+
+    # Verify that the unit doesn't exist
     assert (
         not db.session.query(models.Unit).filter(models.Unit.name == incorrect_unit["name"]).all()
     )
@@ -164,14 +184,19 @@ def test_create_new_unit_public_id_starts_with_dot(client, runner) -> None:
     command_options = create_command_options_from_dict(options=incorrect_unit)
 
     # Run command
-    result: click.testing.Result = runner.invoke(create_new_unit, command_options)
-    # assert "The 'public_id' must begin with a letter or number." in result.output
+    _: click.testing.Result = runner.invoke(create_new_unit, command_options)
+
+    # Get log output
+    _, err = capfd.readouterr()
+    assert "The 'public_id' must begin with a letter or number." in err
+
+    # Verify that the unit doesn't exist
     assert (
         not db.session.query(models.Unit).filter(models.Unit.name == incorrect_unit["name"]).all()
     )
 
 
-def test_create_new_unit_public_id_too_many_dots(client, runner) -> None:
+def test_create_new_unit_public_id_too_many_dots(client, runner, capfd: LogCaptureFixture) -> None:
     """Create new unit, public_id has invalid number of dots."""
     # Change public_id
     incorrect_unit: typing.Dict = correct_unit.copy()
@@ -181,14 +206,19 @@ def test_create_new_unit_public_id_too_many_dots(client, runner) -> None:
     command_options = create_command_options_from_dict(options=incorrect_unit)
 
     # Run command
-    result: click.testing.Result = runner.invoke(create_new_unit, command_options)
-    # assert "The 'public_id' should not contain more than two dots." in result.output
+    _: click.testing.Result = runner.invoke(create_new_unit, command_options)
+
+    # Get log output
+    _, err = capfd.readouterr()
+    assert "The 'public_id' should not contain more than two dots." in err
+
+    # Verify that the unit doesn't exist
     assert (
         not db.session.query(models.Unit).filter(models.Unit.name == incorrect_unit["name"]).all()
     )
 
 
-def test_create_new_unit_public_id_invalid_start(client, runner) -> None:
+def test_create_new_unit_public_id_invalid_start(client, runner, capfd: LogCaptureFixture) -> None:
     """Create new unit, public_id starts with prefix."""
     # Change public_id
     incorrect_unit: typing.Dict = correct_unit.copy()
@@ -198,28 +228,35 @@ def test_create_new_unit_public_id_invalid_start(client, runner) -> None:
     command_options = create_command_options_from_dict(options=incorrect_unit)
 
     # Run command
-    result: click.testing.Result = runner.invoke(create_new_unit, command_options)
-    # assert "The 'public_id' cannot begin with the 'xn--' prefix." in result.output
+    _: click.testing.Result = runner.invoke(create_new_unit, command_options)
+
+    # Get log output
+    _, err = capfd.readouterr()
+    assert "The 'public_id' cannot begin with the 'xn--' prefix." in err
+
+    # Verify that the unit doesn't exist
     assert (
         not db.session.query(models.Unit).filter(models.Unit.name == incorrect_unit["name"]).all()
     )
 
 
-def test_create_new_unit_success(client, runner) -> None:
+def test_create_new_unit_success(client, runner, capfd: LogCaptureFixture) -> None:
     """Create new unit, public_id starts with prefix."""
     # Get command options
     command_options = create_command_options_from_dict(options=correct_unit)
 
     with patch("dds_web.db.session.commit", mock_commit):
         # Run command
-        result: click.testing.Result = runner.invoke(create_new_unit, command_options)
-        # assert f"Unit '{correct_unit['name']}' created" in result.output
+        _: click.testing.Result = runner.invoke(create_new_unit, command_options)
+
+    _, err = capfd.readouterr()
+    assert f"Unit '{correct_unit['name']}' created" in err
 
 
 # update_unit
 
 
-def test_update_unit_no_such_unit(client, runner, capfd) -> None:
+def test_update_unit_no_such_unit(client, runner, capfd: LogCaptureFixture) -> None:
     """Try to update a non existent unit -> Error."""
     # Create command options
     command_options: typing.List = [
@@ -247,7 +284,9 @@ def test_update_unit_no_such_unit(client, runner, capfd) -> None:
     assert f"There is no unit with the public ID '{command_options[1]}'." in err
 
 
-def test_update_unit_sto4_start_time_exists_mock_prompt_False(client, runner, capfd) -> None:
+def test_update_unit_sto4_start_time_exists_mock_prompt_False(
+    client, runner, capfd: LogCaptureFixture
+) -> None:
     """Start time already recorded. Answer no to prompt about update anyway. No changes should be made."""
     # Get existing unit
     unit: models.Unit = models.Unit.query.first()
@@ -310,7 +349,9 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_False(client, runner, ca
     ] == sto4_info_original
 
 
-def test_update_unit_sto4_start_time_exists_mock_prompt_True(client, runner, capfd) -> None:
+def test_update_unit_sto4_start_time_exists_mock_prompt_True(
+    client, runner, capfd: LogCaptureFixture
+) -> None:
     """Start time already recorded. Answer yes to prompt about update anyway. Changes should be made."""
     # Get existing unit
     unit: models.Unit = models.Unit.query.first()
@@ -382,7 +423,9 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_True(client, runner, cap
 # update_uploaded_file_with_log
 
 
-def test_update_uploaded_file_with_log_nonexisting_project(client, runner, capfd) -> None:
+def test_update_uploaded_file_with_log_nonexisting_project(
+    client, runner, capfd: LogCaptureFixture
+) -> None:
     """Add file info to non existing project."""
     # Create command options
     command_options: typing.List = [
@@ -424,7 +467,7 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
 # lost_files_s3_db
 
 
-def test_lost_files_s3_db_no_command(client, cli_runner, capfd):
+def test_lost_files_s3_db_no_command(client, cli_runner, capfd: LogCaptureFixture):
     """Test running the flask lost-files command without any subcommand."""
     _: click.testing.Result = cli_runner.invoke(lost_files_s3_db)
     _, err = capfd.readouterr()
@@ -434,7 +477,7 @@ def test_lost_files_s3_db_no_command(client, cli_runner, capfd):
 # lost_files_s3_db -- list_lost_files
 
 
-def test_list_lost_files_no_such_project(client, cli_runner, capfd):
+def test_list_lost_files_no_such_project(client, cli_runner, capfd: LogCaptureFixture):
     """flask lost-files ls: project specified, project doesnt exist."""
     # Project ID -- doesn't exist
     project_id: str = "nonexistentproject"
@@ -452,7 +495,9 @@ def test_list_lost_files_no_such_project(client, cli_runner, capfd):
     assert f"No such project: '{project_id}'" in err
 
 
-def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_session, capfd):
+def test_list_lost_files_no_lost_files_in_project(
+    client, cli_runner, boto3_session, capfd: LogCaptureFixture
+):
     """flask lost-files ls: project specified, no lost files."""
     # Get project
     project = models.Project.query.first()
@@ -576,7 +621,9 @@ def test_list_lost_files_no_lost_files_in_project(client, cli_runner, boto3_sess
     # ---------------------------------------------------------------------------------------
 
 
-def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
+def test_list_lost_files_missing_in_s3_in_project(
+    client, cli_runner, boto3_session, capfd: LogCaptureFixture
+):
     """flask lost-files ls: project specified, lost files in s3."""
     # Get project
     project = models.Project.query.first()
@@ -604,7 +651,9 @@ def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_sess
     assert f"Lost files in project: {project.public_id}\t\tIn DB but not S3: {len(project.files)}\tIn S3 but not DB: 0\n"
 
 
-def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, capfd):
+def test_list_lost_files_no_lost_files_total(
+    client, cli_runner, boto3_session, capfd: LogCaptureFixture
+):
     """flask lost-files ls: no project specified, no lost files."""
     # Use sto2 -- no sto4_endpoint_added date ---------------------------------------------
     for u in models.Unit.query.all():
@@ -757,7 +806,9 @@ def test_list_lost_files_no_lost_files_total(client, cli_runner, boto3_session, 
     # ---------------------------------------------------------------------------------------
 
 
-def test_list_lost_files_missing_in_s3_in_project(client, cli_runner, boto3_session, capfd):
+def test_list_lost_files_missing_in_s3_in_project(
+    client, cli_runner, boto3_session, capfd: LogCaptureFixture
+):
     """flask lost-files ls: project specified, lost files in s3."""
     # Run command
     result: click.testing.Result = cli_runner.invoke(lost_files_s3_db, ["ls"])
@@ -795,7 +846,7 @@ def test_add_missing_bucket_no_project(client, cli_runner):
     assert "Missing option '--project-id' / '-p'." in result.stdout
 
 
-def test_add_missing_bucket_project_nonexistent(client, cli_runner, capfd):
+def test_add_missing_bucket_project_nonexistent(client, cli_runner, capfd: LogCaptureFixture):
     """flask lost-files add-missing-bucket: no such project --> print out error."""
     # Project -- doesn't exist
     project_id: str = "nonexistentproject"
@@ -812,7 +863,7 @@ def test_add_missing_bucket_project_nonexistent(client, cli_runner, capfd):
     assert f"No such project: '{project_id}'" in err
 
 
-def test_add_missing_bucket_project_inactive(client, cli_runner, capfd):
+def test_add_missing_bucket_project_inactive(client, cli_runner, capfd: LogCaptureFixture):
     """flask lost-files add-missing-bucket: project specified, but inactive --> error message."""
     # Get project
     project: models.Project = models.Project.query.first()
@@ -834,7 +885,9 @@ def test_add_missing_bucket_project_inactive(client, cli_runner, capfd):
     assert f"Project '{project.public_id}' is not an active project." in err
 
 
-def test_add_missing_bucket_not_missing(client, cli_runner, boto3_session, capfd):
+def test_add_missing_bucket_not_missing(
+    client, cli_runner, boto3_session, capfd: LogCaptureFixture
+):
     """flask lost-files add-missing-bucket: project specified, not missing --> ok."""
     from tests.test_utils import mock_nosuchbucket
 
@@ -958,7 +1011,7 @@ def test_delete_lost_files_no_project(client, cli_runner):
     assert "Missing option '--project-id' / '-p'." in result.stdout
 
 
-def test_delete_lost_files_project_nonexistent(client, cli_runner, capfd):
+def test_delete_lost_files_project_nonexistent(client, cli_runner, capfd: LogCaptureFixture):
     """flask lost-files delete: no such project --> print out error."""
     # Project -- doesn't exist
     project_id: str = "nonexistentproject"
@@ -975,7 +1028,7 @@ def test_delete_lost_files_project_nonexistent(client, cli_runner, capfd):
     assert f"No such project: '{project_id}'" in err
 
 
-def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd):
+def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd: LogCaptureFixture):
     """flask lost-files delete: project specified and exists --> deleted files ok."""
     # Get project
     project: models.Project = models.Project.query.first()
@@ -1077,7 +1130,9 @@ def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd):
     # ------------------------------------------------------------------------
 
 
-def test_delete_lost_files_sqlalchemyerror(client, cli_runner, boto3_session, capfd):
+def test_delete_lost_files_sqlalchemyerror(
+    client, cli_runner, boto3_session, capfd: LogCaptureFixture
+):
     """flask lost-files delete: sqlalchemyerror during deletion."""
     # Imports
     from tests.api.test_project import mock_sqlalchemyerror
@@ -1104,7 +1159,7 @@ def test_delete_lost_files_sqlalchemyerror(client, cli_runner, boto3_session, ca
 
 
 # usage = 0 --> check log
-def test_monitor_usage_no_usage(client, cli_runner, capfd):
+def test_monitor_usage_no_usage(client, cli_runner, capfd: LogCaptureFixture):
     """If a unit has no uploaded data, there's no need to do the calculations or send email warning."""
     # Mock the size property of the Unit table
     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
@@ -1122,7 +1177,7 @@ def test_monitor_usage_no_usage(client, cli_runner, capfd):
 
 
 # percentage below warning level --> check log + no email
-def test_monitor_usage_no_email(client, cli_runner, capfd):
+def test_monitor_usage_no_email(client, cli_runner, capfd: LogCaptureFixture):
     """No email should be sent if the usage is below the warning level."""
     # Define quota
     quota_in_test: int = 1e14
@@ -1152,7 +1207,7 @@ def test_monitor_usage_no_email(client, cli_runner, capfd):
 
 
 # percentage above warning level --> check log + email sent
-def test_monitor_usage_warning_sent(client, cli_runner, capfd):
+def test_monitor_usage_warning_sent(client, cli_runner, capfd: LogCaptureFixture):
     """An email should be sent if the usage is above the warning level."""
     # Define quota
     quota_in_test: int = 1e14
