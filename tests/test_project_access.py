@@ -18,7 +18,8 @@ proj_query = {"project": "public_project_id"}
 
 # UTILITY FUNCTIONS ############################################################ UTILITY FUNCTIONS #
 
-def delete_project_user(project_id,user_id):
+
+def delete_project_user(project_id, user_id):
     # Get project from database
     project = models.Project.query.filter_by(public_id=project_id).one_or_none()
     assert project
@@ -36,6 +37,7 @@ def delete_project_user(project_id,user_id):
     assert not user_project_key_row
 
     return project
+
 
 # TESTS #################################################################################### TESTS #
 
@@ -432,7 +434,9 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
 def test_fix_access_unitadmin_valid_email_unituser_no_project(client):
     """Unit Admin giving access to unituser - ok. No project."""
     # Remove ProjectUserKeys row for specific project and user
-    project: models.Project = delete_project_user(project_id="public_project_id", user_id="unituser")
+    project: models.Project = delete_project_user(
+        project_id="public_project_id", user_id="unituser"
+    )
 
     # Fix access for user with no project specified
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
@@ -453,7 +457,9 @@ def test_fix_access_unitadmin_valid_email_unituser_no_project(client):
 def test_fix_access_unitadmin_valid_email_researcher_no_projectuser_row(client):
     """Unit Admin giving access to researcher where there is no row in ProjectUsers table."""
     # Remove ProjectUserKeys row for specific project and user
-    project: models.Project = delete_project_user(project_id="public_project_id", user_id="researchuser")
+    project: models.Project = delete_project_user(
+        project_id="public_project_id", user_id="researchuser"
+    )
 
     # Delete projectuser row and verify that it's deleted for user
     project_users_row = models.ProjectUsers.query.filter_by(
