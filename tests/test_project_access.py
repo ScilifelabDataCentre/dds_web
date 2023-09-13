@@ -460,7 +460,7 @@ def test_fix_access_unitadmin_valid_email_researcher_no_projectuser_row(client):
 
     # Delete projectuser row and verify that it's deleted for user
     _ = delete_project_user(
-        project="public_project_id", user_id="researcher", table_to_use=models.ProjectUsers
+        project_id="public_project_id", user_id="researcher", table_to_use=models.ProjectUsers
     )
     # project_users_row = models.ProjectUsers.query.filter_by(
     #     project_id=project.id, user_id="researchuser"
