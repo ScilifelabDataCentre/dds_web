@@ -30,34 +30,45 @@ What _type of change(s)_ does the PR contain?
 - [ ] PR to `master` branch: _If checked, read [the release instructions](../doc/procedures/new_release.md) <!-- Check this if the PR is made to the `master` branch. Only the `dev` branch should be doing this. -->
     - [ ] I have followed steps 1-8. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
 
-## Actions / Scans
+## 5. Actions / Scans
 
-<!-- Go through all checkboxes. All actions must pass before merging is allowed.-->
+_Check the boxes when the specified checks have passed._ 
 
-- **Black**: Python code formatter. Does not execute. Only tests.
-  Run `black .` locally to execute formatting.
-  - [ ] Passed
-- **Prettier**: General code formatter. Our use case: MD and yaml mainly.
-  Run `npx prettier --write .` locally to execute formatting.
-  - [ ] Passed
-- **Yamllint**: Linting of yaml files.
-  - [ ] Passed
-- **Tests**: Pytest to verify that functionality works as expected.
-  - [ ] New tests added
-  - [ ] No new tests
-  - [ ] Passed
-- **CodeQL**: Scan for security vulnerabilities, bugs, errors
-  - [ ] New alerts: _Go through them and either fix, dismiss och ignore. Add reasoning in items below._
-  - [ ] Alerts fixed: _What?_
-  - [ ] Alerts ignored / dismissed: _Why?_
-  - [ ] Passed
-- **Trivy**: Security scanner
-  - [ ] New alerts: _Go through them and either fix, dismiss och ignore. Add reasoning in items below._
-  - [ ] Alerts fixed: _What?_
-  - [ ] Alerts ignored / dismissed: _Why?_
-  - [ ] Passed
-- **Snyk**: Security scanner
-  - [ ] New alerts: _Go through them and either fix, dismiss och ignore. Add reasoning in items below._
-  - [ ] Alerts fixed: _What?_
-  - [ ] Alerts ignored / dismissed: _Why?_
-  - [ ] Passed
+**For information on what the different checks do and how to fix it if they're failing, enter edit mode of this description or go to the [PR template](../.github/pull_request_template.md).**
+
+- [ ] **Black**
+      <!-- 
+      - What: Python code formatter.
+      - How to fix: Run `black .` locally to execute formatting. 
+      -->
+- [ ] **Prettier**
+      <!--
+      - What: General code formatter. Our use case: MD and yaml mainly. 
+      - How to fix: Run npx prettier --write . locally to execute formatting.
+      -->
+- [ ] **Yamllint**
+      <!-- 
+      - What: Linting of yaml files.
+      - How to fix: Manually fix any errors locally.
+      -->
+- [ ] **Tests**
+      <!-- 
+      - What: Pytest to verify that functionality works as expected. 
+      - How to fix: Manually fix any errors locally. Follow the instructions in the "Run tests" section of the README.md to run the tests locally.
+      - Additional info: The PR should ALWAYS include new tests or fixed tests when there are code changes. When pytest action has finished, it will post a codecov report; Look at this report and verify the files you have changed are listed. "90% <100.00%> (+0.8%)" means "Tests cover 90% of the changed file, <100 % of this PR's code changes are tested>, and (the code changes and added tests increased the overall test coverage with 0.8%) 
+      -->
+- [ ] **CodeQL**
+      <!--
+      - What: Scan for security vulnerabilities, bugs, errors
+      - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+      -->
+- [ ] **Trivy**
+      <!-- 
+      - What: Security scanner
+      - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+      -->
+- [ ] **Snyk**
+      <!-- 
+      - What: Security scanner
+      - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+      -->
