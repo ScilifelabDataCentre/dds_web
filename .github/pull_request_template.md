@@ -1,3 +1,4 @@
+<!--
 ## Read this before submitting the PR
 
 - When creating a new PR, make it a _Draft PR_.
@@ -7,7 +8,7 @@
 - **When all information is filled in, all boxes are checked and the branch is updated with the changes from the master/dev branch (depending on which one this branch is forked from**, mark the PR as _Ready for Review_ and tag reviewers (in the "Reviewers" section in the top right).
 - If you're stuck, or any checks fail (e.g. tests) and you need help, you can tag reviewers and mark as ready for review. Inform the reviewers about needing input about the specific issue.
 - Once there is a submitted review, implement the suggestions (if reasonable, otherwise discuss) and then request a new review (unless approved)
-
+-->
 ## 1. Description / Summary
 
 _Add a summary of the changes in this PR and the related issue._
