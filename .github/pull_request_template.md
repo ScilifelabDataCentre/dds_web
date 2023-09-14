@@ -19,30 +19,16 @@ What _type of change(s)_ does the PR contain?
 - [ ] Bug fix <!-- Should be checked when a bug is fixed in existing functionality. If the bug fix also is a breaking change (see above), add info about that beside this check box. -->
 - [ ] Security Alert fix <!-- Should be checked if the PR attempts to solve a security vulnerability, e.g. reported by the "Security" tab in the repo. -->
 - [ ] Documentation <!-- Should be checked if the PR adds or updates documentation such as e.g. Technical Overview or a architecture decision (dds_web/doc/architecture/decisions.) -->
-- [ ] Workflow <!-- Should be checked if the PR includes a change in e.g. the github actions files (dds_web/.github/*) or another type of workflow change. -->
+- [ ] Workflow <!-- Should be checked if the PR includes a change in e.g. the github actions files (dds_web/.github/*) or another type of workflow change. Anything that alters our or the codes workflow. -->
 - [ ] Tests **only** <!-- Should only be checked if the PR only contains tests, none of the other types of changes listed above. -->
 
+## 4. Additional information
 
-<!--
-- "Breaking": The change will cause existing functionality to not work as expected.
-- Workflow: E.g. a new github action or changes to this PR template. Anything that alters our or the codes workflow.
--->
-
-## Checklist
-
-- [Sprintlog](../SPRINTLOG.md)
-  - [ ] Added
-  - [ ] Not needed (E.g. PR contains _only_ tests)
-- Rebase / Update / Merge _from_ base branch (the branch from which the current is forked)
-  - [ ] Done
-  - [ ] Not needed
-- Blocking PRs
-  - [ ] Merged
-  - [ ] No blocking PRs
-- PR to `master` branch
-  - [ ] Yes: Read [the release instructions](https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/procedures/new_release.md)
-    - [ ] I have followed steps 1-8.
-  - [ ] No
+- [ ] [Sprintlog](../SPRINTLOG.md): <!-- Add a row at the bottom of the SPRINTLOG.md file (not needed if PR contains only tests). Follow the format of previous rows. If the PR is the first in a new sprint, add a new sprint header row (follow the format of previous sprints). -->
+- [ ] Blocking PRs <!-- Should be checked if there are blocking PRs or other tasks that need to be merged prior to this. Add link to PR or Jira card if this is the case. -->
+  - [ ] Merged <!-- Should be checked if the "Blocking PRs" box was checked AND all blocking PRs have been merged / fixed. -->
+- [ ] PR to `master` branch: _If checked, read [the release instructions](../doc/procedures/new_release.md) <!-- Check this if the PR is made to the `master` branch. Only the `dev` branch should be doing this. -->
+    - [ ] I have followed steps 1-8. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
 
 ## Actions / Scans
 
