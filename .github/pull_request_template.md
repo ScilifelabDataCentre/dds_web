@@ -1,31 +1,32 @@
-## Before submitting this PR
+## 1. Description / Summary 
 
-1. **Description:** _Add a summary of the changes in this PR and the related issue._
-2. **Jira task / GitHub issue:** _Link to the github issue or add the Jira task ID here._
-3. **How to test:** _Add information on how someone could manually test this functionality. As detailed as possible._
-4. **Type of change:** [_Check the relevant boxes in the section below_](#what-type-of-changes-does-the-pr-contain)
-5. **Add docstrings and comments to code**, _even if_ you personally think it's obvious.
+_Add a summary of the changes in this PR and the related issue._
 
-## What _type of change(s)_ does the PR contain?
+## 2. Jira task / GitHub issue
+
+_Link to the github issue or add the Jira task ID here._
+
+## 3. Type of change
+
+What _type of change(s)_ does the PR contain?
+
+**Check the relevant boxes below. For an explanation of the different sections, enter edit mode of this PR description template.**
+
+- [ ] New feature
+  - [ ] Breaking: _Why / How? Add info here._ <!-- Should be checked if the changes in this PR will cause existing functionality to not work as expected. E.g. with the master branch of the `dds_cli` -->
+  - [ ] Non-breaking <!-- Should be checked if the changes will not cause existing functionality to fail. "Non-breaking" is just an addition of a new feature. -->
+- [ ] Database change: _Remember the to include a new migration version, **or** explain here why it's not needed._ <!-- Should be checked when you've changed something in `models.py`. For a guide on how to add the a new migration version, look at the "Database changes" section in the README.md. -->
+- [ ] Bug fix <!-- Should be checked when a bug is fixed in existing functionality. If the bug fix also is a breaking change (see above), add info about that beside this check box. -->
+- [ ] Security Alert fix <!-- Should be checked if the PR attempts to solve a security vulnerability, e.g. reported by the "Security" tab in the repo. -->
+- [ ] Documentation <!-- Should be checked if the PR adds or updates documentation such as e.g. Technical Overview or a architecture decision (dds_web/doc/architecture/decisions.) -->
+- [ ] Workflow <!-- Should be checked if the PR includes a change in e.g. the github actions files (dds_web/.github/*) or another type of workflow change. -->
+- [ ] Tests **only** <!-- Should only be checked if the PR only contains tests, none of the other types of changes listed above. -->
+
 
 <!--
 - "Breaking": The change will cause existing functionality to not work as expected.
 - Workflow: E.g. a new github action or changes to this PR template. Anything that alters our or the codes workflow.
 -->
-
-- [ ] New feature
-  - [ ] Breaking: _Please describe the reason for the break and how we can fix it._
-  - [ ] Non-breaking
-- [ ] Database change
-  - [ ] Migration _included in PR_
-  - [ ] Migration _not needed_
-- [ ] Bug fix
-  - [ ] Breaking: _Please describe the reason for the break and how we can fix it._
-  - [ ] Non-breaking
-- [ ] Security Alert fix
-- [ ] Documentation
-- [ ] Tests **(only)**
-- [ ] Workflow
 
 ## Checklist
 
