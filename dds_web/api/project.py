@@ -678,6 +678,8 @@ class CreateProject(flask_restful.Resource):
             new_project = project_schemas.CreateProjectSchema().load(p_info)
             db.session.add(new_project)
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+            flask.current_app.logger.info("Doing db rollback.")
+            db.session.rollback()
             raise DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not new_project:
