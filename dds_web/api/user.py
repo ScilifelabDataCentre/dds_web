@@ -874,31 +874,41 @@ class RemoveUserAssociation(flask_restful.Resource):
         # Check if email is registered to a user
         try:
             existing_user = user_schemas.UserSchema().load({"email": user_email})
+            unanswered_invite = user_schemas.UnansweredInvite().load({"email": user_email})
         except sqlalchemy.exc.OperationalError as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not existing_user:
-            raise ddserr.NoSuchUserError(
-                f"The user with email '{user_email}' does not have access to the specified project."
-                " Cannot remove non-existent project access."
-            )
+            if not unanswered_invite:
+                # The user doesn't exist and doesnt have a pending invite either
+                raise ddserr.NoSuchUserError(
+                    f"The user with email '{user_email}' does not have access to the specified project."
+                    " Cannot remove non-existent project access."
+                )
+            else:
+                invite_id = unanswered_invite.id
+                project_invite_key = models.ProjectInviteKeys.query.filter_by(invite_id=invite_id,project_id=project.id).one_or_none()
+                if project_invite_key:
+                    db.session.delete(unanswered_invite)
+                    db.session.delete(project_invite_key)
 
-        user_in_project = False
-        for user_association in project.researchusers:
-            if user_association.user_id == existing_user.username:
-                user_in_project = True
-                db.session.delete(user_association)
-                project_user_key = models.ProjectUserKeys.query.filter_by(
-                    project_id=project.id, user_id=existing_user.username
-                ).first()
-                if project_user_key:
-                    db.session.delete(project_user_key)
+        else:
+            user_in_project = False
+            for user_association in project.researchusers:
+                if user_association.user_id == existing_user.username:
+                    user_in_project = True
+                    db.session.delete(user_association)
+                    project_user_key = models.ProjectUserKeys.query.filter_by(
+                        project_id=project.id, user_id=existing_user.username
+                    ).first()
+                    if project_user_key:
+                        db.session.delete(project_user_key)
 
-        if not user_in_project:
-            raise ddserr.NoSuchUserError(
-                f"The user with email '{user_email}' does not have access to the specified project."
-                " Cannot remove non-existent project access."
-            )
+            if not user_in_project:
+                raise ddserr.NoSuchUserError(
+                    f"The user with email '{user_email}' does not have access to the specified project."
+                    " Cannot remove non-existent project access."
+                )
 
         try:
             db.session.commit()
@@ -919,12 +929,15 @@ class RemoveUserAssociation(flask_restful.Resource):
                 ),
             ) from err
 
-        flask.current_app.logger.debug(
-            f"User {existing_user.username} no longer associated with project {project.public_id}."
-        )
+        if unanswered_invite:
+            msg = f"Invited user is no longer associated with project {project.public_id}."
+        else:
+            msg = f"User {existing_user.username} no longer associated with project {project.public_id}."
+        
+        flask.current_app.logger.debug(msg)
 
         return {
-            "message": f"User with email {user_email} no longer associated with {project.public_id}."
+            "message": msg
         }
 
 
