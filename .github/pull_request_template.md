@@ -2,7 +2,9 @@
 
 - When creating a new PR, make it a _Draft PR_.
 - Go through sections 1-5 below, fill them in and check all the boxes
-- **When all information is filled in and all boxes are checked**, mark the PR as _Ready for Review_ and tag reviewers (in the "Reviewers" section in the top right).
+  - If there is a field which you are unsure about, enter the edit mode of this description or go to the [PR template](../.github/pull_request_template.md); There are invisible comments providing descriptions which may be of help. 
+- If you see the "Update Branch" button at the bottom of the PR, you will need to rebase or update (merge the head branch into the current branch) 
+- **When all information is filled in, all boxes are checked and the branch is updated with the changes from the master/dev branch (depending on which one this branch is forked from**, mark the PR as _Ready for Review_ and tag reviewers (in the "Reviewers" section in the top right).
 - If you're stuck, or any checks fail (e.g. tests) and you need help, you can tag reviewers and mark as ready for review. Inform the reviewers about needing input about the specific issue.
 - Once there is a submitted review, implement the suggestions (if reasonable, otherwise discuss) and then request a new review (unless approved)
 
