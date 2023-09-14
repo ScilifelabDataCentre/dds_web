@@ -48,35 +48,35 @@ _Check the boxes when the specified checks have passed._
 
 - [ ] **Black**
       <!--
-              - What: Python code formatter.
-              - How to fix: Run `black .` locally to execute formatting.
-              -->
+                  - What: Python code formatter.
+                  - How to fix: Run `black .` locally to execute formatting.
+                  -->
 - [ ] **Prettier**
       <!-- - What: General code formatter. Our use case: MD and yaml mainly. - How to fix: Run npx prettier --write . locally to execute formatting.
       -->
 - [ ] **Yamllint**
       <!--
-              - What: Linting of yaml files.
-              - How to fix: Manually fix any errors locally.
-              -->
+                  - What: Linting of yaml files.
+                  - How to fix: Manually fix any errors locally.
+                  -->
 - [ ] **Tests**
       <!--
-              - What: Pytest to verify that functionality works as expected.
-              - How to fix: Manually fix any errors locally. Follow the instructions in the "Run tests" section of the README.md to run the tests locally.
-              - Additional info: The PR should ALWAYS include new tests or fixed tests when there are code changes. When pytest action has finished, it will post a codecov report; Look at this report and verify the files you have changed are listed. "90% <100.00%> (+0.8%)" means "Tests cover 90% of the changed file, <100 % of this PR's code changes are tested>, and (the code changes and added tests increased the overall test coverage with 0.8%)
-              -->
+                  - What: Pytest to verify that functionality works as expected.
+                  - How to fix: Manually fix any errors locally. Follow the instructions in the "Run tests" section of the README.md to run the tests locally.
+                  - Additional info: The PR should ALWAYS include new tests or fixed tests when there are code changes. When pytest action has finished, it will post a codecov report; Look at this report and verify the files you have changed are listed. "90% <100.00%> (+0.8%)" means "Tests cover 90% of the changed file, <100 % of this PR's code changes are tested>, and (the code changes and added tests increased the overall test coverage with 0.8%)
+                  -->
 - [ ] **CodeQL**
       <!--
-              - What: Scan for security vulnerabilities, bugs, errors
-              - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
-              -->
+                  - What: Scan for security vulnerabilities, bugs, errors
+                  - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+                  -->
 - [ ] **Trivy**
       <!--
-              - What: Security scanner
-              - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
-              -->
+                  - What: Security scanner
+                  - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+                  -->
 - [ ] **Snyk**
       <!--
-              - What: Security scanner
-              - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
-              -->
+                  - What: Security scanner
+                  - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+                  -->
