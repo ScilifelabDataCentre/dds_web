@@ -274,7 +274,7 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
 
 def test_invite_user_expired_not_deleted(client):
     """The invite token expires passed 168 hours (7 days) and every night at midnight a cronjob deletes the row in the db
-    However, if the token is expired and the cronjob hasn't exec yet (the invit is still in the DB), users should be able to send a new invite
+    However, if the token is expired and the cronjob hasn't exec yet (i.e the invit is still in the DB), users should be able to send a new invite
     That replaces the old one
     """
 
@@ -286,9 +286,10 @@ def test_invite_user_expired_not_deleted(client):
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    # Set the expiration date in the DB to +7 days for now
+    # Set the creation date in the DB to -7 days for now
     invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
     invited_user.created_at -= timedelta(hours=168)
+    old_time = invited_user.created_at
     db.session.commit()
 
     # Send the invite again and confirm it works
@@ -301,6 +302,9 @@ def test_invite_user_expired_not_deleted(client):
 
     invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
     assert invited_user
+
+    # check that the date has been updated
+    assert not old_time == invited_user.created_at
 
 
 # -- Add existing users to projects ################################# Add existing users to projects #
