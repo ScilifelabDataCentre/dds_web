@@ -1,4 +1,12 @@
-## 1. Description / Summary 
+## Read this before submitting the PR
+
+- When creating a new PR, make it a _Draft PR_.
+- Go through sections 1-5 below, fill them in and check all the boxes
+- **When all information is filled in and all boxes are checked**, mark the PR as _Ready for Review_ and tag reviewers (in the "Reviewers" section in the top right).
+- If you're stuck, or any checks fail (e.g. tests) and you need help, you can tag reviewers and mark as ready for review. Inform the reviewers about needing input about the specific issue.
+- Once there is a submitted review, implement the suggestions (if reasonable, otherwise discuss) and then request a new review (unless approved)
+
+## 1. Description / Summary
 
 _Add a summary of the changes in this PR and the related issue._
 
@@ -27,48 +35,46 @@ What _type of change(s)_ does the PR contain?
 - [ ] [Sprintlog](../SPRINTLOG.md): <!-- Add a row at the bottom of the SPRINTLOG.md file (not needed if PR contains only tests). Follow the format of previous rows. If the PR is the first in a new sprint, add a new sprint header row (follow the format of previous sprints). -->
 - [ ] Blocking PRs <!-- Should be checked if there are blocking PRs or other tasks that need to be merged prior to this. Add link to PR or Jira card if this is the case. -->
   - [ ] Merged <!-- Should be checked if the "Blocking PRs" box was checked AND all blocking PRs have been merged / fixed. -->
-- [ ] PR to `master` branch: _If checked, read [the release instructions](../doc/procedures/new_release.md) <!-- Check this if the PR is made to the `master` branch. Only the `dev` branch should be doing this. -->
-    - [ ] I have followed steps 1-8. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
+- [ ] PR to `master` branch: \_If checked, read [the release instructions](../doc/procedures/new_release.md) <!-- Check this if the PR is made to the `master` branch. Only the `dev` branch should be doing this. -->
+  - [ ] I have followed steps 1-8. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
 
 ## 5. Actions / Scans
 
-_Check the boxes when the specified checks have passed._ 
+_Check the boxes when the specified checks have passed._
 
 **For information on what the different checks do and how to fix it if they're failing, enter edit mode of this description or go to the [PR template](../.github/pull_request_template.md).**
 
 - [ ] **Black**
-      <!-- 
-      - What: Python code formatter.
-      - How to fix: Run `black .` locally to execute formatting. 
-      -->
-- [ ] **Prettier**
       <!--
-      - What: General code formatter. Our use case: MD and yaml mainly. 
-      - How to fix: Run npx prettier --write . locally to execute formatting.
+          - What: Python code formatter.
+          - How to fix: Run `black .` locally to execute formatting.
+          -->
+- [ ] **Prettier**
+      <!-- - What: General code formatter. Our use case: MD and yaml mainly. - How to fix: Run npx prettier --write . locally to execute formatting.
       -->
 - [ ] **Yamllint**
-      <!-- 
-      - What: Linting of yaml files.
-      - How to fix: Manually fix any errors locally.
-      -->
+      <!--
+          - What: Linting of yaml files.
+          - How to fix: Manually fix any errors locally.
+          -->
 - [ ] **Tests**
-      <!-- 
-      - What: Pytest to verify that functionality works as expected. 
-      - How to fix: Manually fix any errors locally. Follow the instructions in the "Run tests" section of the README.md to run the tests locally.
-      - Additional info: The PR should ALWAYS include new tests or fixed tests when there are code changes. When pytest action has finished, it will post a codecov report; Look at this report and verify the files you have changed are listed. "90% <100.00%> (+0.8%)" means "Tests cover 90% of the changed file, <100 % of this PR's code changes are tested>, and (the code changes and added tests increased the overall test coverage with 0.8%) 
-      -->
+      <!--
+          - What: Pytest to verify that functionality works as expected.
+          - How to fix: Manually fix any errors locally. Follow the instructions in the "Run tests" section of the README.md to run the tests locally.
+          - Additional info: The PR should ALWAYS include new tests or fixed tests when there are code changes. When pytest action has finished, it will post a codecov report; Look at this report and verify the files you have changed are listed. "90% <100.00%> (+0.8%)" means "Tests cover 90% of the changed file, <100 % of this PR's code changes are tested>, and (the code changes and added tests increased the overall test coverage with 0.8%)
+          -->
 - [ ] **CodeQL**
       <!--
-      - What: Scan for security vulnerabilities, bugs, errors
-      - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
-      -->
+          - What: Scan for security vulnerabilities, bugs, errors
+          - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+          -->
 - [ ] **Trivy**
-      <!-- 
-      - What: Security scanner
-      - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
-      -->
+      <!--
+          - What: Security scanner
+          - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+          -->
 - [ ] **Snyk**
-      <!-- 
-      - What: Security scanner
-      - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
-      -->
+      <!--
+          - What: Security scanner
+          - How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+          -->
