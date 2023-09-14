@@ -127,6 +127,7 @@ def share_project_private_key(
 
 
 def __init_and_append_project_user_key(user, project, project_private_key):
+    """Create a new row in ProjectUserKeys for specific user and project."""
     project_user_key = models.ProjectUserKeys(
         project_id=project.id,
         user_id=user.username,
