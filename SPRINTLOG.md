@@ -292,9 +292,11 @@ _Nothing merged in CLI during this sprint_
 - New version: 2.5.0 ([#1458](https://github.com/ScilifelabDataCentre/dds_web/pull/1458))
 - Added check for Maintenance mode status in MaintenanceMode endpoint ([#1459](https://github.com/ScilifelabDataCentre/dds_web/pull/1459))
 
-# 2023-09-4 - 2023-09-15
+# 2023-09-04 - 2023-09-15
 
+- Bug fix: Database rollback added on project creation failure ([#1461](https://github.com/ScilifelabDataCentre/dds_web/pull/1461))
 - Only return date (not time) from `Statistics` endpoint ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1456))
 - Set `sto2*` columns in `Unit` table to nullable ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1462))
 - Dependency: Bump `MariaDB` to LTS version 10.11.5 ([#1465](https://github.com/ScilifelabDataCentre/dds_web/pull/1465))
+- Bug fixed: Row in `ProjectUsers` should also be added if it doesn't exist when giving Researcher access to a specific project ([#1464](https://github.com/ScilifelabDataCentre/dds_web/pull/1464))
 - AddUser checks for expired unanswered invites and updated db ([#1466](https://github.com/ScilifelabDataCentre/dds_web/pull/1466))

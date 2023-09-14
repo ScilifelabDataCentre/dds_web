@@ -678,6 +678,8 @@ class CreateProject(flask_restful.Resource):
             new_project = project_schemas.CreateProjectSchema().load(p_info)
             db.session.add(new_project)
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+            flask.current_app.logger.info("Doing db rollback.")
+            db.session.rollback()
             raise DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
         if not new_project:
@@ -911,6 +913,20 @@ class ProjectAccess(flask_restful.Resource):
                         project_id=proj.id, user_id=user.username
                     ).one_or_none()
                     if not project_keys_row:
+                        # Make sure that Researchers are also listed in project users
+                        if (
+                            user.role == "Researcher"
+                            and not models.ProjectUsers.query.filter_by(
+                                project_id=proj.id, user_id=user.username
+                            ).one_or_none()
+                        ):
+                            # New row in association table
+                            new_projectuser_row = models.ProjectUsers(
+                                project_id=proj.id, user_id=user.username
+                            )
+                            # Append association -- only one required, not both ways
+                            proj.researchusers.append(new_projectuser_row)
+
                         share_project_private_key(
                             from_user=current_user,
                             to_another=user,
