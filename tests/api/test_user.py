@@ -272,6 +272,37 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
     assert invited_user is None
 
 
+def test_invite_user_expired_not_deleted(client):
+    """The invite token expires passed 168 hours (7 days) and every night at midnight a cronjob deletes the row in the db
+    However, if the token is expired and the cronjob hasn't exec yet (the invit is still in the DB), users should be able to send a new invite
+    That replaces the old one
+    """
+
+    # invite a new user
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Set the expiration date in the DB to +7 days for now
+    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    invited_user.created_at -= timedelta(hours=168)
+    db.session.commit()
+
+    # Send the invite again and confirm it works
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    assert invited_user
+
+
 # -- Add existing users to projects ################################# Add existing users to projects #
 def test_add_existing_user_without_project(client):
     """Project required if inviting user to project."""
