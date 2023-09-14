@@ -887,7 +887,9 @@ class RemoveUserAssociation(flask_restful.Resource):
                 )
             else:
                 invite_id = unanswered_invite.id
-                project_invite_key = models.ProjectInviteKeys.query.filter_by(invite_id=invite_id,project_id=project.id).one_or_none()
+                project_invite_key = models.ProjectInviteKeys.query.filter_by(
+                    invite_id=invite_id, project_id=project.id
+                ).one_or_none()
                 if project_invite_key:
                     db.session.delete(unanswered_invite)
                     db.session.delete(project_invite_key)
@@ -933,12 +935,10 @@ class RemoveUserAssociation(flask_restful.Resource):
             msg = f"Invited user is no longer associated with project {project.public_id}."
         else:
             msg = f"User {existing_user.username} no longer associated with project {project.public_id}."
-        
+
         flask.current_app.logger.debug(msg)
 
-        return {
-            "message": msg
-        }
+        return {"message": msg}
 
 
 class EncryptedToken(flask_restful.Resource):
