@@ -296,3 +296,4 @@ _Nothing merged in CLI during this sprint_
 
 - Only return date (not time) from `Statistics` endpoint ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1456))
 - Set `sto2*` columns in `Unit` table to nullable ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1462))
+- Dependency: Bump `MariaDB` to LTS version 10.11.5 ([#1465](https://github.com/ScilifelabDataCentre/dds_web/pull/1465))
