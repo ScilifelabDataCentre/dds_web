@@ -1,14 +1,13 @@
-<!--
 ## Read this before submitting the PR
 
-- When creating a new PR, make it a _Draft PR_.
-- Go through sections 1-5 below, fill them in and check all the boxes
-  - If there is a field which you are unsure about, enter the edit mode of this description or go to the [PR template](../.github/pull_request_template.md); There are invisible comments providing descriptions which may be of help.
-- If you see the "Update Branch" button at the bottom of the PR, you will need to rebase or update (merge the head branch into the current branch)
-- **When all information is filled in, all boxes are checked and the branch is updated with the changes from the master/dev branch (depending on which one this branch is forked from**, mark the PR as _Ready for Review_ and tag reviewers (in the "Reviewers" section in the top right).
-- If you're stuck, or any checks fail (e.g. tests) and you need help, you can tag reviewers and mark as ready for review. Inform the reviewers about needing input about the specific issue.
-- Once there is a submitted review, implement the suggestions (if reasonable, otherwise discuss) and then request a new review (unless approved)
--->
+1. Always create a Draft PR first
+2. Go through sections 1-5 below, fill them in and check all the boxes
+3. Make sure that the branch is updated; if there's an "Update branch" button at the bottom of the PR, rebase or update branch.
+4. When all boxes are checked, information is filled in, and the branch is updated: mark as Ready For Review and tag reviewers (top right)
+5. Once there is a submitted review, implement the suggestions (if reasonable, otherwise discuss) and request an new review.
+
+If there is a field which you are unsure about, enter the edit mode of this description or go to the [PR template](../.github/pull_request_template.md); There are invisible comments providing descriptions which may be of help.
+
 ## 1. Description / Summary
 
 _Add a summary of the changes in this PR and the related issue._
