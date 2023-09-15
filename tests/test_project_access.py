@@ -405,3 +405,9 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
         project_id=project.id, user_id="unituser"
     ).first()
     assert user_project_key_row
+
+def revoking_access_to_existing_user(client):
+    pass
+
+def revoking_access_to_unacepted_invite(client):
+    pass
