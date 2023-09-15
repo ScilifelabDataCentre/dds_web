@@ -83,8 +83,12 @@ class AddUser(flask_restful.Resource):
         try:
             existing_user = user_schemas.UserSchema().load({"email": email})
             unanswered_invite = user_schemas.UnansweredInvite().load({"email": email})
-        except sqlalchemy.exc.OperationalError as err:
-            raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            raise ddserr.DatabaseError(
+                message=str(err),
+                alt_message="Something happened while checking for existig account / active invite.",
+                pass_message=False,
+            )
 
         if existing_user or unanswered_invite:
             if not project:
