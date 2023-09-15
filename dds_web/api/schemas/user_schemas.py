@@ -77,13 +77,16 @@ class UnansweredInvite(marshmallow.Schema):
         userexists = utils.email_in_db(email=data.get("email"))
 
         # check if the user invite should have expired and be deleted
-        if (invite):
-            if (
-                    datetime.datetime.utcnow() - datetime.timedelta(hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"])
-                ) > invite.created_at:
-                    db.session.delete(invite)
-                    db.session.commit()
-                    invite = None
+        if invite and (
+            (
+                datetime.datetime.utcnow()
+                - datetime.timedelta(hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"])
+            )
+            > invite.created_at
+        ):
+            db.session.delete(invite)
+            db.session.commit()
+            invite = None
 
         if userexists and invite:
             raise ddserr.DatabaseError(message="Email exists for user and invite at the same time")
