@@ -86,16 +86,6 @@ class AddUser(flask_restful.Resource):
         except sqlalchemy.exc.OperationalError as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
-        # check if the user invite should have expired and be deleted
-        if unanswered_invite:
-            # If actual time minus 168 hours (7 days) is greater than the time in the invite -> is expired, delete it
-            if (
-                datetime.datetime.utcnow() - datetime.timedelta(hours=168)
-            ) > unanswered_invite.created_at:
-                db.session.delete(unanswered_invite)
-                db.session.commit()
-                unanswered_invite = None
-
         if existing_user or unanswered_invite:
             if not project:
                 raise ddserr.DDSArgumentError(
