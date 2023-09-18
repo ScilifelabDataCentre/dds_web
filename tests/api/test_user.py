@@ -309,6 +309,7 @@ def test_invite_user_expired_not_deleted(client):
 
 def test_invite_user_existing_project_invite_expired(client):
     """Same test as above but user is invited to existing project"""
+    
     project_id = "public_project_id"
 
     # invite a new user
@@ -320,17 +321,20 @@ def test_invite_user_existing_project_invite_expired(client):
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    # Set the creation date in the DB to -7 days for now
+
     invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
-    invited_user.created_at -= timedelta(hours=168)
-    old_time = invited_user.created_at
-    db.session.commit()
+    assert invited_user
 
     # check row was added to project invite keys table
     project_invite_keys = models.ProjectInviteKeys.query.filter_by(
         invite_id=invited_user.id, project_id=project_id
     ).one_or_none()
     assert project_invite_keys
+
+    # Set the creation date in the DB to -7 days for now
+    invited_user.created_at -= timedelta(hours=168)
+    old_time = invited_user.created_at
+    db.session.commit()
 
     # Send the invite again and confirm it works
     response = client.post(
