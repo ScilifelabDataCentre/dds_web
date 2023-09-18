@@ -310,13 +310,13 @@ def test_invite_user_expired_not_deleted(client):
 def test_invite_user_existing_project_invite_expired(client):
     """Same test as above but user is invited to existing project"""
 
-    project_id = "public_project_id"
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
 
     # invite a new user
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": project_id},
+        query_string={"project": project.public_id},
         json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -326,7 +326,7 @@ def test_invite_user_existing_project_invite_expired(client):
 
     # check row was added to project invite keys table
     project_invite_keys = models.ProjectInviteKeys.query.filter_by(
-        invite_id=invited_user.id, project_id=project_id
+        invite_id=invited_user.id, project_id=project.id
     ).one_or_none()
     assert project_invite_keys
 
@@ -339,7 +339,7 @@ def test_invite_user_existing_project_invite_expired(client):
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": project_id},
+        query_string={"project": project.public_id},
         json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -352,7 +352,7 @@ def test_invite_user_existing_project_invite_expired(client):
 
     # check that the project invite keys as a new row
     project_invite_keys_new = models.ProjectInviteKeys.query.filter_by(
-        invite_id=invited_user.id, project_id=project_id
+        invite_id=invited_user.id, project_id=project.id
     ).one_or_none()
     assert not project_invite_keys == project_invite_keys_new
 
