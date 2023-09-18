@@ -108,6 +108,7 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Cannot remove non-existent project access" in response.json["message"]
 
+
 def test_remove_nonacepted_user_from_other_project(client, boto3_session):
     """Try to remove an User with an unacepted invite from another project"""
 
@@ -144,7 +145,6 @@ def test_remove_nonacepted_user_from_other_project(client, boto3_session):
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Cannot remove non-existent project access" in response.json["message"]
-
 
 
 def test_remove_existing_user_from_nonexistent_proj(client, boto3_session):
