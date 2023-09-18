@@ -344,7 +344,7 @@ def test_invite_user_existing_project_invite_expired(client):
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     assert invited_user
 
     # check that the date has been updated
