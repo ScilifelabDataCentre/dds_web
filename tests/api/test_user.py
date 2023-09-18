@@ -287,7 +287,7 @@ def test_invite_user_expired_not_deleted(client):
     assert response.status_code == http.HTTPStatus.OK
 
     # Set the creation date in the DB to -7 days for now
-    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     invited_user.created_at -= timedelta(hours=168)
     old_time = invited_user.created_at
     db.session.commit()
