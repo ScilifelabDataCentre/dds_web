@@ -348,7 +348,7 @@ def test_invite_user_existing_project_invite_expired(client):
     assert invited_user
 
     # check that the date has been updated
-    assert not old_time == invited_user.created_at
+    assert invited_user.created_at != old_time
 
     # check that the project invite keys as a new row
     project_invite_keys_new = models.ProjectInviteKeys.query.filter_by(
