@@ -300,3 +300,4 @@ _Nothing merged in CLI during this sprint_
 - Dependency: Bump `MariaDB` to LTS version 10.11.5 ([#1465](https://github.com/ScilifelabDataCentre/dds_web/pull/1465))
 - Bug fixed: Row in `ProjectUsers` should also be added if it doesn't exist when giving Researcher access to a specific project ([#1464](https://github.com/ScilifelabDataCentre/dds_web/pull/1464))
 - Workflow: Update PR template and clarify sections ([#1467](https://github.com/ScilifelabDataCentre/dds_web/pull/1467))
+- Revoking access to unacepted invites removes the invites from the DB ([#1192])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13/backlog?epics=visible&selectedIssue=DDS-1192)

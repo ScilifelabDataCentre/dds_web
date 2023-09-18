@@ -469,6 +469,7 @@ def revoking_access_to_unacepted_invite(client):
     ).one_or_none()
     assert not project_invite_keys
 
+
 def test_fix_access_unitadmin_valid_email_unituser_no_project(client):
     """Unit Admin giving access to unituser - ok. No project."""
     # Remove ProjectUserKeys row for specific project and user
