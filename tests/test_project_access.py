@@ -14,6 +14,8 @@ import tests
 # proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
 proj_query = {"project": "public_project_id"}
 # proj_query_restricted = {"project": "restricted_project_id"}
+first_new_email = {"email": "first_test_email@mailtrap.io"}
+first_new_user = {**first_new_email, "role": "Researcher"}
 
 # TESTS #################################################################################### TESTS #
 
@@ -406,8 +408,42 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
     ).first()
     assert user_project_key_row
 
-def revoking_access_to_existing_user(client):
-    pass
 
 def revoking_access_to_unacepted_invite(client):
-    pass
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+
+    # invite a new user to an existing project so they receive a new invite
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project.public_id},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    assert invited_user
+
+    # check row was added to project invite keys table
+    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project.id
+    ).one_or_none()
+    assert project_invite_keys
+
+    # Now, revoke access to said user. The invite should be deleted
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project.public_id},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Check that the invite is deleted
+    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    assert not invited_user
+
+    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project.id
+    ).one_or_none()
+    assert not project_invite_keys
