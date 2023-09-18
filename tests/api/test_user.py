@@ -309,7 +309,7 @@ def test_invite_user_expired_not_deleted(client):
 
 def test_invite_user_existing_project_invite_expired(client):
     """Same test as above but user is invited to existing project"""
-    
+
     project_id = "public_project_id"
 
     # invite a new user
@@ -320,7 +320,6 @@ def test_invite_user_existing_project_invite_expired(client):
         json=first_new_user,
     )
     assert response.status_code == http.HTTPStatus.OK
-
 
     invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
     assert invited_user
