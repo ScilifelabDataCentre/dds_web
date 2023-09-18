@@ -6,7 +6,6 @@
 
 # standar library
 import datetime
-from datetime import timedelta
 
 # Installed
 import flask
