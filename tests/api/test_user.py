@@ -354,7 +354,7 @@ def test_invite_user_existing_project_invite_expired(client):
     project_invite_keys_new = models.ProjectInviteKeys.query.filter_by(
         invite_id=invited_user.id, project_id=project.id
     ).one_or_none()
-    assert not project_invite_keys == project_invite_keys_new
+    assert project_invite_keys_new != project_invite_keys
 
 
 # -- Add existing users to projects ################################# Add existing users to projects #
