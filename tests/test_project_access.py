@@ -442,7 +442,7 @@ def revoking_access_to_unacepted_invite(client):
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     assert invited_user
 
     # check row was added to project invite keys table
@@ -461,7 +461,7 @@ def revoking_access_to_unacepted_invite(client):
     assert response.status_code == http.HTTPStatus.OK
 
     # Check that the invite is deleted
-    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     assert not invited_user
 
     project_invite_keys = models.ProjectInviteKeys.query.filter_by(
