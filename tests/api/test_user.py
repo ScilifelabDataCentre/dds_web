@@ -307,6 +307,53 @@ def test_invite_user_expired_not_deleted(client):
     assert not old_time == invited_user.created_at
 
 
+def test_invite_user_existing_project_invite_expired(client):
+    """Same test as above but user is invited to existing project"""
+    project_id = "public_project_id"
+
+    # invite a new user
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project_id},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Set the creation date in the DB to -7 days for now
+    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    invited_user.created_at -= timedelta(hours=168)
+    old_time = invited_user.created_at
+    db.session.commit()
+
+    # check row was added to project invite keys table
+    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project_id
+    ).one_or_none()
+    assert project_invite_keys
+
+    # Send the invite again and confirm it works
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project_id},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    assert invited_user
+
+    # check that the date has been updated
+    assert not old_time == invited_user.created_at
+
+    # check that the project invite keys as a new row
+    project_invite_keys_new = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project_id
+    ).one_or_none()
+    assert not project_invite_keys == project_invite_keys_new
+
+
 # -- Add existing users to projects ################################# Add existing users to projects #
 def test_add_existing_user_without_project(client):
     """Project required if inviting user to project."""
