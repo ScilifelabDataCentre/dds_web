@@ -304,7 +304,7 @@ def test_invite_user_expired_not_deleted(client):
     assert invited_user
 
     # check that the date has been updated
-    assert not old_time == invited_user.created_at
+    assert invited_user.created_at != old_time
 
 
 def test_invite_user_existing_project_invite_expired(client):
