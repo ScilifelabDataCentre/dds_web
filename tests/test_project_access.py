@@ -431,6 +431,7 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
 
 
 def test_revoking_access_to_unacepted_invite(client):
+    """ Revoking access to an unacepted invite for an existing project should delete the invite from the db """
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
 
     # invite a new user to an existing project so they receive a new invite
