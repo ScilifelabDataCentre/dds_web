@@ -107,7 +107,7 @@ def create_new_unit(
     """
     from dds_web.database import models
     from dds_web.utils import current_time
-    
+
     error_message = ""
     if len(public_id) > 50:
         error_message = "The 'public_id' can be a maximum of 50 characters"
@@ -140,7 +140,7 @@ def create_new_unit(
         days_in_expired=days_in_expired,
         quota=quota,
         warning_level=warn_at,
-        sto4_start_time = current_time()
+        sto4_start_time=current_time(),
     )
     db.session.add(new_unit)
     db.session.commit()
