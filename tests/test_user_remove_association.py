@@ -110,7 +110,7 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
 
 
 def test_remove_nonacepted_user_from_other_project(client, boto3_session):
-    """ Try to remove an User with an unacepted invite from another project should result in an error"""
+    """Try to remove an User with an unacepted invite from another project should result in an error"""
 
     create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
