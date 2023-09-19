@@ -354,6 +354,7 @@ def test_invite_user_existing_project_invite_expired(client):
     ).one_or_none()
     assert project_invite_keys_new != project_invite_keys
 
+
 def test_invite_user_expired_sqlalchemyerror(client):
     """Error message should be returned if sqlalchemyerror occurs during deletion of unanswered invite."""
 
@@ -374,7 +375,7 @@ def test_invite_user_expired_sqlalchemyerror(client):
 
     from tests.api.test_project import mock_sqlalchemyerror
 
-    # Simulate database error while trying to send new invite 
+    # Simulate database error while trying to send new invite
     with unittest.mock.patch("dds_web.db.session.delete", mock_sqlalchemyerror):
         response = client.post(
             tests.DDSEndpoint.USER_ADD,
@@ -382,7 +383,10 @@ def test_invite_user_expired_sqlalchemyerror(client):
             json=first_new_user,
         )
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
-        assert response.json.get("message") == "Something happened while checking for existig account / active invite."
+        assert (
+            response.json.get("message")
+            == "Something happened while checking for existig account / active invite."
+        )
 
     # Get invite again
     invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
@@ -391,7 +395,8 @@ def test_invite_user_expired_sqlalchemyerror(client):
     # The invite should be the same
     assert invited_user.created_at == old_time
     assert invited_user.id == old_id
-   
+
+
 # -- Add existing users to projects ################################# Add existing users to projects #
 def test_add_existing_user_without_project(client):
     """Project required if inviting user to project."""
