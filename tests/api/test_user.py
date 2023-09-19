@@ -290,9 +290,6 @@ def test_invite_user_expired_not_deleted(client):
     db.session.commit()
 
     # Send the invite again and confirm it works
-    from tests.api.test_project import mock_sqlalchemyerror
-
-
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -336,9 +333,6 @@ def test_invite_user_existing_project_invite_expired(client):
     db.session.commit()
 
     # Send the invite again and confirm it works
-    from tests.api.test_project import mock_sqlalchemyerror
-
-
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -397,6 +391,7 @@ def test_invite_user_expired_sqlalchemyerror(client):
     # The invite should be the same
     assert invited_user.created_at == old_time
     assert invited_user.id == old_id
+   
 # -- Add existing users to projects ################################# Add existing users to projects #
 def test_add_existing_user_without_project(client):
     """Project required if inviting user to project."""
