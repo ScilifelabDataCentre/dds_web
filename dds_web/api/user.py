@@ -893,8 +893,13 @@ class RemoveUserAssociation(flask_restful.Resource):
 
                 # if the unasnwsered invite was asociated in the project, remove the invite and the asociation
                 if project_invite_key:
-                    db.session.delete(unanswered_invite)
                     db.session.delete(project_invite_key)
+                    
+                    # if such invite was only associated with a single project, delete the invite. Otherwise leave the invite
+                    project_invite_key = models.ProjectInviteKeys.query.filter_by(
+                    invite_id=invite_id).one_or_none()
+                    if not project_invite_key:
+                        db.session.delete(unanswered_invite)
                 else:
                     # the unanswred invite is not asociated with the project
                     raise ddserr.NoSuchUserError(
