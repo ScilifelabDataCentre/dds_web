@@ -299,5 +299,5 @@ _Nothing merged in CLI during this sprint_
 - Set `sto2*` columns in `Unit` table to nullable ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1462))
 - Dependency: Bump `MariaDB` to LTS version 10.11.5 ([#1465](https://github.com/ScilifelabDataCentre/dds_web/pull/1465))
 - Bug fixed: Row in `ProjectUsers` should also be added if it doesn't exist when giving Researcher access to a specific project ([#1464](https://github.com/ScilifelabDataCentre/dds_web/pull/1464))
-- AddUser checks for expired unanswered invites and updated db ([#1466](https://github.com/ScilifelabDataCentre/dds_web/pull/1466))
+- Replace expired invites when there's a new invitation attempt ([#1466](https://github.com/ScilifelabDataCentre/dds_web/pull/1466))
 - Workflow: Update PR template and clarify sections ([#1467](https://github.com/ScilifelabDataCentre/dds_web/pull/1467))
