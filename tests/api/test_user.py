@@ -389,7 +389,7 @@ def test_invite_user_expired_sqlalchemyerror(client):
         )
 
     # Get invite again
-    invited_user = models.Invite.query.filter_by(email=first_new_email["email"]).one_or_none()
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
     assert invited_user
 
     # The invite should be the same
