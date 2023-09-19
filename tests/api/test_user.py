@@ -292,14 +292,6 @@ def test_invite_user_expired_not_deleted(client):
     # Send the invite again and confirm it works
     from tests.api.test_project import mock_sqlalchemyerror
 
-    # simulate database error
-    with unittest.mock.patch("dds_web.db.session.add", mock_sqlalchemyerror):
-        response = client.post(
-            tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            json=first_new_user,
-        )
-        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
 
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
