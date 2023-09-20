@@ -305,7 +305,7 @@ def test_invite_user_expired_not_deleted(client):
 
 
 def test_invite_user_existing_project_invite_expired(client):
-    """If an invite to a project has expired and hasn't been removed. A new invite should replace the old one"""
+    """If an invite to a project has expired and hasn't been removed, a new invite should replace the old one"""
 
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
 
