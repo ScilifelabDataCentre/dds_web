@@ -904,7 +904,7 @@ class RemoveUserAssociation(flask_restful.Resource):
                 else:
                     # the unanswred invite is not asociated with the project
                     raise ddserr.NoSuchUserError(
-                        f"The user with email '{user_email}' does not have access to the specified project."
+                        f"The user / invite with email '{user_email}' does not have access to the specified project."
                         " Cannot remove non-existent project access."
                     )
 
