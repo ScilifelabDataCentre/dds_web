@@ -273,7 +273,7 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
 
 
 def test_invite_user_expired_not_deleted(client):
-    """If an invite has expired and hasn't been removed to the database the invite should be replaced"""
+    """If an invite has expired and hasn't been removed from the database, the invite should be replaced"""
 
     # invite a new user
     response = client.post(
