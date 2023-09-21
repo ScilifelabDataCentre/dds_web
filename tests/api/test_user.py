@@ -272,6 +272,131 @@ def test_add_unitadmin_user_with_unitpersonnel_permission_denied(client):
     assert invited_user is None
 
 
+def test_invite_user_expired_not_deleted(client):
+    """If an invite has expired and hasn't been removed from the database, the invite should be replaced"""
+
+    # invite a new user
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Set the creation date in the DB to -7 days for now
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    invited_user.created_at -= timedelta(hours=168)
+    old_time = invited_user.created_at
+    db.session.commit()
+
+    # Send the invite again and confirm it works
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+
+    # check that the date has been updated
+    assert invited_user.created_at != old_time
+
+
+def test_invite_user_existing_project_invite_expired(client):
+    """If an invite to a project has expired and hasn't been removed, a new invite should replace the old one"""
+
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+
+    # invite a new user
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project.public_id},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+
+    # check row was added to project invite keys table
+    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project.id
+    ).one_or_none()
+    assert project_invite_keys
+
+    # Set the creation date in the DB to -7 days for now
+    invited_user.created_at -= timedelta(hours=168)
+    old_time = invited_user.created_at
+    db.session.commit()
+
+    # Send the invite again and confirm it works
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project.public_id},
+        json=first_new_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+
+    # check that the date has been updated
+    assert invited_user.created_at != old_time
+
+    # check that the project invite keys has a new row
+    project_invite_keys_new = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project.id
+    ).one_or_none()
+    assert project_invite_keys_new != project_invite_keys
+
+
+def test_invite_user_expired_sqlalchemyerror(client):
+    """Error message should be returned if sqlalchemyerror occurs during deletion of unanswered invite."""
+
+    # Invite a new user
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Set the creation date in the DB to -7 days for now
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    invited_user.created_at -= timedelta(hours=168)
+    old_time = invited_user.created_at
+    old_id = invited_user.id
+    db.session.commit()
+
+    from tests.api.test_project import mock_sqlalchemyerror
+
+    # Simulate database error while trying to send new invite
+    with unittest.mock.patch("dds_web.db.session.delete", mock_sqlalchemyerror):
+        response = client.post(
+            tests.DDSEndpoint.USER_ADD,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            json=first_new_user,
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+        assert (
+            response.json.get("message")
+            == "Something happened while checking for existig account / active invite."
+        )
+
+    # Get invite again
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+
+    # The invite should be the same
+    assert invited_user.created_at == old_time
+    assert invited_user.id == old_id
+
+
 # -- Add existing users to projects ################################# Add existing users to projects #
 def test_add_existing_user_without_project(client):
     """Project required if inviting user to project."""
