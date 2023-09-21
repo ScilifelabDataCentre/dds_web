@@ -898,6 +898,24 @@ class RemoveUserAssociation(flask_restful.Resource):
 	if existing_user.role not in allowed_users:
 		raise Exception ("Not enough privileges to remove such user")
 
+
+	----
+	We need to add functionality to check for the user exists in the project and unit
+	
+	 1. Pos and Researchers only delete access in the project they are
+         2. Unit Admin and Personal delete access for every project in the unit
+
+        user_unit = # query to get the unit(s) the user executing the function is asociated
+	user_project = # query to get the projects the user executing the function is asociated from the previous units (only for pos and researchers)
+	So, for everyone:  role.unit != project.unit_id -> Exception
+	pos and researchers: if project.id not in user_project  -> Exception
+
+        if user_unit != project.unit_id:
+            raise Exception("Not enough privileges to remove such user")
+
+        if role in {"Project Owner", "Researcher"} and project.id not in user_project:
+            raise Exception("Not enough privileges to remove such user")
+
         """
 
 
@@ -908,6 +926,7 @@ class RemoveUserAssociation(flask_restful.Resource):
                 f"The user / invite with email '{user_email}' does not have access to the specified project. "
                 "Cannot remove non-existent project access."
             )
+
 
         if unanswered_invite:
             invite_id = unanswered_invite.id
