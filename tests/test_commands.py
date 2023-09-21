@@ -252,6 +252,26 @@ def test_create_new_unit_success(client, runner, capfd: LogCaptureFixture) -> No
     _, err = capfd.readouterr()
     assert f"Unit '{correct_unit['name']}' created" in err
 
+    new_unit = (
+        db.session.query(models.Unit).filter(models.Unit.name == correct_unit["name"]).one_or_none()
+    )
+
+    # Check that the different attributes have been set up
+
+    assert new_unit.public_id == correct_unit["public_id"]
+    assert new_unit.external_display_name == correct_unit["external_display_name"]
+    assert new_unit.contact_email == correct_unit["contact_email"]
+    assert new_unit.internal_ref
+    assert new_unit.sto4_start_time
+    assert new_unit.sto4_endpoint == correct_unit["safespring_endpoint"]
+    assert new_unit.sto4_name == correct_unit["safespring_name"]
+    assert new_unit.sto4_access == correct_unit["safespring_access"]
+    assert new_unit.sto4_secret == correct_unit["safespring_secret"]
+    assert new_unit.days_in_available
+    assert new_unit.days_in_expired
+    assert new_unit.quota == correct_unit["quota"]
+    assert new_unit.warning_level
+
 
 # update_unit
 
