@@ -132,6 +132,7 @@ def create_new_unit(
         external_display_name=external_display_name,
         contact_email=contact_email,
         internal_ref=internal_ref or public_id,
+	sto4_start_time=current_time(),
         sto4_endpoint=safespring_endpoint,
         sto4_name=safespring_name,
         sto4_access=safespring_access,
@@ -140,7 +141,6 @@ def create_new_unit(
         days_in_expired=days_in_expired,
         quota=quota,
         warning_level=warn_at,
-        sto4_start_time=current_time(),
     )
     db.session.add(new_unit)
     db.session.commit()

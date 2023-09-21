@@ -252,6 +252,9 @@ def test_create_new_unit_success(client, runner, capfd: LogCaptureFixture) -> No
     _, err = capfd.readouterr()
     assert f"Unit '{correct_unit['name']}' created" in err
 
+    new_unit = db.session.query(models.Unit).filter(models.Unit.name == correct_unit["name"]).one_or_none()
+
+    assert new_unit.sto4_start_time
 
 # update_unit
 
