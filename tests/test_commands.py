@@ -272,6 +272,11 @@ def test_create_new_unit_success(client, runner, capfd: LogCaptureFixture) -> No
     assert new_unit.quota == correct_unit["quota"]
     assert new_unit.warning_level
 
+    # check for the atributes that should not be setted up
+    assert not new_unit.sto2_endpoint
+    assert not new_unit.sto2_name
+    assert not new_unit.sto2_access
+    assert not new_unit.sto2_secret
 
 # update_unit
 
