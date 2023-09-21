@@ -885,7 +885,22 @@ class RemoveUserAssociation(flask_restful.Resource):
             Researchers only and just only revoke access for Researchers
             ProjectOwners revoke access for ProjectOwners (in the same project) and Researchers (in the same project)
             Unit Personnel & Unit Admins: Researchers and Project Owners (any).
+
+	rules = {
+            "Researcher": {"Researcher"},
+            "Project Owner": {"Project Owner", "Researcher"},
+            "Unit Admin": {"Project Owner", "Researcher"},
+            "Unit Personnel": {"Project Owner", "Researcher"}
+        }
+
+	allowed_users = rules.get(role) # user executing the function
+
+	if existing_user.role not in allowed_users:
+		raise Exception ("Not enough privileges to remove such user")
+
         """
+
+
 
         # If the user doesn't exist and doesn't have a pending invite
         if not existing_user and not unanswered_invite:
