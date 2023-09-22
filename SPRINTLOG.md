@@ -301,3 +301,10 @@ _Nothing merged in CLI during this sprint_
 - Bug fixed: Row in `ProjectUsers` should also be added if it doesn't exist when giving Researcher access to a specific project ([#1464](https://github.com/ScilifelabDataCentre/dds_web/pull/1464))
 - Workflow: Update PR template and clarify sections ([#1467](https://github.com/ScilifelabDataCentre/dds_web/pull/1467))
 - Revoking access to unacepted invites removes the invites from the DB ([#1192])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13/backlog?epics=visible&selectedIssue=DDS-1192)
+
+
+# 2023-09-18 - 2023-09-29
+
+- Column `sto4_start_time` is automatically set when the create-unit command is run ([#1668])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1668)
+- Replace expired invites when there's a new invitation attempt ([#1466](https://github.com/ScilifelabDataCentre/dds_web/pull/1466))
+- New version: 2.5.1 ([#1471](https://github.com/ScilifelabDataCentre/dds_web/pull/1471))

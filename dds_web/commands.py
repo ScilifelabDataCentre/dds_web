@@ -106,6 +106,7 @@ def create_new_unit(
     https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
     """
     from dds_web.database import models
+    from dds_web.utils import current_time
 
     error_message = ""
     if len(public_id) > 50:
@@ -131,6 +132,7 @@ def create_new_unit(
         external_display_name=external_display_name,
         contact_email=contact_email,
         internal_ref=internal_ref or public_id,
+        sto4_start_time=current_time(),
         sto4_endpoint=safespring_endpoint,
         sto4_name=safespring_name,
         sto4_access=safespring_access,
