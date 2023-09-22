@@ -878,48 +878,7 @@ class RemoveUserAssociation(flask_restful.Resource):
         except sqlalchemy.exc.OperationalError as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
-        """
-        TODO before proceding with the deletion: We need to ensure that the hierarchy of roles is ensured
-        i.e That:
- 
-            Researchers only and just only revoke access for Researchers
-            ProjectOwners revoke access for ProjectOwners (in the same project) and Researchers (in the same project)
-            Unit Personnel & Unit Admins: Researchers and Project Owners (any).
-
-	rules = {
-            "Researcher": {"Researcher"},
-            "Project Owner": {"Project Owner", "Researcher"},
-            "Unit Admin": {"Project Owner", "Researcher"},
-            "Unit Personnel": {"Project Owner", "Researcher"}
-        }
-
-	allowed_users = rules.get(role) # user executing the function
-
-	if existing_user.role not in allowed_users:
-		raise Exception ("Not enough privileges to remove such user")
-
-
-	----
-	We need to add functionality to check for the user exists in the project and unit
-	
-	 1. Pos and Researchers only delete access in the project they are
-         2. Unit Admin and Personal delete access for every project in the unit
-
-        user_unit = # query to get the unit(s) the user executing the function is asociated
-	user_project = # query to get the projects the user executing the function is asociated from the previous units (only for pos and researchers)
-	So, for everyone:  role.unit != project.unit_id -> Exception
-	pos and researchers: if project.id not in user_project  -> Exception
-
-        if user_unit != project.unit_id:
-            raise Exception("Not enough privileges to remove such user")
-
-        if role in {"Project Owner", "Researcher"} and project.id not in user_project:
-            raise Exception("Not enough privileges to remove such user")
-
-        """
-
-
-
+        
         # If the user doesn't exist and doesn't have a pending invite
         if not existing_user and not unanswered_invite:
             raise ddserr.NoSuchUserError(
@@ -927,7 +886,44 @@ class RemoveUserAssociation(flask_restful.Resource):
                 "Cannot remove non-existent project access."
             )
 
+        """
+        We also need to ensure the hierarchy of roles is ensured:
 
+            Researchers only revoke access for Researchers
+            ProjectOwners revoke access for ProjectOwners (in the same project) and Researchers (in the same project)
+            Unit Personnel & Unit Admins: Researchers and Project Owners (any project).
+        
+        Because the access to the project has already being verified, and we are revoking access for a specific project
+        The only condition to check is that a Project Owner should not be deleted by a Researcher that is not PO
+        """
+
+        # role of the user calling the function
+        role = auth.current_user().role
+
+        # check if the user/invite trying to get revoked access is a PO
+        is_po = False
+        if unanswered_invite:
+            is_po = models.ProjectInviteKeys.query.filter_by(
+                project_id = project.id,
+                invite_id = unanswered_invite.id,
+                owner = 1
+            )
+        else:
+            is_po = models.ProjectUsers.query.filter_by(
+                project_id = project.id,
+                user_id = existing_user.username,
+                owner = 1
+            ).one_or_none()
+
+        if is_po:
+            """
+            If the user trying to be deleted is a PO -> can only be deleted by a user with higher credentials than a Researcher
+            """
+
+            is_po = models.ProjectUsers.query.filter_by(user_id = auth.current_user().username, project_id = project.id, owner = 1).one_or_none()
+            if role == "Researcher" and not is_po:
+                raise ddserr.AccessDeniedError()
+            
         if unanswered_invite:
             invite_id = unanswered_invite.id
 
@@ -955,11 +951,16 @@ class RemoveUserAssociation(flask_restful.Resource):
                 )
 
         else:
-            # User exists, check if they are associated with the project
-            user_in_project = any(
-                user_association.user_id == existing_user.username
-                for user_association in project.researchusers
-            )
+            user_in_project = False
+            for user_association in project.researchusers:
+                if user_association.user_id == existing_user.username:
+                    user_in_project = True
+                    db.session.delete(user_association)
+                    project_user_key = models.ProjectUserKeys.query.filter_by(
+                        project_id=project.id, user_id=existing_user.username
+                    ).first()
+                    if project_user_key:
+                        db.session.delete(project_user_key)            
 
             if not user_in_project:
                 raise ddserr.NoSuchUserError(
