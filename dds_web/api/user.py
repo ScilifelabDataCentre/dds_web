@@ -878,7 +878,6 @@ class RemoveUserAssociation(flask_restful.Resource):
         except sqlalchemy.exc.OperationalError as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
-        
         # If the user doesn't exist and doesn't have a pending invite
         if not existing_user and not unanswered_invite:
             raise ddserr.NoSuchUserError(
@@ -904,15 +903,11 @@ class RemoveUserAssociation(flask_restful.Resource):
         is_po = False
         if unanswered_invite:
             is_po = models.ProjectInviteKeys.query.filter_by(
-                project_id = project.id,
-                invite_id = unanswered_invite.id,
-                owner = 1
+                project_id=project.id, invite_id=unanswered_invite.id, owner=1
             )
         else:
             is_po = models.ProjectUsers.query.filter_by(
-                project_id = project.id,
-                user_id = existing_user.username,
-                owner = 1
+                project_id=project.id, user_id=existing_user.username, owner=1
             ).one_or_none()
 
         if is_po:
@@ -920,10 +915,12 @@ class RemoveUserAssociation(flask_restful.Resource):
             If the user trying to be deleted is a PO -> can only be deleted by a user with higher credentials than a Researcher
             """
 
-            is_po = models.ProjectUsers.query.filter_by(user_id = auth.current_user().username, project_id = project.id, owner = 1).one_or_none()
+            is_po = models.ProjectUsers.query.filter_by(
+                user_id=auth.current_user().username, project_id=project.id, owner=1
+            ).one_or_none()
             if role == "Researcher" and not is_po:
                 raise ddserr.AccessDeniedError()
-            
+
         if unanswered_invite:
             invite_id = unanswered_invite.id
 
@@ -960,7 +957,7 @@ class RemoveUserAssociation(flask_restful.Resource):
                         project_id=project.id, user_id=existing_user.username
                     ).first()
                     if project_user_key:
-                        db.session.delete(project_user_key)            
+                        db.session.delete(project_user_key)
 
             if not user_in_project:
                 raise ddserr.NoSuchUserError(
