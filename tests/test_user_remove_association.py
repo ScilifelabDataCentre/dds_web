@@ -163,3 +163,24 @@ def test_remove_existing_user_from_nonexistent_proj(client, boto3_session):
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "The specified project does not exist" in response.json["message"]
+
+
+def test_researcher_removes_project_owner(client):
+    """
+    A Researcher who is not a PO should not be able to delete a PO
+    """
+
+    project_id = "public_project_id"
+    email = "projectowner@mailtrap.io"
+
+    rem_user = {"email": email}
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": project_id},
+        json=rem_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    assert "You do not have the necessary permissions" in response.json["message"]
+

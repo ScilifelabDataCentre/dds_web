@@ -859,7 +859,7 @@ class DeleteUser(flask_restful.Resource):
 
 
 class RemoveUserAssociation(flask_restful.Resource):
-    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -919,7 +919,7 @@ class RemoveUserAssociation(flask_restful.Resource):
                 user_id=auth.current_user().username, project_id=project.id, owner=1
             ).one_or_none()
             if role == "Researcher" and not is_po:
-                raise ddserr.AccessDeniedError()
+                raise ddserr.AccessDeniedError("Insufficient credentials")
 
         if unanswered_invite:
             invite_id = unanswered_invite.id
@@ -949,7 +949,7 @@ class RemoveUserAssociation(flask_restful.Resource):
 
         else:
             user_in_project = False
-            for user_association in project.researchusers:
+            for user_association in project.researchusers: # TODO Possible optimization -> comprehesion list
                 if user_association.user_id == existing_user.username:
                     user_in_project = True
                     db.session.delete(user_association)
@@ -958,6 +958,7 @@ class RemoveUserAssociation(flask_restful.Resource):
                     ).first()
                     if project_user_key:
                         db.session.delete(project_user_key)
+                break
 
             if not user_in_project:
                 raise ddserr.NoSuchUserError(
@@ -992,6 +993,7 @@ class RemoveUserAssociation(flask_restful.Resource):
         flask.current_app.logger.debug(msg)
 
         return {"message": msg}
+
 
 
 class EncryptedToken(flask_restful.Resource):
