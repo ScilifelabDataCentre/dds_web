@@ -4,6 +4,9 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
+# standar library
+import datetime
+
 # Installed
 import flask
 import marshmallow
@@ -71,6 +74,18 @@ class UnansweredInvite(marshmallow.Schema):
 
         # double check if there is no existing user with this email
         userexists = utils.email_in_db(email=data.get("email"))
+
+        # check if the user invite should have expired and be deleted
+        if invite and (
+            (
+                datetime.datetime.utcnow()
+                - datetime.timedelta(hours=flask.current_app.config["INVITATION_EXPIRES_IN_HOURS"])
+            )
+            > invite.created_at
+        ):
+            db.session.delete(invite)
+            db.session.commit()
+            invite = None
 
         if userexists and invite:
             raise ddserr.DatabaseError(message="Email exists for user and invite at the same time")
