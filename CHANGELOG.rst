@@ -1,9 +1,24 @@
 Changelog
 ==========
 
+.. _2.5.1:
+
+2.5.1 - 2023-09-27
+~~~~~~~~~~~~~~~~~~~
+
+- Super Admins only: 
+    - New endpoint `MaintenanceMode.get`: Super Admins can get info on whether or not the DDS maintenance mode is on or off.
+    - Statistics endpoint returns date of generated statistics, not time.  
+- Bugs fixed:
+    - Errors when attempting to create a project after it has failed due to a database error should now not happen; Database rollback added to project creation endpoint.
+    - Researchers should now always appear in the list of project users after running `dds project access fix --project <proj_id>`; Missing database update added.
+    - Expired invites are deleted automatically when invite is sent to user again; Deleting invite with `dds user delete --is-invite` is no longer necessary prior to a new `dds user add`. 
+- Dependencies:
+    - `MariaDB` from EOL `10.7.8`` to LTS `10.11.5`
+
 .. _2.5.0:
 
-version 2.5.0 - 2023-08-30
+2.5.0 - 2023-08-30
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Dependencies: 
