@@ -14,7 +14,7 @@ Changelog
     - Researchers should now always appear in the list of project users after running `dds project access fix --project <proj_id>`; Missing database update added.
     - Expired invites are deleted automatically when invite is sent to user again; Deleting invite with `dds user delete --is-invite` is no longer necessary prior to a new `dds user add`. 
 - Dependencies:
-    - `MariaDB` from EOL `10.7.8`` to LTS `10.11.5`
+    - `MariaDB` from EOL `10.7.8` to LTS `10.11.5`
 
 .. _2.5.0:
 
