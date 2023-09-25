@@ -917,11 +917,13 @@ class RemoveUserAssociation(flask_restful.Resource):
                 )
 
         else:
-            if(auth.current_user().username == existing_user.username):
-                raise ddserr.AccessDeniedError(message="You cannot renew your own access.") 
-            
+            if auth.current_user().username == existing_user.username:
+                raise ddserr.AccessDeniedError(message="You cannot renew your own access.")
+
             user_in_project = False
-            for user_association in project.researchusers: # TODO Possible optimization -> comprehesion list
+            for (
+                user_association
+            ) in project.researchusers:  # TODO Possible optimization -> comprehesion list
                 if user_association.user_id == existing_user.username:
                     user_in_project = True
                     db.session.delete(user_association)
@@ -965,7 +967,6 @@ class RemoveUserAssociation(flask_restful.Resource):
         flask.current_app.logger.debug(msg)
 
         return {"message": msg}
-
 
 
 class EncryptedToken(flask_restful.Resource):

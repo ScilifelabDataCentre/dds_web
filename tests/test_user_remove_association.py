@@ -205,6 +205,7 @@ def test_user_personal_removed(client):
     # Should give error because a unit personal cannot be granted access to individual projects
     assert "Cannot remove non-existent project access." in response.json["message"]
 
+
 def test_removed_myself(client):
     """
     An User cannot remove themselves from a project
@@ -224,7 +225,3 @@ def test_removed_myself(client):
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     # Should give error because a unit personal cannot be granted access to individual projects
     assert "You cannot renew your own access." in response.json["message"]
-
-
-
-
