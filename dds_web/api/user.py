@@ -972,7 +972,6 @@ class RemoveUserAssociation(flask_restful.Resource):
         else:
             msg = f"User with email {user_email} no longer associated with {project.public_id}."
 
-        flask.current_app.logger.debug(msg)
 
         return {"message": msg}
 
