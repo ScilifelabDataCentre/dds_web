@@ -925,7 +925,7 @@ class RemoveUserAssociation(flask_restful.Resource):
 
         else:
             if auth.current_user().username == existing_user.username:
-                raise ddserr.AccessDeniedError(message="You cannot renew your own access.")
+                raise ddserr.AccessDeniedError(message="You cannot revoke your own access.")
 
             # Search the user in the project, when found delete from the database all references to them
             user_in_project = False
