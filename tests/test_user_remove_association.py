@@ -182,7 +182,7 @@ def test_researcher_removes_project_owner(client):
     )
 
     assert response.status_code == http.HTTPStatus.FORBIDDEN
-    assert "You do not have the necessary permissions" in response.json["message"]
+    assert "Insufficient credentials" in response.json["message"]
 
 
 def test_user_personal_removed(client):
