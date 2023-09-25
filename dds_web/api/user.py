@@ -893,7 +893,8 @@ class RemoveUserAssociation(flask_restful.Resource):
         if unanswered_invite:
             if unanswered_invite.unit_id:
                 raise ddserr.UserDeletionError(
-                    "Cannot remove a Unit Admin / Unit User from individual projects")
+                    "Cannot remove a Unit Admin / Unit User from individual projects"
+                )
 
             invite_id = unanswered_invite.id
 
