@@ -969,8 +969,6 @@ class RemoveUserAssociation(flask_restful.Resource):
                 ),
             ) from err
 
-
-
         return {"message": msg}
 
 
