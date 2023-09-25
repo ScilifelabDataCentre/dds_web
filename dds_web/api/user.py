@@ -891,6 +891,8 @@ class RemoveUserAssociation(flask_restful.Resource):
             )
 
         if unanswered_invite:
+            # If there is a unit_id value, it means the invite was associated to a unit
+            # i.e The invite is for a Unit Personel which shouldn't be removed from individual projects
             if unanswered_invite.unit_id:
                 raise ddserr.UserDeletionError(
                     "Cannot remove a Unit Admin / Unit User from individual projects"
@@ -903,7 +905,6 @@ class RemoveUserAssociation(flask_restful.Resource):
                 invite_id=invite_id, project_id=project.id
             ).one_or_none()
 
-            # if the invite has an unit id -> it is a unit personel invite, dont remove
             if project_invite_key:
                 # Remove the association if it exists
                 db.session.delete(project_invite_key)
@@ -926,6 +927,7 @@ class RemoveUserAssociation(flask_restful.Resource):
             if auth.current_user().username == existing_user.username:
                 raise ddserr.AccessDeniedError(message="You cannot renew your own access.")
 
+            # Search the user in the project, when found delete from the database all references to them
             user_in_project = False
             for (
                 user_association
