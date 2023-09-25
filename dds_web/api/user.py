@@ -891,6 +891,10 @@ class RemoveUserAssociation(flask_restful.Resource):
             )
 
         if unanswered_invite:
+
+            if (unanswered_invite.unit_id):
+                raise ddserr.UserDeletionError("Cannot delete Unit Admin / Unit User")
+
             invite_id = unanswered_invite.id
 
             # Check if the unanswered invite is associated with the project
@@ -898,11 +902,12 @@ class RemoveUserAssociation(flask_restful.Resource):
                 invite_id=invite_id, project_id=project.id
             ).one_or_none()
 
+            # if the invite has an unit id -> it is a unit personel invite, dont remove
             if project_invite_key:
                 # Remove the association if it exists
                 db.session.delete(project_invite_key)
 
-                # Check if the invite is associated with only one project, then delete it
+                # Check if the invite is associated with only one project, if it is -> delete the invite
                 project_invite_key = models.ProjectInviteKeys.query.filter_by(
                     invite_id=invite_id
                 ).one_or_none()

@@ -14,6 +14,8 @@ proj_query = {"project": "public_project_id"}
 # proj_query_restricted = {"project": "restricted_project_id"}
 first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
+first_new_user_unit_admin = {**first_new_email, "role": "Unit Admin"}
+first_new_user_unit_personel = {**first_new_email, "role": "Unit Personnel"}
 
 # TESTS ################################################################################## TEST #
 
@@ -225,3 +227,61 @@ def test_removed_myself(client):
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     # Should give error because a unit personal cannot be granted access to individual projects
     assert "You cannot renew your own access." in response.json["message"]
+
+def test_remove_invite_unit_admin(client):
+    """
+    A project removal request for an unanswered invite of unit admin should not work
+    """
+
+    project_id = "public_project_id"
+
+    # invite a new unit admin to the system
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=first_new_user_unit_admin,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # try to remove the unitadmin for a specific project within their unit -> should not work
+    email = first_new_user_unit_admin["email"]
+    rem_user = {"email": email}
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project_id},
+        json=rem_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    # Should give error because a unit personal cannot be granted access to individual projects
+    assert "Cannot delete Unit Admin / Unit User" in response.json["message"]
+
+def test_invite_unit_user(client):
+    """
+    A project removal request for an unanswered invite of unit admin should not work
+    """
+
+    project_id = "public_project_id"
+
+    # invite a new unit user to the system
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=first_new_user_unit_personel,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # try to remove the unit personal for a specific project within their unit -> should not work
+    email = first_new_user_unit_personel["email"]
+    rem_user = {"email": email}
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project_id},
+        json=rem_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    # Should give error because a unit personal cannot be granted access to individual projects
+    assert "Cannot delete Unit Admin / Unit User" in response.json["message"]
