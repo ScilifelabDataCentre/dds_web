@@ -967,10 +967,6 @@ class RemoveUserAssociation(flask_restful.Resource):
                 ),
             ) from err
 
-        if unanswered_invite:
-            msg = f"Invited user is no longer associated with {project.public_id}."
-        else:
-            msg = f"User with email {user_email} no longer associated with {project.public_id}."
 
 
         return {"message": msg}
