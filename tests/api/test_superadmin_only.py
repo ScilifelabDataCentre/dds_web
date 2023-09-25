@@ -629,13 +629,26 @@ def test_set_maintenance_not_superadmin(client: flask.testing.FlaskClient) -> No
         assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
-def test_set_maintenance_incorrect_method(client: flask.testing.FlaskClient) -> None:
-    """Only put should be accepted."""
+def test_get_maintenance_status_not_superadmin(client: flask.testing.FlaskClient) -> None:
+    """Check Maintenance mode status using everything but Super Admin access."""
+    no_access_users: typing.Dict = users.copy()
+    no_access_users.pop("Super Admin")
+
+    for u in no_access_users:
+        token: typing.Dict = get_token(username=users[u], client=client)
+        response: werkzeug.test.WrapperTestResponse = client.get(
+            tests.DDSEndpoint.MAINTENANCE, headers=token
+        )
+        assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+def test_maintenance_command_incorrect_method(client: flask.testing.FlaskClient) -> None:
+    """Only put and get should be accepted."""
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
 
     # Attempt request
-    for method in [client.get, client.post, client.delete, client.patch]:
+    for method in [client.post, client.delete, client.patch]:
         response: werkzeug.test.WrapperTestResponse = method(
             tests.DDSEndpoint.MAINTENANCE, headers=token, json={"state": "on"}
         )
@@ -651,6 +664,17 @@ def test_set_maintenance_no_json(client: flask.testing.FlaskClient) -> None:
     response: werkzeug.test.TestResponse = client.put(tests.DDSEndpoint.MAINTENANCE, headers=token)
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Required data missing from request" in response.json.get("message")
+
+
+def test_get_maintenance_status_no_json_required(client: flask.testing.FlaskClient) -> None:
+    """No json needed in order to get the current Maintenance mode."""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+    # Attempt request
+    response: werkzeug.test.TestResponse = client.get(tests.DDSEndpoint.MAINTENANCE, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    assert "Maintenance mode is set to:" in response.json.get("message")
 
 
 def test_set_maintenance_incorrect_state(client: flask.testing.FlaskClient) -> None:
@@ -691,6 +715,11 @@ def test_set_maintenance_on_ok(client: flask.testing.FlaskClient) -> None:
     assert response.status_code == http.HTTPStatus.OK
     assert f"Maintenance set to: {setting.upper()}" in response.json.get("message")
 
+    # Verify that maintenance is set to ON using the get method
+    response: werkzeug.test.TestResponse = client.get(tests.DDSEndpoint.MAINTENANCE, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    assert f"Maintenance mode is set to: {setting.upper()}" in response.json.get("message")
+
 
 def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
     """Set Maintenance mode to 'off'."""
@@ -712,6 +741,11 @@ def test_set_maintenance_off_ok(client: flask.testing.FlaskClient) -> None:
     )
     assert response.status_code == http.HTTPStatus.OK
     assert f"Maintenance set to: {setting.upper()}" in response.json.get("message")
+
+    # Verify that maintenance is set to OFF using the get method
+    response: werkzeug.test.TestResponse = client.get(tests.DDSEndpoint.MAINTENANCE, headers=token)
+    assert response.status_code == http.HTTPStatus.OK
+    assert f"Maintenance mode is set to: {setting.upper()}" in response.json.get("message")
 
 
 # AnyProjectsBusy
@@ -883,7 +917,7 @@ def test_statistics_return_rows(client: flask.testing.FlaskClient, cli_runner) -
     assert len(returned) == 1
     reporting_row = models.Reporting.query.first()
     assert returned[0] == {
-        "Date": str(reporting_row.date),
+        "Date": str(reporting_row.date.date()),
         "Units": reporting_row.unit_count,
         "Researchers": reporting_row.researcher_count,
         "Project Owners": reporting_row.project_owner_unique_count,
@@ -899,6 +933,8 @@ def test_statistics_return_rows(client: flask.testing.FlaskClient, cli_runner) -
         "TBHours Last Month": reporting_row.tbhours,
         "TBHours Total": reporting_row.tbhours_since_start,
     }
+    returned_columns: typing.Dict = response.json.get("columns")
+    assert returned_columns
 
 
 # UnitUserEmails

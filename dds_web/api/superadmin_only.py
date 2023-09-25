@@ -256,7 +256,7 @@ class ResetTwoFactor(flask_restful.Resource):
         }
 
 
-class SetMaintenance(flask_restful.Resource):
+class MaintenanceMode(flask_restful.Resource):
     """Change the maintenance mode of the system."""
 
     @auth.login_required(role=["Super Admin"])
@@ -284,6 +284,15 @@ class SetMaintenance(flask_restful.Resource):
         db.session.commit()
 
         return {"message": f"Maintenance set to: {setting.upper()}"}
+
+    @auth.login_required(role=["Super Admin"])
+    @logging_bind_request
+    @handle_db_error
+    def get(self):
+        """Return current Maintenance mode."""
+        current_mode = models.Maintenance.query.first()
+
+        return {"message": f"Maintenance mode is set to: {'ON' if current_mode.active else 'OFF'}"}
 
 
 class AnyProjectsBusy(flask_restful.Resource):
@@ -325,7 +334,7 @@ class Statistics(flask_restful.Resource):
         return {
             "stats": [
                 {
-                    "Date": str(row.date),
+                    "Date": str(row.date.date()),
                     "Units": row.unit_count,
                     "Researchers": row.researcher_count,
                     "Project Owners": row.project_owner_unique_count,
@@ -343,7 +352,24 @@ class Statistics(flask_restful.Resource):
                 }
                 for row in stat_rows
                 if stat_rows
-            ]
+            ],
+            "columns": {
+                "Date": "Date on which the stats were recorded in the database.",
+                "Units": "Number of SciLifeLab units that are using the DDS for data deliveries.",
+                "Researchers": "Number of accounts with the role 'Researcher'.",
+                "Project Owners": "Number of (unique) 'Researcher' accounts with admin permissions in at least one project.",
+                "Unit Personnel": "Number of accounts with the role 'Unit Personnel'.",
+                "Unit Admins": "Number of accounts with the role 'Unit Admin'.",
+                "Super Admins": "Number of employees at the SciLifeLab Data Centre with the DDS account role 'Super Admin'.",
+                "Total Users": "Total number of accounts. Project Owners are a subrole of 'Researchers' and are therefore not included in the summary.",
+                "Total Projects": "Sum of active- and inactive projects.",
+                "Active Projects": "Delivery projects currently used to deliver data. Statuses included are 'In Progress', 'Available' and 'Expired'.",
+                "Inactive Projects": "Delivery projects that have previously been created and/or used for data deliveries. Statuses included are 'Deleted', 'Archived' (incl. aborted).",
+                "Data Now (TB)": "Number of terrabytes of data that are currently being delivered with the DDS.",
+                "Data Uploaded (TB)": "Total number of terrabytes of data that have been uploaded to the DDS temporary storage location since the DDS went into production.",
+                "TBHours Last Month": "Number of terrabyte hours that were recorded in the DDS the previous month. ",
+                "TBHours Total": "Total number of terrabyte hours that have been recorded in the DDS since going into production.",
+            },
         }
 
 

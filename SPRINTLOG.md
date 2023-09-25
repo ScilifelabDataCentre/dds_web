@@ -290,3 +290,19 @@ _Nothing merged in CLI during this sprint_
 
 - Dependency: Bump `certifi` to 2023.07.22 due to security vulnerability alert(s) ([#1452](https://github.com/ScilifelabDataCentre/dds_web/pull/1452))
 - New version: 2.5.0 ([#1458](https://github.com/ScilifelabDataCentre/dds_web/pull/1458))
+- Added check for Maintenance mode status in MaintenanceMode endpoint ([#1459](https://github.com/ScilifelabDataCentre/dds_web/pull/1459))
+
+# 2023-09-04 - 2023-09-15
+
+- Bug fix: Database rollback added on project creation failure ([#1461](https://github.com/ScilifelabDataCentre/dds_web/pull/1461))
+- Only return date (not time) from `Statistics` endpoint ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1456))
+- Set `sto2*` columns in `Unit` table to nullable ([#1456](https://github.com/ScilifelabDataCentre/dds_web/pull/1462))
+- Dependency: Bump `MariaDB` to LTS version 10.11.5 ([#1465](https://github.com/ScilifelabDataCentre/dds_web/pull/1465))
+- Bug fixed: Row in `ProjectUsers` should also be added if it doesn't exist when giving Researcher access to a specific project ([#1464](https://github.com/ScilifelabDataCentre/dds_web/pull/1464))
+- Workflow: Update PR template and clarify sections ([#1467](https://github.com/ScilifelabDataCentre/dds_web/pull/1467))
+
+# 2023-09-18 - 2023-09-29
+
+- Column `sto4_start_time` is automatically set when the create-unit command is run ([#1668])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1668)
+- Replace expired invites when there's a new invitation attempt ([#1466](https://github.com/ScilifelabDataCentre/dds_web/pull/1466))
+- New version: 2.5.1 ([#1471](https://github.com/ScilifelabDataCentre/dds_web/pull/1471))
