@@ -184,3 +184,47 @@ def test_researcher_removes_project_owner(client):
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert "You do not have the necessary permissions" in response.json["message"]
 
+
+def test_user_personal_removed(client):
+    """
+    User  personal cannot be deleted from individual projects (they should be removed from the unit)
+    """
+
+    project_id = "public_project_id"
+    email = "unituser2@mailtrap.io"
+
+    rem_user = {"email": email}
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project_id},
+        json=rem_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    # Should give error because a unit personal cannot be granted access to individual projects
+    assert "Cannot remove non-existent project access." in response.json["message"]
+
+def test_removed_myself(client):
+    """
+    An User cannot remove themselves from a project
+    """
+
+    project_id = "public_project_id"
+    email = "projectowner@mailtrap.io"
+
+    rem_user = {"email": email}
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
+        query_string={"project": project_id},
+        json=rem_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    # Should give error because a unit personal cannot be granted access to individual projects
+    assert "You cannot renew your own access." in response.json["message"]
+
+
+
+

@@ -890,42 +890,6 @@ class RemoveUserAssociation(flask_restful.Resource):
                 "Cannot remove non-existent project access."
             )
 
-        """
-        We also need to ensure the hierarchy of roles is ensured:
-
-            Researchers only revoke access for Researchers
-            ProjectOwners revoke access for ProjectOwners (in the same project) and Researchers (in the same project)
-            Unit Personnel & Unit Admins: Researchers and Project Owners (any project).
-        
-        Because the access to the project has already being verified, and we are revoking access for a specific project
-        The only condition to check is that a Project Owner should not be deleted by a Researcher that is not PO
-        """
-
-        # role of the user calling the function
-        role = auth.current_user().role
-
-        # check if the user/invite trying to get revoked access is a PO
-        is_po = False
-        if unanswered_invite:
-            is_po = models.ProjectInviteKeys.query.filter_by(
-                project_id=project.id, invite_id=unanswered_invite.id, owner=1
-            )
-        else:
-            is_po = models.ProjectUsers.query.filter_by(
-                project_id=project.id, user_id=existing_user.username, owner=1
-            ).one_or_none()
-
-        if is_po:
-            """
-            If the user trying to be deleted is a PO -> can only be deleted by a user with higher credentials than a Researcher
-            """
-
-            is_po = models.ProjectUsers.query.filter_by(
-                user_id=auth.current_user().username, project_id=project.id, owner=1
-            ).one_or_none()
-            if role == "Researcher" and not is_po:
-                raise ddserr.AccessDeniedError("Insufficient credentials")
-
         if unanswered_invite:
             invite_id = unanswered_invite.id
 
@@ -953,6 +917,9 @@ class RemoveUserAssociation(flask_restful.Resource):
                 )
 
         else:
+            if(auth.current_user().username == existing_user.username):
+                raise ddserr.AccessDeniedError(message="You cannot renew your own access.") 
+            
             user_in_project = False
             for user_association in project.researchusers: # TODO Possible optimization -> comprehesion list
                 if user_association.user_id == existing_user.username:

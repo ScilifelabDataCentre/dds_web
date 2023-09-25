@@ -302,7 +302,6 @@ _Nothing merged in CLI during this sprint_
 - Workflow: Update PR template and clarify sections ([#1467](https://github.com/ScilifelabDataCentre/dds_web/pull/1467))
 - Revoking access to unacepted invites removes the invites from the DB ([#1192])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13/backlog?epics=visible&selectedIssue=DDS-1192)
 
-
 # 2023-09-18 - 2023-09-29
 
 - Column `sto4_start_time` is automatically set when the create-unit command is run ([#1668])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1668)
