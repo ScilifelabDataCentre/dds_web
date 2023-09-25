@@ -256,7 +256,10 @@ def test_remove_invite_unit_admin(client):
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     # Should give error because a unit personal cannot be granted access to individual projects
-    assert "Cannot delete Unit Admin / Unit User" in response.json["message"]
+    assert (
+        "Cannot remove a Unit Admin / Unit User from individual projects"
+        in response.json["message"]
+    )
 
 
 def test_invite_unit_user(client):
@@ -286,4 +289,7 @@ def test_invite_unit_user(client):
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     # Should give error because a unit personal cannot be granted access to individual projects
-    assert "Cannot delete Unit Admin / Unit User" in response.json["message"]
+    assert (
+        "Cannot remove a Unit Admin / Unit User from individual projects"
+        in response.json["message"]
+    )
