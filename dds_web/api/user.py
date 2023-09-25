@@ -947,6 +947,7 @@ class RemoveUserAssociation(flask_restful.Resource):
                     f"The user with email '{user_email}' does not have access to the specified project. "
                     "Cannot remove non-existent project access."
                 )
+            msg = f"User with email {user_email} no longer associated with {project.public_id}."
 
         try:
             db.session.commit()
