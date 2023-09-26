@@ -226,7 +226,7 @@ def test_removed_myself(client):
 
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     # Should give error because a unit personal cannot be granted access to individual projects
-    assert "You cannot renew your own access." in response.json["message"]
+    assert "You cannot revoke your own access" in response.json["message"]
 
 
 def test_remove_invite_unit_admin(client):
