@@ -6,6 +6,7 @@ import copy
 import tests
 from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
 from dds_web.database import models
+from tests.test_project_access import add_to_project
 
 # CONFIG ################################################################################## CONFIG #
 
@@ -16,6 +17,10 @@ first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
 first_new_user_unit_admin = {**first_new_email, "role": "Unit Admin"}
 first_new_user_unit_personel = {**first_new_email, "role": "Unit Personnel"}
+
+remove_user_project_owner = {"email": "projectowner@mailtrap.io"}
+remove_user_unit_user = {"email": "unituser2@mailtrap.io"}
+remove_user_project_owner = {"email": "projectowner@mailtrap.io"}
 
 # TESTS ################################################################################## TEST #
 
@@ -114,6 +119,8 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
 def test_remove_nonacepted_user_from_other_project(client, boto3_session):
     """Try to remove an User with an unacepted invite from another project should result in an error"""
 
+    existing_project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+
     create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
@@ -125,23 +132,16 @@ def test_remove_nonacepted_user_from_other_project(client, boto3_session):
         json=proj_data_with_existing_users,
     )
     assert response.status_code == http.HTTPStatus.OK
-
-    project_id = response.json.get("project_id")
+    new_project_id = response.json.get("project_id")
 
     # invite a new user to an existing project
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        query_string={"project": "public_project_id"},
-        json=first_new_user,
-    )
-    assert response.status_code == http.HTTPStatus.OK
+    add_to_project(project=existing_project, client=client, json_query=first_new_user)
 
     # try to remove the user from the first project
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        query_string={"project": project_id},
+        query_string={"project": new_project_id},
         json=first_new_user,
     )
 
@@ -172,15 +172,12 @@ def test_researcher_removes_project_owner(client):
     A Researcher who is not a PO should not be able to delete a PO
     """
 
-    project_id = "public_project_id"
-    email = "projectowner@mailtrap.io"
-
-    rem_user = {"email": email}
+    # Research user trying to delete PO
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        query_string={"project": project_id},
-        json=rem_user,
+        query_string=proj_query,
+        json=remove_user_project_owner,
     )
 
     assert response.status_code == http.HTTPStatus.FORBIDDEN
@@ -189,18 +186,14 @@ def test_researcher_removes_project_owner(client):
 
 def test_user_personal_removed(client):
     """
-    User  personal cannot be deleted from individual projects (they should be removed from the unit)
+    User  personal cannot be deleted from individual projects (they should be removed from the unit instead)
     """
 
-    project_id = "public_project_id"
-    email = "unituser2@mailtrap.io"
-
-    rem_user = {"email": email}
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": project_id},
-        json=rem_user,
+        query_string=proj_query,
+        json=remove_user_unit_user,
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -213,19 +206,14 @@ def test_removed_myself(client):
     An User cannot remove themselves from a project
     """
 
-    project_id = "public_project_id"
-    email = "projectowner@mailtrap.io"
-
-    rem_user = {"email": email}
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
-        query_string={"project": project_id},
-        json=rem_user,
+        query_string=proj_query,
+        json=remove_user_project_owner,
     )
 
     assert response.status_code == http.HTTPStatus.FORBIDDEN
-    # Should give error because a unit personal cannot be granted access to individual projects
     assert "You cannot revoke your own access" in response.json["message"]
 
 
@@ -233,8 +221,6 @@ def test_remove_invite_unit_admin(client):
     """
     A project removal request for an unanswered invite of unit admin should not work
     """
-
-    project_id = "public_project_id"
 
     # invite a new unit admin to the system
     response = client.post(
@@ -250,7 +236,7 @@ def test_remove_invite_unit_admin(client):
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": project_id},
+        query_string=proj_query,
         json=rem_user,
     )
 
@@ -264,10 +250,8 @@ def test_remove_invite_unit_admin(client):
 
 def test_invite_unit_user(client):
     """
-    A project removal request for an unanswered invite of unit admin should not work
+    A project removal request for an unanswered invite of unit personel should not work
     """
-
-    project_id = "public_project_id"
 
     # invite a new unit user to the system
     response = client.post(
@@ -283,7 +267,7 @@ def test_invite_unit_user(client):
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": project_id},
+        query_string=proj_query,
         json=rem_user,
     )
 

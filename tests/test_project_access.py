@@ -21,6 +21,26 @@ first_new_user = {**first_new_email, "role": "Researcher"}
 # UTILITY FUNCTIONS ############################################################ UTILITY FUNCTIONS #
 
 
+def add_to_project(project, client, json_query):
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project.public_id},
+        json=json_query,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=json_query["email"]).one_or_none()
+    assert invited_user
+
+    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project.id
+    ).one_or_none()
+    assert project_invite_keys
+
+    return invited_user
+
+
 def delete_project_user(project_id, user_id, table_to_use):
     """Delete row in either ProjectUsers or ProjectUserKeys."""
     # Get project from database
@@ -436,28 +456,9 @@ def test_remove_access_invite_associated_several_projects(client):
     project_1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     project_2 = models.Project.query.filter_by(public_id="second_public_project_id").one_or_none()
 
-    def add_to_project(project):
-        response = client.post(
-            tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-            query_string={"project": project.public_id},
-            json=first_new_user,
-        )
-        assert response.status_code == http.HTTPStatus.OK
-
-        invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
-        assert invited_user
-
-        project_invite_keys = models.ProjectInviteKeys.query.filter_by(
-            invite_id=invited_user.id, project_id=project.id
-        ).one_or_none()
-        assert project_invite_keys
-
-        return invited_user
-
     # invite a new user to both projects
-    invited_user = add_to_project(project_1)
-    _ = add_to_project(project_2)
+    invited_user = add_to_project(project=project_1, client=client, json_query=first_new_user)
+    _ = add_to_project(project=project_2, client=client, json_query=first_new_user)
 
     # Now revoke access for the first project
     response = client.post(
@@ -492,24 +493,9 @@ def test_revoking_access_to_unacepted_invite(client):
     """Revoking access to an unacepted invite for an existing project should delete the invite from the db"""
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
 
-    # invite a new user to an existing project so they receive a new invite
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": project.public_id},
-        json=first_new_user,
-    )
-    assert response.status_code == http.HTTPStatus.OK
-
-    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    # Invite a new user to the project
+    invited_user = add_to_project(project=project, client=client, json_query=first_new_user)
     invited_user_id = invited_user.id
-    assert invited_user
-
-    # check row was added to project invite keys table
-    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
-        invite_id=invited_user_id, project_id=project.id
-    ).one_or_none()
-    assert project_invite_keys
 
     # Now, revoke access to said user. The invite should be deleted
     response = client.post(
