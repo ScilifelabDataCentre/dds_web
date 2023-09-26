@@ -740,3 +740,16 @@ class UpdateFile(flask_restful.Resource):
             db.session.commit()
 
         return {"message": "File info updated."}
+
+
+class UpdateFailedFiles(flask_restful.Resource):
+    """Add files from failed_delivery_log to DB using the "update_uploaded_file_with_log" command"""
+
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
+    @json_required
+    @handle_validation_errors
+    def put(self):
+        """Run flask command with failed_delivery_log."""
+ 
+        flask.current_app.logger.debug("API called")
+        return {"message": "File(s) info updated."}
