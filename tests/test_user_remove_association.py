@@ -6,7 +6,7 @@ import copy
 import tests
 from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
 from dds_web.database import models
-from tests.test_project_access import add_to_project
+from tests.test_project_access import invite_to_project, get_existing_projects
 
 # CONFIG ################################################################################## CONFIG #
 
@@ -21,6 +21,7 @@ first_new_user_unit_personel = {**first_new_email, "role": "Unit Personnel"}
 remove_user_project_owner = {"email": "projectowner@mailtrap.io"}
 remove_user_unit_user = {"email": "unituser2@mailtrap.io"}
 remove_user_project_owner = {"email": "projectowner@mailtrap.io"}
+
 
 # TESTS ################################################################################## TEST #
 
@@ -119,29 +120,18 @@ def test_remove_nonexistent_user_from_project(client, boto3_session):
 def test_remove_nonacepted_user_from_other_project(client, boto3_session):
     """Try to remove an User with an unacepted invite from another project should result in an error"""
 
-    existing_project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    projects = get_existing_projects()
+    project_1 = projects[0]
+    project_2 = projects[1]
 
-    create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    # invite a new user to a project
+    invite_to_project(project=project_1, client=client, json_query=first_new_user)
 
-    # create a new project
-    response = client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        json=proj_data_with_existing_users,
-    )
-    assert response.status_code == http.HTTPStatus.OK
-    new_project_id = response.json.get("project_id")
-
-    # invite a new user to an existing project
-    add_to_project(project=existing_project, client=client, json_query=first_new_user)
-
-    # try to remove the user from the first project
+    # try to remove the same user from a different one
     response = client.post(
         tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        query_string={"project": new_project_id},
+        query_string={"project": project_2.public_id},
         json=first_new_user,
     )
 

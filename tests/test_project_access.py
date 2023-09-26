@@ -17,11 +17,21 @@ proj_query = {"project": "public_project_id"}
 first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
 
-
 # UTILITY FUNCTIONS ############################################################ UTILITY FUNCTIONS #
 
 
-def add_to_project(project, client, json_query):
+def get_existing_projects():
+    """Return existing projects for the tests"""
+    existing_project_1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    existing_project_2 = models.Project.query.filter_by(
+        public_id="second_public_project_id"
+    ).one_or_none()
+
+    return [existing_project_1, existing_project_2]
+
+
+def invite_to_project(project, client, json_query):
+    """Create a invitation of a user for a project"""
     response = client.post(
         tests.DDSEndpoint.USER_ADD,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
@@ -453,12 +463,13 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
 def test_remove_access_invite_associated_several_projects(client):
     """If an invite is associated with several projects then a single revoke access should not delete the invite"""
 
-    project_1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
-    project_2 = models.Project.query.filter_by(public_id="second_public_project_id").one_or_none()
+    projects = get_existing_projects()
+    project_1 = projects[0]
+    project_2 = projects[1]
 
     # invite a new user to both projects
-    invited_user = add_to_project(project=project_1, client=client, json_query=first_new_user)
-    _ = add_to_project(project=project_2, client=client, json_query=first_new_user)
+    invited_user = invite_to_project(project=project_1, client=client, json_query=first_new_user)
+    _ = invite_to_project(project=project_2, client=client, json_query=first_new_user)
 
     # Now revoke access for the first project
     response = client.post(
@@ -491,10 +502,11 @@ def test_remove_access_invite_associated_several_projects(client):
 
 def test_revoking_access_to_unacepted_invite(client):
     """Revoking access to an unacepted invite for an existing project should delete the invite from the db"""
-    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+
+    project = get_existing_projects()[0]
 
     # Invite a new user to the project
-    invited_user = add_to_project(project=project, client=client, json_query=first_new_user)
+    invited_user = invite_to_project(project=project, client=client, json_query=first_new_user)
     invited_user_id = invited_user.id
 
     # Now, revoke access to said user. The invite should be deleted
