@@ -750,6 +750,6 @@ class UpdateFailedFiles(flask_restful.Resource):
     @handle_validation_errors
     def put(self):
         """Run flask command with failed_delivery_log."""
- 
+
         flask.current_app.logger.debug("API called")
         return {"message": "File(s) info updated."}
