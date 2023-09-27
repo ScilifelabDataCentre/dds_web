@@ -1414,9 +1414,9 @@ def test_researcher_removes_project_owner(client):
     assert "Insufficient credentials" in response.json["message"]
 
 
-def test_user_personal_removed(client):
+def test_unit_personnel_removed(client):
     """
-    User  personal cannot be deleted from individual projects (they should be removed from the unit instead)
+    Unit Personnel cannot be deleted from individual projects (they should be removed from the unit instead)
     """
     project, _ = get_existing_projects()
 
