@@ -1378,9 +1378,7 @@ def test_revoking_access_to_unacepted_invite(client):
 def test_remove_nonacepted_user_from_other_project(client, boto3_session):
     """Try to remove an User with an unacepted invite from another project should result in an error"""
 
-    projects = get_existing_projects()
-    project_1 = projects[0]
-    project_2 = projects[1]
+    project_1, project_2 = get_existing_projects()
 
     # invite a new user to a project
     invite_to_project(project=project_1, client=client, json_query=first_new_user)
