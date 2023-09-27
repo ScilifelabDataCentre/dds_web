@@ -1495,7 +1495,7 @@ def test_invite_unit_user(client):
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    # try to remove the unit personal for a specific project within their unit -> should not work
+    # try to remove the Unit Personnel for a specific project within their unit -> should not work
     email = first_new_user_unit_personel["email"]
     rem_user = {"email": email}
     response = client.post(
