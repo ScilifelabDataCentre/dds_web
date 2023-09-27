@@ -14,8 +14,6 @@ import tests
 # proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
 proj_query = {"project": "public_project_id"}
 # proj_query_restricted = {"project": "restricted_project_id"}
-first_new_email = {"email": "first_test_email@mailtrap.io"}
-first_new_user = {**first_new_email, "role": "Researcher"}
 
 # UTILITY FUNCTIONS ############################################################ UTILITY FUNCTIONS #
 
