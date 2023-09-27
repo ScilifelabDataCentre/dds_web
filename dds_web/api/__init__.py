@@ -42,6 +42,7 @@ api.add_resource(user.SecondFactor, "/user/second_factor", endpoint="second_fact
 api.add_resource(s3.S3Info, "/s3/proj", endpoint="proj_s3_info")
 
 # Files #################################################################################### Files #
+api.add_resource(files.TemporaryFile, "/file/temp", endpoint="temp_file")
 api.add_resource(files.NewFile, "/file/new", endpoint="new_file")
 api.add_resource(files.MatchFiles, "/file/match", endpoint="match_files")
 api.add_resource(files.ListFiles, "/files/list", endpoint="list_files")

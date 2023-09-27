@@ -70,6 +70,16 @@ def check_eligibility_for_deletion(status, has_been_available):
 # ENDPOINTS ############################################################################ ENDPOINTS #
 ####################################################################################################
 
+class TemporaryFile(flask_restful.Resource):
+    
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    @logging_bind_request
+    @json_required
+    @handle_validation_errors
+    def post(self):
+        """Save temporary files to database and return presigned urls."""
+        # Verify project ID and access
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
 class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
@@ -740,3 +750,4 @@ class UpdateFile(flask_restful.Resource):
             db.session.commit()
 
         return {"message": "File info updated."}
+
