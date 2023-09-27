@@ -463,9 +463,7 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
 def test_remove_access_invite_associated_several_projects(client):
     """If an invite is associated with several projects then a single revoke access should not delete the invite"""
 
-    projects = get_existing_projects()
-    project_1 = projects[0]
-    project_2 = projects[1]
+    project_1, project_2 = get_existing_projects()
 
     # invite a new user to both projects
     invited_user = invite_to_project(project=project_1, client=client, json_query=first_new_user)
