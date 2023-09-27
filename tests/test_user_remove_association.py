@@ -7,14 +7,6 @@ import tests
 from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
 from dds_web.database import models
 
-# CONFIG ################################################################################## CONFIG #
-
-# proj_data = {"pi": "piName", "title": "Test proj", "description": "A longer project description"}
-proj_query = {"project": "public_project_id"}
-# proj_query_restricted = {"project": "restricted_project_id"}
-first_new_email = {"email": "first_test_email@mailtrap.io"}
-first_new_user = {**first_new_email, "role": "Researcher"}
-
 # TESTS ################################################################################## TEST #
 
 
