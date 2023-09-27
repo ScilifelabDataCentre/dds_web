@@ -501,7 +501,7 @@ def test_remove_access_invite_associated_several_projects(client):
 def test_revoking_access_to_unacepted_invite(client):
     """Revoking access to an unacepted invite for an existing project should delete the invite from the db"""
 
-    project = get_existing_projects()[0]
+    project, _ = get_existing_projects()
 
     # Invite a new user to the project
     invited_user = invite_to_project(project=project, client=client, json_query=first_new_user)
