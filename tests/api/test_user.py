@@ -16,11 +16,15 @@ import unittest
 import werkzeug
 import time
 
+# CONFIG ################################################################################## CONFIG #
+
 existing_project = "public_project_id"
 existing_project_2 = "second_public_project_id"
 first_new_email = {"email": "first_test_email@mailtrap.io"}
 first_new_user = {**first_new_email, "role": "Researcher"}
 first_new_owner = {**first_new_email, "role": "Project Owner"}
+first_new_user_unit_admin = {**first_new_email, "role": "Unit Admin"}
+first_new_user_unit_personel = {**first_new_email, "role": "Unit Personnel"}
 first_new_user_existing_project = {**first_new_user, "project": "public_project_id"}
 first_new_user_extra_args = {**first_new_user, "extra": "test"}
 first_new_user_invalid_role = {**first_new_email, "role": "Invalid Role"}
@@ -48,6 +52,43 @@ submit_with_same_ownership = {
     **existing_research_user_owner,
     "project": "second_public_project_id",
 }
+remove_user_project_owner = {"email": "projectowner@mailtrap.io"}
+remove_user_unit_user = {"email": "unituser2@mailtrap.io"}
+remove_user_project_owner = {"email": "projectowner@mailtrap.io"}
+
+# UTILITY FUNCTIONS ############################################################ UTILITY FUNCTIONS #
+
+
+def get_existing_projects():
+    """Return existing projects for the tests"""
+    existing_project_1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    existing_project_2 = models.Project.query.filter_by(
+        public_id="second_public_project_id"
+    ).one_or_none()
+
+    return existing_project_1, existing_project_2
+
+
+def invite_to_project(project, client, json_query):
+    """Create a invitation of a user for a project"""
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project.public_id},
+        json=json_query,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    invited_user = models.Invite.query.filter_by(email=json_query["email"]).one_or_none()
+    assert invited_user
+
+    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project.id
+    ).one_or_none()
+    assert project_invite_keys
+
+    return invited_user
+
 
 # AddUser ################################################################# AddUser #
 
@@ -1258,3 +1299,217 @@ def test_list_invites(client):
     assert response.status_code == http.HTTPStatus.FORBIDDEN
     assert not response.json.get("invites")
     assert not response.json.get("keys")
+
+
+##### Test for RemoveUserAssociation
+
+
+def test_remove_access_invite_associated_several_projects(client):
+    """If an invite is associated with several projects then a single revoke access should not delete the invite"""
+
+    project_1, project_2 = get_existing_projects()
+
+    # invite a new user to both projects
+    invited_user = invite_to_project(project=project_1, client=client, json_query=first_new_user)
+    _ = invite_to_project(project=project_2, client=client, json_query=first_new_user)
+
+    # Now revoke access for the first project
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project_1.public_id},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    assert (
+        f"Invited user is no longer associated with the project '{project_1.public_id}'."
+        in response.json["message"]
+    )
+
+    # The project invite row should only be deleted for project 1 and the invite should still exist
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert invited_user
+
+    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project_2.id
+    ).one_or_none()
+    assert project_invite_keys
+
+    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user.id, project_id=project_1.id
+    ).one_or_none()
+    assert not project_invite_keys
+
+
+def test_revoking_access_to_unacepted_invite(client):
+    """Revoking access to an unacepted invite for an existing project should delete the invite from the db"""
+
+    project, _ = get_existing_projects()
+
+    # Invite a new user to the project
+    invited_user = invite_to_project(project=project, client=client, json_query=first_new_user)
+    invited_user_id = invited_user.id
+
+    # Now, revoke access to said user. The invite should be deleted
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project.public_id},
+        json=first_new_user,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    assert (
+        f"Invited user is no longer associated with the project {project.public_id}."
+        in response.json["message"]
+    )
+
+    # Check that the invite is deleted
+    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
+    assert not invited_user
+
+    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
+        invite_id=invited_user_id, project_id=project.id
+    ).one_or_none()
+    assert not project_invite_keys
+
+
+def test_remove_nonacepted_user_from_other_project(client, boto3_session):
+    """Try to remove an User with an unacepted invite from another project should result in an error"""
+
+    projects = get_existing_projects()
+    project_1 = projects[0]
+    project_2 = projects[1]
+
+    # invite a new user to a project
+    invite_to_project(project=project_1, client=client, json_query=first_new_user)
+
+    # try to remove the same user from a different one
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": project_2.public_id},
+        json=first_new_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "Cannot remove non-existent project access" in response.json["message"]
+
+
+def test_researcher_removes_project_owner(client):
+    """
+    A Researcher who is not a PO should not be able to delete a PO
+    """
+
+    project, _ = get_existing_projects()
+
+    # Research user trying to delete PO
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": project.public_id},
+        json=remove_user_project_owner,
+    )
+
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    assert "Insufficient credentials" in response.json["message"]
+
+
+def test_user_personal_removed(client):
+    """
+    User  personal cannot be deleted from individual projects (they should be removed from the unit instead)
+    """
+    project, _ = get_existing_projects()
+
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project.public_id},
+        json=remove_user_unit_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    # Should give error because a unit personal cannot be granted access to individual projects
+    assert "Cannot remove non-existent project access." in response.json["message"]
+
+
+def test_removed_myself(client):
+    """
+    An User cannot remove themselves from a project
+    """
+    project, _ = get_existing_projects()
+
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["projectowner"]).token(client),
+        query_string={"project": project.public_id},
+        json=remove_user_project_owner,
+    )
+
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
+    assert "You cannot revoke your own access" in response.json["message"]
+
+
+def test_remove_invite_unit_admin(client):
+    """
+    A project removal request for an unanswered invite of unit admin should not work
+    """
+    project, _ = get_existing_projects()
+
+    # invite a new unit admin to the system
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=first_new_user_unit_admin,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # try to remove the unitadmin for a specific project within their unit -> should not work
+    email = first_new_user_unit_admin["email"]
+    rem_user = {"email": email}
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project.public_id},
+        json=rem_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    # Should give error because a unit personal cannot be granted access to individual projects
+    assert (
+        "Cannot remove a Unit Admin / Unit Personnel from individual projects"
+        in response.json["message"]
+    )
+
+
+def test_invite_unit_user(client):
+    """
+    A project removal request for an unanswered invite of unit personel should not work
+    """
+    project, _ = get_existing_projects()
+
+    # invite a new unit user to the system
+    response = client.post(
+        tests.DDSEndpoint.USER_ADD,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=first_new_user_unit_personel,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # try to remove the unit personal for a specific project within their unit -> should not work
+    email = first_new_user_unit_personel["email"]
+    rem_user = {"email": email}
+    response = client.post(
+        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": project.public_id},
+        json=rem_user,
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    # Should give error because a unit personal cannot be granted access to individual projects
+    assert (
+        "Cannot remove a Unit Admin / Unit Personnel from individual projects"
+        in response.json["message"]
+    )

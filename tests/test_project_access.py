@@ -20,37 +20,6 @@ first_new_user = {**first_new_email, "role": "Researcher"}
 # UTILITY FUNCTIONS ############################################################ UTILITY FUNCTIONS #
 
 
-def get_existing_projects():
-    """Return existing projects for the tests"""
-    existing_project_1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
-    existing_project_2 = models.Project.query.filter_by(
-        public_id="second_public_project_id"
-    ).one_or_none()
-
-    return existing_project_1, existing_project_2
-
-
-def invite_to_project(project, client, json_query):
-    """Create a invitation of a user for a project"""
-    response = client.post(
-        tests.DDSEndpoint.USER_ADD,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": project.public_id},
-        json=json_query,
-    )
-    assert response.status_code == http.HTTPStatus.OK
-
-    invited_user = models.Invite.query.filter_by(email=json_query["email"]).one_or_none()
-    assert invited_user
-
-    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
-        invite_id=invited_user.id, project_id=project.id
-    ).one_or_none()
-    assert project_invite_keys
-
-    return invited_user
-
-
 def delete_project_user(project_id, user_id, table_to_use):
     """Delete row in either ProjectUsers or ProjectUserKeys."""
     # Get project from database
@@ -458,77 +427,6 @@ def test_fix_access_unitadmin_valid_email_unituser(client):
         project_id=project.id, user_id="unituser"
     ).first()
     assert user_project_key_row
-
-
-def test_remove_access_invite_associated_several_projects(client):
-    """If an invite is associated with several projects then a single revoke access should not delete the invite"""
-
-    project_1, project_2 = get_existing_projects()
-
-    # invite a new user to both projects
-    invited_user = invite_to_project(project=project_1, client=client, json_query=first_new_user)
-    _ = invite_to_project(project=project_2, client=client, json_query=first_new_user)
-
-    # Now revoke access for the first project
-    response = client.post(
-        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": project_1.public_id},
-        json=first_new_user,
-    )
-    assert response.status_code == http.HTTPStatus.OK
-
-    assert (
-        f"Invited user is no longer associated with the project {project_1.public_id}."
-        in response.json["message"]
-    )
-
-    # The project invite row should only be deleted for project 1 and the invite should still exist
-    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
-    assert invited_user
-
-    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
-        invite_id=invited_user.id, project_id=project_2.id
-    ).one_or_none()
-    assert project_invite_keys
-
-    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
-        invite_id=invited_user.id, project_id=project_1.id
-    ).one_or_none()
-    assert not project_invite_keys
-
-
-def test_revoking_access_to_unacepted_invite(client):
-    """Revoking access to an unacepted invite for an existing project should delete the invite from the db"""
-
-    project, _ = get_existing_projects()
-
-    # Invite a new user to the project
-    invited_user = invite_to_project(project=project, client=client, json_query=first_new_user)
-    invited_user_id = invited_user.id
-
-    # Now, revoke access to said user. The invite should be deleted
-    response = client.post(
-        tests.DDSEndpoint.REMOVE_USER_FROM_PROJ,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": project.public_id},
-        json=first_new_user,
-    )
-    assert response.status_code == http.HTTPStatus.OK
-
-    assert (
-        f"Invited user is no longer associated with the project {project.public_id}."
-        in response.json["message"]
-    )
-
-    # Check that the invite is deleted
-    invited_user = models.Invite.query.filter_by(email=first_new_user["email"]).one_or_none()
-    assert not invited_user
-
-    project_invite_keys = models.ProjectInviteKeys.query.filter_by(
-        invite_id=invited_user_id, project_id=project.id
-    ).one_or_none()
-    assert not project_invite_keys
 
 
 def test_fix_access_unitadmin_valid_email_unituser_no_project(client):
