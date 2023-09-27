@@ -479,7 +479,7 @@ def test_remove_access_invite_associated_several_projects(client):
     assert response.status_code == http.HTTPStatus.OK
 
     assert (
-        f"Invited user is no longer associated with {project_1.public_id}."
+        f"Invited user is no longer associated with the project {project_1.public_id}."
         in response.json["message"]
     )
 
@@ -517,7 +517,7 @@ def test_revoking_access_to_unacepted_invite(client):
     assert response.status_code == http.HTTPStatus.OK
 
     assert (
-        f"Invited user is no longer associated with {project.public_id}."
+        f"Invited user is no longer associated with the project {project.public_id}."
         in response.json["message"]
     )
 

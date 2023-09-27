@@ -906,7 +906,9 @@ class RemoveUserAssociation(flask_restful.Resource):
             ).one_or_none()
 
             if project_invite_key:
-                msg = f"Invited user is no longer associated with the project '{project.public_id}'."
+                msg = (
+                    f"Invited user is no longer associated with the project '{project.public_id}'."
+                )
                 # Remove the association if it exists
                 db.session.delete(project_invite_key)
 
@@ -941,7 +943,7 @@ class RemoveUserAssociation(flask_restful.Resource):
                     ).first()
                     if project_user_key:
                         db.session.delete(project_user_key)
-                break
+                    break
 
             if not user_in_project:
                 raise ddserr.NoSuchUserError(
