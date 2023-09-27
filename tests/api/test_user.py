@@ -1506,7 +1506,7 @@ def test_invite_unit_user(client):
     )
 
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    # Should give error because a unit personal cannot be granted access to individual projects
+    # Should give error because a Unit Personnel cannot be granted access to individual projects
     assert (
         "Cannot remove a Unit Admin / Unit Personnel from individual projects"
         in response.json["message"]
