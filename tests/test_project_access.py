@@ -27,7 +27,7 @@ def get_existing_projects():
         public_id="second_public_project_id"
     ).one_or_none()
 
-    return [existing_project_1, existing_project_2]
+    return existing_project_1, existing_project_2
 
 
 def invite_to_project(project, client, json_query):
