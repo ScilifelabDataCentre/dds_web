@@ -74,7 +74,7 @@ class TemporaryFile(flask_restful.Resource):
     
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @json_required
+    # @json_required
     @handle_validation_errors
     def post(self):
         """Save temporary files to database and return presigned urls."""
@@ -84,6 +84,7 @@ class TemporaryFile(flask_restful.Resource):
         # Verify that the project has the correct status for upload
         check_eligibility_for_upload(status=project.current_status)
 
+        return {"hello": "there"}
         
 
 class NewFile(flask_restful.Resource):
