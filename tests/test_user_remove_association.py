@@ -7,6 +7,8 @@ import tests
 from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
 from dds_web.database import models
 
+# TESTS ################################################################################## TEST #
+
 
 def test_remove_user_from_project(client, boto3_session):
     """Remove an associated user from a project"""

@@ -864,7 +864,7 @@ class DeleteUser(flask_restful.Resource):
 
 
 class RemoveUserAssociation(flask_restful.Resource):
-    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner"])
     @logging_bind_request
     @json_required
     @handle_validation_errors
@@ -876,34 +876,81 @@ class RemoveUserAssociation(flask_restful.Resource):
         if not (user_email := json_input.get("email")):
             raise ddserr.DDSArgumentError(message="User email missing.")
 
-        # Check if email is registered to a user
+        # Check if the user exists or has a pending invite
         try:
             existing_user = user_schemas.UserSchema().load({"email": user_email})
+            unanswered_invite = user_schemas.UnansweredInvite().load({"email": user_email})
         except sqlalchemy.exc.OperationalError as err:
             raise ddserr.DatabaseError(message=str(err), alt_message="Unexpected database error.")
 
-        if not existing_user:
+        # If the user doesn't exist and doesn't have a pending invite
+        if not existing_user and not unanswered_invite:
             raise ddserr.NoSuchUserError(
-                f"The user with email '{user_email}' does not have access to the specified project."
-                " Cannot remove non-existent project access."
+                f"The user / invite with email '{user_email}' does not have access to the specified project. "
+                "Cannot remove non-existent project access."
             )
 
-        user_in_project = False
-        for user_association in project.researchusers:
-            if user_association.user_id == existing_user.username:
-                user_in_project = True
-                db.session.delete(user_association)
-                project_user_key = models.ProjectUserKeys.query.filter_by(
-                    project_id=project.id, user_id=existing_user.username
-                ).first()
-                if project_user_key:
-                    db.session.delete(project_user_key)
+        if unanswered_invite:
+            # If there is a unit_id value, it means the invite was associated to a unit
+            # i.e The invite is for a Unit Personel which shouldn't be removed from individual projects
+            if unanswered_invite.unit_id:
+                raise ddserr.UserDeletionError(
+                    "Cannot remove a Unit Admin / Unit Personnel from individual projects."
+                )
 
-        if not user_in_project:
-            raise ddserr.NoSuchUserError(
-                f"The user with email '{user_email}' does not have access to the specified project."
-                " Cannot remove non-existent project access."
-            )
+            invite_id = unanswered_invite.id
+
+            # Check if the unanswered invite is associated with the project
+            project_invite_key = models.ProjectInviteKeys.query.filter_by(
+                invite_id=invite_id, project_id=project.id
+            ).one_or_none()
+
+            if project_invite_key:
+                msg = (
+                    f"Invited user is no longer associated with the project '{project.public_id}'."
+                )
+                # Remove the association if it exists
+                db.session.delete(project_invite_key)
+
+                # Check if the invite is associated with only one project, if it is -> delete the invite
+                project_invite_key = models.ProjectInviteKeys.query.filter_by(
+                    invite_id=invite_id
+                ).one_or_none()
+
+                if not project_invite_key:
+                    db.session.delete(unanswered_invite)
+            else:
+                # The unanswered invite is not associated with the project
+                raise ddserr.NoSuchUserError(
+                    f"The invite with email '{user_email}' does not have access to the specified project. "
+                    "Cannot remove non-existent project access."
+                )
+
+        else:
+            if auth.current_user().username == existing_user.username:
+                raise ddserr.AccessDeniedError(message="You cannot revoke your own access.")
+
+            # Search the user in the project, when found delete from the database all references to them
+            user_in_project = False
+            for (
+                user_association
+            ) in project.researchusers:  # TODO Possible optimization -> comprehesion list
+                if user_association.user_id == existing_user.username:
+                    user_in_project = True
+                    db.session.delete(user_association)
+                    project_user_key = models.ProjectUserKeys.query.filter_by(
+                        project_id=project.id, user_id=existing_user.username
+                    ).first()
+                    if project_user_key:
+                        db.session.delete(project_user_key)
+                    break
+
+            if not user_in_project:
+                raise ddserr.NoSuchUserError(
+                    f"The user with email '{user_email}' does not have access to the specified project. "
+                    "Cannot remove non-existent project access."
+                )
+            msg = f"User with email {user_email} no longer associated with {project.public_id}."
 
         try:
             db.session.commit()
@@ -924,13 +971,7 @@ class RemoveUserAssociation(flask_restful.Resource):
                 ),
             ) from err
 
-        flask.current_app.logger.debug(
-            f"User {existing_user.username} no longer associated with project {project.public_id}."
-        )
-
-        return {
-            "message": f"User with email {user_email} no longer associated with {project.public_id}."
-        }
+        return {"message": msg}
 
 
 class EncryptedToken(flask_restful.Resource):
