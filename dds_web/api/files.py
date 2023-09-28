@@ -81,6 +81,11 @@ class TemporaryFile(flask_restful.Resource):
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
+        # Verify that the project has the correct status for upload
+        check_eligibility_for_upload(status=project.current_status)
+
+        
+
 class NewFile(flask_restful.Resource):
     """Inserts a file into the database"""
 
