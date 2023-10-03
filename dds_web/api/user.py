@@ -423,6 +423,7 @@ class AddUser(flask_restful.Resource):
 
         unit_email = None
         project_id = None
+        project_title = None
         deadline = None
 
         # Don't display unit admins or personnels name
@@ -440,6 +441,7 @@ class AddUser(flask_restful.Resource):
         elif mail_type == "project_release":
             subject = f"Project made available by {displayed_sender} in the SciLifeLab Data Delivery System"
             project_id = project.public_id
+            project_title = project.title
             deadline = project.current_deadline.astimezone(datetime.timezone.utc).strftime(
                 "%Y-%m-%d %H:%M:%S %Z"
             )
@@ -470,6 +472,7 @@ class AddUser(flask_restful.Resource):
             displayed_sender=displayed_sender,
             unit_email=unit_email,
             project_id=project_id,
+            project_title=project_title,
             deadline=deadline,
         )
         msg.html = flask.render_template(
@@ -478,6 +481,7 @@ class AddUser(flask_restful.Resource):
             displayed_sender=displayed_sender,
             unit_email=unit_email,
             project_id=project_id,
+            project_title=project_title,
             deadline=deadline,
         )
 
