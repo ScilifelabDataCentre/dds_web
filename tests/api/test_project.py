@@ -1388,3 +1388,46 @@ def test_project_usage(module_client):
     # Call project_usage() for the project and check if cost is calculated correctly
     proj_bhours, proj_cost = UserProjects.project_usage(project=project_0)
     assert (proj_bhours / 1e9) * cost_gbhour == proj_cost
+
+
+def test_email_project_release(module_client):
+    """Test that the email to the researches is sent when the project has been released
+    Function is compose_and_send_email_to_user used at project.py
+    """
+
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # Create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_id = response.json.get("project_id")
+
+    # Release project and check email
+    with unittest.mock.patch.object(flask_mail.Mail) as mock_mail:
+        with mock_mail.record_messages() as outbox:
+            response = module_client.post(
+                tests.DDSEndpoint.PROJECT_STATUS,
+                headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+                query_string={"project": project_id},
+                json={"new_status": "Available"},
+            )
+        assert len(outbox) == 1
+        assert "Project made available by" in outbox[0].subject
+
+    assert response.status_code == http.HTTPStatus.OK
+
+
+#        msg = outbox[-1]
+#        assert msg.subject == const.RESET_EMAIL_SUBJECT
+#        assert 'Reset Password' in msg.html
+#        assert 'Reset Password' in msg.body
