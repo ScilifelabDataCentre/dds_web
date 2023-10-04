@@ -16,7 +16,7 @@ import sqlalchemy
 
 # Own
 import dds_web
-from dds_web import db
+from dds_web import auth, mail, db, basic_auth, limiter
 from dds_web.errors import BucketNotFoundError, DatabaseError, DeletionError
 import tests
 from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
@@ -1390,7 +1390,7 @@ def test_project_usage(module_client):
     assert (proj_bhours / 1e9) * cost_gbhour == proj_cost
 
 
-def test_email_project_release(client):
+def test_email_project_release(client,boto3_session):
     """Test that the email to the researches is sent when the project has been released
     Function is compose_and_send_email_to_user used at project.py
     """
@@ -1401,31 +1401,28 @@ def test_email_project_release(client):
     response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-        json=proj_data,
+        json=proj_data_with_existing_users,
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    project_id = response.json.get("project_id")
-
-    assert response.status_code == http.HTTPStatus.OK
+    public_project_id = response.json.get("project_id")
 
     # Release project and check email
-    with unittest.mock.patch.object(flask_mail.Mail) as mock_mail:
-        with mock_mail.record_messages() as outbox:
-            response = client.post(
-                tests.DDSEndpoint.PROJECT_STATUS,
-                headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
-                query_string={"project": project_id},
-                json={"new_status": "Available"},
-            )
-
-        assert len(outbox) == 1
-        assert "Project made available by" in outbox[0].subject
-
-    assert response.status_code == http.HTTPStatus.OK
-
-
-#        msg = outbox[-1]
+    with mail.record_messages() as outbox:
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_STATUS,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+            query_string={"project": public_project_id},
+            json={"new_status": "Available", "deadline": 10, "send_email": True},
+        )
+        assert len(outbox) == 3
+        assert "Project made available by" in outbox[-1].subject
+        # TODO check the body of the email
+        #        msg = outbox[-1]
 #        assert msg.subject == const.RESET_EMAIL_SUBJECT
 #        assert 'Reset Password' in msg.html
 #        assert 'Reset Password' in msg.body
+
+    assert response.status_code == http.HTTPStatus.OK
+
+
