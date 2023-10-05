@@ -1390,7 +1390,7 @@ def test_project_usage(module_client):
     assert (proj_bhours / 1e9) * cost_gbhour == proj_cost
 
 
-def test_email_project_release(client,boto3_session):
+def test_email_project_release(client, boto3_session):
     """Test that the email to the researches is sent when the project has been released
     Function is compose_and_send_email_to_user used at project.py
     """
@@ -1419,10 +1419,8 @@ def test_email_project_release(client,boto3_session):
         assert "Project made available by" in outbox[-1].subject
         # TODO check the body of the email
         #        msg = outbox[-1]
-#        assert msg.subject == const.RESET_EMAIL_SUBJECT
-#        assert 'Reset Password' in msg.html
-#        assert 'Reset Password' in msg.body -> plain text
+    #        assert msg.subject == const.RESET_EMAIL_SUBJECT
+    #        assert 'Reset Password' in msg.html
+    #        assert 'Reset Password' in msg.body -> plain text
 
     assert response.status_code == http.HTTPStatus.OK
-
-
