@@ -307,3 +307,7 @@ _Nothing merged in CLI during this sprint_
 - Column `sto4_start_time` is automatically set when the create-unit command is run ([#1668])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1668)
 - Replace expired invites when there's a new invitation attempt ([#1466](https://github.com/ScilifelabDataCentre/dds_web/pull/1466))
 - New version: 2.5.1 ([#1471](https://github.com/ScilifelabDataCentre/dds_web/pull/1471))
+
+# 2023-10-02 - 2023-10-13
+
+- Changed email subject when motd is release to send the whole DDS name and not just the acronynm ([#1422])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1422)
