@@ -829,7 +829,8 @@ def tertiary_usage():
         for _, project in page_query(
             db.session.query(models.Unit, models.Project)
             .join(models.Project)
-            .filter(models.Project.is_active == False).with_for_update()
+            .filter(models.Project.is_active == False)
+            .with_for_update()
         ):
             # Get number of versions in project that have been fully included in usage calcs
             num_done = (
@@ -855,7 +856,8 @@ def tertiary_usage():
         for _, project in page_query(
             db.session.query(models.Unit, models.Project)
             .join(models.Project)
-            .filter(models.Project.done == False).with_for_update()
+            .filter(models.Project.done == False)
+            .with_for_update()
         ):
             project_byte_hours: int = 0
             for version in project.file_versions:
@@ -886,8 +888,7 @@ def tertiary_usage():
         db.session.rollback()
         raise
 
-    # Send email with latest usage row 
-    
+    # Send email with latest usage row
 
 
 @click.command("stats")
