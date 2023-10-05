@@ -1417,7 +1417,7 @@ def test_email_project_release(module_client, boto3_session):
             query_string={"project": public_project_id},
             json={"new_status": "Available", "deadline": 10, "send_email": True},
         )
-        assert len(outbox) == 3
+        assert len(outbox) == 2 # Emails informing researchers
         assert "Project made available by" in outbox[-1].subject
 
         body = outbox[-1].body  # plain text
@@ -1426,12 +1426,12 @@ def test_email_project_release(module_client, boto3_session):
         project_title = proj_data_with_existing_users["title"]
 
         ## check plain text message
-        assert f"- Project Title: {project_title}" in outbox[-1].body
-        assert f"- DDS project ID: {public_project_id}" in outbox[-1].body
+        assert f"- Project Title: {project_title}" in body
+        assert f"- DDS project ID: {public_project_id}" in body
 
         ## check html
 
-        assert f"<li><b>Project Title:</b> {project_title}</li>"
-        assert f"<li><b>DDS project ID:</b> {public_project_id}</li>"
+        assert f"<li><b>Project Title:</b> {project_title}</li>" in html
+        assert f"<li><b>DDS project ID:</b> {public_project_id}</li>" in html
 
     assert response.status_code == http.HTTPStatus.OK
