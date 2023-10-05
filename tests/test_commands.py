@@ -31,7 +31,7 @@ from dds_web.commands import (
     set_available_to_expired,
     set_expired_to_archived,
     delete_invites,
-    quarterly_usage,
+    tertiary_usage,
     collect_stats,
     lost_files_s3_db,
     update_unit,
@@ -1349,9 +1349,9 @@ def test_delete_invite_timestamp_issue(client, cli_runner):
 # quarterly usage
 
 
-def test_quarterly_usage(client, cli_runner):
-    """Test the quarterly_usage cron job."""
-    cli_runner.invoke(quarterly_usage)
+def test_tertiary_usage(client, cli_runner):
+    """Test the tertiary usage cron job."""
+    cli_runner.invoke(tertiary_usage)
 
 
 # reporting units and users

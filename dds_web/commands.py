@@ -798,12 +798,12 @@ def delete_invites():
         flask.current_app.logger.error(f"{invite} not deleted: {error}")
 
 
-@click.command("quartely-usage")
+@click.command("tertiary-usage")
 @flask.cli.with_appcontext
-def quarterly_usage():
+def tertiary_usage():
     """
-    Get the monthly usage for the units
-    Should be run on the 1st of Jan,Apr,Jul,Oct at around 00:01.
+    Get the tertiary (once every 4 months) usage for the units
+    Should be run on the 1st of Jan,May,September at around 00:01.
     """
 
     flask.current_app.logger.debug("Task: Collecting usage information from database.")
@@ -818,7 +818,6 @@ def quarterly_usage():
     from dds_web.utils import (
         current_time,
         page_query,
-        # calculate_period_usage,
         calculate_version_period_usage,
     )
 
@@ -827,10 +826,10 @@ def quarterly_usage():
         # .. a. Check if the versions are all time_deleted == time_invoiced
         # .. b. Yes --> Set new column to True ("done")
         flask.current_app.logger.info("Marking projects as 'done'....")
-        for unit, project in page_query(
+        for _, project in page_query(
             db.session.query(models.Unit, models.Project)
             .join(models.Project)
-            .filter(models.Project.is_active == False)
+            .filter(models.Project.is_active == False).with_for_update()
         ):
             # Get number of versions in project that have been fully included in usage calcs
             num_done = (
@@ -853,14 +852,14 @@ def quarterly_usage():
             db.session.commit()
 
         # 2. Get project where done = False
-        for unit, project in page_query(
+        for _, project in page_query(
             db.session.query(models.Unit, models.Project)
             .join(models.Project)
-            .filter(models.Project.done == False)
+            .filter(models.Project.done == False).with_for_update()
         ):
             project_byte_hours: int = 0
             for version in project.file_versions:
-                # Skipp deleted and already invoiced versions
+                # Skip deleted and already invoiced versions
                 if version.time_deleted == version.time_invoiced and [
                     version.time_deleted,
                     version.time_invoiced,
@@ -886,6 +885,9 @@ def quarterly_usage():
         flask.current_app.logger.exception(err)
         db.session.rollback()
         raise
+
+    # Send email with latest usage row 
+    
 
 
 @click.command("stats")
