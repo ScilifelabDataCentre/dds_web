@@ -16,7 +16,7 @@ import sqlalchemy
 
 # Own
 import dds_web
-from dds_web import auth, mail, db, basic_auth, limiter
+from dds_web import mail, db
 from dds_web.errors import BucketNotFoundError, DatabaseError, DeletionError
 import tests
 from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
@@ -1421,7 +1421,7 @@ def test_email_project_release(client,boto3_session):
         #        msg = outbox[-1]
 #        assert msg.subject == const.RESET_EMAIL_SUBJECT
 #        assert 'Reset Password' in msg.html
-#        assert 'Reset Password' in msg.body
+#        assert 'Reset Password' in msg.body -> plain text
 
     assert response.status_code == http.HTTPStatus.OK
 
