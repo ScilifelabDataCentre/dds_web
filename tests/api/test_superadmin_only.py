@@ -20,7 +20,7 @@ import freezegun
 import click
 
 # Own
-from dds_web import db
+from dds_web import db, mail
 from dds_web.database import models
 import tests
 from dds_web.commands import collect_stats
@@ -155,9 +155,15 @@ def test_create_motd_as_superadmin_empty_message(client: flask.testing.FlaskClie
 def test_create_motd_as_superadmin_success(client: flask.testing.FlaskClient) -> None:
     """Create a new message of the day, using a Super Admin account."""
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
-    response: werkzeug.test.WrapperTestResponse = client.post(
-        tests.DDSEndpoint.MOTD, headers=token, json={"message": "test"}
-    )
+
+    with mail.record_messages() as outbox:
+        response: werkzeug.test.WrapperTestResponse = client.post(
+            tests.DDSEndpoint.MOTD, headers=token, json={"message": "test"}
+        )
+
+        assert len(outbox) == 1
+        assert "Important Information: Data Delivery System" in outbox[-1].subject
+
     assert response.status_code == http.HTTPStatus.OK
     assert "The MOTD was successfully added to the database." in response.json.get("message")
 
