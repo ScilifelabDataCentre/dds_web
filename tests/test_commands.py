@@ -31,7 +31,7 @@ from dds_web.commands import (
     set_available_to_expired,
     set_expired_to_archived,
     delete_invites,
-    tertiary_usage,
+    monthly_usage,
     collect_stats,
     lost_files_s3_db,
     update_unit,
@@ -1349,7 +1349,7 @@ def test_delete_invite_timestamp_issue(client, cli_runner):
 # quarterly usage
 
 
-def test_tertiary_usage(client, cli_runner):
+def test_monthly_usage(client, cli_runner):
     """Test the tertiary usage cron job."""
     # Check if there's a non active project
     non_active_projects = models.Project.query.filter_by(is_active=False).all()
@@ -1359,7 +1359,7 @@ def test_tertiary_usage(client, cli_runner):
         project.is_active = False
         db.session.commit()
 
-    cli_runner.invoke(tertiary_usage)
+    cli_runner.invoke(monthly_usage)
 
 
 # reporting units and users

@@ -798,12 +798,16 @@ def delete_invites():
         flask.current_app.logger.error(f"{invite} not deleted: {error}")
 
 
-@click.command("tertiary-usage")
+@click.command("monthly-usage")
 @flask.cli.with_appcontext
-def tertiary_usage():
-    """
-    Get the tertiary (once every 4 months) usage for the units
-    Should be run on the 1st of Jan,May,September at around 00:01.
+def monthly_usage():
+    """Get the monthly usage for the units.
+
+    Should be run on the 1st of every month at around 00:01.
+
+    1. Mark projects as done (all files have been included in an invoice)
+    2. Calculate project usage for all non-done projects
+    3. Send success- or failure email
     """
 
     flask.current_app.logger.debug("Task: Collecting usage information from database.")
@@ -824,16 +828,34 @@ def tertiary_usage():
 
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
+    # Success
     email_subject: str = "[INVOICING CRONJOB]"
-
+    email_body: str = (
+        "The calculation of the monthly usage succeeded; The byte hours "
+        "for all active projects have been saved to the database."
+    )
+    # Failure
+    error_subject: str = f"{email_subject} <ERROR> Error in monthly-usage cronjob"
+    error_body: str = (
+        "There was an error in the cronjob 'monthly-usage', used for calculating the"
+        " byte hours for every active project in the last month.\n\n"
+        "What to do:\n"
+        "1. Check the logs on OpenSearch.\n"
+        "2. The DDS team should enter the backend container and run the command `flask monthly-usage`.\n"
+        "3. Check that you receive a new email indicating that the command was successful.\n"
+    )
+    
+    # 1. Mark projects as done (all files have been included in an invoice)
+    # .. a. Get projects where is_active = False
+    # .. b. Check if the versions are all time_deleted == time_invoiced
+    # .. c. Yes --> Set new column to True ("done")
     try:
-        # 1. Get projects where is_active = False
-        # .. a. Check if the versions are all time_deleted == time_invoiced
-        # .. b. Yes --> Set new column to True ("done")
         flask.current_app.logger.info("Marking projects as 'done'...")
+
         # Iterate through units
         for unit in models.Unit.query.all():
             flask.current_app.logger.info(f"...checking projects in unit: {unit.public_id}")
+
             # Iterate through unit projects
             for project in page_query(
                 models.Project.query.filter_by(is_active=False, unit_id=unit.id).with_for_update()
@@ -855,10 +877,32 @@ def tertiary_usage():
                 if num_done == len(project.file_versions):
                     project.done = True
 
+                # Save any projects marked as done
                 db.session.commit()
 
-        # 2. Get project where done = False
+    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        db.session.rollback()
+        flask.current_app.logger.error("Usage collection <failed> during step 1: marking projects as done. Sending email...")
+
+        # Send email about error
+        email_message: flask_mail.Message = flask_mail.Message(
+            subject=error_subject,
+            recipients=[email_recipient],
+            body=error_body,
+        )
+        send_email_with_retry(msg=email_message)
+        raise        
+
+    # 2. Calculate project usage for all non-done projects
+    # .. a. Get projects where done = False
+    # .. b. Calculate usage
+    # .. c. Save usage
+    try:
         flask.current_app.logger.info("Calculating usage...")
+
+        # Save all new rows at once
+        all_new_rows = []
+
         # Iterate through units again
         for unit in models.Unit.query.all():
             flask.current_app.logger.info(f"...calculating projects in unit: {unit.public_id}")
@@ -876,56 +920,44 @@ def tertiary_usage():
                         continue
                     version_bhours = calculate_version_period_usage(version=version)
                     project_byte_hours += version_bhours
-                flask.current_app.logger.info(
+                flask.current_app.logger.debug(
                     f"Project {project.public_id} byte hours: {project_byte_hours}"
                 )
 
                 # Create a record in usage table
-                new_record = models.Usage(
+                new_usage_row = models.Usage(
                     project_id=project.id,
                     usage=project_byte_hours,
-                    cost=0,
                     time_collected=current_time(),
                 )
-                db.session.add(new_record)
-                db.session.commit()
+                all_new_rows.append(new_usage_row)
+        
+        # Save new rows
+        db.session.add_all(all_new_rows)
+        db.session.commit()
 
     except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
         db.session.rollback()
-        flask.current_app.logger.error("Usage collection FAILED; Sending error email.")
+        flask.current_app.logger.error("Usage collection <failed> during step 2: calculating and saving usage. Sending email...")
 
         # Send email about error
-        error_subject: str = f"{email_subject} <ERROR> Error in tertiary-usage cronjob"
-        error_body: str = (
-            "There was an error in the cronjob 'tertiary-usage'. This cronjob calculates "
-            "the byte hours for each active project and saves it to the database. \n\n"
-            "What to do:\n"
-            "1. Check the logs on OpenSearch.\n"
-            "2. The DDS team should enter the backend container and run the command `flask tertiary-usage`."
-            "3. Check that you receive a new email indicating that the command was successful.\n"
-        )
         email_message: flask_mail.Message = flask_mail.Message(
             subject=error_subject,
             recipients=[email_recipient],
             body=error_body,
         )
         send_email_with_retry(msg=email_message)
-        raise
-    else:
-        flask.current_app.logger.info("Usage collection successful; Sending email.")
+        raise      
 
-        # Send email about success
-        email_subject += " Usage records available for collection"
-        email_body: str = (
-            "The calculation of the tertiary usage failed; The byte hours "
-            "for all active projects have been saved to the database."
-        )
-        email_message: flask_mail.Message = flask_mail.Message(
-            subject=email_subject,
-            recipients=[email_recipient],
-            body=email_body,
-        )
-        send_email_with_retry(msg=email_message)
+    # 3. Send success email
+    flask.current_app.logger.info("Usage collection successful; Sending email.")
+    email_subject += " Usage records available for collection"
+    email_message: flask_mail.Message = flask_mail.Message(
+        subject=email_subject,
+        recipients=[email_recipient],
+        body=email_body,
+    )
+    send_email_with_retry(msg=email_message)
 
 
 @click.command("stats")

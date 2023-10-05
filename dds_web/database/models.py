@@ -1053,7 +1053,6 @@ class Usage(db.Model):
 
     # Additional columns
     usage = db.Column(db.Float, nullable=False)
-    cost = db.Column(db.Float, nullable=False)
     time_collected = db.Column(
         db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time
     )
