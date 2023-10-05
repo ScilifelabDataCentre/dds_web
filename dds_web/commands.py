@@ -819,7 +819,12 @@ def tertiary_usage():
         current_time,
         page_query,
         calculate_version_period_usage,
+        send_email_with_retry,
     )
+
+    # Email settings
+    email_recipient: str = flask.current_app.config.get("MAIL_DDS")
+    email_subject: str = "[INVOICING CRONJOB]"
 
     try:
         # 1. Get projects where is_active = False
@@ -884,11 +889,26 @@ def tertiary_usage():
             db.session.commit()
 
     except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-        flask.current_app.logger.exception(err)
         db.session.rollback()
-        raise
+        flask.current_app.logger.exception(err)
 
-    # Send email with latest usage row
+        # Send email about error
+        error_subject: str = f"{email_subject} <ERROR> Error in tertiary-usage cronjob"
+        error_body: str = (
+            "There was an error in the cronjob 'tertiary-usage'. This cronjob calculates "
+            "the byte hours for each active project and saves it to the database. \n\n"
+            "What to do:\n"
+            "1. Check the logs on OpenSearch.\n"
+            "2. The DDS team should enter the backend container and run the command `flask tertiary-usage`."
+            "If all goes well, you should get a new email regarding the cronjob with the usage for each unit.\n"
+        )
+        file_error_msg: flask_mail.Message = flask_mail.Message(
+            subject=error_subject,
+            recipients=[email_recipient],
+            body=error_body,
+        )
+        send_email_with_retry(msg=file_error_msg)
+        raise
 
 
 @click.command("stats")
