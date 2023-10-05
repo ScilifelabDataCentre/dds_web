@@ -844,7 +844,7 @@ def monthly_usage():
         "2. The DDS team should enter the backend container and run the command `flask monthly-usage`.\n"
         "3. Check that you receive a new email indicating that the command was successful.\n"
     )
-    
+
     # 1. Mark projects as done (all files have been included in an invoice)
     # .. a. Get projects where is_active = False
     # .. b. Check if the versions are all time_deleted == time_invoiced
@@ -882,7 +882,9 @@ def monthly_usage():
 
     except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
         db.session.rollback()
-        flask.current_app.logger.error("Usage collection <failed> during step 1: marking projects as done. Sending email...")
+        flask.current_app.logger.error(
+            "Usage collection <failed> during step 1: marking projects as done. Sending email..."
+        )
 
         # Send email about error
         email_message: flask_mail.Message = flask_mail.Message(
@@ -891,7 +893,7 @@ def monthly_usage():
             body=error_body,
         )
         send_email_with_retry(msg=email_message)
-        raise        
+        raise
 
     # 2. Calculate project usage for all non-done projects
     # .. a. Get projects where done = False
@@ -931,14 +933,16 @@ def monthly_usage():
                     time_collected=current_time(),
                 )
                 all_new_rows.append(new_usage_row)
-        
+
         # Save new rows
         db.session.add_all(all_new_rows)
         db.session.commit()
 
     except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
         db.session.rollback()
-        flask.current_app.logger.error("Usage collection <failed> during step 2: calculating and saving usage. Sending email...")
+        flask.current_app.logger.error(
+            "Usage collection <failed> during step 2: calculating and saving usage. Sending email..."
+        )
 
         # Send email about error
         email_message: flask_mail.Message = flask_mail.Message(
@@ -947,7 +951,7 @@ def monthly_usage():
             body=error_body,
         )
         send_email_with_retry(msg=email_message)
-        raise      
+        raise
 
     # 3. Send success email
     flask.current_app.logger.info("Usage collection successful; Sending email.")
