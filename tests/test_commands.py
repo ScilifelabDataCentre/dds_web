@@ -1351,6 +1351,14 @@ def test_delete_invite_timestamp_issue(client, cli_runner):
 
 def test_tertiary_usage(client, cli_runner):
     """Test the tertiary usage cron job."""
+    # Check if there's a non active project
+    non_active_projects = models.Project.query.filter_by(is_active=False).all()
+    if not non_active_projects:
+        # Make at least one project not active
+        project = models.Project.query.first()
+        project.is_active = False
+        db.session.commit()
+
     cli_runner.invoke(tertiary_usage)
 
 
