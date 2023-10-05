@@ -1390,7 +1390,7 @@ def test_project_usage(module_client):
     assert (proj_bhours / 1e9) * cost_gbhour == proj_cost
 
 
-def test_email_project_release(client, boto3_session):
+def test_email_project_release(module_client, boto3_session):
     """Test that the email to the researches is sent when the project has been released
     Function is compose_and_send_email_to_user used at project.py
     """
@@ -1398,9 +1398,9 @@ def test_email_project_release(client, boto3_session):
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
 
-    response = client.post(
+    response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
         json=proj_data_with_existing_users,
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -1409,9 +1409,9 @@ def test_email_project_release(client, boto3_session):
 
     # Release project and check email
     with mail.record_messages() as outbox:
-        response = client.post(
+        response = module_client.post(
             tests.DDSEndpoint.PROJECT_STATUS,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
             query_string={"project": public_project_id},
             json={"new_status": "Available", "deadline": 10, "send_email": True},
         )
