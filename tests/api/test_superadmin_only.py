@@ -155,15 +155,9 @@ def test_create_motd_as_superadmin_empty_message(client: flask.testing.FlaskClie
 def test_create_motd_as_superadmin_success(client: flask.testing.FlaskClient) -> None:
     """Create a new message of the day, using a Super Admin account."""
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
-
-    with mail.record_messages() as outbox:
-        response: werkzeug.test.WrapperTestResponse = client.post(
-            tests.DDSEndpoint.MOTD, headers=token, json={"message": "test"}
-        )
-
-        assert len(outbox) == 1
-        assert "Important Information: Data Delivery System" in outbox[-1].subject
-
+    response: werkzeug.test.WrapperTestResponse = client.post(
+        tests.DDSEndpoint.MOTD, headers=token, json={"message": "test"}
+    )
     assert response.status_code == http.HTTPStatus.OK
     assert "The MOTD was successfully added to the database." in response.json.get("message")
 
@@ -611,12 +605,13 @@ def test_send_motd_ok(client: flask.testing.FlaskClient) -> None:
     num_users = models.User.query.count()
 
     # Attempt request
-    with unittest.mock.patch.object(flask_mail.Connection, "send") as mock_mail_send:
+    with mail.record_messages() as outbox:
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.MOTD_SEND, headers=token, json={"motd_id": created_motd.id}
         )
         assert response.status_code == http.HTTPStatus.OK
-        assert mock_mail_send.call_count == num_users
+        assert len(outbox) == num_users
+        assert "Important Information: Data Delivery System" in outbox[-1].subject
 
 
 # Maintenance ######################################################################################
