@@ -863,7 +863,9 @@ def tertiary_usage():
         for unit in models.Unit.query.all():
             flask.current_app.logger.info(f"...calculating projects in unit: {unit.public_id}")
             # Iterate through unit projects
-            for project in page_query(models.Project.query.filter_by(done=False).with_for_update()):
+            for project in page_query(
+                models.Project.query.filter_by(done=False, unit_id=unit.id).with_for_update()
+            ):
                 project_byte_hours: int = 0
                 for version in project.file_versions:
                     # Skip deleted and already invoiced versions
