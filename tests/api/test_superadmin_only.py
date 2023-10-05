@@ -585,6 +585,7 @@ def test_send_motd_no_primary_email(client: flask.testing.FlaskClient) -> None:
         assert response.status_code == http.HTTPStatus.OK
         assert len(outbox) == num_users - 1
         assert "Important Information: Data Delivery System" in outbox[-1].subject
+        assert "incorrect subject" not in outbox[-1].subject
 
 
 def test_send_motd_ok(client: flask.testing.FlaskClient) -> None:
