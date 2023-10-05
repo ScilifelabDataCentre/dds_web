@@ -310,4 +310,4 @@ _Nothing merged in CLI during this sprint_
 
 # 2023-10-02 - 2023-10-13
 
-- Changed email subject when motd is release to send the whole DDS name and not just the acronynm ([#1422])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1422)
+- Use full DDS name in MOTD email subject ([#1422])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1422)
