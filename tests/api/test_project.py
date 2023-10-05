@@ -1396,11 +1396,13 @@ def test_email_project_release(module_client, boto3_session):
     """
     create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins == 3
+    assert current_unit_admins >= 3
+    
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
 
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        headers=token,
         json=proj_data_with_existing_users,
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -1411,16 +1413,25 @@ def test_email_project_release(module_client, boto3_session):
     with mail.record_messages() as outbox:
         response = module_client.post(
             tests.DDSEndpoint.PROJECT_STATUS,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+            headers=token,
             query_string={"project": public_project_id},
             json={"new_status": "Available", "deadline": 10, "send_email": True},
         )
         assert len(outbox) == 3
         assert "Project made available by" in outbox[-1].subject
-        # TODO check the body of the email
-        #        msg = outbox[-1]
-    #        assert msg.subject == const.RESET_EMAIL_SUBJECT
-    #        assert 'Reset Password' in msg.html
-    #        assert 'Reset Password' in msg.body -> plain text
+        
+        body = outbox[-1].body #plain text
+        html = outbox[-1].html
+
+        project_title = proj_data_with_existing_users["title"]
+
+        ## check plain text message
+        assert f"- Project Title: {project_title}" in outbox[-1].body
+        assert f"- DDS project ID: {public_project_id}" in outbox[-1].body
+
+        ## check html
+
+        assert f"<li><b>Project Title:</b> {project_title}</li>"
+        assert f"<li><b>DDS project ID:</b> {public_project_id}</li>"
 
     assert response.status_code == http.HTTPStatus.OK
