@@ -1397,7 +1397,7 @@ def test_email_project_release(module_client, boto3_session):
     create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins >= 3
-    
+
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
 
     response = module_client.post(
@@ -1419,8 +1419,8 @@ def test_email_project_release(module_client, boto3_session):
         )
         assert len(outbox) == 3
         assert "Project made available by" in outbox[-1].subject
-        
-        body = outbox[-1].body #plain text
+
+        body = outbox[-1].body  # plain text
         html = outbox[-1].html
 
         project_title = proj_data_with_existing_users["title"]
