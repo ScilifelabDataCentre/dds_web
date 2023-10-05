@@ -830,67 +830,67 @@ def tertiary_usage():
         # 1. Get projects where is_active = False
         # .. a. Check if the versions are all time_deleted == time_invoiced
         # .. b. Yes --> Set new column to True ("done")
-        flask.current_app.logger.info("Marking projects as 'done'....")
-        for _, project in page_query(
-            db.session.query(models.Unit, models.Project)
-            .join(models.Project)
-            .filter(models.Project.is_active == False)
-            .with_for_update()
-        ):
-            # Get number of versions in project that have been fully included in usage calcs
-            num_done = (
-                db.session.query(models.Project, models.Version)
-                .join(models.Version)
-                .filter(
-                    sqlalchemy.and_(
-                        models.Project.id == project.id,
-                        models.Version.time_deleted == models.Version.time_invoiced,
+        flask.current_app.logger.info("Marking projects as 'done'...")
+        # Iterate through units
+        for unit in models.Unit.query.all():
+            flask.current_app.logger.info(f"...checking projects in unit: {unit.public_id}")
+            # Iterate through unit projects
+            for project in page_query(
+                models.Project.query.filter_by(is_active=False, unit_id=unit.id).with_for_update()
+            ):
+                # Get number of versions in project that have been fully included in usage calcs
+                num_done = (
+                    db.session.query(models.Project, models.Version)
+                    .join(models.Version)
+                    .filter(
+                        sqlalchemy.and_(
+                            models.Project.id == project.id,
+                            models.Version.time_deleted == models.Version.time_invoiced,
+                        )
                     )
+                    .count()
                 )
-                .count()
-            )
+                # Check if there are any versions that are not fully included
+                # If not, project is done and should not be included in any more usage calculations in billing
+                if num_done == len(project.file_versions):
+                    project.done = True
 
-            # Check if there are any versions that are not fully included
-            # If not, project is done and should not be included in any more usage calculations in billing
-            if num_done == len(project.file_versions):
-                project.done = True
-
-            db.session.commit()
+                db.session.commit()
 
         # 2. Get project where done = False
-        for _, project in page_query(
-            db.session.query(models.Unit, models.Project)
-            .join(models.Project)
-            .filter(models.Project.done == False)
-            .with_for_update()
-        ):
-            project_byte_hours: int = 0
-            for version in project.file_versions:
-                # Skip deleted and already invoiced versions
-                if version.time_deleted == version.time_invoiced and [
-                    version.time_deleted,
-                    version.time_invoiced,
-                ] != [None, None]:
-                    continue
-                version_bhours = calculate_version_period_usage(version=version)
-                project_byte_hours += version_bhours
-            flask.current_app.logger.info(
-                f"Project {project.public_id} byte hours: {project_byte_hours}"
-            )
+        flask.current_app.logger.info("Calculating usage...")
+        # Iterate through units again
+        for unit in models.Unit.query.all():
+            flask.current_app.logger.info(f"...calculating projects in unit: {unit.public_id}")
+            # Iterate through unit projects
+            for project in page_query(models.Project.query.filter_by(done=False).with_for_update()):
+                project_byte_hours: int = 0
+                for version in project.file_versions:
+                    # Skip deleted and already invoiced versions
+                    if version.time_deleted == version.time_invoiced and [
+                        version.time_deleted,
+                        version.time_invoiced,
+                    ] != [None, None]:
+                        continue
+                    version_bhours = calculate_version_period_usage(version=version)
+                    project_byte_hours += version_bhours
+                flask.current_app.logger.info(
+                    f"Project {project.public_id} byte hours: {project_byte_hours}"
+                )
 
-            # Create a record in usage table
-            new_record = models.Usage(
-                project_id=project.id,
-                usage=project_byte_hours,
-                cost=0,
-                time_collected=current_time(),
-            )
-            db.session.add(new_record)
-            db.session.commit()
+                # Create a record in usage table
+                new_record = models.Usage(
+                    project_id=project.id,
+                    usage=project_byte_hours,
+                    cost=0,
+                    time_collected=current_time(),
+                )
+                db.session.add(new_record)
+                db.session.commit()
 
     except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
         db.session.rollback()
-        flask.current_app.logger.exception(err)
+        flask.current_app.logger.error("Usage collection FAILED; Sending error email.")
 
         # Send email about error
         error_subject: str = f"{email_subject} <ERROR> Error in tertiary-usage cronjob"
@@ -900,15 +900,30 @@ def tertiary_usage():
             "What to do:\n"
             "1. Check the logs on OpenSearch.\n"
             "2. The DDS team should enter the backend container and run the command `flask tertiary-usage`."
-            "If all goes well, you should get a new email regarding the cronjob with the usage for each unit.\n"
+            "3. Check that you receive a new email indicating that the command was successful.\n"
         )
-        file_error_msg: flask_mail.Message = flask_mail.Message(
+        email_message: flask_mail.Message = flask_mail.Message(
             subject=error_subject,
             recipients=[email_recipient],
             body=error_body,
         )
-        send_email_with_retry(msg=file_error_msg)
+        send_email_with_retry(msg=email_message)
         raise
+    else:
+        flask.current_app.logger.info("Usage collection successful; Sending email.")
+
+        # Send email about success
+        email_subject += " Usage records available for collection"
+        email_body: str = (
+            "The calculation of the tertiary usage failed; The byte hours "
+            "for all active projects have been saved to the database."
+        )
+        email_message: flask_mail.Message = flask_mail.Message(
+            subject=email_subject,
+            recipients=[email_recipient],
+            body=email_body,
+        )
+        send_email_with_retry(msg=email_message)
 
 
 @click.command("stats")
