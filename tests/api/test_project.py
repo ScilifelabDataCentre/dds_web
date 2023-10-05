@@ -1391,23 +1391,19 @@ def test_project_usage(module_client):
 
 
 def test_email_project_release(module_client, boto3_session):
-    """Test that the email to the researches is sent when the project has been released
-    Function is compose_and_send_email_to_user used at project.py
-    """
+    """Test that check that the email sent to the researchers when project is released is correct"""
+    public_project_id = "public_project_id"
+
     create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins >= 3
 
+    # user to perfrom the operation
     token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=token,
-        json=proj_data_with_existing_users,
-    )
-    assert response.status_code == http.HTTPStatus.OK
-
-    public_project_id = response.json.get("project_id")
+    # project to be released
+    project = models.Project.query.filter_by(public_id=public_project_id).first()
+    # num of researchers that will receive email
+    num_users = models.ProjectUsers.query.filter_by(project_id=project.id).count()
 
     # Release project and check email
     with mail.record_messages() as outbox:
@@ -1417,13 +1413,13 @@ def test_email_project_release(module_client, boto3_session):
             query_string={"project": public_project_id},
             json={"new_status": "Available", "deadline": 10, "send_email": True},
         )
-        assert len(outbox) == 2  # Emails informing researchers
+        assert len(outbox) == num_users  # nº of Emails informing researchers
         assert "Project made available by" in outbox[-1].subject
 
         body = outbox[-1].body  # plain text
         html = outbox[-1].html
 
-        project_title = proj_data_with_existing_users["title"]
+        project_title = project.title
 
         ## check plain text message
         assert f"- Project Title: {project_title}" in body
