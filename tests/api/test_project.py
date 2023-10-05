@@ -1417,7 +1417,7 @@ def test_email_project_release(module_client, boto3_session):
             query_string={"project": public_project_id},
             json={"new_status": "Available", "deadline": 10, "send_email": True},
         )
-        assert len(outbox) == 2 # Emails informing researchers
+        assert len(outbox) == 2  # Emails informing researchers
         assert "Project made available by" in outbox[-1].subject
 
         body = outbox[-1].body  # plain text
