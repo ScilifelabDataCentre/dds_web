@@ -751,5 +751,11 @@ class UpdateFailedFiles(flask_restful.Resource):
     def put(self):
         """Run flask command with failed_delivery_log."""
 
-        flask.current_app.logger.debug("API called")
-        return {"message": "File(s) info updated."}
+        # Verify project ID and access
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        # Get the request json and pass it to add_uploaded_files_to_db
+        request_json = flask.request.get_json(silent=True)
+        dds_web.utils.add_uploaded_files_to_db(project, request_json)
+
+        return {"message": "File(s) added to database."}
