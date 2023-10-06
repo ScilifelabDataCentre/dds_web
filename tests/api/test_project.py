@@ -16,7 +16,7 @@ import sqlalchemy
 
 # Own
 import dds_web
-from dds_web import db
+from dds_web import mail, db
 from dds_web.errors import BucketNotFoundError, DatabaseError, DeletionError
 import tests
 from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
@@ -1388,3 +1388,46 @@ def test_project_usage(module_client):
     # Call project_usage() for the project and check if cost is calculated correctly
     proj_bhours, proj_cost = UserProjects.project_usage(project=project_0)
     assert (proj_bhours / 1e9) * cost_gbhour == proj_cost
+
+
+def test_email_project_release(module_client, boto3_session):
+    """Test that check that the email sent to the researchers when project is released is correct"""
+    public_project_id = "public_project_id"
+
+    create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # user to perfrom the operation
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client)
+    # project to be released
+    project = models.Project.query.filter_by(public_id=public_project_id).first()
+    # num of researchers that will receive email
+    num_users = models.ProjectUsers.query.filter_by(project_id=project.id).count()
+
+    # Release project and check email
+    with mail.record_messages() as outbox:
+        response = module_client.post(
+            tests.DDSEndpoint.PROJECT_STATUS,
+            headers=token,
+            query_string={"project": public_project_id},
+            json={"new_status": "Available", "deadline": 10, "send_email": True},
+        )
+        assert len(outbox) == num_users  # nº of Emails informing researchers
+        assert "Project made available by" in outbox[-1].subject
+
+        body = outbox[-1].body  # plain text
+        html = outbox[-1].html
+
+        project_title = project.title
+
+        ## check plain text message
+        assert f"- Project Title: {project_title}" in body
+        assert f"- DDS project ID: {public_project_id}" in body
+
+        ## check html
+
+        assert f"<li><b>Project Title:</b> {project_title}</li>" in html
+        assert f"<li><b>DDS project ID:</b> {public_project_id}</li>" in html
+
+    assert response.status_code == http.HTTPStatus.OK
