@@ -861,7 +861,7 @@ def monthly_usage():
                 models.Project.query.filter_by(is_active=False, unit_id=unit.id).with_for_update()
             ):
                 # Get number of versions in project that have been fully included in usage calcs
-                num_done = len(v for v in project.file_versions if v.time_deleted == v.time_invoiced)
+                num_done = len(list(v for v in project.file_versions if v.time_deleted == v.time_invoiced))
 
                 # Check if there are any versions that are not fully included
                 # If not, project is done and should not be included in any more usage calculations in billing
