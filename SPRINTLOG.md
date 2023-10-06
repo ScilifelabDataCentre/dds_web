@@ -310,6 +310,6 @@ _Nothing merged in CLI during this sprint_
 
 # 2023-10-02 - 2023-10-13
 
-- Add flag --verify-checksum to the comand in email template ([#1409])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1409)
 - Project title displayed along with the internal project ID email sent when a project is released ([#1475](https://github.com/ScilifelabDataCentre/dds_web/pull/1475))
 - Use full DDS name in MOTD email subject ([#1477](https://github.com/ScilifelabDataCentre/dds_web/pull/1477))
+- Add flag --verify-checksum to the comand in email template ([#1478])(https://github.com/ScilifelabDataCentre/dds_web/pull/1478)
