@@ -312,3 +312,4 @@ _Nothing merged in CLI during this sprint_
 
 - Project title displayed along with the internal project ID email sent when a project is released ([#1475](https://github.com/ScilifelabDataCentre/dds_web/pull/1475))
 - Use full DDS name in MOTD email subject ([#1477](https://github.com/ScilifelabDataCentre/dds_web/pull/1477))
+- Add flag --verify-checksum to the comand in email template ([#1478])(https://github.com/ScilifelabDataCentre/dds_web/pull/1478)
