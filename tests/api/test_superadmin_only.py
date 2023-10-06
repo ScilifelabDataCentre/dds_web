@@ -20,7 +20,7 @@ import freezegun
 import click
 
 # Own
-from dds_web import db
+from dds_web import db, mail
 from dds_web.database import models
 import tests
 from dds_web.commands import collect_stats
@@ -577,13 +577,15 @@ def test_send_motd_no_primary_email(client: flask.testing.FlaskClient) -> None:
     assert not models.Email.query.filter_by(email=email).one_or_none()
     assert not models.User.query.filter_by(username=username).one().primary_email
 
-    # Attempt request
-    with unittest.mock.patch.object(flask_mail.Connection, "send") as mock_mail_send:
+    # Attempt request and catch email
+    with mail.record_messages() as outbox:
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.MOTD_SEND, headers=token, json={"motd_id": created_motd.id}
         )
         assert response.status_code == http.HTTPStatus.OK
-        assert mock_mail_send.call_count == num_users - 1
+        assert len(outbox) == num_users - 1
+        assert "Important Information: Data Delivery System" in outbox[-1].subject
+        assert "incorrect subject" not in outbox[-1].subject
 
 
 def test_send_motd_ok(client: flask.testing.FlaskClient) -> None:
@@ -604,13 +606,14 @@ def test_send_motd_ok(client: flask.testing.FlaskClient) -> None:
     # Get number of users
     num_users = models.User.query.count()
 
-    # Attempt request
-    with unittest.mock.patch.object(flask_mail.Connection, "send") as mock_mail_send:
+    # Attempt request and catch email
+    with mail.record_messages() as outbox:
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.MOTD_SEND, headers=token, json={"motd_id": created_motd.id}
         )
         assert response.status_code == http.HTTPStatus.OK
-        assert mock_mail_send.call_count == num_users
+        assert len(outbox) == num_users
+        assert "Important Information: Data Delivery System" in outbox[-1].subject
 
 
 # Maintenance ######################################################################################
