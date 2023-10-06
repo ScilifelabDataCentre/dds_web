@@ -1511,9 +1511,9 @@ def test_use_sto4_return_true(client: flask.testing.FlaskClient):
     result: bool = use_sto4(unit_object=unit, project_object=project)
     assert result is True
 
-    def test_add_uploaded_files_to_db(self, mock_session, mock_version, mock_query, mock_logger):
+    def test_add_uploaded_files_to_db(client: flask.testing.FlaskClient):
         # Mock input data
-        proj_in_db = MagicMock()
+        proj_in_db = models.Project.query.first()
         log = {
             "file1.txt": {
                 "status": {"failed_op": "add_file_db"},
@@ -1528,32 +1528,21 @@ def test_use_sto4_return_true(client: flask.testing.FlaskClient):
             }
         }
 
-        # Mock S3 connection
-        mock_s3conn = MagicMock()
-        mock_resource = MagicMock()
-        mock_client = MagicMock()
-        mock_s3conn.__enter__.return_value = mock_resource
-        mock_resource.meta.client.head_object.return_value = None
-        ApiS3Connector.return_value = mock_s3conn
-
-        # Mock database query
-        mock_file = MagicMock()
-        mock_file = mock_query.filter.return_value.first.return_value
-
         # Call the function
         add_uploaded_files_to_db(proj_in_db, log)
 
-        # Assert database operations
-        mock_query.filter.assert_called_once_with(
-            File.name == sqlalchemy.func.binary("file1.txt"), File.project_id == proj_in_db.id
-        )
-        mock_file.versions.append.assert_called_once_with(mock_version.return_value)
-        proj_in_db.file_versions.append.assert_called_once_with(mock_version.return_value)
-        proj_in_db.files.append.assert_called_once_with(mock_file)
-        mock_session.add.assert_called_once_with(mock_file)
-        mock_session.commit.assert_called_once()
+        # check that the file is added to the database
+        file = models.File.query.filter_by(name="file1.txt").first()
+        assert file
+        assert file.name == "file1.txt"
+        assert file.name_in_bucket == "file1.txt"
 
-        # Assert logs
-        mock_logger.assert_any_call("vals: {'status': {'failed_op': 'add_file_db'}}")
-        mock_logger.assert_any_call("Files added: [<MagicMock name='mock_file' id='...'>]")
-        mock_logger.assert_any_call("Errors while adding files: {}")
+        # check that the file is added to the project
+        assert file in proj_in_db.files
+
+        # check that the version is added to the database
+        version = models.Version.query.filter_by(file_id=file.id).first()
+        assert version
+
+        # check that the version is added to the project
+        assert version in proj_in_db.versions
