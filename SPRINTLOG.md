@@ -310,5 +310,5 @@ _Nothing merged in CLI during this sprint_
 
 # 2023-10-02 - 2023-10-13
 
-- Use full DDS name in MOTD email subject ([#1422])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1422)
-- Project title displayed along with the internal project ID email sent when a project is released ([#1537])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1537)
+- Project title displayed along with the internal project ID email sent when a project is released ([#1475](https://github.com/ScilifelabDataCentre/dds_web/pull/1475))
+- Use full DDS name in MOTD email subject ([#1477](https://github.com/ScilifelabDataCentre/dds_web/pull/1477))
