@@ -957,7 +957,7 @@ def send_usage(months):
     """Get unit storage usage for the last x months and send in email."""
     # Imports
     from dds_web.database import models
-    from dds_web.utils import current_time
+    from dds_web.utils import current_time, page_query
 
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
@@ -986,12 +986,18 @@ def send_usage(months):
         start = end - relativedelta(months=months)
         flask.current_app.logger.debug(f"Month {months} months ago: {start.month}")
 
-        usage_rows = models.Usage.query.filter(
-            sqlalchemy.and_(
-                models.Usage.time_collected >= start, models.Usage.time_collected <= end
-            )
-        ).all()
+        # Filter for time frame
+        # Iterate through units
+        for unit in models.Unit.query:
+            # Get usage rows connected to unit -- join usage table and project table
+            pass 
+        # Iterate through Usage rows connected to unit projects
+        filter_time_frame = sqlalchemy.and_(models.Usage.time_collected >= start, models.Usage.time_collected <= end)
+
+        usage_rows = models.Usage.query.filter(filter_time_frame).all()
         flask.current_app.logger.debug(f"Usage rows: {usage_rows}")
+
+        
 
 
 @click.command("stats")
