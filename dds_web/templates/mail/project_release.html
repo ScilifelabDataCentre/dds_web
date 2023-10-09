@@ -18,22 +18,29 @@
         </ul>
       </p>
       <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">
-        {% if unit_email %}
-        You were added to this project on behalf of {{displayed_sender}} (<a href="mailto: {{unit_email}}">{{unit_email}}</a>).
-        {% else %}
-        You were added to this project by {{displayed_sender}}.
-        {% endif %}
+        You were added to this project on behalf of {{displayed_sender}}.
       </p>
       <p style="font-family: arial, sans-serif; font-size: 12px; font-weight: normal; margin: 0; Margin-top: 0px;">
-        The DDS CLI command <i>dds ls -p {{project_id}}</i> can be used to list the files in this project. </p>
+        To list the files in this project, run: <br>
+        <i><mark id="ProjectListing">dds ls -p {{project_id}}</mark></i>. <button onclick="copyTextProjectRelease(1)">Copy command</button></p>
       <p style="font-family: arial, sans-serif; font-size: 12px; font-weight: normal; margin: 0; Margin-top: 0px;">
-        The DDS CLI command <i>dds data get -p {{project_id}} -a --verify-checksum</i> can be used to download all the files in this project to your current directory. </p>
-      <p style=" font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-top: 15px;">
-        Your access to this project will expire on {{deadline}}</p>
+        To download all the files in this project to your current directory, run: <br>
+        <i><mark id="ProjectDownload">dds data get -p {{project_id}} -a --verify-checksum</mark></i>. <button onclick="copyTextProjectRelease(2)">Copy command</button> </p>
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-top: 15px;">
+        For more information (including an installation guide), see the DDS CLI documentation here: <a href="https://scilifelabdatacentre.github.io/dds_cli/">scilifelabdatacentre.github.io/dds_cli</a>. </p>
+      <p style="font-family: arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-top: 15px;">
+        
+        {% if unit_email %}
+        if you experience issues, please contact the SciLifeLab unit <b>{{displayed_sender}}</b> at (<a href="mailto: {{unit_email}}">{{unit_email}}</a>).
+        {% else %}
+        if you experience issues, please contact the SciLifeLab unit <b>{{displayed_sender}}</b>.
+        {% endif %}
+      </p>
+        <p style=" font-family: arial, sans-serif; font-size: 20px; font-weight: bold; margin: 0; Margin-top: 15px; text-align: center;">
+          Your access to this project will expire on: <FONT COLOR="RED">{{deadline}}</FONT></p>
       <p style="font-family: arial, sans-serif; font-size: 10px; font-weight: normal; margin: 0; Margin-top: 10px;">
           <b>What is the DDS?</b> The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple
           way.</p>
-  
     </td>
   </tr>
 </table>
