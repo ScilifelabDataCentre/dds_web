@@ -225,13 +225,19 @@ class ProjectStatus(flask_restful.Resource):
                     raise DDSArgumentError("Can only extend deadline if the project is available")
 
                 new_deadline_in = json_input.get("new_deadline_in")
+                current_deadline = (project.current_deadline - curr_date).days
+
                 if not new_deadline_in:
                     raise DDSArgumentError(
                         message="No new deadline provived, cannot perform operation."
                     )
-                if new_deadline_in > 90:
+                if current_deadline > 10:
                     raise DDSArgumentError(
-                        message="The deadline needs to be less than (or equal to) 90 days."
+                        message=f"There are still {current_deadline} days left, it is not possible to extend deadline yet"
+                    )
+                if new_deadline_in + current_deadline > 90:
+                    raise DDSArgumentError(
+                        message="The new deadline needs to be less than (or equal to) 90 days."
                     )
 
                 if project.times_expired > 2:
@@ -250,7 +256,9 @@ class ProjectStatus(flask_restful.Resource):
                     db.session.commit()
 
                     new_status_row = self.release_project(
-                        project=project, current_time=curr_date, deadline_in=new_deadline_in
+                        project=project,
+                        current_time=curr_date,
+                        deadline_in=new_deadline_in + current_deadline,
                     )
                     project.project_statuses.append(new_status_row)
 

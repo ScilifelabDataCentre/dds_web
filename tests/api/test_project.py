@@ -1079,6 +1079,53 @@ def test_projectstatus_post_invalid_deadline_expire(module_client, boto3_session
     assert "The deadline needs to be less than (or equal to) 30 days." in response.json["message"]
 
 
+def test_extend_deadline(module_client, boto3_session):
+    """Extend a project deadline of a project already release"""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    # Release project with a small deadline
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available", "deadline": 5},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    # hasnt been expired or extended deadline yet
+    assert project.times_expired == 0
+
+    deadline = project.current_deadline
+
+    time.sleep(1)  # tests are too fast
+
+    # extend deadline
+    response = module_client.patch(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"extend_deadline": True, "new_deadline_in": 20},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.times_expired == 1
+    assert not project.current_deadline == deadline
+
+    assert f"{project_id} has been given a new deadline" in response.json["message"]
+    assert "An e-mail notification has not been sent." in response.json["message"]
+
+
 def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
