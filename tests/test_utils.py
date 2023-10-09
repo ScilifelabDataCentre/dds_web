@@ -1511,38 +1511,39 @@ def test_use_sto4_return_true(client: flask.testing.FlaskClient):
     result: bool = use_sto4(unit_object=unit, project_object=project)
     assert result is True
 
-    def test_add_uploaded_files_to_db(client: flask.testing.FlaskClient):
-        # Mock input data
-        proj_in_db = models.Project.query.first()
-        log = {
-            "file1.txt": {
-                "status": {"failed_op": "add_file_db"},
-                "path_remote": "path/to/file1.txt",
-                "subpath": "subpath",
-                "size_raw": 100,
-                "size_processed": 200,
-                "compressed": False,
-                "public_key": "public_key",
-                "salt": "salt",
-                "checksum": "checksum",
-            }
+
+def test_add_uploaded_files_to_db(client: flask.testing.FlaskClient):
+    # Mock input data
+    proj_in_db = models.Project.query.first()
+    log = {
+        "file1.txt": {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": "path/to/file1.txt",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
         }
+    }
 
-        # Call the function
-        add_uploaded_files_to_db(proj_in_db, log)
+    # Call the function
+    add_uploaded_files_to_db(proj_in_db, log)
 
-        # check that the file is added to the database
-        file = models.File.query.filter_by(name="file1.txt").first()
-        assert file
-        assert file.name == "file1.txt"
-        assert file.name_in_bucket == "file1.txt"
+    # check that the file is added to the database
+    file = models.File.query.filter_by(name="file1.txt").first()
+    assert file
+    assert file.name == "file1.txt"
+    assert file.name_in_bucket == "file1.txt"
 
-        # check that the file is added to the project
-        assert file in proj_in_db.files
+    # check that the file is added to the project
+    assert file in proj_in_db.files
 
-        # check that the version is added to the database
-        version = models.Version.query.filter_by(file_id=file.id).first()
-        assert version
+    # check that the version is added to the database
+    version = models.Version.query.filter_by(file_id=file.id).first()
+    assert version
 
-        # check that the version is added to the project
-        assert version in proj_in_db.versions
+    # check that the version is added to the project
+    assert version in proj_in_db.versions
