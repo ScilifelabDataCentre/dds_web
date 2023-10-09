@@ -810,7 +810,9 @@ def monthly_usage():
     3. Send success- or failure email
     """
 
-    flask.current_app.logger.debug("Task: Collecting usage information from database.")
+    flask.current_app.logger.debug(
+        "Starting `monthly_usage`; Collecting usage information from database."
+    )
 
     # Imports
     # Installed
@@ -828,13 +830,13 @@ def monthly_usage():
 
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
-    # Success
+    # -- Success
     email_subject: str = "[INVOICING CRONJOB]"
     email_body: str = (
         "The calculation of the monthly usage succeeded; The byte hours "
         "for all active projects have been saved to the database."
     )
-    # Failure
+    # -- Failure
     error_subject: str = f"{email_subject} <ERROR> Error in monthly-usage cronjob"
     error_body: str = (
         "There was an error in the cronjob 'monthly-usage', used for calculating the"
@@ -852,24 +854,22 @@ def monthly_usage():
     try:
         flask.current_app.logger.info("Marking projects as 'done'...")
 
-        # Iterate through units
-        for unit in models.Unit.query.all():
-            flask.current_app.logger.info(f"...checking projects in unit: {unit.public_id}")
+        # Iterate through non-active projects
+        for project in page_query(
+            models.Project.query.filter_by(is_active=False).with_for_update()
+        ):
+            # Get number of versions in project that have been fully included in usage calcs
+            num_done = len(
+                list(v for v in project.file_versions if v.time_deleted == v.time_invoiced)
+            )
 
-            # Iterate through unit projects
-            for project in page_query(
-                models.Project.query.filter_by(is_active=False, unit_id=unit.id).with_for_update()
-            ):
-                # Get number of versions in project that have been fully included in usage calcs
-                num_done = len(list(v for v in project.file_versions if v.time_deleted == v.time_invoiced))
+            # Check if there are any versions that are not fully included
+            # If not, project is done and should not be included in any more usage calculations in billing
+            if num_done == len(project.file_versions):
+                project.done = True
 
-                # Check if there are any versions that are not fully included
-                # If not, project is done and should not be included in any more usage calculations in billing
-                if num_done == len(project.file_versions):
-                    project.done = True
-
-                # Save any projects marked as done
-                db.session.commit()
+            # Save any projects marked as done
+            db.session.commit()
 
     except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
         db.session.rollback()
@@ -896,34 +896,29 @@ def monthly_usage():
         # Save all new rows at once
         all_new_rows = []
 
-        # Iterate through units again
-        for unit in models.Unit.query.all():
-            flask.current_app.logger.info(f"...calculating projects in unit: {unit.public_id}")
-            # Iterate through unit projects
-            for project in page_query(
-                models.Project.query.filter_by(done=False, unit_id=unit.id).with_for_update()
-            ):
-                project_byte_hours: int = 0
-                for version in project.file_versions:
-                    # Skip deleted and already invoiced versions
-                    if version.time_deleted == version.time_invoiced and [
-                        version.time_deleted,
-                        version.time_invoiced,
-                    ] != [None, None]:
-                        continue
-                    version_bhours = calculate_version_period_usage(version=version)
-                    project_byte_hours += version_bhours
-                flask.current_app.logger.debug(
-                    f"Project {project.public_id} byte hours: {project_byte_hours}"
-                )
+        # Iterate through non-done projects
+        for project in page_query(models.Project.query.filter_by(done=False).with_for_update()):
+            project_byte_hours: int = 0
+            for version in project.file_versions:
+                # Skip deleted and already invoiced versions
+                if version.time_deleted == version.time_invoiced and [
+                    version.time_deleted,
+                    version.time_invoiced,
+                ] != [None, None]:
+                    continue
+                version_bhours = calculate_version_period_usage(version=version)
+                project_byte_hours += version_bhours
+            flask.current_app.logger.debug(
+                f"Project {project.public_id} byte hours: {project_byte_hours}"
+            )
 
-                # Create a record in usage table
-                new_usage_row = models.Usage(
-                    project_id=project.id,
-                    usage=project_byte_hours,
-                    time_collected=current_time(),
-                )
-                all_new_rows.append(new_usage_row)
+            # Create a record in usage table
+            new_usage_row = models.Usage(
+                project_id=project.id,
+                usage=project_byte_hours,
+                time_collected=current_time(),
+            )
+            all_new_rows.append(new_usage_row)
 
         # Save new rows
         db.session.add_all(all_new_rows)

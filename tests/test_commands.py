@@ -38,7 +38,7 @@ from dds_web.commands import (
     update_unit,
 )
 from dds_web.database import models
-from dds_web import db
+from dds_web import db, mail
 from dds_web.utils import current_time
 
 # Tools
@@ -1350,8 +1350,41 @@ def mock_unit_size():
 # monthly usage
 
 
-def test_monthly_usage_mark_as_done_(client, cli_runner):
+def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture):
     """Projects should be marked as done."""
+    # Imports
+    from tests.api.test_project import mock_sqlalchemyerror
+
+    # Helper function - can be moved out if we need to use in other places later
+    def create_file_versions(project: models.Project):
+        """Create file versions for project."""
+        # Create new file in project
+        new_file = models.File(
+            name=f"filename_{project.public_id}",
+            name_in_bucket=f"name_in_bucket_{project.public_id}",
+            subpath=f"filename/subpath",
+            size_original=15000,
+            size_stored=10000,
+            compressed=True,
+            salt="A" * 32,
+            public_key="B" * 64,
+            checksum="C" * 64,
+        )
+        project.files.append(new_file)
+
+        # Create new versions
+        for x in range(3):
+            new_version = models.Version(
+                size_stored=10000 * x,
+                time_uploaded=current_time() - timedelta(days=1),
+                time_deleted=current_time(),
+            )
+            project.file_versions.append(new_version)
+            new_file.versions.append(new_version)
+            db.session.add(new_file)
+
+        db.session.commit()
+
     # Check if there's a non active project
     non_active_projects = models.Project.query.filter_by(is_active=False).all()
     project: models.Project = None
@@ -1360,6 +1393,21 @@ def test_monthly_usage_mark_as_done_(client, cli_runner):
         project = models.Project.query.first()
         project.is_active = False
         db.session.commit()
+    else:
+        project = non_active_projects[0]
+
+    # There needs to be file versions in non active project
+    if not project.file_versions:
+        create_file_versions(project=project)
+    assert project.file_versions
+
+    # Get active project - to verify that nothing happens with it
+    project_active: models.Project = models.Project.query.filter_by(is_active=True).first()
+
+    # There needs to be file versions in active project
+    if not project_active.file_versions:
+        create_file_versions(project=project_active)
+    assert project_active.file_versions
 
     # Set file versions as invoiced
     for version in project.file_versions:
@@ -1368,11 +1416,107 @@ def test_monthly_usage_mark_as_done_(client, cli_runner):
         version.time_invoiced = time_now
     db.session.commit()
 
-    # Run command
-    cli_runner.invoke(monthly_usage)
+    # 1. Marking projects as done
+    # Run command - commit should result in sqlalchemy query
+    with mail.record_messages() as outbox1:
+        with patch("dds_web.db.session.commit", mock_sqlalchemyerror):
+            cli_runner.invoke(monthly_usage)
 
-    # Check if project is marked as done
-    assert project.done
+        # Check that non-active project is not marked as done
+        assert not project.done
+        assert not project_active.done
+
+        # Verify correct logging
+        _, logs = capfd.readouterr()
+        assert (
+            "Usage collection <failed> during step 1: marking projects as done. Sending email..."
+            in logs
+        )
+        assert "Calculating usage..." not in logs
+
+        # Error email should be sent
+        assert len(outbox1) == 1
+        assert "[INVOICING CRONJOB] <ERROR> Error in monthly-usage cronjob" in outbox1[-1].subject
+        assert "What to do:" in outbox1[-1].body
+
+        # No usage rows should have been saved
+        num_usage_rows = models.Usage.query.count()
+        assert num_usage_rows == 0
+
+    # 2. Calculating project usage
+    # Run command again - part 1 should be successful
+    with mail.record_messages() as outbox2:
+        with patch("dds_web.db.session.add_all", mock_sqlalchemyerror):
+            cli_runner.invoke(monthly_usage)
+
+        # The non-active project should have been marked as done
+        assert project.done
+        assert not project_active.done
+
+        # Verify correct logging
+        _, logs = capfd.readouterr()
+        assert (
+            "Usage collection <failed> during step 1: marking projects as done. Sending email..."
+            not in logs
+        )
+        assert "Calculating usage..." in logs
+        assert f"Project {project.public_id} byte hours:" not in logs
+        assert f"Project {project_active.public_id} byte hours:" in logs
+        assert (
+            "Usage collection <failed> during step 2: calculating and saving usage. Sending email..."
+            in logs
+        )
+
+        # Error email should have been sent
+        assert len(outbox2) == 1
+        assert "[INVOICING CRONJOB] <ERROR> Error in monthly-usage cronjob" in outbox2[-1].subject
+        assert "What to do:" in outbox2[-1].body
+
+        # Project versions should not be altered
+        assert project_active.file_versions
+        for version in project_active.file_versions:
+            assert version.time_deleted != version.time_invoiced
+
+        # No usage rows should've been saved
+        usage_row_1 = models.Usage.query.filter_by(project_id=project.id).one_or_none()
+        usage_row_2 = models.Usage.query.filter_by(project_id=project_active.id).one_or_none()
+        assert not usage_row_1
+        assert not usage_row_2
+
+    # 3. Send success email
+    # Run command a third time - part 1 and 2 should be successful
+    with mail.record_messages() as outbox3:
+        cli_runner.invoke(monthly_usage)
+
+        # Verify correct logging
+        _, logs = capfd.readouterr()
+        assert (
+            "Usage collection <failed> during step 1: marking projects as done. Sending email..."
+            not in logs
+        )
+        assert (
+            "Usage collection <failed> during step 2: calculating and saving usage. Sending email..."
+            not in logs
+        )
+        assert "Usage collection successful; Sending email." in logs
+
+        # Email should be sent
+        assert len(outbox3) == 1
+        assert "[INVOICING CRONJOB] Usage records available for collection" in outbox3[-1].subject
+        assert (
+            "The calculation of the monthly usage succeeded; The byte hours for all active projects have been saved to the database."
+            in outbox3[-1].body
+        )
+
+        # Project versions should have been altered
+        for version in project_active.file_versions:
+            assert version.time_deleted == version.time_invoiced
+
+        # Usage rows should have been saved for active project
+        usage_row_1 = models.Usage.query.filter_by(project_id=project.id).one_or_none()
+        usage_row_2 = models.Usage.query.filter_by(project_id=project_active.id).one_or_none()
+        assert not usage_row_1
+        assert usage_row_2
 
 
 # # reporting units and users
