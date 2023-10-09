@@ -950,6 +950,50 @@ def monthly_usage():
     send_email_with_retry(msg=email_message)
 
 
+@click.command("send-usage")
+@click.option("--months", type=click.IntRange(min=1, max=12), required=True)
+@flask.cli.with_appcontext
+def send_usage(months):
+    """Get unit storage usage for the last x months and send in email."""
+    # Imports
+    from dds_web.database import models
+    from dds_web.utils import current_time
+
+    # Email settings
+    email_recipient: str = flask.current_app.config.get("MAIL_DDS")
+    # -- Success
+    email_subject: str = "[SEND-USAGE CRONJOB]"
+    email_body: str = f"Here is the usage for the last {months} months:\n"
+    # -- Failure
+    error_subject: str = f"{email_subject} <ERROR> Error in send-usage cronjob"
+    error_body: str = (
+        "There was an error in the cronjob 'send-usage', used for sending"
+        " information about the storage usage for each SciLifeLab unit. \n\n"
+        "What to do:\n"
+        "1. Check the logs on OpenSearch.\n"
+        "2. The DDS team should enter the backend container and run the command `flask send-usage`.\n"
+        "3. Check that you receive a new email indicating that the command was successful.\n"
+    )
+
+    # x months ago
+    import freezegun
+
+    now_date = datetime.date(year=2024, month=1, day=2)
+    with freezegun.freeze_time(now_date):
+        end = current_time()
+        flask.current_app.logger.debug(f"Month now: {end.month}")
+
+        start = end - relativedelta(months=months)
+        flask.current_app.logger.debug(f"Month {months} months ago: {start.month}")
+
+        usage_rows = models.Usage.query.filter(
+            sqlalchemy.and_(
+                models.Usage.time_collected >= start, models.Usage.time_collected <= end
+            )
+        ).all()
+        flask.current_app.logger.debug(f"Usage rows: {usage_rows}")
+
+
 @click.command("stats")
 @flask.cli.with_appcontext
 def collect_stats():

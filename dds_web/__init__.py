@@ -275,6 +275,7 @@ def create_app(testing=False, database_uri=None):
             set_expired_to_archived,
             delete_invites,
             monthly_usage,
+            send_usage,
             collect_stats,
             monitor_usage,
             update_unit,
@@ -292,6 +293,7 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(set_expired_to_archived)
         app.cli.add_command(delete_invites)
         app.cli.add_command(monthly_usage)
+        app.cli.add_command(send_usage)
         app.cli.add_command(collect_stats)
         app.cli.add_command(monitor_usage)
 
