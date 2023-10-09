@@ -1512,7 +1512,7 @@ def test_use_sto4_return_true(client: flask.testing.FlaskClient):
     assert result is True
 
 
-def test_add_uploaded_files_to_db(client: flask.testing.FlaskClient):
+def test_add_uploaded_files_to_db_correct_failed_op(client: flask.testing.FlaskClient):
     # Mock input data
     proj_in_db = models.Project.query.first()
     log = {
@@ -1529,21 +1529,53 @@ def test_add_uploaded_files_to_db(client: flask.testing.FlaskClient):
         }
     }
 
+    # Mock the S3 connector and head_object method
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
+
     # Call the function
-    utils.add_uploaded_files_to_db(proj_in_db, log)
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        utils.add_uploaded_files_to_db(proj_in_db, log)
 
     # check that the file is added to the database
     file = models.File.query.filter_by(name="file1.txt").first()
     assert file
     assert file.name == "file1.txt"
-    assert file.name_in_bucket == "file1.txt"
+    assert file.name_in_bucket == "path/to/file1.txt"
 
     # check that the file is added to the project
     assert file in proj_in_db.files
 
     # check that the version is added to the database
-    version = models.Version.query.filter_by(file_id=file.id).first()
+    version = models.Version.query.filter_by(active_file=file.id).first()
     assert version
 
-    # check that the version is added to the project
-    assert version in proj_in_db.versions
+
+def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskClient):
+    # Mock input data
+    proj_in_db = models.Project.query.first()
+    log = {
+        "file1.txt": {
+            "status": {"failed_op": "some_other_failed_op"},
+            "path_remote": "path/to/file1.txt",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+        }
+    }
+
+    # Mock the S3 connector and head_object method
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
+
+    # Call the function
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that the file is added to the database
+    file = models.File.query.filter_by(name="file1.txt").first()
+    assert not file
