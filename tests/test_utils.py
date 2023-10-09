@@ -1530,7 +1530,7 @@ def test_add_uploaded_files_to_db(client: flask.testing.FlaskClient):
     }
 
     # Call the function
-    add_uploaded_files_to_db(proj_in_db, log)
+    utils.add_uploaded_files_to_db(proj_in_db, log)
 
     # check that the file is added to the database
     file = models.File.query.filter_by(name="file1.txt").first()
