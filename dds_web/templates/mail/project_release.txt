@@ -13,7 +13,7 @@ To download all the files in this project to your current directory, run:
 For more information (including an installation guide), see the DDS CLI documentation here: https://scilifelabdatacentre.github.io/dds_cli/
 
 {% if unit_email %}
-if you experience issues, please contact the SciLifeLab unit {{displayed_sender}}at ({{unit_email}}).
+if you experience issues, please contact the SciLifeLab unit {{displayed_sender}} at ({{unit_email}}).
 {% else %}
 if you experience issues, please contact the SciLifeLab unit {{displayed_sender}}.
 {% endif %}
