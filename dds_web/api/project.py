@@ -199,6 +199,17 @@ class ProjectStatus(flask_restful.Resource):
         project = dds_web.utils.collect_project(project_id=project_id)
         dds_web.utils.verify_project_access(project=project)
 
+        # get atributes
+        json_input = flask.request.get_json(silent=True)  # Already checked by json_required
+
+        # false by default - operation must be confirmed by the user
+        confirmed_operation = json_input.get("confirmed", False)
+        if not isinstance(confirmed_operation, bool):
+            raise DDSArgumentError(message="`confirmed` is a boolean value: True or False.")
+        if not confirmed_operation:
+            warning_message = "Operation must be confirmed before proceding"
+            return {"warning": warning_message}
+
         # Cannot change project status if project is busy
         if project.busy:
             raise ProjectBusyError(
@@ -211,18 +222,19 @@ class ProjectStatus(flask_restful.Resource):
         self.set_busy(project=project, busy=True)
 
         try:
-            # get atributes
-            json_input = flask.request.get_json(silent=True)  # Already checked by json_required
             extend_deadline = json_input.get("extend_deadline", False)  # False by default
 
             # some variable definition
             curr_date = dds_web.utils.current_time()
             send_email = False
 
+            # Update the deadline
             if extend_deadline:
                 # deadline can only be extended from Available
                 if not project.current_status == "Available":
-                    raise DDSArgumentError("Can only extend deadline if the project is available")
+                    raise DDSArgumentError(
+                        "you can only extend the deadline for a project that has the status Available"
+                    )
 
                 new_deadline_in = json_input.get("new_deadline_in")
                 current_deadline = (project.current_deadline - curr_date).days
@@ -242,7 +254,7 @@ class ProjectStatus(flask_restful.Resource):
 
                 if project.times_expired > 2:
                     raise DDSArgumentError(
-                        "Project availability limit: Project cannot have an extended deadline any more times"
+                        "The project has already been available for download 3 times. cannot extend the deadline again"
                     )
 
                 try:

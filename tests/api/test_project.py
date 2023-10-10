@@ -1116,7 +1116,7 @@ def test_extend_deadline(module_client, boto3_session):
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        json={"extend_deadline": True, "new_deadline_in": 20},
+        json={"extend_deadline": True, "new_deadline_in": 20, "confirmed": True},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 1

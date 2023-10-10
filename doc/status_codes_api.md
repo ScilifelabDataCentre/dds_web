@@ -237,6 +237,11 @@
   - `archive_project`
     - Database or S3 issues
 
+#### `patch`
+
+- [Authentication errors](#authentication)
+
+
 ### GetPublic
 
 - [Authentication errors](#authentication)
