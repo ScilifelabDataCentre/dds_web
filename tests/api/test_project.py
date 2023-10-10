@@ -1426,7 +1426,7 @@ def test_email_project_release(module_client, boto3_session):
         assert f"- DDS project ID: {public_project_id}" in body
         assert f"dds ls -p {public_project_id}" in body
         assert f"dds data get -p {public_project_id} -a --verify-checksum" in body
-        assert "if you experience issues, please contact the SciLifeLab unit" in body
+        assert "If you experience issues, please contact the SciLifeLab unit" in body
         assert (
             "What is the DDS? The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple way"
             in body
@@ -1437,7 +1437,7 @@ def test_email_project_release(module_client, boto3_session):
         assert f"<li><b>DDS project ID:</b> {public_project_id}</li>" in html
         assert f"dds ls -p {public_project_id}" in html
         assert f"dds data get -p {public_project_id} -a --verify-checksum" in html
-        assert "if you experience issues, please contact the SciLifeLab unit" in html
+        assert "If you experience issues, please contact the SciLifeLab unit" in html
         assert (
             "<b>What is the DDS?</b> The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple way."
             in html
