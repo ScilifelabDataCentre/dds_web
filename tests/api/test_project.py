@@ -1092,14 +1092,7 @@ def test_projectstatus_post_invalid_deadline_expire(module_client, boto3_session
 def test_extend_deadline_bad_confirmed(module_client, boto3_session):
     """Try to extend a deadline and send a not boolean for confirmation"""
 
-    username = "researchuser"
-    # Get user
-    user = models.User.query.filter_by(username=username).one_or_none()
-    assert user
-
-    # Get project
-    project = user.projects[0]
-    assert project
+    project, _ = get_existing_projects()
     project_id = project.public_id
 
     # Release project
@@ -1113,13 +1106,12 @@ def test_extend_deadline_bad_confirmed(module_client, boto3_session):
     # hasnt been expired or extended deadline yet
     assert project.times_expired == 0
 
-    json_data = {**extend_deadline_data, "confirmed": "true"}
     # extend deadline
     response = module_client.patch(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        json=json_data,
+        json={**extend_deadline_data, "confirmed": "true"},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "`confirmed` is a boolean value: True or False." in response.json["message"]
