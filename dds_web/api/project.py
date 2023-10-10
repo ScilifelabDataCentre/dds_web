@@ -207,14 +207,14 @@ class ProjectStatus(flask_restful.Resource):
         if not isinstance(confirmed_operation, bool):
             raise DDSArgumentError(message="`confirmed` is a boolean value: True or False.")
         if not confirmed_operation:
-            warning_message = "Operation must be confirmed before proceding"
+            warning_message = "Operation must be confirmed before proceding."
             return {"warning": warning_message}
 
         # Cannot change project status if project is busy
         if project.busy:
             raise ProjectBusyError(
                 message=(
-                    f"The status for the project '{project_id}' is already in the process of being changed. "
+                    f"The deadline for the project '{project_id}' is already in the process of being changed. "
                     "Please try again later. \n\nIf you know the project is not busy, contact support."
                 )
             )
@@ -233,7 +233,7 @@ class ProjectStatus(flask_restful.Resource):
                 # deadline can only be extended from Available
                 if not project.current_status == "Available":
                     raise DDSArgumentError(
-                        "you can only extend the deadline for a project that has the status Available"
+                        "you can only extend the deadline for a project that has the status Available."
                     )
 
                 new_deadline_in = json_input.get("new_deadline_in")
@@ -245,7 +245,7 @@ class ProjectStatus(flask_restful.Resource):
                     )
                 if current_deadline > 10:
                     raise DDSArgumentError(
-                        message=f"There are still {current_deadline} days left, it is not possible to extend deadline yet"
+                        message=f"There are still {current_deadline} days left, it is not possible to extend deadline yet."
                     )
                 if new_deadline_in + current_deadline > 90:
                     raise DDSArgumentError(
@@ -254,7 +254,7 @@ class ProjectStatus(flask_restful.Resource):
 
                 if project.times_expired > 2:
                     raise DDSArgumentError(
-                        "The project has already been available for download 3 times. cannot extend the deadline again"
+                        "Project availability limit: Project cannot be made Available any more times."
                     )
 
                 try:
