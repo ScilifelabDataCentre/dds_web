@@ -21,7 +21,6 @@ from dds_web.errors import BucketNotFoundError, DatabaseError, DeletionError
 import tests
 from tests.test_files_new import project_row, file_in_db, FIRST_NEW_FILE
 from tests.test_project_creation import proj_data_with_existing_users, create_unit_admins
-from tests.api.test_user import get_existing_projects
 from dds_web.database import models
 from dds_web.api.project import UserProjects
 
@@ -58,7 +57,7 @@ extend_deadline_data = {**extend_deadline_data_no_confirmed, "confirmed": True}
 # HELPER FUNCTIONS ################################################################################## CONFIG #
 
 
-def create_and_release_project(module_client, proj_data, release_data):
+def create_and_release_project(client, proj_data, release_data):
     """Helper function that creates a project and set it ups as available"""
 
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -67,9 +66,9 @@ def create_and_release_project(module_client, proj_data, release_data):
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins >= 3
 
-    response = module_client.post(
+    response = client.post(
         tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
         json=proj_data,
     )
     assert response.status_code == http.HTTPStatus.OK
@@ -77,9 +76,9 @@ def create_and_release_project(module_client, proj_data, release_data):
     project = project_row(project_id=project_id)
 
     # Release project
-    response = module_client.post(
+    response = client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": project_id},
         json=release_data,
     )
@@ -1125,30 +1124,9 @@ def test_projectstatus_post_invalid_deadline_expire(module_client, boto3_session
 def test_extend_deadline_bad_confirmed(module_client, boto3_session):
     """Try to extend a deadline and send a not boolean for confirmation"""
 
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    if current_unit_admins < 3:
-        create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins >= 3
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        json=proj_data,
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data={"new_status": "Available"}
     )
-    assert response.status_code == http.HTTPStatus.OK
-    project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
-
-    # Release project
-    release_data = {"new_status": "Available"}
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=release_data,
-    )
-    assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
@@ -1166,30 +1144,9 @@ def test_extend_deadline_bad_confirmed(module_client, boto3_session):
 def test_extend_deadline_no_confirmed(module_client, boto3_session):
     """Try to extend a deadline before confirmation should sent a warning and no operation perfrom"""
 
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    if current_unit_admins < 3:
-        create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins >= 3
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        json=proj_data,
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data={"new_status": "Available"}
     )
-    assert response.status_code == http.HTTPStatus.OK
-    project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
-
-    # Release project
-    release_data = {"new_status": "Available"}
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=release_data,
-    )
-    assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
@@ -1210,30 +1167,9 @@ def test_extend_deadline_no_confirmed(module_client, boto3_session):
 def test_extend_deadline_when_busy(module_client, boto3_session):
     """Request should not be possible when project is busy."""
 
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    if current_unit_admins < 3:
-        create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins >= 3
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        json=proj_data,
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data={"new_status": "Available"}
     )
-    assert response.status_code == http.HTTPStatus.OK
-    project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
-
-    # Release project
-    release_data = {"new_status": "Available"}
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=release_data,
-    )
-    assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
@@ -1241,8 +1177,6 @@ def test_extend_deadline_when_busy(module_client, boto3_session):
     project.busy = True
     db.session.commit()
     assert project.busy
-
-    time.sleep(1)  # tests are too fast
 
     # attempt to extend deadline
     response = module_client.patch(
@@ -1266,6 +1200,7 @@ def test_extend_deadline_when_busy(module_client, boto3_session):
 def test_extend_deadline_project_not_available(module_client, boto3_session):
     """Is not possible to extend deadline to project in other status than available."""
 
+    # create a new project and never release it
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
         create_unit_admins(num_admins=2)
@@ -1298,30 +1233,9 @@ def test_extend_deadline_project_not_available(module_client, boto3_session):
 def test_extend_deadline_no_deadline(module_client, boto3_session):
     """If no deadline has been provided it should fail"""
 
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    if current_unit_admins < 3:
-        create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins >= 3
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        json=proj_data,
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data={"new_status": "Available"}
     )
-    assert response.status_code == http.HTTPStatus.OK
-    project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
-
-    # Release project
-    release_data = {"new_status": "Available"}
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=release_data,
-    )
-    assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
@@ -1339,31 +1253,11 @@ def test_extend_deadline_no_deadline(module_client, boto3_session):
 def test_extend_deadline_not_enough_time_left(module_client, boto3_session):
     """If there are more than 10 days left, extend deadline should not be possible"""
 
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    if current_unit_admins < 3:
-        create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins >= 3
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        json=proj_data,
+    current_deadline = 90
+    release_data_long_deadline = {"new_status": "Available", "deadline": current_deadline}
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data=release_data_long_deadline
     )
-    assert response.status_code == http.HTTPStatus.OK
-    project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
-
-    # Release project
-    current_deadline = 30
-    release_data = {"new_status": "Available", "deadline": current_deadline}
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=release_data,
-    )
-    assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
@@ -1384,29 +1278,9 @@ def test_extend_deadline_not_enough_time_left(module_client, boto3_session):
 def test_extend_deadline_too_much_days(module_client, boto3_session):
     """If the new deadline together with the time left already is more than 90 days it should not work"""
 
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    if current_unit_admins < 3:
-        create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins >= 3
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        json=proj_data,
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data=release_project_small_deadline
     )
-    assert response.status_code == http.HTTPStatus.OK
-    project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
-
-    # Release project with a small deadline
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=release_project_small_deadline,
-    )
-    assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
@@ -1426,34 +1300,14 @@ def test_extend_deadline_too_much_days(module_client, boto3_session):
 def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_session):
     """If the deadline has been extended more than 2 times it should not work"""
 
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    if current_unit_admins < 3:
-        create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins >= 3
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        json=proj_data,
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data=release_project_small_deadline
     )
-    assert response.status_code == http.HTTPStatus.OK
-    project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
-
-    # Release project with a small deadline
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=release_project_small_deadline,
-    )
-    assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
     deadline = project.current_deadline
-    new_deadline_in = 1
+    new_deadline_in = 1  # small new deadline
     for i in range(1, 4):
         time.sleep(1)  # tests are too fast
 
@@ -1482,33 +1336,15 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
 def test_extend_deadline_ok(module_client, boto3_session):
     """Extend a project deadline of a project already release"""
 
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    if current_unit_admins < 3:
-        create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins >= 3
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        json=proj_data,
+    # release with a small deadline
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data=release_project_small_deadline
     )
-    assert response.status_code == http.HTTPStatus.OK
-    project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
-
-    # Release project with a small deadline
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=release_project_small_deadline,
-    )
-    assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
     deadline = project.current_deadline
+
     # extend deadline
     response = module_client.patch(
         tests.DDSEndpoint.PROJECT_STATUS,
@@ -1529,29 +1365,9 @@ def test_extend_deadline_ok(module_client, boto3_session):
 def test_extend_deadline_mock_database_error(module_client, boto3_session):
     """Mock error when updating the database"""
 
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    if current_unit_admins < 3:
-        create_unit_admins(num_admins=2)
-    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
-    assert current_unit_admins >= 3
-
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_CREATE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
-        json=proj_data,
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data=release_project_small_deadline
     )
-    assert response.status_code == http.HTTPStatus.OK
-    project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
-
-    # Release project with a small deadline
-    response = module_client.post(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json=release_project_small_deadline,
-    )
-    assert response.status_code == http.HTTPStatus.OK
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
