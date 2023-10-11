@@ -17,6 +17,31 @@ FIRST_NEW_FILE = {
     "checksum": "c" * 64,
 }
 
+FAILED_FILES = {
+    "file1.txt": {
+        "status": {"failed_op": "add_file_db"},
+        "path_remote": "path/to/file1.txt",
+        "subpath": "subpath",
+        "size_raw": 100,
+        "size_processed": 200,
+        "compressed": False,
+        "public_key": "public_key",
+        "salt": "salt",
+        "checksum": "checksum",
+    },
+    "file2.txt": {
+        "status": {"failed_op": "add_file_db"},
+        "path_remote": "path/to/file2.txt",
+        "subpath": "subpath",
+        "size_raw": 100,
+        "size_processed": 200,
+        "compressed": False,
+        "public_key": "public_key",
+        "salt": "salt",
+        "checksum": "checksum",
+    },
+}
+
 # TOOLS #################################################################################### TOOLS #
 
 
@@ -915,48 +940,58 @@ def test_delete_contents_and_upload_again(client, boto3_session):
 
 
 def test_update_failed_files_success(client, boto3_session):
-    """Update failed files endpoint with valid data."""
+    """Update failed files with valid data."""
 
     # get project and verify in progress
     project_1 = project_row(project_id="file_testing_project")
     assert project_1
     assert project_1.current_status == "In Progress"
 
-    # mock a dict object with failed files
-    failed_files = {
-        "file1.txt": {
-            "status": {"failed_op": "add_file_db"},
-            "path_remote": "path/to/file1.txt",
-            "subpath": "subpath",
-            "size_raw": 100,
-            "size_processed": 200,
-            "compressed": False,
-            "public_key": "public_key",
-            "salt": "salt",
-            "checksum": "checksum",
-        },
-        "file2.txt": {
-            "status": {"failed_op": "add_file_db"},
-            "path_remote": "path/to/file2.txt",
-            "subpath": "subpath",
-            "size_raw": 100,
-            "size_processed": 200,
-            "compressed": False,
-            "public_key": "public_key",
-            "salt": "salt",
-            "checksum": "checksum",
-        },
-    }
-
     response = client.put(
         tests.DDSEndpoint.FILE_UPDATE_FAILED,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": "file_testing_project", "status": "Failed"},
-        json=failed_files,
+        query_string={"project": "file_testing_project"},
+        json=FAILED_FILES,
     )
 
     assert response.status_code == http.HTTPStatus.OK
     assert response.json["message"] == "File(s) added to database."
-    for file in failed_files:
-        # query the database for file
+    for file in FAILED_FILES:
         assert db.session.query(models.File).filter(models.File.name == file).first()
+
+
+def test_update_failed_files_no_json(client, boto3_session):
+    """Update failed files without log json."""
+
+    # get project and verify in progress
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    response = client.put(
+        tests.DDSEndpoint.FILE_UPDATE_FAILED,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.json["message"] == "Required data missing from request!"
+    # check that none of the files in the list exist in the database.
+    for file in FAILED_FILES:
+        assert not db.session.query(models.File).filter(models.File.name == file).first()
+
+
+def test_update_failed_files_no_project(client, boto3_session):
+    """Update failed files without project."""
+
+    response = client.put(
+        tests.DDSEndpoint.FILE_UPDATE_FAILED,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        json=FAILED_FILES,
+    )
+
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.json["project"]["message"] == "Project ID required."
+    # check that none of the files in the list exist in the database.
+    for file in FAILED_FILES:
+        assert not db.session.query(models.File).filter(models.File.name == file).first()
