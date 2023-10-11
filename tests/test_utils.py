@@ -1579,3 +1579,36 @@ def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskCli
     # check that the file is added to the database
     file = models.File.query.filter_by(name="file1.txt").first()
     assert not file
+
+
+# def test_add_uploaded_files_to_db_file_not_found(client: flask.testing.FlaskClient):
+
+#     from botocore.exceptions import ClientError
+#     # create mock project and log
+#     proj_in_db = models.Project.query.first()
+#     log = {
+#         "file1.txt": {
+#             "status": {"failed_op": "add_file_db"},
+#             "path_remote": "path/to/file1.txt",
+#             "subpath": "subpath",
+#             "size_raw": 100,
+#             "size_processed": 200,
+#             "compressed": False,
+#             "public_key": "public_key",
+#             "salt": "salt",
+#             "checksum": "checksum",
+#         }
+#     }
+
+#     # mock ApiS3Connector to raise exception when get_object is called
+#     mock_s3conn = MagicMock()
+#     # mock_s3conn.get_object.side_effect = ClientError({"Error": {"Code": "404"}}, "operation_name")
+#     mock_s3conn.resource.meta.client.head_object.side_effect = ClientError({"Error": {"Code": "404"}}, "operation_name")
+#     mock_api_s3_conn = MagicMock(return_value=mock_s3conn)
+
+#     # call add_uploaded_files_to_db and check for expected errors
+#     with patch("dds_web.api.api_s3_connector.ApiS3Connector", mock_api_s3_conn):
+#         utils.add_uploaded_files_to_db(proj_in_db, log)
+
+#     file = models.File.query.filter_by(name="file1.txt").first()
+#     assert not file
