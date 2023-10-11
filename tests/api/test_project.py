@@ -1729,10 +1729,23 @@ def test_email_project_release(module_client, boto3_session):
         ## check plain text message
         assert f"- Project Title: {project_title}" in body
         assert f"- DDS project ID: {public_project_id}" in body
+        assert f"dds ls -p {public_project_id}" in body
+        assert f"dds data get -p {public_project_id} -a --verify-checksum" in body
+        assert "If you experience issues, please contact the SciLifeLab unit" in body
+        assert (
+            "What is the DDS? The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple way"
+            in body
+        )
 
         ## check html
-
         assert f"<li><b>Project Title:</b> {project_title}</li>" in html
         assert f"<li><b>DDS project ID:</b> {public_project_id}</li>" in html
+        assert f"dds ls -p {public_project_id}" in html
+        assert f"dds data get -p {public_project_id} -a --verify-checksum" in html
+        assert "If you experience issues, please contact the SciLifeLab unit" in html
+        assert (
+            "<b>What is the DDS?</b> The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple way."
+            in html
+        )
 
     assert response.status_code == http.HTTPStatus.OK
