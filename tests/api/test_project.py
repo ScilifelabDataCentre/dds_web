@@ -5,6 +5,7 @@ import http
 from sqlite3 import OperationalError
 import pytest
 from _pytest.logging import LogCaptureFixture
+import logging
 import datetime
 import time
 import unittest.mock
@@ -1368,7 +1369,7 @@ def test_extend_deadline_ok(module_client, boto3_session):
 def test_extend_deadline_mock_database_error(
     module_client, boto3_session, capfd: LogCaptureFixture
 ):
-    """Mock error when performing the request"""
+    """Operation fails when trying to save in the Database"""
 
     project_id, project = create_and_release_project(
         client=module_client, proj_data=proj_data, release_data=release_project_small_deadline
@@ -1377,19 +1378,30 @@ def test_extend_deadline_mock_database_error(
     time.sleep(1)  # tests are too fast
 
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
-    with unittest.mock.patch("dds_web.db.session.commit", mock_sqlalchemyerror):
-        # extend deadline
-        response = module_client.patch(
-            tests.DDSEndpoint.PROJECT_STATUS,
-            headers=token,
-            query_string={"project": project_id},
-            json=extend_deadline_data,
-        )
-        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
-        assert "Saving database changes failed." in response.json["message"]
 
-        _, err = capfd.readouterr()
-        assert "500 Internal Server Error: Saving database changes failed." in err
+    with unittest.mock.patch.object(db.session, "rollback") as rollback:
+        with unittest.mock.patch("dds_web.db.session.commit") as mock_commit:
+            # we need this because the first time the commit function is called is when set_busy()
+            def side_effect_generator():
+                yield None  # First call, no exception
+                while True:
+                    yield sqlalchemy.exc.SQLAlchemyError()  # Subsequent calls, exception
+
+            mock_commit.side_effect = side_effect_generator()
+
+            # extend deadline
+            response = module_client.patch(
+                tests.DDSEndpoint.PROJECT_STATUS,
+                headers=token,
+                query_string={"project": project_id},
+                json=extend_deadline_data,
+            )
+            assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+            assert "Saving database changes failed." in response.json["message"]
+
+    assert rollback.called
+    _, err = capfd.readouterr()
+    assert "Failed to extend deadline" in err
 
 
 def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):

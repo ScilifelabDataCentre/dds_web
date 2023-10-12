@@ -273,7 +273,7 @@ class ProjectStatus(flask_restful.Resource):
                     db.session.commit()
 
                 except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-                    flask.current_app.logger.exception(err)
+                    flask.current_app.logger.exception("Failed to extend deadline")
                     db.session.rollback()
                     raise err
 
