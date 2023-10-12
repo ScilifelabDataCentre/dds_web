@@ -252,11 +252,6 @@ class ProjectStatus(flask_restful.Resource):
                         message="The new deadline needs to be less than (or equal to) 90 days."
                     )
 
-                if project.times_expired > 2:
-                    raise DDSArgumentError(
-                        "Project availability limit: Project cannot be made Available any more times."
-                    )
-
                 try:
                     # add a fake archived status to mimick a re-release in order to have an udpated deadline
                     new_status_row = self.expire_project(
@@ -280,17 +275,7 @@ class ProjectStatus(flask_restful.Resource):
                 except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
                     flask.current_app.logger.exception(err)
                     db.session.rollback()
-                    raise DatabaseError(
-                        message=str(err),
-                        alt_message=(
-                            "Status was not updated"
-                            + (
-                                ": Database malfunction."
-                                if isinstance(err, sqlalchemy.exc.OperationalError)
-                                else ": Server Error."
-                            )
-                        ),
-                    ) from err
+                    raise err
 
                 return_message = f"{project.public_id} has been given a new deadline"
 

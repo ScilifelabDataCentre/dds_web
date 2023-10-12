@@ -4,6 +4,7 @@
 import http
 from sqlite3 import OperationalError
 import pytest
+from _pytest.logging import LogCaptureFixture
 import datetime
 import time
 import unittest.mock
@@ -1364,7 +1365,9 @@ def test_extend_deadline_ok(module_client, boto3_session):
     assert "An e-mail notification has not been sent." in response.json["message"]
 
 
-def test_extend_deadline_mock_database_error(module_client, boto3_session):
+def test_extend_deadline_mock_database_error(
+    module_client, boto3_session, capfd: LogCaptureFixture
+):
     """Mock error when performing the request"""
 
     project_id, project = create_and_release_project(
@@ -1384,6 +1387,9 @@ def test_extend_deadline_mock_database_error(module_client, boto3_session):
         )
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
         assert "Saving database changes failed." in response.json["message"]
+
+        _, err = capfd.readouterr()
+        assert "500 Internal Server Error: Saving database changes failed." in err
 
 
 def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):
