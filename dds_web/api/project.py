@@ -239,6 +239,11 @@ class ProjectStatus(flask_restful.Resource):
                         "You can only extend the deadline for a project that has the status 'Available'."
                     )
 
+                if type(new_deadline_in) is not int:
+                    raise DDSArgumentError(
+                        message="The deadline atribute passed should be of type Int (i.e a number)."
+                    )
+                
                 # it shouldnt surpass 90 days
                 current_deadline = (project.current_deadline - curr_date).days
                 if new_deadline_in + current_deadline > 90:
@@ -246,10 +251,6 @@ class ProjectStatus(flask_restful.Resource):
                         message=f"You requested the deadline to be extended with {new_deadline_in} days (from {current_deadline}), giving a new total deadline of {new_deadline_in + current_deadline} days. The new deadline needs to be less than (or equal to) 90 days."
                     )
 
-                if type(new_deadline_in) is not int:
-                    raise DDSArgumentError(
-                        message=" The deadline atribute passed should be of type Int (i.e a number)."
-                    )
                 try:
                     # add a fake archived status to mimick a re-release in order to have an udpated deadline
                     new_status_row = self.expire_project(

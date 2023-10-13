@@ -1267,12 +1267,12 @@ def test_extend_deadline_too_much_days(module_client, boto3_session):
     time.sleep(1)  # tests are too fast
 
     # try to extend deadline by a lot of days
-    extend_deadline_data = {**extend_deadline_data, "new_deadline_in": 90}
+    extend_deadline_data_big_deadline = {**extend_deadline_data, "new_deadline_in": 90}
     response = module_client.patch(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        json=extend_deadline_data,
+        json=extend_deadline_data_big_deadline,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert (
@@ -1291,16 +1291,17 @@ def test_extend_deadline_bad_new_deadline(module_client, boto3_session):
     time.sleep(1)  # tests are too fast
 
     # try to extend deadline with a bad new deadline
-    extend_deadline_data = {**extend_deadline_data, "new_deadline_in": "20"}
+    extend_deadline_data_bad_deadline = {**extend_deadline_data, "new_deadline_in": "20"}
     response = module_client.patch(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        json=extend_deadline_data,
+        json=extend_deadline_data_bad_deadline,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert (
-        "The new deadline needs to be less than (or equal to) 90 days." in response.json["message"]
+        "The deadline atribute passed should be of type Int (i.e a number)."
+        in response.json["message"]
     )
 
 
