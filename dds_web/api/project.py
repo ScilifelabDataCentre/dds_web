@@ -243,7 +243,7 @@ class ProjectStatus(flask_restful.Resource):
                     raise DDSArgumentError(
                         message="The deadline atribute passed should be of type Int (i.e a number)."
                     )
-                
+
                 # it shouldnt surpass 90 days
                 current_deadline = (project.current_deadline - curr_date).days
                 if new_deadline_in + current_deadline > 90:
