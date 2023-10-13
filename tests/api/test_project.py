@@ -49,7 +49,6 @@ fields_set_to_null = [
 release_project_small_deadline = {"new_status": "Available", "deadline": 5}
 
 extend_deadline_data_no_confirmed = {
-    "extend_deadline": True,
     "new_deadline_in": 20,
 }
 
@@ -1126,6 +1125,7 @@ def test_projectstatus_post_invalid_deadline_expire(module_client, boto3_session
 def test_extend_deadline_bad_confirmed(module_client, boto3_session):
     """Try to extend a deadline and send a not boolean for confirmation"""
 
+    # create project and release it
     project_id, project = create_and_release_project(
         client=module_client, proj_data=proj_data, release_data={"new_status": "Available"}
     )
@@ -1146,6 +1146,7 @@ def test_extend_deadline_bad_confirmed(module_client, boto3_session):
 def test_extend_deadline_no_confirmed(module_client, boto3_session):
     """Try to extend a deadline before confirmation - should sent a warning and no operation is perfrom"""
 
+    # create project and release it
     project_id, project = create_and_release_project(
         client=module_client, proj_data=proj_data, release_data={"new_status": "Available"}
     )
@@ -1169,6 +1170,7 @@ def test_extend_deadline_no_confirmed(module_client, boto3_session):
 def test_extend_deadline_when_busy(module_client, boto3_session):
     """Request should not be possible when project is busy."""
 
+    # create project and release it
     project_id, project = create_and_release_project(
         client=module_client, proj_data=proj_data, release_data={"new_status": "Available"}
     )
@@ -1197,6 +1199,28 @@ def test_extend_deadline_when_busy(module_client, boto3_session):
         "Please try again later. \n\nIf you know the project is not busy, contact support."
         in response.json["message"]
     )
+
+
+def test_extend_deadline_no_deadline(module_client, boto3_session):
+    """If no deadline has been provided it should not be executed anything"""
+
+    # create project and release it
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data={"new_status": "Available"}
+    )
+    assert project.times_expired == 0
+    time.sleep(1)  # tests are too fast
+
+    # try to extend deadline - no new deadline provided
+    response = module_client.patch(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"confirmed": True},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.times_expired == 0
+    assert "Nothing to update." in response.json["message"]
 
 
 def test_extend_deadline_project_not_available(module_client, boto3_session):
@@ -1232,30 +1256,10 @@ def test_extend_deadline_project_not_available(module_client, boto3_session):
     )
 
 
-def test_extend_deadline_no_deadline(module_client, boto3_session):
-    """If no deadline has been provided it should fail"""
-
-    project_id, project = create_and_release_project(
-        client=module_client, proj_data=proj_data, release_data={"new_status": "Available"}
-    )
-    assert project.times_expired == 0
-    time.sleep(1)  # tests are too fast
-
-    # try to extend deadline - no new deadline provided
-    response = module_client.patch(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json={"extend_deadline": True, "confirmed": True},
-    )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert "No new deadline provived, cannot perform operation." in response.json["message"]
-
-
 def test_extend_deadline_too_much_days(module_client, boto3_session):
     """If the new deadline together with the time left already is more than 90 days it should not work"""
 
-    # create project with small deadline so it can be extended
+    # create project and release it
     project_id, project = create_and_release_project(
         client=module_client, proj_data=proj_data, release_data=release_project_small_deadline
     )
@@ -1263,11 +1267,36 @@ def test_extend_deadline_too_much_days(module_client, boto3_session):
     time.sleep(1)  # tests are too fast
 
     # try to extend deadline by a lot of days
+    extend_deadline_data = {**extend_deadline_data, "new_deadline_in": 90}
     response = module_client.patch(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        json={"extend_deadline": True, "new_deadline_in": 90, "confirmed": True},
+        json=extend_deadline_data,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert (
+        "The new deadline needs to be less than (or equal to) 90 days." in response.json["message"]
+    )
+
+
+def test_extend_deadline_bad_new_deadline(module_client, boto3_session):
+    """If the new deadlien provided is not an integer it should fail"""
+
+    # create project and release it
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data=release_project_small_deadline
+    )
+    assert project.times_expired == 0
+    time.sleep(1)  # tests are too fast
+
+    # try to extend deadline with a bad new deadline
+    extend_deadline_data = {**extend_deadline_data, "new_deadline_in": "20"}
+    response = module_client.patch(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json=extend_deadline_data,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert (
@@ -1278,7 +1307,7 @@ def test_extend_deadline_too_much_days(module_client, boto3_session):
 def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_session):
     """If the deadline has been extended more than 2 times it should not work"""
 
-    # create project with small deadline so it can be extended
+    # create project and release it
     project_id, project = create_and_release_project(
         client=module_client, proj_data=proj_data, release_data=release_project_small_deadline
     )
@@ -1290,11 +1319,15 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
         time.sleep(1)  # tests are too fast
 
         # extend deadline by a small new deadline so we can do it several times
+        extend_deadline_data_small_deadline = {
+            **extend_deadline_data,
+            "new_deadline_in": new_deadline_in,
+        }
         response = module_client.patch(
             tests.DDSEndpoint.PROJECT_STATUS,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
             query_string={"project": project_id},
-            json={**extend_deadline_data, "new_deadline_in": new_deadline_in},
+            json=extend_deadline_data_small_deadline,
         )
         if i < 3:
             assert response.status_code == http.HTTPStatus.OK
@@ -1314,7 +1347,7 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
 def test_extend_deadline_ok(module_client, boto3_session):
     """Extend a project deadline of a project - it should work ok"""
 
-    # release with a small deadline so it can be extended
+    # create project and release it
     project_id, project = create_and_release_project(
         client=module_client, proj_data=proj_data, release_data=release_project_small_deadline
     )

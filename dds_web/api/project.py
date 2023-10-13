@@ -223,32 +223,33 @@ class ProjectStatus(flask_restful.Resource):
 
         # Extend deadline
         try:
-            extend_deadline = json_input.get("extend_deadline", False)  # False by default
+            new_deadline_in = json_input.get(
+                "new_deadline_in", None
+            )  # if not provided is None -> deadlie is not updated
 
             # some variable definition
             curr_date = dds_web.utils.current_time()
             send_email = False
 
-            # Update the deadline
-            if extend_deadline:
+            # Update the deadline functionality
+            if new_deadline_in:
                 # deadline can only be extended from Available
                 if not project.current_status == "Available":
                     raise DDSArgumentError(
                         "You can only extend the deadline for a project that has the status 'Available'."
                     )
 
-                new_deadline_in = json_input.get("new_deadline_in")
+                # it shouldnt surpass 90 days
                 current_deadline = (project.current_deadline - curr_date).days
-
-                if not new_deadline_in:
-                    raise DDSArgumentError(
-                        message="No new deadline provived, cannot perform operation."
-                    )
                 if new_deadline_in + current_deadline > 90:
                     raise DDSArgumentError(
                         message=f"You requested the deadline to be extended with {new_deadline_in} days (from {current_deadline}), giving a new total deadline of {new_deadline_in + current_deadline} days. The new deadline needs to be less than (or equal to) 90 days."
                     )
 
+                if type(new_deadline_in) is not int:
+                    raise DDSArgumentError(
+                        message=" The deadline atribute passed should be of type Int (i.e a number)."
+                    )
                 try:
                     # add a fake archived status to mimick a re-release in order to have an udpated deadline
                     new_status_row = self.expire_project(
@@ -257,7 +258,6 @@ class ProjectStatus(flask_restful.Resource):
                         deadline_in=project.responsible_unit.days_in_expired,
                     )
                     project.project_statuses.append(new_status_row)
-                    db.session.commit()
 
                     new_status_row = self.release_project(
                         project=project,
@@ -279,7 +279,9 @@ class ProjectStatus(flask_restful.Resource):
                 return_message += (
                     f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
                 )
-
+            else:
+                # leave it for future new functionality of updating the status
+                return_message = "Nothing to update."
         except:
             self.set_busy(project=project, busy=False)
             raise
