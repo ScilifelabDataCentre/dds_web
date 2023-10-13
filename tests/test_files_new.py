@@ -936,7 +936,7 @@ def test_delete_contents_and_upload_again(client, boto3_session):
     assert file_in_db
 
 
-# Test UpdateFailedFiles endpoint
+# Test AddFailedFiles endpoint
 
 
 def test_update_failed_files_success(client, boto3_session):

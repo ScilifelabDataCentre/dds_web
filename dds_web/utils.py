@@ -800,8 +800,10 @@ def add_uploaded_files_to_db(proj_in_db, log):
                     new_file.versions.append(new_version)
 
                     db.session.add(new_file)
-                    files_added.append(new_file)
-                db.session.commit()
+                    try:
+                        db.session.commit()
+                        files_added.append(new_file)
+                    except (sqlalchemy.exc.IntegrityError, sqlalchemy.exc.OperationalError) as err:
+                        errors[file] = {"error": str(err)}
 
-        flask.current_app.logger.info(f"Files added: {files_added}")
-        flask.current_app.logger.info(f"Errors while adding files: {errors}")
+    return files_added, errors
