@@ -246,7 +246,7 @@ class ProjectStatus(flask_restful.Resource):
                     )
                 if new_deadline_in + current_deadline > 90:
                     raise DDSArgumentError(
-                        message="The new deadline needs to be less than (or equal to) 90 days."
+                        message=f"You requested the deadline to be extended with {new_deadline_in} days (from {current_deadline}), giving a new total deadline of {new_deadline_in + current_deadline} days. The new deadline needs to be less than (or equal to) 90 days."
                     )
 
                 try:
