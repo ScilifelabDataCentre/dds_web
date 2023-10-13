@@ -271,7 +271,7 @@ class ProjectStatus(flask_restful.Resource):
                 except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
                     flask.current_app.logger.exception("Failed to extend deadline")
                     db.session.rollback()
-                    raise err
+                    raise
 
                 return_message = f"{project.public_id} has been given a new deadline"
 
