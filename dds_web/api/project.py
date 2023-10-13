@@ -243,10 +243,6 @@ class ProjectStatus(flask_restful.Resource):
                     raise DDSArgumentError(
                         message="No new deadline provived, cannot perform operation."
                     )
-                if current_deadline > 10:
-                    raise DDSArgumentError(
-                        message=f"There are still {current_deadline} days left, it is not possible to extend deadline yet."
-                    )
                 if new_deadline_in + current_deadline > 90:
                     raise DDSArgumentError(
                         message="The new deadline needs to be less than (or equal to) 90 days."
