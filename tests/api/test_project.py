@@ -1251,6 +1251,7 @@ def test_extend_deadline_no_deadline(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "No new deadline provived, cannot perform operation." in response.json["message"]
 
+
 def test_extend_deadline_too_much_days(module_client, boto3_session):
     """If the new deadline together with the time left already is more than 90 days it should not work"""
 
