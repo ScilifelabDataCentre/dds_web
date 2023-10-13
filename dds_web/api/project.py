@@ -233,7 +233,7 @@ class ProjectStatus(flask_restful.Resource):
                 # deadline can only be extended from Available
                 if not project.current_status == "Available":
                     raise DDSArgumentError(
-                        "you can only extend the deadline for a project that has the status Available."
+                        "You can only extend the deadline for a project that has the status 'Available'."
                     )
 
                 new_deadline_in = json_input.get("new_deadline_in")
