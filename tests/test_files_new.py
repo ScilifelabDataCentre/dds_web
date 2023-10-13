@@ -948,7 +948,7 @@ def test_update_failed_files_success(client, boto3_session):
     assert project_1.current_status == "In Progress"
 
     response = client.put(
-        tests.DDSEndpoint.FILE_UPDATE_FAILED,
+        tests.DDSEndpoint.FILE_ADD_FAILED,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
         json=FAILED_FILES,
@@ -969,7 +969,7 @@ def test_update_failed_files_no_json(client, boto3_session):
     assert project_1.current_status == "In Progress"
 
     response = client.put(
-        tests.DDSEndpoint.FILE_UPDATE_FAILED,
+        tests.DDSEndpoint.FILE_ADD_FAILED,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         query_string={"project": "file_testing_project"},
     )
@@ -985,7 +985,7 @@ def test_update_failed_files_no_project(client, boto3_session):
     """Update failed files without project."""
 
     response = client.put(
-        tests.DDSEndpoint.FILE_UPDATE_FAILED,
+        tests.DDSEndpoint.FILE_ADD_FAILED,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
         json=FAILED_FILES,
     )
