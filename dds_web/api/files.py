@@ -745,7 +745,7 @@ class UpdateFile(flask_restful.Resource):
 class AddFailedFiles(flask_restful.Resource):
     """Get files from log file and save to database."""
 
-    @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @json_required
     @handle_validation_errors
     def put(self):
