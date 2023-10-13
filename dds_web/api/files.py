@@ -743,7 +743,7 @@ class UpdateFile(flask_restful.Resource):
 
 
 class AddFailedFiles(flask_restful.Resource):
-    """Add files from failed_delivery_log to DB using the "add_uploaded_files_to_db" utils function"""
+    """Get files from log file and save to database."""
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @json_required
