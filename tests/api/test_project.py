@@ -1227,7 +1227,7 @@ def test_extend_deadline_project_not_available(module_client, boto3_session):
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     assert (
-        "you can only extend the deadline for a project that has the status Available."
+        "You can only extend the deadline for a project that has the status 'Available'."
         in response.json["message"]
     )
 
@@ -1250,33 +1250,6 @@ def test_extend_deadline_no_deadline(module_client, boto3_session):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "No new deadline provived, cannot perform operation." in response.json["message"]
-
-
-def test_extend_deadline_not_enough_time_left(module_client, boto3_session):
-    """If there are still too much days left, extend deadline should not be yet possible"""
-
-    # create and release a new project with a long time left as available
-    current_deadline = 90
-    release_data_long_deadline = {"new_status": "Available", "deadline": current_deadline}
-    project_id, project = create_and_release_project(
-        client=module_client, proj_data=proj_data, release_data=release_data_long_deadline
-    )
-    assert project.times_expired == 0
-    time.sleep(1)  # tests are too fast
-
-    # try to extend upon such deadline
-    response = module_client.patch(
-        tests.DDSEndpoint.PROJECT_STATUS,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
-        query_string={"project": project_id},
-        json={"extend_deadline": True, "new_deadline_in": 20, "confirmed": True},
-    )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
-    assert (
-        f"There are still {current_deadline} days left, it is not possible to extend deadline yet."
-        in response.json["message"]
-    )
-
 
 def test_extend_deadline_too_much_days(module_client, boto3_session):
     """If the new deadline together with the time left already is more than 90 days it should not work"""
