@@ -221,6 +221,7 @@ class ProjectStatus(flask_restful.Resource):
 
         self.set_busy(project=project, busy=True)
 
+        # Extend deadline
         try:
             extend_deadline = json_input.get("extend_deadline", False)  # False by default
 
