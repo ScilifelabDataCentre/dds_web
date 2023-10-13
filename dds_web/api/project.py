@@ -199,7 +199,7 @@ class ProjectStatus(flask_restful.Resource):
         project = dds_web.utils.collect_project(project_id=project_id)
         dds_web.utils.verify_project_access(project=project)
 
-        # get atributes
+        # Get json input from request
         json_input = flask.request.get_json(silent=True)  # Already checked by json_required
 
         # false by default - operation must be confirmed by the user
