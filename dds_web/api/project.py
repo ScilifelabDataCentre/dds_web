@@ -202,7 +202,7 @@ class ProjectStatus(flask_restful.Resource):
         # Get json input from request
         json_input = flask.request.get_json(silent=True)  # Already checked by json_required
 
-        # false by default - operation must be confirmed by the user
+        # Operation must be confirmed by the user - False by default
         confirmed_operation = json_input.get("confirmed", False)
         if not isinstance(confirmed_operation, bool):
             raise DDSArgumentError(message="`confirmed` is a boolean value: True or False.")
