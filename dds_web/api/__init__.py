@@ -50,7 +50,7 @@ api.add_resource(files.RemoveDir, "/file/rmdir", endpoint="remove_dir")
 api.add_resource(files.FileInfo, "/file/info", endpoint="file_info")
 api.add_resource(files.FileInfoAll, "/file/all/info", endpoint="all_file_info")
 api.add_resource(files.UpdateFile, "/file/update", endpoint="update_file")
-api.add_resource(files.UpdateFailedFiles, "/file/failed/update", endpoint="update_failed_file")
+api.add_resource(files.AddFailedFiles, "/file/failed/add", endpoint="add_failed_files")
 
 # Projects ############################################################################## Projects #
 api.add_resource(project.UserProjects, "/proj/list", endpoint="list_projects")
