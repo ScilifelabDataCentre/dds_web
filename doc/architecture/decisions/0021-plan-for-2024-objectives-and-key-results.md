@@ -8,9 +8,9 @@ Accepted
 
 ## Context
 
-The Product Owner (PO) / Project Leader (PL) of Team Hermes - responsible for the development and maintenance of the Data Delivery System (DDS) - is going on parental leave from November 17th 2023. Due do this, and that the substitute(s) / replacement(s) has not had enough time to learn the system in order to fully take over the PO / PL responsibilities, there needs to be a plan for what the team should work on during the coming year. Starting a more formal plans for the coming year (now and in the future) is also a general improvement to the team and stakeholders, since it will allow for more tranparancy outward and help guide the team's focus.
+The Product Owner (PO) / Project Leader (PL) of Team Hermes - responsible for the development and maintenance of the Data Delivery System (DDS) - is going on parental leave from November 17th 2023. Due do this, and that the substitute(s) / replacement(s) has not had enough time to learn the system in order to fully take over the PO / PL responsibilities, there needs to be a plan for what the team should work on during the coming year. Starting a more formal plans for the coming year (now and in the future) is also a general improvement to the team and stakeholders, since it will allow for more tranparency outward and help guide the team's focus.
 
-In order to plan for the coming year (2024, and December 2023), the team is using the tool _OKRs: Objects and Key Results_.
+In order to plan for the coming year (2024, and December 2023), the team is using the tool / method _OKRs: Objects and Key Results_.
 
 > OKR [is] a collaborative goal-setting methodology used by teams and individuals to set challenging, ambitious goals with measurable results.
 >
