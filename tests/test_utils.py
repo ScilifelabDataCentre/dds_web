@@ -1513,6 +1513,7 @@ def test_use_sto4_return_true(client: flask.testing.FlaskClient):
 
 
 def test_add_uploaded_files_to_db_correct_failed_op(client: flask.testing.FlaskClient):
+    """Test calling the function with correct "failed_op"."""
     # Mock input data
     proj_in_db = models.Project.query.first()
     log = {
@@ -1552,7 +1553,8 @@ def test_add_uploaded_files_to_db_correct_failed_op(client: flask.testing.FlaskC
 
 
 def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskClient):
-    # Mock input data
+    """Test calling the function with "failed_op" other than "add_file_db"."""
+    # Prepare input data
     proj_in_db = models.Project.query.first()
     log = {
         "file1.txt": {
@@ -1582,9 +1584,10 @@ def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskCli
 
 
 def test_add_uploaded_files_to_db_file_not_found(client: flask.testing.FlaskClient, capfd):
+    """Test the return values of the function when file is not found on S3."""
     from botocore.exceptions import ClientError
 
-    # create mock project and log
+    # Prepare input data
     proj_in_db = models.Project.query.first()
     log = {
         "file1.txt": {
@@ -1604,15 +1607,17 @@ def test_add_uploaded_files_to_db_file_not_found(client: flask.testing.FlaskClie
     mock_api_s3_conn = MagicMock()
     mock_s3conn = mock_api_s3_conn.return_value.__enter__.return_value
 
-    # call add_uploaded_files_to_db and check for expected errors
+    # call add_uploaded_files_to_db
     with patch("dds_web.api.api_s3_connector.ApiS3Connector", mock_api_s3_conn):
         mock_s3conn.resource.meta.client.head_object.side_effect = ClientError(
             {"Error": {"Code": "404"}}, "operation_name"
         )
-        utils.add_uploaded_files_to_db(proj_in_db, log)
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
 
+    # check that the file is not added to the database
     file = models.File.query.filter_by(name="file1.txt").first()
     assert not file
 
-    # _,err = capfd.readouterr()
-    # assert "Errors while adding files: {'file1.txt': {'error': 'File not found in S3" in err
+    # check that the error is returned and files_added is empty
+    assert files_added == []
+    assert "File not found in S3" in errors["file1.txt"]["error"]
