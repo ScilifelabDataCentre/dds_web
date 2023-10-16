@@ -208,7 +208,15 @@ class ProjectStatus(flask_restful.Resource):
             raise DDSArgumentError(message="`confirmed` is a boolean value: True or False.")
         if not confirmed_operation:
             warning_message = "Operation must be confirmed before proceding."
-            return {"warning": warning_message}
+            project_info = ProjectInfo().get()
+            project_status = self.get()
+            json_returned = {
+                **project_info,
+                "project_status": project_status,
+                "warning": warning_message,
+                "default_unit_days": project.responsible_unit.days_in_expired,
+            }
+            return json_returned
 
         # Cannot change project status if project is busy
         if project.busy:
