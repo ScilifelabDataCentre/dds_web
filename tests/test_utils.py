@@ -1536,7 +1536,7 @@ def test_add_uploaded_files_to_db_correct_failed_op(client: flask.testing.FlaskC
 
     # Call the function
     with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
-        utils.add_uploaded_files_to_db(proj_in_db, log)
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
 
     # check that the file is added to the database
     file = models.File.query.filter_by(name="file1.txt").first()
@@ -1550,6 +1550,10 @@ def test_add_uploaded_files_to_db_correct_failed_op(client: flask.testing.FlaskC
     # check that the version is added to the database
     version = models.Version.query.filter_by(active_file=file.id).first()
     assert version
+
+    # check the return values
+    assert file in files_added
+    assert errors == {}
 
 
 def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskClient):
@@ -1576,11 +1580,17 @@ def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskCli
 
     # Call the function
     with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
-        utils.add_uploaded_files_to_db(proj_in_db, log)
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
 
     # check that the file is added to the database
     file = models.File.query.filter_by(name="file1.txt").first()
     assert not file
+
+    # check that the error is returned and files_added is empty
+    assert file not in files_added
+    assert files_added == []
+    print(errors)
+    assert "Incorrect 'failed_op'." in errors["file1.txt"]["error"]
 
 
 def test_add_uploaded_files_to_db_file_not_found(client: flask.testing.FlaskClient, capfd):
@@ -1619,5 +1629,6 @@ def test_add_uploaded_files_to_db_file_not_found(client: flask.testing.FlaskClie
     assert not file
 
     # check that the error is returned and files_added is empty
+    assert file not in files_added
     assert files_added == []
     assert "File not found in S3" in errors["file1.txt"]["error"]

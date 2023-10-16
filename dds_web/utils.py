@@ -760,6 +760,7 @@ def add_uploaded_files_to_db(proj_in_db, log):
     for file, vals in log.items():
         status = vals.get("status")
         if not status or not status.get("failed_op") == "add_file_db":
+            errors[file] = {"error": "Incorrect 'failed_op'."}
             continue
 
         with ApiS3Connector(project=proj_in_db) as s3conn:
