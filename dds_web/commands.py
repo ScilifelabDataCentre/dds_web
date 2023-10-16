@@ -9,6 +9,8 @@ import sys
 import datetime
 from dateutil.relativedelta import relativedelta
 import gc
+import pathlib
+import csv
 
 # Installed
 import click
@@ -978,7 +980,9 @@ def send_usage(months):
     # x months ago
     import freezegun
 
-    now_date = datetime.date(year=2024, month=1, day=2)
+    now_date = datetime.date(
+        year=2024, month=1, day=2
+    )  # We want the info about Jan, Feb, March, April
     with freezegun.freeze_time(now_date):
         end = current_time()
         flask.current_app.logger.debug(f"Month now: {end.month}")
@@ -986,18 +990,65 @@ def send_usage(months):
         start = end - relativedelta(months=months)
         flask.current_app.logger.debug(f"Month {months} months ago: {start.month}")
 
-        # Filter for time frame
+        flask.current_app.logger.debug(f"Start: {start}")
+        flask.current_app.logger.debug(f"End: {end}")
+
+        # CSV files to send
+        csv_file_names = []
+
         # Iterate through units
         for unit in models.Unit.query:
-            # Get usage rows connected to unit -- join usage table and project table
-            pass 
-        # Iterate through Usage rows connected to unit projects
-        filter_time_frame = sqlalchemy.and_(models.Usage.time_collected >= start, models.Usage.time_collected <= end)
+            # CSV file
+            csv_file_name = pathlib.Path(
+                f"{unit.public_id}_Usage_Months-{start.month}-to-{end.month}.csv"
+            )
+            flask.current_app.logger.debug(f"CSV file name: {csv_file_name}")
+            csv_file_names.append(csv_file_name)
 
-        usage_rows = models.Usage.query.filter(filter_time_frame).all()
-        flask.current_app.logger.debug(f"Usage rows: {usage_rows}")
+            # Total usage for unit
+            total_usage = 0
 
-        
+            # Open new csv file
+            with csv_file_name.open(mode="w+", newline="") as file:
+                csv_writer = csv.writer(file)
+                csv_writer.writerow(
+                    [
+                        "Project ID",
+                        "Project Title",
+                        "Project Created",
+                        "Time Collected",
+                        "Byte Hours",
+                    ]
+                )
+
+                # Get usage rows connected to unit, that have been collected between 4 months ago and now
+                for usage_row, project_row in page_query(
+                    db.session.query(models.Usage, models.Project)
+                    .join(models.Project)
+                    .filter(
+                        models.Project.responsible_unit == unit,
+                        models.Usage.time_collected >= start,
+                        models.Usage.time_collected <= end,
+                    )
+                ):
+                    # Increase total unit usage
+                    total_usage += usage_row.usage
+
+                    # Save usage row info to csv file
+                    csv_writer.writerow(
+                        [
+                            project_row.public_id,
+                            project_row.title,
+                            project_row.date_created,
+                            usage_row.time_collected,
+                            usage_row.usage,
+                        ]
+                    )
+
+                # Save total
+                csv_writer.writerow(["--", "--", "--", "--", total_usage])
+
+        # TODO: Send email with all csv files
 
 
 @click.command("stats")
