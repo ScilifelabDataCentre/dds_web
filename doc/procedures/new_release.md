@@ -20,7 +20,7 @@
 
     - _Minor changes, e.g. bug fix_: Minor version upgrade, e.g. `1.0.1 --> 1.0.2`
     - _Small changes, e.g. new feature_: Mid version upgrade, e.g. `1.1.0 --> 1.2.0`
-    - _Breaking changes or large new feature(s)_: Major version upgrade, e.g. `1.0.0 --> 2.0.0`
+    - _Breaking changes or large new feature(s)_: Major version upgrade, e.g. `1.0.0 --> 2.0.0` _AVOID THIS -- NEED TO INFORM USERS WELL IN ADVANCE IN THAT CASE SINCE IT WILL BLOCK THE USERS FROM USING ANY OLDER VERSIONS_
 
       > Will break if CLI version not bumped as well
 
