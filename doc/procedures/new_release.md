@@ -25,7 +25,7 @@
       > Will break if CLI version not bumped as well
 
 6.  Push version change to branch
-7.  Create a new PR from `<your-branch>` to `dev`
+7.  Create a new PR from `<your-branch>` to `dev`: "New version & changelog"
 
     Wait for approval and merge by Product Owner or admin.
 
