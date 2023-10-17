@@ -758,4 +758,4 @@ class AddFailedFiles(flask_restful.Resource):
         request_json = flask.request.get_json(silent=True)
 
         files_added, errors = dds_web.utils.add_uploaded_files_to_db(project, request_json)
-        return {"message": "File(s) added to database."}
+        return {"files_added": [file.name for file in files_added], "message": errors}
