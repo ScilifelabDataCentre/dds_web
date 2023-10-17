@@ -1,6 +1,14 @@
 Changelog
 ==========
 
+.. _2.5.2:
+
+2.5.2 - 2023-10-25
+~~~~~~~~~~~~~~~~~~~~~
+
+- Users can revoke project access given to unaccepted invites (e.g. after a mistake).
+- Email layout changed. When project is released, important information is now highlighted, and the Project Title is displayed along with the DDS project ID.
+
 .. _2.5.1:
 
 2.5.1 - 2023-09-27
