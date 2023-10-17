@@ -771,7 +771,7 @@ def add_uploaded_files_to_db(proj_in_db, log):
             except botocore.client.ClientError as err:
                 if err.response["Error"]["Code"] == "404":
                     errors[file] = {"error": "File not found in S3", "traceback": err.__traceback__}
-            else:
+            try:
                 file_object = models.File.query.filter(
                     sqlalchemy.and_(
                         models.File.name == sqlalchemy.func.binary(file),
@@ -781,32 +781,31 @@ def add_uploaded_files_to_db(proj_in_db, log):
                 if file_object:
                     errors[file] = {"error": "File already in database."}
                 else:
-                    try:
-                        new_file = models.File(
-                            name=file,
-                            name_in_bucket=vals["path_remote"],
-                            subpath=vals["subpath"],
-                            project_id=proj_in_db.id,
-                            size_original=vals["size_raw"],
-                            size_stored=vals["size_processed"],
-                            compressed=not vals["compressed"],
-                            public_key=vals["public_key"],
-                            salt=vals["salt"],
-                            checksum=vals["checksum"],
-                        )
-                        new_version = models.Version(
-                            size_stored=new_file.size_stored,
-                            time_uploaded=datetime.datetime.utcnow(),
-                        )
-                        proj_in_db.file_versions.append(new_version)
-                        proj_in_db.files.append(new_file)
-                        new_file.versions.append(new_version)
+                    new_file = models.File(
+                        name=file,
+                        name_in_bucket=vals["path_remote"],
+                        subpath=vals["subpath"],
+                        project_id=proj_in_db.id,
+                        size_original=vals["size_raw"],
+                        size_stored=vals["size_processed"],
+                        compressed=not vals["compressed"],
+                        public_key=vals["public_key"],
+                        salt=vals["salt"],
+                        checksum=vals["checksum"],
+                    )
+                    new_version = models.Version(
+                        size_stored=new_file.size_stored,
+                        time_uploaded=datetime.datetime.utcnow(),
+                    )
+                    proj_in_db.file_versions.append(new_version)
+                    proj_in_db.files.append(new_file)
+                    new_file.versions.append(new_version)
 
-                        db.session.add(new_file)
-                        db.session.commit()
-                        files_added.append(new_file)
-                    except (sqlalchemy.exc.IntegrityError, sqlalchemy.exc.OperationalError) as err:
-                        errors[file] = {"error": str(err)}
-                        db.session.rollback()
+                    db.session.add(new_file)
+                    db.session.commit()
+                    files_added.append(new_file)
+            except (sqlalchemy.exc.IntegrityError, sqlalchemy.exc.OperationalError) as err:
+                errors[file] = {"error": str(err)}
+                db.session.rollback()
 
     return files_added, errors
