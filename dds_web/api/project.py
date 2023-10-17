@@ -228,10 +228,10 @@ class ProjectStatus(flask_restful.Resource):
                 )
             )
 
-        self.set_busy(project=project, busy=True)
-
         # Extend deadline
         try:
+            self.set_busy(project=project, busy=True)
+
             new_deadline_in = json_input.get(
                 "new_deadline_in", None
             )  # if not provided --> is None -> deadline is not updated
