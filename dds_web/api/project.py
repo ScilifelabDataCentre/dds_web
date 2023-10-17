@@ -233,7 +233,7 @@ class ProjectStatus(flask_restful.Resource):
         try:
             new_deadline_in = json_input.get(
                 "new_deadline_in", None
-            )  # if not provided is None -> deadlie is not updated
+            )  # if not provided --> is None -> deadline is not updated
 
             # some variable definition
             curr_date = dds_web.utils.current_time()
