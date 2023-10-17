@@ -192,6 +192,7 @@ class ProjectStatus(flask_restful.Resource):
     @logging_bind_request
     @json_required
     @handle_validation_errors
+    @handle_db_error
     def patch(self):
         """Partially update a the project status"""
         # Get project ID, project and verify access
