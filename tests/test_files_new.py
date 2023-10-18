@@ -955,9 +955,10 @@ def test_update_failed_files_success(client, boto3_session):
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert response.json["message"] == "File(s) added to database."
+    assert response.json["message"] == {}
     for file in FAILED_FILES:
         assert db.session.query(models.File).filter(models.File.name == file).first()
+        assert file in response.json["files_added"]
 
 
 def test_update_failed_files_no_json(client, boto3_session):
