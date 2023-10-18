@@ -1435,6 +1435,43 @@ def test_list_lost_files_in_project_overlap(
         )
 
 
+def test_list_lost_files_in_project_sql_error(
+    client: flask.testing.FlaskClient, boto3_session, capfd
+):
+    """Verify proper behaviour when sql OperationalError occurs."""
+    # Imports
+    from dds_web.utils import list_lost_files_in_project
+    from sqlalchemy.exc import OperationalError
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Mock files in s3
+    boto3_session.Bucket(project.bucket).objects.all = mock_items_in_bucket
+    # Get created testfiles
+    fake_files_in_bucket = mock_items_in_bucket()
+
+    # mock db.session.commit
+    files_name_in_bucket_mock = PropertyMock(
+        side_effect=sqlalchemy.exc.OperationalError("OperationalError", "test", "sqlalchemy")
+    )
+
+    # Run listing
+    with patch("dds_web.database.models.Project.files", files_name_in_bucket_mock):
+        try:
+            in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+                project=project, s3_resource=boto3_session
+            )
+        except OperationalError as e:
+            print(f"OperationalError occurred: {e}")
+
+    # Get logging output
+    out, err = capfd.readouterr()
+    assert "OperationalError occurred" in out
+    assert "Unable to connect to db" in err
+
+
 # use_sto4
 
 
@@ -1589,7 +1626,7 @@ def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskCli
     # check that the error is returned and files_added is empty
     assert file not in files_added
     assert files_added == []
-    print(errors)
+
     assert "Incorrect 'failed_op'." in errors["file1.txt"]["error"]
 
 
