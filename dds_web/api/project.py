@@ -209,6 +209,7 @@ class ProjectStatus(flask_restful.Resource):
             raise DDSArgumentError(message="`confirmed` is a boolean value: True or False.")
         if not confirmed_operation:
             warning_message = "Operation must be confirmed before proceding."
+            # When not confirmed, return information about the project
             project_info = ProjectInfo().get()
             project_status = self.get()
             json_returned = {
@@ -228,10 +229,10 @@ class ProjectStatus(flask_restful.Resource):
                 )
             )
 
+        self.set_busy(project=project, busy=True)
+
         # Extend deadline
         try:
-            self.set_busy(project=project, busy=True)
-
             new_deadline_in = json_input.get(
                 "new_deadline_in", None
             )  # if not provided --> is None -> deadline is not updated
