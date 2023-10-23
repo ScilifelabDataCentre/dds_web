@@ -1198,7 +1198,7 @@ def test_extend_deadline_when_busy(module_client, boto3_session):
         in response.json["message"]
     )
     assert (
-        "Please try again later. \n\nIf you know the project is not busy, contact support."
+        "Please try again later. \n\nIf you know that the project is not busy, contact support."
         in response.json["message"]
     )
 
@@ -1302,7 +1302,7 @@ def test_extend_deadline_bad_new_deadline(module_client, boto3_session):
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert (
-        "The deadline atribute passed should be of type Int (i.e a number)."
+        "The deadline attribute passed should be of type Int (i.e a number)."
         in response.json["message"]
     )
 
