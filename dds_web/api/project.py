@@ -292,10 +292,9 @@ class ProjectStatus(flask_restful.Resource):
                     db.session.rollback()
                     raise
 
-                return_message = f"{project.public_id} has been given a new deadline"
-
-                return_message += (
-                    f". An e-mail notification has{' not ' if not send_email else ' '}been sent."
+                return_message = (
+                    f"{project.public_id} has been given a new deadline. "
+                    f"An e-mail notification has{' not ' if not send_email else ' '}been sent."
                 )
             else:
                 # leave it for future new functionality of updating the status
