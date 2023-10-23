@@ -1167,6 +1167,7 @@ def test_extend_deadline_no_confirmed(module_client, boto3_session):
     assert project.times_expired == 0
 
     assert "Operation must be confirmed before proceding." in response.json["warning"]
+    assert all(item in response.json for item in ["project_info", "project_status", "warning", "default_unit_days"])
 
 
 def test_extend_deadline_when_busy(module_client, boto3_session):
