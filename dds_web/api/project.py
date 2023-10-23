@@ -252,7 +252,7 @@ class ProjectStatus(flask_restful.Resource):
 
                 if type(new_deadline_in) is not int:
                     raise DDSArgumentError(
-                        message="The deadline atribute passed should be of type Int (i.e a number)."
+                        message="The deadline attribute passed should be of type Int (i.e a number)."
                     )
 
                 # New deadline shouldnt surpass the default unit days
