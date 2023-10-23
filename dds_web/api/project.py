@@ -223,7 +223,7 @@ class ProjectStatus(flask_restful.Resource):
                 **project_info,
                 "project_status": project_status,
                 "warning": warning_message,
-                "default_unit_days": project.responsible_unit.days_in_expired,
+                "default_unit_days": project.responsible_unit.days_in_available,
             }
             return json_returned
 
