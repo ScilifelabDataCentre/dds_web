@@ -207,7 +207,7 @@ class ProjectStatus(flask_restful.Resource):
         # next time the project expires it wont change again -> error
         if project.times_expired >= 2:
             raise DDSArgumentError(
-                "Project availability limit: The maximun number of changes in data availability has been reached."
+                "Project availability limit: The maximum number of changes in data availability has been reached."
             )
 
         # Operation must be confirmed by the user - False by default
