@@ -240,6 +240,7 @@ class ProjectStatus(flask_restful.Resource):
             # some variable definition
             curr_date = dds_web.utils.current_time()
             send_email = False
+            default_unit_days = project.responsible_unit.days_in_expired
 
             # Update the deadline functionality
             if new_deadline_in:
@@ -254,7 +255,13 @@ class ProjectStatus(flask_restful.Resource):
                         message="The deadline atribute passed should be of type Int (i.e a number)."
                     )
 
-                # it shouldnt surpass 90 days
+                # New deadline shouldnt surpass the default unit days
+                if new_deadline_in > default_unit_days:
+                    raise DDSArgumentError(
+                        message=f"You requested the deadline to be extended {new_deadline_in}. The number of days has to be lower than the default deadline extension number of {default_unit_days} days"
+                    )
+
+                # the new deadline + days left shouldnt surpass 90 days
                 current_deadline = (project.current_deadline - curr_date).days
                 if new_deadline_in + current_deadline > 90:
                     raise DDSArgumentError(
