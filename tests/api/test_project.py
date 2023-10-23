@@ -1376,7 +1376,7 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
         else:
             assert response.status_code == http.HTTPStatus.BAD_REQUEST
             assert (
-                "Project availability limit: Project cannot be made Available any more times"
+                "Project availability limit: The maximun number of changes in data availability has been reached."
                 in response.json["message"]
             )
 

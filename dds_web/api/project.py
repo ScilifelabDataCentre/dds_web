@@ -271,7 +271,7 @@ class ProjectStatus(flask_restful.Resource):
                 # wont change again -> error
                 if project.times_expired >= 2:
                     raise DDSArgumentError(
-                        "Project availability limit: Project cannot be made Available any more times"
+                        "Project availability limit: The maximun number of changes in data availability has been reached."
                     )
                 try:
                     # add a fake expire status to mimick a re-release in order to have an udpated deadline
