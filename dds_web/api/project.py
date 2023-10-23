@@ -225,7 +225,7 @@ class ProjectStatus(flask_restful.Resource):
             raise ProjectBusyError(
                 message=(
                     f"The deadline for the project '{project_id}' is already in the process of being changed. "
-                    "Please try again later. \n\nIf you know the project is not busy, contact support."
+                    "Please try again later. \n\nIf you know that the project is not busy, contact support."
                 )
             )
 
