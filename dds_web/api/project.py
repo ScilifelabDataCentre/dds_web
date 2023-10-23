@@ -203,6 +203,13 @@ class ProjectStatus(flask_restful.Resource):
         # Get json input from request
         json_input = flask.request.get_json(silent=True)  # Already checked by json_required
 
+        # the status has changed at least two times,
+        # next time the project expires it wont change again -> error
+        if project.times_expired >= 2:
+            raise DDSArgumentError(
+                "Project availability limit: The maximun number of changes in data availability has been reached."
+            )
+
         # Operation must be confirmed by the user - False by default
         confirmed_operation = json_input.get("confirmed", False)
         if not isinstance(confirmed_operation, bool):
@@ -266,12 +273,6 @@ class ProjectStatus(flask_restful.Resource):
                 if new_deadline_in + current_deadline > 90:
                     raise DDSArgumentError(
                         message=f"You requested the deadline to be extended with {new_deadline_in} days (from {current_deadline}), giving a new total deadline of {new_deadline_in + current_deadline} days. The new deadline needs to be less than (or equal to) 90 days."
-                    )
-                # the dealine has changed at least two times, next time it expires
-                # wont change again -> error
-                if project.times_expired >= 2:
-                    raise DDSArgumentError(
-                        "Project availability limit: The maximun number of changes in data availability has been reached."
                     )
                 try:
                     # add a fake expire status to mimick a re-release in order to have an udpated deadline
