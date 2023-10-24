@@ -265,7 +265,7 @@ class ProjectStatus(flask_restful.Resource):
                 # New deadline shouldnt surpass the default unit days
                 if new_deadline_in > default_unit_days:
                     raise DDSArgumentError(
-                        message=f"You requested the deadline to be extended {new_deadline_in}. The number of days has to be lower than the default deadline extension number of {default_unit_days} days"
+                        message=f"You requested the deadline to be extended {new_deadline_in} days. The number of days has to be lower than the default deadline extension number of {default_unit_days} days"
                     )
 
                 # the new deadline + days left shouldnt surpass 90 days
