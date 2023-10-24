@@ -188,6 +188,135 @@ class ProjectStatus(flask_restful.Resource):
 
         return {"message": return_message}
 
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    @logging_bind_request
+    @json_required
+    @handle_validation_errors
+    @handle_db_error
+    def patch(self):
+        """Partially update a the project status"""
+        # Get project ID, project and verify access
+        project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+        project = dds_web.utils.collect_project(project_id=project_id)
+        dds_web.utils.verify_project_access(project=project)
+
+        # Get json input from request
+        json_input = flask.request.get_json(silent=True)  # Already checked by json_required
+
+        # the status has changed at least two times,
+        # next time the project expires it wont change again -> error
+        if project.times_expired >= 2:
+            raise DDSArgumentError(
+                "Project availability limit: The maximum number of changes in data availability has been reached."
+            )
+
+        # Operation must be confirmed by the user - False by default
+        confirmed_operation = json_input.get("confirmed", False)
+        if not isinstance(confirmed_operation, bool):
+            raise DDSArgumentError(message="`confirmed` is a boolean value: True or False.")
+        if not confirmed_operation:
+            warning_message = "Operation must be confirmed before proceding."
+            # When not confirmed, return information about the project
+            project_info = ProjectInfo().get()
+            project_status = self.get()
+            json_returned = {
+                **project_info,
+                "project_status": project_status,
+                "warning": warning_message,
+                "default_unit_days": project.responsible_unit.days_in_available,
+            }
+            return json_returned
+
+        # Cannot change project status if project is busy
+        if project.busy:
+            raise ProjectBusyError(
+                message=(
+                    f"The deadline for the project '{project_id}' is already in the process of being changed. "
+                    "Please try again later. \n\nIf you know that the project is not busy, contact support."
+                )
+            )
+
+        self.set_busy(project=project, busy=True)
+
+        # Extend deadline
+        try:
+            new_deadline_in = json_input.get(
+                "new_deadline_in", None
+            )  # if not provided --> is None -> deadline is not updated
+
+            # some variable definition
+            send_email = False
+            default_unit_days = project.responsible_unit.days_in_available
+
+            # Update the deadline functionality
+            if new_deadline_in:
+                # deadline can only be extended from Available
+                if not project.current_status == "Available":
+                    raise DDSArgumentError(
+                        "You can only extend the deadline for a project that has the status 'Available'."
+                    )
+
+                if type(new_deadline_in) is not int:
+                    raise DDSArgumentError(
+                        message="The deadline attribute passed should be of type Int (i.e a number)."
+                    )
+
+                # New deadline shouldnt surpass the default unit days
+                if new_deadline_in > default_unit_days:
+                    raise DDSArgumentError(
+                        message=f"You requested the deadline to be extended {new_deadline_in} days. The number of days has to be lower than the default deadline extension number of {default_unit_days} days"
+                    )
+
+                # the new deadline + days left shouldnt surpass 90 days
+                curr_date = dds_web.utils.current_time()
+                current_deadline = (project.current_deadline - curr_date).days
+                if new_deadline_in + current_deadline > 90:
+                    raise DDSArgumentError(
+                        message=f"You requested the deadline to be extended with {new_deadline_in} days (from {current_deadline}), giving a new total deadline of {new_deadline_in + current_deadline} days. The new deadline needs to be less than (or equal to) 90 days."
+                    )
+                try:
+                    # add a fake expire status to mimick a re-release in order to have an udpated deadline
+                    curr_date = (
+                        dds_web.utils.current_time()
+                    )  # call current_time before each call so it is stored with different timestamps
+                    new_status_row = self.expire_project(
+                        project=project,
+                        current_time=curr_date,
+                        deadline_in=1,  # some dummy deadline bc it will re-release now again
+                    )
+                    project.project_statuses.append(new_status_row)
+
+                    curr_date = (
+                        dds_web.utils.current_time()
+                    )  # call current_time before each call so it is stored with different timestamps
+                    new_status_row = self.release_project(
+                        project=project,
+                        current_time=curr_date,
+                        deadline_in=new_deadline_in + current_deadline,
+                    )
+                    project.project_statuses.append(new_status_row)
+
+                    project.busy = False  # return to not busy
+                    db.session.commit()
+
+                except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+                    flask.current_app.logger.exception("Failed to extend deadline")
+                    db.session.rollback()
+                    raise
+
+                return_message = (
+                    f"The project '{project.public_id}' has been given a new deadline. "
+                    f"An e-mail notification has{' not ' if not send_email else ' '}been sent."
+                )
+            else:
+                # leave it for future new functionality of updating the status
+                return_message = "Nothing to update."
+        except:
+            self.set_busy(project=project, busy=False)
+            raise
+
+        return {"message": return_message}
+
     @staticmethod
     @dbsession
     def set_busy(project: models.Project, busy: bool) -> None:

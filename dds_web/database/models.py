@@ -195,7 +195,7 @@ class Unit(db.Model):
     sto2_access = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
     sto2_secret = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
 
-    # New safespring storage
+    # New safespring storage - NOTE: MAKE SURE IPS ARE WHITELISTED ON UPPMAX AND OTHER SERVERS
     sto4_start_time = db.Column(db.DateTime(), nullable=True)
     sto4_endpoint = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later
     sto4_name = db.Column(db.String(255), unique=False, nullable=True)  # unique=True later

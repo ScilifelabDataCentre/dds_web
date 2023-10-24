@@ -1,14 +1,24 @@
-The project {{project_id}} is now available for your access in the SciLifeLab Data Delivery System (DDS).
-The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple way.
+The following project is now available for your access in the SciLifeLab Data Delivery System (DDS) and you can now download your data.
+    - Project Title: {{project_title}}
+    - DDS project ID: {{project_id}}
 
-{% if unit_email %}
-You were added to this project on behalf of {{displayed_sender}} ({{unit_email}}).
-{% else %}
-You were added to this project by {{displayed_sender}}.
-{% endif %}
+You were added to this project {% if unit_email %} on behalf of {% else %} by {% endif %} {{displayed_sender}}. 
 
-The DDS CLI command 'dds ls -p {{project_id}}' can be used to list the files in this project.
+To list the files in this project, run: 
+    dds ls -p {{project_id}}
 
-The DDS CLI command 'dds data get -p {{project_id}} -a' can be used to download all the files in this project to your current directory.
+To download all the files in this project to your current directory, run:
+    dds data get -p {{project_id}} -a --verify-checksum.
+
+For more information (including an installation guide), see the DDS CLI documentation here: https://scilifelabdatacentre.github.io/dds_cli/
+
+{% if unit_email %} 
+If you experience issues, please contact the SciLifeLab unit {{displayed_sender}} at {{unit_email}}. 
+{% else %} 
+If you experience issues, please contact the SciLifeLab unit {{displayed_sender}}. 
+{% endif %} 
 
 Your access to this project will expire on {{deadline}}
+
+What is the DDS? The DDS is a system for SciLifeLab infrastructures to deliver data to researchers in a fast, secure and simple way.
+

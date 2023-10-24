@@ -164,7 +164,7 @@ class SendMOTD(flask_restful.Resource):
 
         # Create email content
         # put motd_obj.message etc in there etc
-        subject: str = "DDS Important Information"
+        subject: str = "Important Information: Data Delivery System"
         body: str = flask.render_template(f"mail/motd.txt", motd=motd_obj.message)
         html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
 

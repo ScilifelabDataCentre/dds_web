@@ -15,7 +15,6 @@ import tests
 proj_query = {"project": "public_project_id"}
 # proj_query_restricted = {"project": "restricted_project_id"}
 
-
 # UTILITY FUNCTIONS ############################################################ UTILITY FUNCTIONS #
 
 
