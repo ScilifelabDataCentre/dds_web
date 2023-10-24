@@ -299,7 +299,7 @@ class ProjectStatus(flask_restful.Resource):
                     raise
 
                 return_message = (
-                    f"{project.public_id} has been given a new deadline. "
+                    f"The project '{project.public_id}' has been given a new deadline. "
                     f"An e-mail notification has{' not ' if not send_email else ' '}been sent."
                 )
             else:
