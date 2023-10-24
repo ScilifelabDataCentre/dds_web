@@ -245,7 +245,6 @@ class ProjectStatus(flask_restful.Resource):
             )  # if not provided --> is None -> deadline is not updated
 
             # some variable definition
-            curr_date = dds_web.utils.current_time()
             send_email = False
             default_unit_days = project.responsible_unit.days_in_available
 
@@ -269,6 +268,7 @@ class ProjectStatus(flask_restful.Resource):
                     )
 
                 # the new deadline + days left shouldnt surpass 90 days
+                curr_date = dds_web.utils.current_time()
                 current_deadline = (project.current_deadline - curr_date).days
                 if new_deadline_in + current_deadline > 90:
                     raise DDSArgumentError(
@@ -276,13 +276,19 @@ class ProjectStatus(flask_restful.Resource):
                     )
                 try:
                     # add a fake expire status to mimick a re-release in order to have an udpated deadline
+                    curr_date = (
+                        dds_web.utils.current_time()
+                    )  # call current_time before each call so it is stored with different timestamps
                     new_status_row = self.expire_project(
                         project=project,
                         current_time=curr_date,
-                        deadline_in=project.responsible_unit.days_in_expired,
+                        deadline_in=1,  # some dummy deadline bc it will re-release now again
                     )
                     project.project_statuses.append(new_status_row)
 
+                    curr_date = (
+                        dds_web.utils.current_time()
+                    )  # call current_time before each call so it is stored with different timestamps
                     new_status_row = self.release_project(
                         project=project,
                         current_time=curr_date,

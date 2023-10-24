@@ -1371,6 +1371,7 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
             assert project.times_expired == i
             assert project.current_deadline == deadline + datetime.timedelta(days=new_deadline_in)
             deadline = project.current_deadline  # update current deadline
+            assert project.current_status == "Available"
             assert (
                 f"The project '{project_id}' has been given a new deadline"
                 in response.json["message"]
@@ -1408,6 +1409,7 @@ def test_extend_deadline_ok(module_client, boto3_session):
     assert project.current_deadline == deadline + datetime.timedelta(
         days=extend_deadline_data.get("new_deadline_in")
     )
+    assert project.current_status == "Available"
 
     assert f"The project '{project_id}' has been given a new deadline" in response.json["message"]
     assert "An e-mail notification has not been sent." in response.json["message"]
