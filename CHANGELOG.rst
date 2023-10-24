@@ -8,6 +8,7 @@ Changelog
 
 - Users can revoke project access given to unaccepted invites (e.g. after a mistake).
 - Email layout changed. When project is released, important information is now highlighted, and the Project Title is displayed along with the DDS project ID.
+- New endpoint `ProjectStatus.patch`: Unit Admins / Personnel can extend the project deadline.
 
 .. _2.5.1:
 
