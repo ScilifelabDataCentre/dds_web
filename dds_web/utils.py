@@ -751,18 +751,37 @@ def use_sto4(unit_object, project_object) -> bool:
     return False
 
 
-def add_uploaded_files_to_db(proj_in_db, log):
+def add_uploaded_files_to_db(proj_in_db, log: typing.Dict):
+    """
+    Adds uploaded files to the database.
+
+    Args:
+        proj_in_db (dds_web.models.Project): The project to add the files to.
+        log (typing.Dict): A dictionary containing information about the uploaded files.
+
+    Returns:
+        A tuple containing a list of files that were successfully added to the database,
+        and a dictionary containing any errors that occurred while
+        adding the files.
+    """
+    # Import necessary modules and initialize variables
     from dds_web import db
     from dds_web.api.api_s3_connector import ApiS3Connector
 
     errors = {}
     files_added = []
+
+    # Loop through each file in the log
     for file, vals in log.items():
         status = vals.get("status")
+        overwrite = vals.get("overwrite")
+
+        # Check if the file was successfully uploaded
         if not status or not status.get("failed_op") == "add_file_db":
             errors[file] = {"error": "Incorrect 'failed_op'."}
             continue
 
+        # Connect to S3 and check if the file exists
         with ApiS3Connector(project=proj_in_db) as s3conn:
             try:
                 _ = s3conn.resource.meta.client.head_object(
@@ -773,14 +792,25 @@ def add_uploaded_files_to_db(proj_in_db, log):
                     errors[file] = {"error": "File not found in S3", "traceback": err.__traceback__}
             else:
                 try:
+                    # Check if the file already exists in the database
                     file_object = models.File.query.filter(
                         sqlalchemy.and_(
                             models.File.name == sqlalchemy.func.binary(file),
                             models.File.project_id == proj_in_db.id,
                         )
                     ).first()
+
+                    # If the file already exists, create a new version of it if "--overwrite" was specified
                     if file_object:
-                        errors[file] = {"error": "File already in database."}
+                        if vals.get("overwrite", True):
+                            try:
+                                new_file_version(existing_file=file_object, new_info=vals)
+                                files_added.append(file_object)
+                            except KeyError as err:
+                                errors[file] = {"error": f"Missing key: {err}"}
+                        else:
+                            errors[file] = {"error": "File already in database."}
+                    # If the file does not exist, create a new file and version
                     else:
                         new_file = models.File(
                             name=file,
@@ -805,8 +835,91 @@ def add_uploaded_files_to_db(proj_in_db, log):
                         db.session.add(new_file)
                         db.session.commit()
                         files_added.append(new_file)
-                except (sqlalchemy.exc.IntegrityError, sqlalchemy.exc.OperationalError) as err:
+                except (
+                    sqlalchemy.exc.IntegrityError,
+                    sqlalchemy.exc.OperationalError,
+                    sqlalchemy.exc.SQLAlchemyError,
+                ) as err:
                     errors[file] = {"error": str(err)}
                     db.session.rollback()
+    if errors:
+        flask.current_app.logger.error(f"Error in new_file_version: {errors}")
 
     return files_added, errors
+
+
+def new_file_version(existing_file, new_info):
+    """
+    Create new version of a file.
+
+    Args:
+        existing_file (dds_web.models.File): The existing file to create a new version of.
+        new_info (dict): A dictionary containing information about the new version of the file.
+
+    Returns:
+        None
+    """
+    from dds_web import db
+    import dds_web.utils
+
+    # Get project
+    project = existing_file.project
+
+    # Get versions
+    current_file_version = models.Version.query.filter(
+        sqlalchemy.and_(
+            models.Version.active_file == sqlalchemy.func.binary(existing_file.id),
+            models.Version.time_deleted.is_(None),
+        )
+    ).all()
+
+    # If there is more than one version of the file which does not yet have a deletion timestamp, log a warning
+    if len(current_file_version) > 1:
+        flask.current_app.logger.warning(
+            "There is more than one version of the file "
+            "which does not yet have a deletion timestamp."
+        )
+
+    # Same timestamp for deleted and created new version
+    new_timestamp = dds_web.utils.current_time()
+
+    # Set the deletion timestamp for the latests version of the file
+    for version in current_file_version:
+        if version.time_deleted is None:
+            version.time_deleted = new_timestamp
+
+    # Get information about the new version of the file
+    subpath = new_info["subpath"]
+    size_original = new_info["size_raw"]
+    size_stored = new_info["size_processed"]
+    compressed = new_info["compressed"]
+    salt = new_info["salt"]
+    public_key = new_info["public_key"]
+    time_uploaded = new_timestamp
+    checksum = new_info["checksum"]
+
+    # Update file info
+    existing_file.subpath = subpath
+    existing_file.size_original = size_original
+    existing_file.size_stored = size_stored
+    existing_file.compressed = compressed
+    existing_file.salt = salt
+    existing_file.public_key = public_key
+    existing_file.time_uploaded = time_uploaded
+    existing_file.checksum = checksum
+
+    # Create a new version of the file
+    new_version = models.Version(
+        size_stored=new_info.get("size_processed"),
+        time_uploaded=new_timestamp,
+        active_file=existing_file.id,
+        project_id=project,
+    )
+
+    # Update foreign keys and relationships
+    project.file_versions.append(new_version)
+    existing_file.versions.append(new_version)
+
+    # Add the new version to the database and commit the changes
+    db.session.add(new_version)
+    db.session.commit()
