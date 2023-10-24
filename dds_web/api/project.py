@@ -247,7 +247,7 @@ class ProjectStatus(flask_restful.Resource):
             # some variable definition
             curr_date = dds_web.utils.current_time()
             send_email = False
-            default_unit_days = project.responsible_unit.days_in_expired
+            default_unit_days = project.responsible_unit.days_in_available
 
             # Update the deadline functionality
             if new_deadline_in:
