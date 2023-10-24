@@ -237,6 +237,31 @@
   - `archive_project`
     - Database or S3 issues
 
+#### `patch`
+
+- [Authentication errors](#authentication)
+- `400 Bad Request`
+  - Decorators
+    - Json required but not provided
+    - Validation error
+  - Schemas
+    - Project does not exist
+  - Project is busy
+  - `extend_deadline`
+    - Invalid deadline
+    - No deadline provided
+    - Project is not in Available state
+    - Max number of times available reached
+- `403 Forbidden`
+  - Schemas
+    - User does not have access to project
+- `500 Internal Server Error`
+  - Database errors
+  - `delete_project`
+    - Database or S3 issues
+  - `archive_project`
+    - Database or S3 issues
+
 ### GetPublic
 
 - [Authentication errors](#authentication)

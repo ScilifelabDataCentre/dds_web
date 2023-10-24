@@ -314,3 +314,7 @@ _Nothing merged in CLI during this sprint_
 - Use full DDS name in MOTD email subject ([#1477](https://github.com/ScilifelabDataCentre/dds_web/pull/1477))
 - Add flag --verify-checksum to the comand in email template ([#1478])(https://github.com/ScilifelabDataCentre/dds_web/pull/1478)
 - Improved email layout; Highlighted information and commands when project is released ([#1479])(https://github.com/ScilifelabDataCentre/dds_web/pull/1479)
+
+# 2023-10-16 - 2023-10-27
+
+- Added new API endpoint ProjectStatus.patch to extend the deadline ([#1480])(https://github.com/ScilifelabDataCentre/dds_web/pull/1480)
