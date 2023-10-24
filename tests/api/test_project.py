@@ -1321,7 +1321,7 @@ def test_extend_deadline_more_than_default(module_client, boto3_session):
     assert project.times_expired == 0
     time.sleep(1)  # tests are too fast
 
-    default_unit_days = project.responsible_unit.days_in_expired
+    default_unit_days = project.responsible_unit.days_in_available
 
     # try to extend deadline with a bigger deadline that it is suppose to have
     extend_deadline_data_bad_deadline = {
@@ -1371,7 +1371,10 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
             assert project.times_expired == i
             assert project.current_deadline == deadline + datetime.timedelta(days=new_deadline_in)
             deadline = project.current_deadline  # update current deadline
-            assert f"{project_id} has been given a new deadline" in response.json["message"]
+            assert (
+                f"The project '{project_id}' has been given a new deadline"
+                in response.json["message"]
+            )
             assert "An e-mail notification has not been sent." in response.json["message"]
         else:
             assert response.status_code == http.HTTPStatus.BAD_REQUEST
@@ -1406,7 +1409,7 @@ def test_extend_deadline_ok(module_client, boto3_session):
         days=extend_deadline_data.get("new_deadline_in")
     )
 
-    assert f"{project_id} has been given a new deadline" in response.json["message"]
+    assert f"The project '{project_id}' has been given a new deadline" in response.json["message"]
     assert "An e-mail notification has not been sent." in response.json["message"]
 
 
