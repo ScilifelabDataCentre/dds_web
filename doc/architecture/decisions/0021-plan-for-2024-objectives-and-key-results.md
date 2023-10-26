@@ -121,8 +121,8 @@ The sections below have the following structure:
     - _Inquiry 1_
     - _Inquiry 2…_
   - Get feedback/review of documentation from ?? (outside team)
-- **Ticket Volume [ASPIRATIONAL]:** Reduce the number of "unnecessary" support tickets submitted by 50% percent within the next 6 months months, by implementing a chatbot in the web interface. 
-"Unnecessary": questions that should go to units or that units should already know.
+- **Ticket Volume [ASPIRATIONAL]:** Reduce the number of "unnecessary" support tickets submitted by 50% percent within the next 6 months months, by implementing a chatbot in the web interface.
+  "Unnecessary": questions that should go to units or that units should already know.
   - Identify number of unnecessary support tickets in the last x months
     - _Find 3 possible tools for creating the chatbot_
     - _List pros and cons for the possible tools_
@@ -192,9 +192,9 @@ The sections below have the following structure:
 
 ## Consequences
 
-- The GUI prototype should not be prioritized over the other two - this is why it's listed as objective #3. 
+- The GUI prototype should not be prioritized over the other two - this is why it's listed as objective #3.
   - If, during the key results and initiatives within objective #3 (GUI), the team finds that this is not an appropriate objective, or that there's a new, better, objective, the team can switch direction and work on the new one. In this case, the team must inform the users of the new plan.
-  - For more consequences regarding the GUI, see the **Context** section above.   
+  - For more consequences regarding the GUI, see the **Context** section above.
 - The task examples listed under some of the initiatives are just that; _examples_. The team will decide on the appropriate tasks during the sprints, depending on which objective and key result they will be working on.
 - The key results and initiatives _may change_ as time passes since, for example, they may depend on another initiative or information that has been gathered previous to starting the initiative.
 
