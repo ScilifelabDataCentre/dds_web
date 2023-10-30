@@ -13,6 +13,7 @@ import urllib.parse
 import time
 import smtplib
 from dateutil.relativedelta import relativedelta
+import gc 
 
 # Installed
 import botocore
@@ -804,11 +805,11 @@ def add_uploaded_files_to_db(proj_in_db, log: typing.Dict):
                         if overwrite:
                             try:
                                 new_file_version(existing_file=file_object, new_info=vals)
-                                files_added.append(file_object)
                             except KeyError as err:
                                 errors[file] = {"error": f"Missing key: {err}"}
                         else:
                             errors[file] = {"error": "File already in database."}
+                            
                     # If the file does not exist, create a new file and version
                     else:
                         new_file = models.File(
@@ -887,29 +888,19 @@ def new_file_version(existing_file, new_info):
         if version.time_deleted is None:
             version.time_deleted = new_timestamp
 
-    # Get information about the new version of the file
-    subpath = new_info["subpath"]
-    size_original = new_info["size_raw"]
-    size_stored = new_info["size_processed"]
-    compressed = new_info["compressed"]
-    salt = new_info["salt"]
-    public_key = new_info["public_key"]
-    time_uploaded = new_timestamp
-    checksum = new_info["checksum"]
-
     # Update file info
-    existing_file.subpath = subpath
-    existing_file.size_original = size_original
-    existing_file.size_stored = size_stored
-    existing_file.compressed = compressed
-    existing_file.salt = salt
-    existing_file.public_key = public_key
-    existing_file.time_uploaded = time_uploaded
-    existing_file.checksum = checksum
+    existing_file.subpath = new_info["subpath"]
+    existing_file.size_original = new_info["size_raw"]
+    existing_file.size_stored = new_info["size_processed"]
+    existing_file.compressed = new_info["compressed"]
+    existing_file.salt = new_info["salt"]
+    existing_file.public_key = new_info["public_key"]
+    existing_file.time_uploaded = new_timestamp
+    existing_file.checksum = new_info["checksum"]
 
     # Create a new version of the file
     new_version = models.Version(
-        size_stored=new_info.get("size_processed"),
+        size_stored=new_info["size_processed"],
         time_uploaded=new_timestamp,
         active_file=existing_file.id,
         project_id=project,
@@ -922,3 +913,7 @@ def new_file_version(existing_file, new_info):
     # Add the new version to the database and commit the changes
     db.session.add(new_version)
     db.session.commit()
+
+    # Clean up information
+    del new_info
+    gc.collect()
