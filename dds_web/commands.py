@@ -226,7 +226,7 @@ def update_uploaded_file_with_log(project, path_to_log_file):
     with open(path_to_log_file, "r") as f:
         log = json.load(f)
 
-    files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+    files_added, errors = utils.add_uploaded_files_to_db(proj_in_db=proj_in_db, log=log)
 
     flask.current_app.logger.info(f"Files added: {files_added}")
     flask.current_app.logger.info(f"Errors while adding files: {errors}")

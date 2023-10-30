@@ -3,7 +3,7 @@
 # Standard
 import typing
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import patch, mock_open
 from unittest.mock import PropertyMock
 from unittest.mock import MagicMock
 import os
@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import pathlib
 import csv
 from dateutil.relativedelta import relativedelta
+import json
 
 # Installed
 import click
@@ -458,13 +459,20 @@ def test_update_uploaded_file_with_log_nonexisting_project(
     # Run command
     assert db.session.query(models.Project).all()
     with patch("dds_web.database.models.Project.query.filter_by", mock_no_project):
-        result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
+        _: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
     _, err = capfd.readouterr()
     assert "The project 'projectdoesntexist' doesn't exist." in err
 
+    # Verify that things are not printed out
+    assert "Files added:" not in err
+    assert "Errors while adding files:" not in err
 
-def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: FakeFilesystem) -> None:
+
+def test_update_uploaded_file_with_log_nonexisting_file(client, runner, capfd: LogCaptureFixture) -> None:
     """Attempt to read file which does not exist."""
+    # Get project 
+    project = models.Project.query.first()
+
     # Verify that fake file does not exist
     non_existent_log_file: str = "this_is_not_a_file.json"
     assert not os.path.exists(non_existent_log_file)
@@ -472,17 +480,58 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
     # Create command options
     command_options: typing.List = [
         "--project",
-        "projectdoesntexist",
+        project.public_id,
         "--path-to-log-file",
         non_existent_log_file,
     ]
 
     # Run command
-    result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
-    # TODO: Add check for logging or change command to return or raise error. capfd does not work together with fs
-    # _, err = capfd.readouterr()
-    # assert "The project 'projectdoesntexist' doesn't exist." in result.stderr
+    _: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
 
+    # Check logging
+    _, err = capfd.readouterr()
+    assert f"The log file '{non_existent_log_file}' doesn't exist." in err
+
+    # Verify that things are not printed out
+    assert "Files added:" not in err
+    assert "Errors while adding files:" not in err
+
+
+def test_update_uploaded_file(client, runner, capfd: LogCaptureFixture) -> None:
+    """Attempt to read file which does not exist."""
+    # Get project 
+    project = models.Project.query.first()
+
+    # # Verify that fake file exists
+    log_file: str = "this_is_a_file.json"
+
+    # Get file from db
+    file_object: models.File = models.File.query.first()
+    file_dict = {
+            "name": file_object.name,
+            "path_remote": file_object.name_in_bucket,
+            "subpath": file_object.subpath,
+            "size_raw": file_object.size_original,
+            "size_processed": file_object.size_stored,
+            "compressed": not file_object.compressed,
+            "public_key": file_object.public_key,
+            "salt": file_object.salt,
+            "checksum": file_object.checksum,
+        }
+    
+    # Create command options
+    command_options: typing.List = [
+        "--project",
+        project.public_id,
+        "--path-to-log-file",
+        log_file,
+    ]
+    _: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
+
+    # Check logging
+    _, err = capfd.readouterr()
+    assert "Files added:" in err
+    assert "Errors while adding files:" in err
 
 # lost_files_s3_db
 
