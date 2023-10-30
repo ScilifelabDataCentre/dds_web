@@ -1,14 +1,14 @@
 # How to create a new release
 
 1.  Create a PR from `dev` to `master`: "New release"
-2.  Confirm that the development instance works and that the newest changes have been deployed
+2.  Confirm that the development instance works and that the newest changes have been deployed. If not, make a new redeployment of dds-dev (via argocd).
 
     1. _In general_, e.g. that it's up and running
     2. _Specific feature has been added or changed:_ Confirm that it also works in the development instance
     3. _The change is in the API:_ Confirm that the development instance works together with the CLI
 
-3.  Fork a new branch from `dev`
-4.  Update the version [changelog](../../CHANGELOG.rst)
+3.  Fork a new branch from `dev` (locally)
+4.  Update the version [changelog](../../CHANGELOG.rst), located at `dds_web/CHANGELOG.rst`
 
     **Tip:** Use the PR to `master` to see all changes since last release.
 
@@ -20,12 +20,12 @@
 
     - _Minor changes, e.g. bug fix_: Minor version upgrade, e.g. `1.0.1 --> 1.0.2`
     - _Small changes, e.g. new feature_: Mid version upgrade, e.g. `1.1.0 --> 1.2.0`
-    - _Breaking changes or large new feature(s)_: Major version upgrade, e.g. `1.0.0 --> 2.0.0`
+    - _Breaking changes or large new feature(s)_: Major version upgrade, e.g. `1.0.0 --> 2.0.0` _AVOID THIS -- NEED TO INFORM USERS WELL IN ADVANCE IN THAT CASE SINCE IT WILL BLOCK THE USERS FROM USING ANY OLDER VERSIONS_
 
       > Will break if CLI version not bumped as well
 
 6.  Push version change to branch
-7.  Create a new PR from `<your-branch>` to `dev`
+7.  Create a new PR from `<your-branch>` to `dev`: "New version & changelog"
 
     Wait for approval and merge by Product Owner or admin.
 

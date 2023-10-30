@@ -300,13 +300,13 @@ _Nothing merged in CLI during this sprint_
 - Dependency: Bump `MariaDB` to LTS version 10.11.5 ([#1465](https://github.com/ScilifelabDataCentre/dds_web/pull/1465))
 - Bug fixed: Row in `ProjectUsers` should also be added if it doesn't exist when giving Researcher access to a specific project ([#1464](https://github.com/ScilifelabDataCentre/dds_web/pull/1464))
 - Workflow: Update PR template and clarify sections ([#1467](https://github.com/ScilifelabDataCentre/dds_web/pull/1467))
-- Revoke project access for unaccepted invites ([#1192])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13/backlog?epics=visible&selectedIssue=DDS-1192)
 
 # 2023-09-18 - 2023-09-29
 
-- Column `sto4_start_time` is automatically set when the create-unit command is run ([#1668])(https://scilifelab.atlassian.net/jira/software/projects/DDS/boards/13?selectedIssue=DDS-1668)
+- Column `sto4_start_time` is automatically set when the create-unit command is run ([#1469](https://github.com/ScilifelabDataCentre/dds_web/pull/1469))
 - Replace expired invites when there's a new invitation attempt ([#1466](https://github.com/ScilifelabDataCentre/dds_web/pull/1466))
 - New version: 2.5.1 ([#1471](https://github.com/ScilifelabDataCentre/dds_web/pull/1471))
+- Revoke project access for unaccepted invites ([#1468](https://github.com/ScilifelabDataCentre/dds_web/pull/1468))
 
 # 2023-10-02 - 2023-10-13
 
@@ -314,4 +314,9 @@ _Nothing merged in CLI during this sprint_
 - Use full DDS name in MOTD email subject ([#1477](https://github.com/ScilifelabDataCentre/dds_web/pull/1477))
 - Add flag --verify-checksum to the comand in email template ([#1478])(https://github.com/ScilifelabDataCentre/dds_web/pull/1478)
 - Improved email layout; Highlighted information and commands when project is released ([#1479])(https://github.com/ScilifelabDataCentre/dds_web/pull/1479)
+
+# 2023-10-16 - 2023-11-03 (Longer sprint due to OKR prep and höstlov)
+
+- Added new API endpoint ProjectStatus.patch to extend the deadline ([#1480])(https://github.com/ScilifelabDataCentre/dds_web/pull/1480)
+- New version: 2.5.2 ([#1482](https://github.com/ScilifelabDataCentre/dds_web/pull/1482))
 - New endpoint `AddFailedFiles` for adding failed files to database ([#1472])(https://github.com/ScilifelabDataCentre/dds_web/pull/1472)
