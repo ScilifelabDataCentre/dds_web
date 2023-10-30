@@ -1549,48 +1549,7 @@ def test_use_sto4_return_true(client: flask.testing.FlaskClient):
     assert result is True
 
 
-def test_add_uploaded_files_to_db_correct_failed_op(client: flask.testing.FlaskClient):
-    """Test calling the function with correct "failed_op"."""
-    # Mock input data
-    proj_in_db = models.Project.query.first()
-    log = {
-        "file1.txt": {
-            "status": {"failed_op": "add_file_db"},
-            "path_remote": "path/to/file1.txt",
-            "subpath": "subpath",
-            "size_raw": 100,
-            "size_processed": 200,
-            "compressed": False,
-            "public_key": "public_key",
-            "salt": "salt",
-            "checksum": "checksum",
-        }
-    }
-
-    # Mock the S3 connector and head_object method
-    mock_s3conn = MagicMock()
-    mock_s3conn.resource.meta.client.head_object.return_value = None
-
-    # Call the function
-    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
-        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
-
-    # check that the file is added to the database
-    file = models.File.query.filter_by(name="file1.txt").first()
-    assert file
-    assert file.name == "file1.txt"
-    assert file.name_in_bucket == "path/to/file1.txt"
-
-    # check that the file is added to the project
-    assert file in proj_in_db.files
-
-    # check that the version is added to the database
-    version = models.Version.query.filter_by(active_file=file.id).first()
-    assert version
-
-    # check the return values
-    assert file in files_added
-    assert errors == {}
+# add_uploaded_files_to_db
 
 
 def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskClient):
@@ -1629,8 +1588,7 @@ def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskCli
 
     assert "Incorrect 'failed_op'." in errors["file1.txt"]["error"]
 
-
-def test_add_uploaded_files_to_db_file_not_found(client: flask.testing.FlaskClient):
+def test_add_uploaded_files_to_db_correct_failed_op_file_not_found_in_s3(client: flask.testing.FlaskClient):
     """Test the return values of the function when file is not found on S3."""
     from botocore.exceptions import ClientError
 
@@ -1669,6 +1627,78 @@ def test_add_uploaded_files_to_db_file_not_found(client: flask.testing.FlaskClie
     assert file not in files_added
     assert files_added == []
     assert "File not found in S3" in errors["file1.txt"]["error"]
+
+
+def test_add_uploaded_files_to_db_correct_failed_op_file_not_found_in_db(client: flask.testing.FlaskClient):
+    """Test calling the function with correct "failed_op" and file isn't found in database."""
+    # Mock input data
+    proj_in_db = models.Project.query.first()
+    file_name = "file1.txt"
+    log = {
+        file_name: {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": f"path/to/{file_name}",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+        }
+    }
+    
+    # Verify that file does not exist
+    file_object = models.File.query.filter(
+        sqlalchemy.and_(
+            models.File.name == sqlalchemy.func.binary(file_name),
+            models.File.project_id == proj_in_db.id,
+        )
+    ).first()
+    assert not file_object
+
+    # Mock the S3 connector and head_object method
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
+
+    # Call the function
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that the file is added to the database
+    file = models.File.query.filter(
+        sqlalchemy.and_(
+            models.File.name == sqlalchemy.func.binary(file),
+            models.File.project_id == proj_in_db.id,
+        )
+    ).first()
+    assert file
+    assert file.name == file_name
+    assert file.name_in_bucket == log[file_name]["path_remote"]
+    assert file.subpath == log[file_name]["subpath"]
+    assert file.size_original == log[file_name]["size_raw"]
+    assert file.size_stored == log[file_name]["size_processed"]
+    assert file.compressed == log[file_name]["compressed"]
+    assert file.public_key == log[file_name]["public_key"]
+    assert file.salt == log[file_name]["salt"]
+    assert file.checksum == log[file_name]["checksum"]
+
+    # Check that the file is added to the project
+    assert file in proj_in_db.files
+
+    # Check that the version is added to the database
+    version = models.Version.query.filter_by(active_file=file.id).first()
+    assert version
+    assert version.size_stored == log[file_name]["size_processed"]
+
+    # Check the return values
+    assert file in files_added
+    assert errors == {}
+
+
+
+
+
 
 
 # def test_add_uploaded_files_to_db_file_already_in_db(client: flask.testing.FlaskClient):
