@@ -805,6 +805,7 @@ def add_uploaded_files_to_db(proj_in_db, log: typing.Dict):
                         if overwrite:
                             try:
                                 new_file_version(existing_file=file_object, new_info=vals)
+                                files_added.append(file_object)
                             except KeyError as err:
                                 errors[file] = {"error": f"Missing key: {err}"}
                         else:

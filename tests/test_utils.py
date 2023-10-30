@@ -1875,7 +1875,7 @@ def test_add_uploaded_files_to_db_correct_failed_op_file_is_found_in_db_overwrit
     assert file.public_key == log[file_name]["public_key"]
     assert file.salt == log[file_name]["salt"]
     assert file.checksum == log[file_name]["checksum"]
-    assert files_added
+    assert files_added and file in files_added
     
     assert errors == {}
 
