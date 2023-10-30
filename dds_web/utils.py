@@ -893,7 +893,7 @@ def new_file_version(existing_file, new_info):
     existing_file.subpath = new_info["subpath"]
     existing_file.size_original = new_info["size_raw"]
     existing_file.size_stored = new_info["size_processed"]
-    existing_file.compressed = new_info["compressed"]
+    existing_file.compressed = not new_info["compressed"]
     existing_file.salt = new_info["salt"]
     existing_file.public_key = new_info["public_key"]
     existing_file.time_uploaded = new_timestamp

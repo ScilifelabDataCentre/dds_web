@@ -25,6 +25,7 @@ from dateutil.relativedelta import relativedelta
 import boto3
 import botocore
 import sqlalchemy
+from _pytest.logging import LogCaptureFixture
 
 # Variables
 
@@ -1883,7 +1884,7 @@ def test_add_uploaded_files_to_db_correct_failed_op_file_is_found_in_db_overwrit
     assert file.subpath == log[file_name]["subpath"]
     assert file.size_original == log[file_name]["size_raw"]
     assert file.size_stored == log[file_name]["size_processed"]
-    assert file.compressed == log[file_name]["compressed"]
+    assert file.compressed != log[file_name]["compressed"]
     assert file.public_key == log[file_name]["public_key"]
     assert file.salt == log[file_name]["salt"]
     assert file.checksum == log[file_name]["checksum"]
@@ -1940,3 +1941,92 @@ def test_add_uploaded_files_to_db_sql_error(client: flask.testing.FlaskClient):
     assert file not in files_added
     assert files_added == []
     assert "OperationalError" in errors["file1.txt"]["error"]
+
+# new_file_version
+
+def test_new_file_version_multiple_versions(client: flask.testing.FlaskClient, capfd: LogCaptureFixture):
+    """If there are multiple versions for the same file then they should be updated identically."""
+    # Get any project
+    project = models.Project.query.first()
+
+    # Define file info
+    file_name = "file1.txt"
+    original_file_info = {
+        "name": file_name,
+        "path_remote": f"path/to/{file_name}",
+        "subpath": "subpath",
+        "size_raw": 100,
+        "size_processed": 200,
+        "compressed": False,
+        "public_key": "public_key",
+        "salt": "salt",
+        "checksum": "checksum",
+    }
+
+    # Create new file
+    new_file = models.File(
+        name=file_name,
+        name_in_bucket=original_file_info["path_remote"],
+        subpath=original_file_info["subpath"],
+        size_original=original_file_info["size_raw"],
+        size_stored=original_file_info["size_processed"],
+        compressed=original_file_info["compressed"],
+        public_key=original_file_info["public_key"],
+        salt=original_file_info["salt"],
+        checksum=original_file_info["checksum"],
+    )
+
+    # Create new versions (multiple) of the file
+    new_version_1 = models.Version(
+        size_stored=original_file_info["size_processed"],
+        time_uploaded=utils.current_time(),
+        active_file=new_file.id,
+        project_id=project,
+    )
+    new_version_2 = models.Version(
+        size_stored=original_file_info["size_processed"] + 10,
+        time_uploaded=utils.current_time(),
+        active_file=new_file.id,
+        project_id=project,
+    )
+
+    # Append to relationships
+    project.files.append(new_file)  
+    project.file_versions.extend([new_version_1, new_version_2])
+    new_file.versions.extend([new_version_1, new_version_2])
+
+    db.session.add(new_file)
+    db.session.commit()
+
+    # Define new file info
+    new_file_info = {
+        "name": file_name,
+        "path_remote": f"path/to/{file_name}",
+        "subpath": "subpath",
+        "size_raw": 1001,
+        "size_processed": 2001,
+        "compressed": True,
+        "public_key": "public_key2",
+        "salt": "salt2",
+        "checksum": "checksum2",
+    }
+
+    # Run function
+    utils.new_file_version(existing_file=new_file, new_info=new_file_info)
+
+    # Verify that logging printed
+    _, err = capfd.readouterr()
+    assert "There is more than one version of the file which does not yet have a deletion timestamp." in err
+
+    # Verify that there's a new version
+    assert len(new_file.versions) == 3
+
+    # Verify that the file info has been updated
+    assert new_file.subpath == new_file_info["subpath"] == original_file_info["subpath"]
+    assert new_file.size_original == new_file_info["size_raw"] != original_file_info["size_raw"]
+    assert new_file.size_stored == new_file_info["size_processed"] != original_file_info["size_processed"]
+    assert new_file.compressed == (not new_file_info["compressed"]) != (not original_file_info["compressed"])
+    assert new_file.salt == new_file_info["salt"] != original_file_info["salt"]
+    assert new_file.public_key == new_file_info["public_key"] != original_file_info["public_key"]
+    assert new_file.time_uploaded != new_version_1.time_deleted == new_version_2.time_deleted
+    assert new_file.checksum == new_file_info["checksum"] != original_file_info["checksum"]
