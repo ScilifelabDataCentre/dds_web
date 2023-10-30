@@ -13,7 +13,7 @@ import urllib.parse
 import time
 import smtplib
 from dateutil.relativedelta import relativedelta
-import gc 
+import gc
 
 # Installed
 import botocore
@@ -810,7 +810,7 @@ def add_uploaded_files_to_db(proj_in_db, log: typing.Dict):
                                 errors[file] = {"error": f"Missing key: {err}"}
                         else:
                             errors[file] = {"error": "File already in database."}
-                            
+
                     # If the file does not exist, create a new file and version
                     else:
                         new_file = models.File(
