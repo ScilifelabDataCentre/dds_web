@@ -965,7 +965,7 @@ def send_usage(months):
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
     # -- Success
     email_subject: str = "[SEND-USAGE CRONJOB]"
-    email_body: str = f"Here is the usage for the last {months} months:\n"
+    email_body: str = f"Here is the usage for the last {months} months.\n"
     # -- Failure
     error_subject: str = f"{email_subject} <ERROR> Error in send-usage cronjob"
     error_body: str = (

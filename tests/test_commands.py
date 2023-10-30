@@ -36,6 +36,7 @@ from dds_web.commands import (
     collect_stats,
     lost_files_s3_db,
     update_unit,
+    send_usage,
 )
 from dds_web.database import models
 from dds_web import db, mail
@@ -1637,3 +1638,71 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
     reporting_rows = Reporting.query.all()
     for row in reporting_rows:
         verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)
+
+
+def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
+    """Test that the email with the usage report is send"""
+    # Imports
+    from dds_web.database.models import Usage
+
+    # variables definition
+    project_1_unit_1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    project_2_unit_1 = models.Project.query.filter_by(
+        public_id="second_public_project_id"
+    ).one_or_none()
+    project_1_unit_2 = models.Project.query.filter_by(public_id="unit2testing").one_or_none()
+    now = datetime.now()
+    months_to_test = 3
+
+    # Loop to populate usage table with fake entries across the months
+    for i in range(months_to_test + 1):
+        time = now - relativedelta(months=i)
+        usage_1 = Usage(
+            project_id=project_1_unit_1.id,
+            usage=100,
+            time_collected=time,
+        )
+        usage_2 = Usage(
+            project_id=project_2_unit_1.id,
+            usage=100,
+            time_collected=time,
+        )
+        usage_3 = Usage(
+            project_id=project_1_unit_2.id,
+            usage=100,
+            time_collected=time,
+        )
+        db.session.add_all([usage_1, usage_2, usage_3])
+        db.session.commit()
+
+    # Run command
+    with mail.record_messages() as outbox:
+        cli_runner.invoke(send_usage, ["--months", months_to_test])
+
+        # Verify output and sent email
+        assert len(outbox) == 1
+        assert (
+            "[SEND-USAGE CRONJOB] Usage records attached in the present mail" in outbox[-1].subject
+        )
+        assert f"Here is the usage for the last {months_to_test} months." in outbox[-1].body
+
+        end_month = now.month - months_to_test
+        unit_1_id = project_1_unit_1.responsible_unit.public_id
+        unit_2_id = project_1_unit_2.responsible_unit.public_id
+        csv_1_name = f"{unit_1_id}_Usage_Months-{end_month}-to-{now.month}.csv"
+        csv_2_name = f"{unit_2_id}_Usage_Months-{end_month}-to-{now.month}.csv"
+
+        _, logs = capfd.readouterr()
+        assert f"Month now: {now.month}" in logs
+        assert f"Month {months_to_test} months ago: {end_month}" in logs
+        assert f"CSV file name: {csv_1_name}" in logs
+        assert f"CSV file name: {csv_2_name}" in logs
+        assert "Sending email with the CSV." in logs
+
+        # Verify that the csv files are attached - two files, one for each unit
+        assert len(outbox[-1].attachments) == 2
+        for attachment, file_name in zip(outbox[-1].attachments, [csv_1_name, csv_2_name]):
+            assert attachment.filename == file_name
+            assert attachment.content_type == "text/csv"
+    # TODO: test that the csv files are correct
+    # TODO: Test errors in the csv handling
