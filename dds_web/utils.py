@@ -752,8 +752,7 @@ def use_sto4(unit_object, project_object) -> bool:
 
 
 def add_uploaded_files_to_db(proj_in_db, log: typing.Dict):
-    """
-    Adds uploaded files to the database.
+    """Adds uploaded files to the database.
 
     Args:
         proj_in_db (dds_web.models.Project): The project to add the files to.
@@ -774,9 +773,9 @@ def add_uploaded_files_to_db(proj_in_db, log: typing.Dict):
     # Loop through each file in the log
     for file, vals in log.items():
         status = vals.get("status")
-        overwrite = vals.get("overwrite")
+        overwrite = vals.get("overwrite", False)
 
-        # Check if the file was successfully uploaded
+        # Check if the file was successfully uploaded but database not updated
         if not status or not status.get("failed_op") == "add_file_db":
             errors[file] = {"error": "Incorrect 'failed_op'."}
             continue
@@ -802,7 +801,7 @@ def add_uploaded_files_to_db(proj_in_db, log: typing.Dict):
 
                     # If the file already exists, create a new version of it if "--overwrite" was specified
                     if file_object:
-                        if vals.get("overwrite", True):
+                        if overwrite:
                             try:
                                 new_file_version(existing_file=file_object, new_info=vals)
                                 files_added.append(file_object)
