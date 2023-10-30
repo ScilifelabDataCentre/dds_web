@@ -1668,7 +1668,7 @@ def test_add_uploaded_files_to_db_correct_failed_op_file_not_found_in_db(client:
     # check that the file is added to the database
     file = models.File.query.filter(
         sqlalchemy.and_(
-            models.File.name == sqlalchemy.func.binary(file),
+            models.File.name == sqlalchemy.func.binary(file_name),
             models.File.project_id == proj_in_db.id,
         )
     ).first()
@@ -1678,7 +1678,7 @@ def test_add_uploaded_files_to_db_correct_failed_op_file_not_found_in_db(client:
     assert file.subpath == log[file_name]["subpath"]
     assert file.size_original == log[file_name]["size_raw"]
     assert file.size_stored == log[file_name]["size_processed"]
-    assert file.compressed == log[file_name]["compressed"]
+    assert file.compressed != log[file_name]["compressed"]
     assert file.public_key == log[file_name]["public_key"]
     assert file.salt == log[file_name]["salt"]
     assert file.checksum == log[file_name]["checksum"]
@@ -1696,44 +1696,56 @@ def test_add_uploaded_files_to_db_correct_failed_op_file_not_found_in_db(client:
     assert errors == {}
 
 
+def test_add_uploaded_files_to_db_correct_failed_op_file_is_found_in_db_no_overwrite(client: flask.testing.FlaskClient):
+    """Test calling the function with correct "failed_op" and file IS found in database."""
+    # Mock input data
+    proj_in_db = models.Project.query.first()
+    file_name = "file1.txt"
+    log = {
+        file_name: {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": f"path/to/{file_name}",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+        }
+    }
+    
+    # Create new file
+    new_file = models.File(
+            name=file_name,
+            name_in_bucket=log[file_name]["path_remote"],
+            subpath =log[file_name]["subpath"],
+            size_original =log[file_name]["size_raw"],
+            size_stored =log[file_name]["size_processed"],
+            compressed=not log[file_name]["compressed"],
+            public_key =log[file_name]["public_key"],
+            salt =log[file_name]["salt"],
+            checksum =log[file_name]["checksum"],
+    )
+    proj_in_db.files.append(new_file)
+    db.session.add(new_file)
+    db.session.commit()
 
+    # Mock the S3 connector and head_object method
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
 
+    # Call the function
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
 
+    # check that the error is returned and files_added is empty
+    assert files_added == []
+    assert "File already in database" in errors[file_name]["error"]
 
-
-# def test_add_uploaded_files_to_db_file_already_in_db(client: flask.testing.FlaskClient):
-#     """Function should return error if file is already in the database."""
-
-#     # get a project and an existing file from this project
-#     proj_in_db = models.Project.query.first()
-#     file_in_db = proj_in_db.files[0]
-#     assert file_in_db
-
-#     log = {
-#         file_in_db.name: {
-#             "status": {"failed_op": "add_file_db"},
-#             "path_remote": "path/to/file1.txt",
-#             "subpath": "subpath",
-#             "size_raw": 100,
-#             "size_processed": 200,
-#             "compressed": False,
-#             "public_key": "public_key",
-#             "salt": "salt",
-#             "checksum": "checksum",
-#         }
-#     }
-
-#     # Mock the S3 connector and head_object method
-#     mock_s3conn = MagicMock()
-#     mock_s3conn.resource.meta.client.head_object.return_value = None
-
-#     # Call the function
-#     with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
-#         files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
-
-#     assert files_added == []
-#     assert file_in_db.name in errors
-#     assert "File already in database." in errors[file_in_db.name]["error"]
+    # Check that the version is added to the database
+    version = models.Version.query.filter_by(active_file=new_file.id).first()
+    assert not version
 
 
 def test_add_uploaded_files_to_db_sql_error(client: flask.testing.FlaskClient):
