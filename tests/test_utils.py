@@ -1942,9 +1942,13 @@ def test_add_uploaded_files_to_db_sql_error(client: flask.testing.FlaskClient):
     assert files_added == []
     assert "OperationalError" in errors["file1.txt"]["error"]
 
+
 # new_file_version
 
-def test_new_file_version_multiple_versions(client: flask.testing.FlaskClient, capfd: LogCaptureFixture):
+
+def test_new_file_version_multiple_versions(
+    client: flask.testing.FlaskClient, capfd: LogCaptureFixture
+):
     """If there are multiple versions for the same file then they should be updated identically."""
     # Get any project
     project = models.Project.query.first()
@@ -1991,7 +1995,7 @@ def test_new_file_version_multiple_versions(client: flask.testing.FlaskClient, c
     )
 
     # Append to relationships
-    project.files.append(new_file)  
+    project.files.append(new_file)
     project.file_versions.extend([new_version_1, new_version_2])
     new_file.versions.extend([new_version_1, new_version_2])
 
@@ -2016,7 +2020,10 @@ def test_new_file_version_multiple_versions(client: flask.testing.FlaskClient, c
 
     # Verify that logging printed
     _, err = capfd.readouterr()
-    assert "There is more than one version of the file which does not yet have a deletion timestamp." in err
+    assert (
+        "There is more than one version of the file which does not yet have a deletion timestamp."
+        in err
+    )
 
     # Verify that there's a new version
     assert len(new_file.versions) == 3
@@ -2024,8 +2031,16 @@ def test_new_file_version_multiple_versions(client: flask.testing.FlaskClient, c
     # Verify that the file info has been updated
     assert new_file.subpath == new_file_info["subpath"] == original_file_info["subpath"]
     assert new_file.size_original == new_file_info["size_raw"] != original_file_info["size_raw"]
-    assert new_file.size_stored == new_file_info["size_processed"] != original_file_info["size_processed"]
-    assert new_file.compressed == (not new_file_info["compressed"]) != (not original_file_info["compressed"])
+    assert (
+        new_file.size_stored
+        == new_file_info["size_processed"]
+        != original_file_info["size_processed"]
+    )
+    assert (
+        new_file.compressed
+        == (not new_file_info["compressed"])
+        != (not original_file_info["compressed"])
+    )
     assert new_file.salt == new_file_info["salt"] != original_file_info["salt"]
     assert new_file.public_key == new_file_info["public_key"] != original_file_info["public_key"]
     assert new_file.time_uploaded != new_version_1.time_deleted == new_version_2.time_deleted
