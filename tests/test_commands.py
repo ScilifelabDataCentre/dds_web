@@ -1645,19 +1645,21 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
     # Imports
     from dds_web.database.models import Usage
 
-    # variables definition
-    project_1_unit_1 = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
-    project_2_unit_1 = models.Project.query.filter_by(
-        public_id="second_public_project_id"
-    ).one_or_none()
-    project_1_unit_2 = models.Project.query.filter_by(public_id="unit2testing").one_or_none()
-    now = datetime.now()
-    months_to_test = 3
+    # Get projects
+    projects = models.Project.query.filter(
+        models.Project.public_id.in_(
+            ["public_project_id", "second_public_project_id", "unit2testing"]
+        )
+    ).all()
+    project_1_unit_1 = next(p for p in projects if p.public_id == "public_project_id")
+    project_2_unit_1 = next(p for p in projects if p.public_id == "second_public_project_id")
+    project_1_unit_2 = next(p for p in projects if p.public_id == "unit2testing")
 
-    # Loop to populate usage table with fake entries across the months
+    # Loop to populate usage table with fake entries across two years
+    january_2021 = datetime(2021, 1, 1)  # Start at Jan 2021
     usage_list = []
-    for i in range(months_to_test + 1):
-        time = now - relativedelta(months=i)
+    for i in range(25):
+        time = january_2021 + relativedelta(months=i)
         usage_1 = Usage(
             project_id=project_1_unit_1.id,
             usage=100,
@@ -1677,58 +1679,98 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
 
     db.session.add_all(usage_list)
     db.session.commit()
+    # Fake data included from Jan 2021 to Jan 2023
 
-    # Run command
-    with mail.record_messages() as outbox:
-        cli_runner.invoke(send_usage, ["--months", months_to_test])
+    def run_command_and_check_output(months_to_test, start_time):
+        # Run command
+        with mail.record_messages() as outbox:
+            with patch("dds_web.utils.current_time") as current_time_func:  # Mock current time
+                current_time_func.return_value = start_time
+                cli_runner.invoke(send_usage, ["--months", months_to_test])
 
-        # Verify output and sent email
-        assert len(outbox) == 1
-        assert (
-            "[SEND-USAGE CRONJOB] Usage records attached in the present mail" in outbox[-1].subject
-        )
-        assert f"Here is the usage for the last {months_to_test} months." in outbox[-1].body
+            # Verify output and sent email
+            assert len(outbox) == 1
+            assert (
+                "[SEND-USAGE CRONJOB] Usage records attached in the present mail"
+                in outbox[-1].subject
+            )
+            assert f"Here is the usage for the last {months_to_test} months." in outbox[-1].body
 
-        end_month = now.month - months_to_test
-        unit_1_id = project_1_unit_1.responsible_unit.public_id
-        unit_2_id = project_1_unit_2.responsible_unit.public_id
-        csv_1_name = f"{unit_1_id}_Usage_Months-{end_month}-to-{now.month}.csv"
-        csv_2_name = f"{unit_2_id}_Usage_Months-{end_month}-to-{now.month}.csv"
+            start_month = start_time.month
+            end_month = start_month - months_to_test
+            if end_month <= 0:
+                end_month += 12
+            unit_1_id = project_1_unit_1.responsible_unit.public_id
+            unit_2_id = project_1_unit_2.responsible_unit.public_id
+            csv_1_name = f"{unit_1_id}_Usage_Months-{end_month}-to-{start_month}.csv"
+            csv_2_name = f"{unit_2_id}_Usage_Months-{end_month}-to-{start_month}.csv"
 
-        _, logs = capfd.readouterr()
-        assert f"Month now: {now.month}" in logs
-        assert f"Month {months_to_test} months ago: {end_month}" in logs
-        assert f"CSV file name: {csv_1_name}" in logs
-        assert f"CSV file name: {csv_2_name}" in logs
-        assert "Sending email with the CSV." in logs
+            _, logs = capfd.readouterr()
+            assert f"Month now: {start_month}" in logs
+            assert f"Month {months_to_test} months ago: {end_month}" in logs
+            assert f"CSV file name: {csv_1_name}" in logs
+            assert f"CSV file name: {csv_2_name}" in logs
+            assert "Sending email with the CSV." in logs
 
-        # Verify that the csv files are attached - two files, one for each unit
-        assert len(outbox[-1].attachments) == 2
-        for attachment, file_name in zip(outbox[-1].attachments, [csv_1_name, csv_2_name]):
-            assert attachment.filename == file_name
-            assert attachment.content_type == "text/csv"
+            # Verify that the csv files are attached - two files, one for each unit
+            assert len(outbox[-1].attachments) == 2
+            for attachment, file_name in zip(outbox[-1].attachments, [csv_1_name, csv_2_name]):
+                assert attachment.filename == file_name
+                assert attachment.content_type == "text/csv"
 
-    # retrieve the csv and check that it is correct
-    csv_1 = outbox[-1].attachments[0].data
-    csv_2 = outbox[-1].attachments[1].data
-    assert "Project ID,Project Title,Project Created,Time Collected,Byte Hours" in csv_1
-    assert "--,--,--,--,600.0" in csv_1
-    assert "Project ID,Project Title,Project Created,Time Collected,Byte Hours" in csv_2
-    assert "--,--,--,--,300.0" in csv_2
+            # Check csv content
+            # retrieve the files from the email
+            csv_1 = outbox[-1].attachments[0].data
+            csv_2 = outbox[-1].attachments[1].data
 
-    import re
+            # check that the header and summatory at the end is correct
+            assert "Project ID,Project Title,Project Created,Time Collected,Byte Hours" in csv_1
+            assert "Project ID,Project Title,Project Created,Time Collected,Byte Hours" in csv_2
+            usage = 100.0 * months_to_test * 2  # 2 projects
+            assert f"--,--,--,--,{str(usage)}" in csv_1
+            usage = 100.0 * months_to_test
+            assert f"--,--,--,--,{str(usage)}" in csv_2
 
-    csv_1 = re.split(",|\n", csv_1)  # split by comma or newline
-    assert csv_1.count("public_project_id") == 3
-    assert csv_1.count("second_public_project_id") == 3
-    assert csv_1.count("unit2testing") == 0
-    assert csv_1.count("100.0") == 6
+            # check that the content is correct
+            import re
 
-    csv_2 = re.split(",|\n", csv_2)
-    assert csv_2.count("public_project_id") == 0
-    assert csv_2.count("second_public_project_id") == 0
-    assert csv_2.count("unit2testing") == 3
-    assert csv_2.count("100.0") == 3
+            csv_1 = re.split(",|\n", csv_1)  # split by comma or newline
+            csv_2 = re.split(",|\n", csv_2)
+
+            # Projects and data is correct
+            assert csv_1.count("public_project_id") == months_to_test
+            assert csv_1.count("second_public_project_id") == months_to_test
+            assert csv_1.count("unit2testing") == 0  # this project is not in the unit
+            assert csv_1.count("100.0") == months_to_test * 2
+
+            assert csv_2.count("public_project_id") == 0  # this project is not in the unit
+            assert csv_2.count("second_public_project_id") == 0  # this project is not in the unit
+            assert csv_2.count("unit2testing") == months_to_test
+            assert csv_2.count("100.0") == months_to_test
+
+            # Check that the months included in the report are the correct ones
+            # move start time to the first day of the month
+            start_collected_time = start_time.replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+            for i in range(months_to_test):
+                check_time_collected = start_collected_time - relativedelta(
+                    months=i
+                )  # every month is included
+                assert f"{check_time_collected}" in csv_1
+                assert f"{check_time_collected}" in csv_1
+
+    # Test that the command works for 4 months from Jan 2022
+    start_time = datetime(2022, 1, 15)  # Mid Jan 2022
+    run_command_and_check_output(months_to_test=4, start_time=start_time)
+
+    # Test that the command works for 4 months from Aprl 2022
+    start_time = datetime(2022, 4, 15)  # Mid April 2022
+    run_command_and_check_output(months_to_test=4, start_time=start_time)
+
+    # Test that the command works for 4 months from Dec 2022
+    start_time = datetime(2022, 12, 15)  # Mid Dec 2022
+    run_command_and_check_output(months_to_test=4, start_time=start_time)
 
 
 def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
