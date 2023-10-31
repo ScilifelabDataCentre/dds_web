@@ -1751,7 +1751,7 @@ def test_add_uploaded_files_to_db_correct_failed_op_file_is_found_in_db_no_overw
     assert files_added == []
     assert "File already in database" in errors[file_name]["error"]
 
-    # Check that the version is added to the database
+    # Check that the version is not added to the database
     version = models.Version.query.filter_by(active_file=new_file.id).first()
     assert not version
 
@@ -1809,7 +1809,7 @@ def test_add_uploaded_files_to_db_correct_failed_op_file_is_found_in_db_overwrit
     assert files_added == []
     assert "Missing key: 'checksum'" in errors[file_name]["error"]
 
-    # Check that the version is added to the database
+    # Check that the version is not added to the database
     version = models.Version.query.filter_by(active_file=new_file.id).first()
     assert not version
 
