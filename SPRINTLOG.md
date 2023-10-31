@@ -315,11 +315,8 @@ _Nothing merged in CLI during this sprint_
 - Add flag --verify-checksum to the comand in email template ([#1478])(https://github.com/ScilifelabDataCentre/dds_web/pull/1478)
 - Improved email layout; Highlighted information and commands when project is released ([#1479])(https://github.com/ScilifelabDataCentre/dds_web/pull/1479)
 
-# 2023-10-16 - 2023-10-27
+# 2023-10-16 - 2023-11-03
 
 - Added new API endpoint ProjectStatus.patch to extend the deadline ([#1480])(https://github.com/ScilifelabDataCentre/dds_web/pull/1480)
 - New version: 2.5.2 ([#1482](https://github.com/ScilifelabDataCentre/dds_web/pull/1482))
-
-# 2023-10-30 - 2023-11-3
-
 - Change the generate usage command to monthly instead of quartely, and add the command to send a usage report specifying the number of months ([#1476])[https://github.com/ScilifelabDataCentre/dds_web/pull/1476]
