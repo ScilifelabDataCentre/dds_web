@@ -771,6 +771,7 @@ def add_uploaded_files_to_db(proj_in_db, log: typing.Dict):
     errors = {}
     files_added = []
 
+    flask.current_app.logger.info(type(log))
     # Loop through each file in the log
     for file, vals in log.items():
         status = vals.get("status")

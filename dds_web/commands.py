@@ -218,13 +218,16 @@ def update_uploaded_file_with_log(project, path_to_log_file):
     if not proj_in_db:
         flask.current_app.logger.error(f"The project '{project}' doesn't exist.")
         return
+    flask.current_app.logger.debug(f"Updating file in project '{project}'...")
 
     if not os.path.exists(path_to_log_file):
         flask.current_app.logger.error(f"The log file '{path_to_log_file}' doesn't exist.")
         return
+    flask.current_app.logger.debug(f"Reading file info from path '{path_to_log_file}'...")
 
     with open(path_to_log_file, "r") as f:
         log = json.load(f)
+        flask.current_app.logger.debug("File contents were loaded...")
 
     files_added, errors = utils.add_uploaded_files_to_db(proj_in_db=proj_in_db, log=log)
 

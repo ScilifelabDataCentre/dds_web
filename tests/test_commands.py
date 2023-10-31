@@ -468,9 +468,11 @@ def test_update_uploaded_file_with_log_nonexisting_project(
     assert "Errors while adding files:" not in err
 
 
-def test_update_uploaded_file_with_log_nonexisting_file(client, runner, capfd: LogCaptureFixture) -> None:
+def test_update_uploaded_file_with_log_nonexisting_file(
+    client, runner, capfd: LogCaptureFixture
+) -> None:
     """Attempt to read file which does not exist."""
-    # Get project 
+    # Get project
     project = models.Project.query.first()
 
     # Verify that fake file does not exist
@@ -497,9 +499,9 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, capfd: L
     assert "Errors while adding files:" not in err
 
 
-def test_update_uploaded_file(client, runner, capfd: LogCaptureFixture) -> None:
+def test_update_uploaded_file(client, runner, capfd: LogCaptureFixture, boto3_session) -> None:
     """Attempt to read file which does not exist."""
-    # Get project 
+    # Get project
     project = models.Project.query.first()
 
     # # Verify that fake file exists
@@ -508,7 +510,8 @@ def test_update_uploaded_file(client, runner, capfd: LogCaptureFixture) -> None:
     # Get file from db
     file_object: models.File = models.File.query.first()
     file_dict = {
-            "name": file_object.name,
+        file_object.name: {
+            "status": {"failed_op": "add_file_db"},
             "path_remote": file_object.name_in_bucket,
             "subpath": file_object.subpath,
             "size_raw": file_object.size_original,
@@ -518,7 +521,8 @@ def test_update_uploaded_file(client, runner, capfd: LogCaptureFixture) -> None:
             "salt": file_object.salt,
             "checksum": file_object.checksum,
         }
-    
+    }
+
     # Create command options
     command_options: typing.List = [
         "--project",
@@ -526,12 +530,26 @@ def test_update_uploaded_file(client, runner, capfd: LogCaptureFixture) -> None:
         "--path-to-log-file",
         log_file,
     ]
-    _: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
+    with patch("os.path.exists") as mock_exists:
+        mock_exists.return_value = True
+        with patch("dds_web.commands.open"):
+            with patch("json.load") as mock_json_load:
+                mock_json_load.return_value = file_dict
+                _: click.testing.Result = runner.invoke(
+                    update_uploaded_file_with_log, command_options
+                )
 
     # Check logging
     _, err = capfd.readouterr()
-    assert "Files added:" in err
+    assert f"The project '{project.public_id}' doesn't exist." not in err
+    assert f"Updating file in project '{project.public_id}'..." in err
+    assert f"The log file '{log_file}' doesn't exist." not in err
+    assert f"Reading file info from path '{log_file}'..." in err
+    assert "File contents were loaded..." in err
+    assert "Files added: []" in err
     assert "Errors while adding files:" in err
+    assert "File already in database" in err
+
 
 # lost_files_s3_db
 
