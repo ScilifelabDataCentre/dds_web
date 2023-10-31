@@ -1655,6 +1655,7 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
     months_to_test = 3
 
     # Loop to populate usage table with fake entries across the months
+    usage_list = []
     for i in range(months_to_test + 1):
         time = now - relativedelta(months=i)
         usage_1 = Usage(
@@ -1672,8 +1673,10 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
             usage=100,
             time_collected=time,
         )
-        db.session.add_all([usage_1, usage_2, usage_3])
-        db.session.commit()
+        usage_list.extend([usage_1, usage_2, usage_3])
+
+    db.session.add_all(usage_list)
+    db.session.commit()
 
     # Run command
     with mail.record_messages() as outbox:
@@ -1704,5 +1707,41 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
         for attachment, file_name in zip(outbox[-1].attachments, [csv_1_name, csv_2_name]):
             assert attachment.filename == file_name
             assert attachment.content_type == "text/csv"
-    # TODO: test that the csv files are correct
-    # TODO: Test errors in the csv handling
+
+    # retrieve the csv and check that it is correct
+    csv_1 = outbox[-1].attachments[0].data
+    csv_2 = outbox[-1].attachments[1].data
+    assert "Project ID,Project Title,Project Created,Time Collected,Byte Hours" in csv_1
+    assert "--,--,--,--,600.0" in csv_1
+    assert "Project ID,Project Title,Project Created,Time Collected,Byte Hours" in csv_2
+    assert "--,--,--,--,300.0" in csv_2
+
+    import re
+
+    csv_1 = re.split(",|\n", csv_1)  # split by comma or newline
+    assert csv_1.count("public_project_id") == 3
+    assert csv_1.count("second_public_project_id") == 3
+    assert csv_1.count("unit2testing") == 0
+    assert csv_1.count("100.0") == 6
+
+    csv_2 = re.split(",|\n", csv_2)
+    assert csv_2.count("public_project_id") == 0
+    assert csv_2.count("second_public_project_id") == 0
+    assert csv_2.count("unit2testing") == 3
+    assert csv_2.count("100.0") == 3
+
+
+def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
+    """Test that checks errors in the csv handling"""
+
+    with mail.record_messages() as outbox:
+        with patch("csv.writer") as mock_writing_file:
+            mock_writing_file.side_effect = IOError()
+            cli_runner.invoke(send_usage, ["--months", 3])
+
+        _, logs = capfd.readouterr()
+        assert "Error writing to CSV file:" in logs
+        # Verify error email
+        assert len(outbox) == 1
+        assert "[SEND-USAGE CRONJOB] <ERROR> Error in send-usage cronjob" in outbox[-1].subject
+        assert "There was an error in the cronjob 'send-usage'" in outbox[-1].body

@@ -1002,43 +1002,56 @@ def send_usage(months):
         total_usage = 0
 
         # Open new csv file
-        with csv_file_name.open(mode="w+", newline="") as file:
-            csv_writer = csv.writer(file)
-            csv_writer.writerow(
-                [
-                    "Project ID",
-                    "Project Title",
-                    "Project Created",
-                    "Time Collected",
-                    "Byte Hours",
-                ]
-            )
-
-            # Get usage rows connected to unit, that have been collected between X months ago and now
-            for usage_row, project_row in page_query(
-                db.session.query(models.Usage, models.Project)
-                .join(models.Project)
-                .filter(
-                    models.Project.responsible_unit == unit,
-                    models.Usage.time_collected.between(start, end),
-                )
-            ):
-                # Increase total unit usage
-                total_usage += usage_row.usage
-
-                # Save usage row info to csv file
+        try:
+            with csv_file_name.open(mode="w+", newline="") as file:
+                csv_writer = csv.writer(file)
                 csv_writer.writerow(
                     [
-                        project_row.public_id,
-                        project_row.title,
-                        project_row.date_created,
-                        usage_row.time_collected,
-                        usage_row.usage,
+                        "Project ID",
+                        "Project Title",
+                        "Project Created",
+                        "Time Collected",
+                        "Byte Hours",
                     ]
                 )
 
-            # Save total
-            csv_writer.writerow(["--", "--", "--", "--", total_usage])
+                # Get usage rows connected to unit, that have been collected between X months ago and now
+                for usage_row, project_row in page_query(
+                    db.session.query(models.Usage, models.Project)
+                    .join(models.Project)
+                    .filter(
+                        models.Project.responsible_unit == unit,
+                        models.Usage.time_collected.between(start, end),
+                    )
+                ):
+                    # Increase total unit usage
+                    total_usage += usage_row.usage
+
+                    # Save usage row info to csv file
+                    csv_writer.writerow(
+                        [
+                            project_row.public_id,
+                            project_row.title,
+                            project_row.date_created,
+                            usage_row.time_collected,
+                            usage_row.usage,
+                        ]
+                    )
+
+                # Save total
+                csv_writer.writerow(["--", "--", "--", "--", total_usage])
+        except Exception as e:
+            flask.current_app.logger.error(f"Error writing to CSV file: {e}")
+            # delete already generated csv files
+            [csv_file.unlink() for csv_file in csv_file_names]
+            # Send email about error
+            email_message: flask_mail.Message = flask_mail.Message(
+                subject=error_subject,
+                recipients=[email_recipient],
+                body=error_body,
+            )
+            send_email_with_retry(msg=email_message)
+            raise
 
     # Send email with the csv
     flask.current_app.logger.info("Sending email with the CSV.")
@@ -1053,6 +1066,9 @@ def send_usage(months):
         with csv_file.open("r") as file:
             email_message.attach(filename=str(csv_file), content_type="text/csv", data=file.read())
     send_email_with_retry(msg=email_message)
+
+    # delete the csv after sending the email
+    [csv_file.unlink() for csv_file in csv_file_names]
 
 
 @click.command("stats")
