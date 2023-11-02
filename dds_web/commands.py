@@ -1001,8 +1001,6 @@ def send_usage(months):
         except Exception as e:
             # Catch exception, dont raise it. So it can continue to next unit
             flask.current_app.logger.error(f"Error writing to CSV file: {e}")
-            # delete already generated csv files
-            [csv_file.unlink() for csv_file in csv_file_names]
 
             # Set flag to True, so we know at least 1 file have failed
             have_failed = True
