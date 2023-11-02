@@ -1893,6 +1893,9 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
         assert "Error writing to CSV file:" in logs  # error in writing the csv file
         assert "No CSV files generated." in logs  # no csv files generated
 
+        # Check that no files were generated in the fs
+        assert not os.path.exists("*.csv")
+
         # Verify error email :- At least one email was sent
         assert len(outbox) == 1
         assert "[SEND-USAGE CRONJOB] <ERROR> Error in send-usage cronjob" in outbox[-1].subject
