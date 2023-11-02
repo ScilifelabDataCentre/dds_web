@@ -1005,6 +1005,8 @@ def send_usage(months):
             # Set flag to True, so we know at least 1 file have failed
             have_failed = True
 
+            csv_file_name.unlink(missing_ok=True)  # Delete the csv file if it was created
+
             # Update email body with files with errors
             error_body += "File(s) with errors: \n"
             error_body += f"{csv_file_name}\n"
