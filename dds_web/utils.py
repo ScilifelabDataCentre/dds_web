@@ -918,4 +918,3 @@ def new_file_version(existing_file, new_info):
 
     # Clean up information
     del new_info
-    gc.collect()
