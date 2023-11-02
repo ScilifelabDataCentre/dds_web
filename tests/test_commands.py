@@ -1778,6 +1778,10 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
             csv_1_name = f"{unit_1_id}_Usage_Months-{end_month}-to-{start_month}.csv"
             csv_2_name = f"{unit_2_id}_Usage_Months-{end_month}-to-{start_month}.csv"
 
+            # check that the files no longer exist in the filesystem
+            assert not os.path.exists(csv_1_name)
+            assert not os.path.exists(csv_2_name)
+
             _, logs = capfd.readouterr()
             assert f"Month now: {start_month}" in logs
             assert f"Month {months_to_test} months ago: {end_month}" in logs
