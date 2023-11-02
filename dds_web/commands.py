@@ -946,6 +946,8 @@ def send_usage(months):
     # CSV files to send
     csv_file_names = []
 
+    have_failed = False  # Flag to check if any csv files failed to be generated
+
     # Iterate through units
     for unit in models.Unit.query:
         # Generate CSV file name
@@ -957,7 +959,6 @@ def send_usage(months):
         # Total usage for unit
         total_usage = 0
 
-        have_failed = False
         # Open the csv file
         try:
             with csv_file_name.open(mode="w+", newline="") as file:
