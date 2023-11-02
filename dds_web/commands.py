@@ -213,71 +213,28 @@ def update_uploaded_file_with_log(project, path_to_log_file):
     """Update file details that weren't properly uploaded to db from cli log"""
     import botocore
     from dds_web.database import models
-    from dds_web import db
-    from dds_web.api.api_s3_connector import ApiS3Connector
+    from dds_web import utils
     import json
 
     proj_in_db = models.Project.query.filter_by(public_id=project).one_or_none()
     if not proj_in_db:
         flask.current_app.logger.error(f"The project '{project}' doesn't exist.")
         return
+    flask.current_app.logger.debug(f"Updating file in project '{project}'...")
 
     if not os.path.exists(path_to_log_file):
         flask.current_app.logger.error(f"The log file '{path_to_log_file}' doesn't exist.")
         return
+    flask.current_app.logger.debug(f"Reading file info from path '{path_to_log_file}'...")
 
     with open(path_to_log_file, "r") as f:
         log = json.load(f)
-    errors = {}
-    files_added = []
-    for file, vals in log.items():
-        status = vals.get("status")
-        if not status or not status.get("failed_op") == "add_file_db":
-            continue
+        flask.current_app.logger.debug("File contents were loaded...")
 
-        with ApiS3Connector(project=proj_in_db) as s3conn:
-            try:
-                _ = s3conn.resource.meta.client.head_object(
-                    Bucket=s3conn.project.bucket, Key=vals["path_remote"]
-                )
-            except botocore.client.ClientError as err:
-                if err.response["Error"]["Code"] == "404":
-                    errors[file] = {"error": "File not found in S3", "traceback": err.__traceback__}
-            else:
-                file_object = models.File.query.filter(
-                    sqlalchemy.and_(
-                        models.File.name == sqlalchemy.func.binary(file),
-                        models.File.project_id == proj_in_db.id,
-                    )
-                ).first()
-                if file_object:
-                    errors[file] = {"error": "File already in database."}
-                else:
-                    new_file = models.File(
-                        name=file,
-                        name_in_bucket=vals["path_remote"],
-                        subpath=vals["subpath"],
-                        project_id=proj_in_db.id,
-                        size_original=vals["size_raw"],
-                        size_stored=vals["size_processed"],
-                        compressed=not vals["compressed"],
-                        public_key=vals["public_key"],
-                        salt=vals["salt"],
-                        checksum=vals["checksum"],
-                    )
-                    new_version = models.Version(
-                        size_stored=new_file.size_stored, time_uploaded=datetime.datetime.utcnow()
-                    )
-                    proj_in_db.file_versions.append(new_version)
-                    proj_in_db.files.append(new_file)
-                    new_file.versions.append(new_version)
+    files_added, errors = utils.add_uploaded_files_to_db(proj_in_db=proj_in_db, log=log)
 
-                    db.session.add(new_file)
-                    files_added.append(new_file)
-                db.session.commit()
-
-        flask.current_app.logger.info(f"Files added: {files_added}")
-        flask.current_app.logger.info(f"Errors while adding files: {errors}")
+    flask.current_app.logger.info(f"Files added: {files_added}")
+    flask.current_app.logger.info(f"Errors while adding files: {errors}")
 
 
 @click.group(name="lost-files")

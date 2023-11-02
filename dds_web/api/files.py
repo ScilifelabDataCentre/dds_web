@@ -740,3 +740,22 @@ class UpdateFile(flask_restful.Resource):
             db.session.commit()
 
         return {"message": "File info updated."}
+
+
+class AddFailedFiles(flask_restful.Resource):
+    """Get files from log file and save to database."""
+
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    @json_required
+    @handle_validation_errors
+    def put(self):
+        """Run flask command with failed_delivery_log."""
+
+        # Verify project ID and access
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+        # Get the request json and pass it to add_uploaded_files_to_db
+        request_json = flask.request.get_json(silent=True)
+
+        files_added, errors = dds_web.utils.add_uploaded_files_to_db(project, request_json)
+        return {"files_added": [file.name for file in files_added], "message": errors}

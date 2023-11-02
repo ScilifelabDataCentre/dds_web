@@ -1,7 +1,7 @@
 import marshmallow
 from dds_web import utils
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from unittest.mock import PropertyMock
 
 from dds_web import db
@@ -25,6 +25,7 @@ from dateutil.relativedelta import relativedelta
 import boto3
 import botocore
 import sqlalchemy
+from _pytest.logging import LogCaptureFixture
 
 # Variables
 
@@ -1435,6 +1436,43 @@ def test_list_lost_files_in_project_overlap(
         )
 
 
+def test_list_lost_files_in_project_sql_error(
+    client: flask.testing.FlaskClient, boto3_session, capfd
+):
+    """Verify proper behaviour when sql OperationalError occurs."""
+    # Imports
+    from dds_web.utils import list_lost_files_in_project
+    from sqlalchemy.exc import OperationalError
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Mock files in s3
+    boto3_session.Bucket(project.bucket).objects.all = mock_items_in_bucket
+    # Get created testfiles
+    fake_files_in_bucket = mock_items_in_bucket()
+
+    # mock db.session.commit
+    files_name_in_bucket_mock = PropertyMock(
+        side_effect=sqlalchemy.exc.OperationalError("OperationalError", "test", "sqlalchemy")
+    )
+
+    # Run listing
+    with patch("dds_web.database.models.Project.files", files_name_in_bucket_mock):
+        try:
+            in_db_but_not_in_s3, in_s3_but_not_in_db = list_lost_files_in_project(
+                project=project, s3_resource=boto3_session
+            )
+        except OperationalError as e:
+            print(f"OperationalError occurred: {e}")
+
+    # Get logging output
+    out, err = capfd.readouterr()
+    assert "OperationalError occurred" in out
+    assert "Unable to connect to db" in err
+
+
 # use_sto4
 
 
@@ -1510,3 +1548,500 @@ def test_use_sto4_return_true(client: flask.testing.FlaskClient):
     # Run function
     result: bool = use_sto4(unit_object=unit, project_object=project)
     assert result is True
+
+
+# add_uploaded_files_to_db
+
+
+def test_add_uploaded_files_to_db_other_failed_op(client: flask.testing.FlaskClient):
+    """Test calling the function with "failed_op" other than "add_file_db"."""
+    # Prepare input data
+    proj_in_db = models.Project.query.first()
+    log = {
+        "file1.txt": {
+            "status": {"failed_op": "some_other_failed_op"},
+            "path_remote": "path/to/file1.txt",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+        }
+    }
+
+    # Mock the S3 connector and head_object method
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
+
+    # Call the function
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that the file is added to the database
+    file = models.File.query.filter_by(name="file1.txt").first()
+    assert not file
+
+    # check that the error is returned and files_added is empty
+    assert file not in files_added
+    assert files_added == []
+
+    assert "Incorrect 'failed_op'." in errors["file1.txt"]["error"]
+
+
+def test_add_uploaded_files_to_db_correct_failed_op_file_not_found_in_s3(
+    client: flask.testing.FlaskClient,
+):
+    """Test the return values of the function when file is not found on S3."""
+    from botocore.exceptions import ClientError
+
+    # Prepare input data
+    proj_in_db = models.Project.query.first()
+    log = {
+        "file1.txt": {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": "path/to/file1.txt",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+        }
+    }
+
+    # mock ApiS3Connector
+    mock_api_s3_conn = MagicMock()
+    mock_s3conn = mock_api_s3_conn.return_value.__enter__.return_value
+
+    # call add_uploaded_files_to_db
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", mock_api_s3_conn):
+        mock_s3conn.resource.meta.client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "404"}}, "operation_name"
+        )
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that the file is not added to the database
+    file = models.File.query.filter_by(name="file1.txt").first()
+    assert not file
+
+    # check that the error is returned and files_added is empty
+    assert file not in files_added
+    assert files_added == []
+    assert "File not found in S3" in errors["file1.txt"]["error"]
+
+
+def test_add_uploaded_files_to_db_correct_failed_op_file_not_found_in_db(
+    client: flask.testing.FlaskClient,
+):
+    """Test calling the function with correct "failed_op" and file isn't found in database."""
+    # Mock input data
+    proj_in_db = models.Project.query.first()
+    file_name = "file1.txt"
+    log = {
+        file_name: {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": f"path/to/{file_name}",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+        }
+    }
+
+    # Verify that file does not exist
+    file_object = models.File.query.filter(
+        sqlalchemy.and_(
+            models.File.name == sqlalchemy.func.binary(file_name),
+            models.File.project_id == proj_in_db.id,
+        )
+    ).first()
+    assert not file_object
+
+    # Mock the S3 connector and head_object method
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
+
+    # Call the function
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that the file is added to the database
+    file = models.File.query.filter(
+        sqlalchemy.and_(
+            models.File.name == sqlalchemy.func.binary(file_name),
+            models.File.project_id == proj_in_db.id,
+        )
+    ).first()
+    assert file
+    assert file.name == file_name
+    assert file.name_in_bucket == log[file_name]["path_remote"]
+    assert file.subpath == log[file_name]["subpath"]
+    assert file.size_original == log[file_name]["size_raw"]
+    assert file.size_stored == log[file_name]["size_processed"]
+    assert file.compressed != log[file_name]["compressed"]
+    assert file.public_key == log[file_name]["public_key"]
+    assert file.salt == log[file_name]["salt"]
+    assert file.checksum == log[file_name]["checksum"]
+
+    # Check that the file is added to the project
+    assert file in proj_in_db.files
+
+    # Check that the version is added to the database
+    version = models.Version.query.filter_by(active_file=file.id).first()
+    assert version
+    assert version.size_stored == log[file_name]["size_processed"]
+
+    # Check the return values
+    assert file in files_added
+    assert errors == {}
+
+
+def test_add_uploaded_files_to_db_correct_failed_op_file_is_found_in_db_no_overwrite(
+    client: flask.testing.FlaskClient,
+):
+    """Test calling the function with correct "failed_op" and file IS found in database."""
+    # Mock input data
+    proj_in_db = models.Project.query.first()
+    file_name = "file1.txt"
+    log = {
+        file_name: {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": f"path/to/{file_name}",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+        }
+    }
+
+    # Create new file
+    new_file = models.File(
+        name=file_name,
+        name_in_bucket=log[file_name]["path_remote"],
+        subpath=log[file_name]["subpath"],
+        size_original=log[file_name]["size_raw"],
+        size_stored=log[file_name]["size_processed"],
+        compressed=not log[file_name]["compressed"],
+        public_key=log[file_name]["public_key"],
+        salt=log[file_name]["salt"],
+        checksum=log[file_name]["checksum"],
+    )
+    proj_in_db.files.append(new_file)
+    db.session.add(new_file)
+    db.session.commit()
+
+    # Mock the S3 connector and head_object method
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
+
+    # Call the function
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that the error is returned and files_added is empty
+    assert files_added == []
+    assert "File already in database" in errors[file_name]["error"]
+
+    # Check that the version is not added to the database
+    version = models.Version.query.filter_by(active_file=new_file.id).first()
+    assert not version
+
+
+def test_add_uploaded_files_to_db_correct_failed_op_file_is_found_in_db_overwrite_missing_key(
+    client: flask.testing.FlaskClient,
+):
+    """Test calling the function with correct "failed_op" and file IS found in database but there's at least one key missing."""
+    # Mock input data
+    proj_in_db = models.Project.query.first()
+    file_name = "file1.txt"
+    log = {
+        file_name: {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": f"path/to/{file_name}",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+            "overwrite": True,
+        }
+    }
+
+    # Create new file
+    new_file = models.File(
+        name=file_name,
+        name_in_bucket=log[file_name]["path_remote"],
+        subpath=log[file_name]["subpath"],
+        size_original=log[file_name]["size_raw"],
+        size_stored=log[file_name]["size_processed"],
+        compressed=not log[file_name]["compressed"],
+        public_key=log[file_name]["public_key"],
+        salt=log[file_name]["salt"],
+        checksum=log[file_name]["checksum"],
+    )
+    proj_in_db.files.append(new_file)
+    db.session.add(new_file)
+    db.session.commit()
+
+    # Mock the S3 connector and head_object method
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
+
+    # Remove key
+    log[file_name].pop("checksum")
+
+    # Call the function
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that the error is returned and files_added is empty
+    assert files_added == []
+    assert "Missing key: 'checksum'" in errors[file_name]["error"]
+
+    # Check that the version is not added to the database
+    version = models.Version.query.filter_by(active_file=new_file.id).first()
+    assert not version
+
+
+def test_add_uploaded_files_to_db_correct_failed_op_file_is_found_in_db_overwrite_ok(
+    client: flask.testing.FlaskClient,
+):
+    """Test calling the function with correct "failed_op" and file IS found in database but overwrite is specified."""
+    # Mock input data
+    proj_in_db = models.Project.query.first()
+    file_name = "file1.txt"
+    original_file_info = {
+        "name": file_name,
+        "path_remote": f"path/to/{file_name}",
+        "subpath": "subpath",
+        "size_raw": 100,
+        "size_processed": 200,
+        "compressed": False,
+        "public_key": "public_key",
+        "salt": "salt",
+        "checksum": "checksum",
+    }
+    log = {
+        file_name: {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": f"path/to/{file_name}",
+            "subpath": "subpath2",
+            "size_raw": 1001,
+            "size_processed": 201,
+            "compressed": True,
+            "public_key": "public_key2",
+            "salt": "salt2",
+            "checksum": "checksum2",
+            "overwrite": True,
+        }
+    }
+
+    # Create new file
+    new_file = models.File(
+        name=file_name,
+        name_in_bucket=original_file_info["path_remote"],
+        subpath=original_file_info["subpath"],
+        size_original=original_file_info["size_raw"],
+        size_stored=original_file_info["size_processed"],
+        compressed=original_file_info["compressed"],
+        public_key=original_file_info["public_key"],
+        salt=original_file_info["salt"],
+        checksum=original_file_info["checksum"],
+    )
+    proj_in_db.files.append(new_file)
+    db.session.add(new_file)
+    db.session.commit()
+
+    # Mock the S3 connector and head_object method
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
+
+    # Call the function
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that no error is returned and that there's a file and version added
+    file = models.File.query.filter(
+        sqlalchemy.and_(
+            models.File.name == sqlalchemy.func.binary(file_name),
+            models.File.project_id == proj_in_db.id,
+        )
+    ).first()
+    assert file
+    assert file.name == file_name
+    assert file.name_in_bucket == log[file_name]["path_remote"]
+    assert file.subpath == log[file_name]["subpath"]
+    assert file.size_original == log[file_name]["size_raw"]
+    assert file.size_stored == log[file_name]["size_processed"]
+    assert file.compressed != log[file_name]["compressed"]
+    assert file.public_key == log[file_name]["public_key"]
+    assert file.salt == log[file_name]["salt"]
+    assert file.checksum == log[file_name]["checksum"]
+    assert files_added and file in files_added
+
+    assert errors == {}
+
+    # Check that the version is added to the database
+    version = models.Version.query.filter_by(active_file=new_file.id).first()
+    assert version
+    assert version.size_stored == file.size_stored
+
+
+def test_add_uploaded_files_to_db_sql_error(client: flask.testing.FlaskClient):
+    """Test the return values of the function when sqlalchemy error occurs."""
+    import sqlalchemy.exc
+    from dds_web import db
+
+    # Prepare input data
+    proj_in_db = models.Project.query.first()
+    log = {
+        "file1.txt": {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": "path/to/file1.txt",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+        }
+    }
+
+    # mock ApiS3Connector
+    mock_s3conn = MagicMock()
+    mock_s3conn.resource.meta.client.head_object.return_value = None
+
+    # mock db.session.commit
+    db_session_commit_mock = MagicMock(
+        side_effect=sqlalchemy.exc.OperationalError("OperationalError", "test", "sqlalchemy")
+    )
+
+    # call add_uploaded_files_to_db
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", return_value=mock_s3conn):
+        with patch("dds_web.db.session.commit", db_session_commit_mock):
+            files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that the file is not added to the database
+    file = models.File.query.filter_by(name="file1.txt").first()
+    assert not file
+
+    # check that the error is returned and files_added is empty
+    assert file not in files_added
+    assert files_added == []
+    assert "OperationalError" in errors["file1.txt"]["error"]
+
+
+# new_file_version
+
+
+def test_new_file_version_multiple_versions(
+    client: flask.testing.FlaskClient, capfd: LogCaptureFixture
+):
+    """If there are multiple versions for the same file then they should be updated identically."""
+    # Get any project
+    project = models.Project.query.first()
+
+    # Define file info
+    file_name = "file1.txt"
+    original_file_info = {
+        "name": file_name,
+        "path_remote": f"path/to/{file_name}",
+        "subpath": "subpath",
+        "size_raw": 100,
+        "size_processed": 200,
+        "compressed": False,
+        "public_key": "public_key",
+        "salt": "salt",
+        "checksum": "checksum",
+    }
+
+    # Create new file
+    new_file = models.File(
+        name=file_name,
+        name_in_bucket=original_file_info["path_remote"],
+        subpath=original_file_info["subpath"],
+        size_original=original_file_info["size_raw"],
+        size_stored=original_file_info["size_processed"],
+        compressed=original_file_info["compressed"],
+        public_key=original_file_info["public_key"],
+        salt=original_file_info["salt"],
+        checksum=original_file_info["checksum"],
+    )
+
+    # Create new versions (multiple) of the file
+    new_version_1 = models.Version(
+        size_stored=original_file_info["size_processed"],
+        time_uploaded=utils.current_time(),
+        active_file=new_file.id,
+        project_id=project,
+    )
+    new_version_2 = models.Version(
+        size_stored=original_file_info["size_processed"] + 10,
+        time_uploaded=utils.current_time(),
+        active_file=new_file.id,
+        project_id=project,
+    )
+
+    # Append to relationships
+    project.files.append(new_file)
+    project.file_versions.extend([new_version_1, new_version_2])
+    new_file.versions.extend([new_version_1, new_version_2])
+
+    db.session.add(new_file)
+    db.session.commit()
+
+    # Define new file info
+    new_file_info = {
+        "name": file_name,
+        "path_remote": f"path/to/{file_name}",
+        "subpath": "subpath",
+        "size_raw": 1001,
+        "size_processed": 2001,
+        "compressed": True,
+        "public_key": "public_key2",
+        "salt": "salt2",
+        "checksum": "checksum2",
+    }
+
+    # Run function
+    utils.new_file_version(existing_file=new_file, new_info=new_file_info)
+
+    # Verify that logging printed
+    _, err = capfd.readouterr()
+    assert (
+        "There is more than one version of the file which does not yet have a deletion timestamp."
+        in err
+    )
+
+    # Verify that there's a new version
+    assert len(new_file.versions) == 3
+
+    # Verify that the file info has been updated
+    assert new_file.subpath == new_file_info["subpath"] == original_file_info["subpath"]
+    assert new_file.size_original == new_file_info["size_raw"] != original_file_info["size_raw"]
+    assert (
+        new_file.size_stored
+        == new_file_info["size_processed"]
+        != original_file_info["size_processed"]
+    )
+    assert (
+        new_file.compressed
+        == (not new_file_info["compressed"])
+        != (not original_file_info["compressed"])
+    )
+    assert new_file.salt == new_file_info["salt"] != original_file_info["salt"]
+    assert new_file.public_key == new_file_info["public_key"] != original_file_info["public_key"]
+    assert new_file.time_uploaded != new_version_1.time_deleted == new_version_2.time_deleted
+    assert new_file.checksum == new_file_info["checksum"] != original_file_info["checksum"]
