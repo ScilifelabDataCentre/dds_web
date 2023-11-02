@@ -319,6 +319,6 @@ _Nothing merged in CLI during this sprint_
 
 - Added new API endpoint ProjectStatus.patch to extend the deadline ([#1480])(https://github.com/ScilifelabDataCentre/dds_web/pull/1480)
 - New version: 2.5.2 ([#1482](https://github.com/ScilifelabDataCentre/dds_web/pull/1482))
-- New endpoint `AddFailedFiles` for adding failed files to database ([#1472])(https://github.com/ScilifelabDataCentre/dds_web/pull/1472)
+- New endpoint `AddFailedFiles` for adding failed files to database ([#1472](https://github.com/ScilifelabDataCentre/dds_web/pull/1472))
 - Change the generate usage command to monthly instead of quartely, and add the command to send a usage report specifying the number of months ([#1476](https://github.com/ScilifelabDataCentre/dds_web/pull/1476))
 - New ADR record regarding OKR 2024 ([#1483](https://github.com/ScilifelabDataCentre/dds_web/pull/1483))
