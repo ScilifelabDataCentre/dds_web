@@ -991,17 +991,17 @@ def send_usage(months):
 
     # Iterate through units
     for unit in models.Unit.query:
-        # CSV file
+        # Generate CSV file name
         csv_file_name = pathlib.Path(
             f"{unit.public_id}_Usage_Months-{start.month}-to-{end.month}.csv"
         )
         flask.current_app.logger.debug(f"CSV file name: {csv_file_name}")
-        csv_file_names.append(csv_file_name)
 
         # Total usage for unit
         total_usage = 0
 
-        # Open new csv file
+        have_failed = False
+        # Open the csv file
         try:
             with csv_file_name.open(mode="w+", newline="") as file:
                 csv_writer = csv.writer(file)
@@ -1041,17 +1041,34 @@ def send_usage(months):
                 # Save total
                 csv_writer.writerow(["--", "--", "--", "--", total_usage])
         except Exception as e:
+            # Catch exception, dont raise it. So it can continue to next unit
             flask.current_app.logger.error(f"Error writing to CSV file: {e}")
             # delete already generated csv files
             [csv_file.unlink() for csv_file in csv_file_names]
-            # Send email about error
-            email_message: flask_mail.Message = flask_mail.Message(
-                subject=error_subject,
-                recipients=[email_recipient],
-                body=error_body,
-            )
-            send_email_with_retry(msg=email_message)
-            raise
+
+            # Set flag to True, so we know at least 1 file have failed
+            have_failed = True
+
+            # Update email body with files with errors
+            error_body += "File(s) with errors: \n"
+            error_body += f"{csv_file_name}\n"
+        else:
+            # Add correctly created csv to list of files to send
+            csv_file_names.append(csv_file_name)
+
+    # IF any csv files failed to be generated, send email about error
+    if have_failed:
+        email_message: flask_mail.Message = flask_mail.Message(
+            subject=error_subject,
+            recipients=[email_recipient],
+            body=error_body,
+        )
+        send_email_with_retry(msg=email_message)
+
+    # IF no csv files were generated, log error and return
+    if not csv_file_names:
+        flask.current_app.logger.error("No CSV files generated.")
+        return
 
     # Send email with the csv
     flask.current_app.logger.info("Sending email with the CSV.")

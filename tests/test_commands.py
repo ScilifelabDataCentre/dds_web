@@ -1682,7 +1682,14 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
     # Fake data included from Jan 2021 to Jan 2023
 
     def run_command_and_check_output(months_to_test, start_time):
-        # Run command
+        """
+        This function tests the output of the `send_usage` command by running the command with given arguments and checking the output.
+        It mocks the current time and checks that the email sent contains the correct subject and body.
+        It also checks that the csv files attached to the email have the correct names and content.
+
+        Return the csv files attached to the email.
+        """
+
         with mail.record_messages() as outbox:
             with patch("dds_web.utils.current_time") as current_time_func:  # Mock current time
                 current_time_func.return_value = start_time
@@ -1696,10 +1703,9 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
             )
             assert f"Here is the usage for the last {months_to_test} months." in outbox[-1].body
 
+            end_time = start_time - relativedelta(months=months_to_test)
             start_month = start_time.month
-            end_month = start_month - months_to_test
-            if end_month <= 0:
-                end_month += 12
+            end_month = end_time.month
             unit_1_id = project_1_unit_1.responsible_unit.public_id
             unit_2_id = project_1_unit_2.responsible_unit.public_id
             csv_1_name = f"{unit_1_id}_Usage_Months-{end_month}-to-{start_month}.csv"
@@ -1759,18 +1765,49 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
                 )  # every month is included
                 assert f"{check_time_collected}" in csv_1
                 assert f"{check_time_collected}" in csv_1
+        return csv_1, csv_2
 
     # Test that the command works for 4 months from Jan 2022
     start_time = datetime(2022, 1, 15)  # Mid Jan 2022
-    run_command_and_check_output(months_to_test=4, start_time=start_time)
+    csv_1, csv_2 = run_command_and_check_output(months_to_test=4, start_time=start_time)
+    # Hardcode the expected csv content to double check
+    # October, November, December, January (4 months)
+    assert "2021-10-01 00:00:00" in csv_1
+    assert "2021-11-01 00:00:00" in csv_1
+    assert "2021-12-01 00:00:00" in csv_1
+    assert "2022-01-01 00:00:00" in csv_1
+    assert "2021-10-01 00:00:00" in csv_2
+    assert "2021-11-01 00:00:00" in csv_2
+    assert "2021-12-01 00:00:00" in csv_2
+    assert "2022-01-01 00:00:00" in csv_2
 
-    # Test that the command works for 4 months from Aprl 2022
-    start_time = datetime(2022, 4, 15)  # Mid April 2022
-    run_command_and_check_output(months_to_test=4, start_time=start_time)
+    # Test that the command works for 4 months from May 2022
+    start_time = datetime(2022, 5, 15)  # Mid May 2022
+    csv_1, csv_2 = run_command_and_check_output(months_to_test=4, start_time=start_time)
+    # Hardcode the expected csv content to double check
+    # February, March, April, May (4 months)
+    assert "2022-02-01 00:00:00" in csv_1
+    assert "2022-03-01 00:00:00" in csv_1
+    assert "2022-04-01 00:00:00" in csv_1
+    assert "2022-05-01 00:00:00" in csv_1
+    assert "2022-02-01 00:00:00" in csv_2
+    assert "2022-03-01 00:00:00" in csv_2
+    assert "2022-04-01 00:00:00" in csv_2
+    assert "2022-05-01 00:00:00" in csv_2
 
-    # Test that the command works for 4 months from Dec 2022
-    start_time = datetime(2022, 12, 15)  # Mid Dec 2022
-    run_command_and_check_output(months_to_test=4, start_time=start_time)
+    # Test that the command works for 4 months from Sept 2022
+    start_time = datetime(2022, 9, 15)  # Mid Sep 2022
+    csv_1, csv_2 = run_command_and_check_output(months_to_test=4, start_time=start_time)
+    # Hardcode the expected csv content to double check
+    # June, July, August, September (4 months)
+    assert "2022-06-01 00:00:00" in csv_1
+    assert "2022-07-01 00:00:00" in csv_1
+    assert "2022-08-01 00:00:00" in csv_1
+    assert "2022-09-01 00:00:00" in csv_1
+    assert "2022-06-01 00:00:00" in csv_2
+    assert "2022-07-01 00:00:00" in csv_2
+    assert "2022-08-01 00:00:00" in csv_2
+    assert "2022-09-01 00:00:00" in csv_2
 
 
 def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
@@ -1782,8 +1819,10 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
             cli_runner.invoke(send_usage, ["--months", 3])
 
         _, logs = capfd.readouterr()
-        assert "Error writing to CSV file:" in logs
-        # Verify error email
+        assert "Error writing to CSV file:" in logs  # error in writing the csv file
+        assert "No CSV files generated." in logs  # no csv files generated
+
+        # Verify error email :- At least one email was sent
         assert len(outbox) == 1
         assert "[SEND-USAGE CRONJOB] <ERROR> Error in send-usage cronjob" in outbox[-1].subject
         assert "There was an error in the cronjob 'send-usage'" in outbox[-1].body
