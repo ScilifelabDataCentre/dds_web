@@ -9,6 +9,8 @@ import sys
 import datetime
 from dateutil.relativedelta import relativedelta
 import gc
+import pathlib
+import csv
 
 # Installed
 import click
@@ -755,15 +757,21 @@ def delete_invites():
         flask.current_app.logger.error(f"{invite} not deleted: {error}")
 
 
-@click.command("quartely-usage")
+@click.command("monthly-usage")
 @flask.cli.with_appcontext
-def quarterly_usage():
-    """
-    Get the monthly usage for the units
-    Should be run on the 1st of Jan,Apr,Jul,Oct at around 00:01.
+def monthly_usage():
+    """Get the monthly usage for the units.
+
+    Should be run on the 1st of every month at around 00:01.
+
+    1. Mark projects as done (all files have been included in an invoice)
+    2. Calculate project usage for all non-done projects
+    3. Send success- or failure email
     """
 
-    flask.current_app.logger.debug("Task: Collecting usage information from database.")
+    flask.current_app.logger.debug(
+        "Starting `monthly_usage`; Collecting usage information from database."
+    )
 
     # Imports
     # Installed
@@ -775,31 +783,43 @@ def quarterly_usage():
     from dds_web.utils import (
         current_time,
         page_query,
-        # calculate_period_usage,
         calculate_version_period_usage,
+        send_email_with_retry,
     )
 
+    # Email settings
+    email_recipient: str = flask.current_app.config.get("MAIL_DDS")
+    # -- Success
+    email_subject: str = "[INVOICING CRONJOB]"
+    email_body: str = (
+        "The calculation of the monthly usage succeeded; The byte hours "
+        "for all active projects have been saved to the database."
+    )
+    # -- Failure
+    error_subject: str = f"{email_subject} <ERROR> Error in monthly-usage cronjob"
+    error_body: str = (
+        "There was an error in the cronjob 'monthly-usage', used for calculating the"
+        " byte hours for every active project in the last month.\n\n"
+        "What to do:\n"
+        "1. Check the logs on OpenSearch.\n"
+        "2. The DDS team should enter the backend container and run the command `flask monthly-usage`.\n"
+        "3. Check that you receive a new email indicating that the command was successful.\n"
+    )
+
+    # 1. Mark projects as done (all files have been included in an invoice)
+    # .. a. Get projects where is_active = False
+    # .. b. Check if the versions are all time_deleted == time_invoiced
+    # .. c. Yes --> Set new column to True ("done")
     try:
-        # 1. Get projects where is_active = False
-        # .. a. Check if the versions are all time_deleted == time_invoiced
-        # .. b. Yes --> Set new column to True ("done")
-        flask.current_app.logger.info("Marking projects as 'done'....")
-        for unit, project in page_query(
-            db.session.query(models.Unit, models.Project)
-            .join(models.Project)
-            .filter(models.Project.is_active == False)
+        flask.current_app.logger.info("Marking projects as 'done'...")
+
+        # Iterate through non-active projects
+        for project in page_query(
+            models.Project.query.filter_by(is_active=False).with_for_update()
         ):
             # Get number of versions in project that have been fully included in usage calcs
-            num_done = (
-                db.session.query(models.Project, models.Version)
-                .join(models.Version)
-                .filter(
-                    sqlalchemy.and_(
-                        models.Project.id == project.id,
-                        models.Version.time_deleted == models.Version.time_invoiced,
-                    )
-                )
-                .count()
+            num_done = len(
+                list(v for v in project.file_versions if v.time_deleted == v.time_invoiced)
             )
 
             # Check if there are any versions that are not fully included
@@ -807,17 +827,39 @@ def quarterly_usage():
             if num_done == len(project.file_versions):
                 project.done = True
 
+            # Save any projects marked as done
             db.session.commit()
 
-        # 2. Get project where done = False
-        for unit, project in page_query(
-            db.session.query(models.Unit, models.Project)
-            .join(models.Project)
-            .filter(models.Project.done == False)
-        ):
+    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+        db.session.rollback()
+        flask.current_app.logger.error(
+            "Usage collection <failed> during step 1: marking projects as done. Sending email..."
+        )
+
+        # Send email about error
+        email_message: flask_mail.Message = flask_mail.Message(
+            subject=error_subject,
+            recipients=[email_recipient],
+            body=error_body,
+        )
+        send_email_with_retry(msg=email_message)
+        raise
+
+    # 2. Calculate project usage for all non-done projects
+    # .. a. Get projects where done = False
+    # .. b. Calculate usage
+    # .. c. Save usage
+    try:
+        flask.current_app.logger.info("Calculating usage...")
+
+        # Save all new rows at once
+        all_new_rows = []
+
+        # Iterate through non-done projects
+        for project in page_query(models.Project.query.filter_by(done=False).with_for_update()):
             project_byte_hours: int = 0
             for version in project.file_versions:
-                # Skipp deleted and already invoiced versions
+                # Skip deleted and already invoiced versions
                 if version.time_deleted == version.time_invoiced and [
                     version.time_deleted,
                     version.time_invoiced,
@@ -825,24 +867,183 @@ def quarterly_usage():
                     continue
                 version_bhours = calculate_version_period_usage(version=version)
                 project_byte_hours += version_bhours
-            flask.current_app.logger.info(
+            flask.current_app.logger.debug(
                 f"Project {project.public_id} byte hours: {project_byte_hours}"
             )
 
             # Create a record in usage table
-            new_record = models.Usage(
+            new_usage_row = models.Usage(
                 project_id=project.id,
                 usage=project_byte_hours,
-                cost=0,
                 time_collected=current_time(),
             )
-            db.session.add(new_record)
-            db.session.commit()
+            all_new_rows.append(new_usage_row)
+
+        # Save new rows
+        db.session.add_all(all_new_rows)
+        db.session.commit()
 
     except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-        flask.current_app.logger.exception(err)
         db.session.rollback()
+        flask.current_app.logger.error(
+            "Usage collection <failed> during step 2: calculating and saving usage. Sending email..."
+        )
+
+        # Send email about error
+        email_message: flask_mail.Message = flask_mail.Message(
+            subject=error_subject,
+            recipients=[email_recipient],
+            body=error_body,
+        )
+        send_email_with_retry(msg=email_message)
         raise
+
+    # 3. Send success email
+    flask.current_app.logger.info("Usage collection successful; Sending email.")
+    email_subject += " Usage records available for collection"
+    email_message: flask_mail.Message = flask_mail.Message(
+        subject=email_subject,
+        recipients=[email_recipient],
+        body=email_body,
+    )
+    send_email_with_retry(msg=email_message)
+
+
+@click.command("send-usage")
+@click.option("--months", type=click.IntRange(min=1, max=12), required=True)
+@flask.cli.with_appcontext
+def send_usage(months):
+    """Get unit storage usage for the last x months and send in email."""
+    # Imports
+    from dds_web.database import models
+    from dds_web.utils import current_time, page_query, send_email_with_retry
+
+    # Email settings
+    email_recipient: str = flask.current_app.config.get("MAIL_DDS")
+    # -- Success
+    email_subject: str = "[SEND-USAGE CRONJOB]"
+    email_body: str = f"Here is the usage for the last {months} months.\n"
+    # -- Failure
+    error_subject: str = f"{email_subject} <ERROR> Error in send-usage cronjob"
+    error_body: str = (
+        "There was an error in the cronjob 'send-usage', used for sending"
+        " information about the storage usage for each SciLifeLab unit. \n\n"
+        "What to do:\n"
+        "1. Check the logs on OpenSearch.\n"
+        "2. The DDS team should enter the backend container and run the command `flask send-usage`.\n"
+        "3. Check that you receive a new email indicating that the command was successful.\n"
+    )
+
+    end = current_time()
+    flask.current_app.logger.debug(f"Month now: {end.month}")
+
+    start = end - relativedelta(months=months)
+    flask.current_app.logger.debug(f"Month {months} months ago: {start.month}")
+
+    flask.current_app.logger.debug(f"Start: {start}")
+    flask.current_app.logger.debug(f"End: {end}")
+
+    # CSV files to send
+    csv_file_names = []
+
+    have_failed = False  # Flag to check if any csv files failed to be generated
+
+    # Iterate through units
+    for unit in models.Unit.query:
+        # Generate CSV file name
+        csv_file_name = pathlib.Path(
+            f"{unit.public_id}_Usage_Months-{start.month}-to-{end.month}.csv"
+        )
+        flask.current_app.logger.debug(f"CSV file name: {csv_file_name}")
+
+        # Total usage for unit
+        total_usage = 0
+
+        # Open the csv file
+        try:
+            with csv_file_name.open(mode="w+", newline="") as file:
+                csv_writer = csv.writer(file)
+                csv_writer.writerow(
+                    [
+                        "Project ID",
+                        "Project Title",
+                        "Project Created",
+                        "Time Collected",
+                        "Byte Hours",
+                    ]
+                )
+
+                # Get usage rows connected to unit, that have been collected between X months ago and now
+                for usage_row, project_row in page_query(
+                    db.session.query(models.Usage, models.Project)
+                    .join(models.Project)
+                    .filter(
+                        models.Project.responsible_unit == unit,
+                        models.Usage.time_collected.between(start, end),
+                    )
+                ):
+                    # Increase total unit usage
+                    total_usage += usage_row.usage
+
+                    # Save usage row info to csv file
+                    csv_writer.writerow(
+                        [
+                            project_row.public_id,
+                            project_row.title,
+                            project_row.date_created,
+                            usage_row.time_collected,
+                            usage_row.usage,
+                        ]
+                    )
+
+                # Save total
+                csv_writer.writerow(["--", "--", "--", "--", total_usage])
+        except Exception as e:
+            # Catch exception, dont raise it. So it can continue to next unit
+            flask.current_app.logger.error(f"Error writing to CSV file: {e}")
+
+            # Set flag to True, so we know at least 1 file have failed
+            have_failed = True
+
+            csv_file_name.unlink(missing_ok=True)  # Delete the csv file if it was created
+
+            # Update email body with files with errors
+            error_body += "File(s) with errors: \n"
+            error_body += f"{csv_file_name}\n"
+        else:
+            # Add correctly created csv to list of files to send
+            csv_file_names.append(csv_file_name)
+
+    # IF any csv files failed to be generated, send email about error
+    if have_failed:
+        email_message: flask_mail.Message = flask_mail.Message(
+            subject=error_subject,
+            recipients=[email_recipient],
+            body=error_body,
+        )
+        send_email_with_retry(msg=email_message)
+
+    # IF no csv files were generated, log error and return
+    if not csv_file_names:
+        flask.current_app.logger.error("No CSV files generated.")
+        return
+
+    # Send email with the csv
+    flask.current_app.logger.info("Sending email with the CSV.")
+    email_subject += " Usage records attached in the present mail"
+    email_message: flask_mail.Message = flask_mail.Message(
+        subject=email_subject,
+        recipients=[email_recipient],
+        body=email_body,
+    )
+    # add atachments
+    for csv_file in csv_file_names:
+        with csv_file.open("r") as file:
+            email_message.attach(filename=str(csv_file), content_type="text/csv", data=file.read())
+    send_email_with_retry(msg=email_message)
+
+    # delete the csv after sending the email
+    [csv_file.unlink() for csv_file in csv_file_names]
 
 
 @click.command("stats")
