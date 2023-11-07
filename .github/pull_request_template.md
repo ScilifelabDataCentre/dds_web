@@ -28,6 +28,8 @@ What _type of change(s)_ does the PR contain?
 - [ ] Database change: _Remember the to include a new migration version, **or** explain here why it's not needed._ <!-- Should be checked when you've changed something in `models.py`. For a guide on how to add the a new migration version, look at the "Database changes" section in the README.md. -->
 - [ ] Bug fix <!-- Should be checked when a bug is fixed in existing functionality. If the bug fix also is a breaking change (see above), add info about that beside this check box. -->
 - [ ] Security Alert fix <!-- Should be checked if the PR attempts to solve a security vulnerability, e.g. reported by the "Security" tab in the repo. -->
+  - [ ] Package update <!-- Should be checked if the Security alert fix consists of updating a package / dependency version -->
+    - [ ] Major version update <!-- Should be checked if the package / dependency version update is a major upgrade, e.g. 1.0.0 to 2.0.0 -->
 - [ ] Documentation <!-- Should be checked if the PR adds or updates documentation such as e.g. Technical Overview or a architecture decision (dds_web/doc/architecture/decisions.) -->
 - [ ] Workflow <!-- Should be checked if the PR includes a change in e.g. the github actions files (dds_web/.github/*) or another type of workflow change. Anything that alters our or the codes workflow. -->
 - [ ] Tests **only** <!-- Should only be checked if the PR only contains tests, none of the other types of changes listed above. -->
