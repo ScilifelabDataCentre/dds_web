@@ -326,3 +326,4 @@ _Nothing merged in CLI during this sprint_
 # 2023-11-6 - 2023-11-17
 
 - Updated Pillow package version to address vulnerabities ([#1486](https://github.com/ScilifelabDataCentre/dds_web/pull/1486))
+- Updated PostCss Node package to address vulnerabities ([#1489](https://github.com/ScilifelabDataCentre/dds_web/pull/1489))
