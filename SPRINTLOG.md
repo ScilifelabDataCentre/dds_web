@@ -322,3 +322,7 @@ _Nothing merged in CLI during this sprint_
 - New endpoint `AddFailedFiles` for adding failed files to database ([#1472](https://github.com/ScilifelabDataCentre/dds_web/pull/1472))
 - Change the generate usage command to monthly instead of quartely, and add the command to send a usage report specifying the number of months ([#1476](https://github.com/ScilifelabDataCentre/dds_web/pull/1476))
 - New ADR record regarding OKR 2024 ([#1483](https://github.com/ScilifelabDataCentre/dds_web/pull/1483))
+
+# 2023-11-6 - 2023-11-17
+
+- Updated Pillow package version to address vulnerabities ([#1486](https://github.com/ScilifelabDataCentre/dds_web/pull/1486))
