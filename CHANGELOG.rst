@@ -1,6 +1,20 @@
 Changelog
 ==========
 
+.. <version>:
+
+<version> - 2023-11-22
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- New endpoint `AddFailedFiles` to allow a retry of saving files to the database after issues during upload.
+- Cronjobs:
+    - Updated command: `quarterly-usage` changed to `monthly-usage` and refactored to catch errors and send emails.
+    - New command `send-usage` to collect usage rows from the `Usage` table and send csv files to support email.
+- Dependencies: 
+    - `Pillow` from `9.3.0` to `10.1.0`
+    - `urllib3` from `1.26.8` to `1.26.18`
+    - `postcss` (npm) from `8.4.28` to `8.4.31`
+
 .. _2.5.2:
 
 2.5.2 - 2023-10-25
