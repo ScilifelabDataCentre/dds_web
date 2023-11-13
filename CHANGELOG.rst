@@ -1,9 +1,9 @@
 Changelog
 ==========
 
-.. <version>:
+.. _2.6.0:
 
-<version> - 2023-11-22
+2.6.0 - 2023-11-22
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 - New endpoint `AddFailedFiles` to allow a retry of saving files to the database after issues during upload.
