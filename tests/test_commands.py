@@ -3,7 +3,7 @@
 # Standard
 import typing
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import patch, mock_open
 from unittest.mock import PropertyMock
 from unittest.mock import MagicMock
 import os
@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import pathlib
 import csv
 from dateutil.relativedelta import relativedelta
+import json
 
 # Installed
 import click
@@ -21,6 +22,7 @@ from pyfakefs.fake_filesystem import FakeFilesystem
 import flask_mail
 import freezegun
 import rich.prompt
+import sqlalchemy
 
 # Own
 from dds_web.commands import (
@@ -31,13 +33,14 @@ from dds_web.commands import (
     set_available_to_expired,
     set_expired_to_archived,
     delete_invites,
-    quarterly_usage,
+    monthly_usage,
     collect_stats,
     lost_files_s3_db,
     update_unit,
+    send_usage,
 )
 from dds_web.database import models
-from dds_web import db
+from dds_web import db, mail
 from dds_web.utils import current_time
 
 # Tools
@@ -458,13 +461,22 @@ def test_update_uploaded_file_with_log_nonexisting_project(
     # Run command
     assert db.session.query(models.Project).all()
     with patch("dds_web.database.models.Project.query.filter_by", mock_no_project):
-        result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
+        _: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
     _, err = capfd.readouterr()
     assert "The project 'projectdoesntexist' doesn't exist." in err
 
+    # Verify that things are not printed out
+    assert "Files added:" not in err
+    assert "Errors while adding files:" not in err
 
-def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: FakeFilesystem) -> None:
+
+def test_update_uploaded_file_with_log_nonexisting_file(
+    client, runner, capfd: LogCaptureFixture
+) -> None:
     """Attempt to read file which does not exist."""
+    # Get project
+    project = models.Project.query.first()
+
     # Verify that fake file does not exist
     non_existent_log_file: str = "this_is_not_a_file.json"
     assert not os.path.exists(non_existent_log_file)
@@ -472,16 +484,73 @@ def test_update_uploaded_file_with_log_nonexisting_file(client, runner, fs: Fake
     # Create command options
     command_options: typing.List = [
         "--project",
-        "projectdoesntexist",
+        project.public_id,
         "--path-to-log-file",
         non_existent_log_file,
     ]
 
     # Run command
-    result: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
-    # TODO: Add check for logging or change command to return or raise error. capfd does not work together with fs
-    # _, err = capfd.readouterr()
-    # assert "The project 'projectdoesntexist' doesn't exist." in result.stderr
+    _: click.testing.Result = runner.invoke(update_uploaded_file_with_log, command_options)
+
+    # Check logging
+    _, err = capfd.readouterr()
+    assert f"The log file '{non_existent_log_file}' doesn't exist." in err
+
+    # Verify that things are not printed out
+    assert "Files added:" not in err
+    assert "Errors while adding files:" not in err
+
+
+def test_update_uploaded_file(client, runner, capfd: LogCaptureFixture, boto3_session) -> None:
+    """Attempt to read file which does not exist."""
+    # Get project
+    project = models.Project.query.first()
+
+    # # Verify that fake file exists
+    log_file: str = "this_is_a_file.json"
+
+    # Get file from db
+    file_object: models.File = models.File.query.first()
+    file_dict = {
+        file_object.name: {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": file_object.name_in_bucket,
+            "subpath": file_object.subpath,
+            "size_raw": file_object.size_original,
+            "size_processed": file_object.size_stored,
+            "compressed": not file_object.compressed,
+            "public_key": file_object.public_key,
+            "salt": file_object.salt,
+            "checksum": file_object.checksum,
+        }
+    }
+
+    # Create command options
+    command_options: typing.List = [
+        "--project",
+        project.public_id,
+        "--path-to-log-file",
+        log_file,
+    ]
+    with patch("os.path.exists") as mock_exists:
+        mock_exists.return_value = True
+        with patch("dds_web.commands.open"):
+            with patch("json.load") as mock_json_load:
+                mock_json_load.return_value = file_dict
+                _: click.testing.Result = runner.invoke(
+                    update_uploaded_file_with_log, command_options
+                )
+
+    # Check logging
+    _, err = capfd.readouterr()
+    assert f"The project '{project.public_id}' doesn't exist." not in err
+    assert f"Updating file in project '{project.public_id}'..." in err
+    assert f"The log file '{log_file}' doesn't exist." not in err
+    assert f"Reading file info from path '{log_file}'..." in err
+    assert "File contents were loaded..." in err
+    assert "Files added: []" in err
+    assert "Errors while adding files:" in err
+    assert "File already in database" in err
 
 
 # lost_files_s3_db
@@ -1346,12 +1415,176 @@ def test_delete_invite_timestamp_issue(client, cli_runner):
     assert len(db.session.query(models.Invite).all()) == 0
 
 
-# quarterly usage
+# monthly usage
 
 
-def test_quarterly_usage(client, cli_runner):
-    """Test the quarterly_usage cron job."""
-    cli_runner.invoke(quarterly_usage)
+def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture):
+    """Projects should be marked as done."""
+    # Imports
+    from tests.api.test_project import mock_sqlalchemyerror
+
+    # Helper function - can be moved out if we need to use in other places later
+    def create_file_versions(project: models.Project):
+        """Create file versions for project."""
+        # Create new file in project
+        new_file = models.File(
+            name=f"filename_{project.public_id}",
+            name_in_bucket=f"name_in_bucket_{project.public_id}",
+            subpath=f"filename/subpath",
+            size_original=15000,
+            size_stored=10000,
+            compressed=True,
+            salt="A" * 32,
+            public_key="B" * 64,
+            checksum="C" * 64,
+        )
+        project.files.append(new_file)
+
+        # Create new versions
+        for x in range(3):
+            new_version = models.Version(
+                size_stored=10000 * x,
+                time_uploaded=current_time() - timedelta(days=1),
+                time_deleted=current_time(),
+            )
+            project.file_versions.append(new_version)
+            new_file.versions.append(new_version)
+            db.session.add(new_file)
+
+        db.session.commit()
+
+    # Check if there's a non active project
+    non_active_projects = models.Project.query.filter_by(is_active=False).all()
+    project: models.Project = None
+    if not non_active_projects:
+        # Make at least one project not active
+        project = models.Project.query.first()
+        project.is_active = False
+        db.session.commit()
+    else:
+        project = non_active_projects[0]
+
+    # There needs to be file versions in non active project
+    if not project.file_versions:
+        create_file_versions(project=project)
+    assert project.file_versions
+
+    # Get active project - to verify that nothing happens with it
+    project_active: models.Project = models.Project.query.filter_by(is_active=True).first()
+
+    # There needs to be file versions in active project
+    if not project_active.file_versions:
+        create_file_versions(project=project_active)
+    assert project_active.file_versions
+
+    # Set file versions as invoiced
+    for version in project.file_versions:
+        time_now = current_time()
+        version.time_deleted = time_now
+        version.time_invoiced = time_now
+    db.session.commit()
+
+    # 1. Marking projects as done
+    # Run command - commit should result in sqlalchemy query
+    with mail.record_messages() as outbox1:
+        with patch("dds_web.db.session.commit", mock_sqlalchemyerror):
+            cli_runner.invoke(monthly_usage)
+
+        # Check that non-active project is not marked as done
+        assert not project.done
+        assert not project_active.done
+
+        # Verify correct logging
+        _, logs = capfd.readouterr()
+        assert (
+            "Usage collection <failed> during step 1: marking projects as done. Sending email..."
+            in logs
+        )
+        assert "Calculating usage..." not in logs
+
+        # Error email should be sent
+        assert len(outbox1) == 1
+        assert "[INVOICING CRONJOB] <ERROR> Error in monthly-usage cronjob" in outbox1[-1].subject
+        assert "What to do:" in outbox1[-1].body
+
+        # No usage rows should have been saved
+        num_usage_rows = models.Usage.query.count()
+        assert num_usage_rows == 0
+
+    # 2. Calculating project usage
+    # Run command again - part 1 should be successful
+    with mail.record_messages() as outbox2:
+        with patch("dds_web.db.session.add_all", mock_sqlalchemyerror):
+            cli_runner.invoke(monthly_usage)
+
+        # The non-active project should have been marked as done
+        assert project.done
+        assert not project_active.done
+
+        # Verify correct logging
+        _, logs = capfd.readouterr()
+        assert (
+            "Usage collection <failed> during step 1: marking projects as done. Sending email..."
+            not in logs
+        )
+        assert "Calculating usage..." in logs
+        assert f"Project {project.public_id} byte hours:" not in logs
+        assert f"Project {project_active.public_id} byte hours:" in logs
+        assert (
+            "Usage collection <failed> during step 2: calculating and saving usage. Sending email..."
+            in logs
+        )
+
+        # Error email should have been sent
+        assert len(outbox2) == 1
+        assert "[INVOICING CRONJOB] <ERROR> Error in monthly-usage cronjob" in outbox2[-1].subject
+        assert "What to do:" in outbox2[-1].body
+
+        # Project versions should not be altered
+        assert project_active.file_versions
+        for version in project_active.file_versions:
+            assert version.time_deleted != version.time_invoiced
+
+        # No usage rows should've been saved
+        usage_row_1 = models.Usage.query.filter_by(project_id=project.id).one_or_none()
+        usage_row_2 = models.Usage.query.filter_by(project_id=project_active.id).one_or_none()
+        assert not usage_row_1
+        assert not usage_row_2
+
+    # 3. Send success email
+    # Run command a third time - part 1 and 2 should be successful
+    with mail.record_messages() as outbox3:
+        cli_runner.invoke(monthly_usage)
+
+        # Verify correct logging
+        _, logs = capfd.readouterr()
+        assert (
+            "Usage collection <failed> during step 1: marking projects as done. Sending email..."
+            not in logs
+        )
+        assert (
+            "Usage collection <failed> during step 2: calculating and saving usage. Sending email..."
+            not in logs
+        )
+        assert "Usage collection successful; Sending email." in logs
+
+        # Email should be sent
+        assert len(outbox3) == 1
+        assert "[INVOICING CRONJOB] Usage records available for collection" in outbox3[-1].subject
+        assert (
+            "The calculation of the monthly usage succeeded; The byte hours for all active projects have been saved to the database."
+            in outbox3[-1].body
+        )
+
+        # Project versions should have been altered
+        for version in project_active.file_versions:
+            assert version.time_deleted == version.time_invoiced
+
+        # Usage rows should have been saved for active project
+        usage_row_1 = models.Usage.query.filter_by(project_id=project.id).one_or_none()
+        usage_row_2 = models.Usage.query.filter_by(project_id=project_active.id).one_or_none()
+        assert not usage_row_1
+        assert usage_row_2
 
 
 # reporting units and users
@@ -1472,3 +1705,198 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
     reporting_rows = Reporting.query.all()
     for row in reporting_rows:
         verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)
+
+
+def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
+    """Test that the email with the usage report is send"""
+    # Imports
+    from dds_web.database.models import Usage
+
+    # Get projects
+    projects = models.Project.query.filter(
+        models.Project.public_id.in_(
+            ["public_project_id", "second_public_project_id", "unit2testing"]
+        )
+    ).all()
+    project_1_unit_1 = next(p for p in projects if p.public_id == "public_project_id")
+    project_2_unit_1 = next(p for p in projects if p.public_id == "second_public_project_id")
+    project_1_unit_2 = next(p for p in projects if p.public_id == "unit2testing")
+
+    # Loop to populate usage table with fake entries across two years
+    january_2021 = datetime(2021, 1, 1)  # Start at Jan 2021
+    usage_list = []
+    for i in range(25):
+        time = january_2021 + relativedelta(months=i)
+        usage_1 = Usage(
+            project_id=project_1_unit_1.id,
+            usage=100,
+            time_collected=time,
+        )
+        usage_2 = Usage(
+            project_id=project_2_unit_1.id,
+            usage=100,
+            time_collected=time,
+        )
+        usage_3 = Usage(
+            project_id=project_1_unit_2.id,
+            usage=100,
+            time_collected=time,
+        )
+        usage_list.extend([usage_1, usage_2, usage_3])
+
+    db.session.add_all(usage_list)
+    db.session.commit()
+    # Fake data included from Jan 2021 to Jan 2023
+
+    def run_command_and_check_output(months_to_test, start_time):
+        """
+        This function tests the output of the `send_usage` command by running the command with given arguments and checking the output.
+        It mocks the current time and checks that the email sent contains the correct subject and body.
+        It also checks that the csv files attached to the email have the correct names and content.
+
+        Return the csv files attached to the email.
+        """
+
+        with mail.record_messages() as outbox:
+            with patch("dds_web.utils.current_time") as current_time_func:  # Mock current time
+                current_time_func.return_value = start_time
+                cli_runner.invoke(send_usage, ["--months", months_to_test])
+
+            # Verify output and sent email
+            assert len(outbox) == 1
+            assert (
+                "[SEND-USAGE CRONJOB] Usage records attached in the present mail"
+                in outbox[-1].subject
+            )
+            assert f"Here is the usage for the last {months_to_test} months." in outbox[-1].body
+
+            end_time = start_time - relativedelta(months=months_to_test)
+            start_month = start_time.month
+            end_month = end_time.month
+            unit_1_id = project_1_unit_1.responsible_unit.public_id
+            unit_2_id = project_1_unit_2.responsible_unit.public_id
+            csv_1_name = f"{unit_1_id}_Usage_Months-{end_month}-to-{start_month}.csv"
+            csv_2_name = f"{unit_2_id}_Usage_Months-{end_month}-to-{start_month}.csv"
+
+            # check that the files no longer exist in the filesystem
+            assert not os.path.exists(csv_1_name)
+            assert not os.path.exists(csv_2_name)
+
+            _, logs = capfd.readouterr()
+            assert f"Month now: {start_month}" in logs
+            assert f"Month {months_to_test} months ago: {end_month}" in logs
+            assert f"CSV file name: {csv_1_name}" in logs
+            assert f"CSV file name: {csv_2_name}" in logs
+            assert "Sending email with the CSV." in logs
+
+            # Verify that the csv files are attached - two files, one for each unit
+            assert len(outbox[-1].attachments) == 2
+            for attachment, file_name in zip(outbox[-1].attachments, [csv_1_name, csv_2_name]):
+                assert attachment.filename == file_name
+                assert attachment.content_type == "text/csv"
+
+            # Check csv content
+            # retrieve the files from the email
+            csv_1 = outbox[-1].attachments[0].data
+            csv_2 = outbox[-1].attachments[1].data
+
+            # check that the header and summatory at the end is correct
+            assert "Project ID,Project Title,Project Created,Time Collected,Byte Hours" in csv_1
+            assert "Project ID,Project Title,Project Created,Time Collected,Byte Hours" in csv_2
+            usage = 100.0 * months_to_test * 2  # 2 projects
+            assert f"--,--,--,--,{str(usage)}" in csv_1
+            usage = 100.0 * months_to_test
+            assert f"--,--,--,--,{str(usage)}" in csv_2
+
+            # check that the content is correct
+            import re
+
+            csv_1 = re.split(",|\n", csv_1)  # split by comma or newline
+            csv_2 = re.split(",|\n", csv_2)
+
+            # Projects and data is correct
+            assert csv_1.count("public_project_id") == months_to_test
+            assert csv_1.count("second_public_project_id") == months_to_test
+            assert csv_1.count("unit2testing") == 0  # this project is not in the unit
+            assert csv_1.count("100.0") == months_to_test * 2
+
+            assert csv_2.count("public_project_id") == 0  # this project is not in the unit
+            assert csv_2.count("second_public_project_id") == 0  # this project is not in the unit
+            assert csv_2.count("unit2testing") == months_to_test
+            assert csv_2.count("100.0") == months_to_test
+
+            # Check that the months included in the report are the correct ones
+            # move start time to the first day of the month
+            start_collected_time = start_time.replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+            for i in range(months_to_test):
+                check_time_collected = start_collected_time - relativedelta(
+                    months=i
+                )  # every month is included
+                assert f"{check_time_collected}" in csv_1
+                assert f"{check_time_collected}" in csv_1
+        return csv_1, csv_2
+
+    # Test that the command works for 4 months from Jan 2022
+    start_time = datetime(2022, 1, 15)  # Mid Jan 2022
+    csv_1, csv_2 = run_command_and_check_output(months_to_test=4, start_time=start_time)
+    # Hardcode the expected csv content to double check
+    # October, November, December, January (4 months)
+    assert "2021-10-01 00:00:00" in csv_1
+    assert "2021-11-01 00:00:00" in csv_1
+    assert "2021-12-01 00:00:00" in csv_1
+    assert "2022-01-01 00:00:00" in csv_1
+    assert "2021-10-01 00:00:00" in csv_2
+    assert "2021-11-01 00:00:00" in csv_2
+    assert "2021-12-01 00:00:00" in csv_2
+    assert "2022-01-01 00:00:00" in csv_2
+
+    # Test that the command works for 4 months from May 2022
+    start_time = datetime(2022, 5, 15)  # Mid May 2022
+    csv_1, csv_2 = run_command_and_check_output(months_to_test=4, start_time=start_time)
+    # Hardcode the expected csv content to double check
+    # February, March, April, May (4 months)
+    assert "2022-02-01 00:00:00" in csv_1
+    assert "2022-03-01 00:00:00" in csv_1
+    assert "2022-04-01 00:00:00" in csv_1
+    assert "2022-05-01 00:00:00" in csv_1
+    assert "2022-02-01 00:00:00" in csv_2
+    assert "2022-03-01 00:00:00" in csv_2
+    assert "2022-04-01 00:00:00" in csv_2
+    assert "2022-05-01 00:00:00" in csv_2
+
+    # Test that the command works for 4 months from Sept 2022
+    start_time = datetime(2022, 9, 15)  # Mid Sep 2022
+    csv_1, csv_2 = run_command_and_check_output(months_to_test=4, start_time=start_time)
+    # Hardcode the expected csv content to double check
+    # June, July, August, September (4 months)
+    assert "2022-06-01 00:00:00" in csv_1
+    assert "2022-07-01 00:00:00" in csv_1
+    assert "2022-08-01 00:00:00" in csv_1
+    assert "2022-09-01 00:00:00" in csv_1
+    assert "2022-06-01 00:00:00" in csv_2
+    assert "2022-07-01 00:00:00" in csv_2
+    assert "2022-08-01 00:00:00" in csv_2
+    assert "2022-09-01 00:00:00" in csv_2
+
+
+def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
+    """Test that checks errors in the csv handling"""
+
+    with mail.record_messages() as outbox:
+        with patch("csv.writer") as mock_writing_file:
+            mock_writing_file.side_effect = IOError()
+            cli_runner.invoke(send_usage, ["--months", 3])
+
+        _, logs = capfd.readouterr()
+        assert "Error writing to CSV file:" in logs  # error in writing the csv file
+        assert "No CSV files generated." in logs  # no csv files generated
+
+        # Check that no files were generated in the fs
+        assert not os.path.exists("*.csv")
+
+        # Verify error email :- At least one email was sent
+        assert len(outbox) == 1
+        assert "[SEND-USAGE CRONJOB] <ERROR> Error in send-usage cronjob" in outbox[-1].subject
+        assert "There was an error in the cronjob 'send-usage'" in outbox[-1].body

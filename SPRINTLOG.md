@@ -315,7 +315,18 @@ _Nothing merged in CLI during this sprint_
 - Add flag --verify-checksum to the comand in email template ([#1478])(https://github.com/ScilifelabDataCentre/dds_web/pull/1478)
 - Improved email layout; Highlighted information and commands when project is released ([#1479])(https://github.com/ScilifelabDataCentre/dds_web/pull/1479)
 
-# 2023-10-16 - 2023-10-27
+# 2023-10-16 - 2023-11-03 (Longer sprint due to OKR prep and höstlov)
 
 - Added new API endpoint ProjectStatus.patch to extend the deadline ([#1480])(https://github.com/ScilifelabDataCentre/dds_web/pull/1480)
 - New version: 2.5.2 ([#1482](https://github.com/ScilifelabDataCentre/dds_web/pull/1482))
+- New endpoint `AddFailedFiles` for adding failed files to database ([#1472](https://github.com/ScilifelabDataCentre/dds_web/pull/1472))
+- Change the generate usage command to monthly instead of quartely, and add the command to send a usage report specifying the number of months ([#1476](https://github.com/ScilifelabDataCentre/dds_web/pull/1476))
+- New ADR record regarding OKR 2024 ([#1483](https://github.com/ScilifelabDataCentre/dds_web/pull/1483))
+
+# 2023-11-6 - 2023-11-17
+
+- Updated Pillow package version to address vulnerabities ([#1486](https://github.com/ScilifelabDataCentre/dds_web/pull/1486))
+- Updated urllib3 package version to address vulnerabities ([#1487](https://github.com/ScilifelabDataCentre/dds_web/pull/1487))
+- Updated PostCss Node package to address vulnerabities ([#1489](https://github.com/ScilifelabDataCentre/dds_web/pull/1489))
+- Updated Several node libraries to address vulnerabities ([#1492](https://github.com/ScilifelabDataCentre/dds_web/pull/1492))
+- New version: 2.6.0 ([#1494](https://github.com/ScilifelabDataCentre/dds_web/pull/1494))
