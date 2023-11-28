@@ -1,0 +1,744 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Data Delivery System",
+      "description": "Descp\n",
+      "version": "1.0.0"
+    },
+    "servers": [
+      {
+        "url": "https://virtserver.swaggerhub.com/ALVAROREVU/DataDeliverySystem/1.0.0",
+        "description": "SwaggerHub API Auto Mocking"
+      },
+      {
+        "url": "https://dds-dev.dckube3.scilifelab.se/",
+        "description": "SwaggerHub API Auto Mocking"
+      }
+    ],
+    "tags": [
+      {
+        "name": "login/access",
+        "description": "Authorization and authentication operations"
+      },
+      {
+        "name": "files",
+        "description": "Manage files operations"
+      },
+      {
+        "name": "user",
+        "description": "Operations about user"
+      },
+      {
+        "name": "project",
+        "description": "Operations about projects"
+      },
+      {
+        "name": "s3",
+        "description": "s3 bucket"
+      },
+      {
+        "name": "superadmin",
+        "description": "Superadmin operations"
+      }
+    ],
+    "paths": {
+      "/file/new": {
+        "put": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Update an existing file",
+          "operationId": "updateFile",
+          "requestBody": {
+            "$ref": "#/components/requestBodies/FilesQuery"
+          },
+          "responses": {
+            "200": {
+              "description": "succesful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string",
+                    "example": "{message: File data_seq.txt updated in the db.}"
+                  }
+                }
+              }
+            },
+            "405": {
+              "description": "Invalid input"
+            }
+          }
+        },
+        "post": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Add a new file to the database",
+          "operationId": "newFile",
+          "requestBody": {
+            "$ref": "#/components/requestBodies/FilesQuery"
+          },
+          "responses": {
+            "200": {
+              "description": "succesful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string",
+                    "example": "{message: File data_seq.txt added to db.}"
+                  }
+                }
+              }
+            },
+            "405": {
+              "description": "Invalid input"
+            }
+          }
+        }
+      },
+      "/file/match": {
+        "get": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Get name in bucket for all files specified",
+          "operationId": "matchFiles",
+          "parameters": [
+            {
+              "name": "query_string",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "$ref": "#/components/schemas/query_string"
+              }
+            },
+            {
+              "name": "json",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "type": "array",
+                "example": [
+                  "file_name.txt",
+                  "file_name_2.txt"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/inline_response_200"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid status value"
+            }
+          }
+        }
+      },
+      "/files/list": {
+        "get": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Get a list of files within the specific folder",
+          "operationId": "listFiles",
+          "parameters": [
+            {
+              "name": "query_string",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "$ref": "#/components/schemas/query_string_1"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/inline_response_200_1"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid tag value"
+            }
+          }
+        }
+      },
+      "/file/rm": {
+        "delete": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Deletes a file",
+          "operationId": "removeFile",
+          "parameters": [
+            {
+              "name": "query_string",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "$ref": "#/components/schemas/query_string_2"
+              }
+            },
+            {
+              "name": "json",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "type": "array",
+                "example": [
+                  "file_name.txt",
+                  "file_name_2.txt"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          ],
+          "responses": {
+            "400": {
+              "description": "Invalid ID supplied"
+            }
+          }
+        }
+      },
+      "/file/rmdir": {
+        "delete": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Deletes folder(s)",
+          "operationId": "removeDir",
+          "parameters": [
+            {
+              "name": "query_string",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "$ref": "#/components/schemas/query_string_3"
+              }
+            },
+            {
+              "name": "json",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "type": "array",
+                "example": [
+                  "folder_1",
+                  "folder_2"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/inline_response_200_2"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid ID supplied"
+            }
+          }
+        }
+      },
+      "/file/info": {
+        "get": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Get file info on files to download",
+          "operationId": "fileInfo",
+          "parameters": [
+            {
+              "name": "query_string",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "$ref": "#/components/schemas/query_string_4"
+              }
+            },
+            {
+              "name": "json",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "type": "array",
+                "example": [
+                  "file_name.txt"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/inline_response_200_3"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid status value"
+            }
+          }
+        }
+      },
+      "/file/all/info": {
+        "get": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Get info on all project files",
+          "operationId": "fileInfoAll",
+          "parameters": [
+            {
+              "name": "query_string",
+              "in": "query",
+              "required": true,
+              "style": "form",
+              "explode": true,
+              "schema": {
+                "$ref": "#/components/schemas/query_string_5"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/inline_response_200_3"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid status value"
+            }
+          }
+        }
+      },
+      "/file/update": {
+        "put": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Update file info after download",
+          "description": "xxxxxxxx",
+          "operationId": "updateFile2",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/file_update_body"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "succesful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string",
+                    "example": "{message: File info updated}"
+                  }
+                }
+              }
+            },
+            "405": {
+              "description": "Invalid input"
+            }
+          }
+        }
+      },
+      "/file/failed/add": {
+        "put": {
+          "tags": [
+            "files"
+          ],
+          "summary": "Get files from log file and save to database",
+          "description": "xxxxxxxx",
+          "operationId": "addFailed",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/failed_add_body"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/inline_response_200_4"
+                  }
+                }
+              }
+            },
+            "405": {
+              "description": "Invalid input"
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Files": {
+          "required": [
+            "checksum",
+            "compressed",
+            "name",
+            "name_in_bucket",
+            "public_key",
+            "salt",
+            "size",
+            "size_processed",
+            "subpath"
+          ],
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "example": "adn_secuence.txt"
+            },
+            "name_in_bucket": {
+              "type": "string"
+            },
+            "subpath": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "size_processed": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "compressed": {
+              "type": "boolean"
+            },
+            "publick_key": {
+              "type": "string"
+            },
+            "salt": {
+              "type": "string"
+            },
+            "checksum": {
+              "type": "string"
+            }
+          }
+        },
+        "FilesQuery": {
+          "type": "object",
+          "properties": {
+            "json": {
+              "$ref": "#/components/schemas/Files"
+            },
+            "query_string": {
+              "$ref": "#/components/schemas/query_string_5"
+            }
+          }
+        },
+        "ApiResponse": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "type": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            }
+          }
+        },
+        "Schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        },
+        "query_string": {
+          "type": "object",
+          "properties": {
+            "project": {
+              "type": "string",
+              "example": "public_project_id"
+            }
+          }
+        },
+        "inline_response_200": {
+          "type": "object",
+          "properties": {
+            "files": {
+              "type": "array",
+              "example": [
+                "name_in_bucket",
+                "name_in_bucket_2"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "query_string_1": {
+          "type": "object",
+          "properties": {
+            "project": {
+              "type": "string",
+              "example": "public_project_id"
+            }
+          }
+        },
+        "inline_response_200_1": {
+          "type": "object",
+          "properties": {
+            "files_folder": {
+              "type": "array",
+              "example": [
+                {
+                  "folder": true,
+                  "name": "filename1"
+                },
+                {
+                  "folder": true,
+                  "name": "filename2"
+                },
+                {
+                  "folder": true,
+                  "name": "sub"
+                }
+              ],
+              "items": {
+                "$ref": "#/components/schemas/inline_response_200_1_files_folder"
+              }
+            }
+          }
+        },
+        "query_string_2": {
+          "type": "object",
+          "properties": {
+            "project": {
+              "type": "string",
+              "example": "public_project_id"
+            }
+          }
+        },
+        "query_string_3": {
+          "type": "object",
+          "properties": {
+            "project": {
+              "type": "string",
+              "example": "public_project_id"
+            }
+          }
+        },
+        "inline_response_200_2": {
+          "type": "object",
+          "properties": {
+            "not_removed": {
+              "type": "boolean"
+            },
+            "fail_type": {
+              "type": "string"
+            },
+            "not_exists": {
+              "type": "boolean"
+            },
+            "nr_deleted": {
+              "type": "integer"
+            }
+          },
+          "example": {
+            "not_removed": false,
+            "fail_type": "none",
+            "nr_deleted": 10
+          }
+        },
+        "query_string_4": {
+          "type": "object",
+          "properties": {
+            "project": {
+              "type": "string",
+              "example": "public_project_id"
+            }
+          }
+        },
+        "inline_response_200_3": {
+          "type": "object",
+          "properties": {
+            "files": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Files"
+              }
+            }
+          }
+        },
+        "query_string_5": {
+          "type": "object",
+          "properties": {
+            "project": {
+              "type": "string",
+              "example": "public_project_id"
+            }
+          }
+        },
+        "fileupdate_json": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "example": "filename"
+            }
+          }
+        },
+        "file_update_body": {
+          "type": "object",
+          "properties": {
+            "query_string": {
+              "$ref": "#/components/schemas/query_string_5"
+            },
+            "json": {
+              "$ref": "#/components/schemas/fileupdate_json"
+            }
+          }
+        },
+        "failed_add_body": {
+          "type": "object",
+          "properties": {
+            "query_string": {
+              "$ref": "#/components/schemas/query_string_5"
+            }
+          }
+        },
+        "inline_response_200_4": {
+          "type": "object",
+          "properties": {
+            "files_added": {
+              "type": "array",
+              "example": [
+                "filefailed_1",
+                "filefailed_2"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "inline_response_200_1_files_folder": {
+          "type": "object",
+          "properties": {
+            "folder": {
+              "type": "boolean"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "requestBodies": {
+        "FilesQuery": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FilesQuery"
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/FilesQuery"
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "securitySchemes": {
+        "petstore_auth": {
+          "type": "oauth2",
+          "flows": {
+            "implicit": {
+              "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+              "scopes": {
+                "write:pets": "modify pets in your account",
+                "read:pets": "read your pets"
+              }
+            }
+          }
+        },
+        "api_key": {
+          "type": "apiKey",
+          "name": "api_key",
+          "in": "header"
+        }
+      }
+    }
+  }
