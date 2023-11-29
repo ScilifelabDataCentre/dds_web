@@ -47,6 +47,7 @@ services:
   backend:
     container_name: dds_backend
     image: dds-backend-local:latest
+    user: "10600:10600"
     build:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./
