@@ -326,6 +326,7 @@ def create_app(testing=False, database_uri=None):
                 config={
                     "app_name": "DDS API Documentation",
                     "defaultModelsExpandDepth": -1,
+                    "layout": "BaseLayout",
                 },
             )
             app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
