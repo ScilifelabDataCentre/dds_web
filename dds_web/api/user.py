@@ -1018,6 +1018,18 @@ class SecondFactor(flask_restful.Resource):
 
         return {"token": update_token_with_mfa(token_claims)}
 
+    @auth.login_required
+    @json_required
+    @handle_validation_errors
+    def post(self):
+        token_schemas.TokenSchema().load(
+            flask.request.get_json(silent=True)
+        )  # Verified by json_required
+
+        token_claims = dds_web.security.auth.obtain_current_encrypted_token_claims()
+
+        return {"token": update_token_with_mfa(token_claims)}
+
 
 class RequestTOTPActivation(flask_restful.Resource):
     """Request to switch from HOTP to TOTP for second factor authentication."""
