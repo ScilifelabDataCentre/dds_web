@@ -314,9 +314,12 @@ def create_app(testing=False, database_uri=None):
             from dds_web.web.user import auth_blueprint
             from flask_swagger_ui import get_swaggerui_blueprint
 
+            # url for the documentation
             SWAGGER_URL = "/documentation"
+            # path where the swagger file is localted in the repository
             API_URL = "/static/swagger.yaml"
 
+            # register blueprint for the documentation
             swagger_ui_blueprint = get_swaggerui_blueprint(
                 SWAGGER_URL,
                 API_URL,
