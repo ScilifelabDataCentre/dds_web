@@ -1,15 +1,23 @@
----
 openapi: 3.0.0
 info:
-  title: Data Delivery System
   description: |
-    Descp
-  version: 1.0.0
+    Docuementation for the API of the Data Delivery System (DDS) in SciLifeLab
+  version: "2.6.0"
+  title: Data Delivery System
+# Apply the encrypted token to all operations
+security:
+  - seconFactorToken: []
 servers:
-  - url: https://dds-dev.dckube3.scilifelab.se/
-    description: xxxxxxxx
+  # Added by API Auto Mocking Plugin
+  - url: https://delivery.scilifelab.se/api/v1
+    description: Endpoint for the production enviroment
+  - url: https://dds-dev.dckube3.scilifelab.se/api/v1
+    description: Endpoint for the development enviroment
+  # Uncomment when local testing
+  #- url: http://localhost:5000/api/v1
+  #  description: Local enviroment
 tags:
-  - name: login/access
+  - name: authentication
     description: Authorization and authentication operations
   - name: files
     description: Manage files operations
@@ -22,34 +30,23 @@ tags:
   - name: superadmin
     description: Superadmin operations
 paths:
+  ### FILES OPERATIONS #########
   /file/new:
-    put:
-      tags:
-        - files
-      summary: Update an existing file
-      operationId: updateFile
-      requestBody:
-        $ref: "#/components/requestBodies/FilesQuery"
-      responses:
-        "405":
-          description: Invalid input
-        "200":
-          description: succesful operation
-          content:
-            application/json:
-              schema:
-                type: string
-                example: "{message: File data_seq.txt updated in the db.}"
     post:
       tags:
         - files
       summary: Add a new file to the database
       operationId: newFile
-      requestBody:
-        $ref: "#/components/requestBodies/FilesQuery"
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
       responses:
-        "405":
-          description: Invalid input
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
         "200":
           description: succesful operation
           content:
@@ -57,197 +54,269 @@ paths:
               schema:
                 type: string
                 example: "{message: File data_seq.txt added to db.}"
+      requestBody:
+        $ref: "#/components/requestBodies/Files"
+    put:
+      tags:
+        - files
+      summary: Update an existing file
+      operationId: updateFile
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: File data_seq.txt updated in the db.}"
+      requestBody:
+        $ref: "#/components/requestBodies/Files"
   /file/match:
     get:
       tags:
         - files
-      summary: Get name in bucket for all files specified
+      summary: Get name in bucket for all files specified CHECK METHOD
+      description: This method requires the data (project ID) to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      deprecated: true
       operationId: matchFiles
       parameters:
-        - name: query_string
-          in: query
-          required: true
-          style: form
-          explode: true
-          schema:
-            $ref: "#/components/schemas/query_string"
-        - name: json
-          in: query
-          required: true
-          style: form
-          explode: true
-          schema:
-            type: array
-            example:
-              - file_name.txt
-              - file_name_2.txt
-            items:
-              type: string
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
         "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200"
-        "400":
-          description: Invalid status value
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: string
+                    example: [name_in_bucket, name_in_bucket_2]
   /files/list:
     get:
       tags:
         - files
-      summary: Get a list of files within the specific folder
+      summary: Get a list of files within the specific folder CHECK METHOD
+      description: This method requires the data (project ID) to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      deprecated: true
       operationId: listFiles
       parameters:
+        - $ref: "#/components/parameters/defaultHeader"
         - name: query_string
           in: query
           required: true
-          style: form
-          explode: true
           schema:
-            $ref: "#/components/schemas/query_string_1"
+            type: object
+            properties:
+              project:
+                type: string
+                example: public_project_id
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
         "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_1"
-        "400":
-          description: Invalid tag value
+                type: object
+                properties:
+                  files_folder:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        folder:
+                          type: boolean
+                        name:
+                          type: string
+                    example:
+                      [
+                        { "folder": True, "name": "filename1" },
+                        { "folder": True, "name": "filename2" },
+                        { "folder": True, "name": "sub" },
+                      ]
   /file/rm:
     delete:
       tags:
         - files
-      summary: Deletes a file
+      summary: Deletes a file CHECK METHOD
+      description: This method requires the data to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      deprecated: true
       operationId: removeFile
       parameters:
-        - name: query_string
-          in: query
-          required: true
-          style: form
-          explode: true
-          schema:
-            $ref: "#/components/schemas/query_string_2"
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
         - name: json
           in: query
           required: true
-          style: form
-          explode: true
           schema:
             type: array
-            example:
-              - file_name.txt
-              - file_name_2.txt
             items:
               type: string
+            example: [file_name.txt, file_name_2.txt]
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
         "400":
-          description: Invalid ID supplied
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  not_removed:
+                    type: boolean
+                  fail_type:
+                    type: string
+                  not_exists:
+                    type: boolean
+                  nr_deleted:
+                    type: integer
+                example: { "not_removed": false, "not_exists": false }
   /file/rmdir:
     delete:
       tags:
         - files
-      summary: Deletes folder(s)
+      summary: Deletes folder(s) CHECK METHOD
+      description: This method requires the data to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      deprecated: true
       operationId: removeDir
       parameters:
-        - name: query_string
-          in: query
-          required: true
-          style: form
-          explode: true
-          schema:
-            $ref: "#/components/schemas/query_string_3"
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
         - name: json
           in: query
           required: true
-          style: form
-          explode: true
           schema:
             type: array
-            example:
-              - folder_1
-              - folder_2
             items:
               type: string
+            example: [folder_1, folder_2]
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
         "400":
-          description: Invalid ID supplied
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
         "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_2"
+                type: object
+                properties:
+                  not_removed:
+                    type: boolean
+                  fail_type:
+                    type: string
+                  not_exists:
+                    type: boolean
+                  nr_deleted:
+                    type: integer
+                example: { "not_removed": false, "fail_type": "none", "nr_deleted": 10 }
   /file/info:
     get:
       tags:
         - files
-      summary: Get file info on files to download
+      summary: Get file info on files to download CHECK METHOD
+      description: This method requires the data to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      deprecated: true
       operationId: fileInfo
       parameters:
-        - name: query_string
-          in: query
-          required: true
-          style: form
-          explode: true
-          schema:
-            $ref: "#/components/schemas/query_string_4"
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
         - name: json
           in: query
           required: true
-          style: form
-          explode: true
           schema:
             type: array
-            example:
-              - file_name.txt
             items:
               type: string
+            example: [file_name.txt]
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
         "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_3"
-        "400":
-          description: Invalid status value
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Files"
   /file/all/info:
     get:
       tags:
         - files
-      summary: Get info on all project files
+      summary: Get info on all project files CHECK METHOD
+      description: This method requires the data to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      deprecated: true
       operationId: fileInfoAll
       parameters:
-        - name: query_string
-          in: query
-          required: true
-          style: form
-          explode: true
-          schema:
-            $ref: "#/components/schemas/query_string_5"
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
         "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_3"
-        "400":
-          description: Invalid status value
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Files"
   /file/update:
     put:
       tags:
         - files
       summary: Update file info after download
-      description: xxxxxxxx
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
       operationId: updateFile2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/file_update_body"
       responses:
         "405":
           description: Invalid input
@@ -258,18 +327,24 @@ paths:
               schema:
                 type: string
                 example: "{message: File info updated}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: filename
   /file/failed/add:
     put:
       tags:
         - files
       summary: Get files from log file and save to database
-      description: xxxxxxxx
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
       operationId: addFailed
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/failed_add_body"
       responses:
         "405":
           description: Invalid input
@@ -278,203 +353,283 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_4"
+                type: object
+                properties:
+                  files_added:
+                    type: array
+                    items:
+                      type: string
+                    example: [filefailed]
+      requestBody:
+        $ref: "#/components/requestBodies/FailedFiles"
+
+  # LOGIN OPERATIONS
+  /user/encrypted_token:
+    get:
+      tags:
+        - authentication
+      summary: Generates encrypted token for the user
+      operationId: token
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      security:
+        - encryptedToken: []
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedTwofactor"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Please take this token to /user/second_factor to authenticate with MFA!
+                  token:
+                    type: string
+                  secondfactor_method:
+                    type: string
+                    example: secondfactor_method
+  /user/second_factor:
+    get:
+      tags:
+        - authentication
+      summary: Take in and verify an authentication one-time code entered by an authenticated user with basic credentials CHECK METHOD
+      description: This method requires the data (two factor code) to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      deprecated: true
+      operationId: secondFactorGet
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - name: TOTP
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+    post:
+      tags:
+        - authentication
+      summary: Take in and verify an authentication one-time code entered by an authenticated user with basic credentials
+      description: Send either the HOTP or TOTP code depending on the two factor method used
+      operationId: secondFactorPost
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+      requestBody:
+        $ref: "#/components/requestBodies/Token"
+
 components:
+  # define reusable parameters:
+  parameters:
+    defaultHeader:
+      name: X-CLI-Version
+      in: header
+      required: true
+      schema:
+        type: string
+        example: "2.6.0"
+    projectID:
+      name: project
+      in: query
+      schema:
+        type: string
+      description: project id to query
+  # Define common request bodies:
+  requestBodies:
+    Files:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Files"
+    FailedFiles:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              filename:
+                $ref: "#/components/schemas/FailedFiles"
+    Token:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Token"
+  # define reusable responses:
+  responses:
+    BadRequest:
+      description: The requests is missing important information in the body or have invalidad data, such as invalid project specified
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    UnauthorizedTwofactor:
+      description: Username and password not provided or is invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    UnauthorizedToken:
+      description: Encrypted Token is not provided or is invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    InternalServerlError:
+      description: Something wrong in the server side
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  # define schemas for objects
   schemas:
     Files:
+      type: object
       required:
-        - checksum
-        - compressed
         - name
         - name_in_bucket
-        - public_key
-        - salt
+        - subpath
         - size
         - size_processed
-        - subpath
-      type: object
+        - compressed
+        - public_key
+        - salt
+        - checksum
       properties:
         name:
           type: string
           example: adn_secuence.txt
         name_in_bucket:
           type: string
+          example: filebucketname1
         subpath:
           type: string
+          example: subpath
         size:
           type: integer
           format: int64
+          example: 1000
         size_processed:
           type: integer
           format: int64
+          example: 500
         compressed:
           type: boolean
+          example: true
         publick_key:
           type: string
+          example: pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp
         salt:
           type: string
+          example: ssssssssssssssssssssssssssssssss
         checksum:
           type: string
-    FilesQuery:
+          example: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    FailedFiles:
       type: object
+      required:
+        - status
+        - path_remote
+        - subpath
+        - size_raw
+        - size_processed
+        - compressed
+        - public_key
+        - salt
+        - checksum
       properties:
-        json:
-          $ref: "#/components/schemas/Files"
-        query_string:
-          $ref: "#/components/schemas/query_string_5"
-    ApiResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        type:
+        status:
+          type: object
+          properties:
+            failed_op:
+              type: string
+              example: add_file_db
+        path_remote:
           type: string
-        message:
+          example: path/to/file1.txt
+        subpath:
           type: string
-    Schema:
-      type: object
-      properties:
-        id:
+          example: subpath
+        size_raw:
           type: integer
           format: int64
-    query_string:
-      type: object
-      properties:
-        project:
-          type: string
-          example: public_project_id
-    inline_response_200:
-      type: object
-      properties:
-        files:
-          type: array
-          example:
-            - name_in_bucket
-            - name_in_bucket_2
-          items:
-            type: string
-    query_string_1:
-      type: object
-      properties:
-        project:
-          type: string
-          example: public_project_id
-    inline_response_200_1:
-      type: object
-      properties:
-        files_folder:
-          type: array
-          example:
-            - folder: true
-              name: filename1
-            - folder: true
-              name: filename2
-            - folder: true
-              name: sub
-          items:
-            $ref: "#/components/schemas/inline_response_200_1_files_folder"
-    query_string_2:
-      type: object
-      properties:
-        project:
-          type: string
-          example: public_project_id
-    query_string_3:
-      type: object
-      properties:
-        project:
-          type: string
-          example: public_project_id
-    inline_response_200_2:
-      type: object
-      properties:
-        not_removed:
-          type: boolean
-        fail_type:
-          type: string
-        not_exists:
-          type: boolean
-        nr_deleted:
+          example: 100
+        size_processed:
           type: integer
-      example:
-        not_removed: false
-        fail_type: none
-        nr_deleted: 10
-    query_string_4:
-      type: object
-      properties:
-        project:
-          type: string
-          example: public_project_id
-    inline_response_200_3:
-      type: object
-      properties:
-        files:
-          type: array
-          items:
-            $ref: "#/components/schemas/Files"
-    query_string_5:
-      type: object
-      properties:
-        project:
-          type: string
-          example: public_project_id
-    fileupdate_json:
-      type: object
-      properties:
-        name:
-          type: string
-          example: filename
-    file_update_body:
-      type: object
-      properties:
-        query_string:
-          $ref: "#/components/schemas/query_string_5"
-        json:
-          $ref: "#/components/schemas/fileupdate_json"
-    failed_add_body:
-      type: object
-      properties:
-        query_string:
-          $ref: "#/components/schemas/query_string_5"
-    inline_response_200_4:
-      type: object
-      properties:
-        files_added:
-          type: array
-          example:
-            - filefailed_1
-            - filefailed_2
-          items:
-            type: string
-    inline_response_200_1_files_folder:
-      type: object
-      properties:
-        folder:
+          format: int64
+          example: 200
+        compressed:
           type: boolean
-        name:
+          example: False
+        public_key:
           type: string
-  requestBodies:
-    FilesQuery:
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/FilesQuery"
-        application/xml:
-          schema:
-            $ref: "#/components/schemas/FilesQuery"
-      required: true
+          example: public_key
+        salt:
+          type: string
+          example: salt
+        checksum:
+          type: string
+          example: cheksum
+    Token:
+      type: object
+      properties:
+        HOTP:
+          type: string
+        TOTP:
+          type: string
+  # Securit schemes:
   securitySchemes:
-    petstore_auth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: http://petstore.swagger.io/oauth/dialog
-          scopes:
-            write:pets: modify pets in your account
-            read:pets: read your pets
-    api_key:
-      type: apiKey
-      name: api_key
-      in: header
+    encryptedToken: # user and pass
+      type: http
+      scheme: basic
+    seconFactorToken: # encrypted token
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
