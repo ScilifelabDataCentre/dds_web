@@ -1,3 +1,5 @@
+# yammllint and prettier conflict with some rules, disable them
+# yamllint disable rule:braces
 openapi: 3.0.0
 info:
   description: |
@@ -13,9 +15,9 @@ servers:
     description: Endpoint for the production enviroment
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the development enviroment
-  # Uncomment when local testing
-  #- url: http://localhost:5000/api/v1
-  #  description: Local enviroment
+# Uncomment when local testing
+# - url: http://localhost:5000/api/v1
+# description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -85,7 +87,11 @@ paths:
       tags:
         - files
       summary: Get name in bucket for all files specified CHECK METHOD
-      description: This method requires the data (project ID) to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      description: This method requires the data
+        to be passed in the request body instead of the query,
+        because it is not according to the openAPI standar swagger does not
+        let document it properly, therefore it is plan to be
+        removed in the future.
       deprecated: true
       operationId: matchFiles
       parameters:
@@ -115,7 +121,11 @@ paths:
       tags:
         - files
       summary: Get a list of files within the specific folder CHECK METHOD
-      description: This method requires the data (project ID) to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      description: This method requires the data (project ID)
+        to be passed in the request body instead of the query,
+        because it is not according to the openAPI standar swagger does not
+        let document it properly, therefore it is plan to be
+        removed in the future.
       deprecated: true
       operationId: listFiles
       parameters:
@@ -154,16 +164,20 @@ paths:
                           type: string
                     example:
                       [
-                        { "folder": True, "name": "filename1" },
-                        { "folder": True, "name": "filename2" },
-                        { "folder": True, "name": "sub" },
+                        { "folder": true, "name": "filename1" },
+                        { "folder": true, "name": "filename2" },
+                        { "folder": true, "name": "sub" },
                       ]
   /file/rm:
     delete:
       tags:
         - files
       summary: Deletes a file CHECK METHOD
-      description: This method requires the data to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      description: This method requires the data
+        to be passed in the request body instead of the query,
+        because it is not according to the openAPI standar swagger does not
+        let document it properly, therefore it is plan to be
+        removed in the future.
       deprecated: true
       operationId: removeFile
       parameters:
@@ -205,7 +219,11 @@ paths:
       tags:
         - files
       summary: Deletes folder(s) CHECK METHOD
-      description: This method requires the data to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      description: This method requires the data
+        to be passed in the request body instead of the query,
+        because it is not according to the openAPI standar swagger does not
+        let document it properly, therefore it is plan to be
+        removed in the future.
       deprecated: true
       operationId: removeDir
       parameters:
@@ -241,13 +259,17 @@ paths:
                     type: boolean
                   nr_deleted:
                     type: integer
-                example: { "not_removed": false, "fail_type": "none", "nr_deleted": 10 }
+                example: { "not_removed": false, "fail_type": "none", "nr_deleted": 10 } # yamllint disable-line
   /file/info:
     get:
       tags:
         - files
       summary: Get file info on files to download CHECK METHOD
-      description: This method requires the data to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      description: This method requires the data
+        to be passed in the request body instead of the query,
+        because it is not according to the openAPI standar swagger does not
+        let document it properly, therefore it is plan to be
+        removed in the future.
       deprecated: true
       operationId: fileInfo
       parameters:
@@ -284,7 +306,11 @@ paths:
       tags:
         - files
       summary: Get info on all project files CHECK METHOD
-      description: This method requires the data to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      description: This method requires the data (project ID)
+        to be passed in the request body instead of the query,
+        because it is not according to the openAPI standar swagger does not
+        let document it properly, therefore it is plan to be
+        removed in the future.
       deprecated: true
       operationId: fileInfoAll
       parameters:
@@ -390,7 +416,8 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Please take this token to /user/second_factor to authenticate with MFA!
+                    example: Please take this token to /user/second_factor
+                      to authenticate with MFA!
                   token:
                     type: string
                   secondfactor_method:
@@ -400,8 +427,13 @@ paths:
     get:
       tags:
         - authentication
-      summary: Take in and verify an authentication one-time code entered by an authenticated user with basic credentials CHECK METHOD
-      description: This method requires the data (two factor code) to be passed in the request body instead of the query, because it is not according to the openAPI standar swagger does not let document it properly, therefore it is plan to be removed in the future
+      summary: Take in and verify an authentication one-time code entered
+        by an authenticated user with basic credentials CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query,
+        because it is not according to the openAPI standar swagger does not
+        let document it properly, therefore it is plan to be
+        removed in the future.
       deprecated: true
       operationId: secondFactorGet
       parameters:
@@ -430,8 +462,10 @@ paths:
     post:
       tags:
         - authentication
-      summary: Take in and verify an authentication one-time code entered by an authenticated user with basic credentials
-      description: Send either the HOTP or TOTP code depending on the two factor method used
+      summary: Take in and verify an authentication one-time code entered by
+        an authenticated user with basic credentials
+      description: Send either the HOTP or TOTP code
+        depending on the two factor method used
       operationId: secondFactorPost
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -493,7 +527,8 @@ components:
   # define reusable responses:
   responses:
     BadRequest:
-      description: The requests is missing important information in the body or have invalidad data, such as invalid project specified
+      description: The requests is missing important information in the body
+        or have invalidad data, such as invalid project specified
       content:
         application/json:
           schema:
@@ -565,13 +600,13 @@ components:
           example: true
         publick_key:
           type: string
-          example: pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp
+          example: pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp # yamllint disable-line
         salt:
           type: string
           example: ssssssssssssssssssssssssssssssss
         checksum:
           type: string
-          example: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+          example: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc # yamllint disable-line
     FailedFiles:
       type: object
       required:
@@ -607,7 +642,7 @@ components:
           example: 200
         compressed:
           type: boolean
-          example: False
+          example: false
         public_key:
           type: string
           example: public_key
