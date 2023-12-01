@@ -16,8 +16,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the development enviroment
 # Uncomment when local testing
-# - url: http://localhost:5000/api/v1
-# description: Local enviroment
+#  - url: http://localhost:5000/api/v1
+#  description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -130,15 +130,7 @@ paths:
       operationId: listFiles
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
-        - name: query_string
-          in: query
-          required: true
-          schema:
-            type: object
-            properties:
-              project:
-                type: string
-                example: public_project_id
+        - $ref: "#/components/parameters/projectID"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -207,12 +199,8 @@ paths:
                 properties:
                   not_removed:
                     type: boolean
-                  fail_type:
-                    type: string
                   not_exists:
                     type: boolean
-                  nr_deleted:
-                    type: integer
                 example: { "not_removed": false, "not_exists": false }
   /file/rmdir:
     delete:
@@ -255,8 +243,6 @@ paths:
                     type: boolean
                   fail_type:
                     type: string
-                  not_exists:
-                    type: boolean
                   nr_deleted:
                     type: integer
                 example: { "not_removed": false, "fail_type": "none", "nr_deleted": 10 } # yamllint disable-line
