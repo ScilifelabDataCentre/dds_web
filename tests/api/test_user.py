@@ -1267,7 +1267,7 @@ def test_list_invites(client):
 
     response = get_list("superadmin")
     assert "invites" in response.json
-    assert len(response.json["invites"]) == 5
+    assert len(response.json["invites"]) == 6
     for entry in response.json["invites"]:
         for key in ["Email", "Role", "Projects", "Created", "Unit"]:
             assert key in entry
@@ -1280,7 +1280,7 @@ def test_list_invites(client):
 
     response = get_list("unitadmin")
     assert "invites" in response.json
-    assert len(response.json["invites"]) == 2
+    assert len(response.json["invites"]) == 3
     for entry in response.json["invites"]:
         for key in ["Email", "Role", "Projects", "Created"]:
             assert key in entry
@@ -1297,7 +1297,7 @@ def test_list_invites(client):
 
     response = get_list("projectowner")
     assert "invites" in response.json
-    assert len(response.json["invites"]) == 1
+    assert len(response.json["invites"]) == 2
     for entry in response.json["invites"]:
         for key in ["Email", "Role", "Projects", "Created"]:
             assert key in entry
