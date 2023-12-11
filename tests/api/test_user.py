@@ -32,6 +32,7 @@ existing_invite = {"email": "existing_invite_email@mailtrap.io", "role": "Resear
 new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Unit Admin"}
 new_super_admin = {"email": "new_super_admin@mailtrap.io", "role": "Super Admin"}
 new_unit_user = {"email": "new_unit_user@mailtrap.io", "role": "Unit Personnel"}
+new_owner_existing_project = {"email": "new_owner@mailtrap.io", "project": "public_project_id", "role": "Project Owner"} 
 existing_research_user = {"email": "researchuser2@mailtrap.io", "role": "Researcher"}
 existing_research_user_owner = {"email": "researchuser2@mailtrap.io", "role": "Project Owner"}
 existing_research_user_to_existing_project = {
@@ -1247,6 +1248,13 @@ def test_list_invites(client):
     invite_user(new_super_admin, "superadmin")
 
     researcher_to_project = dict(first_new_user_existing_project)
+    invite_user(researcher_to_project, "unitadmin")
+    researcher_to_project["project"] = "second_public_project_id"
+    invite_user(researcher_to_project, "unitadmin")
+    researcher_to_project["project"] = "unit2testing"
+    invite_user(researcher_to_project, "unitadmin")
+
+    researcher_to_project = dict(new_owner_existing_project)
     invite_user(researcher_to_project, "unitadmin")
     researcher_to_project["project"] = "second_public_project_id"
     invite_user(researcher_to_project, "unitadmin")
