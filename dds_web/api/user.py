@@ -1335,7 +1335,7 @@ class InvitedUsers(flask_restful.Resource):
             return hit
 
         def mark_if_owner(entry,invite_id):
-            """ Given a list of users to print, If the researcher is Project Owner, list the role as Owner."""
+            """Given a list of users to print, If the researcher is Project Owner, list the role as Owner."""
             if (
                 models.ProjectInviteKeys.query.filter_by(invite_id=invite_id)
                 .filter_by(owner=1)
@@ -1352,7 +1352,7 @@ class InvitedUsers(flask_restful.Resource):
                 entry = row_to_dict(inv)
                 if inv.role == "Super Admin":
                     entry["Projects"] = "----"
-                mark_if_owner(entry,inv.id)
+                mark_if_owner(entry, inv.id)
                 hits.append(entry)
 
         elif current_user.role in ("Unit Admin", "Unit Personnel"):
@@ -1372,7 +1372,7 @@ class InvitedUsers(flask_restful.Resource):
                     entry["Projects"] = [
                         project for project in entry["Projects"] if project in unit_projects_pubid
                     ]
-                    mark_if_owner(entry,inv.id)
+                    mark_if_owner(entry, inv.id)
                     hits.append(entry)
                 elif inv.role in ("Unit Admin", "Unit Personnel") and inv.unit == unit:
                     hits.append(row_to_dict(inv))
@@ -1403,7 +1403,7 @@ class InvitedUsers(flask_restful.Resource):
                     entry["Projects"] = [
                         project for project in entry["Projects"] if project in user_projects_pubid
                     ]
-                    mark_if_owner(entry,inv.id)
+                    mark_if_owner(entry, inv.id)
                     hits.append(entry)
         else:
             # in case further roles are defined in the future
