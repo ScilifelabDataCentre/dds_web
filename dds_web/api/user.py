@@ -1334,7 +1334,7 @@ class InvitedUsers(flask_restful.Resource):
                 hit["Unit"] = hit["Unit"].name
             return hit
 
-        def mark_if_owner(entry,invite_id):
+        def mark_if_owner(entry, invite_id):
             """Given a list of users to print, If the researcher is Project Owner, list the role as Owner."""
             if (
                 models.ProjectInviteKeys.query.filter_by(invite_id=invite_id)
