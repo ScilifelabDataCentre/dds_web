@@ -32,6 +32,11 @@ existing_invite = {"email": "existing_invite_email@mailtrap.io", "role": "Resear
 new_unit_admin = {"email": "new_unit_admin@mailtrap.io", "role": "Unit Admin"}
 new_super_admin = {"email": "new_super_admin@mailtrap.io", "role": "Super Admin"}
 new_unit_user = {"email": "new_unit_user@mailtrap.io", "role": "Unit Personnel"}
+new_owner_existing_project = {
+    "email": "new_owner@mailtrap.io",
+    "project": "public_project_id",
+    "role": "Project Owner",
+}
 existing_research_user = {"email": "researchuser2@mailtrap.io", "role": "Researcher"}
 existing_research_user_owner = {"email": "researchuser2@mailtrap.io", "role": "Project Owner"}
 existing_research_user_to_existing_project = {
@@ -1253,9 +1258,16 @@ def test_list_invites(client):
     researcher_to_project["project"] = "unit2testing"
     invite_user(researcher_to_project, "unitadmin")
 
+    researcher_to_project = dict(new_owner_existing_project)
+    invite_user(researcher_to_project, "unitadmin")
+    researcher_to_project["project"] = "second_public_project_id"
+    invite_user(researcher_to_project, "unitadmin")
+    researcher_to_project["project"] = "unit2testing"
+    invite_user(researcher_to_project, "unitadmin")
+
     response = get_list("superadmin")
     assert "invites" in response.json
-    assert len(response.json["invites"]) == 5
+    assert len(response.json["invites"]) == 6
     for entry in response.json["invites"]:
         for key in ["Email", "Role", "Projects", "Created", "Unit"]:
             assert key in entry
@@ -1268,7 +1280,7 @@ def test_list_invites(client):
 
     response = get_list("unitadmin")
     assert "invites" in response.json
-    assert len(response.json["invites"]) == 2
+    assert len(response.json["invites"]) == 3
     for entry in response.json["invites"]:
         for key in ["Email", "Role", "Projects", "Created"]:
             assert key in entry
@@ -1285,7 +1297,7 @@ def test_list_invites(client):
 
     response = get_list("projectowner")
     assert "invites" in response.json
-    assert len(response.json["invites"]) == 1
+    assert len(response.json["invites"]) == 2
     for entry in response.json["invites"]:
         for key in ["Email", "Role", "Projects", "Created"]:
             assert key in entry

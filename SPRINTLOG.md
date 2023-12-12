@@ -334,3 +334,4 @@ _Nothing merged in CLI during this sprint_
 # 2023-12-4 - 2023-12-15
 
 - Implemented swagger documentation ([#1495](https://github.com/ScilifelabDataCentre/dds_web/pull/1495))
+- Fix listing users was not showing PO ([#1497](https://github.com/ScilifelabDataCentre/dds_web/pull/1497))
