@@ -331,6 +331,6 @@ _Nothing merged in CLI during this sprint_
 - Updated Several node libraries to address vulnerabities ([#1492](https://github.com/ScilifelabDataCentre/dds_web/pull/1492))
 - New version: 2.6.0 ([#1494](https://github.com/ScilifelabDataCentre/dds_web/pull/1494))
 
-# 2023-11-20 - 2023-11-01
+# 2023-12-4 - 2023-12-15
 
 - Implemented swagger documentation ([#1495](https://github.com/ScilifelabDataCentre/dds_web/pull/1495))
