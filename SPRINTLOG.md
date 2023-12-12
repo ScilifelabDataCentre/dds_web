@@ -332,5 +332,6 @@ _Nothing merged in CLI during this sprint_
 - New version: 2.6.0 ([#1494](https://github.com/ScilifelabDataCentre/dds_web/pull/1494))
 
 # 2023-12-4 - 2023-12-15
+
 - Patch update crypthography package to address cve ([#1496](https://github.com/ScilifelabDataCentre/dds_web/pull/1496))
 - Fix listing users was not showing PO ([#1497](https://github.com/ScilifelabDataCentre/dds_web/pull/1497))
