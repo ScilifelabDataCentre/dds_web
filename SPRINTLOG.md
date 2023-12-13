@@ -335,3 +335,4 @@ _Nothing merged in CLI during this sprint_
 
 - Patch update crypthography package to address cve ([#1496](https://github.com/ScilifelabDataCentre/dds_web/pull/1496))
 - Fix listing users was not showing PO ([#1497](https://github.com/ScilifelabDataCentre/dds_web/pull/1497))
+- Bug: `flask send-usage` permission issue on testing and production environment ([1499](https://github.com/ScilifelabDataCentre/dds_web/pull/1499))

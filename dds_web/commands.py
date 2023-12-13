@@ -945,6 +945,7 @@ def send_usage(months):
 
     # CSV files to send
     csv_file_names = []
+    csv_file_location = "/tmp/"
 
     have_failed = False  # Flag to check if any csv files failed to be generated
 
@@ -952,7 +953,7 @@ def send_usage(months):
     for unit in models.Unit.query:
         # Generate CSV file name
         csv_file_name = pathlib.Path(
-            f"{unit.public_id}_Usage_Months-{start.month}-to-{end.month}.csv"
+            f"{csv_file_location}{unit.public_id}_Usage_Months-{start.month}-to-{end.month}.csv"
         )
         flask.current_app.logger.debug(f"CSV file name: {csv_file_name}")
 
