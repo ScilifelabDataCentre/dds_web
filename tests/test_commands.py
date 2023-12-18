@@ -1757,6 +1757,8 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
         Return the csv files attached to the email.
         """
 
+        csv_file_location = "/tmp/"
+
         with mail.record_messages() as outbox:
             with patch("dds_web.utils.current_time") as current_time_func:  # Mock current time
                 current_time_func.return_value = start_time
@@ -1775,8 +1777,12 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
             end_month = end_time.month
             unit_1_id = project_1_unit_1.responsible_unit.public_id
             unit_2_id = project_1_unit_2.responsible_unit.public_id
-            csv_1_name = f"{unit_1_id}_Usage_Months-{end_month}-to-{start_month}.csv"
-            csv_2_name = f"{unit_2_id}_Usage_Months-{end_month}-to-{start_month}.csv"
+            csv_1_name = (
+                f"{csv_file_location}{unit_1_id}_Usage_Months-{end_month}-to-{start_month}.csv"
+            )
+            csv_2_name = (
+                f"{csv_file_location}{unit_2_id}_Usage_Months-{end_month}-to-{start_month}.csv"
+            )
 
             # check that the files no longer exist in the filesystem
             assert not os.path.exists(csv_1_name)

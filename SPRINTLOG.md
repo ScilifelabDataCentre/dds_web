@@ -330,3 +330,10 @@ _Nothing merged in CLI during this sprint_
 - Updated PostCss Node package to address vulnerabities ([#1489](https://github.com/ScilifelabDataCentre/dds_web/pull/1489))
 - Updated Several node libraries to address vulnerabities ([#1492](https://github.com/ScilifelabDataCentre/dds_web/pull/1492))
 - New version: 2.6.0 ([#1494](https://github.com/ScilifelabDataCentre/dds_web/pull/1494))
+
+# 2023-12-4 - 2023-12-15
+
+- Patch update crypthography package to address cve ([#1496](https://github.com/ScilifelabDataCentre/dds_web/pull/1496))
+- Fix listing users was not showing PO ([#1497](https://github.com/ScilifelabDataCentre/dds_web/pull/1497))
+- Bug: `flask send-usage` permission issue on testing and production environment ([1499](https://github.com/ScilifelabDataCentre/dds_web/pull/1499))
+- New version: 2.6.1 ([#1501](https://github.com/ScilifelabDataCentre/dds_web/pull/1501))
