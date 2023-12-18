@@ -1,6 +1,17 @@
 Changelog
 ==========
 
+.. _2.6.1:
+
+2.6.1 - 2023-12-20
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- Bugs fixed:
+    - Listing users invites will now show if the invote is for Project Owner.
+    - Permissions issue for `send-usage` command in testing and production environment.
+- Dependencies: 
+    - `Cryptography` from `41.0.3` to `41.0.6`
+
 .. _2.6.0:
 
 2.6.0 - 2023-11-22
