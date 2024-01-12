@@ -339,4 +339,7 @@ _Nothing merged in CLI during this sprint_
 - Bug: `flask send-usage` permission issue on testing and production environment ([1499](https://github.com/ScilifelabDataCentre/dds_web/pull/1499))
 - New version: 2.6.1 ([#1501](https://github.com/ScilifelabDataCentre/dds_web/pull/1501))
 
+# 2023-12-15 - 2024-01-12
 
+- Minor update jinja2 package to address cve ([#1503](https://github.com/ScilifelabDataCentre/dds_web/pull/1503))
+- Minor update jwcrypto package to address cve ([#1504](https://github.com/ScilifelabDataCentre/dds_web/pull/1504))
