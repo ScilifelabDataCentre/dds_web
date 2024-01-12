@@ -343,6 +343,7 @@ _Nothing merged in CLI during this sprint_
 
 - Minor update jinja2 package to address cve ([#1503](https://github.com/ScilifelabDataCentre/dds_web/pull/1503))
 - Minor update jwcrypto package to address cve ([#1504](https://github.com/ScilifelabDataCentre/dds_web/pull/1504))
+<<<<<<< HEAD
 
 # 2024-01-15 - 2024-01-26
 
@@ -354,3 +355,5 @@ _Nothing merged in CLI during this sprint_
 # 2024-01-29 - 2024-02-09
 
 - Use of a fix version of black and linted files to 24.1.1 ([#1510](https://github.com/ScilifelabDataCentre/dds_web/pull/1510))
+=======
+>>>>>>> 8f936658 (springlog)
