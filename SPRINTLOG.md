@@ -337,3 +337,7 @@ _Nothing merged in CLI during this sprint_
 - Fix listing users was not showing PO ([#1497](https://github.com/ScilifelabDataCentre/dds_web/pull/1497))
 - Bug: `flask send-usage` permission issue on testing and production environment ([1499](https://github.com/ScilifelabDataCentre/dds_web/pull/1499))
 - New version: 2.6.1 ([#1501](https://github.com/ScilifelabDataCentre/dds_web/pull/1501))
+
+# 2023-12-15 - 2024-01-12
+
+- Minor update jinja2 package to address cve ([#1503](https://github.com/ScilifelabDataCentre/dds_web/pull/1503))
