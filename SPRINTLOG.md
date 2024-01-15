@@ -343,7 +343,3 @@ _Nothing merged in CLI during this sprint_
 
 - Minor update jinja2 package to address cve ([#1503](https://github.com/ScilifelabDataCentre/dds_web/pull/1503))
 - Minor update jwcrypto package to address cve ([#1504](https://github.com/ScilifelabDataCentre/dds_web/pull/1504))
-
-# 2023-11-20 - 2023-11-01
-
-- Implemented swagger documentation ([#1495](https://github.com/ScilifelabDataCentre/dds_web/pull/1495))
