@@ -88,10 +88,8 @@ paths:
         - files
       summary: Get name in bucket for all files specified CHECK METHOD
       description: This method requires the data
-        to be passed in the request body instead of the query,
-        because it is not according to the openAPI standar swagger does not
-        let document it properly, therefore it is plan to be
-        removed in the future.
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
       deprecated: true
       operationId: matchFiles
       parameters:
