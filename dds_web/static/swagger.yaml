@@ -89,7 +89,7 @@ paths:
       summary: Get name in bucket for all files specified CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
         therefore we need to change/remove it in the future.
       deprecated: true
       operationId: matchFiles
@@ -122,7 +122,7 @@ paths:
       summary: Get a list of files within the specific folder CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
         therefore we need to change/remove it in the future.
       deprecated: true
       operationId: listFiles
@@ -165,7 +165,7 @@ paths:
       summary: Deletes a file CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
         therefore we need to change/remove it in the future.
       deprecated: true
       operationId: removeFile
@@ -207,7 +207,7 @@ paths:
       description: This method requires the data
         to be passed in the request body instead of the query.
         Since this does not comply with the openAPI standards, swagger cannot document it properly,
-         therefore we need to change/remove it in the future.
+        therefore we need to change/remove it in the future.
       deprecated: true
       operationId: removeDir
       parameters:
@@ -249,7 +249,7 @@ paths:
       summary: Get file info on files to download CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
         therefore we need to change/remove it in the future.
       deprecated: true
       operationId: fileInfo
@@ -289,7 +289,7 @@ paths:
       summary: Get info on all project files CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
         therefore we need to change/remove it in the future.
       deprecated: true
       operationId: fileInfoAll
@@ -411,7 +411,7 @@ paths:
         by an authenticated user with basic credentials CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
         therefore we need to change/remove it in the future.
       deprecated: true
       operationId: secondFactorGet
