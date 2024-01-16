@@ -3,7 +3,7 @@
 openapi: 3.0.0
 info:
   description: |
-    Docuementation for the API of the Data Delivery System (DDS) in SciLifeLab
+    Documentation for the API of the Data Delivery System (DDS) in SciLifeLab
   version: "2.6.0"
   title: Data Delivery System
 # Apply the encrypted token to all operations
