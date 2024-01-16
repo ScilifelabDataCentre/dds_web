@@ -89,7 +89,8 @@ paths:
       summary: Get name in bucket for all files specified CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        therefore we need to change/remove it in the future.
       deprecated: true
       operationId: matchFiles
       parameters:
@@ -121,7 +122,8 @@ paths:
       summary: Get a list of files within the specific folder CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        therefore we need to change/remove it in the future.
       deprecated: true
       operationId: listFiles
       parameters:
@@ -163,7 +165,8 @@ paths:
       summary: Deletes a file CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        therefore we need to change/remove it in the future.
       deprecated: true
       operationId: removeFile
       parameters:
@@ -203,7 +206,8 @@ paths:
       summary: Deletes folder(s) CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+         therefore we need to change/remove it in the future.
       deprecated: true
       operationId: removeDir
       parameters:
@@ -245,7 +249,8 @@ paths:
       summary: Get file info on files to download CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        therefore we need to change/remove it in the future.
       deprecated: true
       operationId: fileInfo
       parameters:
@@ -284,7 +289,8 @@ paths:
       summary: Get info on all project files CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        therefore we need to change/remove it in the future.
       deprecated: true
       operationId: fileInfoAll
       parameters:
@@ -405,7 +411,8 @@ paths:
         by an authenticated user with basic credentials CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, 
+        therefore we need to change/remove it in the future.
       deprecated: true
       operationId: secondFactorGet
       parameters:
