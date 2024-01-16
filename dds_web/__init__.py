@@ -312,7 +312,24 @@ def create_app(testing=False, database_uri=None):
             from dds_web.api import api_blueprint
             from dds_web.web.root import pages
             from dds_web.web.user import auth_blueprint
+            from flask_swagger_ui import get_swaggerui_blueprint
 
+            # url for the documentation
+            SWAGGER_URL = "/documentation"
+            # path where the swagger file is localted in the repository
+            API_URL = "/static/swagger.yaml"
+
+            # register blueprint for the documentation
+            swagger_ui_blueprint = get_swaggerui_blueprint(
+                SWAGGER_URL,
+                API_URL,
+                config={
+                    "app_name": "DDS API Documentation",
+                    "defaultModelsExpandDepth": -1,
+                    "layout": "BaseLayout",
+                },
+            )
+            app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
             app.register_blueprint(api_blueprint, url_prefix="/api/v1")
             app.register_blueprint(pages, url_prefix="")
             app.register_blueprint(auth_blueprint, url_prefix="")
