@@ -119,11 +119,9 @@ paths:
       tags:
         - files
       summary: Get a list of files within the specific folder CHECK METHOD
-      description: This method requires the data (project ID)
-        to be passed in the request body instead of the query,
-        because it is not according to the openAPI standar swagger does not
-        let document it properly, therefore it is plan to be
-        removed in the future.
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
       deprecated: true
       operationId: listFiles
       parameters:
@@ -164,10 +162,8 @@ paths:
         - files
       summary: Deletes a file CHECK METHOD
       description: This method requires the data
-        to be passed in the request body instead of the query,
-        because it is not according to the openAPI standar swagger does not
-        let document it properly, therefore it is plan to be
-        removed in the future.
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
       deprecated: true
       operationId: removeFile
       parameters:
@@ -206,10 +202,8 @@ paths:
         - files
       summary: Deletes folder(s) CHECK METHOD
       description: This method requires the data
-        to be passed in the request body instead of the query,
-        because it is not according to the openAPI standar swagger does not
-        let document it properly, therefore it is plan to be
-        removed in the future.
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
       deprecated: true
       operationId: removeDir
       parameters:
@@ -250,10 +244,8 @@ paths:
         - files
       summary: Get file info on files to download CHECK METHOD
       description: This method requires the data
-        to be passed in the request body instead of the query,
-        because it is not according to the openAPI standar swagger does not
-        let document it properly, therefore it is plan to be
-        removed in the future.
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
       deprecated: true
       operationId: fileInfo
       parameters:
@@ -290,11 +282,9 @@ paths:
       tags:
         - files
       summary: Get info on all project files CHECK METHOD
-      description: This method requires the data (project ID)
-        to be passed in the request body instead of the query,
-        because it is not according to the openAPI standar swagger does not
-        let document it properly, therefore it is plan to be
-        removed in the future.
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
       deprecated: true
       operationId: fileInfoAll
       parameters:
@@ -414,10 +404,8 @@ paths:
       summary: Take in and verify an authentication one-time code entered
         by an authenticated user with basic credentials CHECK METHOD
       description: This method requires the data
-        to be passed in the request body instead of the query,
-        because it is not according to the openAPI standar swagger does not
-        let document it properly, therefore it is plan to be
-        removed in the future.
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly, therefore we need to change/remove it in the future.
       deprecated: true
       operationId: secondFactorGet
       parameters:
