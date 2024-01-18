@@ -504,8 +504,7 @@ def test_upload_and_delete_file(client, boto3_session):
     response = client.delete(
         tests.DDSEndpoint.REMOVE_FILE,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": "file_testing_project"},
-        json=[FIRST_NEW_FILE["name"]],
+        query_string={"project": "file_testing_project", "files": [FIRST_NEW_FILE["name"]]},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert not response.json["not_removed"]
@@ -547,8 +546,7 @@ def test_upload_and_delete_folder(client, boto3_session):
     response = client.delete(
         tests.DDSEndpoint.REMOVE_FOLDER,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": "file_testing_project"},
-        json=["invalid_folder"],
+        query_string={"project": "file_testing_project", "folders": ["invalid_folder"]},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json["not_exists"][0] == "invalid_folder"
@@ -557,8 +555,7 @@ def test_upload_and_delete_folder(client, boto3_session):
     response = client.delete(
         tests.DDSEndpoint.REMOVE_FOLDER,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": "file_testing_project"},
-        json=[file_1_in_folder["subpath"]],
+        query_string={"project": "file_testing_project", "folders": [file_1_in_folder["subpath"]]},
     )
     assert response.status_code == http.HTTPStatus.OK
     assert not response.json["not_removed"]

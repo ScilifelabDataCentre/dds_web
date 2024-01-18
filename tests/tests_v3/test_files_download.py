@@ -22,17 +22,9 @@ def get_json_file_info(client, args: dict, user_type="researchuser") -> dict:
     return response.json
 
 
-def test_file_download_empty(client):
-    """Make empty request."""
-    args = {}
-    response_json = get_json_file_info(client, args)
-    assert response_json
-    assert "Required data missing from request" in response_json.get("message")
-
-
 def test_file_download_no_project(client):
     """Make request with no project ID."""
-    args = {"json": ["filename1"]}
+    args = {"query_string": {"files": ["filename1"]}}
     response_json = get_json_file_info(client, args)
     assert response_json
     assert (
@@ -44,8 +36,7 @@ def test_file_download_no_project(client):
 def test_file_download_project_none(client):
     """Make request with project as None."""
     args = {
-        "json": ["filename1"],
-        "query_string": {"project": None},
+        "query_string": {"project": None, "files": ["filename1"]},
     }
     response_json = get_json_file_info(client, args)
     assert response_json
@@ -58,8 +49,7 @@ def test_file_download_project_none(client):
 def test_file_download_unknown_field(client):
     """Make request with unknown field passed."""
     args = {
-        "json": ["filename1"],
-        "query_string": {"test": "test"},
+        "query_string": {"test": "test", "files": ["filename1"]},
     }
     response_json = get_json_file_info(client, args)
     assert response_json
@@ -125,8 +115,7 @@ def test_files_download_in_progress(client, boto3_session):
     response = client.get(
         tests.DDSEndpoint.FILE_INFO,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        query_string={"project": "public_project_id"},
-        json=["filename1"],
+        query_string={"project": "public_project_id", "files": ["filename1"]},
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "Current Project status limits file download." in response.json["message"]
@@ -158,8 +147,7 @@ def test_file_download(client, boto3_session):
         response = client.get(
             tests.DDSEndpoint.FILE_INFO,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-            query_string={"project": "public_project_id"},
-            json=["filename1"],
+            query_string={"project": "public_project_id", "files": ["filename1"]},
         )
         assert response.status_code == http.HTTPStatus.OK
         # filename1 in conftest
