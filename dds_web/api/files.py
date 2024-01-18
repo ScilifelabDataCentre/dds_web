@@ -204,10 +204,52 @@ class MatchFiles(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @json_required
     @handle_validation_errors
     def get(self):
         """Get name in bucket for all files specified."""
+
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_get()
+
+        elif "api/v3" in flask.request.path:
+            # Verify project ID and access
+            project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+            
+            # Verify project has correct status for upload
+            check_eligibility_for_upload(status=project.current_status)
+
+            # Get files from request
+            files = flask.request.args.getlist('files')
+            if not files:
+                raise DDSArgumentError("No files specified.")
+
+            try:
+                matching_files = (
+                    models.File.query.filter(models.File.name.in_(files))
+                    .filter(models.File.project_id == sqlalchemy.func.binary(project.id))
+                    .all()
+                )
+            except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+                raise DatabaseError(
+                    message=str(err),
+                    alt_message=f"Failed to get matching files in db"
+                    + (
+                        ": Database malfunction."
+                        if isinstance(err, sqlalchemy.exc.OperationalError)
+                        else "."
+                    ),
+                ) from err
+
+            # The files checked are not in the db
+            if not matching_files or matching_files is None:
+                return {"files": None}
+
+            return {"files": {x.name: x.name_in_bucket for x in matching_files}}
+
+    @json_required
+    def old_get(self):
+        """ Implementation of old get method. Should be removed when api/v1 is removed. """
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
@@ -247,6 +289,63 @@ class ListFiles(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         """Get a list of files within the specified folder."""
+        
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_get()
+
+        elif "api/v3" in flask.request.path:
+            # Verify project ID and access
+            project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+            if auth.current_user().role == "Researcher" and project.current_status == "In Progress":
+                raise AccessDeniedError(
+                    message="The project status must be 'Available'. Please wait for unit to release the data."
+                )
+
+            # Check if to return file size
+            show_size = flask.request.args.get("show_size")
+
+            # Check if to get from root or folder
+            subpath = "."
+            if flask.request.args.get("subpath"):
+                subpath = flask.request.args.get("subpath").rstrip(os.sep)
+
+            files_folders = list()
+
+            # Check project not empty
+            if project.num_files == 0:
+                return {"num_items": 0, "message": f"The project {project.public_id} is empty."}
+
+            # Get files and folders
+            distinct_files, distinct_folders = self.items_in_subpath(project=project, folder=subpath)
+
+            # Collect file and folder info to return to CLI
+            if distinct_files:
+                for x in distinct_files:
+                    info = {
+                        "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
+                        "folder": False,
+                    }
+                    if show_size:
+                        info.update({"size": float(x[1])})
+                    files_folders.append(info)
+            if distinct_folders:
+                for x in distinct_folders:
+                    info = {
+                        "name": x if subpath == "." else x.split(os.sep)[-1],
+                        "folder": True,
+                    }
+
+                    if show_size:
+                        folder_size = self.get_folder_size(project=project, folder_name=x)
+                        info.update({"size": float(folder_size)})
+                    files_folders.append(info)
+
+            return {"files_folders": files_folders}
+
+    def old_get(self):
+        """ Implementation of old get method. Should be removed when api/v1 is removed. """
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
@@ -406,10 +505,35 @@ class RemoveFile(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @json_required
     @handle_validation_errors
     def delete(self):
         """Delete file(s)."""
+
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_delete()
+
+        elif "api/v3" in flask.request.path:
+            # Verify project ID and access
+            project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+            # Verify project status ok for deletion
+            check_eligibility_for_deletion(
+                status=project.current_status, has_been_available=project.has_been_available
+            )
+
+            # Delete file(s) from db and cloud
+            not_removed_dict, not_exist_list = self.delete_multiple(
+                project=project, files=flask.request.args.getlist("files")
+            )
+
+            # Return deleted and not deleted files
+            return {"not_removed": not_removed_dict, "not_exists": not_exist_list}
+
+    @json_required
+    def old_delete(self):
+        """ Implementation of old get method. Should be removed when api/v1 is removed. """
+
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
@@ -522,10 +646,76 @@ class RemoveDir(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @json_required
     @handle_validation_errors
     def delete(self):
         """Delete folder(s)."""
+
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_delete()
+        
+        elif "api/v3" in flask.request.path:
+            # Verify project ID and access
+            project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+            # Verify project status ok for deletion
+            check_eligibility_for_deletion(
+                status=project.current_status, has_been_available=project.has_been_available
+            )
+
+            # Remove folder(s)
+            not_removed, not_exist = ({}, [])
+            fail_type = None
+            with ApiS3Connector(project=project) as s3conn:
+                for folder_name in flask.request.args.getlist("folders"):
+                    # Get all files in the folder
+                    files = self.get_files_for_deletion(project=project, folder=folder_name)
+                    if not files:
+                        not_exist.append(folder_name)
+                        continue
+
+                    # S3 can only delete 1000 files per request
+                    # The deletion will thus be divided into batches of at most 1000 files
+                    batch_size: int = 1000
+                    for i in range(0, len(files), batch_size):
+                        # Delete from s3
+                        bucket_names = tuple(
+                            entry.name_in_bucket for entry in files[i : i + batch_size]
+                        )
+                        try:
+                            s3conn.remove_multiple(items=bucket_names, batch_size=batch_size)
+                        except botocore.client.ClientError as err:
+                            not_removed[folder_name] = str(err)
+                            fail_type = "s3"
+                            break
+
+                        # Commit to db if no error so far
+                        try:
+                            self.queue_file_entry_deletion(files[i : i + batch_size])
+                            project.date_updated = dds_web.utils.current_time()
+                            db.session.commit()
+                        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+                            db.session.rollback()
+                            flask.current_app.logger.error(
+                                "Files deleted in S3 but not in db. The entries must be synchronised! "
+                                f"Error: {str(err)}"
+                            )
+                            not_removed[folder_name] = "Could not remove files in folder" + (
+                                ": Database malfunction."
+                                if isinstance(err, sqlalchemy.exc.OperationalError)
+                                else "."
+                            )
+                            fail_type = "db"
+                            break
+
+            return {
+                "not_removed": not_removed,
+                "fail_type": fail_type,
+                "not_exists": not_exist,
+                "nr_deleted": len(files) if not not_removed else i,
+            }
+
+    @json_required
+    def old_delete(self):
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         # Verify project status ok for deletion
@@ -636,10 +826,41 @@ class FileInfo(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
-    @json_required
     @handle_validation_errors
     def get(self):
         """Checks which files can be downloaded, and get their info."""
+
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_get()
+
+        elif "api/v3" in flask.request.path:
+            # Verify project ID and access
+            project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+
+            # Verify project status ok for download
+            user_role = auth.current_user().role
+            check_eligibility_for_download(status=project.current_status, user_role=user_role)
+
+            # Get project contents
+            input_ = {
+                "project": project.public_id,
+                **{"requested_items": flask.request.args.getlist("files"), "url": True},
+            }
+            (
+                found_files,
+                found_folder_contents,
+                not_found,
+            ) = project_schemas.ProjectContentSchema().dump(input_)
+
+            return {
+                "files": found_files,
+                "folder_contents": found_folder_contents,
+                "not_found": not_found,
+            }
+
+    @json_required
+    def old_get(self):
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 

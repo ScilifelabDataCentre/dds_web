@@ -4,19 +4,22 @@ openapi: 3.0.0
 info:
   description: |
     Documentation for the API of the Data Delivery System (DDS) in SciLifeLab
-  version: "2.6.2"
+    WARNING: This version of the API is not stable and is subject to change
+    without notice. Use at your own risk.
+    We recomended to still use, for now, the version located in the
+    the url -> /documentation/v1
+  version: "3.x.x"
   title: Data Delivery System
 # Apply the encrypted token to all operations
 security:
   - seconFactorToken: []
 servers:
-  # Added by API Auto Mocking Plugin
-  - url: https://delivery.scilifelab.se/api/v1
+  - url: https://delivery.scilifelab.se/api/v3
     description: Endpoint for the production enviroment
-  - url: https://dds-dev.dckube3.scilifelab.se/api/v1
+  - url: https://dds-dev.dckube3.scilifelab.se/api/v3
     description: Endpoint for the development enviroment
   # Uncomment when local testing
-  - url: http://localhost:5000/api/v1
+  - url: http://localhost:5000/api/v3
     description: Local enviroment
 tags:
   - name: authentication
@@ -86,16 +89,12 @@ paths:
     get:
       tags:
         - files
-      summary: Get name in bucket for all files specified CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Get name in bucket for all files specified
       operationId: matchFiles
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
+        - $ref: "#/components/parameters/filesToQuery"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -119,16 +118,21 @@ paths:
     get:
       tags:
         - files
-      summary: Get a list of files within the specific folder CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Get a list of files and folders within an specific folder
       operationId: listFiles
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
+        - name: show_size
+          in: query
+          schema:
+            type: boolean
+          description: Return the size of files/folders
+        - name: subpath
+          in: query
+          schema:
+            type: string
+          description: Check from which folder to get, empty parameters equals check from root
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -162,24 +166,12 @@ paths:
     delete:
       tags:
         - files
-      summary: Deletes a file CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Deletes a file or several files
       operationId: removeFile
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-        - name: json
-          in: query
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
-            example: [file_name.txt, file_name_2.txt]
+        - $ref: "#/components/parameters/filesToQuery"  
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -203,24 +195,12 @@ paths:
     delete:
       tags:
         - files
-      summary: Deletes folder(s) CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Removes one or more full directories from the database and s3.
       operationId: removeDir
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-        - name: json
-          in: query
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
-            example: [folder_1, folder_2]
+        - $ref: "#/components/parameters/foldersToQuery"  
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -246,24 +226,12 @@ paths:
     get:
       tags:
         - files
-      summary: Get file info on files to download CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Get file info on files to download
       operationId: fileInfo
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-        - name: json
-          in: query
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
-            example: [file_name.txt]
+        - $ref: "#/components/parameters/filesToQuery"  
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -405,9 +373,10 @@ paths:
       summary: Take in and verify an authentication one-time code entered
         by an authenticated user with basic credentials CHECK METHOD
       description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
+        to be passed in the request body instead of the query,
+        because it is not according to the openAPI standar swagger does not
+        let document it properly, therefore it is plan to be
+        removed in the future.
       deprecated: true
       operationId: secondFactorGet
       parameters:
@@ -471,13 +440,29 @@ components:
       required: true
       schema:
         type: string
-        example: "2.6.2"
+        example: "3.0.1"
     projectID:
       name: project
       in: query
       schema:
         type: string
       description: project id to query
+    filesToQuery:
+      name: files
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+      description: Files to query
+    foldersToQuery:
+      name: folders
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+      description: Folders to query
   # Define common request bodies:
   requestBodies:
     Files:
