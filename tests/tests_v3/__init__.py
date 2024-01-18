@@ -43,7 +43,7 @@ USER_CREDENTIALS = {
 }
 
 # TODO Get version from a variable
-DEFAULT_HEADER = {"X-CLI-Version": '3.0.1'}
+DEFAULT_HEADER = {"X-CLI-Version": "3.0.1"}
 
 
 ###############################################################################

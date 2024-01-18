@@ -25,6 +25,7 @@ api = flask_restful.Api(api_blueprint)
 api_blueprint_v3 = flask.Blueprint("api_blueprint_v3", __name__)
 api_v3 = flask_restful.Api(api_blueprint_v3)
 
+
 @api.representation("application/json")
 @api_v3.representation("application/json")
 def output_json(data, code, headers=None):
@@ -72,7 +73,9 @@ def add_resources(api, version="v1"):
     api.add_resource(user.AddUser, "/user/add", endpoint="add_user")
     api.add_resource(user.DeleteUser, "/user/delete", endpoint="delete_user")
     api.add_resource(user.DeleteUserSelf, "/user/delete_self", endpoint="delete_user_self")
-    api.add_resource(user.RemoveUserAssociation, "/user/access/revoke", endpoint="revoke_from_project")
+    api.add_resource(
+        user.RemoveUserAssociation, "/user/access/revoke", endpoint="revoke_from_project"
+    )
     api.add_resource(user.UserActivation, "/user/activation", endpoint="user_activation")
     api.add_resource(
         user.RequestHOTPActivation, "/user/hotp/activate", endpoint="request_hotp_activation"
@@ -93,12 +96,15 @@ def add_resources(api, version="v1"):
     api.add_resource(
         superadmin_only.ResetTwoFactor, "/user/totp/deactivate", endpoint="reset_user_hotp"
     )
-    api.add_resource(superadmin_only.AnyProjectsBusy, "/proj/busy/any", endpoint="projects_busy_any")
+    api.add_resource(
+        superadmin_only.AnyProjectsBusy, "/proj/busy/any", endpoint="projects_busy_any"
+    )
     api.add_resource(superadmin_only.Statistics, "/stats", endpoint="stats")
     api.add_resource(superadmin_only.UnitUserEmails, "/user/emails", endpoint="user_emails")
 
     # Invoicing ############################################################################ Invoicing #
     api.add_resource(user.ShowUsage, "/usage", endpoint="usage")
+
 
 add_resources(api, version="v1")
 add_resources(api_v3, version="v3")

@@ -215,12 +215,12 @@ class MatchFiles(flask_restful.Resource):
         elif "api/v3" in flask.request.path:
             # Verify project ID and access
             project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-            
+
             # Verify project has correct status for upload
             check_eligibility_for_upload(status=project.current_status)
 
             # Get files from request
-            files = flask.request.args.getlist('files')
+            files = flask.request.args.getlist("files")
             if not files:
                 raise DDSArgumentError("No files specified.")
 
@@ -249,7 +249,7 @@ class MatchFiles(flask_restful.Resource):
 
     @json_required
     def old_get(self):
-        """ Implementation of old get method. Should be removed when api/v1 is removed. """
+        """Implementation of old get method. Should be removed when api/v1 is removed."""
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
@@ -289,7 +289,7 @@ class ListFiles(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         """Get a list of files within the specified folder."""
-        
+
         if "api/v1" in flask.request.path:
             # requests comming from api/v1 should be handled as before
             return self.old_get()
@@ -318,7 +318,9 @@ class ListFiles(flask_restful.Resource):
                 return {"num_items": 0, "message": f"The project {project.public_id} is empty."}
 
             # Get files and folders
-            distinct_files, distinct_folders = self.items_in_subpath(project=project, folder=subpath)
+            distinct_files, distinct_folders = self.items_in_subpath(
+                project=project, folder=subpath
+            )
 
             # Collect file and folder info to return to CLI
             if distinct_files:
@@ -345,7 +347,7 @@ class ListFiles(flask_restful.Resource):
             return {"files_folders": files_folders}
 
     def old_get(self):
-        """ Implementation of old get method. Should be removed when api/v1 is removed. """
+        """Implementation of old get method. Should be removed when api/v1 is removed."""
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
@@ -532,7 +534,7 @@ class RemoveFile(flask_restful.Resource):
 
     @json_required
     def old_delete(self):
-        """ Implementation of old get method. Should be removed when api/v1 is removed. """
+        """Implementation of old get method. Should be removed when api/v1 is removed."""
 
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -653,7 +655,7 @@ class RemoveDir(flask_restful.Resource):
         if "api/v1" in flask.request.path:
             # requests comming from api/v1 should be handled as before
             return self.old_delete()
-        
+
         elif "api/v3" in flask.request.path:
             # Verify project ID and access
             project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
@@ -693,7 +695,10 @@ class RemoveDir(flask_restful.Resource):
                             self.queue_file_entry_deletion(files[i : i + batch_size])
                             project.date_updated = dds_web.utils.current_time()
                             db.session.commit()
-                        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+                        except (
+                            sqlalchemy.exc.SQLAlchemyError,
+                            sqlalchemy.exc.OperationalError,
+                        ) as err:
                             db.session.rollback()
                             flask.current_app.logger.error(
                                 "Files deleted in S3 but not in db. The entries must be synchronised! "

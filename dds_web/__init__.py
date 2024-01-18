@@ -198,9 +198,9 @@ def create_app(testing=False, database_uri=None):
                 # TODO add version check for v3 when it is released
                 # Verify that major versions match - temp solution
                 from dds_web.errors import VersionMismatchError
-                if '3' != flask.request.headers.get("X-Cli-Version").split(".")[0]:
-                    raise VersionMismatchError
 
+                if "3" != flask.request.headers.get("X-Cli-Version").split(".")[0]:
+                    raise VersionMismatchError
 
             # Get message of the day
             flask.g.motd = get_active_motds()
@@ -316,7 +316,7 @@ def create_app(testing=False, database_uri=None):
             import dds_web.security.auth
 
             # Register blueprints
-            from dds_web.api import api_blueprint,api_blueprint_v3
+            from dds_web.api import api_blueprint, api_blueprint_v3
             from dds_web.web.root import pages
             from dds_web.web.user import auth_blueprint
             from flask_swagger_ui import get_swaggerui_blueprint
@@ -348,9 +348,13 @@ def create_app(testing=False, database_uri=None):
                 },
             )
 
-            # two documentation and api versions, v3 will contain the new endpoints fixed 
-            app.register_blueprint(swagger_ui_blueprint_v1, url_prefix=SWAGGER_URL+"/v1", name="v1")
-            app.register_blueprint(swagger_ui_blueprint_v3, url_prefix=SWAGGER_URL+"/v3", name="v3")
+            # two documentation and api versions, v3 will contain the new endpoints fixed
+            app.register_blueprint(
+                swagger_ui_blueprint_v1, url_prefix=SWAGGER_URL + "/v1", name="v1"
+            )
+            app.register_blueprint(
+                swagger_ui_blueprint_v3, url_prefix=SWAGGER_URL + "/v3", name="v3"
+            )
             app.register_blueprint(api_blueprint, url_prefix="/api/v1")
             app.register_blueprint(api_blueprint_v3, url_prefix="/api/v3")
             app.register_blueprint(pages, url_prefix="")

@@ -171,7 +171,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-        - $ref: "#/components/parameters/filesToQuery"  
+        - $ref: "#/components/parameters/filesToQuery"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -200,7 +200,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-        - $ref: "#/components/parameters/foldersToQuery"  
+        - $ref: "#/components/parameters/foldersToQuery"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -231,7 +231,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-        - $ref: "#/components/parameters/filesToQuery"  
+        - $ref: "#/components/parameters/filesToQuery"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
