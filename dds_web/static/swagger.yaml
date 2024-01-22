@@ -1905,7 +1905,7 @@ components:
             Last Updated:
               type: string
               example: 2020-01-01 00:00:00
-            PI: 
+            PI:
               type: string
               example: support@example.org
             Project ID:
@@ -1913,8 +1913,8 @@ components:
               example: project_id
             Size:
               type: integer
-              example: 1000          
-            Status: 
+              example: 1000
+            Status:
               type: string
               example: In progress
             Title:
@@ -1933,6 +1933,7 @@ components:
             usage:
               type: integer
               example: 1000
+<<<<<<< HEAD
 <<<<<<< HEAD
     ProjInfo:
       type: object
@@ -2041,6 +2042,9 @@ components:
 >>>>>>> 8892009e (feedback changes)
 =======
     ProjInfo: 
+=======
+    ProjInfo:
+>>>>>>> 2f180b39 (endpoints)
       type: object
       properties:
         Created By:
@@ -2049,22 +2053,22 @@ components:
         Last Updated:
           type: string
           example: 2020-01-01 00:00:00
-        PI: 
+        PI:
           type: string
           example: support@example.org
         Project ID:
           type: string
           example: project_id
-        Status: 
+        Status:
           type: string
           example: In progress
-        Size: 
+        Size:
           type: integer
           example: 1000
         Title:
           type: string
           example: project_title
-        Description: 
+        Description:
           type: string
           example: project_description
 >>>>>>> 512e8b0a (endpoints)
