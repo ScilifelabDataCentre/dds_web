@@ -16,8 +16,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the development enviroment
   # Uncomment when local testing
-#  - url: http://localhost:5000/api/v1
-#    description: Local enviroment
+  - url: http://localhost:5000/api/v1
+    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -1765,6 +1765,7 @@ components:
         checksum:
           type: string
           example: cheksum
+<<<<<<< HEAD
     User:
       type: object
       required:
@@ -1854,6 +1855,8 @@ components:
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
+=======
+>>>>>>> 512e8b0a (endpoints)
     ProjListInfo:
       type: object
       properties:
@@ -1861,6 +1864,7 @@ components:
           type: boolean
           example: true
         project_info:
+<<<<<<< HEAD
           type: array
           items:
             type: object
@@ -1889,6 +1893,34 @@ components:
               Title:
                 type: string
                 example: project_title
+=======
+          type: object
+          properties:
+            Access:
+              type: boolean
+              example: true
+            Created By:
+              type: string
+              example: user
+            Last Updated:
+              type: string
+              example: 2020-01-01 00:00:00
+            PI: 
+              type: string
+              example: support@example.org
+            Project ID:
+              type: string
+              example: project_id
+            Size:
+              type: integer
+              example: 1000          
+            Status: 
+              type: string
+              example: In progress
+            Title:
+              type: string
+              example: project_title
+>>>>>>> 512e8b0a (endpoints)
         total_size:
           type: integer
           example: 1000
@@ -1901,6 +1933,7 @@ components:
             usage:
               type: integer
               example: 1000
+<<<<<<< HEAD
     ProjInfo:
       type: object
       properties:
@@ -2006,6 +2039,35 @@ components:
           type: integer
 =======
 >>>>>>> 8892009e (feedback changes)
+=======
+    ProjInfo: 
+      type: object
+      properties:
+        Created By:
+          type: string
+          example: user
+        Last Updated:
+          type: string
+          example: 2020-01-01 00:00:00
+        PI: 
+          type: string
+          example: support@example.org
+        Project ID:
+          type: string
+          example: project_id
+        Status: 
+          type: string
+          example: In progress
+        Size: 
+          type: integer
+          example: 1000
+        Title:
+          type: string
+          example: project_title
+        Description: 
+          type: string
+          example: project_description
+>>>>>>> 512e8b0a (endpoints)
     Token:
       type: object
       properties:
