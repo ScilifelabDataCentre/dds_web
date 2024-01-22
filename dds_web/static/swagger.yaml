@@ -488,11 +488,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserInfo"
-  /user/add: 
+  /user/add:
     post:
       tags:
         - user
-      summary: Associate existing users or unanswered invites with projects or create invites 
+      summary: Associate existing users or unanswered invites with projects or create invites
       operationId: addUser
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -563,7 +563,7 @@ paths:
               schema:
                 type: string
                 example: "{message: Requested account deletion initiated. An e-mail with a confirmation link has been sent to your address}"
-  /user/access/revoke: 
+  /user/access/revoke:
     post:
       tags:
         - user
@@ -706,7 +706,7 @@ paths:
     get:
       tags:
         - user
-      summary: Provides a list of invited users. Superadmins see all invites, unitusers the invites to their projects and units. 
+      summary: Provides a list of invited users. Superadmins see all invites, unitusers the invites to their projects and units.
       operationId: getInvites
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -730,7 +730,7 @@ paths:
       tags:
         - user
         - project
-      summary:  Calculate and display the amount of GB hours and the total cost. Only unit accounts can get invoicing information 
+      summary: Calculate and display the amount of GB hours and the total cost. Only unit accounts can get invoicing information
       operationId: showUsage
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -1009,7 +1009,7 @@ components:
         username:
           type: string
           example: unitadmin_1
-        email: 
+        email:
           type: string
           example: unitadmin1@mailtrap.io
     InvitesList:
