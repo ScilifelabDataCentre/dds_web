@@ -576,7 +576,8 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Requested account deletion initiated. An e-mail with a confirmation link has been sent to your address}"
+                example: "{message: Requested account deletion initiated.
+                  An e-mail with a confirmation link has been sent to your address}"
   /user/access/revoke:
     post:
       tags:
@@ -599,7 +600,8 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Requested account deletion initiated. An e-mail with a confirmation link has been sent to your address}"
+                example: "{message: Requested account deletion initiated.
+                  An e-mail with a confirmation link has been sent to your address}"
       requestBody:
         content:
           application/json:
@@ -667,7 +669,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Please check your email and follow the attached link to activate two-factor with email}"
+                example: "{message: Please check your email and follow the attached link to activate two-factor with email}" # yamllint disable-line
       security:
         - encryptedToken: []
   /user/totp/activate:
@@ -691,7 +693,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Please check your email and follow the attached link to activate two-factor with autenticator app}"
+                example: "{message: Please check your email and follow the attached link to activate two-factor with autenticator app}" # yamllint disable-line
   /users:
     get:
       tags:
