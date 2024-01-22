@@ -488,11 +488,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserInfo"
-  /user/add: 
+  /user/add:
     post:
       tags:
         - user
-      summary: Associate existing users or unanswered invites with projects or create invites 
+      summary: Associate existing users or unanswered invites with projects or create invites
       operationId: addUser
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -577,7 +577,7 @@ paths:
               schema:
                 type: string
                 example: "{message: Requested account deletion initiated. An e-mail with a confirmation link has been sent to your address}"
-  /user/access/revoke: 
+  /user/access/revoke:
     post:
       tags:
         - user
@@ -1434,7 +1434,7 @@ components:
         username:
           type: string
           example: unitadmin_1
-        email: 
+        email:
           type: string
           example: unitadmin1@mailtrap.io
     InvitesList:
