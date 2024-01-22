@@ -16,8 +16,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the development enviroment
   # Uncomment when local testing
-#  - url: http://localhost:5000/api/v1
-#    description: Local enviroment
+  - url: http://localhost:5000/api/v1
+    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -466,7 +466,48 @@ paths:
                     type: string
       requestBody:
         $ref: "#/components/requestBodies/Token"
-
+  ### S3 OPERATIONS #########
+  /s3/proj:
+    get:
+      tags:
+        - s3
+      summary: Get the project S3 keys
+      operationId: retrieveUserInfo
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bucket:
+                    type: string
+                    example: bucketname
+                  keys:
+                    type: object
+                    properties:
+                      access_key:
+                        type: string
+                        example: access_key
+                      secret_key:
+                        type: string
+                        example: secret_key
+                  url:
+                    type: string
+                    example: url
+                  safespring_project:
+                    type: string
+                    example: sfsp_proj
 components:
   # define reusable parameters:
   parameters:
