@@ -516,7 +516,8 @@ paths:
     delete:
       tags:
         - user
-      summary: Delete user or invite in the DDS. Unit Admins can delete Unit Admins and Unit Personnel. Super admins can delete any user CHECK METHOD
+      summary: Delete user or invite in the DDS. Unit Admins can delete Unit Admins and Unit Personnel.
+        Super admins can delete any user CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
         Since this does not comply with the openAPI standards, swagger cannot document it properly,
@@ -545,7 +546,8 @@ paths:
     delete:
       tags:
         - user
-      summary: Endpoint to initiate user self removal from the system. Every user can self-delete the own account with an e-mail confirmation
+      summary: Endpoint to initiate user self removal from the system.
+        Every user can self-delete the own account with an e-mail confirmation
       operationId: deleteUserSelf
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -562,7 +564,8 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Requested account deletion initiated. An e-mail with a confirmation link has been sent to your address}"
+                example: "{message: Requested account deletion initiated.
+                  An e-mail with a confirmation link has been sent to your address}"
   /user/access/revoke:
     post:
       tags:
@@ -585,7 +588,8 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Requested account deletion initiated. An e-mail with a confirmation link has been sent to your address}"
+                example: "{message: Requested account deletion initiated.
+                  An e-mail with a confirmation link has been sent to your address}"
       requestBody:
         content:
           application/json:
@@ -653,7 +657,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Please check your email and follow the attached link to activate two-factor with email}"
+                example: "{message: Please check your email and follow the attached link to activate two-factor with email}" # yamllint disable-line
       security:
         - encryptedToken: []
   /user/totp/activate:
@@ -677,7 +681,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Please check your email and follow the attached link to activate two-factor with autenticator app}"
+                example: "{message: Please check your email and follow the attached link to activate two-factor with autenticator app}" # yamllint disable-line
   /users:
     get:
       tags:
@@ -706,7 +710,8 @@ paths:
     get:
       tags:
         - user
-      summary: Provides a list of invited users. Superadmins see all invites, unitusers the invites to their projects and units.
+      summary: Provides a list of invited users.
+        Superadmins see all invites, unitusers the invites to their projects and units.
       operationId: getInvites
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -730,7 +735,8 @@ paths:
       tags:
         - user
         - project
-      summary: Calculate and display the amount of GB hours and the total cost. Only unit accounts can get invoicing information
+      summary: Calculate and display the amount of GB hours and the total cost.
+        Only unit accounts can get invoicing information
       operationId: showUsage
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
