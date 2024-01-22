@@ -694,7 +694,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: "#/components/schemas/ProjInfo"
+                $ref: "#/components/schemas/ProjInfo"
     put:
       tags:
         - project
@@ -715,20 +715,20 @@ paths:
           content:
             application/json:
               schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                      example: Project info updated
-                    title: 
-                      type: string
-                      example: new_title
-                    description:
-                      type: string
-                      example: new_description
-                    pi:
-                      type: string
-                      example: new_pi@example.org
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Project info updated
+                  title:
+                    type: string
+                    example: new_title
+                  description:
+                    type: string
+                    example: new_description
+                  pi:
+                    type: string
+                    example: new_pi@example.org
       requestBody:
         content:
           application/json:
@@ -739,7 +739,7 @@ paths:
                   type: string
                 new_description:
                   type: string
-                new_pi:  
+                new_pi:
                   type: string
 components:
   # define reusable parameters:
@@ -923,7 +923,7 @@ components:
             Last Updated:
               type: string
               example: 2020-01-01 00:00:00
-            PI: 
+            PI:
               type: string
               example: support@example.org
             Project ID:
@@ -931,8 +931,8 @@ components:
               example: project_id
             Size:
               type: integer
-              example: 1000          
-            Status: 
+              example: 1000
+            Status:
               type: string
               example: In progress
             Title:
@@ -950,7 +950,7 @@ components:
             usage:
               type: integer
               example: 1000
-    ProjInfo: 
+    ProjInfo:
       type: object
       properties:
         Created By:
@@ -959,22 +959,22 @@ components:
         Last Updated:
           type: string
           example: 2020-01-01 00:00:00
-        PI: 
+        PI:
           type: string
           example: support@example.org
         Project ID:
           type: string
           example: project_id
-        Status: 
+        Status:
           type: string
           example: In progress
-        Size: 
+        Size:
           type: integer
           example: 1000
         Title:
           type: string
           example: project_title
-        Description: 
+        Description:
           type: string
           example: project_description
     Token:
