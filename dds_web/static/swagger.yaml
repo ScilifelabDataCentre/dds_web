@@ -735,7 +735,7 @@ paths:
             schema:
               type: object
               properties:
-                new_title:
+                title:
                   type: string
                 new_description:
                   type: string
