@@ -347,3 +347,7 @@ _Nothing merged in CLI during this sprint_
 # 2023-11-20 - 2023-11-01
 
 - Implemented swagger documentation ([#1495](https://github.com/ScilifelabDataCentre/dds_web/pull/1495))
+
+# 2024-01-15 - 2024-01-26
+
+- Document Superadmin endpoints ([#1507](https://github.com/ScilifelabDataCentre/dds_web/pull/1507))
