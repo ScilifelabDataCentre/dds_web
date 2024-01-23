@@ -16,8 +16,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the development enviroment
   # Uncomment when local testing
-#  - url: http://localhost:5000/api/v1
-#    description: Local enviroment
+  - url: http://localhost:5000/api/v1
+    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -509,7 +509,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                type: object
+                properties:
+                  email:
+                    type: string
+                    example: researcher1@mailtrap.io
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  message:
+                    type: string
+                    example: Pending invite was successful
+                  status:
+                    type: integer
+                    example: 200
       requestBody:
         $ref: "#/components/requestBodies/User"
   /user/delete:
@@ -687,7 +701,9 @@ paths:
       tags:
         - user
       summary: List unit users within the unit the current user is connected to, or the one defined by a superadmin.
-      description: TODO - for superadmin, it can be passed a unit in the query parameters.
+        CHECK METHOD FOR SUPERADMINS
+      description: TODO - for superadmin, it can be passed a unit, currently in body, needs to be in query.
+      deprecated: true
       operationId: getUsers
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -727,9 +743,17 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/InvitesList"
+                type: object
+                properties:
+                  invites:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/InvitesList"
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    example: [Email, Role, Projects, Created]                  
   /usage:
     get:
       tags:
