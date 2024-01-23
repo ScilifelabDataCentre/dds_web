@@ -47,7 +47,8 @@ services:
   backend:
     container_name: dds_backend
     image: dds-backend-local:latest
-    user: "10600:10600"
+    # When we want to run as root, uncomment the following line
+    #user: "root:root"
     build:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./
