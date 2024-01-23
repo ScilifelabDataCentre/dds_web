@@ -16,8 +16,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the development enviroment
   # Uncomment when local testing
-  - url: http://localhost:5000/api/v1
-    description: Local enviroment
+#  - url: http://localhost:5000/api/v1
+#    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -503,7 +503,7 @@ paths:
     get:
       tags:
         - superadmin
-      summary: Get unit info.
+      summary: Get units info.
       operationId: allUnits
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -519,9 +519,27 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/UnitsInfo"
+                type: object
+                properties:
+                  units:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UnitsInfo"
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        Name,
+                        Contact Email,
+                        Days In Available,
+                        Days In Expired,
+                        External Display Name,
+                        Public ID,
+                        Safespring Endpoint,
+                        Size,
+                      ]
   /motd:
     post:
       tags:
@@ -572,9 +590,17 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/MotdInfo"
+                type: object
+                properties:
+                  motds:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MotdInfo"
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    example: [MOTD ID, Message, Created]
     put:
       tags:
         - superadmin
@@ -752,7 +778,34 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Reporting"
+                type: object
+                properties:
+                  stats:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Reporting"
+                  columns:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        Active projects,
+                        Data Now (TB),
+                        Data Uploaded (TB),
+                        Date,
+                        Inactive projects,
+                        Project Owners,
+                        Researchers,
+                        Super Admins,
+                        TBHours Last Month,
+                        TBHours Total,
+                        Total projects,
+                        Total users,
+                        Unit Admins,
+                        Unit Personnel,
+                        Units,
+                      ]
   /user/emails:
     get:
       tags:
@@ -773,17 +826,20 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
-                example:
-                  [
-                    unitadmin1@mailtrap.io,
-                    unitadmin2@mailtrap.io,
-                    unitadmin3@mailtrap.io,
-                    unituser1@mailtrap.io,
-                    unituser2@mailtrap.io,
-                  ]
+                type: object
+                properties:
+                  emails:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        unitadmin1@mailtrap.io,
+                        unitadmin2@mailtrap.io,
+                        unitadmin3@mailtrap.io,
+                        unituser1@mailtrap.io,
+                        unituser2@mailtrap.io,
+                      ]
 components:
   # define reusable parameters:
   parameters:
