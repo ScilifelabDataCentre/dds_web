@@ -47,8 +47,9 @@ services:
   backend:
     container_name: dds_backend
     image: dds-backend-local:latest
-    # When we want to run as root, uncomment the following line
-    #user: "root:root"
+    # This user will be used by default in docker compose test. 
+    # When we want to run as root, change the following line
+    user: "dds-user:dds-user"
     build:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./
