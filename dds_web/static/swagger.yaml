@@ -16,8 +16,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the development enviroment
   # Uncomment when local testing
-  - url: http://localhost:5000/api/v1
-    description: Local enviroment
+#  - url: http://localhost:5000/api/v1
+#    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -1865,6 +1865,9 @@ components:
           example: true
         project_info:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> a4a0cb69 (last changes)
           type: array
           items:
             type: object
@@ -1893,6 +1896,7 @@ components:
               Title:
                 type: string
                 example: project_title
+<<<<<<< HEAD
 =======
           type: object
           properties:
@@ -1921,6 +1925,8 @@ components:
               type: string
               example: project_title
 >>>>>>> 512e8b0a (endpoints)
+=======
+>>>>>>> a4a0cb69 (last changes)
         total_size:
           type: integer
           example: 1000
@@ -1965,6 +1971,7 @@ components:
             Description:
               type: string
               example: project_description
+<<<<<<< HEAD
 >>>>>>> 802d66dd (sync with dev)
     UnitsInfo:
       type: object
@@ -2072,6 +2079,8 @@ components:
           type: string
           example: project_description
 >>>>>>> 512e8b0a (endpoints)
+=======
+>>>>>>> a4a0cb69 (last changes)
     Token:
       type: object
       properties:
