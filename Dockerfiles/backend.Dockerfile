@@ -52,9 +52,11 @@ FROM base as test
 RUN pip3 install -r /code/tests/requirements-test.txt
 RUN apk add mariadb-client
 
-# Switch to the user before exiting layer
+# Switch to the user
 USER $USERNAME
-RUN COVERAGE_FILE=./coverage/.coverage
+# Declare coverage file
+RUN COVERAGE_FILE=/code/coverage/.coverage
+
 ###################
 ## BUILD FRONTEND
 ###################
