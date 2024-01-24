@@ -13,7 +13,7 @@ ARG USER_GID=$USER_UID
 # Create the user
 RUN addgroup -g $USER_GID $GROUPNAME \
     && adduser -D -u $USER_UID -G $GROUPNAME $USERNAME \
-    && chown -R $USERNAME:$GROUPNAME /py/lib/python3.10/site-packages && 
+    && chown -R $USERNAME:$GROUPNAME /usr/local/lib/python3.10/site-packages
 
 # Update and upgrade
 RUN apk update && apk upgrade
