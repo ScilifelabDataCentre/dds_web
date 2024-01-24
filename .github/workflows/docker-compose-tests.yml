@@ -21,6 +21,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        if: ${{ failure() }}
+        with:
+          ## If no one connects after 5 minutes, shut down server.
+          wait-timeout-minutes: 5
+
       - name: Run tests against database container
         run: docker-compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build --exit-code-from backend
 
