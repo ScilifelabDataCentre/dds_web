@@ -352,12 +352,8 @@ def create_app(testing=False, database_uri=None):
             )
 
             # two documentation and api versions, v3 will contain the new endpoints fixed
-            app.register_blueprint(
-                swagger_ui_blueprint_v1, url_prefix=SWAGGER_URL_1, name="v1"
-            )
-            app.register_blueprint(
-                swagger_ui_blueprint_v3, url_prefix=SWAGGER_URL_3, name="v3"
-            )
+            app.register_blueprint(swagger_ui_blueprint_v1, url_prefix=SWAGGER_URL_1, name="v1")
+            app.register_blueprint(swagger_ui_blueprint_v3, url_prefix=SWAGGER_URL_3, name="v3")
             app.register_blueprint(api_blueprint, url_prefix="/api/v1")
             app.register_blueprint(api_blueprint_v3, url_prefix="/api/v3")
             app.register_blueprint(pages, url_prefix="")
