@@ -3,8 +3,13 @@
 openapi: 3.0.0
 info:
   description: |
-    Documentation for the API of the Data Delivery System (DDS) in SciLifeLab
-  version: "2.6.2"
+    Documentation for the API of the Data Delivery System (DDS) in SciLifeLab.
+
+    WARNING: Some endpoints are not according to the OpenAPI standard, and therefore
+    cannot be documented properly. These endpoints are marked with CHECK METHOD and as deprecated.
+    These endpoints will be changed in the future, and will be documented properly in the url
+    https://delivery.scilifelab.se/api/documentation/v3
+  version: "" # leave empty, as otherwise will need to be updated every new release
   title: Data Delivery System
 # Apply the encrypted token to all operations
 security:
@@ -12,9 +17,9 @@ security:
 servers:
   # Added by API Auto Mocking Plugin
   - url: https://delivery.scilifelab.se/api/v1
-    description: Endpoint for the production enviroment
+    description: Endpoint for the production server
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
-    description: Endpoint for the development enviroment
+    description: Endpoint for the test server
   # Uncomment when local testing
   - url: http://localhost:5000/api/v1
     description: Local enviroment
@@ -472,6 +477,9 @@ components:
       schema:
         type: string
         example: "2.6.2"
+      description: The oficial CLI provided by the DDS team always uses the
+        latest stable version. When implementing your own client(s) make sure to set the
+        correct version header in every request.
     projectID:
       name: project
       in: query

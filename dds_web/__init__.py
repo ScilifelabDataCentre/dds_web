@@ -324,7 +324,8 @@ def create_app(testing=False, database_uri=None):
             from flask_swagger_ui import get_swaggerui_blueprint
 
             # base url for the api documentation
-            SWAGGER_URL = "/documentation"
+            SWAGGER_URL_1 = "/api/docs/v1"
+            SWAGGER_URL_3 = "/api/docs/v3"
 
             # path where the swagger file(s) are localted in the repository
             API_URL_V1 = "/static/swagger.yaml"
@@ -332,7 +333,7 @@ def create_app(testing=False, database_uri=None):
 
             # register blueprint(s) for the documentation
             swagger_ui_blueprint_v1 = get_swaggerui_blueprint(
-                SWAGGER_URL + "/v1",
+                SWAGGER_URL_1,
                 API_URL_V1,
                 config={
                     "app_name": "DDS API Documentation",
@@ -341,7 +342,7 @@ def create_app(testing=False, database_uri=None):
                 },
             )
             swagger_ui_blueprint_v3 = get_swaggerui_blueprint(
-                SWAGGER_URL + "/v3",
+                SWAGGER_URL_3,
                 API_URL_V3,
                 config={
                     "app_name": "DDS API Documentation",
@@ -352,10 +353,10 @@ def create_app(testing=False, database_uri=None):
 
             # two documentation and api versions, v3 will contain the new endpoints fixed
             app.register_blueprint(
-                swagger_ui_blueprint_v1, url_prefix=SWAGGER_URL + "/v1", name="v1"
+                swagger_ui_blueprint_v1, url_prefix=SWAGGER_URL_1, name="v1"
             )
             app.register_blueprint(
-                swagger_ui_blueprint_v3, url_prefix=SWAGGER_URL + "/v3", name="v3"
+                swagger_ui_blueprint_v3, url_prefix=SWAGGER_URL_3, name="v3"
             )
             app.register_blueprint(api_blueprint, url_prefix="/api/v1")
             app.register_blueprint(api_blueprint_v3, url_prefix="/api/v3")

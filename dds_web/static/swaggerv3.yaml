@@ -4,20 +4,21 @@ openapi: 3.0.0
 info:
   description: |
     Documentation for the API of the Data Delivery System (DDS) in SciLifeLab
+
     WARNING: This version of the API is not stable and is subject to change
     without notice. Use at your own risk.
     We recomended to still use, for now, the version located in the
-    the url -> /documentation/v1
-  version: "3.x.x"
+    the url https://delivery.scilifelab.se/api/documentation/v3
+  version: "" # leave empty, as otherwise will need to be updated every new release
   title: Data Delivery System
 # Apply the encrypted token to all operations
 security:
   - seconFactorToken: []
 servers:
   - url: https://delivery.scilifelab.se/api/v3
-    description: Endpoint for the production enviroment
+    description: Endpoint for the production server
   - url: https://dds-dev.dckube3.scilifelab.se/api/v3
-    description: Endpoint for the development enviroment
+    description: Endpoint for the test server
   # Uncomment when local testing
   - url: http://localhost:5000/api/v3
     description: Local enviroment
@@ -371,12 +372,8 @@ paths:
       tags:
         - authentication
       summary: Take in and verify an authentication one-time code entered
-        by an authenticated user with basic credentials CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query,
-        because it is not according to the openAPI standar swagger does not
-        let document it properly, therefore it is plan to be
-        removed in the future.
+        by an authenticated user with basic credentials
+      description: Deprecated. Use the POST method instead.
       deprecated: true
       operationId: secondFactorGet
       parameters:
@@ -441,6 +438,9 @@ components:
       schema:
         type: string
         example: "3.0.1"
+      description: The oficial CLI provided by the DDS team always uses the
+        latest stable version. When implementing your own client(s) make sure to set the
+        correct version header in every request.
     projectID:
       name: project
       in: query

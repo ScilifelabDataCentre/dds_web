@@ -37,7 +37,7 @@ def output_json(data, code, headers=None):
 ####################################################################################################
 # RESOURCES ############################################################################ RESOURCES #
 ####################################################################################################
-def add_resources(api, version="v1"):
+def add_resources(api):
     # Login/access ###################################################################### Login/access #
     api.add_resource(user.EncryptedToken, "/user/encrypted_token", endpoint="encrypted_token")
     api.add_resource(user.SecondFactor, "/user/second_factor", endpoint="second_factor")
@@ -106,5 +106,5 @@ def add_resources(api, version="v1"):
     api.add_resource(user.ShowUsage, "/usage", endpoint="usage")
 
 
-add_resources(api, version="v1")
-add_resources(api_v3, version="v3")
+add_resources(api)
+add_resources(api_v3)
