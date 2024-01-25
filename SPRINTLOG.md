@@ -343,3 +343,7 @@ _Nothing merged in CLI during this sprint_
 
 - Minor update jinja2 package to address cve ([#1503](https://github.com/ScilifelabDataCentre/dds_web/pull/1503))
 - Minor update jwcrypto package to address cve ([#1504](https://github.com/ScilifelabDataCentre/dds_web/pull/1504))
+
+# 2023-01-15 - 2024-01-25
+
+- Fix the files endpoints according to the openAPI standar, providing new endpoint version that lives with the previous one ([#1505](https://github.com/ScilifelabDataCentre/dds_web/pull/1505))
