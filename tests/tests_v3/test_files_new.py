@@ -4,6 +4,9 @@ import time
 from dds_web import db
 from dds_web.database import models
 import tests.tests_v3 as tests
+from unittest.mock import patch, MagicMock
+import sqlalchemy
+import pytest
 
 FIRST_NEW_FILE = {
     "name": "filename1",
@@ -494,6 +497,26 @@ def test_match_file_endpoint(client):
     assert response.status_code == http.HTTPStatus.OK
     assert response.json["files"] is None
 
+    # Match but error in db
+
+
+#    db_session_commit_mock = MagicMock(
+#        side_effect=sqlalchemy.exc.OperationalError("OperationalError", "test", "sqlalchemy")
+#    )
+
+#    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+#    query_files = {"files": [FIRST_NEW_FILE["name"]]}
+#    with patch("dds_web.db.models.File", db_session_commit_mock):
+#        response = client.get(
+#            tests.DDSEndpoint.FILE_MATCH,
+#            headers=token,
+#            query_string={**query_files, "project": "file_testing_project"},
+#        )
+#        print(response.json)
+#        assert response.status_code == http.HTTPStatus.OK
+#        assert 'db' in response.json["fail_type"]
+#        assert "Database malfunction" in response.json["not_removed"]["subpath"]
+
 
 def test_upload_and_delete_file(client, boto3_session):
     """Upload and delete a file"""
@@ -571,6 +594,56 @@ def test_upload_and_delete_folder(client, boto3_session):
     assert not response.json["not_removed"]
     assert not file_in_db(test_dict=file_1_in_folder, project=project_1.id)
     assert not file_in_db(test_dict=file_2_in_folder, project=project_1.id)
+
+
+def test_upload_and_delete_folder_sql_error(client, boto3_session):
+    """Delete folder raises a DB error"""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    file_1_in_folder = FIRST_NEW_FILE.copy()
+    file_1_in_folder["name"] = "file_1_in_folder"
+    file_1_in_folder["name_in_bucket"] = "bucketfile_1_in_folder"
+    file_2_in_folder = FIRST_NEW_FILE.copy()
+    file_2_in_folder["name"] = "file_2_in_folder"
+    file_2_in_folder["name_in_bucket"] = "bucketfile_2_in_folder"
+
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=file_1_in_folder,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=file_1_in_folder, project=project_1.id)
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=file_2_in_folder,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=file_2_in_folder, project=project_1.id)
+
+    # Remove folder
+    db_session_commit_mock = MagicMock(
+        side_effect=sqlalchemy.exc.OperationalError("OperationalError", "test", "sqlalchemy")
+    )
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    with patch("dds_web.db.session.commit", db_session_commit_mock):
+        response = client.delete(
+            tests.DDSEndpoint.REMOVE_FOLDER,
+            headers=token,
+            query_string={
+                "project": "file_testing_project",
+                "folders": [file_1_in_folder["subpath"]],
+            },
+        )
+        assert "db" in response.json["fail_type"]
+        assert "Database malfunction" in response.json["not_removed"]["subpath"]
 
 
 def test_upload_move_available_delete_file(client, boto3_session):

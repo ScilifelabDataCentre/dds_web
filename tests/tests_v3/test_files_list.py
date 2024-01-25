@@ -170,7 +170,11 @@ def test_list_files_auth(client):
     response = client.get(
         tests.DDSEndpoint.LIST_FILES,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
-        query_string={"project": "public_project_id", "subpath": "sub/path/to/files", "show_size": True},
+        query_string={
+            "project": "public_project_id",
+            "subpath": "sub/path/to/files",
+            "show_size": True,
+        },
     )
     # compare in multiple steps as the order of the returned entries is not guaranteed
     expected = {
