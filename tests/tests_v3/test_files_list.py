@@ -167,6 +167,30 @@ def test_list_files_auth(client):
         entry["name"] for entry in expected["files_folders"]
     )
 
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id", "subpath": "sub/path/to/files", "show_size": True},
+    )
+    # compare in multiple steps as the order of the returned entries is not guaranteed
+    expected = {
+        "files_folders": [
+            {"folder": False, "name": "filename_b1", "size": "500.0"},
+            {"folder": False, "name": "filename_b2", "size": "1000.0"},
+            {"folder": False, "name": "filename_b3", "size": "1500.0"},
+            {"folder": False, "name": "filename_b4", "size": "2000.0"},
+            {"folder": False, "name": "filename_b5", "size": "2500.0"},
+        ]
+    }
+    assert "files_folders" in response.json
+    assert len(response.json["files_folders"]) == len(expected["files_folders"])
+    for entry in response.json["files_folders"]:
+        assert len(entry) == 3
+        assert entry["folder"] is False
+    assert set(entry["name"] for entry in response.json["files_folders"]) == set(
+        entry["name"] for entry in expected["files_folders"]
+    )
+
 
 def test_list_project_with_no_files(client):
     """List project with no files"""

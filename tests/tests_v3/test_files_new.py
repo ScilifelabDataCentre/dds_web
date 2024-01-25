@@ -455,6 +455,16 @@ def test_match_file_endpoint(client):
     assert project_1
     assert project_1.current_status == "In Progress"
 
+    # Match requests with no file
+    query_files = {}
+    response = client.get(
+        tests.DDSEndpoint.FILE_MATCH,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={**query_files, "project": "file_testing_project"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.json["message"] == "No files specified."
+
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
