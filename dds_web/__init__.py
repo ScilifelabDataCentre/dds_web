@@ -195,12 +195,12 @@ def create_app(testing=False, database_uri=None):
             if "api/v1" in flask.request.path:
                 verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"))
             elif "api/v3" in flask.request.path:
-                # TODO add version check for v3 when it is released
-                # Verify that major versions match - temp solution
-                from dds_web.errors import VersionMismatchError
+                # If version api is not provided, it gets the data from the __version__ file
+                # When v3 is finallized, this should be removed and the __version__ file should be updated
+                verify_cli_version(version_cli=flask.request.headers.get("X-Cli-Version"), version_api="3.0.0")
 
-                if "3" != flask.request.headers.get("X-Cli-Version").split(".")[0]:
-                    raise VersionMismatchError
+                #if "3" != flask.request.headers.get("X-Cli-Version").split(".")[0]:
+                #    raise VersionMismatchError
 
             # Get message of the day
             flask.g.motd = get_active_motds()
