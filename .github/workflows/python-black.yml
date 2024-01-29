@@ -17,3 +17,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: psf/black@stable
+        with:
+          version: ${{ env.INPUT_VERSION }}
