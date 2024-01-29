@@ -16,8 +16,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the development enviroment
   # Uncomment when local testing
-#  - url: http://localhost:5000/api/v1
-#    description: Local enviroment
+  - url: http://localhost:5000/api/v1
+    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -489,7 +489,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: maintenance set.}"
+                example: "{message: Maintenance mode is set to: ON}"
       requestBody:
         content:
           application/json:
@@ -499,6 +499,27 @@ paths:
                 state:
                   type: string
                   enum: [on, off]
+    get:
+      tags:
+        - superadmin
+      summary: Return current Maintenance mode
+      operationId: maintenanceModeGet
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Maintenance mode is set to: ON}"
   /unit/info/all:
     get:
       tags:
@@ -561,7 +582,8 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: The MOTD was added to the database.}"
+                example: "{message: The MOTD was successfuly
+                  added to the database.}"
       requestBody:
         content:
           application/json:
@@ -621,7 +643,8 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: The MOTD was deactivated in the database.}"
+                example: "{message: The MOTD was successfuly
+                  deactivated in the database.}"
       requestBody:
         content:
           application/json:
@@ -652,7 +675,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: MOTD has been sent to the users.}"
+                example: "{message: MOTD 1 has been sent to the users.}"
       requestBody:
         content:
           application/json:
@@ -710,7 +733,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: TOTP has been deactivated.
+                example: "{message: TOTP has been deactivated for user unituser1.
                   They can now use 2FA via email during authentication}"
       requestBody:
         content:
@@ -780,10 +803,6 @@ paths:
               schema:
                 type: object
                 properties:
-                  stats:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Reporting"
                   columns:
                     type: array
                     items:
@@ -806,6 +825,10 @@ paths:
                         Unit Personnel,
                         Units,
                       ]
+                  stats:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Reporting"
   /user/emails:
     get:
       tags:
