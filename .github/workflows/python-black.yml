@@ -8,9 +8,12 @@ name: Black
 
 on: [push, pull_request]
 
+env:
+  INPUT_VERSION: 24.1.0
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: psf/black@23
+      - uses: psf/black@stable
