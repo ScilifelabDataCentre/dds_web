@@ -9,7 +9,7 @@ name: Black
 on: [push, pull_request]
 
 env:
-  INPUT_VERSION: 23.0.0
+  INPUT_VERSION: 24.1.1
 
 jobs:
   lint:
