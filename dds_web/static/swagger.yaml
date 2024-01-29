@@ -600,8 +600,8 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Requested account deletion initiated.
-                  An e-mail with a confirmation link has been sent to your address}"
+                example: "{message: User with email email@example.com no longer
+                  associated with exmple_project.}"
       requestBody:
         content:
           application/json:
@@ -619,7 +619,6 @@ paths:
       operationId: userActivation
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
-        - $ref: "#/components/parameters/projectID"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -753,9 +752,6 @@ paths:
                     items:
                       type: string
                     example: [Email, Role, Projects, Created, Unit]
-                type: array
-                items:
-                  $ref: "#/components/schemas/InvitesList"
   /usage:
     get:
       tags:
@@ -1465,6 +1461,7 @@ components:
         Unit:
           type: string
           example: ""
+<<<<<<< HEAD
     UnitsInfo:
       type: object
       properties:
@@ -1537,6 +1534,8 @@ components:
           type: integer
         Units:
           type: integer
+=======
+>>>>>>> 8892009e (feedback changes)
     Token:
       type: object
       properties:
