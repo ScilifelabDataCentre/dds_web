@@ -515,9 +515,7 @@ paths:
                     type: string
                     example: researcher1@mailtrap.io
                   errors:
-                    type: array
-                    items:
-                      type: string
+                    type: object
                   message:
                     type: string
                     example: Pending invite was successful
@@ -602,8 +600,8 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{message: Requested account deletion initiated.
-                  An e-mail with a confirmation link has been sent to your address}"
+                example: "{message: User with email email@example.com no longer
+                  associated with exmple_project.}"
       requestBody:
         content:
           application/json:
@@ -621,7 +619,6 @@ paths:
       operationId: userActivation
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
-        - $ref: "#/components/parameters/projectID"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -728,6 +725,7 @@ paths:
         - user
       summary: Provides a list of invited users.
         Superadmins see all invites, unitusers the invites to their projects and units.
+      description: The Unit field is only returned when authenticated as a superadmin.
       operationId: getInvites
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -753,7 +751,7 @@ paths:
                     type: array
                     items:
                       type: string
-                    example: [Email, Role, Projects, Created]
+                    example: [Email, Role, Projects, Created, Unit]
   /usage:
     get:
       tags:
@@ -1012,18 +1010,18 @@ components:
               type: array
               items:
                 type: string
-        is_admin:
-          type: boolean
-          example: true
-        name:
-          type: string
-          example: Unit Admin 1
-        role:
-          type: string
-          example: Unit Admin
-        username:
-          type: string
-          example: unitadmin_1
+            is_admin:
+              type: boolean
+              example: true
+            name:
+              type: string
+              example: Unit Admin 1
+            role:
+              type: string
+              example: Unit Admin
+            username:
+              type: string
+              example: unitadmin_1
     UserList:
       type: object
       properties:
@@ -1044,6 +1042,10 @@ components:
           example: unitadmin1@mailtrap.io
     InvitesList:
       type: object
+      required:
+        - Created
+        - Email
+        - Role
       properties:
         Created:
           type: string
@@ -1059,6 +1061,9 @@ components:
           items:
             type: string
           example: [project1]
+        Unit:
+          type: string
+          example: ""
     Token:
       type: object
       properties:
