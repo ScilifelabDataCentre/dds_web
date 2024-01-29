@@ -490,9 +490,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  bucket:
+                  safespring_project:
                     type: string
-                    example: bucketname
+                    example: sfsp_proj
+                  url:
+                    type: string
+                    example: url
                   keys:
                     type: object
                     properties:
@@ -502,12 +505,9 @@ paths:
                       secret_key:
                         type: string
                         example: secret_key
-                  url:
+                  bucket:
                     type: string
-                    example: url
-                  safespring_project:
-                    type: string
-                    example: sfsp_proj
+                    example: bucketname
 components:
   # define reusable parameters:
   parameters:
