@@ -466,6 +466,7 @@ paths:
                     type: string
       requestBody:
         $ref: "#/components/requestBodies/Token"
+
   ### USER OPERATIONS #########
   /user/info:
     get:
@@ -797,6 +798,396 @@ paths:
                       cost:
                         type: number
                         example: 0.00000000000000000000
+
+  ### PROJECT OPERATIONS #########
+  /proj/list:
+    get:
+      tags:
+        - project
+      summary: Get info regarding all projects which user is involved in
+      operationId: userProjects
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjListInfo"
+  /proj/rm:
+    delete:
+      tags:
+        - project
+      summary: Remove project contents
+      operationId: removeContents
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{removed: true}"
+  /proj/public:
+    get:
+      tags:
+        - project
+      summary: Gets the public key beloning to the current project
+      operationId: getPublic
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  public:
+                    type: string
+                    example: public_key
+  /proj/private:
+    get:
+      tags:
+        - project
+      summary: Gets the private key beloning to the current project
+      operationId: getPublic
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  private:
+                    type: string
+                    example: private
+  /proj/create:
+    post:
+      tags:
+        - project
+      summary: Create a new project
+      operationId: createProject
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Added new project project_title
+                  project_id:
+                    type: string
+                    example: project_id
+                  user_addition_statuses:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: User added
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - pi
+              properties:
+                forced:
+                  type: boolean
+                  example: false
+                  description: Verify enough number of Unit Admins
+                title:
+                  type: string
+                  example: project_title
+                description:
+                  type: string
+                  example: project_description
+                pi:
+                  type: string
+                  example: pi@example.com
+                non_sensitive:
+                  type: boolean
+                  example: False
+                  description: If has non-sensitive data
+                users_to_add:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                        example: researcheruser@mailtrap.io
+                      role:
+                        type: string
+                        example: Researcher
+                  description: List of users (outside the unit) to add to the project. Can be empty.
+  /proj/users:
+    get:
+      tags:
+        - project
+      summary: Get all users in a project
+      operationId: projectUsers
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  research_users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Primary email:
+                          type: string
+                        User name:
+                          type: string
+                        Role:
+                          type: string
+  /proj/status:
+    get:
+      tags:
+        - project
+      summary: Get current project status and optionally entire status history CHECK METHOD
+      description: This method requires some data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: projectStatusGet
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+        - name: history
+          in: query
+          required: false
+          schema:
+            type: boolean
+            example: true
+          description: If true, return entire status history
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current_status:
+                    type: string
+                    example: In progress
+    post:
+      tags:
+        - project
+      summary: Update project status
+      operationId: projectStatusPost
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_status:
+                  type: string
+                  example: Available
+                send_email:
+                  type: boolean
+                  example: true
+                deadline:
+                  type: integer
+                  example: 30
+                is_aborted:
+                  type: boolean
+                  example: false
+  /proj/access:
+    post:
+      tags:
+        - project
+      summary: Give access to user
+      operationId: projectAccess
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Project Access updated
+                  for user user_primeary_email.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+  /proj/info:
+    get:
+      tags:
+        - project
+      summary: Display Project information
+      operationId: projectInfo
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjInfo"
+    put:
+      tags:
+        - project
+      summary: Update Project information
+      operationId: projectInfoUpdate
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Project_id info was successfuly updated
+                  title:
+                    type: string
+                    example: new_title
+                  description:
+                    type: string
+                    example: new_description
+                  pi:
+                    type: string
+                    example: new_pi@example.org
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                new_description:
+                  type: string
+                new_pi:
+                  type: string
 components:
   # define reusable parameters:
   parameters:
@@ -1064,6 +1455,83 @@ components:
         Unit:
           type: string
           example: ""
+    ProjListInfo:
+      type: object
+      properties:
+        always_show:
+          type: boolean
+          example: true
+        project_info:
+          type: array
+          items:
+            type: object
+            properties:
+              Access:
+                type: boolean
+                example: true
+              Created By:
+                type: string
+                example: user
+              Last Updated:
+                type: string
+                example: 2020-01-01 00:00:00
+              PI:
+                type: string
+                example: support@example.org
+              Project ID:
+                type: string
+                example: project_id
+              Size:
+                type: integer
+                example: 1000
+              Status:
+                type: string
+                example: In progress
+              Title:
+                type: string
+                example: project_title
+        total_size:
+          type: integer
+          example: 1000
+        tota_usage:
+          type: object
+          properties:
+            cost:
+              type: integer
+              example: 0
+            usage:
+              type: integer
+              example: 1000
+    ProjInfo:
+      type: object
+      properties:
+        project_info:
+          type: object
+          properties:
+            Created By:
+              type: string
+              example: user
+            Last Updated:
+              type: string
+              example: 2020-01-01 00:00:00
+            PI:
+              type: string
+              example: support@example.org
+            Project ID:
+              type: string
+              example: project_id
+            Status:
+              type: string
+              example: In progress
+            Size:
+              type: integer
+              example: 1000
+            Title:
+              type: string
+              example: project_title
+            Description:
+              type: string
+              example: project_description
     Token:
       type: object
       properties:
