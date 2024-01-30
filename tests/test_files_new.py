@@ -777,9 +777,9 @@ def test_new_file_sizeprocessed_bigint(client):
     assert project_1
 
     file_sizeprocessed_bigint = FIRST_NEW_FILE.copy()
-    file_sizeprocessed_bigint[
-        "size_processed"
-    ] = 9223372036854775807  # 9223 petabytes (big int sql definition)
+    file_sizeprocessed_bigint["size_processed"] = (
+        9223372036854775807  # 9223 petabytes (big int sql definition)
+    )
     response = client.post(
         tests.DDSEndpoint.FILE_NEW,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),

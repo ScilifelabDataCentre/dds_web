@@ -306,9 +306,9 @@ class ProjectContentSchema(ProjectRequiredSchema):
                             {
                                 z.name: {
                                     **fileschema.dump(z),
-                                    "url": s3.generate_get_url(key=z.name_in_bucket)
-                                    if url
-                                    else None,
+                                    "url": (
+                                        s3.generate_get_url(key=z.name_in_bucket) if url else None
+                                    ),
                                 }
                                 for z in y
                             }
