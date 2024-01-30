@@ -1231,6 +1231,7 @@ paths:
                   bucket:
                     type: string
                     example: bucketname
+
 components:
   # define reusable parameters:
   parameters:
