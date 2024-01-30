@@ -467,7 +467,7 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/Token"
 
-### USER OPERATIONS #########
+  ### USER OPERATIONS #########
   /user/info:
     get:
       tags:
