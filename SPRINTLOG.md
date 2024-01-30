@@ -348,6 +348,10 @@ _Nothing merged in CLI during this sprint_
 
 - Fix the files endpoints according to the openAPI standar, providing new endpoint version that lives with the previous one ([#1505](https://github.com/ScilifelabDataCentre/dds_web/pull/1505))
 
+# 2024-01-15 - 2024-01-26
+
+- Document User endpoints ([#1506](https://github.com/ScilifelabDataCentre/dds_web/pull/1506))
+
 # 2024-01-29 - 2024-02-09
 
 - Use of a fix version of black and linted files to 24.1.1 ([#1510](https://github.com/ScilifelabDataCentre/dds_web/pull/1510))
