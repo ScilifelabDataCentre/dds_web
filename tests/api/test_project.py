@@ -1716,7 +1716,9 @@ def test_set_busy_invalid_version(module_client):
     """ProjectBusy endpoint is empty and should only return error message about invalid version."""
     # Error messages
     major_version_error: str = "You're using an old CLI version, please upgrade to the latest one."
-    busy_error: str = "Your CLI version is trying to use functionality which is no longer in use. Upgrade your version to the latest one and run your command again."
+    busy_error: str = (
+        "Your CLI version is trying to use functionality which is no longer in use. Upgrade your version to the latest one and run your command again."
+    )
 
     for username in ["superadmin", "researchuser", "projectowner", "unituser", "unitadmin"]:
         # Get user
