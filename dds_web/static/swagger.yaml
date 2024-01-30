@@ -1895,6 +1895,7 @@ components:
         Unit:
           type: string
           example: ""
+<<<<<<< HEAD
     ProjListInfo:
       type: object
       properties:
@@ -2044,6 +2045,8 @@ components:
           type: integer
         Units:
           type: integer
+=======
+>>>>>>> 95911ff2 (sync with dev+)
     Token:
       type: object
       properties:
