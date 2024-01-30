@@ -233,9 +233,9 @@ class AddUser(flask_restful.Resource):
                                     project=unit_project,
                                 )
                             except ddserr.KeyNotFoundError as keyerr:
-                                projects_not_shared[
-                                    unit_project.public_id
-                                ] = "You do not have access to the project(s)"
+                                projects_not_shared[unit_project.public_id] = (
+                                    "You do not have access to the project(s)"
+                                )
                             else:
                                 goahead = True
                 else:
@@ -258,9 +258,9 @@ class AddUser(flask_restful.Resource):
                         is_project_owner=new_user_role == "Project Owner",
                     )
                 except ddserr.KeyNotFoundError as keyerr:
-                    projects_not_shared[
-                        project.public_id
-                    ] = "You do not have access to the specified project."
+                    projects_not_shared[project.public_id] = (
+                        "You do not have access to the specified project."
+                    )
                 else:
                     goahead = True
             else:
