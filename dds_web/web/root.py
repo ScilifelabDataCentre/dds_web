@@ -3,6 +3,7 @@
 Most of the app routes are in `dds_web/web/user.py`.
 Here we have the routes that are not specific to a user.
 """
+
 from datetime import datetime, timedelta
 import functools
 import threading

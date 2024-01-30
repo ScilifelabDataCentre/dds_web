@@ -1,4 +1,5 @@
 """ Code for generating and maintaining project and user related keys """
+
 import os
 
 import argon2

@@ -3,6 +3,7 @@ Revision ID: 908382be548a
 Revises: cd1903e5f2b0
 Create Date: 2022-06-13 12:34:34.981373
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
