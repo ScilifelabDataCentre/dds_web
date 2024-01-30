@@ -1369,83 +1369,6 @@ components:
         checksum:
           type: string
           example: cheksum
-    ProjListInfo:
-      type: object
-      properties:
-        always_show:
-          type: boolean
-          example: true
-        project_info:
-          type: array
-          items:
-            type: object
-            properties:
-              Access:
-                type: boolean
-                example: true
-              Created By:
-                type: string
-                example: user
-              Last Updated:
-                type: string
-                example: 2020-01-01 00:00:00
-              PI:
-                type: string
-                example: support@example.org
-              Project ID:
-                type: string
-                example: project_id
-              Size:
-                type: integer
-                example: 1000
-              Status:
-                type: string
-                example: In progress
-              Title:
-                type: string
-                example: project_title
-        total_size:
-          type: integer
-          example: 1000
-        tota_usage:
-          type: object
-          properties:
-            cost:
-              type: integer
-              example: 0
-            usage:
-              type: integer
-              example: 1000
-    ProjInfo:
-      type: object
-      properties:
-        project_info:
-          type: object
-          properties:
-            Created By:
-              type: string
-              example: user
-            Last Updated:
-              type: string
-              example: 2020-01-01 00:00:00
-            PI:
-              type: string
-              example: support@example.org
-            Project ID:
-              type: string
-              example: project_id
-            Status:
-              type: string
-              example: In progress
-            Size:
-              type: integer
-              example: 1000
-            Title:
-              type: string
-              example: project_title
-            Description:
-              type: string
-              example: project_description
     User:
       type: object
       required:
@@ -1532,6 +1455,83 @@ components:
         Unit:
           type: string
           example: ""
+    ProjListInfo:
+      type: object
+      properties:
+        always_show:
+          type: boolean
+          example: true
+        project_info:
+          type: array
+          items:
+            type: object
+            properties:
+              Access:
+                type: boolean
+                example: true
+              Created By:
+                type: string
+                example: user
+              Last Updated:
+                type: string
+                example: 2020-01-01 00:00:00
+              PI:
+                type: string
+                example: support@example.org
+              Project ID:
+                type: string
+                example: project_id
+              Size:
+                type: integer
+                example: 1000
+              Status:
+                type: string
+                example: In progress
+              Title:
+                type: string
+                example: project_title
+        total_size:
+          type: integer
+          example: 1000
+        tota_usage:
+          type: object
+          properties:
+            cost:
+              type: integer
+              example: 0
+            usage:
+              type: integer
+              example: 1000
+    ProjInfo:
+      type: object
+      properties:
+        project_info:
+          type: object
+          properties:
+            Created By:
+              type: string
+              example: user
+            Last Updated:
+              type: string
+              example: 2020-01-01 00:00:00
+            PI:
+              type: string
+              example: support@example.org
+            Project ID:
+              type: string
+              example: project_id
+            Status:
+              type: string
+              example: In progress
+            Size:
+              type: integer
+              example: 1000
+            Title:
+              type: string
+              example: project_title
+            Description:
+              type: string
+              example: project_description
     Token:
       type: object
       properties:
