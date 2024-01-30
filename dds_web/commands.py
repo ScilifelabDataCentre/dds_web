@@ -277,15 +277,21 @@ def list_lost_files(project_id: str):
         # Connect to S3
         resource = session.resource(
             service_name="s3",
-            endpoint_url=project.responsible_unit.sto4_endpoint
-            if sto4
-            else project.responsible_unit.sto2_endpoint,
-            aws_access_key_id=project.responsible_unit.sto4_access
-            if sto4
-            else project.responsible_unit.sto2_access,
-            aws_secret_access_key=project.responsible_unit.sto4_secret
-            if sto4
-            else project.responsible_unit.sto2_secret,
+            endpoint_url=(
+                project.responsible_unit.sto4_endpoint
+                if sto4
+                else project.responsible_unit.sto2_endpoint
+            ),
+            aws_access_key_id=(
+                project.responsible_unit.sto4_access
+                if sto4
+                else project.responsible_unit.sto2_access
+            ),
+            aws_secret_access_key=(
+                project.responsible_unit.sto4_secret
+                if sto4
+                else project.responsible_unit.sto2_secret
+            ),
         )
 
         # List the lost files
@@ -340,15 +346,21 @@ def list_lost_files(project_id: str):
                 # Connect to S3
                 resource_unit = session.resource(
                     service_name="s3",
-                    endpoint_url=proj.responsible_unit.sto4_endpoint
-                    if sto4
-                    else proj.responsible_unit.sto2_endpoint,
-                    aws_access_key_id=proj.responsible_unit.sto4_access
-                    if sto4
-                    else proj.responsible_unit.sto2_access,
-                    aws_secret_access_key=proj.responsible_unit.sto4_secret
-                    if sto4
-                    else proj.responsible_unit.sto2_secret,
+                    endpoint_url=(
+                        proj.responsible_unit.sto4_endpoint
+                        if sto4
+                        else proj.responsible_unit.sto2_endpoint
+                    ),
+                    aws_access_key_id=(
+                        proj.responsible_unit.sto4_access
+                        if sto4
+                        else proj.responsible_unit.sto2_access
+                    ),
+                    aws_secret_access_key=(
+                        proj.responsible_unit.sto4_secret
+                        if sto4
+                        else proj.responsible_unit.sto2_secret
+                    ),
                 )
 
                 # List the lost files
@@ -411,15 +423,17 @@ def add_missing_bucket(project_id: str):
     # Connect to S3
     resource = session.resource(
         service_name="s3",
-        endpoint_url=project.responsible_unit.sto4_endpoint
-        if sto4
-        else project.responsible_unit.sto2_endpoint,
-        aws_access_key_id=project.responsible_unit.sto4_access
-        if sto4
-        else project.responsible_unit.sto2_access,
-        aws_secret_access_key=project.responsible_unit.sto4_secret
-        if sto4
-        else project.responsible_unit.sto2_secret,
+        endpoint_url=(
+            project.responsible_unit.sto4_endpoint
+            if sto4
+            else project.responsible_unit.sto2_endpoint
+        ),
+        aws_access_key_id=(
+            project.responsible_unit.sto4_access if sto4 else project.responsible_unit.sto2_access
+        ),
+        aws_secret_access_key=(
+            project.responsible_unit.sto4_secret if sto4 else project.responsible_unit.sto2_secret
+        ),
     )
 
     # Check if bucket exists
@@ -474,15 +488,17 @@ def delete_lost_files(project_id: str):
     # Connect to S3
     resource = session.resource(
         service_name="s3",
-        endpoint_url=project.responsible_unit.sto4_endpoint
-        if sto4
-        else project.responsible_unit.sto2_endpoint,
-        aws_access_key_id=project.responsible_unit.sto4_access
-        if sto4
-        else project.responsible_unit.sto2_access,
-        aws_secret_access_key=project.responsible_unit.sto4_secret
-        if sto4
-        else project.responsible_unit.sto2_secret,
+        endpoint_url=(
+            project.responsible_unit.sto4_endpoint
+            if sto4
+            else project.responsible_unit.sto2_endpoint
+        ),
+        aws_access_key_id=(
+            project.responsible_unit.sto4_access if sto4 else project.responsible_unit.sto2_access
+        ),
+        aws_secret_access_key=(
+            project.responsible_unit.sto4_secret if sto4 else project.responsible_unit.sto2_secret
+        ),
     )
 
     # Get list of lost files

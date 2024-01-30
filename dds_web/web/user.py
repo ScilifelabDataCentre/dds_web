@@ -596,9 +596,9 @@ def password_reset_completed():
                 unit_admins_to_contact = users
             else:
                 if project.responsible_unit.external_display_name not in units_to_contact:
-                    units_to_contact[
-                        project.responsible_unit.external_display_name
-                    ] = project.responsible_unit.contact_email
+                    units_to_contact[project.responsible_unit.external_display_name] = (
+                        project.responsible_unit.contact_email
+                    )
 
         if len(unit_admins_to_contact) > 0:
             for unit_admin in unit_admins_to_contact:

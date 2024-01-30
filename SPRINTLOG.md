@@ -347,3 +347,7 @@ _Nothing merged in CLI during this sprint_
 # 2024-01-15 - 2024-01-26
 
 - Document S3 endpoints ([#1509](https://github.com/ScilifelabDataCentre/dds_web/pull/1509))
+
+# 2024-01-29 - 2024-02-09
+
+- Use of a fix version of black and linted files to 24.1.1 ([#1510](https://github.com/ScilifelabDataCentre/dds_web/pull/1510))
