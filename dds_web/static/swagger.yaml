@@ -1896,6 +1896,9 @@ components:
           type: string
           example: ""
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 906f3249 (sync with dev)
     ProjListInfo:
       type: object
       properties:
@@ -1973,6 +1976,7 @@ components:
             Description:
               type: string
               example: project_description
+<<<<<<< HEAD
     UnitsInfo:
       type: object
       properties:
@@ -2047,6 +2051,8 @@ components:
           type: integer
 =======
 >>>>>>> 95911ff2 (sync with dev+)
+=======
+>>>>>>> 906f3249 (sync with dev)
     Token:
       type: object
       properties:
