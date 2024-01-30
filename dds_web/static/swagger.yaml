@@ -467,6 +467,338 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/Token"
 
+  ### USER OPERATIONS #########
+  /user/info:
+    get:
+      tags:
+        - user
+      summary: Return own info when required
+      operationId: retrieveUserInfo
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+  /user/add:
+    post:
+      tags:
+        - user
+      summary: Associate existing users or unanswered invites with projects or create invites
+      operationId: addUser
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    example: researcher1@mailtrap.io
+                  errors:
+                    type: object
+                  message:
+                    type: string
+                    example: Pending invite was successful
+                  status:
+                    type: integer
+                    example: 200
+      requestBody:
+        $ref: "#/components/requestBodies/User"
+  /user/delete:
+    delete:
+      tags:
+        - user
+      summary: Delete user or invite in the DDS. Unit Admins can delete Unit Admins and Unit Personnel.
+        Super admins can delete any user CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: deleteUser
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/email"
+        - $ref: "#/components/parameters/is_invite"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: You successfully deleted the account.}"
+  /user/delete_self:
+    delete:
+      tags:
+        - user
+      summary: Endpoint to initiate user self removal from the system.
+        Every user can self-delete the own account with an e-mail confirmation
+      operationId: deleteUserSelf
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Requested account deletion initiated.
+                  An e-mail with a confirmation link has been sent to your address}"
+  /user/access/revoke:
+    post:
+      tags:
+        - user
+      summary: Remove an user from a project
+      operationId: removeUserAssociation
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: User with email email@example.com no longer
+                  associated with exmple_project.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: researcher1@mailtrap.io
+  /user/activation:
+    post:
+      tags:
+        - user
+      summary: Unit Admins can reactivate/deactivate unitusers. Super admins can reactivate/deactivate any user.
+      operationId: userActivation
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: You successfully reactivated the account}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: researcher1@mailtrap.io
+                action:
+                  type: string
+                  enum:
+                    - reactivate
+                    - deactivate
+  /user/hotp/activate:
+    post:
+      tags:
+        - user
+      summary: Request to switch from TOTP to HOTP for second factor authentication.
+      operationId: requestHOTPActivation
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Please check your email and follow the attached link to activate two-factor with email}" # yamllint disable-line
+      security:
+        - encryptedToken: []
+  /user/totp/activate:
+    post:
+      tags:
+        - user
+      summary: Request to switch from HOTP to TOTP for second factor authentication.
+      operationId: requestTOTPActivation
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Please check your email and follow the attached link to activate two-factor with autenticator app}" # yamllint disable-line
+  /users:
+    get:
+      tags:
+        - user
+      summary: List unit users within the unit the current user is connected to, or the one defined by a superadmin.
+        CHECK METHOD FOR SUPERADMINS
+      description: TODO - for superadmin, it can be passed a unit, currently in body, needs to be in query.
+      deprecated: true
+      operationId: getUsers
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserList"
+  /user/invites:
+    get:
+      tags:
+        - user
+      summary: Provides a list of invited users.
+        Superadmins see all invites, unitusers the invites to their projects and units.
+      description: The Unit field is only returned when authenticated as a superadmin.
+      operationId: getInvites
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invites:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/InvitesList"
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    example: [Email, Role, Projects, Created, Unit]
+  /usage:
+    get:
+      tags:
+        - user
+        - project
+      summary: Calculate and display the amount of GB hours and the total cost.
+        Only unit accounts can get invoicing information
+      operationId: showUsage
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  project_usage:
+                    type: object
+                    properties:
+                      project_1:
+                        type: object
+                        properties:
+                          gbhours:
+                            type: number
+                            example: 0.00000000000000000000
+                          cost:
+                            type: number
+                            example: 0.00000000000000000000
+                  total_usage:
+                    type: object
+                    properties:
+                      gbhours:
+                        type: number
+                        example: 0.00000000000000000000
+                      cost:
+                        type: number
+                        example: 0.00000000000000000000
+
   ### SUPERADMIN OPERATIONS #########
   /maintenance:
     put:
@@ -879,6 +1211,18 @@ components:
       schema:
         type: string
       description: project id to query
+    email:
+      name: email
+      in: query
+      schema:
+        type: string
+      description: email of the user/invite to query
+    is_invite:
+      name: is_invite
+      in: query
+      schema:
+        type: string
+      description: flag to mark if the user to query is an invite
   # Define common request bodies:
   requestBodies:
     Files:
@@ -894,6 +1238,11 @@ components:
             properties:
               filename:
                 $ref: "#/components/schemas/FailedFiles"
+    User:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/User"
     Token:
       content:
         application/json:
@@ -1027,6 +1376,92 @@ components:
         checksum:
           type: string
           example: cheksum
+    User:
+      type: object
+      required:
+        - role
+        - unit
+        - email
+      properties:
+        role:
+          type: string
+          example: Researcher
+        unit:
+          type: string
+          example: UnitA
+        email:
+          type: string
+          example: researcher1@mailtrap.io
+        send_email:
+          type: boolean
+          example: true
+    UserInfo:
+      type: object
+      properties:
+        info:
+          type: object
+          properties:
+            email_primary:
+              type: string
+              example: unitadmin1@mailtrap.io
+            emails_all:
+              type: array
+              items:
+                type: string
+            is_admin:
+              type: boolean
+              example: true
+            name:
+              type: string
+              example: Unit Admin 1
+            role:
+              type: string
+              example: Unit Admin
+            username:
+              type: string
+              example: unitadmin_1
+    UserList:
+      type: object
+      properties:
+        active:
+          type: boolean
+          example: true
+        name:
+          type: string
+          example: Unit Admin 1
+        role:
+          type: string
+          example: Unit Admin
+        username:
+          type: string
+          example: unitadmin_1
+        email:
+          type: string
+          example: unitadmin1@mailtrap.io
+    InvitesList:
+      type: object
+      required:
+        - Created
+        - Email
+        - Role
+      properties:
+        Created:
+          type: string
+          format: date-time
+        Email:
+          type: string
+          example: researcher1@mailtrap.io
+        Role:
+          type: string
+          example: Researcher
+        Projects:
+          type: array
+          items:
+            type: string
+          example: [project1]
+        Unit:
+          type: string
+          example: ""
     UnitsInfo:
       type: object
       properties:
