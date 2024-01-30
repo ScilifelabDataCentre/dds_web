@@ -1972,6 +1972,10 @@ components:
             Description:
               type: string
               example: project_description
+<<<<<<< HEAD
+=======
+>>>>>>> 802d66dd (sync with dev)
+>>>>>>> d19dca89 (sync with dev)
     UnitsInfo:
       type: object
       properties:
