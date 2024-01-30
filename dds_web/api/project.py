@@ -1063,9 +1063,9 @@ class ProjectAccess(flask_restful.Resource):
                             from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
                         )
             except KeyNotFoundError as keyerr:
-                fix_errors[
-                    proj.public_id
-                ] = "You do not have access to this project. Please contact the responsible unit."
+                fix_errors[proj.public_id] = (
+                    "You do not have access to this project. Please contact the responsible unit."
+                )
 
         return fix_errors
 
