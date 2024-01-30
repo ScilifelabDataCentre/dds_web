@@ -347,6 +347,7 @@ _Nothing merged in CLI during this sprint_
 # 2024-01-15 - 2024-01-26
 
 - Document Superadmin endpoints ([#1507](https://github.com/ScilifelabDataCentre/dds_web/pull/1507))
+- Document S3 endpoints ([#1509](https://github.com/ScilifelabDataCentre/dds_web/pull/1509))
 - Document Project endpoints ([#1508](https://github.com/ScilifelabDataCentre/dds_web/pull/1508))
 - Document User endpoints ([#1506](https://github.com/ScilifelabDataCentre/dds_web/pull/1506))
 
