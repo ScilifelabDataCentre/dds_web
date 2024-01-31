@@ -2,18 +2,27 @@
 # yamllint disable rule:braces
 openapi: 3.0.0
 info:
-  description: |
-    Documentation for the API of the Data Delivery System (DDS) in SciLifeLab.
-
-    WARNING: Some endpoints are not according to the OpenAPI standard, and therefore
-    cannot be documented properly. These endpoints are marked with CHECK METHOD and as deprecated.
-    These endpoints will be changed in the future, and will be documented properly in the url
-    https://delivery.scilifelab.se/api/documentation/v3
-  version: "" # leave empty, as otherwise will need to be updated every new release
+  description: | # html syntax is allowed
+    Documentation for the API of the Data Delivery System (DDS) in SciLifeLab. <br>
+    <br><br>
+    <b>WARNING</b>: Some endpoints are not according to the OpenAPI standard, and therefore
+    cannot be documented properly. These endpoints are marked with <u>CHECK METHOD</u> and as deprecated.<br>
+    These endpoints will be changed in the future, and will be documented properly in the <b>url</b> hosted in
+    <a href="https://delivery.scilifelab.se/api/documentation/v3"> api/documentation/v3</a> <br>
+    <br>
+    <b>USE</b>: Change the server in the list below depending on the instance you are using,
+    and click on the "Authorize" button to enter your user and password. <br>
+    The endpoint <b> /user/encrypted_token </b> is used to generate an encrypted token for the user. <br> 
+    Add this endpoint in the "Authorize" button and call the endpoint <b> /user/second_factor </b> to authenticate with MFA. <br>
+    Lastly, save again this second token in the same place (login out the previous one). <br>
+    Now you can start using the API! <br>
+    <br>
+    <b>NOTE</b>: The encrypted token is valid for 7 days. <br>
+  version: "version 2"
   title: Data Delivery System
 # Apply the encrypted token to all operations
 security:
-  - seconFactorToken: []
+  - secondFactorToken: []
 servers:
   # Added by API Auto Mocking Plugin
   - url: https://delivery.scilifelab.se/api/v1
@@ -21,8 +30,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the test server
   # Uncomment when local testing
-  - url: http://localhost:5000/api/v1
-    description: Local enviroment
+#  - url: http://localhost:5000/api/v1
+#    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -2059,7 +2068,7 @@ components:
     encryptedToken: # user and pass
       type: http
       scheme: basic
-    seconFactorToken: # encrypted token
+    secondFactorToken: # encrypted token
       type: http
       scheme: bearer
       bearerFormat: JWT
