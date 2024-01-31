@@ -8,7 +8,7 @@ info:
     <b>WARNING</b>: This version is NOT stable and is subject to change
     without notice. Use at your own risk.
     We recomended to still use, for now, the version located in the
-    the <b>url</b> <a href="https://delivery.scilifelab.se/api/documentation/v1"> api/documentation/v1</a> <br>
+    the <b>url</b> <a href="/api/documentation/v1"> api/documentation/v1</a> <br>
     <br>
     <b>USE</b>: Change the server in the list below depending on the instance you are using,
     and click on the "Authorize" button to enter your user and password. <br>
@@ -311,8 +311,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: File info updated}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "File info updated"
       requestBody:
         content:
           application/json:
@@ -499,8 +502,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: You successfully deleted the account.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You successfully deleted the account.
   /user/delete_self:
     delete:
       tags:
@@ -522,9 +528,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Requested account deletion initiated.
-                  An e-mail with a confirmation link has been sent to your address}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Requested account deletion initiated.
+                      An e-mail with a confirmation link has been sent to your address
   /user/access/revoke:
     post:
       tags:
@@ -546,9 +555,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: User with email email@example.com no longer
-                  associated with exmple_project.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User with email email@example.com no longer
+                      associated with exmple_project.
       requestBody:
         content:
           application/json:
@@ -578,8 +590,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: You successfully reactivated the account}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You successfully reactivated the account.
       requestBody:
         content:
           application/json:
@@ -614,8 +629,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Please check your email and follow the attached link to activate two-factor with email}" # yamllint disable-line
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Please check your email and follow the attached link to activate two-factor with email # yamllint disable-line
       security:
         - encryptedToken: []
   /user/totp/activate:
@@ -638,8 +656,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Please check your email and follow the attached link to activate two-factor with autenticator app}" # yamllint disable-line
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Please check your email and follow the attached link to activate two-factor with autenticator app # yamllint disable-line
   /users:
     get:
       tags:
@@ -1055,9 +1076,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Project Access updated
-                  for user user_primeary_email.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Project Access updated
+                      for user user_primeary_email.
       requestBody:
         content:
           application/json:
@@ -1156,8 +1180,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Maintenance mode is set to: ON}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Maintenance mode is set to: ON"
       requestBody:
         content:
           application/json:
@@ -1186,8 +1213,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Maintenance mode is set to: ON}"
+                type: object
+                properties:
+                  state:
+                    type: string
+                    example: "Maintenance mode is set to: ON"
   /unit/info/all:
     get:
       tags:
@@ -1249,9 +1279,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: The MOTD was successfuly
-                  added to the database.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The MOTD was successfuly
+                      added to the database.
       requestBody:
         content:
           application/json:
@@ -1310,9 +1343,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: The MOTD was successfuly
-                  deactivated in the database.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The MOTD was successfuly
+                      deactivated in the database.
       requestBody:
         content:
           application/json:
@@ -1342,8 +1378,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: MOTD 1 has been sent to the users.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: MOTD 1 has been sent to the users.
       requestBody:
         content:
           application/json:
@@ -1378,8 +1417,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{Exists: true}"
+                type: object
+                properties:
+                  Exists:
+                    type: boolean
+                    example: true
   /user/totp/deactivate:
     put:
       tags:
@@ -1400,9 +1442,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: TOTP has been deactivated for user unituser1.
-                  They can now use 2FA via email during authentication}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: TOTP has been deactivated for user unituser1.
+                      They can now use 2FA via email during authentication
       requestBody:
         content:
           application/json:

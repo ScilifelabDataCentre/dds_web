@@ -8,7 +8,7 @@ info:
     <b>WARNING</b>: Some endpoints are not according to the OpenAPI standard, and therefore
     cannot be documented properly. These endpoints are marked with <u>CHECK METHOD</u> and as deprecated.<br>
     These endpoints will be changed in the future, and will be documented properly in the <b>url</b> hosted in
-    <a href="https://delivery.scilifelab.se/api/documentation/v3"> api/documentation/v3</a> <br>
+    <a href="/api/documentation/v3"> api/documentation/v3</a> <br>
     <br>
     <b>USE</b>: Change the server in the list below depending on the instance you are using,
     and click on the "Authorize" button to enter your user and password. <br>

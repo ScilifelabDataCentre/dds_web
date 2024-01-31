@@ -324,8 +324,8 @@ def create_app(testing=False, database_uri=None):
             from flask_swagger_ui import get_swaggerui_blueprint
 
             # base url for the api documentation
-            SWAGGER_URL_1 = "/api/docs/v1"
-            SWAGGER_URL_3 = "/api/docs/v3"
+            SWAGGER_URL_1 = "/api/documentation/v1"
+            SWAGGER_URL_3 = "/api/documentation/v3"
 
             # path where the swagger file(s) are localted in the repository
             API_URL_V1 = "/static/swagger.yaml"
