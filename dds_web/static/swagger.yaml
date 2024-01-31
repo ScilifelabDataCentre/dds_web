@@ -16,8 +16,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the development enviroment
   # Uncomment when local testing
-#  - url: http://localhost:5000/api/v1
-#    description: Local enviroment
+  - url: http://localhost:5000/api/v1
+    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -1189,6 +1189,403 @@ paths:
                 new_pi:
                   type: string
 
+  ### SUPERADMIN OPERATIONS #########
+  /maintenance:
+    put:
+      tags:
+        - superadmin
+      summary: Change the maintenance mode of the system
+      operationId: maintenanceMode
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Maintenance mode is set to: ON}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                state:
+                  type: string
+                  enum: [on, off]
+    get:
+      tags:
+        - superadmin
+      summary: Return current Maintenance mode
+      operationId: maintenanceModeGet
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Maintenance mode is set to: ON}"
+  /unit/info/all:
+    get:
+      tags:
+        - superadmin
+      summary: Get units info.
+      operationId: allUnits
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  units:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UnitsInfo"
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        Name,
+                        Contact Email,
+                        Days In Available,
+                        Days In Expired,
+                        External Display Name,
+                        Public ID,
+                        Safespring Endpoint,
+                        Size,
+                      ]
+  /motd:
+    post:
+      tags:
+        - superadmin
+      summary: Add a Message of the Day.
+      operationId: addMOTD
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: The MOTD was successfuly
+                  added to the database.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "This is a message of the day"
+    get:
+      tags:
+        - superadmin
+      summary: Return list of all active MOTDs to super admin.
+      operationId: allUnits
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  motds:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MotdInfo"
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    example: [MOTD ID, Message, Created]
+    put:
+      tags:
+        - superadmin
+      summary: Deactivate MOTD.
+      operationId: deactivateMOTD
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: The MOTD was successfuly
+                  deactivated in the database.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motd_id:
+                  type: integer
+                  example: 1
+  /motd/send:
+    post:
+      tags:
+        - superadmin
+      summary: Send MOTD as email to users.
+      operationId: sendMOTD
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: MOTD 1 has been sent to the users.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motd_id:
+                  type: integer
+                  example: 1
+  /user/find:
+    get:
+      tags:
+        - superadmin
+      summary: Get all users or check if there is a specific user in the database CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: findUser
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{Exists: true}"
+  /user/totp/deactivate:
+    put:
+      tags:
+        - superadmin
+      summary: Deactivate TOTP and activate HOTP for other user, e.g. if phone lost
+      operationId: resetTwoFactor
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: TOTP has been deactivated for user unituser1.
+                  They can now use 2FA via email during authentication}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: unituser1
+  /proj/busy/any:
+    get:
+      tags:
+        - superadmin
+      summary: Check if any project are busy CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: anyProjectBusy
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - in: query
+          name: list
+          schema:
+            type: boolean
+          required: false
+          description: Check if user is listing the busy projects.
+            Otherwise just returns the number of busy projects.
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  num:
+                    type: integer
+                    example: 0
+  /stats:
+    get:
+      tags:
+        - superadmin
+      summary: Collect rows from reporting table and return them.
+      operationId: stats
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        Active projects,
+                        Data Now (TB),
+                        Data Uploaded (TB),
+                        Date,
+                        Inactive projects,
+                        Project Owners,
+                        Researchers,
+                        Super Admins,
+                        TBHours Last Month,
+                        TBHours Total,
+                        Total projects,
+                        Total users,
+                        Unit Admins,
+                        Unit Personnel,
+                        Units,
+                      ]
+                  stats:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Reporting"
+  /user/emails:
+    get:
+      tags:
+        - superadmin
+      summary: Get emails for Unit Admins and Unit Personnel.
+      operationId: unitUsersEmails
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  emails:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        unitadmin1@mailtrap.io,
+                        unitadmin2@mailtrap.io,
+                        unitadmin3@mailtrap.io,
+                        unituser1@mailtrap.io,
+                        unituser2@mailtrap.io,
+                      ]
+
   ### S3 OPERATIONS #########
   /s3/proj:
     get:
@@ -1231,7 +1628,6 @@ paths:
                   bucket:
                     type: string
                     example: bucketname
-
 components:
   # define reusable parameters:
   parameters:
@@ -1576,6 +1972,78 @@ components:
             Description:
               type: string
               example: project_description
+    UnitsInfo:
+      type: object
+      properties:
+        Name:
+          type: string
+          example: Unit 1
+        Contact Email:
+          type: string
+          example: support@example.com
+        Days In Available:
+          type: integer
+          example: 90
+        Days In Expired:
+          type: integer
+          example: 30
+        External Display Name:
+          type: string
+          example: Unit 1
+        Public ID:
+          type: string
+          example: unit_1
+        Safespring Endpoint:
+          type: string
+        Size:
+          type: integer
+          format: int64
+          example: 1000
+    MotdInfo:
+      type: object
+      properties:
+        MOTD ID:
+          type: integer
+          example: 1
+        Message:
+          type: string
+          example: This is a message of the day
+        Created:
+          type: string
+          example: 2021-01-01 00:00:00
+    Reporting:
+      type: object
+      properties:
+        Active projects:
+          type: integer
+        Data Now (TB):
+          type: integer
+        Data Uploaded (TB):
+          type: integer
+        Date:
+          type: string
+        Inactive projects:
+          type: integer
+        Project Owners:
+          type: integer
+        Researchers:
+          type: integer
+        Super Admins:
+          type: integer
+        TBHours Last Month:
+          type: integer
+        TBHours Total:
+          type: integer
+        Total projects:
+          type: integer
+        Total users:
+          type: integer
+        Unit Admins:
+          type: integer
+        Unit Personnel:
+          type: integer
+        Units:
+          type: integer
     Token:
       type: object
       properties:
