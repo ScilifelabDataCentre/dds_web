@@ -3,7 +3,9 @@
 openapi: 3.0.0
 info:
   description: | # html syntax is allowed
-    Documentation for the API of the Data Delivery System (DDS) in SciLifeLab. <br>
+    Documentation for the API of the Data Delivery System (DDS) in SciLifeLab Data Centre. <br>
+    This documentation is mainly intended for internal use. But developers and researchers can use it at their own risk. 
+    However, DC recomends to always use the client and tools provided to units and researchers. <br>
     <br><br>
     <b>WARNING</b>: Some endpoints are not according to the OpenAPI standard, and therefore
     cannot be documented properly. These endpoints are marked with <u>CHECK METHOD</u> and as deprecated.<br>
@@ -31,8 +33,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v1
     description: Endpoint for the test server
   # Uncomment when local testing
-#  - url: http://localhost:5000/api/v1
-#    description: Local enviroment
+  - url: http://localhost:5000/api/v1
+    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations
@@ -52,7 +54,9 @@ paths:
     post:
       tags:
         - files
-      summary: Add a new file to the database
+      summary: Add the information of a new file to the database
+      description: Adds the metadata of a file to the DB, please note that to upload
+        the actual file to the system you need to get the s3 keys in the /s3/proj endpoint
       operationId: newFile
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -77,6 +81,8 @@ paths:
       tags:
         - files
       summary: Update an existing file
+      description: Updates the metadata of a file in the DB. The name will be used
+        to find the file. The rest of the fields will be updated.
       operationId: updateFile
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -177,11 +183,12 @@ paths:
     delete:
       tags:
         - files
-      summary: Deletes a file CHECK METHOD
+      summary: Deletes a file metadataCHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
         Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
+        therefore we need to change/remove it in the future. <br><br>
+        Deletes the file from the DB and bucket, no further operation with the s3 keys are required.
       deprecated: true
       operationId: removeFile
       parameters:
@@ -203,7 +210,9 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerlError"
         "200":
-          description: successful operation
+          description: Successful operation, this means that the backend didn't encounted
+            any errors. But the file may not have been deleted from the database. If this happens, it will
+            be indicated in the response
           content:
             application/json:
               schema:
@@ -222,7 +231,8 @@ paths:
       description: This method requires the data
         to be passed in the request body instead of the query.
         Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
+        therefore we need to change/remove it in the future. <br> <br>
+        Deletes the directory from the DB and bucket, no further operation with the s3 keys are required.
       deprecated: true
       operationId: removeDir
       parameters:
@@ -244,7 +254,9 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerlError"
         "200":
-          description: successful operation
+          description: Successful operation, this means that the backend didn't encounted
+            any errors. But the file may not have been deleted from the database. If this happens, it will
+            be indicated in the response
           content:
             application/json:
               schema:
@@ -294,9 +306,11 @@ paths:
                 type: object
                 properties:
                   files:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Files"
+                    $ref: "#/components/schemas/FilesInfo"
+                  folder_contents:
+                    example: {}
+                  not_found:
+                    example: {}
   /file/all/info:
     get:
       tags:
@@ -321,14 +335,13 @@ paths:
                 type: object
                 properties:
                   files:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Files"
+                    $ref: "#/components/schemas/FilesInfo"
   /file/update:
     put:
       tags:
         - files
-      summary: Update file info after download
+      summary: Get info on all project files
+      description: After downloading a file, that event has to be registered using this endpoint
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
@@ -357,6 +370,8 @@ paths:
       tags:
         - files
       summary: Get files from log file and save to database
+      description: If there was a fail with some files, the information from the log is
+        passed to this endpoint to allow for a retru of the upload
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
@@ -1822,6 +1837,40 @@ components:
         checksum:
           type: string
           example: cheksum
+    FilesInfo:
+      type: object
+      properties:
+        filename.txt:
+          type: object
+          properties:
+            checksum:
+              type: string
+              example: checksum
+            compressed:
+              type: boolean
+              example: true
+            name_in_bucket:
+              type: string
+              example: filebucketname1
+            public_key:
+              type: string
+              example: public_key
+            salt:
+              type: string
+              example: salt
+            size_original:
+              type: integer
+              format: int64
+              example: 1000
+            size_stored:
+              type: integer
+              format: int64
+              example: 500
+            subpath:
+              type: string
+              example: subpath
+            url:
+              type: string
     User:
       type: object
       required:
