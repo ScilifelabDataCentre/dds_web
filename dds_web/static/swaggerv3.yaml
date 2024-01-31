@@ -12,8 +12,9 @@ info:
     <br>
     <b>USE</b>: Change the server in the list below depending on the instance you are using,
     and click on the "Authorize" button to enter your user and password. <br>
-    The endpoint <b> /user/encrypted_token </b> is used to generate an encrypted token for the user. <br> 
-    Add this endpoint in the "Authorize" button and call the endpoint <b> /user/second_factor </b> to authenticate with MFA. <br>
+    The endpoint <b> /user/encrypted_token </b> is used to generate an encrypted token for the user. <br>
+    Add this endpoint in the "Authorize" button and call the endpoint <b> /user/second_factor </b>
+     to authenticate with MFA. <br>
     Lastly, save again this second token in the same place (login out the previous one). <br>
     Now you can start using the API! <br>
     <br>
