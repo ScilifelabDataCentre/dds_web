@@ -4,7 +4,8 @@ openapi: 3.0.0
 info:
   description: | # html syntax is allowed
     Documentation for the API of the Data Delivery System (DDS) in SciLifeLab Data Centre. <br>
-    This documentation is mainly intended for internal use. But developers and researchers can use it at their own risk. 
+    This documentation is mainly intended for internal use. But developers and researchers
+     can use it at their own risk.
     However, DC recomends to always use the client and tools provided to units and researchers. <br>
     <br><br>
     <b>WARNING</b>: This version is NOT stable and is subject to change
