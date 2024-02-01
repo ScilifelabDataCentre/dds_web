@@ -33,8 +33,8 @@ servers:
   - url: https://dds-dev.dckube3.scilifelab.se/api/v3
     description: Endpoint for the test server
   # Uncomment when local testing
-  - url: http://localhost:5000/api/v3
-    description: Local enviroment
+#  - url: http://localhost:5000/api/v3
+#    description: Local enviroment
 tags:
   - name: authentication
     description: Authorization and authentication operations

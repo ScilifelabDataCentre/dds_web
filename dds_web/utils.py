@@ -94,6 +94,7 @@ def verify_cli_version(version_cli: str = None, version_api: str = None) -> None
 
     # Split version string up into major, middle, minor
     version_cli_parts = version_cli.split(".")
+    # version_api is optional, if not specified gets the info from the version file
     if not version_api:
         version_correct_parts = __version__.split(".")
     else:
