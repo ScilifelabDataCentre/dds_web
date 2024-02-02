@@ -6,6 +6,7 @@ services:
   db:
     container_name: dds_database
     image: mariadb:10.11.5
+    user: "10600:10600"
     environment:
       - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
       - MYSQL_USER=${DDS_MYSQL_USER}
@@ -49,7 +50,7 @@ services:
     image: dds-backend-local:latest
     # This user will be used by default in docker compose test.
     # When we want to run as root, change the following line
-    user: "dds-user:dds-user"
+    user: "10600:10600"
     build:
       dockerfile: Dockerfiles/backend.Dockerfile
       context: ./
