@@ -6,14 +6,13 @@
 FROM python:3.10-alpine as base
 
 ARG USERNAME=dds-user
-ARG USER_UID=10600
+ARG USER_UID=1001
 ARG GROUPNAME=$USERNAME
 ARG USER_GID=$USER_UID
 
 # Create the user
 RUN addgroup -g $USER_GID $GROUPNAME \
-    && adduser -D -u $USER_UID -G $GROUPNAME $USERNAME \
-    && chown -R $USERNAME:$GROUPNAME /usr/local/lib/python3.10/site-packages
+    && adduser -D -u $USER_UID -G $GROUPNAME $USERNAME
 
 # Update and upgrade
 RUN apk update && apk upgrade
