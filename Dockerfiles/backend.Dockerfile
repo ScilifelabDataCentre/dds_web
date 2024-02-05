@@ -53,8 +53,6 @@ RUN apk add mariadb-client
 
 # Switch to the user
 USER $USERNAME
-# Declare coverage file
-RUN COVERAGE_FILE=/code/coverage/.coverage
 
 ###################
 ## BUILD FRONTEND
