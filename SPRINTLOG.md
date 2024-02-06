@@ -354,3 +354,4 @@ _Nothing merged in CLI during this sprint_
 # 2024-01-29 - 2024-02-09
 
 - Use of a fix version of black and linted files to 24.1.1 ([#1510](https://github.com/ScilifelabDataCentre/dds_web/pull/1510))
+- Run containers as non-root in development envronment ([#1498](https://github.com/ScilifelabDataCentre/dds_web/pull/1498))
