@@ -1,4 +1,5 @@
 ---
+# yamllint disable rule:line-length
 version: "3.8"
 
 services:
@@ -15,9 +16,7 @@ services:
       context: ./
       target: test
     command: >
-      # yamllint disable-line
       sh -c "COVERAGE_FILE=./coverage/.coverage pytest -s -color=yes $DDS_PYTEST_ARGS --cov=./dds_web --cov-report=xml:coverage/report.xml"
-      # yamllint enable-line
     restart: "no"
     volumes:
       - type: bind
