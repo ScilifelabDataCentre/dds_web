@@ -6,6 +6,9 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=${DDS_MYSQL_ROOT_PASS}
       - DDS_PYTEST_ARGS=${DDS_PYTEST_ARGS}
+    # This user will be used by default in the container.
+    # When we want to run as root, change the following line to
+    # user: "root:root"
     user: "1001:1001"
     build:
       dockerfile: Dockerfiles/backend.Dockerfile
