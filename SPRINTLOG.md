@@ -359,3 +359,4 @@ _Nothing merged in CLI during this sprint_
 # 2024-02-12 - 2024-03-08
 
 - Pillow update to address cve ([#1511](https://github.com/ScilifelabDataCentre/dds_web/pull/1511))
+New version: 2.6.2 ([#1514](https://github.com/ScilifelabDataCentre/dds_web/pull/1514))
