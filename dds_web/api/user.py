@@ -233,9 +233,9 @@ class AddUser(flask_restful.Resource):
                                     project=unit_project,
                                 )
                             except ddserr.KeyNotFoundError as keyerr:
-                                projects_not_shared[
-                                    unit_project.public_id
-                                ] = "You do not have access to the project(s)"
+                                projects_not_shared[unit_project.public_id] = (
+                                    "You do not have access to the project(s)"
+                                )
                             else:
                                 goahead = True
                 else:
@@ -258,9 +258,9 @@ class AddUser(flask_restful.Resource):
                         is_project_owner=new_user_role == "Project Owner",
                     )
                 except ddserr.KeyNotFoundError as keyerr:
-                    projects_not_shared[
-                        project.public_id
-                    ] = "You do not have access to the specified project."
+                    projects_not_shared[project.public_id] = (
+                        "You do not have access to the specified project."
+                    )
                 else:
                     goahead = True
             else:
@@ -1010,6 +1010,18 @@ class SecondFactor(flask_restful.Resource):
     @json_required
     @handle_validation_errors
     def get(self):
+        token_schemas.TokenSchema().load(
+            flask.request.get_json(silent=True)
+        )  # Verified by json_required
+
+        token_claims = dds_web.security.auth.obtain_current_encrypted_token_claims()
+
+        return {"token": update_token_with_mfa(token_claims)}
+
+    @auth.login_required
+    @json_required
+    @handle_validation_errors
+    def post(self):
         token_schemas.TokenSchema().load(
             flask.request.get_json(silent=True)
         )  # Verified by json_required

@@ -333,7 +333,30 @@ _Nothing merged in CLI during this sprint_
 
 # 2023-12-4 - 2023-12-15
 
+- Implemented swagger documentation ([#1495](https://github.com/ScilifelabDataCentre/dds_web/pull/1495))
 - Patch update crypthography package to address cve ([#1496](https://github.com/ScilifelabDataCentre/dds_web/pull/1496))
 - Fix listing users was not showing PO ([#1497](https://github.com/ScilifelabDataCentre/dds_web/pull/1497))
 - Bug: `flask send-usage` permission issue on testing and production environment ([1499](https://github.com/ScilifelabDataCentre/dds_web/pull/1499))
 - New version: 2.6.1 ([#1501](https://github.com/ScilifelabDataCentre/dds_web/pull/1501))
+
+# 2023-12-15 - 2024-01-12
+
+- Minor update jinja2 package to address cve ([#1503](https://github.com/ScilifelabDataCentre/dds_web/pull/1503))
+- Minor update jwcrypto package to address cve ([#1504](https://github.com/ScilifelabDataCentre/dds_web/pull/1504))
+
+# 2024-01-15 - 2024-01-26
+
+- Document Superadmin endpoints ([#1507](https://github.com/ScilifelabDataCentre/dds_web/pull/1507))
+- Document S3 endpoints ([#1509](https://github.com/ScilifelabDataCentre/dds_web/pull/1509))
+- Document Project endpoints ([#1508](https://github.com/ScilifelabDataCentre/dds_web/pull/1508))
+- Document User endpoints ([#1506](https://github.com/ScilifelabDataCentre/dds_web/pull/1506))
+
+# 2024-01-29 - 2024-02-09
+
+- Use of a fix version of black and linted files to 24.1.1 ([#1510](https://github.com/ScilifelabDataCentre/dds_web/pull/1510))
+- Run containers as non-root in development envronment ([#1498](https://github.com/ScilifelabDataCentre/dds_web/pull/1498))
+
+# 2024-02-12 - 2024-03-08
+
+- Pillow update to address cve ([#1511](https://github.com/ScilifelabDataCentre/dds_web/pull/1511))
+- New version: 2.6.2 ([#1514](https://github.com/ScilifelabDataCentre/dds_web/pull/1514))

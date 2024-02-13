@@ -1,13 +1,26 @@
 Changelog
 ==========
 
+.. _2.6.2:
+
+2.6.2 - 2023-02-13
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- New features:
+    - Documentation is now available at `https://delivery.scilifelab.se/documentation/`. Some endpoints do not comply with the openAPI standards and are not properly documented.
+- Dependencies: 
+    - `jinja2` from `3.0.3` to `3.1.3`
+    - `jwcrypto` from `1.4.2` to `1.5.1`
+    - `Pillow` from `10.1.0` to `10.2.0`
+
+
 .. _2.6.1:
 
 2.6.1 - 2023-12-20
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 - Bugs fixed:
-    - Listing users invites will now show if the invote is for Project Owner.
+    - Listing users invites will now show if the invite is for Project Owner.
     - Permissions issue for `send-usage` command in testing and production environment.
 - Dependencies: 
     - `Cryptography` from `41.0.3` to `41.0.6`

@@ -1,0 +1,2062 @@
+# yammllint and prettier conflict with some rules, disable them
+# yamllint disable rule:braces
+openapi: 3.0.0
+info:
+  description: |
+    Documentation for the API of the Data Delivery System (DDS) in SciLifeLab
+  version: "2.6.0"
+  title: Data Delivery System
+# Apply the encrypted token to all operations
+security:
+  - seconFactorToken: []
+servers:
+  # Added by API Auto Mocking Plugin
+  - url: https://delivery.scilifelab.se/api/v1
+    description: Endpoint for the production enviroment
+  - url: https://dds-dev.dckube3.scilifelab.se/api/v1
+    description: Endpoint for the development enviroment
+  # Uncomment when local testing
+  - url: http://localhost:5000/api/v1
+    description: Local enviroment
+tags:
+  - name: authentication
+    description: Authorization and authentication operations
+  - name: files
+    description: Manage files operations
+  - name: user
+    description: Operations about user
+  - name: project
+    description: Operations about projects
+  - name: s3
+    description: s3 bucket
+  - name: superadmin
+    description: Superadmin operations
+paths:
+  ### FILES OPERATIONS #########
+  /file/new:
+    post:
+      tags:
+        - files
+      summary: Add a new file to the database
+      operationId: newFile
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: File data_seq.txt added to db.}"
+      requestBody:
+        $ref: "#/components/requestBodies/Files"
+    put:
+      tags:
+        - files
+      summary: Update an existing file
+      operationId: updateFile
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: File data_seq.txt updated in the db.}"
+      requestBody:
+        $ref: "#/components/requestBodies/Files"
+  /file/match:
+    get:
+      tags:
+        - files
+      summary: Get name in bucket for all files specified CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: matchFiles
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: string
+                    example: [name_in_bucket, name_in_bucket_2]
+  /files/list:
+    get:
+      tags:
+        - files
+      summary: Get a list of files within the specific folder CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: listFiles
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files_folder:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        folder:
+                          type: boolean
+                        name:
+                          type: string
+                    example:
+                      [
+                        { "folder": true, "name": "filename1" },
+                        { "folder": true, "name": "filename2" },
+                        { "folder": true, "name": "sub" },
+                      ]
+  /file/rm:
+    delete:
+      tags:
+        - files
+      summary: Deletes a file CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: removeFile
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+        - name: json
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+            example: [file_name.txt, file_name_2.txt]
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  not_removed:
+                    type: boolean
+                  not_exists:
+                    type: boolean
+                example: { "not_removed": false, "not_exists": false }
+  /file/rmdir:
+    delete:
+      tags:
+        - files
+      summary: Deletes folder(s) CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: removeDir
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+        - name: json
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+            example: [folder_1, folder_2]
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  not_removed:
+                    type: boolean
+                  fail_type:
+                    type: string
+                  nr_deleted:
+                    type: integer
+                example: { "not_removed": false, "fail_type": "none", "nr_deleted": 10 } # yamllint disable-line
+  /file/info:
+    get:
+      tags:
+        - files
+      summary: Get file info on files to download CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: fileInfo
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+        - name: json
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+            example: [file_name.txt]
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Files"
+  /file/all/info:
+    get:
+      tags:
+        - files
+      summary: Get info on all project files CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: fileInfoAll
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Files"
+  /file/update:
+    put:
+      tags:
+        - files
+      summary: Update file info after download
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      operationId: updateFile2
+      responses:
+        "405":
+          description: Invalid input
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: File info updated}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: filename
+  /file/failed/add:
+    put:
+      tags:
+        - files
+      summary: Get files from log file and save to database
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      operationId: addFailed
+      responses:
+        "405":
+          description: Invalid input
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files_added:
+                    type: array
+                    items:
+                      type: string
+                    example: [filefailed]
+      requestBody:
+        $ref: "#/components/requestBodies/FailedFiles"
+
+  # LOGIN OPERATIONS
+  /user/encrypted_token:
+    get:
+      tags:
+        - authentication
+      summary: Generates encrypted token for the user
+      operationId: token
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      security:
+        - encryptedToken: []
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedTwofactor"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Please take this token to /user/second_factor
+                      to authenticate with MFA!
+                  token:
+                    type: string
+                  secondfactor_method:
+                    type: string
+                    example: secondfactor_method
+  /user/second_factor:
+    get:
+      tags:
+        - authentication
+      summary: Take in and verify an authentication one-time code entered
+        by an authenticated user with basic credentials CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: secondFactorGet
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - name: TOTP
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+    post:
+      tags:
+        - authentication
+      summary: Take in and verify an authentication one-time code entered by
+        an authenticated user with basic credentials
+      description: Send either the HOTP or TOTP code
+        depending on the two factor method used
+      operationId: secondFactorPost
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+      requestBody:
+        $ref: "#/components/requestBodies/Token"
+
+  ### USER OPERATIONS #########
+  /user/info:
+    get:
+      tags:
+        - user
+      summary: Return own info when required
+      operationId: retrieveUserInfo
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+  /user/add:
+    post:
+      tags:
+        - user
+      summary: Associate existing users or unanswered invites with projects or create invites
+      operationId: addUser
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    example: researcher1@mailtrap.io
+                  errors:
+                    type: object
+                  message:
+                    type: string
+                    example: Pending invite was successful
+                  status:
+                    type: integer
+                    example: 200
+      requestBody:
+        $ref: "#/components/requestBodies/User"
+  /user/delete:
+    delete:
+      tags:
+        - user
+      summary: Delete user or invite in the DDS. Unit Admins can delete Unit Admins and Unit Personnel.
+        Super admins can delete any user CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: deleteUser
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/email"
+        - $ref: "#/components/parameters/is_invite"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: You successfully deleted the account.}"
+  /user/delete_self:
+    delete:
+      tags:
+        - user
+      summary: Endpoint to initiate user self removal from the system.
+        Every user can self-delete the own account with an e-mail confirmation
+      operationId: deleteUserSelf
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Requested account deletion initiated.
+                  An e-mail with a confirmation link has been sent to your address}"
+  /user/access/revoke:
+    post:
+      tags:
+        - user
+      summary: Remove an user from a project
+      operationId: removeUserAssociation
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: User with email email@example.com no longer
+                  associated with exmple_project.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: researcher1@mailtrap.io
+  /user/activation:
+    post:
+      tags:
+        - user
+      summary: Unit Admins can reactivate/deactivate unitusers. Super admins can reactivate/deactivate any user.
+      operationId: userActivation
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: You successfully reactivated the account}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: researcher1@mailtrap.io
+                action:
+                  type: string
+                  enum:
+                    - reactivate
+                    - deactivate
+  /user/hotp/activate:
+    post:
+      tags:
+        - user
+      summary: Request to switch from TOTP to HOTP for second factor authentication.
+      operationId: requestHOTPActivation
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Please check your email and follow the attached link to activate two-factor with email}" # yamllint disable-line
+      security:
+        - encryptedToken: []
+  /user/totp/activate:
+    post:
+      tags:
+        - user
+      summary: Request to switch from HOTP to TOTP for second factor authentication.
+      operationId: requestTOTPActivation
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Please check your email and follow the attached link to activate two-factor with autenticator app}" # yamllint disable-line
+  /users:
+    get:
+      tags:
+        - user
+      summary: List unit users within the unit the current user is connected to, or the one defined by a superadmin.
+        CHECK METHOD FOR SUPERADMINS
+      description: TODO - for superadmin, it can be passed a unit, currently in body, needs to be in query.
+      deprecated: true
+      operationId: getUsers
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserList"
+  /user/invites:
+    get:
+      tags:
+        - user
+      summary: Provides a list of invited users.
+        Superadmins see all invites, unitusers the invites to their projects and units.
+      description: The Unit field is only returned when authenticated as a superadmin.
+      operationId: getInvites
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invites:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/InvitesList"
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    example: [Email, Role, Projects, Created, Unit]
+  /usage:
+    get:
+      tags:
+        - user
+        - project
+      summary: Calculate and display the amount of GB hours and the total cost.
+        Only unit accounts can get invoicing information
+      operationId: showUsage
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  project_usage:
+                    type: object
+                    properties:
+                      project_1:
+                        type: object
+                        properties:
+                          gbhours:
+                            type: number
+                            example: 0.00000000000000000000
+                          cost:
+                            type: number
+                            example: 0.00000000000000000000
+                  total_usage:
+                    type: object
+                    properties:
+                      gbhours:
+                        type: number
+                        example: 0.00000000000000000000
+                      cost:
+                        type: number
+                        example: 0.00000000000000000000
+
+  ### PROJECT OPERATIONS #########
+  /proj/list:
+    get:
+      tags:
+        - project
+      summary: Get info regarding all projects which user is involved in
+      operationId: userProjects
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjListInfo"
+  /proj/rm:
+    delete:
+      tags:
+        - project
+      summary: Remove project contents
+      operationId: removeContents
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{removed: true}"
+  /proj/public:
+    get:
+      tags:
+        - project
+      summary: Gets the public key beloning to the current project
+      operationId: getPublic
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  public:
+                    type: string
+                    example: public_key
+  /proj/private:
+    get:
+      tags:
+        - project
+      summary: Gets the private key beloning to the current project
+      operationId: getPublic
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  private:
+                    type: string
+                    example: private
+  /proj/create:
+    post:
+      tags:
+        - project
+      summary: Create a new project
+      operationId: createProject
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Added new project project_title
+                  project_id:
+                    type: string
+                    example: project_id
+                  user_addition_statuses:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: User added
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - pi
+              properties:
+                forced:
+                  type: boolean
+                  example: false
+                  description: Verify enough number of Unit Admins
+                title:
+                  type: string
+                  example: project_title
+                description:
+                  type: string
+                  example: project_description
+                pi:
+                  type: string
+                  example: pi@example.com
+                non_sensitive:
+                  type: boolean
+                  example: False
+                  description: If has non-sensitive data
+                users_to_add:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                        example: researcheruser@mailtrap.io
+                      role:
+                        type: string
+                        example: Researcher
+                  description: List of users (outside the unit) to add to the project. Can be empty.
+  /proj/users:
+    get:
+      tags:
+        - project
+      summary: Get all users in a project
+      operationId: projectUsers
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  research_users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Primary email:
+                          type: string
+                        User name:
+                          type: string
+                        Role:
+                          type: string
+  /proj/status:
+    get:
+      tags:
+        - project
+      summary: Get current project status and optionally entire status history CHECK METHOD
+      description: This method requires some data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: projectStatusGet
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+        - name: history
+          in: query
+          required: false
+          schema:
+            type: boolean
+            example: true
+          description: If true, return entire status history
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current_status:
+                    type: string
+                    example: In progress
+    post:
+      tags:
+        - project
+      summary: Update project status
+      operationId: projectStatusPost
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_status:
+                  type: string
+                  example: Available
+                send_email:
+                  type: boolean
+                  example: true
+                deadline:
+                  type: integer
+                  example: 30
+                is_aborted:
+                  type: boolean
+                  example: false
+  /proj/access:
+    post:
+      tags:
+        - project
+      summary: Give access to user
+      operationId: projectAccess
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Project Access updated
+                  for user user_primeary_email.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+  /proj/info:
+    get:
+      tags:
+        - project
+      summary: Display Project information
+      operationId: projectInfo
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjInfo"
+    put:
+      tags:
+        - project
+      summary: Update Project information
+      operationId: projectInfoUpdate
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Project_id info was successfuly updated
+                  title:
+                    type: string
+                    example: new_title
+                  description:
+                    type: string
+                    example: new_description
+                  pi:
+                    type: string
+                    example: new_pi@example.org
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                new_description:
+                  type: string
+                new_pi:
+                  type: string
+
+  ### SUPERADMIN OPERATIONS #########
+  /maintenance:
+    put:
+      tags:
+        - superadmin
+      summary: Change the maintenance mode of the system
+      operationId: maintenanceMode
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Maintenance mode is set to: ON}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                state:
+                  type: string
+                  enum: [on, off]
+    get:
+      tags:
+        - superadmin
+      summary: Return current Maintenance mode
+      operationId: maintenanceModeGet
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: Maintenance mode is set to: ON}"
+  /unit/info/all:
+    get:
+      tags:
+        - superadmin
+      summary: Get units info.
+      operationId: allUnits
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  units:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UnitsInfo"
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        Name,
+                        Contact Email,
+                        Days In Available,
+                        Days In Expired,
+                        External Display Name,
+                        Public ID,
+                        Safespring Endpoint,
+                        Size,
+                      ]
+  /motd:
+    post:
+      tags:
+        - superadmin
+      summary: Add a Message of the Day.
+      operationId: addMOTD
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: The MOTD was successfuly
+                  added to the database.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "This is a message of the day"
+    get:
+      tags:
+        - superadmin
+      summary: Return list of all active MOTDs to super admin.
+      operationId: allUnits
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  motds:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MotdInfo"
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    example: [MOTD ID, Message, Created]
+    put:
+      tags:
+        - superadmin
+      summary: Deactivate MOTD.
+      operationId: deactivateMOTD
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: The MOTD was successfuly
+                  deactivated in the database.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motd_id:
+                  type: integer
+                  example: 1
+  /motd/send:
+    post:
+      tags:
+        - superadmin
+      summary: Send MOTD as email to users.
+      operationId: sendMOTD
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: MOTD 1 has been sent to the users.}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motd_id:
+                  type: integer
+                  example: 1
+  /user/find:
+    get:
+      tags:
+        - superadmin
+      summary: Get all users or check if there is a specific user in the database CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: findUser
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{Exists: true}"
+  /user/totp/deactivate:
+    put:
+      tags:
+        - superadmin
+      summary: Deactivate TOTP and activate HOTP for other user, e.g. if phone lost
+      operationId: resetTwoFactor
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{message: TOTP has been deactivated for user unituser1.
+                  They can now use 2FA via email during authentication}"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: unituser1
+  /proj/busy/any:
+    get:
+      tags:
+        - superadmin
+      summary: Check if any project are busy CHECK METHOD
+      description: This method requires the data
+        to be passed in the request body instead of the query.
+        Since this does not comply with the openAPI standards, swagger cannot document it properly,
+        therefore we need to change/remove it in the future.
+      deprecated: true
+      operationId: anyProjectBusy
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - in: query
+          name: list
+          schema:
+            type: boolean
+          required: false
+          description: Check if user is listing the busy projects.
+            Otherwise just returns the number of busy projects.
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  num:
+                    type: integer
+                    example: 0
+  /stats:
+    get:
+      tags:
+        - superadmin
+      summary: Collect rows from reporting table and return them.
+      operationId: stats
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        Active projects,
+                        Data Now (TB),
+                        Data Uploaded (TB),
+                        Date,
+                        Inactive projects,
+                        Project Owners,
+                        Researchers,
+                        Super Admins,
+                        TBHours Last Month,
+                        TBHours Total,
+                        Total projects,
+                        Total users,
+                        Unit Admins,
+                        Unit Personnel,
+                        Units,
+                      ]
+                  stats:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Reporting"
+  /user/emails:
+    get:
+      tags:
+        - superadmin
+      summary: Get emails for Unit Admins and Unit Personnel.
+      operationId: unitUsersEmails
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  emails:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        unitadmin1@mailtrap.io,
+                        unitadmin2@mailtrap.io,
+                        unitadmin3@mailtrap.io,
+                        unituser1@mailtrap.io,
+                        unituser2@mailtrap.io,
+                      ]
+
+  ### S3 OPERATIONS #########
+  /s3/proj:
+    get:
+      tags:
+        - s3
+      summary: Get the project S3 keys
+      operationId: retrieveUserInfo
+      parameters:
+        - $ref: "#/components/parameters/defaultHeader"
+        - $ref: "#/components/parameters/projectID"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerlError"
+        "200":
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  safespring_project:
+                    type: string
+                    example: sfsp_proj
+                  url:
+                    type: string
+                    example: url
+                  keys:
+                    type: object
+                    properties:
+                      access_key:
+                        type: string
+                        example: access_key
+                      secret_key:
+                        type: string
+                        example: secret_key
+                  bucket:
+                    type: string
+                    example: bucketname
+components:
+  # define reusable parameters:
+  parameters:
+    defaultHeader:
+      name: X-CLI-Version
+      in: header
+      required: true
+      schema:
+        type: string
+        example: "2.6.0"
+    projectID:
+      name: project
+      in: query
+      schema:
+        type: string
+      description: project id to query
+    email:
+      name: email
+      in: query
+      schema:
+        type: string
+      description: email of the user/invite to query
+    is_invite:
+      name: is_invite
+      in: query
+      schema:
+        type: string
+      description: flag to mark if the user to query is an invite
+  # Define common request bodies:
+  requestBodies:
+    Files:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Files"
+    FailedFiles:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              filename:
+                $ref: "#/components/schemas/FailedFiles"
+    User:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/User"
+    Token:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Token"
+  # define reusable responses:
+  responses:
+    BadRequest:
+      description: The requests is missing important information in the body
+        or have invalidad data, such as invalid project specified
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    UnauthorizedTwofactor:
+      description: Username and password not provided or is invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    UnauthorizedToken:
+      description: Encrypted Token is not provided or is invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    InternalServerlError:
+      description: Something wrong in the server side
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  # define schemas for objects
+  schemas:
+    Files:
+      type: object
+      required:
+        - name
+        - name_in_bucket
+        - subpath
+        - size
+        - size_processed
+        - compressed
+        - public_key
+        - salt
+        - checksum
+      properties:
+        name:
+          type: string
+          example: adn_secuence.txt
+        name_in_bucket:
+          type: string
+          example: filebucketname1
+        subpath:
+          type: string
+          example: subpath
+        size:
+          type: integer
+          format: int64
+          example: 1000
+        size_processed:
+          type: integer
+          format: int64
+          example: 500
+        compressed:
+          type: boolean
+          example: true
+        public_key:
+          type: string
+          example: pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp # yamllint disable-line
+        salt:
+          type: string
+          example: ssssssssssssssssssssssssssssssss
+        checksum:
+          type: string
+          example: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc # yamllint disable-line
+    FailedFiles:
+      type: object
+      required:
+        - status
+        - path_remote
+        - subpath
+        - size_raw
+        - size_processed
+        - compressed
+        - public_key
+        - salt
+        - checksum
+      properties:
+        status:
+          type: object
+          properties:
+            failed_op:
+              type: string
+              example: add_file_db
+        path_remote:
+          type: string
+          example: path/to/file1.txt
+        subpath:
+          type: string
+          example: subpath
+        size_raw:
+          type: integer
+          format: int64
+          example: 100
+        size_processed:
+          type: integer
+          format: int64
+          example: 200
+        compressed:
+          type: boolean
+          example: false
+        public_key:
+          type: string
+          example: public_key
+        salt:
+          type: string
+          example: salt
+        checksum:
+          type: string
+          example: cheksum
+    User:
+      type: object
+      required:
+        - role
+        - unit
+        - email
+      properties:
+        role:
+          type: string
+          example: Researcher
+        unit:
+          type: string
+          example: UnitA
+        email:
+          type: string
+          example: researcher1@mailtrap.io
+        send_email:
+          type: boolean
+          example: true
+    UserInfo:
+      type: object
+      properties:
+        info:
+          type: object
+          properties:
+            email_primary:
+              type: string
+              example: unitadmin1@mailtrap.io
+            emails_all:
+              type: array
+              items:
+                type: string
+            is_admin:
+              type: boolean
+              example: true
+            name:
+              type: string
+              example: Unit Admin 1
+            role:
+              type: string
+              example: Unit Admin
+            username:
+              type: string
+              example: unitadmin_1
+    UserList:
+      type: object
+      properties:
+        active:
+          type: boolean
+          example: true
+        name:
+          type: string
+          example: Unit Admin 1
+        role:
+          type: string
+          example: Unit Admin
+        username:
+          type: string
+          example: unitadmin_1
+        email:
+          type: string
+          example: unitadmin1@mailtrap.io
+    InvitesList:
+      type: object
+      required:
+        - Created
+        - Email
+        - Role
+      properties:
+        Created:
+          type: string
+          format: date-time
+        Email:
+          type: string
+          example: researcher1@mailtrap.io
+        Role:
+          type: string
+          example: Researcher
+        Projects:
+          type: array
+          items:
+            type: string
+          example: [project1]
+        Unit:
+          type: string
+          example: ""
+    ProjListInfo:
+      type: object
+      properties:
+        always_show:
+          type: boolean
+          example: true
+        project_info:
+          type: array
+          items:
+            type: object
+            properties:
+              Access:
+                type: boolean
+                example: true
+              Created By:
+                type: string
+                example: user
+              Last Updated:
+                type: string
+                example: 2020-01-01 00:00:00
+              PI:
+                type: string
+                example: support@example.org
+              Project ID:
+                type: string
+                example: project_id
+              Size:
+                type: integer
+                example: 1000
+              Status:
+                type: string
+                example: In progress
+              Title:
+                type: string
+                example: project_title
+        total_size:
+          type: integer
+          example: 1000
+        tota_usage:
+          type: object
+          properties:
+            cost:
+              type: integer
+              example: 0
+            usage:
+              type: integer
+              example: 1000
+    ProjInfo:
+      type: object
+      properties:
+        project_info:
+          type: object
+          properties:
+            Created By:
+              type: string
+              example: user
+            Last Updated:
+              type: string
+              example: 2020-01-01 00:00:00
+            PI:
+              type: string
+              example: support@example.org
+            Project ID:
+              type: string
+              example: project_id
+            Status:
+              type: string
+              example: In progress
+            Size:
+              type: integer
+              example: 1000
+            Title:
+              type: string
+              example: project_title
+            Description:
+              type: string
+              example: project_description
+    UnitsInfo:
+      type: object
+      properties:
+        Name:
+          type: string
+          example: Unit 1
+        Contact Email:
+          type: string
+          example: support@example.com
+        Days In Available:
+          type: integer
+          example: 90
+        Days In Expired:
+          type: integer
+          example: 30
+        External Display Name:
+          type: string
+          example: Unit 1
+        Public ID:
+          type: string
+          example: unit_1
+        Safespring Endpoint:
+          type: string
+        Size:
+          type: integer
+          format: int64
+          example: 1000
+    MotdInfo:
+      type: object
+      properties:
+        MOTD ID:
+          type: integer
+          example: 1
+        Message:
+          type: string
+          example: This is a message of the day
+        Created:
+          type: string
+          example: 2021-01-01 00:00:00
+    Reporting:
+      type: object
+      properties:
+        Active projects:
+          type: integer
+        Data Now (TB):
+          type: integer
+        Data Uploaded (TB):
+          type: integer
+        Date:
+          type: string
+        Inactive projects:
+          type: integer
+        Project Owners:
+          type: integer
+        Researchers:
+          type: integer
+        Super Admins:
+          type: integer
+        TBHours Last Month:
+          type: integer
+        TBHours Total:
+          type: integer
+        Total projects:
+          type: integer
+        Total users:
+          type: integer
+        Unit Admins:
+          type: integer
+        Unit Personnel:
+          type: integer
+        Units:
+          type: integer
+    Token:
+      type: object
+      properties:
+        HOTP:
+          type: string
+        TOTP:
+          type: string
+  # Securit schemes:
+  securitySchemes:
+    encryptedToken: # user and pass
+      type: http
+      scheme: basic
+    seconFactorToken: # encrypted token
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
