@@ -7,7 +7,7 @@ Changelog
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 - New features:
-    - Documentation is now available at `/documentation/` Some endpoints are not properly documented due to openApi limitations.
+    - Documentation is now available at `https://delivery.scilifelab.se/documentation/`. Some endpoints do not comply with the openAPI standards and are not properly documented.
 - Dependencies: 
     - `jinja2` from `3.0.3` to `3.1.3`
     - `jwcrypto` from `1.4.2` to `1.5.1`
@@ -20,7 +20,7 @@ Changelog
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 - Bugs fixed:
-    - Listing users invites will now show if the invote is for Project Owner.
+    - Listing users invites will now show if the invite is for Project Owner.
     - Permissions issue for `send-usage` command in testing and production environment.
 - Dependencies: 
     - `Cryptography` from `41.0.3` to `41.0.6`
