@@ -355,3 +355,7 @@ _Nothing merged in CLI during this sprint_
 
 - Use of a fix version of black and linted files to 24.1.1 ([#1510](https://github.com/ScilifelabDataCentre/dds_web/pull/1510))
 - Run containers as non-root in development envronment ([#1498](https://github.com/ScilifelabDataCentre/dds_web/pull/1498))
+
+# 2024-02-12 - 2024-03-08
+
+- Pillow update to address cve ([#1511](https://github.com/ScilifelabDataCentre/dds_web/pull/1511))
