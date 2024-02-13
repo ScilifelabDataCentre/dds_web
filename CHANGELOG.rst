@@ -1,6 +1,19 @@
 Changelog
 ==========
 
+.. _2.6.2:
+
+2.6.2 - 2023-02-13
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- New features:
+    - Documentation is now available at `/documentation/` Some endpoints are not properly documented due to openApi limitations.
+- Dependencies: 
+    - `jinja2` from `3.0.3` to `3.1.3`
+    - `jwcrypto` from `1.4.2` to `1.5.1`
+    - `Pillow` from `10.1.0` to `10.2.0`
+
+
 .. _2.6.1:
 
 2.6.1 - 2023-12-20
