@@ -54,6 +54,7 @@ def test_open_policy(client: flask.testing.FlaskClient) -> None:
             if b"{%" not in x:
                 assert x in response.data
 
+
 # user_agreement, /user_agreement
 
 
