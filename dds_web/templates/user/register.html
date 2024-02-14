@@ -91,6 +91,7 @@ Create account
     <!-- Agree to the conditions -->
     <div class="row mb-3">
         <p>Open the <a href="{{ url_for('pages.open_policy') }}" target="_blank">Privacy Policy</a></p>
+        <p>Open the <a href="{{ url_for('pages.user_agreement') }}" target="_blank">User Agreement</a></p>
         {{ form.policy_checkbox.label(class="form-check-label")}}
         <div>
             {{ form.policy_checkbox }}

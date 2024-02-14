@@ -68,7 +68,7 @@ class RegistrationForm(flask_wtf.FlaskForm):
     )
 
     policy_checkbox = wtforms.BooleanField(
-        "I agree to the conditions",
+        "I have read and agree to the Privacy policy and User agreement documents linked above.",
         validators=[
             wtforms.validators.DataRequired(message="Please agree to the conditions."),
         ],
