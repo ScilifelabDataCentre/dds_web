@@ -35,7 +35,7 @@ def open_policy():
 
 @pages.route("/user_agreement", methods=["GET"])
 def user_agreement():
-    """Show privacy policy."""
+    """Show user agreement."""
     return render_template("user_agreement.html")
 
 
