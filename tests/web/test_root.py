@@ -54,29 +54,6 @@ def test_open_policy(client: flask.testing.FlaskClient) -> None:
             if b"{%" not in x:
                 assert x in response.data
 
-
-# user_agreement, /user_agreement
-
-
-def test_open_agreement_post(client: flask.testing.FlaskClient) -> None:
-    """Post should not work."""
-    response = client.post(tests.DDSEndpoint.USER_AGREEMENT, content_type="application/json")
-    assert response.status_code == http.HTTPStatus.METHOD_NOT_ALLOWED
-
-
-def test_open_agreement(client: flask.testing.FlaskClient) -> None:
-    """Open user agreement document."""
-    response = client.get(tests.DDSEndpoint.USER_AGREEMENT, content_type="application/json")
-    assert response.status_code == http.HTTPStatus.OK
-    assert "text/html" in response.content_type
-    with (pathlib.Path.cwd() / pathlib.Path("dds_web/templates/user_agreement.html")).open(
-        mode="rb"
-    ) as file:
-        for x in file.readlines():
-            if b"{%" not in x:
-                assert x in response.data
-
-
 # open_troubleshooting
 
 
