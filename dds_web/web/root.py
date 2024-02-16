@@ -33,12 +33,6 @@ def open_policy():
     return render_template("policy.html")
 
 
-@pages.route("/user_agreement", methods=["GET"])
-def user_agreement():
-    """Show user agreement."""
-    return render_template("user_agreement.html")
-
-
 @pages.route("/trouble", methods=["GET"])
 def open_troubleshooting():
     """Show troubleshooting document."""
