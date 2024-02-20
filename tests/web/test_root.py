@@ -47,7 +47,7 @@ def test_open_policy(client: flask.testing.FlaskClient) -> None:
     response = client.get(tests.DDSEndpoint.POLICY, content_type="application/json")
     assert response.status_code == http.HTTPStatus.OK
     assert "text/html" in response.content_type
-    with (pathlib.Path.cwd() / pathlib.Path("dds_web/templates/policy.html")).open(
+    with (pathlib.Path.cwd() / pathlib.Path("dds_web/templates/privacy_policy.html")).open(
         mode="rb"
     ) as file:
         for x in file.readlines():
