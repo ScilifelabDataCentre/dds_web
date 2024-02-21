@@ -279,7 +279,7 @@ paths:
       tags:
         - files
       summary: Get file info on files to download CHECK METHOD
-      description: Checks which files can be downloaded, and get their info. 
+      description: Checks which files can be downloaded, and get their info.
         <br>
         This method requires the data
         to be passed in the request body instead of the query.
