@@ -197,9 +197,7 @@ def create_app(testing=False, database_uri=None):
             elif "api/v3" in flask.request.path:  # experimental v3 version
                 # If version api is not provided, it gets the data from the __version__ file
                 # When v3 is finallized, this should be removed and the __version__ file should be updated
-                verify_cli_version(
-                    version_cli=flask.request.headers.get("X-Cli-Version"), version_api="3.0.0"
-                )
+                pass
 
             # Get message of the day
             flask.g.motd = get_active_motds()

@@ -85,7 +85,7 @@ def verify_project_access(project) -> None:
         )
 
 
-def verify_cli_version(version_cli: str = None, version_api: str = None) -> None:
+def verify_cli_version(version_cli: str = None) -> None:
     """Verify that the CLI version in header is compatible with the web version."""
     # Verify that version is specified
     if not version_cli:
@@ -94,11 +94,7 @@ def verify_cli_version(version_cli: str = None, version_api: str = None) -> None
 
     # Split version string up into major, middle, minor
     version_cli_parts = version_cli.split(".")
-    # version_api is optional, if not specified gets the info from the version file
-    if not version_api:
-        version_correct_parts = __version__.split(".")
-    else:
-        version_correct_parts = version_api.split(".")
+    version_correct_parts = __version__.split(".")
 
     # The versions must have the same lengths
     if len(version_cli_parts) != len(version_correct_parts):
