@@ -184,7 +184,7 @@ paths:
     delete:
       tags:
         - files
-      summary: Deletes a file metadataCHECK METHOD
+      summary: Deletes a file or several files metadata from the database AND the s3 bucket. CHECK METHOD
       description: This method requires the data
         to be passed in the request body instead of the query.
         Since this does not comply with the openAPI standards, swagger cannot document it properly,
