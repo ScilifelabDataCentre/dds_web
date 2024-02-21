@@ -257,7 +257,7 @@ paths:
       tags:
         - files
       summary: Get file info on files to download
-      description: Checks which files can be downloaded, and get their info
+      description: Checks which files can be downloaded, and get their info.
       operationId: fileInfo
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -345,8 +345,8 @@ paths:
       tags:
         - files
       summary: Get files from log file and save to database
-      description: If there was a fail with some files, the information from the log is
-        passed to this endpoint to allow for a retry of the upload
+      description: If adding database entries failed for some files, the information from the log is
+        passed to this endpoint to allow for a new database update attempt.
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
