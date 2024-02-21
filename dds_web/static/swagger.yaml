@@ -371,8 +371,8 @@ paths:
       tags:
         - files
       summary: Get files from log file and save to database
-      description: If there was a fail with some files, the information from the log is
-        passed to this endpoint to allow for a retru of the upload
+      description: If adding database entries failed for some files, the information from the log is
+        passed to this endpoint to allow for a new database update attempt
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
