@@ -143,7 +143,7 @@ class DDSEndpoint:
 
     # Web
     INDEX = "/"
-    POLICY = "/policy"
+    POLICY = "/privacy_policy"
     TROUBLE = "/trouble"
     LOGIN = "/login"
     LOGOUT = "/logout"
