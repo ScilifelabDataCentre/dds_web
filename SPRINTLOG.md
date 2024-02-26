@@ -358,3 +358,11 @@ _Nothing merged in CLI during this sprint_
 # 2024-01-29 - 2024-02-09
 
 - Use of a fix version of black and linted files to 24.1.1 ([#1510](https://github.com/ScilifelabDataCentre/dds_web/pull/1510))
+- Run containers as non-root in development envronment ([#1498](https://github.com/ScilifelabDataCentre/dds_web/pull/1498))
+
+# 2024-02-12 - 2024-03-08
+
+- Criptography update to address cve ([#1512](https://github.com/ScilifelabDataCentre/dds_web/pull/1512))
+- Pillow update to address cve ([#1511](https://github.com/ScilifelabDataCentre/dds_web/pull/1511))
+- New version: 2.6.2 ([#1514](https://github.com/ScilifelabDataCentre/dds_web/pull/1514))
+- Changes in registration from to include user agreement ([#1515](https://github.com/ScilifelabDataCentre/dds_web/pull/1515))

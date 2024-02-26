@@ -27,10 +27,10 @@ def home():
     return render_template("home.html", form=form)
 
 
-@pages.route("/policy", methods=["GET"])
+@pages.route("/privacy_policy", methods=["GET"])
 def open_policy():
     """Show privacy policy."""
-    return render_template("policy.html")
+    return render_template("privacy_policy.html")
 
 
 @pages.route("/trouble", methods=["GET"])
