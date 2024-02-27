@@ -1,6 +1,16 @@
 Changelog
 ==========
 
+.. _2.6.3:
+
+2.6.3 - 2023-02-27
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- New features:
+    - New User Agreement is available to read during registration, as well as always accesible through the footer of the webpage .
+- Dependencies: 
+    - `Criptography` from `41.0.6` to `42.0.4`
+
 .. _2.6.2:
 
 2.6.2 - 2023-02-13
