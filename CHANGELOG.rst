@@ -7,7 +7,7 @@ Changelog
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 - New features:
-    - New User Agreement is available to read during registration, as well as always accesible through the footer of the webpage .
+    - User Agreement is available to read during registration, as well as always accesible through the footer of the webpage .
 - Dependencies: 
     - `Criptography` from `41.0.6` to `42.0.4`
 
