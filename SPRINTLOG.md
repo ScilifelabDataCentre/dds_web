@@ -366,3 +366,4 @@ _Nothing merged in CLI during this sprint_
 # 2024-02-26 - 2024-03-08
 
 - Add link in footer for new User Agreement and privacy policy ([#1516](https://github.com/ScilifelabDataCentre/dds_web/pull/1516))
+- New extra release, outside maintenance window, version 2.6.3 ([#1518](https://github.com/ScilifelabDataCentre/dds_web/pull/1518))
