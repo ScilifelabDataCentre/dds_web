@@ -358,5 +358,12 @@ _Nothing merged in CLI during this sprint_
 
 # 2024-02-12 - 2024-03-08
 
+- Criptography update to address cve ([#1512](https://github.com/ScilifelabDataCentre/dds_web/pull/1512))
 - Pillow update to address cve ([#1511](https://github.com/ScilifelabDataCentre/dds_web/pull/1511))
 - New version: 2.6.2 ([#1514](https://github.com/ScilifelabDataCentre/dds_web/pull/1514))
+- Changes in registration from to include user agreement ([#1515](https://github.com/ScilifelabDataCentre/dds_web/pull/1515))
+
+# 2024-02-26 - 2024-03-08
+
+- Add link in footer for new User Agreement and Privacy Policy ([#1516](https://github.com/ScilifelabDataCentre/dds_web/pull/1516))
+- New extra release, outside maintenance window, version 2.6.3 ([#1518](https://github.com/ScilifelabDataCentre/dds_web/pull/1518))
