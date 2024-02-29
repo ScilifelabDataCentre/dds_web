@@ -55,9 +55,10 @@ paths:
     post:
       tags:
         - files
-      summary: Add the information of a new file to the database
-      description: Adds the metadata of a file to the DB, please note that to upload
-        the actual file to the system you need to get the s3 keys in the /s3/proj endpoint
+      summary: Add the information of a new file to the database.
+      description: Adds the metadata of a file to the DB. <br>
+        This endpoints needs to be called AFTER uploading the actual file to the bucket. <br>
+        To do that you need to get the s3 keys in the /s3/proj endpoint
       operationId: newFile
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -185,7 +186,8 @@ paths:
       tags:
         - files
       summary: Deletes a file or several files metadata from the database AND the s3 bucket. CHECK METHOD
-      description: Deletes the file from the DB and bucket, no further operation with the s3 keys are required.
+      description: Deletes the file from the DB and bucket. <br>
+        In contrast with the /file/new endpoint there is no further operation with the s3 keys.
         <br>
         This method requires the data
         to be passed in the request body instead of the query.
@@ -231,7 +233,8 @@ paths:
       tags:
         - files
       summary: Removes one or more full directories metadata from the database AND the s3 bucket CHECK METHOD
-      description: Deletes the directory from the DB and bucket, no further operation with the s3 keys are required.
+      description: Deletes the directory from the DB and bucket. <br>
+        In contrast with the /file/new endpoint there is no further operation with the s3 keys.
         <br>
         This method requires the data
         to be passed in the request body instead of the query.
