@@ -5,6 +5,15 @@
 # Set official image -- parent image
 FROM python:3.10-alpine as base
 
+ARG USERNAME=dds-user
+ARG USER_UID=1001
+ARG GROUPNAME=$USERNAME
+ARG USER_GID=$USER_UID
+
+# Create the user
+RUN addgroup -g $USER_GID $GROUPNAME \
+    && adduser -D -u $USER_UID -G $GROUPNAME $USERNAME
+
 # Update and upgrade
 RUN apk update && apk upgrade
 
@@ -29,8 +38,8 @@ COPY ./requirements.txt /code/requirements.txt
 # Install all dependencies
 RUN pip3 install -r /code/requirements.txt
 
-# Copy the content to a code folder in container
-COPY . /code
+# Copy the content to a code folder in container - The owner is the dds user created
+COPY --chown=$USER_UID:$USER_GID . /code
 
 # Add code directory in pythonpath
 ENV PYTHONPATH /code
@@ -41,6 +50,9 @@ ENV PYTHONPATH /code
 FROM base as test
 RUN pip3 install -r /code/tests/requirements-test.txt
 RUN apk add mariadb-client
+
+# Switch to the user
+USER $USERNAME
 
 ###################
 ## BUILD FRONTEND
@@ -67,6 +79,9 @@ WORKDIR /code/dds_web
 
 # Get the built frontend
 COPY --from=nodebuilder /build ./static
+
+# Switch to the user
+USER $USERNAME
 
 # Run app -- needs to be in WORKDIR
 CMD ["gunicorn", "run_app:app_obj"]
