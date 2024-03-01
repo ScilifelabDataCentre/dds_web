@@ -367,3 +367,4 @@ _Nothing merged in CLI during this sprint_
 
 - Add link in footer for new User Agreement and Privacy Policy ([#1516](https://github.com/ScilifelabDataCentre/dds_web/pull/1516))
 - New extra release, outside maintenance window, version 2.6.3 ([#1518](https://github.com/ScilifelabDataCentre/dds_web/pull/1518))
+- Added email to troubleshouting webpage, with obfuscation ([#1520](https://github.com/ScilifelabDataCentre/dds_web/pull/1520))
