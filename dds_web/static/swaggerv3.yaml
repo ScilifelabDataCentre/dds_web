@@ -226,7 +226,7 @@ paths:
         - files
       summary: Removes one or more full directories metadata from the database AND the s3 bucket.
       description: Deletes the directory from the DB and bucket. <br>
-        In contrast with the /file/new endpoint there is no further operation with the s3 keys.
+       In contrast with the /file/new endpoint there is no extra operation with the s3 keys needed.
       operationId: removeDir
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
