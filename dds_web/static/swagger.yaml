@@ -187,7 +187,7 @@ paths:
         - files
       summary: Deletes a file or several files metadata from the database AND the s3 bucket. CHECK METHOD
       description: Deletes the file from the DB and bucket. <br>
-        In contrast with the /file/new endpoint there is no further operation with the s3 keys.
+        In contrast with the /file/new endpoint there is no extra operation with the s3 keys needed.
         <br>
         This method requires the data
         to be passed in the request body instead of the query.
