@@ -193,7 +193,7 @@ paths:
         to be passed in the request body instead of the query.
         Since this does not comply with the openAPI standards, swagger cannot document it properly,
         therefore we need to change/remove it in the future. <br><br>
-        Deletes the file from the DB and bucket, no further operation with the s3 keys are required.
+        Deletes the file from the DB and bucket, there is no extra operation with the s3 keys needed.
       deprecated: true
       operationId: removeFile
       parameters:
