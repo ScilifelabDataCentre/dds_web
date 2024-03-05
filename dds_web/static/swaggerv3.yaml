@@ -320,7 +320,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-      operationId: updateFile2
+      operationId: updateFile
       responses:
         "405":
           description: Invalid input
@@ -378,7 +378,7 @@ paths:
       tags:
         - authentication
       summary: Generates encrypted token for the user
-      operationId: token
+      operationId: getEncryptedToken
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
       security:
@@ -414,7 +414,7 @@ paths:
         an authenticated user with basic credentials
       description: Send either the HOTP or TOTP code
         depending on the two factor method used
-      operationId: secondFactorPost
+      operationId: GetSecondFactor
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
       responses:
@@ -862,7 +862,7 @@ paths:
       tags:
         - project
       summary: Gets the private key beloning to the current project
-      operationId: getPublic
+      operationId: getPrivateKey
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
@@ -1318,7 +1318,7 @@ paths:
       tags:
         - superadmin
       summary: Return list of all active MOTDs to super admin.
-      operationId: allUnits
+      operationId: getMOTDs
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
       responses:
@@ -1603,7 +1603,7 @@ paths:
       tags:
         - s3
       summary: Get the project S3 keys
-      operationId: retrieveUserInfo
+      operationId: retrieveProjectKeys
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
