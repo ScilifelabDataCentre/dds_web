@@ -173,7 +173,7 @@ def test_list_files_auth(client):
     assert "files_folders" in response.json
     assert len(response.json["files_folders"]) == len(expected["files_folders"])
     for entry in response.json["files_folders"]:
-        assert len(entry) == 2
+        assert len(entry) == 3
         assert entry["folder"] is False
     assert set(entry["name"] for entry in response.json["files_folders"]) == set(
         entry["name"] for entry in expected["files_folders"]
