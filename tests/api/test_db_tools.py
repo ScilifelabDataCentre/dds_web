@@ -8,14 +8,13 @@ import flask_mail
 import itsdangerous
 import pytest
 import sqlalchemy
+from unittest.mock import patch, MagicMock
 
 # own modules
 import dds_web.utils
 import dds_web.errors as ddserr
 import tests
 
-import pytest
-from unittest.mock import patch, MagicMock
 
 from dds_web import db
 from dds_web.database import models
