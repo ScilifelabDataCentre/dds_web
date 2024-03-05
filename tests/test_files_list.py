@@ -6,6 +6,11 @@ import http
 # Own
 import tests
 
+# Installed
+from unittest.mock import patch, MagicMock
+import sqlalchemy
+import pytest
+
 
 # CONFIG ################################################################################## CONFIG #
 
@@ -153,16 +158,16 @@ def test_list_files_auth(client):
         tests.DDSEndpoint.LIST_FILES,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
         query_string={"project": "public_project_id"},
-        json={"subpath": "sub/path/to/files"},
+        json={"subpath": "sub/path/to/files", "show_size": True},
     )
     # compare in multiple steps as the order of the returned entries is not guaranteed
     expected = {
         "files_folders": [
-            {"folder": False, "name": "filename_b1"},
-            {"folder": False, "name": "filename_b2"},
-            {"folder": False, "name": "filename_b3"},
-            {"folder": False, "name": "filename_b4"},
-            {"folder": False, "name": "filename_b5"},
+            {"folder": False, "name": "filename_b1", "size": "500.0"},
+            {"folder": False, "name": "filename_b2", "size": "1000.0"},
+            {"folder": False, "name": "filename_b3", "size": "1500.0"},
+            {"folder": False, "name": "filename_b4", "size": "2000.0"},
+            {"folder": False, "name": "filename_b5", "size": "2500.0"},
         ]
     }
     assert "files_folders" in response.json
@@ -173,6 +178,31 @@ def test_list_files_auth(client):
     assert set(entry["name"] for entry in response.json["files_folders"]) == set(
         entry["name"] for entry in expected["files_folders"]
     )
+
+
+def test_list_files_database_error_items(client):
+    """List files endpoint raises DB error in query"""
+
+    # Make project available
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json={"new_status": "Available"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    with patch("dds_web.database.models.File.query") as mock_query:
+        mock_query.filter.side_effect = sqlalchemy.exc.SQLAlchemyError()
+
+        response = client.get(
+            tests.DDSEndpoint.LIST_FILES,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+            query_string={"project": "public_project_id"},
+            json={"show_size": True},
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+        assert "Could not get items" in response.json["message"]
 
 
 def test_list_project_with_no_files(client):
