@@ -14,12 +14,14 @@ info:
     <a href="/api/documentation/v3"> api/documentation/v3</a> <br>
     <br>
     <b>For interaction with the API resources</b>: <br> 
-1. Change the server in the list below depending on the instance you are using,
-    and click on the "Authorize" button to enter your user and password. <br>
+    1. Change the server in the list below depending on the instance you are using,
+      and click on the "Authorize" button to enter your user and password. <br>
     2. Use the endpoint <b> /user/encrypted_token </b> to generate an encrypted token for the user. <br>
-    3. Add this returned token in the second section, <em> secondFactorToken  (http, Bearer) </em> of the same "Authorize" form used before. <br>
+    3. Add this returned token in the second section, <em> secondFactorToken  (http, Bearer) </em> 
+      of the same "Authorize" form used before. <br>
     4. Call the endpoint <b> /user/second_factor </b> to authenticate with MFA. This will return a new token.<br>
-    5. Lastly, go back to the "Authorize" form, click "Logout" at the <em> secondFactorToken  (http, Bearer) </em> part, and use the second token from the previous step to login again. <br>
+    5. Lastly, go back to the "Authorize" form, click "Logout" at the <em> secondFactorToken  (http, Bearer) </em> part,
+      and use the second token from the previous step to login again. <br>
 
     Now you can start using the API! <br>
     <br>
