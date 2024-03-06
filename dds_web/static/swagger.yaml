@@ -13,12 +13,14 @@ info:
     These endpoints will be changed in the future, and will be documented properly in the <b>url</b> hosted in
     <a href="/api/documentation/v3"> api/documentation/v3</a> <br>
     <br>
-    <b>USE</b>: Change the server in the list below depending on the instance you are using,
+    <b>For interaction with the API resources</b>: <br> 
+1. Change the server in the list below depending on the instance you are using,
     and click on the "Authorize" button to enter your user and password. <br>
-    The endpoint <b> /user/encrypted_token </b> is used to generate an encrypted token for the user. <br>
-    Add this returned token in the second section of the same "Authorize" button used before. <br>
-    Call the endpoint <b> /user/second_factor </b> to authenticate with MFA. <br>
-    Lastly, save again this second token in the same place as the first one obtained(login out the previous one). <br>
+    2. Use the endpoint <b> /user/encrypted_token </b> to generate an encrypted token for the user. <br>
+    3. Add this returned token in the second section, <em> secondFactorToken  (http, Bearer) </em> of the same "Authorize" form used before. <br>
+    4. Call the endpoint <b> /user/second_factor </b> to authenticate with MFA. This will return a new token.<br>
+    5. Lastly, go back to the "Authorize" form, click "Logout" at the <em> secondFactorToken  (http, Bearer) </em> part, and use the second token from the previous step to login again. <br>
+
     Now you can start using the API! <br>
     <br>
     <b>NOTE</b>: The encrypted token is valid for 7 days. <br>
