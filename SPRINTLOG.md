@@ -346,7 +346,7 @@ _Nothing merged in CLI during this sprint_
 
 # 2023-01-15 - 2024-01-25
 
-- Fix the files endpoints according to the openAPI standar, providing new endpoint version that lives with the previous one ([#1505](https://github.com/ScilifelabDataCentre/dds_web/pull/1505))
+- Fix the files endpoints according to the openAPI standards, providing new endpoint version that co-exists with the current one ([#1505](https://github.com/ScilifelabDataCentre/dds_web/pull/1505))
 
 # 2024-01-15 - 2024-01-26
 
