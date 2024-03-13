@@ -373,3 +373,4 @@ _Nothing merged in CLI during this sprint_
 # 2024-03-11 - 2024-03-22
 
 - Fix the files endpoints according to the openAPI standards, providing new endpoint version that co-exists with the current one ([#1505](https://github.com/ScilifelabDataCentre/dds_web/pull/1505))
+- Added email to troubleshouting webpage, with obfuscation ([#1520](https://github.com/ScilifelabDataCentre/dds_web/pull/1520))
