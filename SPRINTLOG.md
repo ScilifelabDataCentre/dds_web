@@ -346,8 +346,6 @@ _Nothing merged in CLI during this sprint_
 
 # 2023-01-15 - 2024-01-25
 
-- Fix the files endpoints according to the openAPI standards, providing new endpoint version that co-exists with the current one ([#1505](https://github.com/ScilifelabDataCentre/dds_web/pull/1505))
-
 # 2024-01-15 - 2024-01-26
 
 - Document Superadmin endpoints ([#1507](https://github.com/ScilifelabDataCentre/dds_web/pull/1507))
@@ -371,3 +369,7 @@ _Nothing merged in CLI during this sprint_
 
 - Add link in footer for new User Agreement and Privacy Policy ([#1516](https://github.com/ScilifelabDataCentre/dds_web/pull/1516))
 - New extra release, outside maintenance window, version 2.6.3 ([#1518](https://github.com/ScilifelabDataCentre/dds_web/pull/1518))
+
+# 2024-03-11 - 2024-03-22
+
+- Fix the files endpoints according to the openAPI standards, providing new endpoint version that co-exists with the current one ([#1505](https://github.com/ScilifelabDataCentre/dds_web/pull/1505))
