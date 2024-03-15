@@ -5,6 +5,11 @@ from dds_web import db
 from dds_web.database import models
 import tests
 
+# Installed
+from unittest.mock import patch, MagicMock
+import sqlalchemy
+import pytest
+
 FIRST_NEW_FILE = {
     "name": "filename1",
     "name_in_bucket": "filebucketname1",
@@ -389,6 +394,30 @@ def test_new_file_checksum_none(client):
     )
 
 
+def test_new_file_database_error(client):
+    """The endpoint to add a new file to the database raises a DB error."""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+
+    with patch.object(db.session, "rollback") as rollback:
+        with patch("dds_web.db.session.commit") as mock_commit:
+            mock_commit.side_effect = sqlalchemy.exc.SQLAlchemyError()
+
+            response = client.post(
+                tests.DDSEndpoint.FILE_NEW,
+                headers=token,
+                query_string={"project": "file_testing_project"},
+                json=FIRST_NEW_FILE,
+            )
+            assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+            assert "Failed to add new file to database." in response.json["message"]
+
+    assert rollback.called
+
+
 def test_new_file(client):
     """Add and overwrite file to database."""
 
@@ -448,6 +477,43 @@ def test_update_nonexistent_file(client):
     )
 
 
+def test_update_file_database_error(client):
+    """The endpoint to update a file throws a database error."""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+
+    # Add file
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=FIRST_NEW_FILE,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project_1.id)
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    updated_file = FIRST_NEW_FILE.copy()
+    updated_file["size"] = 1200
+
+    with patch.object(db.session, "rollback") as rollback:
+        with patch("dds_web.db.session.commit") as mock_commit:
+            mock_commit.side_effect = sqlalchemy.exc.SQLAlchemyError()
+
+            # Update file
+            response = client.put(
+                tests.DDSEndpoint.FILE_NEW,
+                headers=token,
+                query_string={"project": "file_testing_project"},
+                json=updated_file,
+            )
+            assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+            assert "Failed updating file information." in response.json["message"]
+
+    assert rollback.called
+
+
 def test_match_file_endpoint(client):
     """Test Match file endpoint"""
 
@@ -483,6 +549,39 @@ def test_match_file_endpoint(client):
     )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json["files"] is None
+
+
+def test_match_file_database_error(client):
+    """Match file endpoint raises a DB error"""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    # Add file
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=FIRST_NEW_FILE,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project_1.id)
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+
+    with patch("dds_web.database.models.File.query") as mock_query:
+        mock_query.filter.side_effect = sqlalchemy.exc.SQLAlchemyError()
+
+        # Match existing file
+        response = client.get(
+            tests.DDSEndpoint.FILE_MATCH,
+            headers=token,
+            query_string={"project": "file_testing_project"},
+            json=[FIRST_NEW_FILE["name"]],
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+        assert "Failed to get matching files in db" in response.json["message"]
 
 
 def test_upload_and_delete_file(client, boto3_session):
@@ -564,6 +663,101 @@ def test_upload_and_delete_folder(client, boto3_session):
     assert not response.json["not_removed"]
     assert not file_in_db(test_dict=file_1_in_folder, project=project_1.id)
     assert not file_in_db(test_dict=file_2_in_folder, project=project_1.id)
+
+
+def test_upload_and_delete_folder_sql_error(client, boto3_session):
+    """Delete folder raises a DB error"""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    file_1_in_folder = FIRST_NEW_FILE.copy()
+    file_1_in_folder["name"] = "file_1_in_folder"
+    file_1_in_folder["name_in_bucket"] = "bucketfile_1_in_folder"
+    file_2_in_folder = FIRST_NEW_FILE.copy()
+    file_2_in_folder["name"] = "file_2_in_folder"
+    file_2_in_folder["name_in_bucket"] = "bucketfile_2_in_folder"
+
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=file_1_in_folder,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=file_1_in_folder, project=project_1.id)
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=file_2_in_folder,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=file_2_in_folder, project=project_1.id)
+
+    # Remove folder
+    db_session_commit_mock = MagicMock(
+        side_effect=sqlalchemy.exc.OperationalError("OperationalError", "test", "sqlalchemy")
+    )
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+    with patch("dds_web.db.session.commit", db_session_commit_mock):
+        response = client.delete(
+            tests.DDSEndpoint.REMOVE_FOLDER,
+            headers=token,
+            query_string={"project": "file_testing_project"},
+            json=[file_1_in_folder["subpath"]],
+        )
+        assert "db" in response.json["fail_type"]
+        assert "Database malfunction" in response.json["not_removed"]["subpath"]
+
+
+def test_delete_folder_bucket_error(client, boto3_session, capfd):
+    """Verify that s3 error is raised."""
+
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    assert project_1.current_status == "In Progress"
+
+    file_1_in_folder = FIRST_NEW_FILE.copy()
+    file_1_in_folder["name"] = "file_1_in_folder"
+    file_1_in_folder["name_in_bucket"] = "bucketfile_1_in_folder"
+    file_2_in_folder = FIRST_NEW_FILE.copy()
+    file_2_in_folder["name"] = "file_2_in_folder"
+    file_2_in_folder["name_in_bucket"] = "bucketfile_2_in_folder"
+
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=file_1_in_folder,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=file_1_in_folder, project=project_1.id)
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=file_2_in_folder,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert file_in_db(test_dict=file_2_in_folder, project=project_1.id)
+
+    # Mock s3 error
+    from botocore.exceptions import ClientError
+
+    mock_s3_error = MagicMock(side_effect=ClientError({"Error": {"Code": "404"}}, "operation_name"))
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector.remove_multiple", mock_s3_error):
+        response = client.delete(
+            tests.DDSEndpoint.REMOVE_FOLDER,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+            query_string={"project": "file_testing_project"},
+            json=[file_1_in_folder["subpath"]],
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        assert "s3" in response.json["fail_type"]
+        assert "An error occurred" in response.json["not_removed"]["subpath"]
 
 
 def test_upload_move_available_delete_file(client, boto3_session):
