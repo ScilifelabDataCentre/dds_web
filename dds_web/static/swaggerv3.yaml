@@ -685,7 +685,7 @@ paths:
       tags:
         - user
       summary: List unit users within the unit the current user is connected to, or the one defined by a superadmin.
-      description: Unit Users will get all personnel in their units. <br> 
+      description: Unit Users will get all personnel in their units. <br>
         For Superadmins. It can be passed a unit as a parameter.
       operationId: getUsers
       parameters:
@@ -1670,8 +1670,8 @@ components:
       name: is_invite
       in: query
       schema:
-          type: boolean
-          example: false
+        type: boolean
+        example: false
       description: flag to mark if the user to query is an invite
     filesToQuery:
       name: files
