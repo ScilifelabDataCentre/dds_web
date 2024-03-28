@@ -1,5 +1,5 @@
 # Set official image
-FROM python:3.10-alpine as base
+FROM python:3.11-alpine as base
 
 # Update and upgrade
 RUN apk update && apk upgrade
