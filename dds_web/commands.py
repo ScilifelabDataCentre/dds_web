@@ -681,9 +681,9 @@ def set_expired_to_archived():
                         project.current_status,
                         project.current_deadline,
                     )
-                    # If project is expired, delete the files and bucket
-                    # There could be a case where the expired project already has it's contents deleted
-                    # In this case create the new status directly
+                    # If project is expired, delete the files and bucket.
+                    # There could be a case where the expired project already has it's contents deleted.
+                    # In this case, calling the archive_project function should raise the error.
                     try:
                         new_status_row, delete_message = archive.archive_project(
                             project=project,
@@ -698,7 +698,7 @@ def set_expired_to_archived():
                         traceback = re.findall("raise.*?\\n", traceback)  # Get only the raise lines
                         for i in traceback:
                             if "BucketNotFoundError" in i:
-                                # If the error is a BucketNotFoundError, create the new status directly
+                                # If the real error is a BucketNotFoundError, create the new status directly
                                 new_status_row = models.ProjectStatuses(
                                     status="Archived", date_created=current_time(), is_aborted=False
                                 )

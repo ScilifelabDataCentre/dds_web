@@ -1395,6 +1395,33 @@ def test_set_expired_to_archived(_: MagicMock, client, cli_runner):
     assert j == 6
 
 
+@mock.patch("boto3.session.Session")
+def test_set_expired_to_archived_db_failed(_: MagicMock, client, cli_runner):
+    """Reproduce the error when the s3 bucket is deleted but the DB update fails."""
+    from tests.api.test_project import mock_sqlalchemyerror
+
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+
+    for status in project.project_statuses:
+        status.deadline = current_time() - timedelta(weeks=1)
+        status.status = "Expired"
+    # Do the first call that just deletes the s3 bucket but does not update the database
+    # either mock the db update or call the deletion directly
+
+    #    with patch("dds_web.db.session.commit", mock_sqlalchemyerror):
+    #        cli_runner.invoke(set_expired_to_archived)
+    from dds_web.api.project import RemoveContents
+
+    RemoveContents().delete_project_contents(project=project, delete_bucket=True)
+
+    # TODO check that bucket does not exist but db is not updated
+    assert project.current_status == "Expired"
+
+    # Do the second call that updates the database but will not fail when bucket not found
+    cli_runner.invoke(set_expired_to_archived)
+    assert project.current_status == "Archived"
+
+
 # delete invites
 
 
