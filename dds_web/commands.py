@@ -641,6 +641,9 @@ def set_expired_to_archived():
     flask.current_app.logger.debug("Task: Checking for projects to archive.")
 
     # Imports
+    import traceback as tb
+    import re
+
     # Installed
     import sqlalchemy
 
@@ -678,11 +681,30 @@ def set_expired_to_archived():
                         project.current_status,
                         project.current_deadline,
                     )
-                    new_status_row, delete_message = archive.archive_project(
-                        project=project,
-                        current_time=current_time(),
-                    )
-                    flask.current_app.logger.debug(delete_message.strip())
+                    # If project is expired, delete the files and bucket
+                    # There could be a case where the expired project already has it's contents deleted
+                    # In this case create the new status directly
+                    try:
+                        new_status_row, delete_message = archive.archive_project(
+                            project=project,
+                            current_time=current_time(),
+                        )
+                        flask.current_app.logger.debug(delete_message.strip())
+                    except RuntimeError as err:
+                        # Because of how the application is set up, the only way to catch the error
+                        # is to catch the RuntimeError, which is generated after the BucketNotFound fails
+                        # to be initialized due to not being called in an API request
+                        traceback = tb.format_exc()
+                        traceback = re.findall("raise.*?\\n", traceback)  # Get only the raise lines
+                        for i in traceback:
+                            if "BucketNotFoundError" in i:
+                                # If the error is a BucketNotFoundError, create the new status directly
+                                new_status_row = models.ProjectStatuses(
+                                    status="Archived", date_created=current_time(), is_aborted=False
+                                )
+                                break  # exit the traceback loop
+                        flask.current_app.logger.exception(err)  # Log the error
+
                     project.project_statuses.append(new_status_row)
 
                     try:
