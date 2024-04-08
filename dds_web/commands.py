@@ -691,7 +691,7 @@ def set_expired_to_archived():
                         )
                         flask.current_app.logger.debug(delete_message.strip())
                     except RuntimeError as err:
-                        # Because of how the application is set up, the only way to catch an error
+                        # Because of how the application is set up, the only way to catch this errors
                         # is to catch the RuntimeError, which is generated after a custom error (errors.py) fails
                         # to be initialized due to not being called in an API request
                         traceback = tb.format_exc()
@@ -703,8 +703,10 @@ def set_expired_to_archived():
                                 )
                                 break  # exit the traceback loop
                             if "DeletionError":
-                                message = "DeletionError: Project bucket contents were deleted, but they were not deleted from the "
-                                "database. Please contact SciLifeLab Data Centre."
+                                message = (
+                                    "DeletionError: Project bucket contents were deleted, but they were not deleted from the "
+                                    "database. Please contact SciLifeLab Data Centre."
+                                )
                                 break  # exit the traceback loop
                         flask.current_app.logger.exception(f"{message} \n {err}")  # Log the error
 
