@@ -691,19 +691,22 @@ def set_expired_to_archived():
                         )
                         flask.current_app.logger.debug(delete_message.strip())
                     except RuntimeError as err:
-                        # Because of how the application is set up, the only way to catch the error
-                        # is to catch the RuntimeError, which is generated after the BucketNotFound fails
+                        # Because of how the application is set up, the only way to catch an error
+                        # is to catch the RuntimeError, which is generated after a custom error (errors.py) fails
                         # to be initialized due to not being called in an API request
                         traceback = tb.format_exc()
                         traceback = re.findall("raise.*?\\n", traceback)  # Get only the raise lines
                         for i in traceback:
                             if "BucketNotFoundError" in i:
-                                # If the real error is a BucketNotFoundError, create the new status directly
-                                new_status_row = models.ProjectStatuses(
-                                    status="Archived", date_created=current_time(), is_aborted=False
+                                message = (
+                                    "BucketNotFoundError: No bucket found for the specified project"
                                 )
                                 break  # exit the traceback loop
-                        flask.current_app.logger.exception(err)  # Log the error
+                            if "DeletionError":
+                                message = "DeletionError: Project bucket contents were deleted, but they were not deleted from the "
+                                "database. Please contact SciLifeLab Data Centre."
+                                break  # exit the traceback loop
+                        flask.current_app.logger.exception(f"{message} \n {err}")  # Log the error
 
                     project.project_statuses.append(new_status_row)
 
