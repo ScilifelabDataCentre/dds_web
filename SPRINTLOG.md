@@ -374,3 +374,7 @@ _Nothing merged in CLI during this sprint_
 
 - Fix the files endpoints according to the openAPI standards, providing new endpoint version that co-exists with the current one ([#1505](https://github.com/ScilifelabDataCentre/dds_web/pull/1505))
 - Added email to troubleshouting webpage, with obfuscation ([#1520](https://github.com/ScilifelabDataCentre/dds_web/pull/1520))
+
+# 2024-03-25 - 2024-04-5
+
+- Update base image and packages to address cve in docker containers ([#1523](https://github.com/ScilifelabDataCentre/dds_web/pull/1523))
