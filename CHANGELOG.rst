@@ -10,7 +10,7 @@ Changelog
     - Fix the files endpoint acording to openAPI standar .
     - Added email contact to troubleshouting page
 - Dependencies: 
-    - `Criptography` from `1.5.1` to `1.5.6`
+    - `jwcrypto` from `1.5.1` to `1.5.6`
 - Update base image for the docker containers from `python:3.10-alpine` to `python:3.11-alpine`
 
 .. _2.6.3:
