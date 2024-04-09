@@ -378,3 +378,7 @@ _Nothing merged in CLI during this sprint_
 # 2024-03-25 - 2024-04-5
 
 - Update base image and packages to address cve in docker containers ([#1523](https://github.com/ScilifelabDataCentre/dds_web/pull/1523))
+
+# 2024-04-8 - 2024-04-19
+
+- New version: 2.6.4 ([#1526](https://github.com/ScilifelabDataCentre/dds_web/pull/1526))
