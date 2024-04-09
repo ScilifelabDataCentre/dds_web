@@ -17,8 +17,32 @@
     </ol>
     <br>
     <h4>Does the issue persist and / or the provided information not help?</h4>
-    <p>If you're a data producer, using the DDS for data deliveries to your users: contact the Data Centre.</p>
-    <p>If you're a data recipient, using the DDS to download your data from a data producing SciLifeLab unit: contact the SciLifeLab unit responsible for delivering the data to you.</p>
+    <p>If you're a <b> data producer </b>, using the DDS for data deliveries to your users: contact the 
+    <!-- 
+        email obfuscation: 
+        - the address is split into parts and concatenated in the JavaScript function
+        A honeypot email is used to lure scrappers and bots away from the real email address
+
+        question?: Doesnt this explanation defeat the purpose of obfuscation?
+
+        If this does not work, another more elabore solution is: 
+        https://gist.github.com/aggrolite/5138710
+    -->
+    <script language="JavaScript"> <!--
+        (function funct() {
+        
+            var a = "@"
+                , pre = "delivery"
+                , post = "scilifelab."
+                , dom = "se"
+                , e = pre + a + post + dom
+                , l = "<a href=mailto:{honeypot@whatnot.org}>Data Centre.</a>".replace(/{.+?(})/g, e)
+            ;
+            document.write(l);
+        })();        
+        // --> </script> <noscript>Data Centre.</noscript>  <!-- no JavaScript just display the text -->
+    </p>
+    <p>If you're a <b> data recipient </b>, using the DDS to download your data from a data producing SciLifeLab unit: contact the SciLifeLab unit responsible for delivering the data to you.</p>
     <p>Please <strong>provide the following information</strong>:</p>
     <ul>
         <li>Did the error / issue occurr in the web interface or the CLI?</li>

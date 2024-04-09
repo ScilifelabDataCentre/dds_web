@@ -344,6 +344,8 @@ _Nothing merged in CLI during this sprint_
 - Minor update jinja2 package to address cve ([#1503](https://github.com/ScilifelabDataCentre/dds_web/pull/1503))
 - Minor update jwcrypto package to address cve ([#1504](https://github.com/ScilifelabDataCentre/dds_web/pull/1504))
 
+# 2023-01-15 - 2024-01-25
+
 # 2024-01-15 - 2024-01-26
 
 - Document Superadmin endpoints ([#1507](https://github.com/ScilifelabDataCentre/dds_web/pull/1507))
@@ -367,3 +369,16 @@ _Nothing merged in CLI during this sprint_
 
 - Add link in footer for new User Agreement and Privacy Policy ([#1516](https://github.com/ScilifelabDataCentre/dds_web/pull/1516))
 - New extra release, outside maintenance window, version 2.6.3 ([#1518](https://github.com/ScilifelabDataCentre/dds_web/pull/1518))
+
+# 2024-03-11 - 2024-03-22
+
+- Fix the files endpoints according to the openAPI standards, providing new endpoint version that co-exists with the current one ([#1505](https://github.com/ScilifelabDataCentre/dds_web/pull/1505))
+- Added email to troubleshouting webpage, with obfuscation ([#1520](https://github.com/ScilifelabDataCentre/dds_web/pull/1520))
+
+# 2024-03-25 - 2024-04-5
+
+- Update base image and packages to address cve in docker containers ([#1523](https://github.com/ScilifelabDataCentre/dds_web/pull/1523))
+
+# 2024-04-8 - 2024-04-19
+
+- New version: 2.6.4 ([#1526](https://github.com/ScilifelabDataCentre/dds_web/pull/1526))
