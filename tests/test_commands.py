@@ -1395,52 +1395,6 @@ def test_set_expired_to_archived(_: MagicMock, client, cli_runner):
     assert j == 6
 
 
-@mock.patch("boto3.session.Session")
-def test_set_expired_to_archived_db_failed(
-    _: MagicMock, client, cli_runner, capfd: LogCaptureFixture
-):
-    """Reproduce the error when the s3 bucket is deleted but the DB update fails."""
-    import re
-
-    def side_effect_generator():
-        yield RuntimeError("")  # First call, Error
-        while True:
-            yield None  # Subsequent calls, no exception
-
-    # Get the project and set up as expired
-    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
-    for status in project.project_statuses:
-        status.deadline = current_time() - timedelta(weeks=1)
-        status.status = "Expired"
-
-    # Mock the archive_project method to raise an error
-    with patch("dds_web.api.project.ProjectStatus.archive_project") as mock_archive_project:
-        mock_archive_project.side_effect = side_effect_generator()
-        # Mock that the regex to query the traceback found a BucketNotFoundError
-        with patch.object(re, "findall") as regex:
-            regex.return_value = ["BucketNotFoundError"]
-            cli_runner.invoke(set_expired_to_archived)
-
-    # Check the logs for the error message
-    _, err = capfd.readouterr()
-    assert "BucketNotFoundError: No bucket found for the specified project" in err
-
-    # Mock again with a DeletionError instead archive_project method to raise an error
-    with patch("dds_web.api.project.ProjectStatus.archive_project") as mock_archive_project:
-        mock_archive_project.side_effect = side_effect_generator()
-        # Mock that the regex to query the traceback found a DeletionError
-        with patch.object(re, "findall") as regex:
-            regex.return_value = ["DeletionError"]
-            cli_runner.invoke(set_expired_to_archived)
-
-    # Check the logs for the error message
-    _, err = capfd.readouterr()
-    assert (
-        "DeletionError: Project bucket contents were deleted, but they were not deleted from the "
-    )
-    "database. Please contact SciLifeLab Data Centre." in err
-
-
 # delete invites
 
 

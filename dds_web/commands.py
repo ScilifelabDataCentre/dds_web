@@ -641,9 +641,6 @@ def set_expired_to_archived():
     flask.current_app.logger.debug("Task: Checking for projects to archive.")
 
     # Imports
-    import traceback as tb
-    import re
-
     # Installed
     import sqlalchemy
 
@@ -681,35 +678,11 @@ def set_expired_to_archived():
                         project.current_status,
                         project.current_deadline,
                     )
-                    # If project is expired, delete the files and bucket.
-                    # There could be a case where the expired project already has it's contents deleted.
-                    # In this case, calling the archive_project function should raise the error.
-                    try:
-                        new_status_row, delete_message = archive.archive_project(
+                    new_status_row, delete_message = archive.archive_project(
                             project=project,
                             current_time=current_time(),
                         )
-                        flask.current_app.logger.debug(delete_message.strip())
-                    except RuntimeError as err:
-                        # Because of how the application is set up, the only way to catch this errors
-                        # is to catch the RuntimeError, which is generated after a custom error (errors.py) fails
-                        # to be initialized due to not being called in an API request
-                        traceback = tb.format_exc()
-                        traceback = re.findall("raise.*?\\n", traceback)  # Get only the raise lines
-                        for i in traceback:
-                            if "BucketNotFoundError" in i:
-                                message = (
-                                    "BucketNotFoundError: No bucket found for the specified project"
-                                )
-                                break  # exit the traceback loop
-                            if "DeletionError":
-                                message = (
-                                    "DeletionError: Project bucket contents were deleted, but they were not deleted from the "
-                                    "database. Please contact SciLifeLab Data Centre."
-                                )
-                                break  # exit the traceback loop
-                        flask.current_app.logger.exception(f"{message} \n {err}")  # Log the error
-
+                    flask.current_app.logger.debug(delete_message.strip())
                     project.project_statuses.append(new_status_row)
 
                     try:
