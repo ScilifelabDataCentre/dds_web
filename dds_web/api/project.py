@@ -768,6 +768,7 @@ class RemoveContents(flask_restful.Resource):
             AttributeError,
         ) as sqlerr:
             import flask
+
             if flask.has_request_context():
                 raise DeletionError(
                     project=project.public_id,

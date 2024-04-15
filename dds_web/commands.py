@@ -679,9 +679,9 @@ def set_expired_to_archived():
                         project.current_deadline,
                     )
                     new_status_row, delete_message = archive.archive_project(
-                            project=project,
-                            current_time=current_time(),
-                        )
+                        project=project,
+                        current_time=current_time(),
+                    )
                     flask.current_app.logger.debug(delete_message.strip())
                     project.project_statuses.append(new_status_row)
 
