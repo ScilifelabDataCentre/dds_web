@@ -1400,12 +1400,6 @@ def test_set_expired_to_archived_db_failed(
     _: MagicMock, client, cli_runner, capfd: LogCaptureFixture
 ):
     """Reproduce the error when the s3 bucket is deleted but the DB update fails."""
-
-    def side_effect_generator():
-        yield RuntimeError("")  # First call, Error
-        while True:
-            yield None  # Subsequent calls, no exception
-
     # Get the project and set up as expired
     project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
     for status in project.project_statuses:
