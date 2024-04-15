@@ -767,9 +767,7 @@ class RemoveContents(flask_restful.Resource):
             sqlalchemy.exc.OperationalError,
             AttributeError,
         ) as sqlerr:
-            import flask
-
-            if flask.has_request_context():
+            if flask.request:
                 raise DeletionError(
                     project=project.public_id,
                     message=str(sqlerr),
