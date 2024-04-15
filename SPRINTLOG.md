@@ -382,3 +382,4 @@ _Nothing merged in CLI during this sprint_
 # 2024-04-8 - 2024-04-19
 
 - New version: 2.6.4 ([#1526](https://github.com/ScilifelabDataCentre/dds_web/pull/1526))
+- Fix raising error when archiving project, bucket deleted but DB error ([#1524](https://github.com/ScilifelabDataCentre/dds_web/pull/1524))
