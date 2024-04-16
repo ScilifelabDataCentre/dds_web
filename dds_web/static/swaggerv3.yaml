@@ -1659,20 +1659,20 @@ components:
       in: query
       schema:
         type: string
-      description: project id to query
+      description: Project id to query
     email:
       name: email
       in: query
       schema:
         type: string
-      description: email of the user/invite to query
+      description: Email of the user/invite to query
     is_invite:
       name: is_invite
       in: query
       schema:
         type: boolean
         example: false
-      description: flag to mark if the user to query is an invite
+      description: Flag to mark if the user to query is an invite. If false or not present, it will query an user.
     filesToQuery:
       name: files
       in: query

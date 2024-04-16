@@ -758,7 +758,7 @@ class DeleteUser(flask_restful.Resource):
 
             is_invite = flask.request.args.get("is_invite")
             email = flask.request.args.get("email")
-            if is_invite:
+            if is_invite == "true":
                 email = self.delete_invite(email=email)
                 return {
                     "message": ("The invite connected to email " f"'{email}' has been deleted.")
