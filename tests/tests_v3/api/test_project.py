@@ -1711,6 +1711,7 @@ def test_set_busy_no_token(module_client):
     assert "No token" in response.json.get("message")
 
 
+# This test should be removed due to removing the put method. -> Class ProjectBusy in dds_web/api/project.py
 def test_set_busy_invalid_version(module_client):
     """ProjectBusy endpoint is empty and should only return error message about invalid version."""
     # Error messages
@@ -1732,7 +1733,8 @@ def test_set_busy_invalid_version(module_client):
         token = tests.UserAuth(tests.USER_CREDENTIALS[username]).token(module_client)
         for version, error_message in {
             token["X-CLI-Version"]: busy_error,
-            "1.9.9": major_version_error,
+            # Experimental v3 doesnt verify the major version
+            # "1.9.9": major_version_error,
             "2.1.9": busy_error,
         }.items():
             token["X-CLI-Version"] = version

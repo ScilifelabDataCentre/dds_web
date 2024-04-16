@@ -62,7 +62,7 @@ class ProjectStatus(flask_restful.Resource):
         """Get current project status and optionally entire status history"""
         if "api/v1" in flask.request.path:
             # requests comming from api/v1 should be handled as before
-            return self.old_get(current_user)
+            return self.old_get()
 
         elif "api/v3" in flask.request.path:
             # Get project ID, project and verify access
@@ -86,7 +86,7 @@ class ProjectStatus(flask_restful.Resource):
 
             return return_info
 
-    def old_get(self, current_user):
+    def old_get(self):
         """Implementation of old get method. Should be removed when api/v1 is removed."""
 
         # Get project ID, project and verify access
