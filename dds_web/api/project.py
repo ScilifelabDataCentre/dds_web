@@ -70,13 +70,13 @@ class ProjectStatus(flask_restful.Resource):
             return_info["current_deadline"] = project.current_deadline
 
         # Get status history
-        json_input = flask.request.get_json(silent=True)
-        if json_input and json_input.get("history"):
-            history = []
+        history = flask.request.args.get("history")
+        if history == "true":
+            history_info = []
             for pstatus in project.project_statuses:
-                history.append(tuple((pstatus.status, pstatus.date_created)))
-            history.sort(key=lambda x: x[1], reverse=True)
-            return_info.update({"history": history})
+                history_info.append(tuple((pstatus.status, pstatus.date_created)))
+            history_info.sort(key=lambda x: x[1], reverse=True)
+            return_info.update({"history": history_info})
 
         return return_info
 
