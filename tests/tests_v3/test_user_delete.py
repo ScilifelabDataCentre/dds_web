@@ -1,6 +1,9 @@
 # Standard libraries
 import http
 import unittest
+from unittest.mock import MagicMock
+from unittest.mock import patch
+from _pytest.logging import LogCaptureFixture
 
 # Installed
 import flask
@@ -428,3 +431,63 @@ def test_del_invite_unit_admin_and_personnel_and_researcher_as_unit_admin(client
 
         invited_user_row = models.Invite.query.filter_by(email=user["email"]).one_or_none()
         assert not invited_user_row
+
+
+def test_user_delete_db_error(client, capfd: LogCaptureFixture):
+    """Test user deletion with database error."""
+    from sqlalchemy.exc import OperationalError
+
+    email_to_delete = "delete_me_unituser@mailtrap.io"
+
+    with patch("dds_web.api.schemas.user_schemas.UserSchema.load") as mock_load:
+        mock_load.side_effect = OperationalError("OperationalError", "test", "sqlalchemy")
+        response = client.delete(
+            tests.DDSEndpoint.USER_DELETE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
+            query_string={"email": email_to_delete},
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    # Make sure that user was NOT deleted
+    exists = user_from_email(email_to_delete)
+    assert exists
+    assert dds_web.utils.email_in_db(email_to_delete) is True
+
+    # Check logs
+    _, err = capfd.readouterr()
+    assert "DatabaseError" in err
+    assert "Unexpected database error." in err
+
+
+def test_user_delete_no_user(client, capfd: LogCaptureFixture):
+    """Test user deletion with database error."""
+
+    email_to_delete = "does_not_exists@mailtrap.io"
+
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
+        query_string={"email": email_to_delete},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # Check logs
+    _, err = capfd.readouterr()
+    assert "This e-mail address is not associated with a user in the DDS" in err
+
+
+def test_user_delete_resarcher_unit_admin_no_ok(client, capfd: LogCaptureFixture):
+    """Test that a Unit Admin cannot delete a Researcher."""
+
+    email_to_delete = "delete_me_researcher@mailtrap.io"
+
+    response = client.delete(
+        tests.DDSEndpoint.USER_DELETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["delete_me_unitadmin"]).token(client),
+        query_string={"email": email_to_delete},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # Check logs
+    _, err = capfd.readouterr()
+    assert "You can only delete users with the role Unit Admin or Unit Personnel." in err
