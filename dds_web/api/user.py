@@ -752,13 +752,13 @@ class DeleteUser(flask_restful.Resource):
 
         if "api/v1" in flask.request.path:
             # requests comming from api/v1 should be handled as before
-            return self.old_get(current_user)
+            return self.old_delete(current_user)
 
         elif "api/v3" in flask.request.path:
 
-            is_invite = flask.request.args.get("is_invite")
+            is_invite = flask.request.args.get("is_invite", type=bool, default=False)
             email = flask.request.args.get("email")
-            if is_invite == "true":
+            if is_invite:
                 email = self.delete_invite(email=email)
                 return {
                     "message": ("The invite connected to email " f"'{email}' has been deleted.")
@@ -821,7 +821,7 @@ class DeleteUser(flask_restful.Resource):
                 )
             }
 
-    def old_get(self, current_user):
+    def old_delete(self, current_user):
         """Implementation of old get method. Should be removed when api/v1 is removed."""
 
         json_info = flask.request.get_json(silent=True)
