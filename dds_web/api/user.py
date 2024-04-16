@@ -13,6 +13,7 @@ import datetime
 # Installed
 import flask
 import flask_restful
+from flask_restful import inputs
 import flask_mail
 import itsdangerous
 import structlog
@@ -756,7 +757,7 @@ class DeleteUser(flask_restful.Resource):
 
         elif "api/v3" in flask.request.path:
 
-            is_invite = flask.request.args.get("is_invite", type=bool, default=False)
+            is_invite = flask.request.args.get("is_invite", type=inputs.boolean, default=False)
             email = flask.request.args.get("email")
             if is_invite:
                 email = self.delete_invite(email=email)
