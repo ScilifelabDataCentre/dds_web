@@ -93,7 +93,7 @@ class ProjectStatus(flask_restful.Resource):
         project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
         project = dds_web.utils.collect_project(project_id=project_id)
         dds_web.utils.verify_project_access(project=project)
-        
+
         # Get current status and deadline
         return_info = {"current_status": project.current_status}
         if project.current_deadline:
