@@ -678,10 +678,24 @@ def set_expired_to_archived():
                         project.current_status,
                         project.current_deadline,
                     )
-                    new_status_row, delete_message = archive.archive_project(
-                        project=project,
-                        current_time=current_time(),
-                    )
+                    try:
+                        new_status_row, delete_message = archive.archive_project(
+                            project=project,
+                            current_time=current_time(),
+                        )
+                    except (
+                        sqlalchemy.exc.OperationalError,
+                        sqlalchemy.exc.SQLAlchemyError,
+                    ):
+                        # Save error message and continue to next project
+                        db.session.rollback()
+                        error_msg = (
+                            "Project bucket contents were deleted, but they were not deleted from the "
+                            "database. Please contact SciLifeLab Data Centre."
+                        )
+                        errors[unit.name][project.public_id] = error_msg
+                        continue
+
                     flask.current_app.logger.debug(delete_message.strip())
                     project.project_statuses.append(new_status_row)
 
@@ -694,6 +708,7 @@ def set_expired_to_archived():
                         sqlalchemy.exc.OperationalError,
                         sqlalchemy.exc.SQLAlchemyError,
                     ) as err:
+                        # commit operation failed, save error message, log it and continue to next project
                         flask.current_app.logger.exception(err)
                         db.session.rollback()
                         errors[unit.name][project.public_id] = str(err)

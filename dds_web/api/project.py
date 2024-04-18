@@ -782,7 +782,11 @@ class RemoveContents(flask_restful.Resource):
                     ),
                 ) from sqlerr
             else:
-                raise
+                error_msg = (
+                    "Project bucket contents were deleted, but they were not deleted from the "
+                    "database. Please contact SciLifeLab Data Centre."
+                )
+                flask.current_app.logger.exception(error_msg)
 
 
 class CreateProject(flask_restful.Resource):
