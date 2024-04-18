@@ -1416,6 +1416,10 @@ def test_set_expired_to_archived_db_failed(
 
     # Check the logs for the error message
     _, err = capfd.readouterr()
+    print(err)
+    assert (
+        "Project bucket contents were deleted, but they were not deleted from the database. Please contact SciLifeLab Data Centre."
+    ) in err
     assert ("SQL: OperationalError") in err
 
 
