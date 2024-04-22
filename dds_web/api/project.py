@@ -767,25 +767,22 @@ class RemoveContents(flask_restful.Resource):
             sqlalchemy.exc.OperationalError,
             AttributeError,
         ) as sqlerr:
+            error_msg = (
+                "Project bucket contents were deleted, but they were not deleted from the "
+                "database. Please contact SciLifeLab Data Centre."
+                + (
+                    "Database malfunction."
+                    if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
+                    else "."
+                )
+            )
             if flask.request:
                 raise DeletionError(
                     project=project.public_id,
                     message=str(sqlerr),
-                    alt_message=(
-                        "Project bucket contents were deleted, but they were not deleted from the "
-                        "database. Please contact SciLifeLab Data Centre."
-                        + (
-                            "Database malfunction."
-                            if isinstance(sqlerr, sqlalchemy.exc.OperationalError)
-                            else "."
-                        )
-                    ),
+                    alt_message=error_msg,
                 ) from sqlerr
             else:
-                error_msg = (
-                    "Project bucket contents were deleted, but they were not deleted from the "
-                    "database. Please contact SciLifeLab Data Centre."
-                )
                 flask.current_app.logger.exception(error_msg)
 
 
