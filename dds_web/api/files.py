@@ -12,6 +12,7 @@ import re
 import botocore
 import flask
 import flask_restful
+from flask_restful import inputs
 import sqlalchemy
 import werkzeug
 
