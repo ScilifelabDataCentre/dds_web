@@ -686,7 +686,7 @@ paths:
         - user
       summary: List unit users within the unit the current user is connected to, or the one defined by a superadmin.
       description: Unit Users will get all personnel in their units. <br>
-        For Superadmins. It can be passed a unit as a parameter.
+        Superadmins can pass a unit as a parameter.
       operationId: getUsers
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
