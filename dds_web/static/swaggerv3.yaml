@@ -503,7 +503,7 @@ paths:
       tags:
         - user
       summary: Delete user or invite in the DDS. Unit Admins can delete Unit Admins and Unit Personnel.
-        Super admins can delete any user
+        Superadmins can delete any user
       operationId: deleteUser
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
