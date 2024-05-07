@@ -1672,7 +1672,7 @@ components:
       schema:
         type: boolean
         example: false
-      description: Flag to mark if the user to query is an invite. If false or not present, it will query an user.
+      description: Flag to query for an invite. If false or not present, it will query for a user.
     filesToQuery:
       name: files
       in: query
