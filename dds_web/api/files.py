@@ -305,7 +305,7 @@ class ListFiles(flask_restful.Resource):
                 )
 
             # Check if to return file size
-            show_size = flask.request.args.get("show_size", type=inputs.boolean, default=False)
+            show_size = flask.request.args.get("show_size")
 
             # Check if to get from root or folder
             subpath = "."
