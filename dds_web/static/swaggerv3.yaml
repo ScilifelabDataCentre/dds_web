@@ -503,7 +503,7 @@ paths:
       tags:
         - user
       summary: Delete user or invite in the DDS. Unit Admins can delete Unit Admins and Unit Personnel.
-        Super admins can delete any user
+        Superadmins can delete any user
       operationId: deleteUser
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -686,7 +686,7 @@ paths:
         - user
       summary: List unit users within the unit the current user is connected to, or the one defined by a superadmin.
       description: Unit Users will get all personnel in their units. <br>
-        For Superadmins. It can be passed a unit as a parameter.
+        Superadmins can pass a unit as a parameter.
       operationId: getUsers
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -1672,7 +1672,7 @@ components:
       schema:
         type: boolean
         example: false
-      description: Flag to mark if the user to query is an invite. If false or not present, it will query an user.
+      description: Flag to query for an invite. If false or not present, it will query for a user.
     filesToQuery:
       name: files
       in: query
