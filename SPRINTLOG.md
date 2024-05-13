@@ -382,3 +382,7 @@ _Nothing merged in CLI during this sprint_
 # 2024-04-8 - 2024-04-19
 
 - New version: 2.6.4 ([#1526](https://github.com/ScilifelabDataCentre/dds_web/pull/1526))
+
+# 2024-05-6 - 2024-05-17
+
+- Parse boolean inputs correctly ([#1528](https://github.com/ScilifelabDataCentre/dds_web/pull/1528))
