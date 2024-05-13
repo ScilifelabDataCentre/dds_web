@@ -383,6 +383,6 @@ _Nothing merged in CLI during this sprint_
 
 - New version: 2.6.4 ([#1526](https://github.com/ScilifelabDataCentre/dds_web/pull/1526))
 
-# 2024-04-25 - 2024-05-3
+# 2024-05-6 - 2024-05-17
 
 - Fix the User endpoints according to OpenAPI standar ([#1524](https://github.com/ScilifelabDataCentre/dds_web/pull/1524))
