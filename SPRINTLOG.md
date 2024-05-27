@@ -385,9 +385,9 @@ _Nothing merged in CLI during this sprint_
 
 # 2024-05-6 - 2024-05-17
 
-- Parse boolean inputs correctly ([#1528](https://github.com/ScilifelabDataCentre/dds_web/pull/1528))
 - Fix the User endpoints according to OpenAPI standar ([#1524](https://github.com/ScilifelabDataCentre/dds_web/pull/1524))
 
 # 2024-05-20 - 2024-05-31
 
 - Update Werkzeug and related libraries to solve CVE([#1530](https://github.com/ScilifelabDataCentre/dds_web/pull/1530))
+- Parse boolean inputs correctly ([#1528](https://github.com/ScilifelabDataCentre/dds_web/pull/1528))
