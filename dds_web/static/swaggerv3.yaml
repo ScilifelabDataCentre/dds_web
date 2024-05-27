@@ -8,10 +8,10 @@ info:
      can use it at their own risk.
     However, DC recomends to always use the client and tools provided to units and researchers. <br>
     <br><br>
-    <b>WARNING</b>: Some endpoints are not according to the OpenAPI standard, and therefore
-    cannot be documented properly. These endpoints are marked with <u>CHECK METHOD</u> and as deprecated.<br>
-    These endpoints will be changed in the future, and will be documented properly in the <b>url</b> hosted in
-    <a href="/api/documentation/v3"> api/documentation/v3</a> <br>
+    <b>WARNING</b>: This version is NOT stable and is subject to change
+    without notice. Use at your own risk.
+    We recomended to still use, for now, the version located in the
+    the <b>url</b> <a href="/api/documentation/v1"> api/documentation/v1</a> <br>
     <br>
     <b>For interaction with the API resources</b>: <br>
     1. Change the server in the list below depending on the instance you are using,
@@ -26,19 +26,18 @@ info:
     Now you can start using the API! <br>
     <br>
     <b>NOTE</b>: The encrypted token is valid for 7 days. <br>
-  version: "version 2"
+  version: "version 3"
   title: Data Delivery System
 # Apply the encrypted token to all operations
 security:
   - secondFactorToken: []
 servers:
-  # Added by API Auto Mocking Plugin
-  - url: https://delivery.scilifelab.se/api/v1
+  - url: https://delivery.scilifelab.se/api/v3
     description: Endpoint for the production server
-  - url: https://dds-dev.dckube3.scilifelab.se/api/v1
+  - url: https://dds-dev.dckube3.scilifelab.se/api/v3
     description: Endpoint for the test server
   # Uncomment when local testing
-#  - url: http://localhost:5000/api/v1
+#  - url: http://localhost:5000/api/v3
 #    description: Local enviroment
 tags:
   - name: authentication
@@ -59,7 +58,7 @@ paths:
     post:
       tags:
         - files
-      summary: Add the information of a new file to the database.
+      summary: Add the information of a new file to the database
       description: Adds the metadata of a file to the DB. <br>
         This endpoints needs to be called AFTER uploading the actual file to the bucket. <br>
         To do that you need to get the s3 keys in the /s3/proj endpoint
@@ -79,8 +78,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: File data_seq.txt added to db.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "File data_seq.txt added to db."
       requestBody:
         $ref: "#/components/requestBodies/Files"
     put:
@@ -105,24 +107,23 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: File data_seq.txt updated in the db.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "File data_seq.txt updated in the db."
       requestBody:
         $ref: "#/components/requestBodies/Files"
   /file/match:
     get:
       tags:
         - files
-      summary: Get name in bucket for all files specified CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Get name in bucket for all files specified
       operationId: matchFiles
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
+        - $ref: "#/components/parameters/filesToQuery"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -146,16 +147,21 @@ paths:
     get:
       tags:
         - files
-      summary: Get a list of files within the specific folder CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Get a list of files and folders within an specific folder
       operationId: listFiles
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
+        - name: show_size
+          in: query
+          schema:
+            type: boolean
+          description: Return the size of files/folders
+        - name: subpath
+          in: query
+          schema:
+            type: string
+          description: Check from which folder to get, empty parameters equals check from root
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -189,28 +195,14 @@ paths:
     delete:
       tags:
         - files
-      summary: Deletes a file or several files metadata from the database AND the s3 bucket. CHECK METHOD
+      summary: Deletes a file or several files metadata from the database AND the s3 bucket.
       description: Deletes the file from the DB and bucket. <br>
         In contrast with the /file/new endpoint there is no extra operation with the s3 keys needed.
-        <br>
-        This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future. <br><br>
-        Deletes the file from the DB and bucket, there is no extra operation with the s3 keys needed.
-      deprecated: true
       operationId: removeFile
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-        - name: json
-          in: query
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
-            example: [file_name.txt, file_name_2.txt]
+        - $ref: "#/components/parameters/filesToQuery"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -236,28 +228,14 @@ paths:
     delete:
       tags:
         - files
-      summary: Removes one or more full directories metadata from the database AND the s3 bucket CHECK METHOD
+      summary: Removes one or more full directories metadata from the database AND the s3 bucket.
       description: Deletes the directory from the DB and bucket. <br>
         In contrast with the /file/new endpoint there is no extra operation with the s3 keys needed.
-        <br>
-        This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future. <br> <br>
-        Deletes the file from the DB and bucket, there is no extra operation with the s3 keys needed.
-      deprecated: true
       operationId: removeDir
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-        - name: json
-          in: query
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
-            example: [folder_1, folder_2]
+        - $ref: "#/components/parameters/foldersToQuery"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -285,26 +263,13 @@ paths:
     get:
       tags:
         - files
-      summary: Get file info on files to download CHECK METHOD
+      summary: Get file info on files to download
       description: Checks which files can be downloaded, and get their info.
-        <br>
-        This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
       operationId: fileInfo
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
         - $ref: "#/components/parameters/projectID"
-        - name: json
-          in: query
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
-            example: [file_name.txt]
+        - $ref: "#/components/parameters/filesToQuery"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -354,7 +319,7 @@ paths:
     put:
       tags:
         - files
-      summary: Get info on all project files
+      summary: Update file info after download
       description: After downloading a file, that event has to be registered using this endpoint
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -368,8 +333,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: File info updated}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "File info updated"
       requestBody:
         content:
           application/json:
@@ -443,40 +411,6 @@ paths:
                     type: string
                     example: secondfactor_method
   /user/second_factor:
-    get:
-      tags:
-        - authentication
-      summary: Take in and verify an authentication one-time code entered
-        by an authenticated user with basic credentials CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
-      operationId: GetSecondFactor
-      parameters:
-        - $ref: "#/components/parameters/defaultHeader"
-        - name: TOTP
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        "401":
-          $ref: "#/components/responses/UnauthorizedToken"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerlError"
-        "200":
-          description: succesful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token:
-                    type: string
     post:
       tags:
         - authentication
@@ -484,7 +418,7 @@ paths:
         an authenticated user with basic credentials
       description: Send either the HOTP or TOTP code
         depending on the two factor method used
-      operationId: PostSecondFactor
+      operationId: GetSecondFactor
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
       responses:
@@ -569,12 +503,7 @@ paths:
       tags:
         - user
       summary: Delete user or invite in the DDS. Unit Admins can delete Unit Admins and Unit Personnel.
-        Super admins can delete any user CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+        Superadmins can delete any user
       operationId: deleteUser
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -592,8 +521,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: You successfully deleted the account.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You successfully deleted the account.
   /user/delete_self:
     delete:
       tags:
@@ -615,9 +547,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Requested account deletion initiated.
-                  An e-mail with a confirmation link has been sent to your address}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Requested account deletion initiated.
+                      An e-mail with a confirmation link has been sent to your address
   /user/access/revoke:
     post:
       tags:
@@ -639,9 +574,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: User with email email@example.com no longer
-                  associated with exmple_project.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User with email email@example.com no longer
+                      associated with exmple_project.
       requestBody:
         content:
           application/json:
@@ -671,8 +609,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: You successfully reactivated the account}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You successfully reactivated the account.
       requestBody:
         content:
           application/json:
@@ -707,8 +648,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Please check your email and follow the attached link to activate two-factor with email}" # yamllint disable-line
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Please check your email and follow the attached link to activate two-factor with email # yamllint disable-line
       security:
         - encryptedToken: []
   /user/totp/activate:
@@ -731,20 +675,25 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Please check your email and follow the attached link to activate two-factor with autenticator app}" # yamllint disable-line
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Please check your email and follow the attached link to activate two-factor with autenticator app # yamllint disable-line
   /users:
     get:
       tags:
         - user
       summary: List unit users within the unit the current user is connected to, or the one defined by a superadmin.
-        CHECK METHOD FOR SUPERADMINS
       description: Unit Users will get all personnel in their units. <br>
-        Superadmins can pass a unit as a parameter, currently in body, needs to be in query.
-      deprecated: true
+        Superadmins can pass a unit as a parameter.
       operationId: getUsers
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
+        - in: query
+          name: unit
+          schema:
+            type: string
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -1149,9 +1098,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Project Access updated
-                  for user user_primeary_email.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Project Access updated
+                      for user user_primeary_email.
       requestBody:
         content:
           application/json:
@@ -1250,8 +1202,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Maintenance mode is set to: ON}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Maintenance mode is set to: ON"
       requestBody:
         content:
           application/json:
@@ -1280,8 +1235,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: Maintenance mode is set to: ON}"
+                type: object
+                properties:
+                  state:
+                    type: string
+                    example: "Maintenance mode is set to: ON"
   /unit/info/all:
     get:
       tags:
@@ -1343,9 +1301,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: The MOTD was successfuly
-                  added to the database.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The MOTD was successfuly
+                      added to the database.
       requestBody:
         content:
           application/json:
@@ -1404,9 +1365,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: The MOTD was successfuly
-                  deactivated in the database.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The MOTD was successfuly
+                      deactivated in the database.
       requestBody:
         content:
           application/json:
@@ -1436,8 +1400,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: MOTD 1 has been sent to the users.}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: MOTD 1 has been sent to the users.
       requestBody:
         content:
           application/json:
@@ -1472,8 +1439,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{Exists: true}"
+                type: object
+                properties:
+                  Exists:
+                    type: boolean
+                    example: true
   /user/totp/deactivate:
     put:
       tags:
@@ -1494,9 +1464,12 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{message: TOTP has been deactivated for user unituser1.
-                  They can now use 2FA via email during authentication}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: TOTP has been deactivated for user unituser1.
+                      They can now use 2FA via email during authentication
       requestBody:
         content:
           application/json:
@@ -1677,7 +1650,7 @@ components:
       required: true
       schema:
         type: string
-        example: "2.6.2"
+        example: "3.0.1"
       description: The oficial CLI provided by the DDS team always uses the
         latest stable version. When implementing your own client(s) make sure to set the
         correct version header in every request.
@@ -1686,19 +1659,36 @@ components:
       in: query
       schema:
         type: string
-      description: project id to query
+      description: Project id to query
     email:
       name: email
       in: query
       schema:
         type: string
-      description: email of the user/invite to query
+      description: Email of the user/invite to query
     is_invite:
       name: is_invite
       in: query
       schema:
-        type: string
-      description: flag to mark if the user to query is an invite
+        type: boolean
+        example: false
+      description: Flag to query for an invite. If false or not present, it will query for a user.
+    filesToQuery:
+      name: files
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+      description: Files to query
+    foldersToQuery:
+      name: folders
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+      description: Folders to query
   # Define common request bodies:
   requestBodies:
     Files:

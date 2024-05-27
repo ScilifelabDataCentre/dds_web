@@ -42,7 +42,8 @@ USER_CREDENTIALS = {
     "delete_me_unitadmin": "delete_me_unitadmin:password",
 }
 
-DEFAULT_HEADER = {"X-CLI-Version": __version__}
+# TODO Get version from a variable
+DEFAULT_HEADER = {"X-CLI-Version": "3.0.1"}
 
 
 ###############################################################################
@@ -136,14 +137,14 @@ class DDSEndpoint:
     """Defines all DDS urls."""
 
     # Base url - local or remote
-    BASE_ENDPOINT = "/api/v1"
+    BASE_ENDPOINT = "/api/v3"
 
     # status
     STATUS = "/status"
 
     # Web
     INDEX = "/"
-    POLICY = "/privacy_policy"
+    POLICY = "/policy"
     TROUBLE = "/trouble"
     LOGIN = "/login"
     LOGOUT = "/logout"
