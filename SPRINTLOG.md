@@ -390,3 +390,4 @@ _Nothing merged in CLI during this sprint_
 # 2024-05-20 - 2024-05-31
 
 - Update Werkzeug and related libraries to solve CVE([#1530](https://github.com/ScilifelabDataCentre/dds_web/pull/1530))
+- Increase the identified less covered files([#1521](https://github.com/ScilifelabDataCentre/dds_web/pull/1521))
