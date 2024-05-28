@@ -393,4 +393,3 @@ _Nothing merged in CLI during this sprint_
 - Fix raising error when archiving project, bucket deleted but DB error ([#1524](https://github.com/ScilifelabDataCentre/dds_web/pull/1524))
 - Increase the identified less covered files([#1521](https://github.com/ScilifelabDataCentre/dds_web/pull/1521))
 - Parse boolean inputs correctly ([#1528](https://github.com/ScilifelabDataCentre/dds_web/pull/1528))
-
