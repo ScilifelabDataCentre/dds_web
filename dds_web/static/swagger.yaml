@@ -739,7 +739,8 @@ paths:
         - user
       summary: List unit users within the unit the current user is connected to, or the one defined by a superadmin.
         CHECK METHOD FOR SUPERADMINS
-      description: TODO - for superadmin, it can be passed a unit, currently in body, needs to be in query.
+      description: Unit Users will get all personnel in their units. <br>
+        Superadmins can pass a unit as a parameter, currently in body, needs to be in query.
       deprecated: true
       operationId: getUsers
       parameters:
