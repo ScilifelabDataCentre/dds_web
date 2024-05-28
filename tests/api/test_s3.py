@@ -2,6 +2,8 @@ import flask
 import http
 import sqlalchemy
 import typing
+import pytest
+from unittest.mock import patch, MagicMock
 
 from tests import DDSEndpoint, DEFAULT_HEADER, UserAuth, USER_CREDENTIALS
 from dds_web.database import models
@@ -109,3 +111,61 @@ def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
         query_string={"project": "public_project_id"},
     )
     assert response.status_code == http.HTTPStatus.FORBIDDEN
+
+
+def test_get_s3_sql_error(client):
+
+    # Get project
+    project: models.Project = models.Project.query.first()
+
+    # Get users with access to project
+    unit_users = db.session.query(models.UnitUser).filter(
+        models.UnitUser.unit_id == project.unit_id
+    )
+
+    # Mock the s3 connector and exception
+    mock_conector = MagicMock()
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector.get_s3_info", mock_conector):
+        mock_conector.side_effect = sqlalchemy.exc.SQLAlchemyError("Database error")
+
+        # Try s3info - "/s3/proj"
+        unit_personnel: models.UnitUser = unit_users.filter(
+            models.UnitUser.is_admin == False
+        ).first()
+        unit_personnel_token = UserAuth(USER_CREDENTIALS[unit_personnel.username]).token(client)
+        response = client.get(
+            DDSEndpoint.S3KEYS,
+            headers=unit_personnel_token,
+            query_string={"project": "public_project_id"},
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+        assert "Could not get cloud information" in response.json["message"]
+
+
+def test_get_s3_empty_response(client):
+
+    # Get project
+    project: models.Project = models.Project.query.first()
+
+    # Get users with access to project
+    unit_users = db.session.query(models.UnitUser).filter(
+        models.UnitUser.unit_id == project.unit_id
+    )
+
+    # Mock the s3 connector and exception
+    mock_conector = MagicMock()
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector.get_s3_info", mock_conector):
+        mock_conector.return_value = (None, None, None, None)
+
+        # Try s3info - "/s3/proj"
+        unit_personnel: models.UnitUser = unit_users.filter(
+            models.UnitUser.is_admin == False
+        ).first()
+        unit_personnel_token = UserAuth(USER_CREDENTIALS[unit_personnel.username]).token(client)
+        response = client.get(
+            DDSEndpoint.S3KEYS,
+            headers=unit_personnel_token,
+            query_string={"project": "public_project_id"},
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+        assert "No s3 info returned!" in response.json["message"]
