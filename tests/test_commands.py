@@ -1395,6 +1395,34 @@ def test_set_expired_to_archived(_: MagicMock, client, cli_runner):
     assert j == 6
 
 
+@mock.patch("boto3.session.Session")
+def test_set_expired_to_archived_db_failed(
+    _: MagicMock, client, cli_runner, capfd: LogCaptureFixture
+):
+    """Reproduce the error when the s3 bucket is deleted but the DB update fails."""
+    # Get the project and set up as expired
+    project = models.Project.query.filter_by(public_id="public_project_id").one_or_none()
+    for status in project.project_statuses:
+        status.deadline = current_time() - timedelta(weeks=1)
+        status.status = "Expired"
+
+    mock_query = MagicMock()
+    mock_query.filter.return_value.delete.side_effect = sqlalchemy.exc.OperationalError(
+        "OperationalError", "test", "sqlalchemy"
+    )
+    with patch("dds_web.database.models.File.query", mock_query):
+        with patch("flask.request", False):
+            cli_runner.invoke(set_expired_to_archived)
+
+    # Check the logs for the error message
+    _, err = capfd.readouterr()
+    print(err)
+    assert (
+        "Project bucket contents were deleted, but they were not deleted from the database. Please contact SciLifeLab Data Centre."
+    ) in err
+    assert ("SQL: OperationalError") in err
+
+
 # delete invites
 
 
