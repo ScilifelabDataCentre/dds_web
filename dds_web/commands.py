@@ -678,14 +678,14 @@ def set_expired_to_archived():
                         project.current_status,
                         project.current_deadline,
                     )
-                    new_status_row, delete_message = archive.archive_project(
-                        project=project,
-                        current_time=current_time(),
-                    )
-                    flask.current_app.logger.debug(delete_message.strip())
-                    project.project_statuses.append(new_status_row)
 
                     try:
+                        new_status_row, delete_message = archive.archive_project(
+                            project=project,
+                            current_time=current_time(),
+                        )
+                        project.project_statuses.append(new_status_row)
+                        flask.current_app.logger.debug(delete_message.strip())
                         db.session.commit()
                         flask.current_app.logger.debug(
                             "Project: %s has status Archived now!", project.public_id
@@ -694,6 +694,7 @@ def set_expired_to_archived():
                         sqlalchemy.exc.OperationalError,
                         sqlalchemy.exc.SQLAlchemyError,
                     ) as err:
+                        # archive or commit operation failed, save error message, log it and continue to next project
                         flask.current_app.logger.exception(err)
                         db.session.rollback()
                         errors[unit.name][project.public_id] = str(err)

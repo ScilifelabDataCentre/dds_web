@@ -13,6 +13,7 @@ import datetime
 # Installed
 import flask
 import flask_restful
+from flask_restful import inputs
 import flask_mail
 import itsdangerous
 import structlog
@@ -750,6 +751,80 @@ class DeleteUser(flask_restful.Resource):
         """Delete user or invite in the DDS."""
         current_user = auth.current_user()
 
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_delete(current_user)
+
+        elif "api/v3" in flask.request.path:
+
+            is_invite = flask.request.args.get("is_invite", type=inputs.boolean, default=False)
+            email = flask.request.args.get("email")
+            if is_invite:
+                email = self.delete_invite(email=email)
+                return {
+                    "message": ("The invite connected to email " f"'{email}' has been deleted.")
+                }
+
+            try:
+                user = user_schemas.UserSchema().load({"email": email})
+            except sqlalchemy.exc.OperationalError as err:
+                raise ddserr.DatabaseError(
+                    message=str(err), alt_message="Unexpected database error."
+                )
+
+            if not user:
+                raise ddserr.UserDeletionError(
+                    message=(
+                        "This e-mail address is not associated with a user in the DDS, "
+                        "make sure it is not misspelled."
+                    )
+                )
+
+            user_email_str = user.primary_email
+            current_user = auth.current_user()
+
+            if current_user.role == "Unit Admin":
+                if user.role not in ["Unit Admin", "Unit Personnel"]:
+                    raise ddserr.UserDeletionError(
+                        message="You can only delete users with the role Unit Admin or Unit Personnel."
+                    )
+                if current_user.unit != user.unit:
+                    raise ddserr.UserDeletionError(
+                        message=(
+                            "As a Unit Admin, you're can only delete Unit Admins "
+                            "and Unit Personnel within your specific unit."
+                        )
+                    )
+
+            if current_user == user:
+                raise ddserr.UserDeletionError(
+                    message="To delete your own account, use the '--self' flag instead!"
+                )
+
+            self.delete_user(user)
+
+            msg = (
+                f"The user account {user.username} ({user_email_str}, {user.role}) has been "
+                f"terminated successfully been by {current_user.name} ({current_user.role})."
+            )
+            flask.current_app.logger.info(msg)
+
+            with structlog.threadlocal.bound_threadlocal(
+                who={"user": user.username, "role": user.role},
+                by_whom={"user": current_user.username, "role": current_user.role},
+            ):
+                action_logger.info(self.__class__)
+
+            return {
+                "message": (
+                    f"You successfully deleted the account {user.username} "
+                    f"({user_email_str}, {user.role})!"
+                )
+            }
+
+    def old_delete(self, current_user):
+        """Implementation of old get method. Should be removed when api/v1 is removed."""
+
         json_info = flask.request.get_json(silent=True)
         if json_info:
             is_invite = json_info.pop("is_invite", False)
@@ -1247,6 +1322,77 @@ class Users(flask_restful.Resource):
     @handle_db_error
     def get(self):
         """List unit users within the unit the current user is connected to, or the one defined by a superadmin."""
+
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_get()
+
+        elif "api/v3" in flask.request.path:
+
+            # Function only accessible here
+            def get_users(unit: models.Unit = None):
+                """Get users, either all or from specific unit."""
+                users_to_iterate = None
+                if unit:
+                    users_to_iterate = unit.users
+                else:
+                    users_to_iterate = models.User.query.all()
+
+                users_to_return = [
+                    {
+                        "Name": user.name,
+                        "Username": user.username,
+                        "Email": user.primary_email,
+                        "Role": user.role,
+                        "Active": user.is_active,
+                    }
+                    for user in users_to_iterate
+                ]
+                return users_to_return
+
+            # End of function
+
+            # Keys to return
+            keys = ["Name", "Username", "Email", "Role", "Active"]
+
+            # Super Admins can list users in units or all users,
+            if auth.current_user().role == "Super Admin":
+                unit = flask.request.args.get("unit")
+                if unit:
+                    # Verify unit public id
+                    unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
+                    if not unit_row:
+                        raise ddserr.DDSArgumentError(
+                            message=f"There is no unit with the public id '{unit}'."
+                        )
+
+                    # Get users in unit
+                    users_to_return = get_users(unit=unit_row)
+                    return {
+                        "users": users_to_return,
+                        "unit": unit_row.name,
+                        "keys": keys,
+                        "empty": not users_to_return,
+                    }
+
+                # Get all users if no unit specified
+                users_to_return = get_users()
+                return {"users": users_to_return, "keys": keys, "empty": not users_to_return}
+
+            # Unit Personnel and Unit Admins can list all users within their units
+            unit_row = auth.current_user().unit
+
+            # Get users in unit
+            users_to_return = get_users(unit=unit_row)
+            return {
+                "users": users_to_return,
+                "unit": unit_row.name,
+                "keys": keys,
+                "empty": not users_to_return,
+            }
+
+    def old_get(self):
+        """Implementation of old get method. Should be removed when api/v1 is removed."""
 
         # Function only accessible here
         def get_users(unit: models.Unit = None):
