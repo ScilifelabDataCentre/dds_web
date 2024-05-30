@@ -8,7 +8,7 @@ Changelog
 
 - New features:
     - Fix the User endpoint according to OpenAPI standard.
-    - Added email contact to troubleshotting page
+    - Added email contact to troubleshooting page
 - Dependencies: 
     - `Werkzeug` from `2.2.3` to `3.0.3`
     - `Flask-WTF` from `1.0.0` to `1.1.2`
