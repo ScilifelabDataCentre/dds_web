@@ -1,6 +1,23 @@
 Changelog
 ==========
 
+.. _2.7.0:
+
+2.7.0 - 2024-05-29
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- New features:
+    - Fix the User endpoint according to OpenAPI standard.
+    - Added email contact to troubleshooting page
+- Dependencies: 
+    - `Werkzeug` from `2.2.3` to `3.0.3`
+    - `Flask-WTF` from `1.0.0` to `1.1.2`
+    - `Flask-Login` from `0.6.2` to `0.6.3`
+    - `Flask-HTTPAuth` from `4.5.0` to `4.8.0`
+- Bugs fixed:
+    - Boolean inputs in requests are parsed with flask types.
+
+
 .. _2.6.4:
 
 2.6.4 - 2023-04-10
