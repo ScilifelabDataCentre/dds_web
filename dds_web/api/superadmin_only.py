@@ -10,6 +10,7 @@ import typing
 
 # Installed
 import flask_restful
+from flask_restful import inputs
 import flask
 import structlog
 import flask_mail
@@ -204,11 +205,31 @@ class FindUser(flask_restful.Resource):
 
     @auth.login_required(role=["Super Admin"])
     @logging_bind_request
-    @json_required
     @handle_db_error
     def get(self):
-        """Return users or a confirmation on if one exists."""
-        # Get request info
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_get()
+
+        elif "api/v3" in flask.request.path:
+            """Return users or a confirmation on if one exists."""
+
+            # Get username from request
+            user_to_find = flask.request.args.get("username")
+            if not user_to_find:
+                raise ddserr.DDSArgumentError(
+                    message="Username required to check existence of account."
+                )
+
+            return {
+                "exists": models.User.query.filter_by(username=user_to_find).one_or_none()
+                is not None
+            }
+
+    @json_required
+    def old_get(self):
+        """Implementation of old get method. Should be removed when api/v1 is removed."""  # Get request info
+
         request_json = flask.request.get_json(silent=True)  # Verified by json_required
 
         # Get username from request
@@ -303,6 +324,31 @@ class AnyProjectsBusy(flask_restful.Resource):
     @handle_db_error
     def get(self):
         """Check if any projects are busy."""
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_get()
+
+        elif "api/v3" in flask.request.path:
+            # Get busy projects
+            projects_busy: typing.List = models.Project.query.filter_by(busy=True).all()
+            num_busy: int = len(projects_busy)
+
+            # Set info to always return nu
+            return_info: typing.Dict = {"num": num_busy}
+
+            # Return 0 if none are busy
+            if num_busy == 0:
+                return return_info
+
+            # Check if user listing busy projects
+            if flask.request.args("list", type=inputs.boolean, default=False) is True:
+                return_info.update(
+                    {"projects": {p.public_id: p.date_updated for p in projects_busy}}
+                )
+
+            return return_info
+
+    def old_get():
         # Get busy projects
         projects_busy: typing.List = models.Project.query.filter_by(busy=True).all()
         num_busy: int = len(projects_busy)
