@@ -22,7 +22,7 @@ import click
 # Own
 from dds_web import db, mail
 from dds_web.database import models
-import tests
+import tests.tests_v3 as tests
 from dds_web.commands import collect_stats
 
 ####################################################################################################
