@@ -1656,7 +1656,6 @@ components:
         type: string
       required: true
       description: project id to query
-      description: Project id to query
     email:
       name: email
       in: query
