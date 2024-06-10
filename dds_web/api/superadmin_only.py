@@ -341,7 +341,7 @@ class AnyProjectsBusy(flask_restful.Resource):
                 return return_info
 
             # Check if user listing busy projects
-            if flask.request.args("list", type=inputs.boolean, default=False) is True:
+            if flask.request.args.get("list", type=inputs.boolean, default=False):
                 return_info.update(
                     {"projects": {p.public_id: p.date_updated for p in projects_busy}}
                 )
