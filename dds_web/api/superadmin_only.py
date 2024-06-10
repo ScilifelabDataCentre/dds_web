@@ -348,7 +348,7 @@ class AnyProjectsBusy(flask_restful.Resource):
 
             return return_info
 
-    def old_get():
+    def old_get(self):
         # Get busy projects
         projects_busy: typing.List = models.Project.query.filter_by(busy=True).all()
         num_busy: int = len(projects_busy)
