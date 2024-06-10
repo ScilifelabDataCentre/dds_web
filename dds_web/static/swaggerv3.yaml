@@ -503,12 +503,7 @@ paths:
       tags:
         - user
       summary: Delete user or invite in the DDS. Unit Admins can delete Unit Admins and Unit Personnel.
-        Super admins can delete any user CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+        Superadmins can delete any user
       operationId: deleteUser
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -690,12 +685,15 @@ paths:
       tags:
         - user
       summary: List unit users within the unit the current user is connected to, or the one defined by a superadmin.
-        CHECK METHOD FOR SUPERADMINS
-      description: TODO - for superadmin, it can be passed a unit, currently in body, needs to be in query.
-      deprecated: true
+      description: Unit Users will get all personnel in their units. <br>
+        Superadmins can pass a unit as a parameter.
       operationId: getUsers
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
+        - in: query
+          name: unit
+          schema:
+            type: string
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -1658,18 +1656,20 @@ components:
         type: string
       required: true
       description: project id to query
+      description: Project id to query
     email:
       name: email
       in: query
       schema:
         type: string
-      description: email of the user/invite to query
+      description: Email of the user/invite to query
     is_invite:
       name: is_invite
       in: query
       schema:
-        type: string
-      description: flag to mark if the user to query is an invite
+        type: boolean
+        example: false
+      description: Flag to query for an invite. If false or not present, it will query for a user.
     filesToQuery:
       name: files
       in: query
