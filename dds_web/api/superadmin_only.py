@@ -212,7 +212,7 @@ class FindUser(flask_restful.Resource):
             return self.old_get()
 
         elif "api/v3" in flask.request.path:
-            """Return users or a confirmation on if one exists."""
+            """Return all users or confirmation whether a specific user is in the database."""
 
             # Get username from request
             user_to_find = flask.request.args.get("username")
