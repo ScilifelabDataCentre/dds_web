@@ -397,3 +397,4 @@ _Nothing merged in CLI during this sprint_
 # 2024-06-03 - 2024-06-14
 
 - Fix the project endpoints according to the OpenAPI standard ([#1527](https://github.com/ScilifelabDataCentre/dds_web/pull/1527))
+- Fix the Superadmin endpoints according to the OpenAPI standard ([#1533](https://github.com/ScilifelabDataCentre/dds_web/pull/1533))
