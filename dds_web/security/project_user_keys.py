@@ -4,7 +4,8 @@ import os
 
 import argon2
 import cryptography.exceptions
-from cryptography.hazmat.primitives import asymmetric, ciphers, hashes, serialization
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives import asymmetric, hashes, serialization
 import flask
 import gc
 
@@ -178,7 +179,7 @@ def __encrypt_with_aes(key, plaintext, aad=None):
     :param plaintext: a byte string
     :param aad: Additional data that should be authenticated with the key, but is not encrypted. Can be None.
     """
-    aesgcm = ciphers.aead.AESGCM(key)
+    aesgcm = AESGCM(key)
     nonce = os.urandom(12)
     return nonce, aesgcm.encrypt(nonce, plaintext, aad)
 
@@ -192,7 +193,7 @@ def __decrypt_with_aes(key, ciphertext, nonce, aad=None):
     :param aad: Additional data that should be authenticated with the key, but is not encrypted. Can be None.
     """
     try:
-        aesgcm = ciphers.aead.AESGCM(key=key)
+        aesgcm = AESGCM(key=key)
         return aesgcm.decrypt(nonce=nonce, data=ciphertext, associated_data=aad)
     except (cryptography.exceptions.InvalidTag, ValueError):
         return None
@@ -205,7 +206,7 @@ def __owner_identifier(owner):
 def __encrypt_owner_private_key(owner, private_key, owner_key=None):
     """Encrypt owners private key."""
     # Generate key or use current key if exists
-    key = owner_key or ciphers.aead.AESGCM.generate_key(bit_length=256)
+    key = owner_key or AESGCM.generate_key(bit_length=256)
 
     # Encrypt private key
     nonce, encrypted_key = __encrypt_with_aes(
