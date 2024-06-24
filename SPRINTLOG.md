@@ -403,4 +403,3 @@ _Nothing merged in CLI during this sprint_
 
 - Update pymysql to address cve ([#1534](https://github.com/ScilifelabDataCentre/dds_web/pull/1534))
 - Update node packages to address cve ([#1536](https://github.com/ScilifelabDataCentre/dds_web/pull/1536))
-
