@@ -398,3 +398,7 @@ _Nothing merged in CLI during this sprint_
 
 - Fix the project endpoints according to the OpenAPI standard ([#1527](https://github.com/ScilifelabDataCentre/dds_web/pull/1527))
 - Fix the Superadmin endpoints according to the OpenAPI standard ([#1533](https://github.com/ScilifelabDataCentre/dds_web/pull/1533))
+
+# 2024-06-17 - 2024-06-28
+
+- Update pymysql to address cve ([#1534](https://github.com/ScilifelabDataCentre/dds_web/pull/1534))
