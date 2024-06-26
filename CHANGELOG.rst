@@ -1,6 +1,24 @@
 Changelog
 ==========
 
+.. _2.7.1:
+
+2.7.1 - 2024-06-26
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- New features:
+    - Fix the Project endpoint according to OpenAPI standard.
+    - Fix the Superadmin endpoint according to OpenAPI standard.
+- Dependencies: 
+    - `Authlib` from `0.15.5` to `1.3.1`
+    - `PyMySQL` from `1.0.2` to `1.1.1`
+- Node modules: 
+    - `braces` from `3.0.2` to `3.0.3`
+    - `fill-range` from `7.0.1` to `7.1.1`
+    - `ip` from `2.0.0` to `9.0.5`
+    - `socks` from `2.7.1` to `2.8.3`
+    - `tar` from `6.1.15` to `6.2.1`
+
 .. _2.7.0:
 
 2.7.0 - 2024-05-29
