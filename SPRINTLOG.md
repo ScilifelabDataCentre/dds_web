@@ -393,3 +393,14 @@ _Nothing merged in CLI during this sprint_
 - Fix raising error when archiving project, bucket deleted but DB error ([#1524](https://github.com/ScilifelabDataCentre/dds_web/pull/1524))
 - Increase the identified less covered files([#1521](https://github.com/ScilifelabDataCentre/dds_web/pull/1521))
 - Parse boolean inputs correctly ([#1528](https://github.com/ScilifelabDataCentre/dds_web/pull/1528))
+
+# 2024-06-03 - 2024-06-14
+
+- Fix the project endpoints according to the OpenAPI standard ([#1527](https://github.com/ScilifelabDataCentre/dds_web/pull/1527))
+- Fix the Superadmin endpoints according to the OpenAPI standard ([#1533](https://github.com/ScilifelabDataCentre/dds_web/pull/1533))
+
+# 2024-06-17 - 2024-06-28
+
+- Update pymysql to address cve ([#1534](https://github.com/ScilifelabDataCentre/dds_web/pull/1534))
+- Update authlib to address cve ([#1535](https://github.com/ScilifelabDataCentre/dds_web/pull/1535))
+- Update node packages to address cve ([#1536](https://github.com/ScilifelabDataCentre/dds_web/pull/1536))

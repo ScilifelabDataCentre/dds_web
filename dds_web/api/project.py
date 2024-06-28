@@ -9,6 +9,7 @@ import http
 
 # Installed
 import flask_restful
+from flask_restful import inputs
 import flask
 import sqlalchemy
 import datetime
@@ -59,6 +60,35 @@ class ProjectStatus(flask_restful.Resource):
     @handle_validation_errors
     def get(self):
         """Get current project status and optionally entire status history"""
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_get()
+
+        elif "api/v3" in flask.request.path:
+            # Get project ID, project and verify access
+            project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
+            project = dds_web.utils.collect_project(project_id=project_id)
+            dds_web.utils.verify_project_access(project=project)
+
+            # Get current status and deadline
+            return_info = {"current_status": project.current_status}
+            if project.current_deadline:
+                return_info["current_deadline"] = project.current_deadline
+
+            # Get status history
+            history = flask.request.args.get("history", type=inputs.boolean, default=False)
+            if history:
+                history_info = []
+                for pstatus in project.project_statuses:
+                    history_info.append(tuple((pstatus.status, pstatus.date_created)))
+                history_info.sort(key=lambda x: x[1], reverse=True)
+                return_info.update({"history": history_info})
+
+            return return_info
+
+    def old_get(self):
+        """Implementation of old get method. Should be removed when api/v1 is removed."""
+
         # Get project ID, project and verify access
         project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
         project = dds_web.utils.collect_project(project_id=project_id)

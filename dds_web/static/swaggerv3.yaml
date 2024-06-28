@@ -1001,12 +1001,7 @@ paths:
     get:
       tags:
         - project
-      summary: Get current project status and optionally entire status history CHECK METHOD
-      description: This method requires some data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Get current project status and optionally entire status history
       operationId: projectStatusGet
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -1017,7 +1012,7 @@ paths:
           schema:
             type: boolean
             example: true
-          description: If true, return entire status history
+          description: If true, return entire status history. If false or missing, return only current status
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -1418,15 +1413,15 @@ paths:
     get:
       tags:
         - superadmin
-      summary: Get all users or check if there is a specific user in the database CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Check if a specific user exists in the system. The username must be passed
       operationId: findUser
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
+        - in: query
+          name: username
+          schema:
+            type: string
+          description: username to check
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedToken"
@@ -1483,12 +1478,7 @@ paths:
     get:
       tags:
         - superadmin
-      summary: Check if any project are busy CHECK METHOD
-      description: This method requires the data
-        to be passed in the request body instead of the query.
-        Since this does not comply with the openAPI standards, swagger cannot document it properly,
-        therefore we need to change/remove it in the future.
-      deprecated: true
+      summary: Check if any project are busy. Returns the number of busy projects and can list them if requested.
       operationId: anyProjectBusy
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -1659,7 +1649,8 @@ components:
       in: query
       schema:
         type: string
-      description: Project id to query
+      required: true
+      description: project id to query
     email:
       name: email
       in: query
