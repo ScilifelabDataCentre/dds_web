@@ -408,3 +408,4 @@ _Nothing merged in CLI during this sprint_
 # 2024-07-15 - 2024-07-26
 
 - Move raw Technical Overview doc to repo, add page numbers ([#1539](https://github.com/ScilifelabDataCentre/dds_web/pull/1539))
+- Small updates to Technical Overview contents ([#1540](https://github.com/ScilifelabDataCentre/dds_web/pull/1540))

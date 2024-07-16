@@ -191,7 +191,7 @@ location within the cloud where the uploaded data will be stored. When a Safespr
 created, the DDS Product Owner (“PO”) receives the following information from Safespring:
 
 Keys
-: Access key and secret key. These are sent within an encrypted file, only decryptable for a certain amount of time by a certain person - the PO.
+: Access key and secret key. These are created within Safespring and can be retrieved from there by the Data Centre.
 
 Endpoint
 : The storage site. This is currently the same for all, but may change in the future, either for all or some of the
@@ -519,6 +519,7 @@ during the upload, the Unit Admin/Personnel can change the project status from A
 Progress (“retracting”). This lets the Unit Admin/Personnel continue uploading files and prevents
 any downloads by the Researchers. However, retracting the project does not pause the countdown
 of DiA. When DiA number of days have passed, the project status is automatically set to Expired.
+The deadline for a given project can be extended by Unit Admins or Personnel. 
 More information on this can be found in section [Automatic expiry of data access](#automatic-expiry-of-data-access-and-archiving-of-project).
 Releasing the data also, by default, notifies the Researchers that there is data available for
 download. If the unit does not want these emails to be sent, it can be disabled when performing the
