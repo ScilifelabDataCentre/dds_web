@@ -1,3 +1,6 @@
 *.html
 dds_web/static/css
 dds_web/static/node_modules
+# Would like to enable this but prettier isn't correctly formatting grid tables for pandoc
+# We need grid table markdown due to having tables with multi-column/row spans
+doc/technical-overview.md

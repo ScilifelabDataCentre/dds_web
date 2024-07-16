@@ -404,3 +404,7 @@ _Nothing merged in CLI during this sprint_
 - Update pymysql to address cve ([#1534](https://github.com/ScilifelabDataCentre/dds_web/pull/1534))
 - Update authlib to address cve ([#1535](https://github.com/ScilifelabDataCentre/dds_web/pull/1535))
 - Update node packages to address cve ([#1536](https://github.com/ScilifelabDataCentre/dds_web/pull/1536))
+
+# 2024-07-15 - 2024-07-26
+
+- Move raw Technical Overview doc to repo, add page numbers ([#1539](https://github.com/ScilifelabDataCentre/dds_web/pull/1539))
