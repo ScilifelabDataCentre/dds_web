@@ -31,7 +31,7 @@
    <a href="https://scilifelabdatacentre.github.io/dds_cli/">
       <img alt="Documentation" src="https://img.shields.io/badge/-Documentation-222222?logo=github-pages">
    </a>
-   <a href="https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Technical-Overview.pdf">
+   <a href="https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/technical-overview.md">
       <img alt="Technical Overview" src="https://img.shields.io/badge/-Technical%20Overview-informational?logo=github">
    </a>
    <a href="https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR">

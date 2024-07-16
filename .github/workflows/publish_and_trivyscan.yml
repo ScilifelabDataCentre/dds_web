@@ -24,7 +24,30 @@ on:
   release:
     types: [published]
 jobs:
+  build_tech_overview:
+    name: Build Technical Overview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - uses: docker://pandoc/latex:3.2
+        with:
+          entrypoint: /bin/sh
+          args: >-
+            -c "
+            tlmgr update --self &&
+            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
+            updmap-sys &&
+            pandoc
+            --output=dds_web/static/dds-technical-overview.pdf
+            doc/technical-overview.md"
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tech-overview-pdf
+          path: dds_web/static/dds-technical-overview.pdf
   push_to_registry:
+    needs: build_tech_overview
     if: github.repository == 'ScilifelabDataCentre/dds_web'
     name: Push image
     runs-on: ubuntu-latest
@@ -37,23 +60,28 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Log in to Github Container Repository
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download Tech Overview artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tech-overview-pdf
+          path: dds_web/static
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             ghcr.io/scilifelabdatacentre/dds-backend
       - name: Ensure lowercase name
         run: echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
       - name: Build for scan
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           file: Dockerfiles/backend.Dockerfile
           context: .
