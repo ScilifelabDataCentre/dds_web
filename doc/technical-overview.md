@@ -6,7 +6,6 @@ output:
     md_extensions: +grid_tables
 toc: true
 geometry: "left=1cm, right=1cm, top=2cm, bottom=2cm"
-fontfamily: lato
 fontsize: 12pt
 colorlinks: true
 header-includes:
