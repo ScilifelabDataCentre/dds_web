@@ -6,7 +6,6 @@ output:
     md_extensions: +grid_tables
 toc: true
 geometry: "left=1cm, right=1cm, top=2cm, bottom=2cm"
-fontfamily: lato
 fontsize: 12pt
 colorlinks: true
 header-includes:
@@ -105,7 +104,7 @@ delivery medium, thereby keeping the data within the Swedish borders. The DDS ha
 encryption and key management, enabling protection of the data without requiring the users to
 perform these steps themselves prior to delivery.
 
-![Overview diagram of the DDS](img/dds_overview.svg "Overview of DDS")
+![Overview diagram of the DDS](doc/img/dds_overview.svg "Overview of DDS")
 
 The DDS has been developed by the SciLifeLab Data Centre together with NGI Stockholm. The web
 interface can be found at <https://delivery.scilifelab.se> and the documentation at
@@ -606,7 +605,7 @@ There are four different roles in the DDS: “Super Admin”, “Unit Admin”, 
 - Super Admins do not have access to any data but have administrative permissions regarding
   all other roles, including other Super Admins.
 
-![Schematic showing relationship between DDS roles](img/dds_roles.svg "Relationship between the roles")
+![Schematic showing relationship between DDS roles](doc/img/dds_roles.svg "Relationship between the roles")
 
 ### Super Admin
 
@@ -793,7 +792,7 @@ used?”](#how-is-it-used) describes the standard project life cycle, from creat
 Progress, to project archivation. The figure below shows a summary of the different statuses and
 what they mean. The rest of this section describes them in more detail.
 
-![Schematic showing lifecycle of DDS projects](img/dds_project_statuses.svg "Lifecycle of DDS projects")
+![Schematic showing lifecycle of DDS projects](doc/img/dds_project_statuses.svg "Lifecycle of DDS projects")
 
 ### In Progress
 
@@ -888,49 +887,49 @@ requiring access to the diagrams.net page.
 
 ### Authentication
 
-![Flowchart showing the authentication flow](img/flowcharts_authentication.svg "Authentication flow")
+![Flowchart showing the authentication flow](doc/img/flowcharts_authentication.svg "Authentication flow")
 \elandscape
 
 \blandscape
 
 ### Setup of 2FA via Authentication App
 
-![Flowchart showing setup of 2FA](img/flowcharts_2FA_setup.svg "2 Factor Authentication (2FA) setup flow")
+![Flowchart showing setup of 2FA](doc/img/flowcharts_2FA_setup.svg "2 Factor Authentication (2FA) setup flow")
 \elandscape
 
 \blandscape
 
 ### Inviting users
 
-![Flowchart showing new user account creation](img/flowcharts_inviting_users.svg "New user account creation flow")
+![Flowchart showing new user account creation](doc/img/flowcharts_inviting_users.svg "New user account creation flow")
 \elandscape
 
 \blandscape
 
 ### Inviting users to Project
 
-![Flowchart showing process to grant user access to a project](img/flowcharts_invite_to_project.svg "Granting access for a user to a project flow")
+![Flowchart showing process to grant user access to a project](doc/img/flowcharts_invite_to_project.svg "Granting access for a user to a project flow")
 \elandscape
 
 \blandscape
 
 ### Creating a Project
 
-![Flowchart showing project creation](img/flowcharts_create_project.svg "New project creation flow")
+![Flowchart showing project creation](doc/img/flowcharts_create_project.svg "New project creation flow")
 \elandscape
 
 \blandscape
 
 ### Uploading data
 
-![Flowchart showing upload of data to a project](img/flowcharts_upload.svg "Upload of data flow")
+![Flowchart showing upload of data to a project](doc/img/flowcharts_upload.svg "Upload of data flow")
 \elandscape
 
 \blandscape
 
 ### Downloading data
 
-![Flowchart showing download of data from a project](img/flowcharts_download.svg "Download of data flow")
+![Flowchart showing download of data from a project](doc/img/flowcharts_download.svg "Download of data flow")
 \elandscape
 
 [comment]: The footnotes text is stored here. LaTeX figures out how to put them where they're referenced.

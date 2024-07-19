@@ -409,3 +409,4 @@ _Nothing merged in CLI during this sprint_
 
 - Move raw Technical Overview doc to repo, add page numbers ([#1539](https://github.com/ScilifelabDataCentre/dds_web/pull/1539))
 - Small updates to Technical Overview contents ([#1540](https://github.com/ScilifelabDataCentre/dds_web/pull/1540))
+- Build Technical Overview PDF in GitHub Actions, rename to include DDS and remove option to view on GitHub ([#1541](https://github.com/ScilifelabDataCentre/dds_web/pull/1541/))
