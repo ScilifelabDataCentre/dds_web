@@ -15,7 +15,6 @@
 name: Publish to GHCR (+ Trivy scan)
 on:
   workflow_dispatch:
-    branches: [dev]
   pull_request:
   push:
     branches:
