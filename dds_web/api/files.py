@@ -291,64 +291,6 @@ class ListFiles(flask_restful.Resource):
     def get(self):
         """Get a list of files within the specified folder."""
 
-        if "api/v1" in flask.request.path:
-            # requests comming from api/v1 should be handled as before
-            return self.old_get()
-
-        elif "api/v3" in flask.request.path:
-            # Verify project ID and access
-            project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
-
-            if auth.current_user().role == "Researcher" and project.current_status == "In Progress":
-                raise AccessDeniedError(
-                    message="The project status must be 'Available'. Please wait for unit to release the data."
-                )
-
-            # Check if to return file size
-            show_size = flask.request.args.get("show_size", type=inputs.boolean, default=False)
-
-            # Check if to get from root or folder
-            subpath = "."
-            if flask.request.args.get("subpath"):
-                subpath = flask.request.args.get("subpath").rstrip(os.sep)
-
-            files_folders = list()
-
-            # Check project not empty
-            if project.num_files == 0:
-                return {"num_items": 0, "message": f"The project {project.public_id} is empty."}
-
-            # Get files and folders
-            distinct_files, distinct_folders = self.items_in_subpath(
-                project=project, folder=subpath
-            )
-
-            # Collect file and folder info to return to CLI
-            if distinct_files:
-                for x in distinct_files:
-                    info = {
-                        "name": x[0] if subpath == "." else x[0].split(os.sep)[-1],
-                        "folder": False,
-                    }
-                    if show_size:
-                        info.update({"size": float(x[1])})
-                    files_folders.append(info)
-            if distinct_folders:
-                for x in distinct_folders:
-                    info = {
-                        "name": x if subpath == "." else x.split(os.sep)[-1],
-                        "folder": True,
-                    }
-
-                    if show_size:
-                        folder_size = self.get_folder_size(project=project, folder_name=x)
-                        info.update({"size": float(folder_size)})
-                    files_folders.append(info)
-
-            return {"files_folders": files_folders}
-
-    def old_get(self):
-        """Implementation of old get method. Should be removed when api/v1 is removed."""
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
 
@@ -356,6 +298,23 @@ class ListFiles(flask_restful.Resource):
             raise AccessDeniedError(
                 message="The project status must be 'Available'. Please wait for unit to release the data."
             )
+
+        if "api/v1" in flask.request.path:
+            # requests comming from api/v1 should be handled as before
+            return self.old_get(project)
+
+        elif "api/v3" in flask.request.path:
+
+            # Check if to return file size
+            show_size = flask.request.args.get("show_size", type=inputs.boolean, default=False)
+
+            # Check if to get from root or folder
+            subpath = flask.request.args.get("subpath", default=".").rstrip(os.sep)
+            subpath = "." if subpath == "" else subpath
+            return self.get_files_folders(project, subpath, show_size)
+
+    def old_get(self, project):
+        """Implementation of old get method. Should be removed when api/v1 is removed."""
 
         extra_args = flask.request.get_json(silent=True)
         if extra_args is None:
@@ -365,15 +324,16 @@ class ListFiles(flask_restful.Resource):
         show_size = extra_args.get("show_size")
 
         # Check if to get from root or folder
-        subpath = "."
-        if extra_args.get("subpath"):
-            subpath = extra_args.get("subpath").rstrip(os.sep)
+        subpath = extra_args.get("subpath", ".").rstrip(os.sep)
+        subpath = "." if subpath == "" else subpath
 
-        files_folders = list()
+        return self.get_files_folders(project, subpath, show_size)
 
-        # Check project not empty
+    def get_files_folders(self, project, subpath, show_size):
         if project.num_files == 0:
             return {"num_items": 0, "message": f"The project {project.public_id} is empty."}
+
+        files_folders = list()
 
         # Get files and folders
         distinct_files, distinct_folders = self.items_in_subpath(project=project, folder=subpath)

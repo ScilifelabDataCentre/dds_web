@@ -180,6 +180,38 @@ def test_list_files_auth(client):
     )
 
 
+@pytest.mark.parametrize("root_path", ["/", "./", "."])
+def test_list_files_root_path(client, root_path):
+    """Test listing files when different representations of the root path are requested."""
+    # Common setup: Make project available
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json={"new_status": "Available"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Test using parameterized root path
+    response = client.get(
+        tests.DDSEndpoint.LIST_FILES,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["researchuser"]).token(client),
+        query_string={"project": "public_project_id"},
+        json={"subpath": root_path},
+    )
+
+    expected_files_folders = [
+        {"folder": True, "name": "filename1"},
+        {"folder": True, "name": "filename2"},
+        {"folder": True, "name": "sub"},
+    ]
+
+    assert "files_folders" in response.json
+    assert len(response.json["files_folders"]) == len(expected_files_folders)
+    for entry in response.json["files_folders"]:
+        assert entry in expected_files_folders
+
+
 def test_list_files_database_error_items(client):
     """List files endpoint raises DB error in query"""
 
