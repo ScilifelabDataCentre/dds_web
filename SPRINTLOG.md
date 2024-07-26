@@ -411,3 +411,4 @@ _Nothing merged in CLI during this sprint_
 - Small updates to Technical Overview contents ([#1540](https://github.com/ScilifelabDataCentre/dds_web/pull/1540))
 - Build Technical Overview PDF in GitHub Actions, rename to include DDS and remove option to view on GitHub ([#1541](https://github.com/ScilifelabDataCentre/dds_web/pull/1541/))
 - Fixed index out of range when listing files from root ([#1543](https://github.com/ScilifelabDataCentre/dds_web/pull/1543/))
+- Update Trivy GitHub Actions ([#1545](https://github.com/ScilifelabDataCentre/dds_web/pull/1545))

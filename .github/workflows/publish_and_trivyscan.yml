@@ -15,7 +15,6 @@
 name: Publish to GHCR (+ Trivy scan)
 on:
   workflow_dispatch:
-    branches: [dev]
   pull_request:
   push:
     branches:
@@ -95,7 +94,7 @@ jobs:
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
       - name: Upload Trivy scan results to Github Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy-build
