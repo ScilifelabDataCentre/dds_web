@@ -74,9 +74,9 @@ If you have an email that you are certain does not go through the KI spam filter
 
 If you cannot find the email, contact the Data Centre.
 
-## F. Documentation not accessible
+## F. CLI Documentation not accessible
 
-You can download the documentation as a PDF.
+You can download the CLI documentation as a PDF.
 Click [here](https://github.com/ScilifelabDataCentre/dds_cli/releases/latest/download/dds_cli_user_manual.pdf). The
 download should start automatically. Notify the Data Centre that the documentation page is down so that we can look
 into it.
@@ -126,7 +126,7 @@ raise error_class(parsed_response, operation_name)
 ```
 
 This indicates that the cloud storage location has a specific limit for your unit and that it has been exceeded.
-This should be an easy fix. Contact the Data Centre, inform them of the error (remember to include the full error
+Contact the Data Centre, inform them of the error (remember to include the full error
 message) and tell them the size of the data you are attempting to upload.
 
 ## L. Unrecoverable key error
@@ -159,7 +159,7 @@ steps:
 
 ## M. ERROR: Internal Server Error
 
-Contact [delivery@scilifelab.se](mailto:delivery@scilifelab.se) and provide the information listed in the red box above.
+Contact [delivery@scilifelab.se](mailto:delivery@scilifelab.se) and provide the information listed [here](https://delivery.scilifelab.se/trouble).
 
 ## N. TooManyBuckets
 
@@ -300,12 +300,11 @@ Follow the same steps as in [the above C](#c.-web-invalid-username-or-password-1
 
 Check the information in the User section earlier in the document regarding this specific topic. If they contact us,
 the email is correct and it’s not an email address connected to the KI spam filter, create a card in the Jira board.
-Also create an issue in the sysadmin repository so that they can check that it’s not an issue on our cluster.
 
-## F. Documentation not accessible
+## F. CLI Documentation not accessible
 
-1. Notify the users that they can download the documentation as a PDF from [here](https://github.com/ScilifelabDataCentre/dds_cli/releases/latest/download/dds_cli_user_manual.pdf)
-2. Create an issue in the sysadmin repository.
+1. Notify the users that they can download the CLI documentation as a PDF from [here](https://github.com/ScilifelabDataCentre/dds_cli/releases/latest/download/dds_cli_user_manual.pdf)
+2. Investigate the issue, including whether it could be infrastructure-related.
 
 ## G. Long error message (traceback)
 
@@ -412,17 +411,15 @@ related. If someone contacts you regarding an Internal Server Error, begin with 
 information mentioned [here](https://delivery.scilifelab.se/trouble). When they have done this,
 look through the traceback.
 
-If you cannot find the issue in the traceback, get the logs from the backend, either if you have access to the cluster
-and know how to handle it or create an issue in the sysadmin repository and ask for the log to be sent in slack to
-you. The log should not be posted in github just in case of the logs showing anything that shouldn’t be public
-information (this shouldn’t happen but it’s a precaution).
+If you cannot find the issue in the traceback, get the logs from the backend. The log should not be posted in Github
+just in case of the logs showing anything that shouldn’t be public information (this shouldn’t happen but it’s a precaution).
 
 ## N. TooManyBuckets
 
 Safespring has a maximum number of buckets per unit, however this number is set quite high and therefore this should
 not happen. If it does happen, it should only be possible when a user is creating a project. It’s also possible that
 this is the cause of a failed project creation, so if a project cannot be created and there is a questionable error
-message displayed, check with the sysadmins for the log and see if the bucket could be created. To increase the number
+message displayed, check the logs and see if the bucket could be created. To increase the number
 of allowed buckets, contact Safespring and ask them to increase the number of allowed buckets in the affected Safespring
 project, listed and pinned in the dds-development channel on Slack. After this, the users can attempt creating a project
 again.
@@ -443,19 +440,15 @@ Note: Normally we would need to do the following, but as is noted in the section
 perform the upload again at this time. This has also not happened yet apart from during the testing phase, but there’s
 a first time for everything.
 
-If a user contacts us with an upload issue that has generated the above mentioned file, do the following:
+If a user contacts us with an upload issue that has generated the aforementioned file, do the following:
 
 1. Ask them to send the exact CLI command that they ran
-2. Give them the Nextcloud link and password corresponding to the unit that they are employed at; If someone at NGI
-   Stockholm contacts you with this specific issue, send the link and password underneath the point in slack saying
-   “NGI Stockholm”, and so on.
-3. Ask them to upload the json file to the folder that they can access with that link and password.
-4. When they have done that, a sysadmin should also use the link and password
-5. The sysadmin should download that file and run the following command in the cluster, in the DDS backend:
+2. Get the JSON file.
+3. Download that file and run the following command in the cluster, in the DDS backend:
    `flask update-uploaded-file` while specifying the project that the user has used in the command emailed to us, and the
-   path to the file as the options. This command goes through the file and checks if the file has been uploaded but has not been added to the database. If so, the backend adds the file information to the database which should mean that the project contents should now be accessible for download.
-6. The sysadmin should delete the json file immediately after the command is done and the file should be removed from
-   the nextcloud folder.
+   path to the file as the options. This command goes through the file and checks if the file has been uploaded but has
+   not been added to the database. If so, the backend adds the file information to the database which should mean that
+   the project contents should now be accessible for download.
 
 Make sure to do this as soon as possible since it’s possible that the upload has in fact been successful but the
 information has not been added to the database. This means that the data is located in the cloud and will take up space
