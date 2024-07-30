@@ -39,12 +39,18 @@ jobs:
             updmap-sys &&
             pandoc
             --output=dds_web/static/dds-technical-overview.pdf
-            doc/technical-overview.md"
-      - name: Upload PDF artifact
+            doc/technical-overview.md &&
+            pandoc
+            --output=dds_web/static/dds-troubleshooting.pdf
+            doc/troubleshooting.md
+            "
+      - name: Upload PDF artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tech-overview-pdf
-          path: dds_web/static/dds-technical-overview.pdf
+          name: pdf-artifacts
+          path: |
+            dds_web/static/dds-technical-overview.pdf
+            dds_web/static/dds-troubleshooting.pdf
   push_to_registry:
     needs: build_tech_overview
     if: github.repository == 'ScilifelabDataCentre/dds_web'
@@ -66,10 +72,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download Tech Overview artifact
+      - name: Download PDF artifact
         uses: actions/download-artifact@v4
         with:
-          name: tech-overview-pdf
+          name: pdf-artifacts
           path: dds_web/static
       - name: Docker metadata
         id: meta
