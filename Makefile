@@ -5,7 +5,7 @@ TROUBLE_MARKDOWN_FILE := doc/troubleshooting.md
 TROUBLE_PDF := dds_web/static/dds-troubleshooting.pdf
 
 install_pandoc:
-	brew install pandoc
+	brew install pandoc basictex librsvg
 
 update_tlmgr:
 	tlmgr update --self
