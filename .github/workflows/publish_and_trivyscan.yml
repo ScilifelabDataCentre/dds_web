@@ -24,12 +24,13 @@ on:
     types: [published]
 jobs:
   build_tech_overview:
-    name: Build Technical Overview
+    name: Build technical overview
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-      - uses: docker://pandoc/latex:3.2
+      - name: Build tech overview PDF
+        uses: docker://pandoc/latex:3.2
         with:
           entrypoint: /bin/sh
           args: >-
@@ -39,14 +40,39 @@ jobs:
             updmap-sys &&
             pandoc
             --output=dds_web/static/dds-technical-overview.pdf
-            doc/technical-overview.md"
-      - name: Upload PDF artifact
+            doc/technical-overview.md
+            "
+      - name: Upload technical overview PDF
         uses: actions/upload-artifact@v4
         with:
-          name: tech-overview-pdf
+          name: technical-overview-pdf
           path: dds_web/static/dds-technical-overview.pdf
+  build_troubleshooting:
+    name: Build troubleshooting guide
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Build troubleshooting guide
+        uses: docker://pandoc/latex:3.2
+        with:
+          entrypoint: /bin/sh
+          args: >-
+            -c "
+            tlmgr update --self &&
+            tlmgr install cm-super fontaxes lato xkeyval &&
+            updmap-sys &&
+            pandoc
+            --output=dds_web/static/dds-troubleshooting.pdf
+            doc/troubleshooting.md
+            "
+      - name: Upload troubleshooting PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: troubleshooting-pdf
+          path: dds_web/static/dds-troubleshooting.pdf
   push_to_registry:
-    needs: build_tech_overview
+    needs: [build_tech_overview, build_troubleshooting]
     if: github.repository == 'ScilifelabDataCentre/dds_web'
     name: Push image
     runs-on: ubuntu-latest
@@ -66,11 +92,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download Tech Overview artifact
+      - name: Download technical overview PDF
         uses: actions/download-artifact@v4
         with:
-          name: tech-overview-pdf
-          path: dds_web/static
+          name: technical-overview-pdf
+          path: dds_web/static/dds-technical-overview.pdf
+      - name: Download troubleshooting PDF
+        uses: actions/download-artifact@v4
+        with:
+          name: troubleshooting-pdf
+          path: dds_web/static/dds-troubleshooting.pdf
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
