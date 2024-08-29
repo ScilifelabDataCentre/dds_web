@@ -417,3 +417,5 @@ _Nothing merged in CLI during this sprint_
 
 - Move raw troubleshooting doc to repo and make small updates ([#1546](https://github.com/ScilifelabDataCentre/dds_web/pull/1546))
 - Update python base image and related libraries ([#1548](https://github.com/ScilifelabDataCentre/dds_web/pull/1548))
+- Update certifi to remove GLOBALISSUER certicates ([#1549](https://github.com/ScilifelabDataCentre/dds_web/pull/1549))
+
