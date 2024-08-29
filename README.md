@@ -37,7 +37,7 @@
    <a href="https://github.com/ScilifelabDataCentre/dds_web/wiki/Architecture-Decision-Record,-ADR">
       <img alt="Architecture Decision Record" src="https://img.shields.io/badge/-ADR-000000?logo=github">
    </a>
-   <a href="https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/Troubleshooting.pdf">
+   <a href="https://github.com/ScilifelabDataCentre/dds_web/blob/master/doc/troubleshooting.md">
       <img alt="Troubleshooting" src="https://img.shields.io/badge/-Troubleshooting%20Guide-red?logo=github">
    </a>
    <a href="https://github.com/ScilifelabDataCentre/dds_cli">
