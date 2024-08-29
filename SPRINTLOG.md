@@ -416,3 +416,4 @@ _Nothing merged in CLI during this sprint_
 # 2024-07-29 - 2024-08-09
 
 - Move raw troubleshooting doc to repo and make small updates ([#1546](https://github.com/ScilifelabDataCentre/dds_web/pull/1546))
+- Update certifi to remove GLOBALISSUER certicates ([#1549](https://github.com/ScilifelabDataCentre/dds_web/pull/1549))
