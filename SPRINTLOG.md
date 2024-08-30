@@ -231,11 +231,11 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 # 2023-03-17 - 2023-03-31
 
-_Nothing merged in CLI during this sprint_
+_Nothing merged during this sprint_
 
 # 2023-03-31 - 2023-04-14
 
-_Nothing merged in CLI during this sprint_
+_Nothing merged during this sprint_
 
 # 2023-04-14 - 2023-04-28
 
@@ -416,4 +416,12 @@ _Nothing merged in CLI during this sprint_
 # 2024-07-29 - 2024-08-09
 
 - Move raw troubleshooting doc to repo and make small updates ([#1546](https://github.com/ScilifelabDataCentre/dds_web/pull/1546))
+
+# 2024-08-12 - 2024-08-23
+
+_Nothing merged during this sprint_
+
+# 2024-08-26 - 2024-09-06
+
 - Update certifi to remove GLOBALISSUER certicates ([#1549](https://github.com/ScilifelabDataCentre/dds_web/pull/1549))
+- Add CODEOWNERS file in order to define Team Hermes as owners of all files in repository ([#708](https://github.com/ScilifelabDataCentre/dds_web/pull/708))
