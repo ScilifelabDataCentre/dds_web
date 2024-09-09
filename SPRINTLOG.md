@@ -425,3 +425,7 @@ _Nothing merged during this sprint_
 
 - Update certifi to remove GLOBALISSUER certicates ([#1549](https://github.com/ScilifelabDataCentre/dds_web/pull/1549))
 - Add CODEOWNERS file in order to define Team Hermes as owners of all files in repository ([#708](https://github.com/ScilifelabDataCentre/dds_web/pull/708))
+
+# 2024-09-09 - 2024-09-20
+
+- Flask command to update unit quotas ([#1551](https://github.com/ScilifelabDataCentre/dds_web/pull/1551))
