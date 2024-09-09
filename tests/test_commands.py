@@ -442,6 +442,7 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_True(
         command_options[9],
     ]
 
+
 # update_unit_quota
 
 
@@ -452,7 +453,7 @@ def test_update_unit_no_such_unit(client, runner, capfd: LogCaptureFixture) -> N
         "--unit-id",
         "unitdoesntexist",
         "--quota",
-        10,
+        10**9,  # 1 GB,
     ]
 
     # Run command
@@ -466,31 +467,83 @@ def test_update_unit_no_such_unit(client, runner, capfd: LogCaptureFixture) -> N
     # Verify message
     assert f"There is no unit with the public ID '{command_options[1]}'." in err
 
-def test_update_unit_quota_ok(client, runner, capfd: LogCaptureFixture) -> None:
-    """Sucessfully update unit quota - Result is OK."""
 
+def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptureFixture) -> None:
+    """Start time already recorded. Answer no to prompt about update anyway. No changes should be made."""
     # Get existing unit
     unit: models.Unit = models.Unit.query.first()
     unit_id: str = unit.public_id
+
+    # save original quota
+    quota_original = unit.quota
 
     # Create command options
     command_options: typing.List = [
         "--unit-id",
         unit_id,
         "--quota",
-        10,
+        10**9,  # 1 GB,
     ]
 
     # Run command
-    result: click.testing.Result = runner.invoke(update_unit_quota, command_options)
-    assert result.exit_code == 0
-    assert not result.output
+    # Mock rich prompt - False
+    with patch.object(rich.prompt.Confirm, "ask", return_value=False) as mock_ask:
+        result: click.testing.Result = runner.invoke(update_unit_quota, command_options)
+        assert result.exit_code == 0
+        assert not result.output
+    mock_ask.assert_called_once
 
     # Get logging
     _, err = capfd.readouterr()
 
-    # Verify message
+    # Verify logging
+    assert f"Cancelling sto4 update for unit '{unit_id}'." in err
+    assert f"Unit '{unit_id}' updated successfully" not in err
+
+    # Verify no change in unit
+    unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).first()
+    assert unit
+    assert unit.quota == quota_original
+
+
+def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCaptureFixture) -> None:
+    """Sucessfully update unit quota - The answer to the prompt is True."""
+
+    # Get existing unit
+    unit: models.Unit = models.Unit.query.first()
+    unit_id: str = unit.public_id
+
+    # save original quota
+    quota_original = unit.quota
+
+    # Create command options
+    command_options: typing.List = [
+        "--unit-id",
+        unit_id,
+        "--quota",
+        10**9,  # 1 GB,
+    ]
+
+    # Run command
+    # Mock rich prompt - True
+    with patch.object(rich.prompt.Confirm, "ask", return_value=True) as mock_ask:
+        result: click.testing.Result = runner.invoke(update_unit_quota, command_options)
+        assert result.exit_code == 0
+        assert not result.output
+    mock_ask.assert_called_once
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify logging
+    assert f"Cancelling quota update for unit '{unit_id}'." not in err
     assert f"Unit '{unit_id}' updated successfully" in err
+
+    # Verify change in unit
+    unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).first()
+    assert unit
+    assert unit.quota != quota_original
+    assert unit.quota == command_options[3]
 
 
 # update_uploaded_file_with_log

@@ -212,6 +212,7 @@ def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret
 def update_unit_quota(unit_id, quota):
     """Update unit quota. The quota is in bytes."""
     # Imports
+    import rich.prompt
     from dds_web import db
     from dds_web.database import models
 
@@ -220,6 +221,15 @@ def update_unit_quota(unit_id, quota):
     if not unit:
         flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
         sys.exit(1)
+
+    # ask the user for confirmation
+    do_update = rich.prompt.Confirm.ask(
+        f"You are about to update the quota for unit '{unit_id}' to {quota}. Are you sure? \n"
+        f"Remember that the quota is in bytes. You have select about {round(quota / 1024 ** 3,2)} GB."
+    )
+    if not do_update:
+        flask.current_app.logger.info(f"Cancelling quota update for unit '{unit_id}'.")
+        return
 
     # Set sto4 info
     unit.quota = quota
