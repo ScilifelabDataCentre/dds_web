@@ -36,7 +36,8 @@ from dds_web.commands import (
     monthly_usage,
     collect_stats,
     lost_files_s3_db,
-    update_unit,
+    update_unit_sto4,
+    update_unit_quota,
     send_usage,
 )
 from dds_web.database import models
