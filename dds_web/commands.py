@@ -164,8 +164,8 @@ def create_new_unit(
 @click.option("--sto4-access", "-sa", type=str, required=True)
 @click.option("--sto4-secret", "-ss", type=str, required=True)
 @flask.cli.with_appcontext
-def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
-    """Update unit info."""
+def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
+    """Update unit sto4 storage info."""
     # Imports
     import rich.prompt
     from dds_web import db
@@ -203,6 +203,29 @@ def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
     del sto4_access
     del sto4_secret
     gc.collect()
+
+
+@click.command("update-unit")
+@click.option("--unit-id", "-u", type=str, required=True)
+@click.option("--quota", "-q", type=int, required=True)
+@flask.cli.with_appcontext
+def update_unit_quota(unit_id, quota):
+    """Update unit quota."""
+    # Imports
+    from dds_web import db
+    from dds_web.database import models
+
+    # Get unit
+    unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).one_or_none()
+    if not unit:
+        flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
+        return
+
+    # Set sto4 info
+    unit.quota = quota
+    db.session.commit()
+
+    flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
 
 
 @click.command("update-uploaded-file")

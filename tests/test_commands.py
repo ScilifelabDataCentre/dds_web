@@ -296,7 +296,7 @@ def test_update_unit_no_such_unit(client, runner, capfd: LogCaptureFixture) -> N
     ]
 
     # Run command
-    result: click.testing.Result = runner.invoke(update_unit, command_options)
+    result: click.testing.Result = runner.invoke(update_unit_sto4, command_options)
     assert result.exit_code == 0
     assert not result.output
 
@@ -349,7 +349,7 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_False(
     # Run command
     # Mock rich prompt - False
     with patch.object(rich.prompt.Confirm, "ask", return_value=False) as mock_ask:
-        result: click.testing.Result = runner.invoke(update_unit, command_options)
+        result: click.testing.Result = runner.invoke(update_unit_sto4, command_options)
         assert result.exit_code == 0
         assert not result.output
     mock_ask.assert_called_once
@@ -414,7 +414,7 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_True(
     # Run command
     # Mock rich prompt - True
     with patch.object(rich.prompt.Confirm, "ask", return_value=True) as mock_ask:
-        result: click.testing.Result = runner.invoke(update_unit, command_options)
+        result: click.testing.Result = runner.invoke(update_unit_sto4, command_options)
         assert result.exit_code == 0
         assert not result.output
     mock_ask.assert_called_once

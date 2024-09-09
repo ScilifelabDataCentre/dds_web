@@ -282,13 +282,15 @@ def create_app(testing=False, database_uri=None):
             send_usage,
             collect_stats,
             monitor_usage,
-            update_unit,
+            update_unit_sto4,
+            update_unit_quota,
         )
 
         # Add flask commands - general
         app.cli.add_command(fill_db_wrapper)
         app.cli.add_command(create_new_unit)
-        app.cli.add_command(update_unit)
+        app.cli.add_command(update_unit_sto4)
+        app.cli.add_command(update_unit_quota)
         app.cli.add_command(update_uploaded_file_with_log)
         app.cli.add_command(lost_files_s3_db)
 
