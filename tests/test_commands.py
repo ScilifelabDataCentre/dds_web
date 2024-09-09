@@ -276,7 +276,7 @@ def test_create_new_unit_success(client, runner, capfd: LogCaptureFixture) -> No
     assert new_unit.warning_level
 
 
-# update_unit
+# update_unit_sto4
 
 
 def test_update_unit_no_such_unit(client, runner, capfd: LogCaptureFixture) -> None:
@@ -441,6 +441,56 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_True(
         command_options[7],
         command_options[9],
     ]
+
+# update_unit_quota
+
+
+def test_update_unit_no_such_unit(client, runner, capfd: LogCaptureFixture) -> None:
+    """Try to update a non existent unit -> Error."""
+    # Create command options
+    command_options: typing.List = [
+        "--unit-id",
+        "unitdoesntexist",
+        "--quota",
+        10,
+    ]
+
+    # Run command
+    result: click.testing.Result = runner.invoke(update_unit_quota, command_options)
+    assert result.exit_code == 1
+    assert not result.output
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify message
+    assert f"There is no unit with the public ID '{command_options[1]}'." in err
+
+def test_update_unit_quota_ok(client, runner, capfd: LogCaptureFixture) -> None:
+    """Sucessfully update unit quota - Result is OK."""
+
+    # Get existing unit
+    unit: models.Unit = models.Unit.query.first()
+    unit_id: str = unit.public_id
+
+    # Create command options
+    command_options: typing.List = [
+        "--unit-id",
+        unit_id,
+        "--quota",
+        10,
+    ]
+
+    # Run command
+    result: click.testing.Result = runner.invoke(update_unit_quota, command_options)
+    assert result.exit_code == 0
+    assert not result.output
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify message
+    assert f"Unit '{unit_id}' updated successfully" in err
 
 
 # update_uploaded_file_with_log

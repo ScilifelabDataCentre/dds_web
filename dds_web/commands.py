@@ -157,7 +157,7 @@ def create_new_unit(
     gc.collect()
 
 
-@click.command("update-unit")
+@click.command("update-unit-sto4")
 @click.option("--unit-id", "-u", type=str, required=True)
 @click.option("--sto4-endpoint", "-se", type=str, required=True)
 @click.option("--sto4-name", "-sn", type=str, required=True)
@@ -205,12 +205,12 @@ def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret
     gc.collect()
 
 
-@click.command("update-unit")
+@click.command("update-unit-quota")
 @click.option("--unit-id", "-u", type=str, required=True)
 @click.option("--quota", "-q", type=int, required=True)
 @flask.cli.with_appcontext
 def update_unit_quota(unit_id, quota):
-    """Update unit quota."""
+    """Update unit quota. The quota is in bytes."""
     # Imports
     from dds_web import db
     from dds_web.database import models
@@ -219,7 +219,7 @@ def update_unit_quota(unit_id, quota):
     unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).one_or_none()
     if not unit:
         flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
-        return
+        sys.exit(1)
 
     # Set sto4 info
     unit.quota = quota
