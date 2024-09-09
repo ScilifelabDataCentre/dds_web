@@ -498,7 +498,7 @@ def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptur
     _, err = capfd.readouterr()
 
     # Verify logging
-    assert f"Cancelling sto4 update for unit '{unit_id}'." in err
+    assert f"Cancelling quota update for unit '{unit_id}'." in err
     assert f"Unit '{unit_id}' updated successfully" not in err
 
     # Verify no change in unit
