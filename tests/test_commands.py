@@ -483,7 +483,7 @@ def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptur
         "--unit-id",
         unit_id,
         "--quota",
-        10**9,  # 1 GB,
+        20**9,  # 2 GB,
     ]
 
     # Run command
@@ -522,7 +522,7 @@ def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCapture
         "--unit-id",
         unit_id,
         "--quota",
-        10**9,  # 1 GB,
+        20**9,  # 2 GB,
     ]
 
     # Run command
