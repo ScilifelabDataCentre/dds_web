@@ -280,7 +280,7 @@ def test_create_new_unit_success(client, runner, capfd: LogCaptureFixture) -> No
 # update_unit_sto4
 
 
-def test_update_unit_no_such_unit(client, runner, capfd: LogCaptureFixture) -> None:
+def test_update_unit_sto4_no_such_unit(client, runner, capfd: LogCaptureFixture) -> None:
     """Try to update a non existent unit -> Error."""
     # Create command options
     command_options: typing.List = [
@@ -447,7 +447,7 @@ def test_update_unit_sto4_start_time_exists_mock_prompt_True(
 # update_unit_quota
 
 
-def test_update_unit_no_such_unit(client, runner, capfd: LogCaptureFixture) -> None:
+def test_update_unit_quota_no_such_unit(client, runner, capfd: LogCaptureFixture) -> None:
     """Try to update a non existent unit -> Error."""
     # Create command options
     command_options: typing.List = [

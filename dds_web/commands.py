@@ -227,7 +227,9 @@ def update_unit_quota(unit_id, quota):
         f"You are about to update the quota for unit '{unit_id}' to {quota} bytes (approx {round(quota / 1000 ** 3,2)} GB). Are you sure? \n"
     )
     if not do_update:
-        flask.current_app.logger.info(f"Cancelling quota update for unit '{unit_id}'. The quota is still {unit.quota} bytes.")
+        flask.current_app.logger.info(
+            f"Cancelling quota update for unit '{unit_id}'. The quota is still {unit.quota} bytes."
+        )
         return
 
     # Set sto4 info
