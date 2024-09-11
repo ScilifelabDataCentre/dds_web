@@ -224,8 +224,7 @@ def update_unit_quota(unit_id, quota):
 
     # ask the user for confirmation
     do_update = rich.prompt.Confirm.ask(
-        f"You are about to update the quota for unit '{unit_id}' to {quota}. Are you sure? \n"
-        f"Remember that the quota is in bytes. You have select about {round(quota / 1024 ** 3,2)} GB."
+        f"You are about to update the quota for unit '{unit_id}' to {quota} bytes (approx {round(quota / 1000 ** 3,2)} GB). Are you sure? \n"
     )
     if not do_update:
         flask.current_app.logger.info(f"Cancelling quota update for unit '{unit_id}'.")
