@@ -508,7 +508,7 @@ def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptur
 
 
 def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCaptureFixture) -> None:
-    """Sucessfully update unit quota - The answer to the prompt is True."""
+    """Unit quota successfully updated when answer to the prompt is True."""
 
     # Get existing unit
     unit: models.Unit = models.Unit.query.first()
