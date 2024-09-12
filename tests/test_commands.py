@@ -454,7 +454,7 @@ def test_update_unit_quota_no_such_unit(client, runner, capfd: LogCaptureFixture
         "--unit-id",
         "unitdoesntexist",
         "--quota",
-        10**9,  # 1 GB,
+        2,  # 2 GB,
     ]
 
     # Run command
@@ -483,7 +483,7 @@ def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptur
         "--unit-id",
         unit_id,
         "--quota",
-        20**9,  # 2 GB,
+        2,  # 2 GB,
     ]
 
     # Run command
@@ -522,7 +522,7 @@ def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCapture
         "--unit-id",
         unit_id,
         "--quota",
-        20**9,  # 2 GB,
+        2,  # 2 GB,
     ]
 
     # Run command
@@ -544,7 +544,7 @@ def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCapture
     unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).first()
     assert unit
     assert unit.quota != quota_original
-    assert unit.quota == command_options[3]
+    assert unit.quota == command_options[3] * 1024**3  # GB to bytes
 
 
 # update_uploaded_file_with_log

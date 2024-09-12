@@ -210,7 +210,7 @@ def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret
 @click.option("--quota", "-q", type=int, required=True)
 @flask.cli.with_appcontext
 def update_unit_quota(unit_id, quota):
-    """Update unit quota. The quota is in bytes."""
+    """Update unit quota. The input is in GB."""
     # Imports
     import rich.prompt
     from dds_web import db
@@ -224,7 +224,9 @@ def update_unit_quota(unit_id, quota):
 
     # ask the user for confirmation
     do_update = rich.prompt.Confirm.ask(
-        f"You are about to update the quota for unit '{unit_id}' to {quota} bytes (approx {round(quota / 1000 ** 3,2)} GB). Are you sure? \n"
+        f"Current quota for unit '{unit_id}' is {round(unit.quota / 1000 ** 3,2)} GB. \n"
+        f"You are about to update the quota to {quota} GB (aprox {quota * 1000 ** 3} bytes). \n"
+        "Are you sure you want to continue?"
     )
     if not do_update:
         flask.current_app.logger.info(
@@ -233,7 +235,8 @@ def update_unit_quota(unit_id, quota):
         return
 
     # Set sto4 info
-    unit.quota = quota
+    quota_bytes = quota * 1000**3
+    unit.quota = quota_bytes
     db.session.commit()
 
     flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
