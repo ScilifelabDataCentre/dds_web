@@ -429,3 +429,4 @@ _Nothing merged during this sprint_
 # 2024-09-09 - 2024-09-20
 
 - Flask command to update unit quotas ([#1551](https://github.com/ScilifelabDataCentre/dds_web/pull/1551))
+- Bump python base image to 3.12 and related libraries in both web and client([#1548](https://github.com/ScilifelabDataCentre/dds_web/pull/1548))
