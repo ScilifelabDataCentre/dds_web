@@ -3,7 +3,7 @@
 #############################
 
 # Set official image -- parent image
-FROM python:3.11-alpine as base
+FROM python:3.12-alpine as base
 
 ARG USERNAME=dds-user
 ARG USER_UID=1001
