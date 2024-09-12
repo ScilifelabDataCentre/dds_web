@@ -470,7 +470,7 @@ def test_update_unit_quota_no_such_unit(client, runner, capfd: LogCaptureFixture
 
 
 def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptureFixture) -> None:
-    """Start time already recorded. Answer no to prompt about update anyway. No changes should be made."""
+    """Unit quota should not be changed when answer to prompt is False."""
     # Get existing unit
     unit: models.Unit = models.Unit.query.first()
     unit_id: str = unit.public_id
