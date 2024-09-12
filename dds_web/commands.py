@@ -225,7 +225,7 @@ def update_unit_quota(unit_id, quota):
     # ask the user for confirmation
     do_update = rich.prompt.Confirm.ask(
         f"Current quota for unit '{unit_id}' is {round(unit.quota / 1000 ** 3,2)} GB. \n"
-        f"You are about to update the quota to {quota} GB (aprox {quota * 1000 ** 3} bytes). \n"
+        f"You are about to update the quota to {quota} GB ({quota * 1000 ** 3} bytes). \n"
         "Are you sure you want to continue?"
     )
     if not do_update:
