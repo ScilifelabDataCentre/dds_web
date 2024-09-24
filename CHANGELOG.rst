@@ -13,6 +13,7 @@ Changelog
     - `certifi` from `2023.07.22` to `2024.7.4`
     - `requests` from `2.31.0` to `2.32.0`
     - `wrapt` from `1.13.3` to `1.14.0`
+- Dependencies (tests):
     - `pyfakefs` from `4.5.5` to `5.3.0`
 - Update base image for the docker containers from `python:3.11-alpine` to `python:3.12-alpine`
 
