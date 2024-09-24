@@ -1,6 +1,21 @@
 Changelog
 ==========
 
+.. _2.8.0:
+
+2.8.0 - 2024-09-24
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- New features:
+    - Technical Overview and Troubleshooting updated and made available as pdf.
+    - Added Flask command for updating units quota.
+- Dependencies:
+    - `certifi` from `2023.07.22` to `2024.7.4`
+    - `requests` from `2.31.0` to `2.32.0`
+    - `wrapt` from `1.13.3` to `1.14.0`
+    - `pyfakefs` from `4.5.5` to `5.3.0`
+- Update base image for the docker containers from `python:3.11-alpine` to `python:3.12-alpine`
+
 .. _2.7.1:
 
 2.7.1 - 2024-06-26
