@@ -15,7 +15,6 @@
 name: Publish to GHCR (+ Trivy scan)
 on:
   workflow_dispatch:
-    branches: [dev]
   pull_request:
   push:
     branches:
@@ -24,7 +23,56 @@ on:
   release:
     types: [published]
 jobs:
+  build_tech_overview:
+    name: Build technical overview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Build tech overview PDF
+        uses: docker://pandoc/latex:3.2
+        with:
+          entrypoint: /bin/sh
+          args: >-
+            -c "
+            tlmgr update --self &&
+            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
+            updmap-sys &&
+            pandoc
+            --output=dds_web/static/dds-technical-overview.pdf
+            doc/technical-overview.md
+            "
+      - name: Upload technical overview PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: technical-overview-pdf
+          path: dds_web/static/dds-technical-overview.pdf
+  build_troubleshooting:
+    name: Build troubleshooting guide
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Build troubleshooting guide
+        uses: docker://pandoc/latex:3.2
+        with:
+          entrypoint: /bin/sh
+          args: >-
+            -c "
+            tlmgr update --self &&
+            tlmgr install cm-super fontaxes lato xkeyval &&
+            updmap-sys &&
+            pandoc
+            --output=dds_web/static/dds-troubleshooting.pdf
+            doc/troubleshooting.md
+            "
+      - name: Upload troubleshooting PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: troubleshooting-pdf
+          path: dds_web/static/dds-troubleshooting.pdf
   push_to_registry:
+    needs: [build_tech_overview, build_troubleshooting]
     if: github.repository == 'ScilifelabDataCentre/dds_web'
     name: Push image
     runs-on: ubuntu-latest
@@ -37,23 +85,33 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Log in to Github Container Repository
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download technical overview PDF
+        uses: actions/download-artifact@v4
+        with:
+          name: technical-overview-pdf
+          path: dds_web/static/dds-technical-overview.pdf
+      - name: Download troubleshooting PDF
+        uses: actions/download-artifact@v4
+        with:
+          name: troubleshooting-pdf
+          path: dds_web/static/dds-troubleshooting.pdf
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             ghcr.io/scilifelabdatacentre/dds-backend
       - name: Ensure lowercase name
         run: echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
       - name: Build for scan
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           file: Dockerfiles/backend.Dockerfile
           context: .
@@ -67,7 +125,7 @@ jobs:
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
       - name: Upload Trivy scan results to Github Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy-build

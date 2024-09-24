@@ -6,10 +6,7 @@
 # ---------------------------------
 name: Trivy - ghcr image scan - dev
 on:
-  workflow_dispatch:
-    branches:
-      - dev
-  schedule:
+  schedule: # Since dev is the default branch of the repo don't specify
     - cron: "0 9,12,15 * * *"
 jobs:
   scan:
@@ -26,7 +23,7 @@ jobs:
         run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
 
       - name: Run Trivy on latest dev image
-        uses: aquasecurity/trivy-action@0.7.1
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:dev"
           format: "sarif"
@@ -34,7 +31,7 @@ jobs:
           severity: "CRITICAL,HIGH"
 
       - name: Upload Trivy scan results to dev branch GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-results-dev.sarif"
           category: trivy-dev

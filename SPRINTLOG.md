@@ -231,11 +231,11 @@ Please add a _short_ line describing the PR you make, if the PR implements a spe
 
 # 2023-03-17 - 2023-03-31
 
-_Nothing merged in CLI during this sprint_
+_Nothing merged during this sprint_
 
 # 2023-03-31 - 2023-04-14
 
-_Nothing merged in CLI during this sprint_
+_Nothing merged during this sprint_
 
 # 2023-04-14 - 2023-04-28
 
@@ -404,3 +404,29 @@ _Nothing merged in CLI during this sprint_
 - Update pymysql to address cve ([#1534](https://github.com/ScilifelabDataCentre/dds_web/pull/1534))
 - Update authlib to address cve ([#1535](https://github.com/ScilifelabDataCentre/dds_web/pull/1535))
 - Update node packages to address cve ([#1536](https://github.com/ScilifelabDataCentre/dds_web/pull/1536))
+
+# 2024-07-15 - 2024-07-26
+
+- Move raw Technical Overview doc to repo, add page numbers ([#1539](https://github.com/ScilifelabDataCentre/dds_web/pull/1539))
+- Small updates to Technical Overview contents ([#1540](https://github.com/ScilifelabDataCentre/dds_web/pull/1540))
+- Build Technical Overview PDF in GitHub Actions, rename to include DDS and remove option to view on GitHub ([#1541](https://github.com/ScilifelabDataCentre/dds_web/pull/1541/))
+- Fixed index out of range when listing files from root ([#1543](https://github.com/ScilifelabDataCentre/dds_web/pull/1543/))
+- Update Trivy GitHub Actions ([#1545](https://github.com/ScilifelabDataCentre/dds_web/pull/1545))
+
+# 2024-07-29 - 2024-08-09
+
+- Move raw troubleshooting doc to repo and make small updates ([#1546](https://github.com/ScilifelabDataCentre/dds_web/pull/1546))
+
+# 2024-08-12 - 2024-08-23
+
+_Nothing merged during this sprint_
+
+# 2024-08-26 - 2024-09-06
+
+- Update certifi to remove GLOBALISSUER certicates ([#1549](https://github.com/ScilifelabDataCentre/dds_web/pull/1549))
+- Add CODEOWNERS file in order to define Team Hermes as owners of all files in repository ([#708](https://github.com/ScilifelabDataCentre/dds_web/pull/708))
+
+# 2024-09-09 - 2024-09-20
+
+- Flask command to update unit quotas ([#1551](https://github.com/ScilifelabDataCentre/dds_web/pull/1551))
+- Bump python base image to 3.12 and related libraries in both web and client([#1548](https://github.com/ScilifelabDataCentre/dds_web/pull/1548))

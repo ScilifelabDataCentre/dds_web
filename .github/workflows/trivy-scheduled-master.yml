@@ -6,9 +6,6 @@
 # ---------------------------------
 name: Trivy - ghcr image scan - master
 on:
-  workflow_dispatch:
-    branches:
-      - master
   schedule:
     - cron: "0 7,15 * * *"
 jobs:
@@ -28,7 +25,7 @@ jobs:
         run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
 
       - name: Run Trivy on latest release image
-        uses: aquasecurity/trivy-action@0.7.1
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:latest"
           format: "sarif"
@@ -36,7 +33,7 @@ jobs:
           severity: "CRITICAL,HIGH"
 
       - name: Upload Trivy scan results to master branch GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-results-master.sarif"
           category: trivy-master
