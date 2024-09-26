@@ -85,7 +85,7 @@ def fill_db_wrapper(db_type):
 @click.option("--days_in_available", "-da", type=int, required=False, default=90)
 @click.option("--days_in_expired", "-de", type=int, required=False, default=30)
 @click.option("--quota", "-q", type=int, required=True)
-@click.option("--warn-at", "-w", type=float, required=False, default=0.8)
+@click.option("--warn-at", "-w", type=click.FloatRange(0.0, 1.0), required=False, default=0.8)
 @flask.cli.with_appcontext
 def create_new_unit(
     name,
