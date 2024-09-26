@@ -134,6 +134,25 @@ def test_create_new_unit_public_id_too_long(client, runner, capfd: LogCaptureFix
     )
 
 
+def test_create_new_unit_incorrect_warning_level(client, runner, capfd: LogCaptureFixture) -> None:
+    """Create new unit, warning level is not a float between 0.0 and 1.0"""
+    # Change public_id
+    incorrect_unit: typing.Dict = correct_unit.copy()
+    incorrect_unit["warn-at"] = 30
+
+    # Get command options
+    command_options = create_command_options_from_dict(options=incorrect_unit)
+
+    # Run command
+    result: click.testing.Result = runner.invoke(create_new_unit, command_options)
+
+    assert result.exit_code != 0  # No sucess
+    # Verify that unit doesn't exist
+    assert (
+        not db.session.query(models.Unit).filter(models.Unit.name == incorrect_unit["name"]).all()
+    )
+
+
 def test_create_new_unit_public_id_incorrect_characters(
     client, runner, capfd: LogCaptureFixture
 ) -> None:
