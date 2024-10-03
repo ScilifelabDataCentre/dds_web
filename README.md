@@ -257,7 +257,7 @@ Equally, if you want to tear down you need to run pytest _twice_ without it, as 
 
 ## Production Instance
 
-The production version of the backend image is published at [Dockerhub](https://hub.docker.com/repository/docker/scilifelabdatacentre/dds-backend). It can also be built by running:
+The production version of the backend image is published at the [GitHub Container registry](ghcr.io/scilifelabdatacentre/dds-backend). It can also be built by running:
 
 ```bash
 docker build --target production -f Dockerfiles/backend.Dockerfile .
