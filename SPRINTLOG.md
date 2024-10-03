@@ -434,4 +434,4 @@ _Nothing merged during this sprint_
 
 # 2024-09-24 - 2024-10-04
 
-- Modify the motd command to only send to unit users([#1552](https://github.com/ScilifelabDataCentre/dds_web/pull/1552))
+- Add option to motd command for sending to unit users only([#1552](https://github.com/ScilifelabDataCentre/dds_web/pull/1552))
