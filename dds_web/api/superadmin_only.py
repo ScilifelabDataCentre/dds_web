@@ -210,8 +210,14 @@ class SendMOTD(flask_restful.Resource):
                 )
                 # Send email
                 utils.send_email_with_retry(msg=msg, obj=conn)
+            
+        return_msg = f"MOTD '{motd_id}' has been "
+        if unit_personnel_only:
+            return_msg += "sent to unit personnel only."
+        else:
+            return_msg += "sent to all users."
 
-        return {"message": f"MOTD '{motd_id}' has been sent to the users."}
+        return {"message": return_msg}
 
 
 class FindUser(flask_restful.Resource):
