@@ -85,7 +85,7 @@ def fill_db_wrapper(db_type):
 @click.option("--days_in_available", "-da", type=int, required=False, default=90)
 @click.option("--days_in_expired", "-de", type=int, required=False, default=30)
 @click.option("--quota", "-q", type=int, required=True)
-@click.option("--warn-at", "-w", type=int, required=False, default=80)
+@click.option("--warn-at", "-w", type=click.FloatRange(0.0, 1.0), required=False, default=0.8)
 @flask.cli.with_appcontext
 def create_new_unit(
     name,
@@ -157,15 +157,15 @@ def create_new_unit(
     gc.collect()
 
 
-@click.command("update-unit")
+@click.command("update-unit-sto4")
 @click.option("--unit-id", "-u", type=str, required=True)
 @click.option("--sto4-endpoint", "-se", type=str, required=True)
 @click.option("--sto4-name", "-sn", type=str, required=True)
 @click.option("--sto4-access", "-sa", type=str, required=True)
 @click.option("--sto4-secret", "-ss", type=str, required=True)
 @flask.cli.with_appcontext
-def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
-    """Update unit info."""
+def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
+    """Update unit sto4 storage info."""
     # Imports
     import rich.prompt
     from dds_web import db
@@ -203,6 +203,43 @@ def update_unit(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
     del sto4_access
     del sto4_secret
     gc.collect()
+
+
+@click.command("update-unit-quota")
+@click.option("--unit-id", "-u", type=str, required=True)
+@click.option("--quota", "-q", type=int, required=True)
+@flask.cli.with_appcontext
+def update_unit_quota(unit_id, quota):
+    """Update unit quota. The input is in GB."""
+    # Imports
+    import rich.prompt
+    from dds_web import db
+    from dds_web.database import models
+
+    # Get unit
+    unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).one_or_none()
+    if not unit:
+        flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
+        sys.exit(1)
+
+    # ask the user for confirmation
+    do_update = rich.prompt.Confirm.ask(
+        f"Current quota for unit '{unit_id}' is {round(unit.quota / 1000 ** 3,2)} GB. \n"
+        f"You are about to update the quota to {quota} GB ({quota * 1000 ** 3} bytes). \n"
+        "Are you sure you want to continue?"
+    )
+    if not do_update:
+        flask.current_app.logger.info(
+            f"Cancelling quota update for unit '{unit_id}'. The quota is still {round(unit.quota / 1000 ** 3,2)} GB. ({unit.quota} bytes.)"
+        )
+        return
+
+    # Set sto4 info
+    quota_bytes = quota * 1000**3
+    unit.quota = quota_bytes
+    db.session.commit()
+
+    flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
 
 
 @click.command("update-uploaded-file")
@@ -1219,7 +1256,7 @@ def monitor_usage():
 
         # Get info from database
         quota: int = unit.quota
-        warn_after: int = unit.warning_level
+        warn_after: float = unit.warning_level
         current_usage: int = unit.size
 
         # Check if 0 and then skip the next steps
@@ -1236,7 +1273,7 @@ def monitor_usage():
         # Information to log and potentially send
         info_string: str = (
             f"- Quota:{quota} bytes\n"
-            f"- Warning level: {warn_after*quota} bytes ({warn_after*100}%)\n"
+            f"- Warning level: {int(warn_after*quota)} bytes ({int(warn_after*100)}%)\n"
             f"- Current usage: {current_usage} bytes ({perc_used}%)\n"
         )
         flask.current_app.logger.debug(
