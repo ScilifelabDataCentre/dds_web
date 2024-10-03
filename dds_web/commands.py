@@ -85,7 +85,7 @@ def fill_db_wrapper(db_type):
 @click.option("--days_in_available", "-da", type=int, required=False, default=90)
 @click.option("--days_in_expired", "-de", type=int, required=False, default=30)
 @click.option("--quota", "-q", type=int, required=True)
-@click.option("--warn-at", "-w", type=int, required=False, default=80)
+@click.option("--warn-at", "-w", type=click.FloatRange(0.0, 1.0), required=False, default=0.8)
 @flask.cli.with_appcontext
 def create_new_unit(
     name,
@@ -1256,7 +1256,7 @@ def monitor_usage():
 
         # Get info from database
         quota: int = unit.quota
-        warn_after: int = unit.warning_level
+        warn_after: float = unit.warning_level
         current_usage: int = unit.size
 
         # Check if 0 and then skip the next steps
@@ -1273,7 +1273,7 @@ def monitor_usage():
         # Information to log and potentially send
         info_string: str = (
             f"- Quota:{quota} bytes\n"
-            f"- Warning level: {warn_after*quota} bytes ({warn_after*100}%)\n"
+            f"- Warning level: {int(warn_after*quota)} bytes ({int(warn_after*100)}%)\n"
             f"- Current usage: {current_usage} bytes ({perc_used}%)\n"
         )
         flask.current_app.logger.debug(
