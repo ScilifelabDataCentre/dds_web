@@ -608,7 +608,7 @@ def test_send_motd_incorrect_type_unit_personnel_only(client: flask.testing.Flas
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.MOTD_SEND,
             headers=token,
-            json={"motd_id": created_motd.id, "unit_personnel_only": "False"},
+            json={"motd_id": created_motd.id, "unit_personnel_only": "some_string"},
         )
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert "The 'unit_personnel_only' argument must be a boolean." in response.json.get(
