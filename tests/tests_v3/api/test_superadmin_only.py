@@ -575,7 +575,36 @@ def test_send_motd_no_primary_email(client: flask.testing.FlaskClient) -> None:
         assert "incorrect subject" not in outbox[-1].subject
 
 
-def test_send_motd_ok(client: flask.testing.FlaskClient) -> None:
+def test_send_motd_incorrect_type_unit_personnel_only(client: flask.testing.FlaskClient) -> None:
+    """The parameter unit_personnel_only should be a boolean"""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+    # Create a motd
+    message: str = "This is a message that should become a MOTD and then be sent to all the users."
+    new_motd: models.MOTD = models.MOTD(message=message)
+    db.session.add(new_motd)
+    db.session.commit()
+
+    # Make sure the motd is created
+    created_motd: models.MOTD = models.MOTD.query.filter_by(message=message).one_or_none()
+    assert created_motd
+
+    # Attempt request
+    with unittest.mock.patch.object(flask_mail.Connection, "send") as mock_mail_send:
+        response: werkzeug.test.WrapperTestResponse = client.post(
+            tests.DDSEndpoint.MOTD_SEND,
+            headers=token,
+            json={"motd_id": created_motd.id, "unit_personnel_only": "some_string"},
+        )
+        assert response.status_code == http.HTTPStatus.BAD_REQUEST
+        assert "The 'unit_personnel_only' argument must be a boolean." in response.json.get(
+            "message"
+        )
+        assert mock_mail_send.call_count == 0
+
+
+def test_send_motd_ok_all(client: flask.testing.FlaskClient) -> None:
     """Send a motd to all users."""
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
@@ -596,7 +625,39 @@ def test_send_motd_ok(client: flask.testing.FlaskClient) -> None:
     # Attempt request and catch email
     with mail.record_messages() as outbox:
         response: werkzeug.test.WrapperTestResponse = client.post(
-            tests.DDSEndpoint.MOTD_SEND, headers=token, json={"motd_id": created_motd.id}
+            tests.DDSEndpoint.MOTD_SEND,
+            headers=token,
+            json={"motd_id": created_motd.id, "unit_personnel_only": False},
+        )
+        assert response.status_code == http.HTTPStatus.OK
+        assert len(outbox) == num_users
+        assert "Important Information: Data Delivery System" in outbox[-1].subject
+
+
+def test_send_motd_ok_unitusers(client: flask.testing.FlaskClient) -> None:
+    """Send a motd to all unitusers users."""
+    # Authenticate
+    token: typing.Dict = get_token(username=users["Super Admin"], client=client)
+
+    # Create a motd
+    message: str = "This is a message that should become a MOTD and then be sent to all the users."
+    new_motd: models.MOTD = models.MOTD(message=message)
+    db.session.add(new_motd)
+    db.session.commit()
+
+    # Make sure the motd is created
+    created_motd: models.MOTD = models.MOTD.query.filter_by(message=message).one_or_none()
+    assert created_motd
+
+    # Get number of users
+    num_users = models.UnitUser.query.count()
+
+    # Attempt request and catch email
+    with mail.record_messages() as outbox:
+        response: werkzeug.test.WrapperTestResponse = client.post(
+            tests.DDSEndpoint.MOTD_SEND,
+            headers=token,
+            json={"motd_id": created_motd.id, "unit_personnel_only": True},
         )
         assert response.status_code == http.HTTPStatus.OK
         assert len(outbox) == num_users
