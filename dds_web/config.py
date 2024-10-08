@@ -18,7 +18,7 @@ class Config(object):
     """Base config"""
 
     SITE_NAME = "Data Delivery System"
-    INSTANCE_NAME = "DEVELOPMENT"
+    SERVER_NAME = "DEVELOPMENT"
     SECRET_KEY = "REPLACE_THE_STRING_IN_PRODUCTION"
 
     # DB related config

@@ -847,7 +847,7 @@ def monthly_usage():
     # -- Success
     email_subject: str = "[INVOICING CRONJOB]"
     # instance name can be none, so check if it is set and add it to the subject
-    if instance_name:
+    if server_name:
         email_subject += f" ({instance_name})"
 
     email_body: str = (
