@@ -841,10 +841,15 @@ def monthly_usage():
         send_email_with_retry,
     )
 
+    instance_name = flask.current_app.config.get("INSTANCE_NAME")
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
     # -- Success
     email_subject: str = "[INVOICING CRONJOB]"
+    # instance name can be none, so check if it is set and add it to the subject
+    if instance_name:
+        email_subject += f" ({instance_name})"
+
     email_body: str = (
         "The calculation of the monthly usage succeeded; The byte hours "
         "for all active projects have been saved to the database."
