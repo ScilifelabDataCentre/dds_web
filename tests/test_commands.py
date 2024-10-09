@@ -1655,7 +1655,10 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
 
         # Error email should be sent
         assert len(outbox1) == 1
-        assert "[INVOICING CRONJOB] <ERROR> Error in monthly-usage cronjob" in outbox1[-1].subject
+        assert (
+            "[INVOICING CRONJOB] (DEVELOPMENT) <ERROR> Error in monthly-usage cronjob"
+            in outbox1[-1].subject
+        )
         assert "What to do:" in outbox1[-1].body
 
         # No usage rows should have been saved
@@ -1688,7 +1691,10 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
 
         # Error email should have been sent
         assert len(outbox2) == 1
-        assert "[INVOICING CRONJOB] <ERROR> Error in monthly-usage cronjob" in outbox2[-1].subject
+        assert (
+            "[INVOICING CRONJOB] (DEVELOPMENT) <ERROR> Error in monthly-usage cronjob"
+            in outbox2[-1].subject
+        )
         assert "What to do:" in outbox2[-1].body
 
         # Project versions should not be altered
@@ -1721,7 +1727,10 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
 
         # Email should be sent
         assert len(outbox3) == 1
-        assert "[INVOICING CRONJOB] Usage records available for collection" in outbox3[-1].subject
+        assert (
+            "[INVOICING CRONJOB] (DEVELOPMENT) Usage records available for collection"
+            in outbox3[-1].subject
+        )
         assert (
             "The calculation of the monthly usage succeeded; The byte hours for all active projects have been saved to the database."
             in outbox3[-1].body
@@ -1918,7 +1927,7 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
             # Verify output and sent email
             assert len(outbox) == 1
             assert (
-                "[SEND-USAGE CRONJOB] Usage records attached in the present mail"
+                "[SEND-USAGE CRONJOB] (DEVELOPMENT) Usage records attached in the present mail"
                 in outbox[-1].subject
             )
             assert f"Here is the usage for the last {months_to_test} months." in outbox[-1].body
@@ -2055,5 +2064,8 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
 
         # Verify error email :- At least one email was sent
         assert len(outbox) == 1
-        assert "[SEND-USAGE CRONJOB] <ERROR> Error in send-usage cronjob" in outbox[-1].subject
+        assert (
+            "[SEND-USAGE CRONJOB] (DEVELOPMENT) <ERROR> Error in send-usage cronjob"
+            in outbox[-1].subject
+        )
         assert "There was an error in the cronjob 'send-usage'" in outbox[-1].body
