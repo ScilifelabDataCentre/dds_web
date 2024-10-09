@@ -841,13 +841,14 @@ def monthly_usage():
         send_email_with_retry,
     )
 
+    # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
     instance_name = flask.current_app.config.get("INSTANCE_NAME")
+
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
     # -- Success
     email_subject: str = "[INVOICING CRONJOB]"
-    # instance name can be none, so check if it is set and add it to the subject
-    if instance_name:
+    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
         email_subject += f" ({instance_name})"
 
     email_body: str = (
@@ -856,6 +857,9 @@ def monthly_usage():
     )
     # -- Failure
     error_subject: str = f"{email_subject} <ERROR> Error in monthly-usage cronjob"
+    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
+        error_subject += f" ({instance_name})"
+
     error_body: str = (
         "There was an error in the cronjob 'monthly-usage', used for calculating the"
         " byte hours for every active project in the last month.\n\n"
@@ -977,13 +981,22 @@ def send_usage(months):
     from dds_web.database import models
     from dds_web.utils import current_time, page_query, send_email_with_retry
 
+    # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
+    instance_name = flask.current_app.config.get("INSTANCE_NAME")
+
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
     # -- Success
     email_subject: str = "[SEND-USAGE CRONJOB]"
+    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
+        email_subject += f" ({instance_name})"
+
     email_body: str = f"Here is the usage for the last {months} months.\n"
     # -- Failure
     error_subject: str = f"{email_subject} <ERROR> Error in send-usage cronjob"
+    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
+        error_subject += f" ({instance_name})"
+
     error_body: str = (
         "There was an error in the cronjob 'send-usage', used for sending"
         " information about the storage usage for each SciLifeLab unit. \n\n"
