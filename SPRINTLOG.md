@@ -435,3 +435,8 @@ _Nothing merged during this sprint_
 # 2024-09-24 - 2024-10-04
 
 - Add option to motd command for sending to unit users only([#1552](https://github.com/ScilifelabDataCentre/dds_web/pull/1552))
+
+# 2024-10-07 - 2024-10-18
+
+- Update readme: backend image is published to GHCR, not DockerHub ([#1558](https://github.com/ScilifelabDataCentre/dds_web/pull/1558))
+- Workflow bug fixed: PDFs (Technical Overview and Troubleshooting) were downloaded to incorrect directory([#1559](https://github.com/ScilifelabDataCentre/dds_web/pull/1559))
