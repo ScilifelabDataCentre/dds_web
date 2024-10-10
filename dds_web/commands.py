@@ -857,8 +857,6 @@ def monthly_usage():
     )
     # -- Failure
     error_subject: str = f"{email_subject} <ERROR> Error in monthly-usage cronjob"
-    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
-        error_subject += f" ({instance_name})"
 
     error_body: str = (
         "There was an error in the cronjob 'monthly-usage', used for calculating the"
@@ -994,8 +992,6 @@ def send_usage(months):
     email_body: str = f"Here is the usage for the last {months} months.\n"
     # -- Failure
     error_subject: str = f"{email_subject} <ERROR> Error in send-usage cronjob"
-    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
-        error_subject += f" ({instance_name})"
 
     error_body: str = (
         "There was an error in the cronjob 'send-usage', used for sending"
@@ -1155,8 +1151,6 @@ def collect_stats():
     # Get email address
     recipient: str = flask.current_app.config.get("MAIL_DDS")
     error_subject: str = "[CRONJOB] Error during collection of DDS unit- and user statistics."
-    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
-        error_subject += f" ({instance_name})"
 
     error_body: str = (
         f"The cronjob 'reporting' experienced issues. Please see logs. Time: {current_time}."
