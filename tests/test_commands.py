@@ -1657,7 +1657,7 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
         assert len(outbox1) == 1
         assert (
             "[INVOICING CRONJOB] (DEVELOPMENT) <ERROR> Error in monthly-usage cronjob"
-            in outbox1[-1].subject
+            == outbox1[-1].subject
         )
         assert "What to do:" in outbox1[-1].body
 
@@ -1693,7 +1693,7 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
         assert len(outbox2) == 1
         assert (
             "[INVOICING CRONJOB] (DEVELOPMENT) <ERROR> Error in monthly-usage cronjob"
-            in outbox2[-1].subject
+            == outbox2[-1].subject
         )
         assert "What to do:" in outbox2[-1].body
 
@@ -1747,7 +1747,25 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
         assert usage_row_2
 
 
-# reporting units and users
+def test_monthly_usage_no_instance_name(client, cli_runner, capfd: LogCaptureFixture):
+    """Test that the command do not send an email with the name if it is not set."""
+
+    import flask
+
+    assert flask.current_app.config.get("INSTANCE_NAME") == "DEVELOPMENT"
+    # Set the instance name to none
+    flask.current_app.config["INSTANCE_NAME"] = None
+
+    with mail.record_messages() as outbox:
+        cli_runner.invoke(monthly_usage)
+
+        # Email should be sent
+        assert len(outbox) == 1
+        assert "[INVOICING CRONJOB] Usage records available for collection" == outbox[-1].subject
+        assert (
+            "The calculation of the monthly usage succeeded; The byte hours for all active projects have been saved to the database."
+            == outbox[-1].body
+        )
 
 
 def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
@@ -2066,6 +2084,6 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
         assert len(outbox) == 1
         assert (
             "[SEND-USAGE CRONJOB] (DEVELOPMENT) <ERROR> Error in send-usage cronjob"
-            in outbox[-1].subject
+            == outbox[-1].subject
         )
         assert "There was an error in the cronjob 'send-usage'" in outbox[-1].body
