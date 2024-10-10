@@ -1729,7 +1729,7 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
         assert len(outbox3) == 1
         assert (
             "[INVOICING CRONJOB] (DEVELOPMENT) Usage records available for collection"
-            in outbox3[-1].subject
+            == outbox3[-1].subject
         )
         assert (
             "The calculation of the monthly usage succeeded; The byte hours for all active projects have been saved to the database."
