@@ -1145,9 +1145,6 @@ def collect_stats():
     # Get current time
     current_time = dds_web.utils.timestamp(ts_format="%Y-%m-%d")
 
-    # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
-    instance_name = flask.current_app.config.get("INSTANCE_NAME")
-
     # Get email address
     recipient: str = flask.current_app.config.get("MAIL_DDS")
     error_subject: str = "[CRONJOB] Error during collection of DDS unit- and user statistics."
