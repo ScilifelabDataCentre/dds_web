@@ -1147,7 +1147,14 @@ def collect_stats():
 
     # Get email address
     recipient: str = flask.current_app.config.get("MAIL_DDS")
-    error_subject: str = "[CRONJOB] Error during collection of DDS unit- and user statistics."
+
+    # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
+    instance_name = flask.current_app.config.get("INSTANCE_NAME")
+
+    error_subject: str = "[CRONJOB]"
+    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
+        error_subject += f" ({instance_name})"
+    error_subject += " Error during collection of DDS unit and user statistics."
 
     error_body: str = (
         f"The cronjob 'reporting' experienced issues. Please see logs. Time: {current_time}."
