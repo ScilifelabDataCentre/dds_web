@@ -1282,7 +1282,7 @@ def monitor_usage():
 
         # Email if the unit is using more
         if perc_used_decimal > warn_after:
-            recipient: str = unit.email
+            recipient: str = unit.contact_email
             # Email settings
             message: str = (
                 "A SciLifeLab Unit is approaching the allocated data quota.\n"
