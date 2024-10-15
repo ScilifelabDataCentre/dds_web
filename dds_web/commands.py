@@ -842,7 +842,7 @@ def monthly_usage():
     )
 
     # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
-    instance_name = os.environ.get("INSTANCE_NAME")
+    instance_name = flask.current_app.config.get("INSTANCE_NAME")
 
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
@@ -980,7 +980,7 @@ def send_usage(months):
     from dds_web.utils import current_time, page_query, send_email_with_retry
 
     # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
-    instance_name = os.environ.get("INSTANCE_NAME")
+    instance_name = flask.current_app.config.get("INSTANCE_NAME")
 
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
@@ -1149,7 +1149,7 @@ def collect_stats():
     recipient: str = flask.current_app.config.get("MAIL_DDS")
 
     # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
-    instance_name = os.environ.get("INSTANCE_NAME")
+    instance_name = flask.current_app.config.get("INSTANCE_NAME")
 
     error_subject: str = "[CRONJOB]"
     if instance_name:  # instance name can be none, so check if it is set and add it to the subject
