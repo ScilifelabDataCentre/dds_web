@@ -16,10 +16,9 @@ import argon2
 
 class Config(object):
     """Base config"""
-
+        
     SITE_NAME = "Data Delivery System"  # Name of the site, will appear in the website title
-    # Name of the instance, e.g. "PRODUCTION", "DEVELOPMENT", "TEST"
-    INSTANCE_NAME = os.environ.get("INSTANCE_NAME", "DEVELOPMENT")
+
     SECRET_KEY = "REPLACE_THE_STRING_IN_PRODUCTION"
 
     # DB related config
