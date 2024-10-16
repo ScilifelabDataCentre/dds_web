@@ -16,7 +16,7 @@ import argon2
 
 class Config(object):
     """Base config"""
-        
+
     SITE_NAME = "Data Delivery System"  # Name of the site, will appear in the website title
 
     SECRET_KEY = "REPLACE_THE_STRING_IN_PRODUCTION"
