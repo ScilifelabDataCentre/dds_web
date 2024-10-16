@@ -1656,7 +1656,7 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
         # Error email should be sent
         assert len(outbox1) == 1
         assert (
-            "[INVOICING CRONJOB] (DEVELOPMENT) <ERROR> Error in monthly-usage cronjob"
+            "[INVOICING CRONJOB] (LOCAL_DEVELOPMENT) <ERROR> Error in monthly-usage cronjob"
             == outbox1[-1].subject
         )
         assert "What to do:" in outbox1[-1].body
@@ -1692,7 +1692,7 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
         # Error email should have been sent
         assert len(outbox2) == 1
         assert (
-            "[INVOICING CRONJOB] (DEVELOPMENT) <ERROR> Error in monthly-usage cronjob"
+            "[INVOICING CRONJOB] (LOCAL_DEVELOPMENT) <ERROR> Error in monthly-usage cronjob"
             == outbox2[-1].subject
         )
         assert "What to do:" in outbox2[-1].body
@@ -1728,7 +1728,7 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
         # Email should be sent
         assert len(outbox3) == 1
         assert (
-            "[INVOICING CRONJOB] (DEVELOPMENT) Usage records available for collection"
+            "[INVOICING CRONJOB] (LOCAL_DEVELOPMENT) Usage records available for collection"
             == outbox3[-1].subject
         )
         assert (
@@ -1752,7 +1752,7 @@ def test_monthly_usage_no_instance_name(client, cli_runner, capfd: LogCaptureFix
 
     import flask
 
-    assert flask.current_app.config.get("INSTANCE_NAME") == "DEVELOPMENT"
+    assert flask.current_app.config.get("INSTANCE_NAME") == "LOCAL_DEVELOPMENT"
     # Set the instance name to none
     flask.current_app.config["INSTANCE_NAME"] = None
 
@@ -1945,7 +1945,7 @@ def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
             # Verify output and sent email
             assert len(outbox) == 1
             assert (
-                "[SEND-USAGE CRONJOB] (DEVELOPMENT) Usage records attached in the present mail"
+                "[SEND-USAGE CRONJOB] (LOCAL_DEVELOPMENT) Usage records attached in the present mail"
                 in outbox[-1].subject
             )
             assert f"Here is the usage for the last {months_to_test} months." in outbox[-1].body
@@ -2083,7 +2083,7 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
         # Verify error email :- At least one email was sent
         assert len(outbox) == 1
         assert (
-            "[SEND-USAGE CRONJOB] (DEVELOPMENT) <ERROR> Error in send-usage cronjob"
+            "[SEND-USAGE CRONJOB] (LOCAL_DEVELOPMENT) <ERROR> Error in send-usage cronjob"
             == outbox[-1].subject
         )
         assert "There was an error in the cronjob 'send-usage'" in outbox[-1].body
