@@ -440,3 +440,4 @@ _Nothing merged during this sprint_
 
 - Update readme: backend image is published to GHCR, not DockerHub ([#1558](https://github.com/ScilifelabDataCentre/dds_web/pull/1558))
 - Workflow bug fixed: PDFs (Technical Overview and Troubleshooting) were downloaded to incorrect directory([#1559](https://github.com/ScilifelabDataCentre/dds_web/pull/1559))
+- Modify the monitor usage command to send warning to the affected unit instead of Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
