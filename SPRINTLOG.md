@@ -442,3 +442,4 @@ _Nothing merged during this sprint_
 - Workflow bug fixed: PDFs (Technical Overview and Troubleshooting) were downloaded to incorrect directory([#1559](https://github.com/ScilifelabDataCentre/dds_web/pull/1559))
 - Update trivy action and add a second mirror repository to reduce TOO MANY REQUEST issue([#1560](https://github.com/ScilifelabDataCentre/dds_web/pull/1560))
 - Modify the invoicing commands to send the instance name in the emails([#1561](https://github.com/ScilifelabDataCentre/dds_web/pull/1561))
+- Fix the MOTD endpoint according to post merge review([#1564](https://github.com/ScilifelabDataCentre/dds_web/pull/1564))
