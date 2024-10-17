@@ -171,6 +171,10 @@ def create_app(testing=False, database_uri=None):
         # Initiate app object
         app = flask.Flask(__name__, instance_relative_config=False)
 
+        # All variables in the env that start with FLASK_* will be loaded into the app config
+        # 'FLASK_' will be dropped, e.g. FLASK_TESTVAR will be loaded as TESTVAR
+        app.config.from_prefixed_env()
+
         # Default development config
         app.config.from_object("dds_web.config.Config")
 
