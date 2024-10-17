@@ -85,7 +85,7 @@ def fill_db_wrapper(db_type):
 @click.option("--days_in_available", "-da", type=int, required=False, default=90)
 @click.option("--days_in_expired", "-de", type=int, required=False, default=30)
 @click.option("--quota", "-q", type=int, required=True)
-@click.option("--warn-at", "-w", type=int, required=False, default=80)
+@click.option("--warn-at", "-w", type=click.FloatRange(0.0, 1.0), required=False, default=0.8)
 @flask.cli.with_appcontext
 def create_new_unit(
     name,
@@ -841,16 +841,23 @@ def monthly_usage():
         send_email_with_retry,
     )
 
+    # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
+    instance_name = flask.current_app.config.get("INSTANCE_NAME")
+
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
     # -- Success
     email_subject: str = "[INVOICING CRONJOB]"
+    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
+        email_subject += f" ({instance_name})"
+
     email_body: str = (
         "The calculation of the monthly usage succeeded; The byte hours "
         "for all active projects have been saved to the database."
     )
     # -- Failure
     error_subject: str = f"{email_subject} <ERROR> Error in monthly-usage cronjob"
+
     error_body: str = (
         "There was an error in the cronjob 'monthly-usage', used for calculating the"
         " byte hours for every active project in the last month.\n\n"
@@ -972,13 +979,20 @@ def send_usage(months):
     from dds_web.database import models
     from dds_web.utils import current_time, page_query, send_email_with_retry
 
+    # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
+    instance_name = flask.current_app.config.get("INSTANCE_NAME")
+
     # Email settings
     email_recipient: str = flask.current_app.config.get("MAIL_DDS")
     # -- Success
     email_subject: str = "[SEND-USAGE CRONJOB]"
+    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
+        email_subject += f" ({instance_name})"
+
     email_body: str = f"Here is the usage for the last {months} months.\n"
     # -- Failure
     error_subject: str = f"{email_subject} <ERROR> Error in send-usage cronjob"
+
     error_body: str = (
         "There was an error in the cronjob 'send-usage', used for sending"
         " information about the storage usage for each SciLifeLab unit. \n\n"
@@ -1133,7 +1147,15 @@ def collect_stats():
 
     # Get email address
     recipient: str = flask.current_app.config.get("MAIL_DDS")
-    error_subject: str = "[CRONJOB] Error during collection of DDS unit- and user statistics."
+
+    # Get the instance name (DEVELOPMENT, PRODUCTION, etc.)
+    instance_name = flask.current_app.config.get("INSTANCE_NAME")
+
+    error_subject: str = "[CRONJOB]"
+    if instance_name:  # instance name can be none, so check if it is set and add it to the subject
+        error_subject += f" ({instance_name})"
+    error_subject += " Error during collection of DDS unit and user statistics."
+
     error_body: str = (
         f"The cronjob 'reporting' experienced issues. Please see logs. Time: {current_time}."
     )
@@ -1256,7 +1278,7 @@ def monitor_usage():
 
         # Get info from database
         quota: int = unit.quota
-        warn_after: int = unit.warning_level
+        warn_after: float = unit.warning_level
         current_usage: int = unit.size
 
         # Check if 0 and then skip the next steps
@@ -1273,7 +1295,7 @@ def monitor_usage():
         # Information to log and potentially send
         info_string: str = (
             f"- Quota:{quota} bytes\n"
-            f"- Warning level: {warn_after*quota} bytes ({warn_after*100}%)\n"
+            f"- Warning level: {int(warn_after*quota)} bytes ({int(warn_after*100)}%)\n"
             f"- Current usage: {current_usage} bytes ({perc_used}%)\n"
         )
         flask.current_app.logger.debug(

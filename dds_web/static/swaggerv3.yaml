@@ -1409,6 +1409,9 @@ paths:
                 motd_id:
                   type: integer
                   example: 1
+                unit_personnel_only:
+                  type: boolean
+                  example: false
   /user/find:
     get:
       tags:

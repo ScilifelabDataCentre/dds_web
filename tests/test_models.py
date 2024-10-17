@@ -109,6 +109,32 @@ def test_delete_unit_row(client):
     assert invites == []
 
 
+def test_create_unit_wrong_warning_level(client):
+    """Test try to create a unit which has an invalid value for the warning level"""
+    from dds_web.utils import current_time
+
+    unit = models.Unit.query.filter_by(name="Unit 1").first()
+
+    with pytest.raises(ValueError) as err:
+        new_unit = models.Unit(
+            name="test",
+            public_id="public_id",
+            external_display_name="external_display_name",
+            contact_email=unit.contact_email,
+            internal_ref="public_id",
+            sto4_start_time=current_time(),
+            sto4_endpoint=unit.sto4_endpoint,
+            sto4_name=unit.sto4_name,
+            sto4_access=unit.sto4_access,
+            sto4_secret=unit.sto4_secret,
+            days_in_available=unit.days_in_available,
+            days_in_expired=unit.days_in_expired,
+            quota=unit.quota,
+            warning_level=20.0,
+        )
+    assert "Warning level must be a float between 0 and 1" in str(err.value)
+
+
 # Project #################################################################################### Project #
 def __setup_project():
     """
