@@ -611,9 +611,7 @@ def test_send_motd_incorrect_type_unit_user_only(client: flask.testing.FlaskClie
             json={"motd_id": created_motd.id, "unit_only": "some_string"},
         )
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
-        assert "The 'unit_only' argument must be a boolean." in response.json.get(
-            "message"
-        )
+        assert "The 'unit_only' argument must be a boolean." in response.json.get("message")
         assert mock_mail_send.call_count == 0
 
 
