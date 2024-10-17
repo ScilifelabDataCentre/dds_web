@@ -611,7 +611,9 @@ def test_send_motd_incorrect_type_unit_user_only(client: flask.testing.FlaskClie
             json={"motd_id": created_motd.id, "unit_only": "some_string"},
         )
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
-        assert "The 'unit_only' argument must be a boolean." in response.json.get("message")
+        assert "The 'unit_only' argument must be a boolean." in response.json.get(
+            "message"
+        )
         assert mock_mail_send.call_count == 0
 
 
@@ -638,7 +640,7 @@ def test_send_motd_ok_all(client: flask.testing.FlaskClient) -> None:
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.MOTD_SEND,
             headers=token,
-            json={"motd_id": created_motd.id, "unit_personnel_only": False},
+            json={"motd_id": created_motd.id, "unit_only": False},
         )
         assert response.status_code == http.HTTPStatus.OK
         assert len(outbox) == num_users
@@ -668,7 +670,7 @@ def test_send_motd_ok_unitusers(client: flask.testing.FlaskClient) -> None:
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.MOTD_SEND,
             headers=token,
-            json={"motd_id": created_motd.id, "unit_personnel_only": True},
+            json={"motd_id": created_motd.id, "unit_only": True},
         )
         assert response.status_code == http.HTTPStatus.OK
         assert len(outbox) == num_users
