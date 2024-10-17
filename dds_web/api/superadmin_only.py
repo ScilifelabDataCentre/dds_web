@@ -166,9 +166,7 @@ class SendMOTD(flask_restful.Resource):
         # check if sent to unit users only or all users
         unit_only: bool = request_json.get("unit_only", False)
         if not isinstance(unit_only, bool):
-            raise ddserr.DDSArgumentError(
-                message="The 'unit_personnel_only' argument must be a boolean."
-            )
+            raise ddserr.DDSArgumentError(message="The 'unit_only' argument must be a boolean.")
         if unit_only:
             users_to_send = db.session.query(models.UnitUser)
         else:

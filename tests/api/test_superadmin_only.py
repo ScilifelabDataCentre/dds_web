@@ -588,8 +588,8 @@ def test_send_motd_no_primary_email(client: flask.testing.FlaskClient) -> None:
         assert "incorrect subject" not in outbox[-1].subject
 
 
-def test_send_motd_incorrect_type_unit_personnel_only(client: flask.testing.FlaskClient) -> None:
-    """The parameter unit_personnel_only should be a boolean"""
+def test_send_motd_incorrect_type_unit_user_only(client: flask.testing.FlaskClient) -> None:
+    """The parameter unit_only should be a boolean"""
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
 
@@ -608,12 +608,10 @@ def test_send_motd_incorrect_type_unit_personnel_only(client: flask.testing.Flas
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.MOTD_SEND,
             headers=token,
-            json={"motd_id": created_motd.id, "unit_personnel_only": "some_string"},
+            json={"motd_id": created_motd.id, "unit_only": "some_string"},
         )
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
-        assert "The 'unit_personnel_only' argument must be a boolean." in response.json.get(
-            "message"
-        )
+        assert "The 'unit_only' argument must be a boolean." in response.json.get("message")
         assert mock_mail_send.call_count == 0
 
 
