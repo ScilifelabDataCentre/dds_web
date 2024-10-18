@@ -1444,7 +1444,7 @@ def test_monitor_usage_warning_sent(client, cli_runner, capfd: LogCaptureFixture
                 # Verify email has been sent to the correct recipient
                 assert outbox[i].recipients[0] == unit.contact_email
                 assert (
-                    f"A SciLifeLab Unit is approaching the allocated data quota.\nAffected unit: {unit.name}\n"
+                    f"Your unit is approaching the allocated data quota.\nUnit name: {unit.name}\n"
                     in err
                 )
                 i += 1
