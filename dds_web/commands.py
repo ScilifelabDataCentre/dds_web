@@ -1314,7 +1314,7 @@ def monitor_usage():
             flask.current_app.logger.info(message)
             msg: flask_mail.Message = flask_mail.Message(
                 subject=default_subject,
-                recipients=[unit_contact,dds_contact],
+                recipients=[unit_contact, dds_contact],
                 body=message,
             )
             dds_web.utils.send_email_with_retry(msg=msg)
