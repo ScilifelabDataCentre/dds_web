@@ -1,6 +1,19 @@
 Changelog
 ==========
 
+.. _2.8.1:
+
+2.8.1 - 2024-10-23
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- New features:
+    - warning_level option when a unit is created defaults to 0.8.
+    - Add option to MOTD endpoint to send an email to unit users only.
+    - Modify the invoicing commands to send the instance name in the emails.
+- Bugs fixed:
+    - Update
+- Update readme to indicate that the backend image is published to GGCR, not DockerHub.
+
 .. _2.8.0:
 
 2.8.0 - 2024-09-24
