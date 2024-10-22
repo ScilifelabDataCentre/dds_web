@@ -163,6 +163,15 @@ class SendMOTD(flask_restful.Resource):
         if not motd_obj or not motd_obj.active:
             raise ddserr.DDSArgumentError(message=f"There is no active MOTD with ID '{motd_id}'.")
 
+        # check if sent to unit users only or all users
+        unit_only: bool = request_json.get("unit_only", False)
+        if not isinstance(unit_only, bool):
+            raise ddserr.DDSArgumentError(message="The 'unit_only' argument must be a boolean.")
+        if unit_only:
+            users_to_send = db.session.query(models.UnitUser)
+        else:
+            users_to_send = db.session.query(models.User)
+
         # Create email content
         # put motd_obj.message etc in there etc
         subject: str = "Important Information: Data Delivery System"
@@ -172,7 +181,7 @@ class SendMOTD(flask_restful.Resource):
         # Setup email connection
         with mail.connect() as conn:
             # Email users
-            for user in utils.page_query(db.session.query(models.User)):
+            for user in utils.page_query(users_to_send):
                 primary_email = user.primary_email
                 if not primary_email:
                     flask.current_app.logger.warning(
@@ -197,7 +206,13 @@ class SendMOTD(flask_restful.Resource):
                 # Send email
                 utils.send_email_with_retry(msg=msg, obj=conn)
 
-        return {"message": f"MOTD '{motd_id}' has been sent to the users."}
+        return_msg = f"MOTD '{motd_id}' has been "
+        if unit_only:
+            return_msg += "sent to unit personnel only."
+        else:
+            return_msg += "sent to all users."
+
+        return {"message": return_msg}
 
 
 class FindUser(flask_restful.Resource):

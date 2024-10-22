@@ -11,6 +11,7 @@ import time
 
 # Installed
 import sqlalchemy
+from sqlalchemy.orm import validates
 import flask
 import argon2
 import flask_login
@@ -224,6 +225,12 @@ class Unit(db.Model):
         """Calculate size of unit - current total storage usage."""
 
         return sum([p.size for p in self.projects])
+
+    @validates("warning_level")
+    def validate_level(self, key, value):
+        if not (0.0 <= value <= 1.0):
+            raise ValueError("Warning level must be a float between 0 and 1")
+        return value
 
 
 class Project(db.Model):
