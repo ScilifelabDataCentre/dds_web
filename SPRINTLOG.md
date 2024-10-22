@@ -443,3 +443,6 @@ _Nothing merged during this sprint_
 - Update trivy action and add a second mirror repository to reduce TOO MANY REQUEST issue([#1560](https://github.com/ScilifelabDataCentre/dds_web/pull/1560))
 - Modify the invoicing commands to send the instance name in the emails([#1561](https://github.com/ScilifelabDataCentre/dds_web/pull/1561))
 - Modify the monitor usage command to send warning to the affected unit instead of Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
+- Fix the MOTD endpoint according to post merge review([#1564](https://github.com/ScilifelabDataCentre/dds_web/pull/1564))
+- New version & changelog([#1565](https://github.com/ScilifelabDataCentre/dds_web/pull/1565))
+
