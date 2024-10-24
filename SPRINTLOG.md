@@ -447,4 +447,4 @@ _Nothing merged during this sprint_
 
 # 2024-10-23 - 2024-11-01
 
-- Modify the monitor usage command to send warning to the affected unit instead of Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
+- Modify the monitor usage command to send warning to the affected unit as well as Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
