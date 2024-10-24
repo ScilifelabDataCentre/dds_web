@@ -444,3 +444,7 @@ _Nothing merged during this sprint_
 - Modify the invoicing commands to send the instance name in the emails([#1561](https://github.com/ScilifelabDataCentre/dds_web/pull/1561))
 - Fix the MOTD endpoint according to post merge review([#1564](https://github.com/ScilifelabDataCentre/dds_web/pull/1564))
 - New version & changelog([#1565](https://github.com/ScilifelabDataCentre/dds_web/pull/1565))
+
+# 2024-10-23 - 2024-11-01
+
+- Modify the monitor usage command to send warning to the affected unit as well as Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
