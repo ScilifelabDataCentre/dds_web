@@ -430,11 +430,11 @@ _Nothing merged during this sprint_
 
 - Flask command to update unit quotas ([#1551](https://github.com/ScilifelabDataCentre/dds_web/pull/1551))
 - Bump python base image to 3.12 and related libraries in both web and client([#1548](https://github.com/ScilifelabDataCentre/dds_web/pull/1548))
-- Warning_level option defaults to 0.8([#1557](https://github.com/ScilifelabDataCentre/dds_web/pull/1557))
 
 # 2024-09-24 - 2024-10-04
 
 - Add option to motd command for sending to unit users only([#1552](https://github.com/ScilifelabDataCentre/dds_web/pull/1552))
+- Warning_level option defaults to 0.8([#1557](https://github.com/ScilifelabDataCentre/dds_web/pull/1557))
 
 # 2024-10-07 - 2024-10-18
 
@@ -447,4 +447,5 @@ _Nothing merged during this sprint_
 
 # 2024-10-21 - 2024-11-01
 
+- Bump GitHub checkout action to v4 ([#1556](https://github.com/ScilifelabDataCentre/dds_web/pull/1556))
 - Workflow: CodeQL action version(s) bumped to v3 ([#1566](https://github.com/ScilifelabDataCentre/dds_web/pull/1566))
