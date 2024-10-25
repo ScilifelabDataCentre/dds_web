@@ -449,3 +449,4 @@ _Nothing merged during this sprint_
 
 - Bump GitHub checkout action to v4 ([#1556](https://github.com/ScilifelabDataCentre/dds_web/pull/1556))
 - Workflow: CodeQL action version(s) bumped to v3 ([#1566](https://github.com/ScilifelabDataCentre/dds_web/pull/1566))
+- Workflow: Prettier action version bumped to v4 ([#1568](https://github.com/ScilifelabDataCentre/dds_web/pull/1568))
