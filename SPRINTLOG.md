@@ -435,4 +435,16 @@ _Nothing merged during this sprint_
 
 - Add option to motd command for sending to unit users only([#1552](https://github.com/ScilifelabDataCentre/dds_web/pull/1552))
 - Warning_level option defaults to 0.8([#1557](https://github.com/ScilifelabDataCentre/dds_web/pull/1557))
+
+# 2024-10-07 - 2024-10-18
+
+- Update readme: backend image is published to GHCR, not DockerHub ([#1558](https://github.com/ScilifelabDataCentre/dds_web/pull/1558))
+- Workflow bug fixed: PDFs (Technical Overview and Troubleshooting) were downloaded to incorrect directory([#1559](https://github.com/ScilifelabDataCentre/dds_web/pull/1559))
+- Update trivy action and add a second mirror repository to reduce TOO MANY REQUEST issue([#1560](https://github.com/ScilifelabDataCentre/dds_web/pull/1560))
+- Modify the invoicing commands to send the instance name in the emails([#1561](https://github.com/ScilifelabDataCentre/dds_web/pull/1561))
+- Fix the MOTD endpoint according to post merge review([#1564](https://github.com/ScilifelabDataCentre/dds_web/pull/1564))
+- New version & changelog([#1565](https://github.com/ScilifelabDataCentre/dds_web/pull/1565))
+
+# 2024-10-21 - 2024-11-01
+
 - Bump GitHub checkout action to v4 ([#1556](https://github.com/ScilifelabDataCentre/dds_web/pull/1556))
