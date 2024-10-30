@@ -595,6 +595,14 @@ class GetPrivate(flask_restful.Resource):
 
         flask.current_app.logger.debug("Getting the private key.")
 
+        try:
+            private_key = obtain_project_private_key(
+                user=auth.current_user(),
+                project=project,
+                token=dds_web.security.auth.obtain_current_encrypted_token(),
+            )
+        except KeyNotFoundError as err:
+            return {"status": err.code, "message": err.message}, 500
         return flask.jsonify(
             {
                 "private": obtain_project_private_key(
