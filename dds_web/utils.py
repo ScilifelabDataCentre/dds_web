@@ -83,6 +83,10 @@ def verify_project_access(project) -> None:
             username=auth.current_user().username,
             project=project.public_id,
         )
+
+
+def verify_project_user_key(project) -> None:
+    """Verify that current authenticated user has a row in projectUserKeys."""
     project_key = models.ProjectUserKeys.query.filter_by(
         project_id=project.id, user_id=auth.current_user().username
     ).first()
