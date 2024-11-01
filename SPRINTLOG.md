@@ -450,3 +450,7 @@ _Nothing merged during this sprint_
 - Workflow: Bump GitHub checkout action to v4 ([#1556](https://github.com/ScilifelabDataCentre/dds_web/pull/1556))
 - Workflow: CodeQL action version(s) bumped to v3 ([#1569](https://github.com/ScilifelabDataCentre/dds_web/pull/1569))
 - Workflow: Setup-node, codecov and upload-sarif action versions bumped to v4, v4 and v3, respectively ([#1570](https://github.com/ScilifelabDataCentre/dds_web/pull/1570))
+
+# 2024-11-04 - 2024-11-15
+
+- Change the errror when trying to download data after a password reset to an AuthenticationError to avoid getting an alert ([#1571](https://github.com/ScilifelabDataCentre/dds_web/pull/1571))
