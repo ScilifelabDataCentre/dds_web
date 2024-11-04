@@ -89,7 +89,7 @@ def verify_project_user_key(project) -> None:
     """Verify that current authenticated user has a row in projectUserKeys."""
     project_key = models.ProjectUserKeys.query.filter_by(
         project_id=project.id, user_id=auth.current_user().username
-    ).first()
+    ).one_or_none()
     if not project_key:
         msg = (
             "There is no entry in the projectUserKeys table for the user and project. "
