@@ -136,6 +136,58 @@ def test_verify_project_access_ok(client: flask.testing.FlaskClient) -> None:
     utils.verify_project_access(project=project)
 
 
+def test_verify_project_user_key_denied(client: flask.testing.FlaskClient) -> None:
+    """A user must have an entry in projectUserKeys to access a project."""
+    # User
+    user = models.UnitUser.query.filter_by(unit_id=1).first()
+    assert user
+
+    # Get project
+    project = models.Project.query.filter_by(unit_id=1).first()
+    assert project
+
+    # get projectUserKey
+    projectUserKey = models.ProjectUserKey.query.filter_by(
+        project_id=project.id, user_id=user.id
+    ).one_or_none()
+    assert projectUserKey
+
+    # delete projectUserKey
+    db.session.delete(projectUserKey)
+    db.session.commit()
+
+    # verify no projectUserKey
+    projectUserKey = models.ProjectUserKey.query.filter_by(
+        project_id=project.id, user_id=user.id
+    ).one_or_none()
+    assert not projectUserKey
+
+    # Set auth.current_user
+    flask.g.flask_httpauth_user = user
+
+    # Verify project access -- not ok
+    with pytest.raises(AccessDeniedError) as err:
+        utils.verify_project_user_key(project=project)
+    assert "Project access denied" in str(err.value)
+
+
+def test_verify_project_access_ok(client: flask.testing.FlaskClient) -> None:
+    """A project must have access to the project, otherwise error."""
+    # user
+    user = models.UnitUser.query.filter_by(unit_id=1).first()
+    assert user
+
+    # Get project
+    project = models.Project.query.filter_by(unit_id=1).first()
+    assert project
+
+    # Set auth.current_user
+    flask.g.flask_httpauth_user = user1
+
+    # Verify project access -- not ok
+    utils.verify_project_access(project=project)
+
+
 # verify_cli_version
 
 
