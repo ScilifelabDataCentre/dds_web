@@ -183,6 +183,12 @@ def test_verify_project_user_key_ok(client: flask.testing.FlaskClient) -> None:
     project = models.Project.query.filter_by(unit_id=1).first()
     assert project
 
+    # get projectUserKey
+    projectUserKey = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id=user.username
+    ).one_or_none()
+    assert projectUserKey
+
     # Set auth.current_user
     flask.g.flask_httpauth_user = user
 
