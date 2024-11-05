@@ -14,6 +14,7 @@ import flask
 import json
 import jwcrypto
 from jwcrypto import jwk, jwt
+from jwcrypto.jwe import InvalidJWEData
 import structlog
 
 # Own modules
@@ -370,7 +371,7 @@ def decrypt_token(token):
     # Decrypt token
     try:
         decrypted_token = jwt.JWT(key=key, jwt=token, expected_type="JWE")
-    except ValueError as exc:
+    except (ValueError, InvalidJWEData) as exc:
         # "Token format unrecognized"
         raise AuthenticationError(message="Invalid token") from exc
 
