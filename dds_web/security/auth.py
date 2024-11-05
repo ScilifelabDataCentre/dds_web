@@ -371,8 +371,10 @@ def decrypt_token(token):
     # Decrypt token
     try:
         decrypted_token = jwt.JWT(key=key, jwt=token, expected_type="JWE")
-    except (ValueError, InvalidJWEData) as exc:
-        # "Token format unrecognized"
+    except (ValueError, jwcrypto.common.JWException) as exc:
+        # ValueError is raised when the token doesn't look right (for example no periods)
+        # jwcryopto.common.JWException is the base exception raised by jwcrypto,
+        # and is raised when the token is malformed or invalid.
         raise AuthenticationError(message="Invalid token") from exc
 
     return decrypted_token.claims
