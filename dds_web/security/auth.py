@@ -14,7 +14,6 @@ import flask
 import json
 import jwcrypto
 from jwcrypto import jwk, jwt
-from jwcrypto.jwe import InvalidJWEData
 import structlog
 
 # Own modules
