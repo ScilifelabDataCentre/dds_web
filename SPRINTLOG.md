@@ -453,4 +453,4 @@ _Nothing merged during this sprint_
 
 # 2024-11-04 - 2024-11-15
 
-- TODO ([#1573](https://github.com/ScilifelabDataCentre/dds_web/pull/1573))
+- Filter out the MaintenanceModeException from the logs ([#1573](https://github.com/ScilifelabDataCentre/dds_web/pull/1573))
