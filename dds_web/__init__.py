@@ -19,6 +19,7 @@ from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
+from flask.logging import logging as flask_logging
 import flask_migrate
 
 
@@ -66,6 +67,14 @@ migrate = flask_migrate.Migrate()
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
+
+
+class FilterMaintenanceExc(flask_logging.Filter):
+    from dds_web.errors import MaintenanceOngoingException
+
+    def filter(record):
+        # Check if the log record does not have an exception or if the exception is not MaintenanceOngoingException
+        return record.exc_info is None or record.exc_info[0] != MaintenanceOngoingException
 
 
 def setup_logging(app):
@@ -163,6 +172,9 @@ def setup_logging(app):
         # logger.
         cache_logger_on_first_use=True,
     )
+
+    # Add custom filter to the logger
+    logging.getLogger("general").addFilter(FilterMaintenanceExc)
 
 
 def create_app(testing=False, database_uri=None):
