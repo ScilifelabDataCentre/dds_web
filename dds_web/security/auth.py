@@ -278,6 +278,7 @@ def __verify_general_token(token):
         # ValueError is raised when the token doesn't look right (for example no periods)
         # jwcryopto.common.JWException is the base exception raised by jwcrypto,
         # and is raised when the token is malformed or invalid.
+        flask.current_app.logger.warning(f"Exception Name: {type(e).__name__}")
         raise AuthenticationError(message="Invalid token") from e
 
     expiration_time = data.get("exp")
