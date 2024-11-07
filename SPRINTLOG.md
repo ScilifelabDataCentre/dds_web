@@ -453,4 +453,4 @@ _Nothing merged during this sprint_
 
 # 2024-11-04 - 2024-11-15
 
-- Remove logging of the exception of incorrect token ([#1572](https://github.com/ScilifelabDataCentre/dds_web/pull/1572))
+- Fix logging of the exception of incorrect token ([#1572](https://github.com/ScilifelabDataCentre/dds_web/pull/1572))

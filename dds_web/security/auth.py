@@ -371,6 +371,7 @@ def decrypt_token(token):
     try:
         decrypted_token = jwt.JWT(key=key, jwt=token, expected_type="JWE")
     except ValueError as exc:
+        # "Token format unrecognized"
         raise AuthenticationError(message="Invalid token") from exc
 
     return decrypted_token.claims
