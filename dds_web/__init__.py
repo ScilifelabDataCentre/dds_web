@@ -70,9 +70,10 @@ migrate = flask_migrate.Migrate()
 
 
 class FilterMaintenanceExc(flask_logging.Filter):
-    from dds_web.errors import MaintenanceOngoingException
 
     def filter(record):
+        from dds_web.errors import MaintenanceOngoingException
+
         # Check if the log record does not have an exception or if the exception is not MaintenanceOngoingException
         return record.exc_info is None or record.exc_info[0] != MaintenanceOngoingException
 
