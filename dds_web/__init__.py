@@ -75,7 +75,7 @@ class FilterMaintenanceExc(flask_logging.Filter):
         """
         Filters log records to exclude those with MaintenanceOngoingException.
         Returns:
-            bool: True if the log record should be processed, False if it should be filtered out.
+            bool: True if the log record should be logged, False if it should be filtered out.
         """
         from dds_web.errors import MaintenanceOngoingException
 
