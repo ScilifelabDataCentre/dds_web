@@ -92,8 +92,8 @@ def verify_project_user_key(project) -> None:
     ).one_or_none()
     if not project_key:
         msg = (
-            "There is no entry in the projectUserKeys table for the user and project. "
-            "Probably due to password reset. Please, ask a colleague to run dds project access fix"
+            "Access to all active projects has been lost, probably due to password reset. "
+            "Please, ask the corresponding unit to run dds project access fix"
         )
         raise AccessDeniedError(
             message=msg,
