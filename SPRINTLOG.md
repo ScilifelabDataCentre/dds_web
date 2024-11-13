@@ -453,4 +453,4 @@ _Nothing merged during this sprint_
 
 # 2024-11-04 - 2024-11-15
 
-- Change the errror when trying to download data after a password reset to an AuthenticationError to avoid getting an alert ([#1571](https://github.com/ScilifelabDataCentre/dds_web/pull/1571))
+- Change the error raised upon attempt to download data after a password reset to an AuthenticationError to avoid getting an alert ([#1571](https://github.com/ScilifelabDataCentre/dds_web/pull/1571))
