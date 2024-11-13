@@ -592,6 +592,7 @@ class GetPrivate(flask_restful.Resource):
         """Get private key from database."""
         # Verify project ID and access
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        dds_web.utils.verify_project_user_key(project=project)
         flask.current_app.logger.debug("Getting the private key.")
 
         return flask.jsonify(
