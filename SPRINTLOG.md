@@ -450,3 +450,7 @@ _Nothing merged during this sprint_
 - Workflow: Bump GitHub checkout action to v4 ([#1556](https://github.com/ScilifelabDataCentre/dds_web/pull/1556))
 - Workflow: CodeQL action version(s) bumped to v3 ([#1569](https://github.com/ScilifelabDataCentre/dds_web/pull/1569))
 - Workflow: Setup-node, codecov and upload-sarif action versions bumped to v4, v4 and v3, respectively ([#1570](https://github.com/ScilifelabDataCentre/dds_web/pull/1570))
+
+# 2024-11-18 – 2024-11-29
+
+- Logging: Add which user name reset password ([https://github.com/ScilifelabDataCentre/dds_web/pull/1574](https://github.com/ScilifelabDataCentre/dds_web/pull/1574))
