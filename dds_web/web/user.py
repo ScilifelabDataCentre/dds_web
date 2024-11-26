@@ -605,7 +605,9 @@ def password_reset_completed():
                 dds_web.utils.send_project_access_reset_email(unit_admin, email[0], token)
 
     action_logger = structlog.getLogger("actions")
-    action_logger.info(f"{flask.request.endpoint}", username=user.username, resource=flask.request.path)
+    action_logger.info(
+        f"{flask.request.endpoint}", username=user.username, resource=flask.request.path
+    )
     return flask.render_template(
         "user/password_reset_completed.html", units_to_contact=units_to_contact
     )
