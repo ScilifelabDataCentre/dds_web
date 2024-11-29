@@ -451,6 +451,10 @@ _Nothing merged during this sprint_
 - Workflow: CodeQL action version(s) bumped to v3 ([#1569](https://github.com/ScilifelabDataCentre/dds_web/pull/1569))
 - Workflow: Setup-node, codecov and upload-sarif action versions bumped to v4, v4 and v3, respectively ([#1570](https://github.com/ScilifelabDataCentre/dds_web/pull/1570))
 
+# 2024-11-04 - 2024-11-15
+
+- Removed exception for invalid token to simplify logging and reduce unnecessary error entries ([#1572](https://github.com/ScilifelabDataCentre/dds_web/pull/1572))
+
 # 2024-11-18 – 2024-11-29
 
 - Bugfix: Quick and dirty change to prevent `dds ls --tree` from failing systematically ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1575).
