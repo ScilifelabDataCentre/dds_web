@@ -453,5 +453,8 @@ _Nothing merged during this sprint_
 
 # 2024-11-04 - 2024-11-15
 
-- Filter out the MaintenanceModeException from the logs ([#1573](https://github.com/ScilifelabDataCentre/dds_web/pull/1573))
 - Removed exception for invalid token to simplify logging and reduce unnecessary error entries ([#1572](https://github.com/ScilifelabDataCentre/dds_web/pull/1572))
+
+# 2024-12-02 - 2024-12-13
+
+- Filter out the MaintenanceModeException from the logs ([#1573](https://github.com/ScilifelabDataCentre/dds_web/pull/1573))
