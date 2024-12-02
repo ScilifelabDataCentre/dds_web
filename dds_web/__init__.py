@@ -19,7 +19,6 @@ from authlib.integrations import flask_client as auth_flask_client
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
-from flask.logging import logging as flask_logging
 import flask_migrate
 
 
