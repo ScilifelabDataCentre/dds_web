@@ -1307,7 +1307,8 @@ def monitor_usage():
             # Email settings
             unit_contact: str = unit.contact_email
             message: str = (
-                "Your unit is approaching the allocated data quota.\n"
+                "Your unit is approaching the allocated data quota (see details below).\n\n"
+                f"NB! If you would like to increase or decrease the allocated quota ('Quota') or the level after which you receive this email ('Warning level'), the technical contact person for your unit must send a request to {dds_contact}.\n"
                 f"Unit name: {unit.name}\n"
                 f"{info_string}"
             )
