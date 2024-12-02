@@ -94,7 +94,7 @@ def verify_project_user_key(project) -> None:
         msg = (
             "You have lost access to this project. "
             "This is likely due to a password reset, in which case you have lost access to all active projects. "
-            f"In order to regain access to this project, please contact '{project.responsible_unit.external_display_name}' and ask them to run 'dds project access fix'."
+            f"In order to regain access to this project, please contact {project.responsible_unit.external_display_name} ({project.responsible_unit.contact_email}) and ask them to run 'dds project access fix'."
         )
         raise AccessDeniedError(
             message=msg,
