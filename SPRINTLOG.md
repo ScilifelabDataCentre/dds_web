@@ -460,4 +460,5 @@ _Nothing merged during this sprint_
 - Logging: Add which user name reset password ([https://github.com/ScilifelabDataCentre/dds_web/pull/1574](https://github.com/ScilifelabDataCentre/dds_web/pull/1574))
 
 # 2024-12-02 - 2024-12-13
+
 - Bugfix: Quick and dirty change to prevent `dds ls --tree` from failing systematically ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1575).
