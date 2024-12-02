@@ -454,3 +454,7 @@ _Nothing merged during this sprint_
 # 2024-11-04 - 2024-11-15
 
 - Removed exception for invalid token to simplify logging and reduce unnecessary error entries ([#1572](https://github.com/ScilifelabDataCentre/dds_web/pull/1572))
+
+# 2024-11-18 – 2024-11-29
+
+- Logging: Add which user name reset password ([https://github.com/ScilifelabDataCentre/dds_web/pull/1574](https://github.com/ScilifelabDataCentre/dds_web/pull/1574))
