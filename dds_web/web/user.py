@@ -16,6 +16,7 @@ import itsdangerous
 import qrcode
 import qrcode.image.svg
 import sqlalchemy
+import structlog
 
 # Own Modules
 import dds_web.utils
@@ -549,7 +550,6 @@ def reset_password(token):
 
 
 @auth_blueprint.route("/password_reset_completed", methods=["GET"])
-@logging_bind_request
 def password_reset_completed():
     """Landing page after password reset"""
 
@@ -604,6 +604,10 @@ def password_reset_completed():
             for unit_admin in unit_admins_to_contact:
                 dds_web.utils.send_project_access_reset_email(unit_admin, email[0], token)
 
+    action_logger = structlog.getLogger("actions")
+    action_logger.info(
+        f"{flask.request.endpoint}", username=user.username, resource=flask.request.path
+    )
     return flask.render_template(
         "user/password_reset_completed.html", units_to_contact=units_to_contact
     )
