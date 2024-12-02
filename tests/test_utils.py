@@ -168,12 +168,12 @@ def test_verify_project_user_key_denied(client: flask.testing.FlaskClient) -> No
     # Verify project access -- not ok
     with pytest.raises(AccessDeniedError) as err:
         utils.verify_project_user_key(project=project)
-    
+
     error_msg = (
-            "You have lost access to this project. "
-            "This is likely due to a password reset, in which case you have lost access to all active projects. "
-            f"In order to regain access to this project, please contact {project.responsible_unit.external_display_name} ({project.responsible_unit.contact_email}) and ask them to run 'dds project access fix'."
-        )
+        "You have lost access to this project. "
+        "This is likely due to a password reset, in which case you have lost access to all active projects. "
+        f"In order to regain access to this project, please contact {project.responsible_unit.external_display_name} ({project.responsible_unit.contact_email}) and ask them to run 'dds project access fix'."
+    )
     assert error_msg in str(err.value)
 
 
@@ -198,7 +198,6 @@ def test_verify_project_user_key_ok(client: flask.testing.FlaskClient) -> None:
 
     # Verify project access -- ok
     utils.verify_project_access(project=project)
-
 
 
 # verify_cli_version
