@@ -68,7 +68,7 @@ migrate = flask_migrate.Migrate()
 ####################################################################################################
 
 
-class FilterMaintenanceExc(flask_logging.Filter):
+class FilterMaintenanceExc(logging.Filter):
 
     def filter(record):
         """
