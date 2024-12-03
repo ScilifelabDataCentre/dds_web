@@ -22,6 +22,7 @@ def upgrade():
         table_name="units",
         column_name="contact_email",
         existing_type=sa.String(length=255),
+        server_default="delivery@scilifelab.se",
         nullable=False,
     )
 
