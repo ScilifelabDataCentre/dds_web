@@ -462,4 +462,5 @@ _Nothing merged during this sprint_
 # 2024-12-02 – 2024-12-13
 
 - Change the error raised upon attempt to download data after a password reset to an AuthenticationError to avoid getting an alert ([#1571](https://github.com/ScilifelabDataCentre/dds_web/pull/1571))
+- Filter out the MaintenanceModeException from the logs ([#1573](https://github.com/ScilifelabDataCentre/dds_web/pull/1573))
 - Bugfix: Quick and dirty change to prevent `dds ls --tree` from failing systematically ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1575)
