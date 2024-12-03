@@ -462,3 +462,4 @@ _Nothing merged during this sprint_
 # 2024-12-02 - 2024-12-13
 
 - Filter out the MaintenanceModeException from the logs ([#1573](https://github.com/ScilifelabDataCentre/dds_web/pull/1573))
+- Bugfix: Quick and dirty change to prevent `dds ls --tree` from failing systematically ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1575)
