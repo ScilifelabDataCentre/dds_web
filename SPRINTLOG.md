@@ -453,7 +453,6 @@ _Nothing merged during this sprint_
 
 # 2024-11-04 - 2024-11-15
 
-- Modify the monitor usage command to send warning to the affected unit as well as Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
 - Removed exception for invalid token to simplify logging and reduce unnecessary error entries ([#1572](https://github.com/ScilifelabDataCentre/dds_web/pull/1572))
 
 # 2024-11-18 – 2024-11-29
@@ -465,3 +464,4 @@ _Nothing merged during this sprint_
 - Change the error raised upon attempt to download data after a password reset to an AuthenticationError to avoid getting an alert ([#1571](https://github.com/ScilifelabDataCentre/dds_web/pull/1571))
 - Filter out the MaintenanceModeException from the logs ([#1573](https://github.com/ScilifelabDataCentre/dds_web/pull/1573))
 - Bugfix: Quick and dirty change to prevent `dds ls --tree` from failing systematically ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1575)
+- Modify the monitor usage command to send warning to the affected unit as well as Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
