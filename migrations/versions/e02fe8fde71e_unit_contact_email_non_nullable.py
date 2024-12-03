@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "e02fe8fde71e"
-down_revision = None
+down_revision = "3d610b382383"
 branch_labels = None
 depends_on = None
 
@@ -21,6 +21,7 @@ def upgrade():
     op.alter_column(
         table_name="units",
         column_name="contact_email",
+        existing_type=sa.String(length=255),
         nullable=False,
     )
 
@@ -29,5 +30,6 @@ def downgrade():
     op.alter_column(
         table_name="units",
         column_name="contact_email",
-        nullable=False,
+        existing_type=sa.String(length=255),
+        nullable=True,
     )
