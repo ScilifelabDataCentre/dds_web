@@ -136,6 +136,70 @@ def test_verify_project_access_ok(client: flask.testing.FlaskClient) -> None:
     utils.verify_project_access(project=project)
 
 
+def test_verify_project_user_key_denied(client: flask.testing.FlaskClient) -> None:
+    """A user must have an entry in projectUserKeys to access a project."""
+    # User
+    user = models.UnitUser.query.filter_by(unit_id=1).first()
+    assert user
+
+    # Get project
+    project = models.Project.query.filter_by(unit_id=1).first()
+    assert project
+
+    # get projectUserKey
+    projectUserKey = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id=user.username
+    ).one_or_none()
+    assert projectUserKey
+
+    # delete projectUserKey
+    db.session.delete(projectUserKey)
+    db.session.commit()
+
+    # verify no projectUserKey
+    projectUserKey = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id=user.username
+    ).one_or_none()
+    assert not projectUserKey
+
+    # Set auth.current_user
+    flask.g.flask_httpauth_user = user
+
+    # Verify project access -- not ok
+    with pytest.raises(AccessDeniedError) as err:
+        utils.verify_project_user_key(project=project)
+
+    error_msg = (
+        "You have lost access to this project. "
+        "This is likely due to a password reset, in which case you have lost access to all active projects. "
+        f"In order to regain access to this project, please contact {project.responsible_unit.external_display_name} ({project.responsible_unit.contact_email}) and ask them to run 'dds project access fix'."
+    )
+    assert error_msg in str(err.value)
+
+
+def test_verify_project_user_key_ok(client: flask.testing.FlaskClient) -> None:
+    """A user must have an entry in projectUserKeys to access a project."""
+    # user
+    user = models.UnitUser.query.filter_by(unit_id=1).first()
+    assert user
+
+    # Get project
+    project = models.Project.query.filter_by(unit_id=1).first()
+    assert project
+
+    # get projectUserKey
+    projectUserKey = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id=user.username
+    ).one_or_none()
+    assert projectUserKey
+
+    # Set auth.current_user
+    flask.g.flask_httpauth_user = user
+
+    # Verify project access -- ok
+    utils.verify_project_access(project=project)
+
+
 # verify_cli_version
 
 
