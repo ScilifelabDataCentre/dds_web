@@ -85,6 +85,24 @@ def verify_project_access(project) -> None:
         )
 
 
+def verify_project_user_key(project) -> None:
+    """Verify that current authenticated user has a row in projectUserKeys."""
+    project_key = models.ProjectUserKeys.query.filter_by(
+        project_id=project.id, user_id=auth.current_user().username
+    ).one_or_none()
+    if not project_key:
+        msg = (
+            "You have lost access to this project. "
+            "This is likely due to a password reset, in which case you have lost access to all active projects. "
+            f"In order to regain access to this project, please contact {project.responsible_unit.external_display_name} ({project.responsible_unit.contact_email}) and ask them to run 'dds project access fix'."
+        )
+        raise AccessDeniedError(
+            message=msg,
+            username=auth.current_user().username,
+            project=project.public_id,
+        )
+
+
 def verify_cli_version(version_cli: str = None) -> None:
     """Verify that the CLI version in header is compatible with the web version."""
     # Verify that version is specified
