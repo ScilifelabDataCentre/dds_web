@@ -1,1 +1,39 @@
-Single-database configuration for Flask.
+# Database Migration Guide
+
+This document explains how to perform database migrations for this project. In DDS we use Alembic leveraged through flask-migrate.
+
+## Steps for Running Migrations
+
+### 1. Start the Containers
+
+Before making any model changes, ensure the containers are running locally.
+
+### 2. Modify the Database Models
+
+Edit the `models.py` file to reflect the changes you need. This might include:
+
+- Adding new tables or columns
+- Modifying existing fields
+- Deleting tables or columns
+
+### 3. Access the Backend Container
+
+Connect a terminal into the backend container.
+
+### 4. Run the Migration Command
+
+Inside the container, execute the migration command:
+
+```bash
+flask db migrate -m "Your migration message"
+```
+
+### 5. Review the Generated Migration File
+
+A new migration script will be generated in the `migrations/versions` directory. **Review this file carefully** to ensure it correctly represents your intended changes.
+
+For reference on available operations and customization options, check the [Alembic Documentation](https://alembic.sqlalchemy.org/en/latest/ops.html).
+
+### 6. Commit the Migration File
+
+Finally, commit the migration script to version control.
