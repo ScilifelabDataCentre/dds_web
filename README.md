@@ -177,7 +177,7 @@ All have the password: `password`
 
 If you modify the database models (e.g. tables or indexes), you must create a migration for the changes. We use `Alembic` (via `flask-migrate`) which compares our database models with the running database to generate a suggested migration.
 
-For instructions on how to do this, see [the README in the migrations directory](./migrations/README).
+For instructions on how to do this, see [the README in the migrations directory](./migrations/README.md).
 
 ## Run tests
 
