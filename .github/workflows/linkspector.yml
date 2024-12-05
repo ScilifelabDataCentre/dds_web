@@ -1,3 +1,5 @@
+# Linkspector: Verify links in MD files
+---
 name: Linkspector
 on: [pull_request]
 jobs:
