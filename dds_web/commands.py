@@ -133,15 +133,7 @@ def create_new_unit(
         return
 
     # The quota input is in TB, convert to bytes
-<<<<<<< HEAD
-<<<<<<< HEAD
     quota_bytes = int(quota * 1000**4)
-=======
-    quota_bytes = quota * 1000 ** 4
->>>>>>> eb0dcb84 (change quota input to TB)
-=======
-    quota_bytes = quota * 1000**4
->>>>>>> 26210c59 (black)
 
     new_unit = models.Unit(
         name=name,
@@ -1303,35 +1295,15 @@ def monitor_usage():
         flask.current_app.logger.info(f"Checking quotas and usage for: {unit.name}")
 
         # Get info from database
-<<<<<<< HEAD
-<<<<<<< HEAD
         quota: int = unit.quota  # in bytes
-=======
-        quota: int = unit.quota # in bytes
->>>>>>> eb0dcb84 (change quota input to TB)
-=======
-        quota: int = unit.quota  # in bytes
->>>>>>> 26210c59 (black)
         warn_after: float = unit.warning_level
         current_usage: int = unit.size
 
         # convert to TB and GB, only for logs
-<<<<<<< HEAD
-<<<<<<< HEAD
         quota_tb: float = round(quota / 1000**4, 4)
         quota_gb: float = round(quota / 1000**3, 4)
         current_usage_tb: float = round(current_usage / 1000**4, 4)
         current_usage_gb: float = round(current_usage / 1000**3, 4)
-=======
-        quota_tb: float = round(quota / 1000 ** 4, 2)
-        current_usage_tb: float = round(current_usage / 1000 ** 4, 2)
-        quota_gb: float = round(quota / 1000 ** 3, 2)
->>>>>>> eb0dcb84 (change quota input to TB)
-=======
-        quota_tb: float = round(quota / 1000**4, 2)
-        current_usage_tb: float = round(current_usage / 1000**4, 2)
-        quota_gb: float = round(quota / 1000**3, 2)
->>>>>>> 26210c59 (black)
 
         # Check if 0 and then skip the next steps
         if not current_usage:
@@ -1346,15 +1318,9 @@ def monitor_usage():
 
         # Information to log and potentially send
         info_string: str = (
-<<<<<<< HEAD
             f"- Quota: {quota_tb} TB // {quota_gb} GB\n"
             f"- Warning level: {round(warn_after*quota_tb,4)} TB // {round(warn_after*quota_gb,4)} GB ({int(warn_after*100)}%)\n"
             f"- Current usage: {current_usage_tb} TB // {current_usage_gb} GB ({perc_used}%)\n"
-=======
-            f"- Quota:{quota_tb} TB ({quota_gb} GB)\n"
-            f"- Warning level: {int(warn_after*quota_tb)} TB ({int(warn_after*100)}%)\n"
-            f"- Current usage: {current_usage_tb} TB ({perc_used}%)\n"
->>>>>>> eb0dcb84 (change quota input to TB)
         )
         flask.current_app.logger.debug(
             f"Monitoring the usage for unit '{unit.name}' showed the following:\n" + info_string
