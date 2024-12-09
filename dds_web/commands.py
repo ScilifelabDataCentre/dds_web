@@ -87,7 +87,7 @@ def fill_db_wrapper(db_type):
 @click.option("--safespring_secret", "-ss", type=str, required=True)
 @click.option("--days_in_available", "-da", type=int, required=False, default=90)
 @click.option("--days_in_expired", "-de", type=int, required=False, default=30)
-@click.option("--quota", "-q", type=int, required=True)
+@click.option("--quota", "-q", type=float, required=True, help="Quota in TB")
 @click.option("--warn-at", "-w", type=click.FloatRange(0.0, 1.0), required=False, default=0.8)
 @flask.cli.with_appcontext
 def create_new_unit(
@@ -131,6 +131,9 @@ def create_new_unit(
         flask.current_app.logger.error(error_message)
         return
 
+    # The quota input is in TB, convert to bytes
+    quota_bytes = quota * 1000 ** 4
+
     new_unit = models.Unit(
         name=name,
         public_id=public_id,
@@ -144,7 +147,7 @@ def create_new_unit(
         sto4_secret=safespring_secret,
         days_in_available=days_in_available,
         days_in_expired=days_in_expired,
-        quota=quota,
+        quota=quota_bytes,
         warning_level=warn_at,
     )
     db.session.add(new_unit)
@@ -210,10 +213,10 @@ def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret
 
 @click.command("update-unit-quota")
 @click.option("--unit-id", "-u", type=str, required=True)
-@click.option("--quota", "-q", type=int, required=True)
+@click.option("--quota", "-q", type=float, required=True, help="Quota in TB")
 @flask.cli.with_appcontext
 def update_unit_quota(unit_id, quota):
-    """Update unit quota. The input is in GB."""
+    """Update unit quota. The input is in TB."""
     # Imports
     import rich.prompt
     from dds_web import db
@@ -227,18 +230,18 @@ def update_unit_quota(unit_id, quota):
 
     # ask the user for confirmation
     do_update = rich.prompt.Confirm.ask(
-        f"Current quota for unit '{unit_id}' is {round(unit.quota / 1000 ** 3,2)} GB. \n"
-        f"You are about to update the quota to {quota} GB ({quota * 1000 ** 3} bytes). \n"
+        f"Current quota for unit '{unit_id}' is {round(unit.quota / 1000 ** 4, 2)} TB. \n"
+        f"You are about to update the quota to {quota} TB ({quota * 1000 ** 3} GB.) \n"
         "Are you sure you want to continue?"
     )
     if not do_update:
         flask.current_app.logger.info(
-            f"Cancelling quota update for unit '{unit_id}'. The quota is still {round(unit.quota / 1000 ** 3,2)} GB. ({unit.quota} bytes.)"
+            f"Cancelling quota update for unit '{unit_id}'. The quota is still {round(unit.quota / 1000 ** 4, 2)} TB. ({round(unit.quota / 1000 ** 3,2)} GB)"
         )
         return
 
     # Set sto4 info
-    quota_bytes = quota * 1000**3
+    quota_bytes = quota * 1000 ** 4
     unit.quota = quota_bytes
     db.session.commit()
 
@@ -1278,9 +1281,14 @@ def monitor_usage():
         flask.current_app.logger.info(f"Checking quotas and usage for: {unit.name}")
 
         # Get info from database
-        quota: int = unit.quota
+        quota: int = unit.quota # in bytes
         warn_after: float = unit.warning_level
         current_usage: int = unit.size
+
+        # convert to TB and GB, only for logs
+        quota_tb: float = round(quota / 1000 ** 4, 2)
+        current_usage_tb: float = round(current_usage / 1000 ** 4, 2)
+        quota_gb: float = round(quota / 1000 ** 3, 2)
 
         # Check if 0 and then skip the next steps
         if not current_usage:
@@ -1295,9 +1303,9 @@ def monitor_usage():
 
         # Information to log and potentially send
         info_string: str = (
-            f"- Quota:{quota} bytes\n"
-            f"- Warning level: {int(warn_after*quota)} bytes ({int(warn_after*100)}%)\n"
-            f"- Current usage: {current_usage} bytes ({perc_used}%)\n"
+            f"- Quota:{quota_tb} TB ({quota_gb} GB)\n"
+            f"- Warning level: {int(warn_after*quota_tb)} TB ({int(warn_after*100)}%)\n"
+            f"- Current usage: {current_usage_tb} TB ({perc_used}%)\n"
         )
         flask.current_app.logger.debug(
             f"Monitoring the usage for unit '{unit.name}' showed the following:\n" + info_string
