@@ -132,7 +132,7 @@ def create_new_unit(
         return
 
     # The quota input is in TB, convert to bytes
-    quota_bytes = quota * 1000**4
+    quota_bytes = int(quota * 1000**4)
 
     new_unit = models.Unit(
         name=name,
@@ -230,8 +230,8 @@ def update_unit_quota(unit_id, quota):
 
     # ask the user for confirmation
     do_update = rich.prompt.Confirm.ask(
-        f"Current quota for unit '{unit_id}' is {round(unit.quota / 1000 ** 4, 2)} TB. \n"
-        f"You are about to update the quota to {quota} TB ({quota * 1000 ** 3} GB.) \n"
+        f"Current quota for unit '{unit_id}' is {round(unit.quota / 1000 ** 4, 2)} TB ({round(unit.quota / 1000 ** 3,2)} GB). \n"
+        f"You are about to update the quota to {quota} TB ({quota * 1000 ** 3} GB). \n"
         "Are you sure you want to continue?"
     )
     if not do_update:
@@ -241,7 +241,7 @@ def update_unit_quota(unit_id, quota):
         return
 
     # Set sto4 info
-    quota_bytes = quota * 1000**4
+    quota_bytes = int(quota * 1000**4)
     unit.quota = quota_bytes
     db.session.commit()
 
