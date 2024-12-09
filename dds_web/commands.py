@@ -132,7 +132,7 @@ def create_new_unit(
         return
 
     # The quota input is in TB, convert to bytes
-    quota_bytes = quota * 1000 ** 4
+    quota_bytes = quota * 1000**4
 
     new_unit = models.Unit(
         name=name,
@@ -241,7 +241,7 @@ def update_unit_quota(unit_id, quota):
         return
 
     # Set sto4 info
-    quota_bytes = quota * 1000 ** 4
+    quota_bytes = quota * 1000**4
     unit.quota = quota_bytes
     db.session.commit()
 
@@ -1281,14 +1281,14 @@ def monitor_usage():
         flask.current_app.logger.info(f"Checking quotas and usage for: {unit.name}")
 
         # Get info from database
-        quota: int = unit.quota # in bytes
+        quota: int = unit.quota  # in bytes
         warn_after: float = unit.warning_level
         current_usage: int = unit.size
 
         # convert to TB and GB, only for logs
-        quota_tb: float = round(quota / 1000 ** 4, 2)
-        current_usage_tb: float = round(current_usage / 1000 ** 4, 2)
-        quota_gb: float = round(quota / 1000 ** 3, 2)
+        quota_tb: float = round(quota / 1000**4, 2)
+        current_usage_tb: float = round(current_usage / 1000**4, 2)
+        quota_gb: float = round(quota / 1000**3, 2)
 
         # Check if 0 and then skip the next steps
         if not current_usage:
