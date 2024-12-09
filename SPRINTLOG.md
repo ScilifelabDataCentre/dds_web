@@ -469,7 +469,8 @@ _Nothing merged during this sprint_
 - Update backend Dockerfile to pin a fixed version of mariadb-client ([#1581](https://github.com/ScilifelabDataCentre/dds_web/pull/1581))
 - Update documentation regarding 'Upload' or 'Download' added to end of delivery directory name depending on command ([#1580](https://github.com/ScilifelabDataCentre/dds_web/pull/1580))
 - Modify the monitor usage command to send warning to the affected unit as well as Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
-- Run npm audit fix to solve node cve's ([#1577](https://github.com/ScilifelabDataCentre/dds_web/pull/1577)
+- Run npm audit fix to solve node cve's ([#1577](https://github.com/ScilifelabDataCentre/dds_web/pull/1577))
+- Change quota input to TB ([#1579](https://github.com/ScilifelabDataCentre/dds_web/pull/1579))
 
 # 2024-12-16 - 2024-12-20
 
