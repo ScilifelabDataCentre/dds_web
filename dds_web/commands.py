@@ -134,10 +134,14 @@ def create_new_unit(
 
     # The quota input is in TB, convert to bytes
 <<<<<<< HEAD
+<<<<<<< HEAD
     quota_bytes = int(quota * 1000**4)
 =======
     quota_bytes = quota * 1000 ** 4
 >>>>>>> eb0dcb84 (change quota input to TB)
+=======
+    quota_bytes = quota * 1000**4
+>>>>>>> 26210c59 (black)
 
     new_unit = models.Unit(
         name=name,
@@ -1300,14 +1304,19 @@ def monitor_usage():
 
         # Get info from database
 <<<<<<< HEAD
+<<<<<<< HEAD
         quota: int = unit.quota  # in bytes
 =======
         quota: int = unit.quota # in bytes
 >>>>>>> eb0dcb84 (change quota input to TB)
+=======
+        quota: int = unit.quota  # in bytes
+>>>>>>> 26210c59 (black)
         warn_after: float = unit.warning_level
         current_usage: int = unit.size
 
         # convert to TB and GB, only for logs
+<<<<<<< HEAD
 <<<<<<< HEAD
         quota_tb: float = round(quota / 1000**4, 4)
         quota_gb: float = round(quota / 1000**3, 4)
@@ -1318,6 +1327,11 @@ def monitor_usage():
         current_usage_tb: float = round(current_usage / 1000 ** 4, 2)
         quota_gb: float = round(quota / 1000 ** 3, 2)
 >>>>>>> eb0dcb84 (change quota input to TB)
+=======
+        quota_tb: float = round(quota / 1000**4, 2)
+        current_usage_tb: float = round(current_usage / 1000**4, 2)
+        quota_gb: float = round(quota / 1000**3, 2)
+>>>>>>> 26210c59 (black)
 
         # Check if 0 and then skip the next steps
         if not current_usage:
