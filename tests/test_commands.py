@@ -109,7 +109,7 @@ correct_unit: typing.Dict = {
     "safespring_secret": "newsafespringsecret",
     "days_in_available": 45,
     "days_in_expired": 15,
-    "quota": 80,
+    "quota": 0.8,  # in TB
 }
 
 
@@ -293,7 +293,7 @@ def test_create_new_unit_success(client, runner, capfd: LogCaptureFixture) -> No
     assert new_unit.sto4_secret == correct_unit["safespring_secret"]
     assert new_unit.days_in_available
     assert new_unit.days_in_expired
-    assert new_unit.quota == correct_unit["quota"]
+    assert new_unit.quota == correct_unit["quota"] * 1000**4  # TB to bytes
     assert new_unit.warning_level
 
 
@@ -503,7 +503,7 @@ def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptur
         "--unit-id",
         unit_id,
         "--quota",
-        2,  # 2 GB,
+        2,  # 2 TB,
     ]
 
     # Run command
@@ -542,7 +542,7 @@ def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCapture
         "--unit-id",
         unit_id,
         "--quota",
-        2,  # 2 GB,
+        2,  # 2 TB,
     ]
 
     # Run command
@@ -564,7 +564,7 @@ def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCapture
     unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).first()
     assert unit
     assert unit.quota != quota_original
-    assert unit.quota == command_options[3] * 1000**3  # GB to bytes
+    assert unit.quota == command_options[3] * 1000**4  # TB to bytes
 
 
 # update_uploaded_file_with_log
