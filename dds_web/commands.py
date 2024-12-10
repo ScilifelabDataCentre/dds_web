@@ -229,21 +229,26 @@ def update_unit_quota(unit_id, quota):
         flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
         sys.exit(1)
 
+    # calculate quotas for logging purposes
+    old_quota_tb = round(unit.quota / 1000**4, 4)
+    old_quota_gb = round(unit.quota / 1000**3, 4)
+    new_quota_gb = round(quota * 1000, 4)
+
     # ask the user for confirmation
     do_update = rich.prompt.Confirm.ask(
-        f"Current quota for unit '{unit_id}' is {round(unit.quota / 1000 ** 4, 2)} TB ({round(unit.quota / 1000 ** 3,2)} GB). \n"
-        f"You are about to update the quota to {quota} TB ({quota * 1000 ** 3} GB). \n"
+        f"Current quota for unit '{unit_id}' is {old_quota_tb} TB ({old_quota_gb} GB). \n"
+        f"You are about to update the quota to {quota} TB ({new_quota_gb} GB). \n"
         "Are you sure you want to continue?"
     )
     if not do_update:
         flask.current_app.logger.info(
-            f"Cancelling quota update for unit '{unit_id}'. The quota is still {round(unit.quota / 1000 ** 4, 2)} TB. ({round(unit.quota / 1000 ** 3,2)} GB)"
+            f"Cancelling quota update for unit '{unit_id}'. The quota is still {old_quota_tb} TB. ({old_quota_gb} GB)"
         )
         return
 
-    # Set sto4 info
-    quota_bytes = int(quota * 1000**4)
-    unit.quota = quota_bytes
+    # Set new quota info
+    new_quota_bytes = int(quota * 1000**4)
+    unit.quota = new_quota_bytes
     db.session.commit()
 
     flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
@@ -1287,9 +1292,10 @@ def monitor_usage():
         current_usage: int = unit.size
 
         # convert to TB and GB, only for logs
-        quota_tb: float = round(quota / 1000**4, 2)
-        current_usage_tb: float = round(current_usage / 1000**4, 2)
-        quota_gb: float = round(quota / 1000**3, 2)
+        quota_tb: float = round(quota / 1000**4, 4)
+        quota_gb: float = round(quota / 1000**3, 4)
+        current_usage_tb: float = round(current_usage / 1000**4, 4)
+        current_usage_gb: float = round(current_usage / 1000**3, 4)
 
         # Check if 0 and then skip the next steps
         if not current_usage:
@@ -1304,9 +1310,9 @@ def monitor_usage():
 
         # Information to log and potentially send
         info_string: str = (
-            f"- Quota:{quota_tb} TB ({quota_gb} GB)\n"
-            f"- Warning level: {int(warn_after*quota_tb)} TB ({int(warn_after*100)}%)\n"
-            f"- Current usage: {current_usage_tb} TB ({perc_used}%)\n"
+            f"- Quota: {quota_tb} TB // {quota_gb} GB\n"
+            f"- Warning level: {round(warn_after*quota_tb,4)} TB // {round(warn_after*quota_gb,4)} GB ({int(warn_after*100)}%)\n"
+            f"- Current usage: {current_usage_tb} TB // {current_usage_gb} GB ({perc_used}%)\n"
         )
         flask.current_app.logger.debug(
             f"Monitoring the usage for unit '{unit.name}' showed the following:\n" + info_string
