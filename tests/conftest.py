@@ -124,10 +124,9 @@ def new_test_db(uri):
         dbname,
     ]
 
-    proc1 = subprocess.run(dump_args, stdout=subprocess.PIPE)
-    proc2 = subprocess.run(load_args, input=proc1.stdout, capture_output=True)
+    # proc1 = subprocess.run(dump_args, stdout=subprocess.PIPE)
+    # proc2 = subprocess.run(load_args, input=proc1.stdout, capture_output=True)
 
-    """
     # Dump the database
     with open("/tmp/dump.sql", "wb") as f:
         subprocess.run(dump_args, stdout=f)
@@ -144,7 +143,6 @@ def new_test_db(uri):
     # Load the database
     with open("/tmp/dump.sql", "rb") as f:
         subprocess.run(load_args, stdin=f)
-    """
 
 
 def demo_data():
