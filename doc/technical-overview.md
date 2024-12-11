@@ -453,8 +453,8 @@ Personnel have the permissions to upload data.
 When starting an upload, a directory (“staging directory”) is created by the executing command. The
 default location of the staging directory is the current working directory, however the user can specify
 an existing directory in which the staging directory should be placed. Independent of the location
-(specified or default), the staging directory is named _DataDelivery*<timestamp>*<project_id>_,
-where <timestamp> is the date and time when the upload was started, and <project_id> is the ID of
+(specified or default), the staging directory is named _DataDelivery\_\<timestamp\>\_\<project_id\>\_upload_,
+where \<timestamp\> is the date and time when the upload was started, and \<project_id\> is the ID of
 the project the user is attempting to upload data to. If there is no data to upload, this directory is
 deleted immediately. If not, the staging directory will contain three subdirectories:
 
@@ -533,7 +533,7 @@ When downloading data, the Researchers can either choose to download specific fi
 folder(s), or the entire project contents.
 
 As with the upload ([Uploading data](#uploading-data)), a staging directory is created when downloading the data. This
-directory is placed by default in the current working directory, and is named DataDelivery*<timestamp>*<project_id>.
+directory is placed by default in the current working directory, and is named _DataDelivery\_\<timestamp\>\_\<project_id\>\_download_.
 However unlike the upload command, downloading allows the user to choose the name of the directory - specifying a
 destination. The destination cannot be an existing directory[^22] - it must be a new directory. Since a new destination is required with every
 download, downloading the same file(s) multiple times is possible and is only limited by the amount
