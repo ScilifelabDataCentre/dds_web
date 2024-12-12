@@ -103,9 +103,25 @@ def fill_basic_db(db):
 def new_test_db(uri):
     dbname = uri[uri.rindex("/") + 1 :]
     dbname_base = DATABASE_URI_BASE[DATABASE_URI_BASE.rindex("/") + 1 :]
-    dump_args = ["mysqldump", "-h", "db", "-u", "root", f"-p{mysql_root_password}", dbname_base]
-    load_args = ["mysql", "-h", "db", "-u", "root", f"-p{mysql_root_password}", dbname]
-    proc1 = subprocess.run(dump_args, capture_output=True)
+    dump_args = [
+        "mariadb-dump",
+        "-h",
+        "db",
+        "-u",
+        "root",
+        f"-p{mysql_root_password}",
+        dbname_base,
+    ]
+    load_args = [
+        "mariadb",
+        "-h",
+        "db",
+        "-u",
+        "root",
+        f"-p{mysql_root_password}",
+        dbname,
+    ]
+
     proc1 = subprocess.run(dump_args, stdout=subprocess.PIPE)
     proc2 = subprocess.run(load_args, input=proc1.stdout, capture_output=True)
 
