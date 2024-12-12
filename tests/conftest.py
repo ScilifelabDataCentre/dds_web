@@ -110,7 +110,6 @@ def new_test_db(uri):
         "-u",
         "root",
         f"-p{mysql_root_password}",
-        "--skip_ssl",
         dbname_base,
     ]
     load_args = [
@@ -120,29 +119,11 @@ def new_test_db(uri):
         "-u",
         "root",
         f"-p{mysql_root_password}",
-        "--skip_ssl",
         dbname,
     ]
 
-    # proc1 = subprocess.run(dump_args, stdout=subprocess.PIPE)
-    # proc2 = subprocess.run(load_args, input=proc1.stdout, capture_output=True)
-
-    # Dump the database
-    with open("/tmp/dump.sql", "wb") as f:
-        subprocess.run(dump_args, stdout=f)
-
-    # This is necessary because the dump contains a line that is not supported by this mariadb client
-    # The line is M!100616 SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0
-    with open("/tmp/dump.sql", "rb") as file:
-        lines = file.readlines()
-    with open("/tmp/dump.sql", "wb") as file:
-        for line in lines:
-            if b"NOTE_VERBOSITY" not in line:  # Use binary strings to avoid encoding issues
-                file.write(line)
-
-    # Load the database
-    with open("/tmp/dump.sql", "rb") as f:
-        subprocess.run(load_args, stdin=f)
+    proc1 = subprocess.run(dump_args, stdout=subprocess.PIPE)
+    proc2 = subprocess.run(load_args, input=proc1.stdout, capture_output=True)
 
 
 def demo_data():
