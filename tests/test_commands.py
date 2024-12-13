@@ -1432,19 +1432,21 @@ def test_monitor_usage_warning_sent(client, cli_runner, capfd: LogCaptureFixture
     # Mock the size property of the Unit table
     with patch("dds_web.database.models.Unit.size", new_callable=PropertyMock) as mock_size:
         mock_size.return_value = 0.9 * quota_in_test
-        # Mock emails - only check if function call
-        with patch.object(flask_mail.Mail, "send") as mock_mail_send:
+
+        with mail.record_messages() as outbox:
             # Run command
             _: click.testing.Result = cli_runner.invoke(monitor_usage)
-            # Verify no email has been sent and stoud contains logging info
-            assert mock_mail_send.call_count == 2  # 2 because client and cli_runner both run
+            # capture output
+            _, err = capfd.readouterr()
 
-    _, err = capfd.readouterr()
-    for unit in models.Unit.query.all():
-        assert (
-            f"A SciLifeLab Unit is approaching the allocated data quota.\nAffected unit: {unit.name}\n"
-            in err
-        )
+            i = 0
+            for unit in models.Unit.query.all():
+                # Verify email has been sent to the correct recipient
+                assert outbox[i].recipients[0] == unit.contact_email
+                assert outbox[i].recipients[1] == "delivery@scilifelab.se"
+                assert "Your unit is approaching the allocated data quota" in err
+                assert f"Unit name: {unit.name}" in err
+                i += 1
 
 
 # set_available_to_expired
