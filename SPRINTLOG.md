@@ -239,8 +239,8 @@ _Nothing merged during this sprint_
 
 # 2023-04-14 - 2023-04-28
 
-- Documentation: Minor update of Technical Overview ((#1411)[https://github.com/ScilifelabDataCentre/dds_web/pull/1411])
-- Documentation: Account roles and their permissions ((#1412)[https://github.com/ScilifelabDataCentre/dds_web/pull/1412])
+- Documentation: Minor update of Technical Overview ([#1411](https://github.com/ScilifelabDataCentre/dds_web/pull/1411))
+- Documentation: Account roles and their permissions ([#1412](https://github.com/ScilifelabDataCentre/dds_web/pull/1412))
 
 # 2023-05-26 - 2023-06-09
 
