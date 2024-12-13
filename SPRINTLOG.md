@@ -463,5 +463,7 @@ _Nothing merged during this sprint_
 
 - Change the error raised upon attempt to download data after a password reset to an AuthenticationError to avoid getting an alert ([#1571](https://github.com/ScilifelabDataCentre/dds_web/pull/1571))
 - Filter out the MaintenanceModeException from the logs ([#1573](https://github.com/ScilifelabDataCentre/dds_web/pull/1573))
-- Bugfix: Quick and dirty change to prevent `dds ls --tree` from failing systematically ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1575)
+- Bugfix: Quick and dirty change to prevent `dds ls --tree` from failing systematically ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1575))
+- Update backend Dockerfile to pin a fixed version of mariadb-client ([#1581](https://github.com/ScilifelabDataCentre/dds_web/pull/1581))
+- Update documentation regarding 'Upload' or 'Download' added to end of delivery directory name depending on command ([#1580](https://github.com/ScilifelabDataCentre/dds_web/pull/1580))
 - Instructions regarding database migrations moved to migrations directory, and Linkspector action added to scan for incorrect links in MD ([#1576](https://github.com/ScilifelabDataCentre/dds_web/pull/1576))
