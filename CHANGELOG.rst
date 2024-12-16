@@ -3,19 +3,20 @@ Changelog
 
 .. _2.9.0:
 
-2.8.2 - 2024-12-13
+2.9.0 - 2024-12-16
 ~~~~~~~~~~~~~~~~~~~~~~~
 - New features:
-    - Add documentation to new client feature of 'Upload' or 'Download' added to end of delivery directory name.
-    - Modify the monitor usage command to send warning to the affected unit as well as Data Centre.
+    - Delivery directory names now include 'Upload' or 'Download' for clarity.
+    - Monitor usage now sends warnings to the affected unit and Data Centre when approaching the allocated quota.
 - Bugs fixed:
-    - Change the error raised upon attempt to download data after a password reset.
-    - Fix the dds ls --tree command.
-    - Update backend Dockerfile to pin a fixed version of mariadb-client.
+    - Improved error message for downloads after a password reset.
+    - Fixed the dds ls --tree command.
+    - Pinned mariadb-client version in backend Dockerfile for stability.
+    - Resolved Node.js vulnerabilities with npm audit fix.
 - Logging:
-    - Removed exception for invalid token to simplify logging.
-    - Username logged when password is reset.
-    - Filter out the MaintenanceModeException from the logs.
+    - Removed invalid token exceptions from logs.
+    - Logged usernames for password resets.
+    - Filtered out MaintenanceModeException from logs.
 
 .. _2.8.1:
 
