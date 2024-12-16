@@ -187,7 +187,7 @@ class Unit(db.Model):
     public_id = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(255), unique=True, nullable=False)
     external_display_name = db.Column(db.String(255), unique=False, nullable=False)
-    contact_email = db.Column(db.String(255), unique=False, nullable=True)
+    contact_email = db.Column(db.String(255), unique=False, nullable=False)
     internal_ref = db.Column(db.String(50), unique=True, nullable=False)
 
     # Safespring storage

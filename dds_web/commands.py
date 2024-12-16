@@ -1269,7 +1269,7 @@ def monitor_usage():
     import dds_web.utils
 
     # Email settings
-    recipient: str = flask.current_app.config.get("MAIL_DDS")
+    dds_contact: str = flask.current_app.config.get("MAIL_DDS")
     default_subject: str = "DDS: Usage quota warning!"
 
     # Run task
@@ -1305,15 +1305,17 @@ def monitor_usage():
         # Email if the unit is using more
         if perc_used_decimal > warn_after:
             # Email settings
+            unit_contact: str = unit.contact_email
             message: str = (
-                "A SciLifeLab Unit is approaching the allocated data quota.\n"
-                f"Affected unit: {unit.name}\n"
+                "Your unit is approaching the allocated data quota (see details below).\n\n"
+                f"NB! If you would like to increase or decrease the allocated quota ('Quota') or the level after which you receive this email ('Warning level'), the technical contact person for your unit must send a request to {dds_contact}.\n"
+                f"Unit name: {unit.name}\n"
                 f"{info_string}"
             )
             flask.current_app.logger.info(message)
             msg: flask_mail.Message = flask_mail.Message(
                 subject=default_subject,
-                recipients=[recipient],
+                recipients=[unit_contact, dds_contact],
                 body=message,
             )
             dds_web.utils.send_email_with_retry(msg=msg)
