@@ -65,7 +65,7 @@ USER $USERNAME
 FROM node:18 as nodebuilder
 COPY ./dds_web/static /build
 WORKDIR /build
-RUN npm install -g npm@latest --quiet
+RUN npm install -g npm@10.9.2 --quiet
 RUN npm install --quiet
 RUN npm run css
 
