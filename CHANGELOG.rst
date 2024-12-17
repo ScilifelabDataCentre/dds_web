@@ -3,7 +3,7 @@ Changelog
 
 .. _2.9.0:
 
-2.9.0 - 2024-12-16
+2.9.0 - 2024-12-18
 ~~~~~~~~~~~~~~~~~~~~~~~
 - New features:
     - Delivery directory names now include 'Upload' or 'Download' for clarity.
