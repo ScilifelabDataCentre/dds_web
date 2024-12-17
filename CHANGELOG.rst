@@ -1,6 +1,24 @@
 Changelog
 ==========
 
+.. _2.9.0:
+
+2.9.0 - 2024-12-18
+~~~~~~~~~~~~~~~~~~
+
+- New features:
+    - Delivery directory names now include 'Upload' or 'Download' for clarity.
+    - Monitor usage now sends warnings to the affected unit and Data Centre when approaching the allocated quota.
+- Bugs fixed:
+    - Improved error message for downloads after a password reset.
+    - Fixed the dds ls --tree command.
+    - Pinned mariadb-client version in backend Dockerfile for stability.
+    - Resolved Node.js vulnerabilities with npm audit fix.
+- Logging:
+    - Removed invalid token exceptions from logs.
+    - Logged usernames for password resets.
+    - Filtered out MaintenanceModeException from logs.
+
 .. _2.8.1:
 
 2.8.1 - 2024-10-23
