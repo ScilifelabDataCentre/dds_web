@@ -177,7 +177,7 @@ production instance, and should be collected from the agreements or additional c
 | Days in Available                                 | The number of days during which the data will be available for download by the Researchers. The countdown starts when the project is released. There is no time limit when the project is In Progress and the project has not been released. For more information on the project statuses and what actions can be performed during them, see the appendix ([Project Statuses](#b-project-statuses)). After Days in Available (DiA) number of days has passed, the project is automatically set as Expired. |
 | Days in Expired                                   | The number of days (after being available) during which the data is still stored but not available for download. During this time, the project can be renewed, leading to the project being available again and therefore allowing for downloads again. When the Days in Expired (DiE) number of days has passed, the project is automatically archived by the system.                                                                                                                                     |
 | Quota                                             | The amount of storage space made available for a particular unit. This information should be included in the service agreement. Another value cannot be chosen by the Data Centre or by the unit.                                                                                                                                                                                                                                                                                                          |
-| Warning level                                     | When a unit has used this percentage of it’s available storage space, an alert is triggered and sent to [delivery@scilifelab.se](mailto:delivery@scilifelab.se). In the event of an alert, the Data Centre contacts the unit to discuss whether or not the quota is sufficient. If not, the service agreement will need to be updated and the quota increased in both the database and at Safespring's S3 storage, for that specific Safespring project.                                                   |
+| Warning level                                     | When a unit has used this percentage of it’s available storage space, an alert is triggered and sent to the contact email within the unit, as well as a to [delivery@scilifelab.se](mailto:delivery@scilifelab.se). In the event of an alert, the unit affected should contact the Data Centre to discuss whether or not the quota is sufficient. If not, the service agreement will need to be updated and the quota increased in both the database and at Safespring's S3 storage, for that specific Safespring project.                                                   |
 : Parameters used to configure a Unit within DDS 
 
 The unit also must provide the email addresses of at least two (but preferably three or more)
@@ -453,8 +453,8 @@ Personnel have the permissions to upload data.
 When starting an upload, a directory (“staging directory”) is created by the executing command. The
 default location of the staging directory is the current working directory, however the user can specify
 an existing directory in which the staging directory should be placed. Independent of the location
-(specified or default), the staging directory is named _DataDelivery*<timestamp>*<project_id>_,
-where <timestamp> is the date and time when the upload was started, and <project_id> is the ID of
+(specified or default), the staging directory is named _DataDelivery\_\<timestamp\>\_\<project_id\>\_upload_,
+where \<timestamp\> is the date and time when the upload was started, and \<project_id\> is the ID of
 the project the user is attempting to upload data to. If there is no data to upload, this directory is
 deleted immediately. If not, the staging directory will contain three subdirectories:
 
@@ -533,7 +533,7 @@ When downloading data, the Researchers can either choose to download specific fi
 folder(s), or the entire project contents.
 
 As with the upload ([Uploading data](#uploading-data)), a staging directory is created when downloading the data. This
-directory is placed by default in the current working directory, and is named DataDelivery*<timestamp>*<project_id>.
+directory is placed by default in the current working directory, and is named _DataDelivery\_\<timestamp\>\_\<project_id\>\_download_.
 However unlike the upload command, downloading allows the user to choose the name of the directory - specifying a
 destination. The destination cannot be an existing directory[^22] - it must be a new directory. Since a new destination is required with every
 download, downloading the same file(s) multiple times is possible and is only limited by the amount

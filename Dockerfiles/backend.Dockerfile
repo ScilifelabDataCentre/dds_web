@@ -49,7 +49,12 @@ ENV PYTHONPATH /code
 ###################
 FROM base as test
 RUN pip3 install -r /code/tests/requirements-test.txt
-RUN apk add mariadb-client
+
+# The version of mariadb-client should match the version of the mariadb server
+# Because of how alpine works, this is how to pin a version. However, it can break if this branch is removed from alpine
+# https://superuser.com/questions/1055060/how-to-install-a-specific-package-version-in-alpine
+# https://pkgs.alpinelinux.org/packages?name=mariadb-client&branch=v3.19&repo=&arch=x86_64&origin=&flagged=&maintainer=
+RUN apk add mariadb-client=~10.11 --repository https://dl-cdn.alpinelinux.org/alpine/v3.19/main/
 
 # Switch to the user
 USER $USERNAME
@@ -60,7 +65,7 @@ USER $USERNAME
 FROM node:18 as nodebuilder
 COPY ./dds_web/static /build
 WORKDIR /build
-RUN npm install -g npm@latest --quiet
+RUN npm install -g npm@10.9.2 --quiet
 RUN npm install --quiet
 RUN npm run css
 

@@ -68,6 +68,20 @@ migrate = flask_migrate.Migrate()
 ####################################################################################################
 
 
+class FilterMaintenanceExc(logging.Filter):
+
+    def filter(record):
+        """
+        Filters log records to exclude those with MaintenanceOngoingException.
+        Returns:
+            bool: True if the log record should be logged, False if it should be filtered out.
+        """
+        from dds_web.errors import MaintenanceOngoingException
+
+        # Check if the log record does not have an exception or if the exception is not MaintenanceOngoingException
+        return record.exc_info is None or record.exc_info[0] != MaintenanceOngoingException
+
+
 def setup_logging(app):
     """Setup loggers"""
 
@@ -163,6 +177,9 @@ def setup_logging(app):
         # logger.
         cache_logger_on_first_use=True,
     )
+
+    # Add custom filter to the logger
+    logging.getLogger("general").addFilter(FilterMaintenanceExc)
 
 
 def create_app(testing=False, database_uri=None):

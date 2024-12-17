@@ -430,11 +430,11 @@ _Nothing merged during this sprint_
 
 - Flask command to update unit quotas ([#1551](https://github.com/ScilifelabDataCentre/dds_web/pull/1551))
 - Bump python base image to 3.12 and related libraries in both web and client([#1548](https://github.com/ScilifelabDataCentre/dds_web/pull/1548))
-- Warning_level option defaults to 0.8([#1557](https://github.com/ScilifelabDataCentre/dds_web/pull/1557))
 
 # 2024-09-24 - 2024-10-04
 
 - Add option to motd command for sending to unit users only([#1552](https://github.com/ScilifelabDataCentre/dds_web/pull/1552))
+- Warning_level option defaults to 0.8([#1557](https://github.com/ScilifelabDataCentre/dds_web/pull/1557))
 
 # 2024-10-07 - 2024-10-18
 
@@ -444,3 +444,31 @@ _Nothing merged during this sprint_
 - Modify the invoicing commands to send the instance name in the emails([#1561](https://github.com/ScilifelabDataCentre/dds_web/pull/1561))
 - Fix the MOTD endpoint according to post merge review([#1564](https://github.com/ScilifelabDataCentre/dds_web/pull/1564))
 - New version & changelog([#1565](https://github.com/ScilifelabDataCentre/dds_web/pull/1565))
+
+# 2024-10-21 - 2024-11-01
+
+- Workflow: Bump GitHub checkout action to v4 ([#1556](https://github.com/ScilifelabDataCentre/dds_web/pull/1556))
+- Workflow: CodeQL action version(s) bumped to v3 ([#1569](https://github.com/ScilifelabDataCentre/dds_web/pull/1569))
+- Workflow: Setup-node, codecov and upload-sarif action versions bumped to v4, v4 and v3, respectively ([#1570](https://github.com/ScilifelabDataCentre/dds_web/pull/1570))
+
+# 2024-11-04 - 2024-11-15
+
+- Removed exception for invalid token to simplify logging and reduce unnecessary error entries ([#1572](https://github.com/ScilifelabDataCentre/dds_web/pull/1572))
+
+# 2024-11-18 – 2024-11-29
+
+- Logging: Add which user name reset password ([https://github.com/ScilifelabDataCentre/dds_web/pull/1574](https://github.com/ScilifelabDataCentre/dds_web/pull/1574))
+
+# 2024-12-02 – 2024-12-13
+
+- Change the error raised upon attempt to download data after a password reset to an AuthenticationError to avoid getting an alert ([#1571](https://github.com/ScilifelabDataCentre/dds_web/pull/1571))
+- Filter out the MaintenanceModeException from the logs ([#1573](https://github.com/ScilifelabDataCentre/dds_web/pull/1573))
+- Bugfix: Quick and dirty change to prevent `dds ls --tree` from failing systematically ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1575))
+- Update backend Dockerfile to pin a fixed version of mariadb-client ([#1581](https://github.com/ScilifelabDataCentre/dds_web/pull/1581))
+- Update documentation regarding 'Upload' or 'Download' added to end of delivery directory name depending on command ([#1580](https://github.com/ScilifelabDataCentre/dds_web/pull/1580))
+- Modify the monitor usage command to send warning to the affected unit as well as Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
+- Run npm audit fix to solve node cve's ([#1577](https://github.com/ScilifelabDataCentre/dds_web/pull/1577)
+
+# 2024-12-16 - 2024-12-20
+
+- New version: 2.9.0 ([#1584](https://github.com/ScilifelabDataCentre/dds_web/pull/1584))
