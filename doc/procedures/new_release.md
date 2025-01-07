@@ -10,7 +10,7 @@
 3.  Fork a new branch from `dev` (locally)
 4.  Update the version [changelog](../../CHANGELOG.rst), located at `dds_web/CHANGELOG.rst`
 
-    **Tip:** Use the PR to `master` to see all changes since last release.
+    **Tip:** Crease a [release **draft**](https://github.com/ScilifelabDataCentre/dds_web/releases/new) with `Target: dev`, click `Generate release notes` and copy paste the release notes into the Changelog. 
 
     - The new version should be at the top of the page
     - List the changes that the users will / may notice
