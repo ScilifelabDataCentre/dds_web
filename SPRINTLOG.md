@@ -473,3 +473,7 @@ _Nothing merged during this sprint_
 
 - New version: 2.9.0 ([#1584](https://github.com/ScilifelabDataCentre/dds_web/pull/1584))
 - Instructions regarding database migrations moved to migrations directory, and Linkspector action added to scan for incorrect links in MD ([#1576](https://github.com/ScilifelabDataCentre/dds_web/pull/1576))
+
+# 2024-12-20 - 2025-01-10
+
+- Make release template ([1587](https://github.com/ScilifelabDataCentre/dds_web/pull/1587))
