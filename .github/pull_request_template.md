@@ -10,13 +10,13 @@ If there is a field which you are unsure about, enter the edit mode of this desc
 
 ## 1. Description / Summary
 
-**Add a summary here**: What does this PR add/change and why? 
+**Add a summary here**: What does this PR add/change and why?
 
 ## 2. Jira task / GitHub issue
 
 **Is this a GitHub issue?** --> Add the link to the github issue
 
-**Is this from a Jira task?** --> If your branch does not contain info regarding the Jira task ID, put it here. 
+**Is this from a Jira task?** --> If your branch does not contain info regarding the Jira task ID, put it here.
 
 ## 3. Type of change - Add label
 
@@ -27,8 +27,8 @@ _If you do not want this change to be included in release notes, add the label `
 - New feature
   - Breaking --> label: `breaking` <!-- If the changes in this PR will cause existing functionality to not work as expected. E.g. with the master branch of the `dds_cli`. Add info here on how the change is breaking. -->
   - Non-breaking --> label: `feature` <!-- If the changes will not cause existing functionality to fail. "Non-breaking" is just an addition of a new feature. -->
-- Database change --> label: `feature` or none at all. 
-    _Remember the to include a new migration version, **or** explain here why it's not needed._ <!-- If you've changed something in `models.py`. For a guide on how to add the a new migration version, look at the "Database changes" section in the README.md. -->
+- Database change --> label: `feature` or none at all.
+  _Remember the to include a new migration version, **or** explain here why it's not needed._ <!-- If you've changed something in `models.py`. For a guide on how to add the a new migration version, look at the "Database changes" section in the README.md. -->
 - Bug fix --> label: `bug` <!-- If a bug is fixed in existing functionality. If the bug fix also is a breaking change (see above), add info about that beside this check box. -->
 - Security Alert fix <!-- If the PR attempts to solve a security vulnerability, e.g. reported by the "Security" tab in the repo. -->
   - Package update --> label: `dependency` <!-- If the Security alert fix consists of updating a package / dependency version -->
@@ -45,7 +45,7 @@ _If you do not want this change to be included in release notes, add the label `
 
 ## 5. Actions / Scans
 
-**Make sure that the following checks/actions have passed.** 
+**Make sure that the following checks/actions have passed.**
 
 - **Black**
 <!--

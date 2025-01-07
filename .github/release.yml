@@ -16,7 +16,7 @@ changelog:
       labels:
         - breaking
     - title: 🛡️ Dependencies
-      labels: 
+      labels:
         - dependency
     - title: Other Changes
       labels:
