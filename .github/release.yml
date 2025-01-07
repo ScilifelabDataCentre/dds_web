@@ -14,7 +14,7 @@ changelog:
         - bug
     - title: ⛓️‍💥 Breaking Changes
       labels:
-        - breaking-change
+        - breaking
     - title: Other Changes
       labels:
         - "*" # Catch-all for pull requests that didn't match any of the previous categories
