@@ -15,6 +15,9 @@ changelog:
     - title: ⛓️‍💥 Breaking Changes
       labels:
         - breaking
+    - title: 🛡️ Dependencies
+      labels: 
+        - dependency
     - title: Other Changes
       labels:
         - "*" # Catch-all for pull requests that didn't match any of the previous categories
