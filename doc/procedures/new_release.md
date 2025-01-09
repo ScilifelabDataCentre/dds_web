@@ -10,7 +10,7 @@
 3.  Fork a new branch from `dev` (locally)
 4.  Update the version [changelog](../../CHANGELOG.rst), located at `dds_web/CHANGELOG.rst`
 
-    **Tip:** Crease a [release **draft**](https://github.com/ScilifelabDataCentre/dds_web/releases/new) with `Target: dev`, click `Generate release notes` and copy paste the release notes into the Changelog. **DO NOT PUBLISH THE RELEASE**
+    **Tip:** Create a [release **draft**](https://github.com/ScilifelabDataCentre/dds_web/releases/new) with `Target: dev`, click `Generate release notes` and copy paste the release notes into the Changelog. **DO NOT PUBLISH THE RELEASE**
 
     - The new version should be at the top of the page
     - List the changes that the users will / may notice
@@ -67,7 +67,7 @@
       3.  Send a message in the `dds-status` slack channel to inform the units
       4.  Ask for a redeployment
 
-          1.  Go to the [sysadmin repository](https://github.com/ScilifelabDataCentre/sysadmin/issues)
+          1.  Go to the [sysadmin repository](https://github.com/ScilifelabDataCentre/sysadmin)
           2.  Create a new issue and fill in the following information
 
               `Title`
