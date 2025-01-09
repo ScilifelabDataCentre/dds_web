@@ -67,7 +67,7 @@
       3.  Send a message in the `dds-status` slack channel to inform the units
       4.  Ask for a redeployment
 
-          1.  Go to the [sysadmin repository](https://github.com/ScilifelabDataCentre/sysadmin)
+          1.  Go to the [sysadmin repository](https://github.com/ScilifelabDataCentre/sysadmin/issues)
           2.  Create a new issue and fill in the following information
 
               `Title`
