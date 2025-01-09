@@ -175,10 +175,13 @@ services:
         source: ../dds_cli
         target: /code
 
-  worker:
+  celery:
     build:
-      context: .
-      dockerfile: Dockerfiles/backend.Dockerfile
+        context: .
+    environment:
+      FLASK_APP: run
+    volumes:
+      - .:/app
     command: celery -A run.celery worker --loglevel=info
-    links:
+    depends_on:
       - redis

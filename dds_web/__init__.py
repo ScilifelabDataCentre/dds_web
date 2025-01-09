@@ -29,7 +29,6 @@ from flask_limiter.util import get_remote_address
 import sqlalchemy
 import structlog
 import werkzeug
-from celery import Celery
 
 ####################################################################################################
 # GLOBAL VARIABLES ############################################################## GLOBAL VARIABLES #
@@ -62,9 +61,6 @@ limiter = Limiter(key_func=get_remote_address)
 
 # Migration
 migrate = flask_migrate.Migrate()
-
-# Celery
-celery = Celery()
 
 ####################################################################################################
 # FUNCTIONS ############################################################################ FUNCTIONS #
@@ -282,10 +278,6 @@ def create_app(testing=False, database_uri=None):
 
         # Initialize migrations
         migrate.init_app(app, db)
-
-        # Celery
-        celery = Celery(app.name, broker=app.config["CELERY_BROKER_URL"])
-        celery.conf.update(app.config)
 
         # initialize OIDC
         oauth.init_app(app)
