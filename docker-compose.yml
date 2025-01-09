@@ -174,3 +174,11 @@ services:
       - type: bind
         source: ../dds_cli
         target: /code
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfiles/backend.Dockerfile
+    command: celery -A run.celery worker --loglevel=info
+    links:
+      - redis
