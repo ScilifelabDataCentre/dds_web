@@ -1,6 +1,0 @@
-# Configuration file for linkspector.yml
-dirs:
-  - .
-useGitIgnore: true
-ignorePatterns:
-  - pattern: "https://github.com/ScilifelabDataCentre/sysadmin*+"
