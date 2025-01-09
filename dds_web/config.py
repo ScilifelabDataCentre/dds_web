@@ -91,4 +91,3 @@ class Config(object):
     # Logging setup; 0 means no log rotation
     LOG_MAX_SIZE = os.environ.get("LOG_MAX_SIZE", 0x100000)
     LOG_BACKUP_COUNT = os.environ.get("LOG_BACKUP_COUNT", 15)
-    
