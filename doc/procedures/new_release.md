@@ -10,7 +10,7 @@
 3.  Fork a new branch from `dev` (locally)
 4.  Update the version [changelog](../../CHANGELOG.rst), located at `dds_web/CHANGELOG.rst`
 
-    **Tip:** Use the PR to `master` to see all changes since last release.
+    **Tip:** Create a [release **draft**](https://github.com/ScilifelabDataCentre/dds_web/releases/new) with `Target: dev`, click `Generate release notes` and copy paste the release notes into the Changelog. **DO NOT PUBLISH THE RELEASE**
 
     - The new version should be at the top of the page
     - List the changes that the users will / may notice
@@ -56,46 +56,4 @@
 
        An image of the web / api will be published to the [GitHub Container Registry](https://codefresh.io/csdp-docs/docs/integrations/container-registries/github-cr/)
 
-10. Perform redeployment
-
-    The method for this _depends on the situation_ / size of and reason for the upgrade.
-
-    - **Bug**, affecting the DDS functionality - Fix ASAP
-
-      1.  Add a new _Message of the Day_ (MOTD) informing the users of an ongoing / immediate update - (see CLI)
-      2.  Send the MOTD via email (see CLI)
-      3.  Send a message in the `dds-status` slack channel to inform the units
-      4.  Ask for a redeployment
-
-          1.  Go to the [sysadmin repository](https://github.com/ScilifelabDataCentre/sysadmin/issues)
-          2.  Create a new issue and fill in the following information
-
-              `Title`
-
-                  DDS: Redeploy the production instance (`dds`)
-
-              `Leave a comment`
-
-                  Please redeploy the production instance of the DDS.
-                  Image: <Name of the latest release / tag, e.g. v1.1.0 >
-
-                  Fill in the [manual log](https://scilifelab.atlassian.net/wiki/spaces/deliveryportal/pages/2318565390/Production) on Confluence.
-
-    - **New feature** or bug that does not need an immediate fix
-
-      Cluster maintenance is performed the first Wednesday (that is a work day) of every month. The DDS is redeployed during this as well. However, we still need to inform the users of the upcoming upgrade, and the sysadmins of which image they should deploy.
-
-      1.  Go to the [sysadmin repository](https://github.com/ScilifelabDataCentre/sysadmin/issues)
-      2.  Create a new issue and fill in the following information
-
-          `Title`
-
-              DDS: Schedule redeployment of production instance (`dds`) for next cluster maintenance window
-
-          `Leave a comment`
-
-              During the next cluster maintenance (`<Weekday, Day / Month, Time>`), please redeploy the production instance of the DDS.
-
-              Image: <Name of the latest release / tag, e.g. v1.1.0 >
-
-              Fill in the [manual log](https://scilifelab.atlassian.net/wiki/spaces/deliveryportal/pages/2318565390/Production) on Confluence.
+10. Perform redeployment during maintenance window.
