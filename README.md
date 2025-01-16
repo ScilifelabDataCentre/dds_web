@@ -23,9 +23,6 @@
    <a href="https://codecov.io/github/ScilifelabDataCentre/dds_web" > 
       <img src="https://codecov.io/github/ScilifelabDataCentre/dds_web/graph/badge.svg?token=r5tM6o08Sd"/> 
    </a>
-   <!-- <a href="https://codecov.io/gh/ScilifelabDataCentre/dds_web">
-      <img alt="codecov" src="https://codecov.io/gh/ScilifelabDataCentre/dds_web/branch/dev/graph/badge.svg?token=r5tM6o08Sd">
-   </a> -->
    <img alt="Tests" src="https://github.com/ScilifelabDataCentre/dds_web/actions/workflows/docker-compose-tests.yml/badge.svg">
 </p>
 <p align="center">
