@@ -7,4 +7,3 @@ pytest-mock==3.7.0
 pyfakefs==5.3.0
 requests_cache==0.9.4
 testfixtures==7.0.4
-coverage==7.6.10
