@@ -511,10 +511,8 @@ def send_email_for_queue(msg):
     except smtplib.SMTPException as err:
         # Wait a little bit
         time.sleep(10)
-        # Retry twice
-        if times_retried < 2:
-            retry = times_retried + 1
-            send_email_with_retry(msg, times_retried=1, obj=mail)
+        # Retry twice, calls the other function TODO fix or replace
+        send_email_with_retry(msg, times_retried=1, obj=mail)
 
 
 def create_one_time_password_email(user, hotp_value):
