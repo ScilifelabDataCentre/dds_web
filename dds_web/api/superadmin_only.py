@@ -211,6 +211,7 @@ class SendMOTD(flask_restful.Resource):
                         ["Content-ID", "<Logo>"],
                     ],
                 )
+
                 # Send email in a queue to avoid blocking the API
                 # job = q.enqueue(utils.send_email_with_queue, msg)
 
@@ -219,12 +220,9 @@ class SendMOTD(flask_restful.Resource):
 
         return_msg = f"MOTD '{motd_id}' has been "
         if unit_only:
-            return_msg += "scheduled to unit personnel only."
+            return_msg += "sent to unit personnel only."
         else:
-            return_msg += "scheduled to all users."
-        return_msg += (
-            " You can check the status of the emails in the dashboard (TODO ADD DASHBOARD URL)."
-        )
+            return_msg += "sent to all users."
         return {"message": return_msg}
 
 
