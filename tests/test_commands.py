@@ -39,6 +39,7 @@ from dds_web.commands import (
     update_unit_sto4,
     update_unit_quota,
     send_usage,
+    run_worker,
 )
 from dds_web.database import models
 from dds_web import db, mail
@@ -2089,3 +2090,19 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
             == outbox[-1].subject
         )
         assert "There was an error in the cronjob 'send-usage'" in outbox[-1].body
+
+
+## run-worker
+def test_run_worker(client, cli_runner):
+    """Test that starts the redis workers"""
+
+    with patch("redis.client.Redis.from_url") as mock_redis:
+        with patch("rq.worker.Worker") as mock_worker:
+
+            # Mock Redis and Worker objects to avoid generating a connection to Redis
+            mock_redis_instance = MagicMock()
+            mock_redis.return_value = mock_redis_instance
+            mock_worker_instance = MagicMock()
+            mock_worker.return_value = mock_worker_instance
+
+            cli_runner.invoke(run_worker)
