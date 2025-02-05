@@ -1334,7 +1334,7 @@ def run_worker():
     Configuration:
         - The Redis server URL should be specified in the Flask application's
         configuration under the key "REDIS_URL".
-        - The worker can be further customized, see https://python-rq.org/docs/workers/        
+        - The worker can be further customized, see https://python-rq.org/docs/workers/
     """
 
     redis_url = flask.current_app.config.get("REDIS_URL")
