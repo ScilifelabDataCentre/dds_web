@@ -14,7 +14,7 @@ import boto3
 from requests_mock.mocker import Mocker
 import requests_cache
 import click
-from unittest.mock import patch, MagicMock
+from rq.queue import Queue
 
 # Own
 from dds_web.database.models import (
@@ -593,7 +593,7 @@ def mock_enqueue():
         f(*function_args, **kwargs)
 
         # Return a mock job object
-        job = MagicMock()
+        job = unittest.mock.MagicMock()
         job.id = "mock-job-id"
         return job
 
@@ -604,16 +604,14 @@ def mock_enqueue():
 def mock_queue_redis(mock_enqueue):
     """Fixture to mock RQ's Queue and parse_args."""
 
-    from rq.queue import Queue
-
-    with patch("redis.client.Redis.from_url") as mock_redis:
-        with patch("rq.queue.Queue") as mock_queue:
-            with patch.object(Queue, "enqueue") as mock_enqueue_func:
+    with unittest.mock.patch("redis.client.Redis.from_url") as mock_redis:
+        with unittest.mock.patch("rq.queue.Queue") as mock_queue:
+            with unittest.mock.patch.object(Queue, "enqueue") as mock_enqueue_func:
 
                 # Mock Redis and Queue objects to avoid generating a connection to Redis
-                mock_redis_instance = MagicMock()
+                mock_redis_instance = unittest.mock.MagicMock()
                 mock_redis.return_value = mock_redis_instance
-                mock_queue_instance = MagicMock()
+                mock_queue_instance = unittest.mock.MagicMock()
                 mock_queue.return_value = mock_queue_instance
 
                 # Mock the enqueue to call the function directly without actually enqueueing
