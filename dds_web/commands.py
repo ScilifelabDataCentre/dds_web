@@ -1326,9 +1326,17 @@ def monitor_usage():
 @click.command("run-worker")
 @flask.cli.with_appcontext
 def run_worker():
-    """TODO"""
-    # workers configuration is found in https://python-rq.org/docs/workers/
-    # Check if for further customizations
+    """
+    This function initializes a worker that connects to a Redis server using the
+    URL specified in the Flask application's configuration. The worker listens to
+    the "default" queue and processes jobs from it.
+
+    Configuration:
+        - The Redis server URL should be specified in the Flask application's
+        configuration under the key "REDIS_URL".
+        - The worker can be further customized, see https://python-rq.org/docs/workers/        
+    """
+
     redis_url = flask.current_app.config.get("REDIS_URL")
     redis_connection = redis.from_url(redis_url)
     worker = Worker(
