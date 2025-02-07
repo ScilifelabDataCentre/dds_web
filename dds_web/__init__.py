@@ -309,7 +309,7 @@ def create_app(testing=False, database_uri=None):
             monitor_usage,
             update_unit_sto4,
             update_unit_quota,
-            run_worker,
+            run_redis_worker,
         )
 
         # Add flask commands - general
