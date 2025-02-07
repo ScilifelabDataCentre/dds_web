@@ -18,7 +18,7 @@ import flask
 import flask_mail
 import sqlalchemy
 import botocore
-import redis
+from redis import Redis
 from rq import Worker
 
 # Own
@@ -1338,7 +1338,7 @@ def run_worker():
     """
 
     redis_url = flask.current_app.config.get("REDIS_URL")
-    redis_connection = redis.from_url(redis_url)
+    redis_connection = Redis.from_url(redis_url)
     worker = Worker(
         ["default"], connection=redis_connection, name="redis-queue"
     )  # if no name, it wil be random
