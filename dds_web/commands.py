@@ -1323,9 +1323,9 @@ def monitor_usage():
             dds_web.utils.send_email_with_retry(msg=msg)
 
 
-@click.command("run-worker")
+@click.command("run-redis-worker")
 @flask.cli.with_appcontext
-def run_worker():
+def run_redis_worker():
     """
     This function initializes a worker that connects to a Redis server using the
     URL specified in the Flask application's configuration. The worker listens to
