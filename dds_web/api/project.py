@@ -781,7 +781,7 @@ class RemoveContents(flask_restful.Resource):
         job = q.enqueue(self.delete_project_contents, project.public_id)
 
         # OLD
-        # self.delete_project_contents(project=project)
+        # self.delete_project_contents(project_id=project.public_id)
 
         # TODO - return job id to client to check status of deletion
         return {"removed": True}
@@ -812,6 +812,8 @@ class RemoveContents(flask_restful.Resource):
                     models.Version.time_deleted.is_(None),
                 )
             ).update({"time_deleted": dds_web.utils.current_time()})
+
+            db.session.commit()
         except (
             sqlalchemy.exc.SQLAlchemyError,
             sqlalchemy.exc.OperationalError,
