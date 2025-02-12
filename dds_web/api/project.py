@@ -752,7 +752,6 @@ class RemoveContents(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @dbsession
     @handle_validation_errors
     def delete(self):
         """Removes all project contents."""
@@ -780,13 +779,11 @@ class RemoveContents(flask_restful.Resource):
         # Enqueue job to delete project contents
         job = q.enqueue(self.delete_project_contents, project.public_id)
 
-        # OLD
-        # self.delete_project_contents(project_id=project.public_id)
-
         # TODO - return job id to client to check status of deletion
         return {"removed": True}
 
     @staticmethod
+    @dbsession
     def delete_project_contents(project_id, delete_bucket=False):
         """Remove project contents"""
         # Get project
@@ -813,7 +810,6 @@ class RemoveContents(flask_restful.Resource):
                 )
             ).update({"time_deleted": dds_web.utils.current_time()})
 
-            db.session.commit()
         except (
             sqlalchemy.exc.SQLAlchemyError,
             sqlalchemy.exc.OperationalError,

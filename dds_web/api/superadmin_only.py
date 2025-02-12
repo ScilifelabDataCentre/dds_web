@@ -14,8 +14,6 @@ from flask_restful import inputs
 import flask
 import structlog
 import flask_mail
-from rq import Queue
-from redis import Redis
 
 # Own modules
 from dds_web import auth, db, mail
@@ -152,11 +150,6 @@ class SendMOTD(flask_restful.Resource):
     def post(self):
         """Send MOTD as email to users."""
 
-        # Get redis connection and queue
-        redis_url = flask.current_app.config.get("REDIS_URL")
-        r = Redis.from_url(redis_url)
-        q = Queue(connection=r)
-
         # Get request info
         request_json = flask.request.get_json(silent=True)  # Verified by json_required
         # Get MOTD ID
@@ -211,9 +204,6 @@ class SendMOTD(flask_restful.Resource):
                         ["Content-ID", "<Logo>"],
                     ],
                 )
-
-                # Send email in a queue to avoid blocking the API
-                # job = q.enqueue(utils.send_email_with_queue, msg)
 
                 # This funcion cannot be enqued because the connection object is not pickable
                 utils.send_email_with_retry(msg=msg, obj=conn)
