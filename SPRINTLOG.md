@@ -481,4 +481,4 @@ _Nothing merged during this sprint_
 
 # 2024-02-03 - 2025-02-14
 
-- POC for Redis Queue ([#1591](https://github.com/ScilifelabDataCentre/dds_web/pull/1591))
+- Implementation of a Redis Queue to process aynschronus some requests and avoid timeouts, and enque the function to delete all the contents of a project([#1591](https://github.com/ScilifelabDataCentre/dds_web/pull/1591))
