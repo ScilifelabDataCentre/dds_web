@@ -500,6 +500,7 @@ def send_email_with_retry(msg, times_retried=0, obj=None):
             retry = times_retried + 1
             send_email_with_retry(msg, times_retried=retry, obj=obj)
 
+
 def create_one_time_password_email(user, hotp_value):
     """Create HOTP email."""
     msg = flask_mail.Message(
