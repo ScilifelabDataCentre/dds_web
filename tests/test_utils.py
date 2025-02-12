@@ -760,33 +760,6 @@ def test_send_project_access_reset_email(client):
 # send email functions
 
 
-def test_send_email_for_queue(client):
-    """Send email for the queue function - ok first try."""
-    # Get email row
-    email_row: models.Email = db.session.query(models.Email).first()
-
-    # Run function
-    with patch("dds_web.utils.mail.send"):
-        response = utils.send_email_for_queue(msg=email_row)
-    assert response is None
-
-
-def test_send_email_for_queue_exception(client):
-    """Send email for the queue function - exception on the 1st try."""
-
-    import smtplib
-
-    side_effect = [smtplib.SMTPException, None]  # Exception on the first try, second try is ok
-
-    # Get email row
-    email_row: models.Email = db.session.query(models.Email).first()
-
-    # Run function
-    with patch("dds_web.utils.mail.send", side_effect=side_effect):
-        response = utils.send_email_for_queue(msg=email_row)
-    assert response is None
-
-
 def test_send_email_with_retry(client):
     """Send email with retry ok first try."""
     # Get email row
