@@ -319,6 +319,7 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(update_unit_quota)
         app.cli.add_command(update_uploaded_file_with_log)
         app.cli.add_command(lost_files_s3_db)
+        app.cli.add_command(run_redis_worker)
 
         # Add flask commands - cronjobs
         app.cli.add_command(set_available_to_expired)
@@ -328,7 +329,6 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(send_usage)
         app.cli.add_command(collect_stats)
         app.cli.add_command(monitor_usage)
-        app.cli.add_command(run_redis_worker)
 
         # Make version available inside jinja templates:
         @app.template_filter("dds_version")

@@ -2092,10 +2092,6 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
         assert "There was an error in the cronjob 'send-usage'" in outbox[-1].body
 
 
-def dummy_func():
-    pass
-
-
 ## run-worker
 def test_run_redis__worker(client, cli_runner):
     """Test that starts the redis workers"""
