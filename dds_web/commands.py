@@ -163,8 +163,15 @@ def create_new_unit(
 @click.option("--sto4-name", "-sn", type=str, required=True)
 @click.option("--sto4-access", "-sa", type=str, required=True)
 @click.option("--sto4-secret", "-ss", type=str, required=True)
+@click.option(
+    "--skip-timestamp",
+    "-st",
+    is_flag=True,
+    default=False,
+    help="Skip updating the sto4_start_time timestamp",
+)
 @flask.cli.with_appcontext
-def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret):
+def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret, skip_timestamp):
     """Update unit sto4 storage info."""
     # Imports
     import rich.prompt
@@ -188,7 +195,8 @@ def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret
             return
 
     # Set sto4 info
-    unit.sto4_start_time = current_time()
+    if not skip_timestamp:  # Update timestamp by default unless explicitly skipped
+        unit.sto4_start_time = current_time()
     unit.sto4_endpoint = sto4_endpoint
     unit.sto4_name = sto4_name
     unit.sto4_access = sto4_access
