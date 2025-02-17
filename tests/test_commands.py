@@ -2089,3 +2089,149 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
             == outbox[-1].subject
         )
         assert "There was an error in the cronjob 'send-usage'" in outbox[-1].body
+
+
+def test_update_unit_sto4_skip_timestamp(cli_test_app, client, setup_database):
+    """Test that --skip-timestamp flag prevents timestamp update."""
+    from dds_web.database import models
+    from dds_web import db
+    import datetime
+    from unittest.mock import patch
+    import rich.prompt
+
+    # Get an existing unit instead of creating a new one
+    unit = models.Unit.query.first()
+    original_time = datetime.datetime(2024, 1, 1)
+
+    # Update the existing unit with sto4 info
+    unit.sto4_start_time = original_time
+    unit.sto4_endpoint = "old-endpoint"
+    unit.sto4_name = "old-name"
+    unit.sto4_access = "old-access"
+    unit.sto4_secret = "old-secret"
+    db.session.commit()
+
+    # Mock the confirmation prompt to return True
+    with patch.object(rich.prompt.Confirm, "ask", return_value=True):
+        # Run command with --skip-timestamp
+        runner = cli_test_app.test_cli_runner()
+        result = runner.invoke(
+            args=[
+                "update-unit-sto4",
+                "--unit-id",
+                unit.public_id,
+                "--sto4-endpoint",
+                "new-endpoint",
+                "--sto4-name",
+                "new-name",
+                "--sto4-access",
+                "new-access",
+                "--sto4-secret",
+                "new-secret",
+                "--skip-timestamp",
+            ]
+        )
+
+        assert result.exit_code == 0
+
+        # Verify timestamp unchanged but other fields updated
+        updated_unit = models.Unit.query.filter_by(public_id=unit.public_id).one()
+        assert updated_unit.sto4_start_time == original_time
+        assert updated_unit.sto4_endpoint == "new-endpoint"
+        assert updated_unit.sto4_name == "new-name"
+
+
+def test_update_unit_sto4_default_behavior(cli_test_app, client, setup_database):
+    """Test that timestamp is updated by default when skip-timestamp is not used."""
+    from dds_web.database import models
+    from dds_web import db
+    from dds_web.utils import current_time
+    import datetime
+    from unittest.mock import patch
+    import rich.prompt
+
+    # Get an existing unit
+    unit = models.Unit.query.first()
+    original_time = datetime.datetime(2024, 1, 1)
+
+    # Set initial sto4 info
+    unit.sto4_start_time = original_time
+    unit.sto4_endpoint = "old-endpoint"
+    unit.sto4_name = "old-name"
+    unit.sto4_access = "old-access"
+    unit.sto4_secret = "old-secret"
+    db.session.commit()
+
+    # Mock the confirmation prompt to return True
+    with patch.object(rich.prompt.Confirm, "ask", return_value=True):
+        # Run command without --skip-timestamp
+        runner = cli_test_app.test_cli_runner()
+        result = runner.invoke(
+            args=[
+                "update-unit-sto4",
+                "--unit-id",
+                unit.public_id,
+                "--sto4-endpoint",
+                "new-endpoint",
+                "--sto4-name",
+                "new-name",
+                "--sto4-access",
+                "new-access",
+                "--sto4-secret",
+                "new-secret",
+            ]
+        )
+
+        assert result.exit_code == 0
+
+        # Verify timestamp is updated along with other fields
+        updated_unit = models.Unit.query.filter_by(public_id=unit.public_id).one()
+        assert updated_unit.sto4_start_time != original_time  # Timestamp should change
+        assert updated_unit.sto4_endpoint == "new-endpoint"
+        assert updated_unit.sto4_name == "new-name"
+
+
+def test_update_unit_sto4_warning_prompt(cli_test_app, client, setup_database):
+    """Test that warning prompt works correctly with skip-timestamp flag."""
+    from dds_web.database import models
+    from dds_web import db
+    import datetime
+    from unittest.mock import patch
+    import rich.prompt
+
+    # Get an existing unit
+    unit = models.Unit.query.first()
+    original_time = datetime.datetime(2024, 1, 1)
+    original_endpoint = "old-endpoint"
+
+    # Set initial sto4 info
+    unit.sto4_start_time = original_time
+    unit.sto4_endpoint = original_endpoint
+    db.session.commit()
+
+    # Mock the confirmation prompt to return False (user cancels)
+    with patch.object(rich.prompt.Confirm, "ask", return_value=False):
+        runner = cli_test_app.test_cli_runner()
+        result = runner.invoke(
+            args=[
+                "update-unit-sto4",
+                "--unit-id",
+                unit.public_id,
+                "--sto4-endpoint",
+                "new-endpoint",
+                "--sto4-name",
+                "new-name",
+                "--sto4-access",
+                "new-access",
+                "--sto4-secret",
+                "new-secret",
+                "--skip-timestamp",
+            ]
+        )
+
+        assert result.exit_code == 0
+
+        # Verify nothing changed when user cancels
+        updated_unit = models.Unit.query.filter_by(public_id=unit.public_id).one()
+        assert updated_unit.sto4_start_time == original_time
+        assert updated_unit.sto4_endpoint == original_endpoint
