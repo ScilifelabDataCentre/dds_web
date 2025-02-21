@@ -756,6 +756,7 @@ def test_send_project_access_reset_email(client):
         )
     assert response is None
 
+
 # is_safe_url - not tested
 # def test_is_safe_url(client):
 #     """Check if url is safe to redirect to."""
