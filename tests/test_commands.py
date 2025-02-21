@@ -2095,18 +2095,17 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
 ## run-worker
 def test_restart_redis__worker(client, cli_runner, mock_queue_redis):
     """Test that starts the redis workers"""
-    from rq import Worker
 
-    with patch("redis.client.Redis.from_url") as mock_redis:
-        with patch("dds_web.commands.Worker") as mock_worker:
+    from rq.command import send_shutdown_command
 
-            # Mock Redis and Worker objects to avoid generating a connection to Redis
-            mock_redis_instance = MagicMock()
-            mock_redis.return_value = mock_redis_instance
-            mock_worker_instance = MagicMock()
-            mock_worker.return_value = mock_worker_instance
+    with patch("dds_web.commands.Worker.all") as mock_get_all:
+        with patch("dds_web.commands.send_shutdown_command"):
+            with patch("dds_web.commands.Worker") as mock_worker:
 
-            cli_runner.invoke(restart_redis_worker)
+                mock_get_all.return_value = [MagicMock(name="worker1"), MagicMock(name="worker2")]
+                mock_worker_instance = MagicMock()
+                mock_worker.return_value = mock_worker_instance
 
-            mock_redis.assert_called_once()
-            mock_worker_instance.work.assert_called_once()  # work method called
+                cli_runner.invoke(restart_redis_worker)
+
+                mock_worker_instance.work.assert_called_once()  # work method called
