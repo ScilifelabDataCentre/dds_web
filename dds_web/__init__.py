@@ -9,6 +9,7 @@ import logging
 import pathlib
 import sys
 import os
+import multiprocessing
 
 # Installed
 import flask
@@ -21,6 +22,8 @@ import flask_mail
 import flask_login
 import flask_migrate
 import rq_dashboard
+from redis import Redis
+from rq import Worker
 
 # import flask_qrcode
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -294,6 +297,18 @@ def create_app(testing=False, database_uri=None):
             client_kwargs={"scope": "openid profile email"},
         )
 
+        # Redis Worker needs to run as its own process, we initialize it here.
+        # If some worker was already running, it will not be started again.
+        redis_url = app.config.get("REDIS_URL")
+        redis_connection = Redis.from_url(redis_url)
+
+        workers = Worker.all(redis_connection)
+        if not workers:
+            worker = Worker(["default"], connection=redis_connection)
+            worker.log = app.logger
+            p = multiprocessing.Process(target=worker.work, daemon=True)
+            p.start()
+
         # Import flask commands - all
         from dds_web.commands import (
             fill_db_wrapper,
@@ -309,7 +324,7 @@ def create_app(testing=False, database_uri=None):
             monitor_usage,
             update_unit_sto4,
             update_unit_quota,
-            run_redis_worker,
+            restart_redis_worker,
         )
 
         # Add flask commands - general
@@ -319,7 +334,7 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(update_unit_quota)
         app.cli.add_command(update_uploaded_file_with_log)
         app.cli.add_command(lost_files_s3_db)
-        app.cli.add_command(run_redis_worker)
+        app.cli.add_command(restart_redis_worker)
 
         # Add flask commands - cronjobs
         app.cli.add_command(set_available_to_expired)

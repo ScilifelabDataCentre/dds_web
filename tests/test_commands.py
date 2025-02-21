@@ -39,7 +39,7 @@ from dds_web.commands import (
     update_unit_sto4,
     update_unit_quota,
     send_usage,
-    run_redis_worker,
+    restart_redis_worker,
 )
 from dds_web.database import models
 from dds_web import db, mail
@@ -2106,7 +2106,7 @@ def test_run_redis__worker(client, cli_runner):
             mock_worker_instance = MagicMock()
             mock_worker.return_value = mock_worker_instance
 
-            cli_runner.invoke(run_redis_worker)
+            cli_runner.invoke(restart_redis_worker)
 
             mock_redis.assert_called_once()
             mock_worker_instance.work.assert_called_once()  # work method called
