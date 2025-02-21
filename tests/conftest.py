@@ -477,15 +477,14 @@ def add_data_to_db():
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_redis_init():
-    """Fixture to mock Redis and RQ's BaseWorker.all method to avoid connection to Redis
-    when initializing the app."""
+    """Fixture to mock the starting of Redis Queue Worker when initializing the app."""
 
     with unittest.mock.patch("redis.client.Redis.from_url"):
-        with unittest.mock.patch("dds_web.Worker.all") as mock_get_all:
-            with unittest.mock.patch("dds_web.Worker"):
-                mock_get_all.return_value = None
-
-                yield
+        with unittest.mock.patch("dds_web.Worker"):
+            with unittest.mock.patch("dds_web.Worker.all") as mock_get_all:
+                with unittest.mock.patch("multiprocessing.Process"):
+                    mock_get_all.return_value = None  # No previous workers
+                    yield
 
 
 @pytest.fixture(scope="session", autouse=True)

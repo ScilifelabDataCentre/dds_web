@@ -2096,15 +2096,15 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
 def test_restart_redis__worker(client, cli_runner, mock_queue_redis):
     """Test that starts the redis workers"""
 
-    from rq.command import send_shutdown_command
+    with patch("dds_web.commands.Worker") as mock_worker:
+        with patch("dds_web.commands.Worker.all") as mock_get_all:
+            with patch("dds_web.commands.send_shutdown_command") as mock_send_shutdown_command:
 
-    with patch("dds_web.commands.Worker.all") as mock_get_all:
-        with patch("dds_web.commands.send_shutdown_command"):
-            with patch("dds_web.commands.Worker") as mock_worker:
-
-                mock_get_all.return_value = [MagicMock(name="worker1"), MagicMock(name="worker2")]
                 mock_worker_instance = MagicMock()
                 mock_worker.return_value = mock_worker_instance
+                mock_send_shutdown_command.return_value = MagicMock()
+
+                mock_get_all.return_value = [MagicMock(name="worker1"), MagicMock(name="worker2")]
 
                 cli_runner.invoke(restart_redis_worker)
 
