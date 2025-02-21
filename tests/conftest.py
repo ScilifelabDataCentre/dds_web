@@ -476,7 +476,27 @@ def add_data_to_db():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_database():
+def mock_redis_init():
+    """Fixture to mock Redis and RQ's BaseWorker.all method to avoid connection to Redis
+    when initializing the app."""
+
+    with unittest.mock.patch("redis.client.Redis.from_url") as mock_redis:
+        with unittest.mock.patch("rq.worker.BaseWorker.all") as mock_get_all:
+            with unittest.mock.patch("dds_web.Worker") as mock_worker:
+                # Mock Redis to avoid generating a connection to Redis
+                mock_redis_instance = unittest.mock.MagicMock()
+                mock_redis.return_value = mock_redis_instance
+
+                mock_get_all.return_value = None
+
+                mock_worker_instance = unittest.mock.MagicMock()
+                mock_worker.return_value = mock_worker_instance
+
+                yield
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_database(mock_redis_init):
     print("setup_database is called")
     # Create database specific for tests
     if not database_exists(DATABASE_URI_BASE):

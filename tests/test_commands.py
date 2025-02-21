@@ -2093,7 +2093,7 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
 
 
 ## run-worker
-def test_run_redis__worker(client, cli_runner):
+def test_restart_redis__worker(client, cli_runner, mock_queue_redis):
     """Test that starts the redis workers"""
     from rq import Worker
 
