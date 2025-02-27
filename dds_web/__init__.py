@@ -362,7 +362,6 @@ def create_app(testing=False, database_uri=None):
                 p = multiprocessing.Process(target=worker.work, daemon=True)
                 p.start()
 
-
             # base url for the api documentation
             SWAGGER_URL_1 = "/api/documentation/v1"
             SWAGGER_URL_3 = "/api/documentation/v3"
