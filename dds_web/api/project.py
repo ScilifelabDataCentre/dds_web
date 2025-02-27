@@ -753,6 +753,7 @@ class RemoveContents(flask_restful.Resource):
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
     @handle_validation_errors
+    @dbsession
     def delete(self):
         """Removes all project contents."""
         # Verify project ID and access

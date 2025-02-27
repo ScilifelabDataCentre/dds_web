@@ -297,18 +297,6 @@ def create_app(testing=False, database_uri=None):
             client_kwargs={"scope": "openid profile email"},
         )
 
-        # Redis Worker needs to run as its own process, we initialize it here.
-        # If some worker was already running, it will not be started again.
-        redis_url = app.config.get("REDIS_URL")
-        redis_connection = Redis.from_url(redis_url)
-
-        workers = Worker.all(redis_connection)
-        if not workers:
-            worker = Worker(["default"], connection=redis_connection)
-            worker.log = app.logger
-            p = multiprocessing.Process(target=worker.work, daemon=True)
-            p.start()
-
         # Import flask commands - all
         from dds_web.commands import (
             fill_db_wrapper,
@@ -361,6 +349,19 @@ def create_app(testing=False, database_uri=None):
             from dds_web.web.root import pages
             from dds_web.web.user import auth_blueprint
             from flask_swagger_ui import get_swaggerui_blueprint
+
+            # Redis Worker needs to run as its own process, we initialize it here.
+            # If some worker was already running, it will not be started again.
+            redis_url = app.config.get("REDIS_URL")
+            redis_connection = Redis.from_url(redis_url)
+
+            workers = Worker.all(redis_connection)
+            if not workers:
+                worker = Worker(["default"], connection=redis_connection)
+                worker.log = app.logger
+                p = multiprocessing.Process(target=worker.work, daemon=True)
+                p.start()
+
 
             # base url for the api documentation
             SWAGGER_URL_1 = "/api/documentation/v1"
