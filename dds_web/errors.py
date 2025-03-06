@@ -420,3 +420,10 @@ class MaintenanceOngoingException(LoggedHTTPException):
     def __init__(self, message="Maintenance of DDS is ongoing."):
         """Inform that maintenance is ongoing."""
         super().__init__(message)
+
+
+class InvalidJobIdError(LoggedHTTPException):
+    code = http.HTTPStatus.BAD_REQUEST
+
+    def __init__(self, message="Invalid job id."):
+        super().__init__(message)

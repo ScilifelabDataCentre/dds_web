@@ -524,3 +524,12 @@ def test_VersionMismatchError(client: flask.testing.FlaskClient) -> None:
     with pytest.raises(errors.VersionMismatchError) as err3:
         raise errors.VersionMismatchError(message=alternative_error)
     assert str(err3.value) == f"{error_start}{alternative_error}"
+
+
+def test_InvalidJobIdError(client: flask.testing.FlaskClient) -> None:
+    error_start = f"{http.HTTPStatus.BAD_REQUEST} Bad Request: "
+    original_error = "Invalid job id."
+
+    with pytest.raises(errors.InvalidJobIdError) as err1:
+        raise errors.InvalidJobIdError(message=original_error)
+    assert str(err1.value) == f"{error_start}{original_error}"
