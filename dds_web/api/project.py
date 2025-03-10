@@ -781,7 +781,8 @@ class RemoveContents(flask_restful.Resource):
         job = q.enqueue(self.delete_project_contents, project.public_id)
 
         # TODO - return job id to client to check status of deletion
-        return {"removed": True}
+        msg = "Data deletion has started. This might take some time. The DDS is handling this in the background."
+        return {"removed": True, "message": msg}
 
     @staticmethod
     @dbsession

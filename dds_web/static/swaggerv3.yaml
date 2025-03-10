@@ -831,8 +831,13 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{removed: true}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Data deletion has started. This might take some time. The DDS is handling this in the background. # yamllint disable-line
+                  removed:
+                    type: boolean
   /proj/public:
     get:
       tags:
