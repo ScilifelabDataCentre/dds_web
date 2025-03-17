@@ -14,6 +14,8 @@ from flask_restful import inputs
 import flask
 import structlog
 import flask_mail
+from rq import Queue
+from redis import Redis
 
 # Own modules
 from dds_web import auth, db, mail
@@ -179,40 +181,43 @@ class SendMOTD(flask_restful.Resource):
         body: str = flask.render_template(f"mail/motd.txt", motd=motd_obj.message)
         html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
 
-        # Setup email connection
-        with mail.connect() as conn:
-            # Email users
-            for user in utils.page_query(users_to_send):
-                primary_email = user.primary_email
-                if not primary_email:
-                    flask.current_app.logger.warning(
-                        f"No primary email found for user '{user.username}'."
-                    )
-                    continue
-                msg = flask_mail.Message(
-                    subject=subject, recipients=[primary_email], body=body, html=html
-                )
-                msg.attach(
-                    "scilifelab_logo.png",
-                    "image/png",
-                    open(
-                        os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"),
-                        "rb",
-                    ).read(),
-                    "inline",
-                    headers=[
-                        ["Content-ID", "<Logo>"],
-                    ],
-                )
+        # Get redis connection to add a job to delete project contents
+        redis_url = flask.current_app.config.get("REDIS_URL")
+        r = Redis.from_url(redis_url)
+        q = Queue(connection=r)
 
-                # This funcion cannot be enqued because the connection object is not pickable
-                utils.send_email_with_retry(msg=msg, obj=conn)
+        # Email users
+        for user in utils.page_query(users_to_send):
+            primary_email = user.primary_email
+            if not primary_email:
+                flask.current_app.logger.warning(
+                    f"No primary email found for user '{user.username}'."
+                )
+                continue
+            msg = flask_mail.Message(
+                subject=subject, recipients=[primary_email], body=body, html=html
+            )
+            msg.attach(
+                "scilifelab_logo.png",
+                "image/png",
+                open(
+                    os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"),
+                    "rb",
+                ).read(),
+                "inline",
+                headers=[
+                    ["Content-ID", "<Logo>"],
+                ],
+            )
 
-        return_msg = f"MOTD '{motd_id}' has been "
+            # Enqueue function to send the email
+            job = q.enqueue(utils.send_email_with_retry, msg)
+
+        return_msg = f"MOTD '{motd_id}' has been scheduled"
         if unit_only:
-            return_msg += "sent to unit personnel only."
+            return_msg += " to unit personnel only."
         else:
-            return_msg += "sent to all users."
+            return_msg += " to all users."
         return {"message": return_msg}
 
 
