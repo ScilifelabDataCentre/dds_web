@@ -482,3 +482,7 @@ _Nothing merged during this sprint_
 # 2024-02-03 - 2025-02-14
 
 - Implement Redis Queue to process some requests asynschronusly and avoid timeouts. Set project deletion as a background task. ([#1591](https://github.com/ScilifelabDataCentre/dds_web/pull/1591))
+
+# 2025-03-17 – 2025-02-28
+
+- Adapted Message of the Day function to work asynchronous using the Redis Queue. ([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))
