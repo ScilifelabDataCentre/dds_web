@@ -15,6 +15,8 @@ import sqlalchemy
 import datetime
 import botocore
 import marshmallow
+from rq import Queue
+from redis import Redis
 
 # Own modules
 import dds_web.utils
@@ -479,7 +481,9 @@ class ProjectStatus(flask_restful.Resource):
 
         try:
             # Deletes files (also commits session in the function - possibly refactor later)
-            RemoveContents().delete_project_contents(project=project, delete_bucket=True)
+            RemoveContents().delete_project_contents(
+                project_id=project.public_id, delete_bucket=True
+            )
             self.rm_project_user_keys(project=project)
 
             # Delete metadata from project row
@@ -519,7 +523,9 @@ class ProjectStatus(flask_restful.Resource):
 
         try:
             # Deletes files (also commits session in the function - possibly refactor later)
-            RemoveContents().delete_project_contents(project=project, delete_bucket=True)
+            RemoveContents().delete_project_contents(
+                project_id=project.public_id, delete_bucket=True
+            )
             delete_message = f"\nAll files in {project.public_id} deleted"
             self.rm_project_user_keys(project=project)
 
@@ -746,8 +752,8 @@ class RemoveContents(flask_restful.Resource):
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel"])
     @logging_bind_request
-    @dbsession
     @handle_validation_errors
+    @dbsession
     def delete(self):
         """Removes all project contents."""
         # Verify project ID and access
@@ -765,13 +771,26 @@ class RemoveContents(flask_restful.Resource):
             )
 
         # Delete project contents from db and cloud
-        self.delete_project_contents(project=project)
 
-        return {"removed": True}
+        # Get redis connection to add a job to delete project contents
+        redis_url = flask.current_app.config.get("REDIS_URL")
+        r = Redis.from_url(redis_url)
+        q = Queue(connection=r)
+
+        # Enqueue job to delete project contents
+        job = q.enqueue(self.delete_project_contents, project.public_id)
+
+        # TODO - return job id to client to check status of deletion
+        msg = "Data deletion has started. This might take some time. The DDS is handling this in the background."
+        return {"removed": True, "message": msg}
 
     @staticmethod
-    def delete_project_contents(project, delete_bucket=False):
+    @dbsession
+    def delete_project_contents(project_id, delete_bucket=False):
         """Remove project contents"""
+        # Get project
+        project: models.Project = models.Project.query.filter_by(public_id=project_id).one_or_none()
+
         # Delete from cloud
         with ApiS3Connector(project=project) as s3conn:
             try:
@@ -792,6 +811,7 @@ class RemoveContents(flask_restful.Resource):
                     models.Version.time_deleted.is_(None),
                 )
             ).update({"time_deleted": dds_web.utils.current_time()})
+
         except (
             sqlalchemy.exc.SQLAlchemyError,
             sqlalchemy.exc.OperationalError,
