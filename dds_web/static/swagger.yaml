@@ -875,6 +875,14 @@ paths:
           $ref: "#/components/responses/UnauthorizedToken"
         "400":
           $ref: "#/components/responses/BadRequest"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There are no project contents to delete.
         "500":
           $ref: "#/components/responses/InternalServerlError"
         "200":
@@ -882,8 +890,13 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "{removed: true}"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Data deletion has started. This might take some time. The DDS is handling this in the background. # yamllint disable-line
+                  removed:
+                    type: boolean
   /proj/public:
     get:
       tags:

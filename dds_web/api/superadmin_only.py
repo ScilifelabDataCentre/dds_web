@@ -149,6 +149,7 @@ class SendMOTD(flask_restful.Resource):
     @handle_db_error
     def post(self):
         """Send MOTD as email to users."""
+
         # Get request info
         request_json = flask.request.get_json(silent=True)  # Verified by json_required
         # Get MOTD ID
@@ -203,7 +204,8 @@ class SendMOTD(flask_restful.Resource):
                         ["Content-ID", "<Logo>"],
                     ],
                 )
-                # Send email
+
+                # This funcion cannot be enqued because the connection object is not pickable
                 utils.send_email_with_retry(msg=msg, obj=conn)
 
         return_msg = f"MOTD '{motd_id}' has been "
@@ -211,7 +213,6 @@ class SendMOTD(flask_restful.Resource):
             return_msg += "sent to unit personnel only."
         else:
             return_msg += "sent to all users."
-
         return {"message": return_msg}
 
 

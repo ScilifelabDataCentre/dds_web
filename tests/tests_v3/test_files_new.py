@@ -751,7 +751,7 @@ def test_upload_move_available_delete_file(client, boto3_session):
     )
 
 
-def test_upload_and_remove_all_project_contents(client, boto3_session):
+def test_upload_and_remove_all_project_contents(client, boto3_session, mock_queue_redis):
     """Upload and then delete all project contents"""
 
     project_1 = project_row(project_id="file_testing_project")
@@ -991,7 +991,7 @@ def test_new_file_wrong_status(client):
     assert "Project not in right status to upload/modify files" in response.json.get("message")
 
 
-def test_delete_contents_and_upload_again(client, boto3_session):
+def test_delete_contents_and_upload_again(client, boto3_session, mock_queue_redis):
     """Upload and then delete all project contents"""
 
     project_1 = project_row(project_id="file_testing_project")

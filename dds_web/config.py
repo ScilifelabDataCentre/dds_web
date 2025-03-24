@@ -64,6 +64,10 @@ class Config(object):
         "RATELIMIT_STORAGE_URI", "memory://"
     )  # Use in devel only! Use Redis or memcached in prod
 
+    # Redis
+    REDIS_URL = "redis://dds_redis"  # In production the URL also has a password and it's the same as RATELIMIT_STORAGE_URI
+    RQ_DASHBOARD_REDIS_URL = REDIS_URL
+
     INVITATION_EXPIRES_IN_HOURS = 7 * 24
 
     # Argon2id settings
