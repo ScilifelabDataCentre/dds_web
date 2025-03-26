@@ -213,16 +213,12 @@ class SendMOTD(flask_restful.Resource):
             # Enqueue function to send the email
             job = q.enqueue(utils.send_email_with_retry, msg)
 
-               if unit_only:
-            recipients = "unit personnel"
-        else:
-            recipients = "all users"
-            
+            if unit_only:
+                recipients = "unit personnel"
+            else:
+                recipients = "all users"
+
         return_msg = f"Email notification #{motd_id} is scheduled for delivery to {recipients}"
-        if unit_only:
-            return_msg += " to unit personnel only."
-        else:
-            return_msg += " to all users."
         return {"message": return_msg}
 
 
