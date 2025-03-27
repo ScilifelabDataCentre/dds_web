@@ -16,7 +16,6 @@ import datetime
 import botocore
 import marshmallow
 from rq import Queue
-from rq import Callback
 from redis import Redis
 
 # Own modules
