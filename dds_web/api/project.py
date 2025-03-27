@@ -554,6 +554,7 @@ class ProjectStatus(flask_restful.Resource):
                 self.archive_project_queue_delete_contents,
                 project_id=project.public_id,  # It is not possible to pass the project object directly to the queue
             )
+
             job_update_db = q.enqueue(
                 self.archive_project_queue_update_db,
                 project_id=project.public_id,
@@ -561,6 +562,7 @@ class ProjectStatus(flask_restful.Resource):
                 aborted=aborted,
                 depends_on=job_delete_contents,  # This job is only executed after success of delete contents
             )
+
             return None, ""  # Dummy returns to not break the main function
         else:
             try:
