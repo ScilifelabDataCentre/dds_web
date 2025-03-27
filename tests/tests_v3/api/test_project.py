@@ -460,8 +460,8 @@ def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, bo
     assert not project.project_user_keys
 
 
-def test_projectstatus_archived_project(module_client, boto3_session):
-    """Create a project and archive it"""
+def test_projectstatus_archived_project_no_queue(module_client, boto3_session):
+    """Create a project and archive it - no queue function"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -564,6 +564,56 @@ def test_projectstatus_aborted_project(module_client, boto3_session):
         if field in fields_set_to_null:
             assert not value
     assert len(project.researchusers) == 0
+
+
+def test_projectstatus_archived_project_queue(module_client, boto3_session, mock_queue_redis):
+    """Create a project and archive it - queue function"""
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    project_id = response.json.get("project_id")
+    # add a file
+    response = module_client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json=FIRST_NEW_FILE,
+    )
+
+    project = project_row(project_id=project_id)
+
+    assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
+
+    json_data = {"new_status": "Archived", "is_queue_operation": True}
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json=json_data,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Archived"
+
+    assert not max(project.project_statuses, key=lambda x: x.date_created).is_aborted
+    assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
+    assert not project.project_user_keys
+
+    for field, value in vars(project).items():
+        if field in fields_set_to_null:
+            assert value
+    assert project.researchusers
 
 
 def test_projectstatus_abort_from_in_progress_once_made_available(module_client, boto3_session):
