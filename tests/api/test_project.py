@@ -512,10 +512,10 @@ def test_projectstatus_archived_project_no_queue(module_client, boto3_session):
     assert project.researchusers
 
 
-def test_projectstatus_archived_project_db_fail(
+def test_projectstatus_archived_project_db_fail_no_queue(
     module_client, boto3_session, capfd: LogCaptureFixture
 ):
-    """Create a project and archive it fails in DB update"""
+    """Create a project and archive it fails in DB update - no queue"""
 
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -603,6 +603,48 @@ def test_projectstatus_archived_project_queue(module_client, boto3_session, mock
         if field in fields_set_to_null:
             assert value
     assert project.researchusers
+
+
+def test_projectstatus_archived_project_db_fail_queue(
+    module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
+):
+    """Create a project and archive it fails in DB update - queue"""
+
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+
+    # change status and mock fail in DB operation
+    mock_query = MagicMock()
+    mock_query.filter.return_value.delete.side_effect = sqlalchemy.exc.OperationalError(
+        "OperationalError", "test", "sqlalchemy"
+    )
+    with patch("dds_web.database.models.File.query", mock_query):
+        json_data = {"new_status": "Archived", "is_queue_operation": True}
+        response = module_client.post(
+            tests.DDSEndpoint.PROJECT_STATUS,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+            query_string={"project": project_id},
+            json=json_data,
+        )
+
+    _, err = capfd.readouterr()
+    assert "DeletionError" in err
+    assert (
+        "Project bucket contents were deleted, but they were not deleted from the database. Please contact SciLifeLab Data Centre"
+        in err
+    )
 
 
 def test_projectstatus_aborted_project(module_client, boto3_session):
