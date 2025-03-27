@@ -646,6 +646,96 @@ def test_projectstatus_archived_project_db_fail_queue(
     )
 
 
+def test_projectstatus_archived_project_new_row_fail_no_queue(
+    module_client, boto3_session, capfd: LogCaptureFixture
+):
+    """Archiving fails when updating the project status row - no queue"""
+
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
+
+    with unittest.mock.patch("dds_web.db.session.commit") as mock_commit:
+        # we need this because the first time the commit function is called is when set_busy()
+        def side_effect_generator():
+            yield None  # set_busy()
+            yield None  # commit to update files in db
+            while True:
+                yield sqlalchemy.exc.SQLAlchemyError()  # Subsequent calls, exception
+
+        mock_commit.side_effect = side_effect_generator()
+
+        new_status = {"new_status": "Archived"}
+        response = module_client.post(
+            tests.DDSEndpoint.PROJECT_STATUS,
+            headers=token,
+            query_string={"project": project_id},
+            json=new_status,
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    _, err = capfd.readouterr()
+    assert "DatabaseError" in err
+
+
+def test_projectstatus_archived_project_new_row_fail_queue(
+    module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
+):
+    """Archiving fails when updating the project status row - using queue"""
+
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
+
+    with unittest.mock.patch("dds_web.db.session.commit") as mock_commit:
+        # we need this because the first time the commit function is called is when set_busy()
+        def side_effect_generator():
+            yield None  # set_busy()
+            yield None  # commit to update files in db
+            while True:
+                yield sqlalchemy.exc.SQLAlchemyError()  # Subsequent calls, exception
+
+        mock_commit.side_effect = side_effect_generator()
+
+        json_data = {"new_status": "Archived", "is_queue_operation": True}
+        response = module_client.post(
+            tests.DDSEndpoint.PROJECT_STATUS,
+            headers=token,
+            query_string={"project": project_id},
+            json=json_data,
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    _, err = capfd.readouterr()
+    assert "DatabaseError" in err
+
+
 def test_projectstatus_aborted_project(module_client, boto3_session):
     """Create a project and try to abort it"""
     # Create unit admins to allow project creation
