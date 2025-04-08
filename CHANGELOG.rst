@@ -1,6 +1,14 @@
 Changelog
 ==========
 
+.. _2.10.0:
+
+2.10.0 - 2025-04-08
+~~~~~~~~~~~~~~~~~~~~
+
+- 🚀 Features
+    - Implement Redis Queue for Async Requests & Project Deletion
+
 .. _2.9.0:
 
 2.9.0 - 2024-12-18
