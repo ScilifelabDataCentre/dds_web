@@ -14,6 +14,7 @@ import boto3
 from requests_mock.mocker import Mocker
 import requests_cache
 import click
+from rq.queue import Queue
 
 # Own
 from dds_web.database.models import (
@@ -475,7 +476,19 @@ def add_data_to_db():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_database():
+def mock_redis_init():
+    """Fixture to mock the starting of Redis Queue Worker when initializing the app."""
+
+    with unittest.mock.patch("redis.client.Redis.from_url"):
+        with unittest.mock.patch("dds_web.Worker"):
+            with unittest.mock.patch("dds_web.Worker.all") as mock_get_all:
+                with unittest.mock.patch("multiprocessing.Process"):
+                    mock_get_all.return_value = None  # No previous workers
+                    yield
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_database(mock_redis_init):
     print("setup_database is called")
     # Create database specific for tests
     if not database_exists(DATABASE_URI_BASE):
@@ -576,3 +589,43 @@ def cli_test_app():
 @pytest.fixture()
 def cli_runner(cli_test_app):
     return cli_test_app.test_cli_runner()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_enqueue():
+    """Fixture to mock RQ's enqueue method and bypass Redis queue."""
+
+    def _mock_enqueue(*args, **kwargs):
+
+        # Extract the function from args (RQ expects it to be the first argument)
+        f = args[0]
+        function_args = args[1:]  # Remaining args passed to function
+
+        # Call the function directly
+        f(*function_args, **kwargs)
+
+        # Return a mock job object
+        job = unittest.mock.MagicMock()
+        job.id = "mock-job-id"
+        return job
+
+    return _mock_enqueue  # Return function so it can be used in tests
+
+
+@pytest.fixture(scope="function")
+def mock_queue_redis(mock_enqueue):
+    """Fixture to mock RQ's Queue and parse_args."""
+
+    with unittest.mock.patch("redis.client.Redis.from_url") as mock_redis:
+        with unittest.mock.patch("rq.queue.Queue") as mock_queue:
+            with unittest.mock.patch.object(Queue, "enqueue") as mock_enqueue_func:
+
+                # Mock Redis and Queue objects to avoid generating a connection to Redis
+                mock_redis_instance = unittest.mock.MagicMock()
+                mock_redis.return_value = mock_redis_instance
+                mock_queue_instance = unittest.mock.MagicMock()
+                mock_queue.return_value = mock_queue_instance
+
+                # Mock the enqueue to call the function directly without actually enqueueing
+                mock_enqueue_func.side_effect = mock_enqueue
+                yield

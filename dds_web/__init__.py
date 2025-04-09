@@ -9,6 +9,7 @@ import logging
 import pathlib
 import sys
 import os
+import multiprocessing
 
 # Installed
 import flask
@@ -20,7 +21,9 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 import flask_mail
 import flask_login
 import flask_migrate
-
+import rq_dashboard
+from redis import Redis
+from rq import Worker
 
 # import flask_qrcode
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -198,6 +201,10 @@ def create_app(testing=False, database_uri=None):
         # User config file, if e.g. using in production
         app.config.from_envvar("DDS_APP_CONFIG", silent=True)
 
+        # redis dashboard
+        app.config.from_object(rq_dashboard.default_settings)
+        rq_dashboard.web.setup_rq_connection(app)
+
         # Test related configs
         if database_uri is not None:
             app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
@@ -305,6 +312,7 @@ def create_app(testing=False, database_uri=None):
             monitor_usage,
             update_unit_sto4,
             update_unit_quota,
+            restart_redis_worker,
         )
 
         # Add flask commands - general
@@ -314,6 +322,7 @@ def create_app(testing=False, database_uri=None):
         app.cli.add_command(update_unit_quota)
         app.cli.add_command(update_uploaded_file_with_log)
         app.cli.add_command(lost_files_s3_db)
+        app.cli.add_command(restart_redis_worker)
 
         # Add flask commands - cronjobs
         app.cli.add_command(set_available_to_expired)
@@ -340,6 +349,18 @@ def create_app(testing=False, database_uri=None):
             from dds_web.web.root import pages
             from dds_web.web.user import auth_blueprint
             from flask_swagger_ui import get_swaggerui_blueprint
+
+            # Redis Worker needs to run as its own process, we initialize it here.
+            # If some worker was already running, it will not be started again.
+            redis_url = app.config.get("REDIS_URL")
+            redis_connection = Redis.from_url(redis_url)
+
+            workers = Worker.all(redis_connection)
+            if not workers:
+                worker = Worker(["default"], connection=redis_connection)
+                worker.log = app.logger
+                p = multiprocessing.Process(target=worker.work, daemon=True)
+                p.start()
 
             # base url for the api documentation
             SWAGGER_URL_1 = "/api/documentation/v1"
@@ -374,6 +395,8 @@ def create_app(testing=False, database_uri=None):
             app.register_blueprint(swagger_ui_blueprint_v3, url_prefix=SWAGGER_URL_3, name="v3")
             app.register_blueprint(api_blueprint, url_prefix="/api/v1")
             app.register_blueprint(api_blueprint_v3, url_prefix="/api/v3")
+
+            app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
             app.register_blueprint(pages, url_prefix="")
             app.register_blueprint(auth_blueprint, url_prefix="")
 

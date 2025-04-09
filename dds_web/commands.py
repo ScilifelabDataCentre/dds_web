@@ -18,6 +18,9 @@ import flask
 import flask_mail
 import sqlalchemy
 import botocore
+from redis import Redis
+from rq import Worker
+from rq.command import send_shutdown_command
 
 # Own
 from dds_web import db
@@ -1319,3 +1322,30 @@ def monitor_usage():
                 body=message,
             )
             dds_web.utils.send_email_with_retry(msg=msg)
+
+
+@click.command("restart-redis-worker")
+@flask.cli.with_appcontext
+def restart_redis_worker():
+    """
+    This function restarts the redis worker intialized by the Flask application.
+    It will shutdown any existing workers and start a new one.
+    The Redis URL is specified in the Flask application's configuration.
+    The worker listens to the "default" queue and processes jobs from it.
+
+    Configuration:
+        - The Redis server URL should be specified in the Flask application's
+        configuration under the key "REDIS_URL".
+        - The worker can be further customized, see https://python-rq.org/docs/workers/
+    """
+
+    redis_url = flask.current_app.config.get("REDIS_URL")
+    redis_connection = Redis.from_url(redis_url)
+
+    workers = Worker.all(redis_connection)
+    for worker in workers:
+        send_shutdown_command(redis_connection, worker.name)  # Tells worker to shutdown
+
+    new_worker = Worker(["default"], connection=redis_connection)
+    new_worker.log = flask.current_app.logger
+    new_worker.work()

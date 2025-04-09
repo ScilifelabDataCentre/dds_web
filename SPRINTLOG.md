@@ -239,8 +239,8 @@ _Nothing merged during this sprint_
 
 # 2023-04-14 - 2023-04-28
 
-- Documentation: Minor update of Technical Overview ((#1411)[https://github.com/ScilifelabDataCentre/dds_web/pull/1411])
-- Documentation: Account roles and their permissions ((#1412)[https://github.com/ScilifelabDataCentre/dds_web/pull/1412])
+- Documentation: Minor update of Technical Overview ([#1411](https://github.com/ScilifelabDataCentre/dds_web/pull/1411))
+- Documentation: Account roles and their permissions ([#1412](https://github.com/ScilifelabDataCentre/dds_web/pull/1412))
 
 # 2023-05-26 - 2023-06-09
 
@@ -472,3 +472,17 @@ _Nothing merged during this sprint_
 # 2024-12-16 - 2024-12-20
 
 - New version: 2.9.0 ([#1584](https://github.com/ScilifelabDataCentre/dds_web/pull/1584))
+- Instructions regarding database migrations moved to migrations directory, and Linkspector action added to scan for incorrect links in MD ([#1576](https://github.com/ScilifelabDataCentre/dds_web/pull/1576))
+
+# 2025-12-20 - 2025-01-17
+
+- Make release template ([#1587](https://github.com/ScilifelabDataCentre/dds_web/pull/1587))
+- Fix codecov action ([#1589](https://github.com/ScilifelabDataCentre/dds_web/pull/1589))
+
+# 2025-02-03 - 2025-02-14
+
+- Implement Redis Queue to process some requests asynschronusly and avoid timeouts. Set project deletion as a background task. ([#1591](https://github.com/ScilifelabDataCentre/dds_web/pull/1591))
+
+# 2025-03-31 - 2025-04-11
+
+- New version: 2.10.0 ([#1597](https://github.com/ScilifelabDataCentre/dds_web/pull/1597))

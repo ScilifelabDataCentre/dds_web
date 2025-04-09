@@ -1,0 +1,18 @@
+# Linkspector: Verify links in MD files
+---
+name: Linkspector
+on: [pull_request]
+permissions:
+  pull-requests: write
+jobs:
+  check-links:
+    name: runner / linkspector
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run linkspector
+        uses: umbrelladocs/action-linkspector@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review
+          filter_mode: file
