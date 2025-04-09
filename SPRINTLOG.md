@@ -474,15 +474,16 @@ _Nothing merged during this sprint_
 - New version: 2.9.0 ([#1584](https://github.com/ScilifelabDataCentre/dds_web/pull/1584))
 - Instructions regarding database migrations moved to migrations directory, and Linkspector action added to scan for incorrect links in MD ([#1576](https://github.com/ScilifelabDataCentre/dds_web/pull/1576))
 
-# 2024-12-20 - 2025-01-17
+# 2025-12-20 - 2025-01-17
 
 - Make release template ([#1587](https://github.com/ScilifelabDataCentre/dds_web/pull/1587))
 - Fix codecov action ([#1589](https://github.com/ScilifelabDataCentre/dds_web/pull/1589))
 
-# 2024-02-03 - 2025-02-14
+# 2025-02-03 - 2025-02-14
 
-- Implement Redis Queue to process some requests asynschronusly and avoid timeouts. Set project deletion as a background task. ([#1591](https://github.com/ScilifelabDataCentre/dds_web/pull/1591))
+- Implement Redis Queue to process some requests asynschronusly and avoid timeouts. Set project deletion as a background task. ([#1591](https://github.com/ScilifelabDataCentre/dds_web/pull/1591)
 
-# 2025-03-17 – 2025-02-28
+# 2025-03-31 - 2025-04-11
 
+- New version: 2.10.0 ([#1597](https://github.com/ScilifelabDataCentre/dds_web/pull/1597))
 - Adapted Message of the Day function to work asynchronous using the Redis Queue. ([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))
