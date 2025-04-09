@@ -218,7 +218,7 @@ class SendMOTD(flask_restful.Resource):
             else:
                 recipients = "all users"
 
-        return_msg = f"Email notification #{motd_id} is scheduled for delivery to {recipients}"
+        return_msg = f"MOTD #{motd_id} is scheduled for delivery to {recipients}"
         return {"message": return_msg}
 
 
