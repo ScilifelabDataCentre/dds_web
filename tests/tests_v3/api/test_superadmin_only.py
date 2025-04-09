@@ -535,7 +535,7 @@ def test_send_motd_not_active(client: flask.testing.FlaskClient) -> None:
         assert mock_mail_send.call_count == 0
 
 
-def test_send_motd_no_primary_email(client: flask.testing.FlaskClient) -> None:
+def test_send_motd_no_primary_email(client: flask.testing.FlaskClient, mock_queue_redis) -> None:
     """Send a motd to all users."""
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
@@ -602,7 +602,7 @@ def test_send_motd_incorrect_type_unit_only(client: flask.testing.FlaskClient) -
         assert mock_mail_send.call_count == 0
 
 
-def test_send_motd_ok_all(client: flask.testing.FlaskClient) -> None:
+def test_send_motd_ok_all(client: flask.testing.FlaskClient, mock_queue_redis) -> None:
     """Send a motd to all users."""
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
@@ -632,7 +632,7 @@ def test_send_motd_ok_all(client: flask.testing.FlaskClient) -> None:
         assert "Important Information: Data Delivery System" in outbox[-1].subject
 
 
-def test_send_motd_ok_unitusers(client: flask.testing.FlaskClient) -> None:
+def test_send_motd_ok_unitusers(client: flask.testing.FlaskClient, mock_queue_redis) -> None:
     """Send a motd to all unitusers users."""
     # Authenticate
     token: typing.Dict = get_token(username=users["Super Admin"], client=client)
