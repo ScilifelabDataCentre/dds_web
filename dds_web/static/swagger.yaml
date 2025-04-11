@@ -1141,6 +1141,9 @@ paths:
                 is_aborted:
                   type: boolean
                   example: false
+                is_queue_operation:
+                  type: boolean
+                  example: true
   /proj/access:
     post:
       tags:
