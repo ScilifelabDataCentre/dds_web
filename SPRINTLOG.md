@@ -486,4 +486,7 @@ _Nothing merged during this sprint_
 # 2025-03-31 - 2025-04-11
 
 - New version: 2.10.0 ([#1597](https://github.com/ScilifelabDataCentre/dds_web/pull/1597))
+
+# 2025-04-14 - 2025-04-25
+
 - Adapted Message of the Day function to work asynchronous using the Redis Queue. ([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))

@@ -170,53 +170,30 @@ class SendMOTD(flask_restful.Resource):
         unit_only: bool = request_json.get("unit_only", False)
         if not isinstance(unit_only, bool):
             raise ddserr.DDSArgumentError(message="The 'unit_only' argument must be a boolean.")
-        if unit_only:
-            users_to_send = db.session.query(models.UnitUser)
-        else:
-            users_to_send = db.session.query(models.User)
 
-        # Create email content
-        # put motd_obj.message etc in there etc
-        subject: str = "Important Information: Data Delivery System"
-        body: str = flask.render_template(f"mail/motd.txt", motd=motd_obj.message)
-        html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
+        BaseUser = models.UnitUser if unit_only else models.User
+        users_to_send = (
+            db.session.query(BaseUser.username, models.Email.email).join(models.Email).all()
+        )
 
         # Get redis connection to add a job to delete project contents
         redis_url = flask.current_app.config.get("REDIS_URL")
         r = Redis.from_url(redis_url)
         q = Queue(connection=r)
 
-        # Email users
-        for user in utils.page_query(users_to_send):
-            primary_email = user.primary_email
-            if not primary_email:
-                flask.current_app.logger.warning(
-                    f"No primary email found for user '{user.username}'."
-                )
-                continue
-            msg = flask_mail.Message(
-                subject=subject, recipients=[primary_email], body=body, html=html
-            )
-            msg.attach(
-                "scilifelab_logo.png",
-                "image/png",
-                open(
-                    os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"),
-                    "rb",
-                ).read(),
-                "inline",
-                headers=[
-                    ["Content-ID", "<Logo>"],
-                ],
-            )
+        # Create email content
+        # This attributes cannot be generated in the enqueued function, because they require an active request context
+        subject: str = "Important Information: Data Delivery System"
+        body: str = flask.render_template(f"mail/motd.txt", motd=motd_obj.message)
+        html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
 
-            # Enqueue function to send the email
-            job = q.enqueue(utils.send_email_with_retry, msg)
+        # Possible improvement: Divide the users into smaller chunks to avoid sending too many emails at once
+        job = q.enqueue(utils.send_motd_to_user_list, users_to_send, subject, body, html)
 
-            if unit_only:
-                recipients = "unit personnel"
-            else:
-                recipients = "all users"
+        if unit_only:
+            recipients = "unit personnel"
+        else:
+            recipients = "all users"
 
         return_msg = f"MOTD #{motd_id} is scheduled for delivery to {recipients}"
         return {"message": return_msg}
