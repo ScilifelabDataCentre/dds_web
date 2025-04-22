@@ -9,13 +9,7 @@
 # git push
 ---
 name: Sprintlog
-on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-    branches:
-      - dev
+on: [push]
 env:
   FILE_TO_UPDATE: "SPRINTLOG.md"
 jobs:
@@ -28,8 +22,6 @@ jobs:
       - name: Get current PR
         uses: 8BitJonny/gh-get-current-pr@3.0.0
         id: PR
-        with:
-          sha: ${{ github.event.pull_request.head.sha }}
 
       - name: Modify sprintlog
         if: steps.PR.outputs.pr_found == 'true'
