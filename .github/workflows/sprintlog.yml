@@ -30,7 +30,7 @@ jobs:
         id: PR
 
       - name: Modify sprintlog
-        if: steps.PR.outputs.pr_found == 'true'
+        # if: steps.PR.outputs.pr_found == 'true'
         env:
           prTitle: ${{ steps.PR.outputs.pr_title }}
           prNumber: ${{ steps.PR.outputs.number }}
