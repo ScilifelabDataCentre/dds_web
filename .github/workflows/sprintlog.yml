@@ -1,0 +1,25 @@
+# Add line to end of sprintlog
+# pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+---
+name: Sprintlog
+on: [push] # should be pull request
+jobs: 
+    Sprintlog:
+        runs-on: ubuntu-latest
+        steps: 
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            
+            - name: Get current PR
+              uses: 8BitJonny/gh-get-current-pr@3.0.0
+              id: PR
+            
+            - name: Modify sprintlog
+              if: steps.PR.outputs.pr_found == 'true'
+              env: 
+                prTitle: ${{ steps.PR.outputs.pr_title }}
+                prNumber: ${{ steps.PR.outputs.number }}
+                prUrl: ${{ steps.PR.outputs.pr_url }}
+              run: |
+                echo "- ${prTitle} ([${prNumber}](${prUrl}))" >> SPRINTLOG.md
+                
