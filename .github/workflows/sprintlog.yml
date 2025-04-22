@@ -11,7 +11,7 @@
 name: Sprintlog
 on: [push] # should be pull request
 env:
-  BRANCH_NAME: ${GITHUB_REF##*/}
+  BRANCH_NAME: "${GITHUB_REF##*/}"
 jobs: 
     Sprintlog:
         runs-on: ubuntu-latest
