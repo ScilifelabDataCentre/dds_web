@@ -10,6 +10,8 @@
 ---
 name: Sprintlog
 on: [push] # should be pull request
+env:
+  BRANCH_NAME: ${GITHUB_REF##*/}
 jobs: 
     Sprintlog:
         runs-on: ubuntu-latest
@@ -27,9 +29,9 @@ jobs:
                 prTitle: ${{ steps.PR.outputs.pr_title }}
                 prNumber: ${{ steps.PR.outputs.number }}
                 prUrl: ${{ steps.PR.outputs.pr_url }}
-              run: |
+              run: |BRANCH_NAME
                 echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> SPRINTLOG.md
-            
+                          
             - name: Commit changes
               run: |
-                echo "${GITHUB_REF##*/}"
+                echo "$BRANCH_NAME"
