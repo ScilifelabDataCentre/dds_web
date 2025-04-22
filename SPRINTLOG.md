@@ -494,3 +494,4 @@ _Nothing merged during this sprint_
 - New GitHub Action for adding a line to the sprintlog ([#1599](https://github.com/ScilifelabDataCentre/dds_web/pull/1599))
 - New GitHub Action for adding a line to the sprintlog ([#1599](https://github.com/ScilifelabDataCentre/dds_web/pull/1599))
 - New GitHub Action for adding a line to the sprintlog ([#1599](https://github.com/ScilifelabDataCentre/dds_web/pull/1599))
+- New GitHub Action for adding a line to the sprintlog ([#1599](https://github.com/ScilifelabDataCentre/dds_web/pull/1599))
