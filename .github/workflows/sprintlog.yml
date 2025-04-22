@@ -30,7 +30,7 @@ jobs:
           prNumber: ${{ steps.PR.outputs.number }}
           prUrl: ${{ steps.PR.outputs.pr_url }}
         run: |
-          echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> SPRINTLOG.md
+          echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> ${FILE_TO_UPDATE}
 
       - name: Check for changes
         id: git_diff
