@@ -31,7 +31,5 @@ jobs:
                 echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> SPRINTLOG.md
             
             - name: Commit changes
-              env:
-                BRANCH_NAME: ${{ github.head_ref }}
               run: |
-                echo $BRANCH_NAME
+                echo "${GITHUB_REF##*/}"
