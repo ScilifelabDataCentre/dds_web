@@ -486,3 +486,4 @@ _Nothing merged during this sprint_
 # 2025-03-31 - 2025-04-11
 
 - New version: 2.10.0 ([#1597](https://github.com/ScilifelabDataCentre/dds_web/pull/1597))
+- Remove docker-compose.yml version (obsolete) ([#1598](https://github.com/ScilifelabDataCentre/dds_web/pull/1598))
