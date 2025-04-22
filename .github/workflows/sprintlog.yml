@@ -42,7 +42,7 @@ jobs:
               SHA=""
             fi
             curl -s -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -d "{\"message\":\"Update $FILENAME\", \"content\":\"$CONTENT\", " \
-               "\"branch\":\"${GITHUB_REF##*/}\", \"sha\":\"$SHA\"}" \
+              -d "{\"message\":\"Update $FILENAME\", \"content\":\"$CONTENT\", " 
+                "\"branch\":\"${GITHUB_REF##*/}\", \"sha\":\"$SHA\"}" \
               https://api.github.com/repos/${{ github.repository }}/contents/$file
           done
