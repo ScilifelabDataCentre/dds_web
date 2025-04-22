@@ -1,5 +1,5 @@
 <p>
-   <h1 align="center">Data Delivery System TEST Web / API</h1>
+   <h1 align="center">Data Delivery System Web / API</h1>
 </p>
 
 <p align="center">

@@ -9,7 +9,7 @@
 # git push
 ---
 name: Sprintlog
-on: [pull_request]
+on: [push] # does not work with pull_request
 env:
   FILE_TO_UPDATE: "SPRINTLOG.md"
 jobs:
