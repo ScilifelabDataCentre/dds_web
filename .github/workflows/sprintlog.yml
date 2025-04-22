@@ -22,4 +22,11 @@ jobs:
                 prUrl: ${{ steps.PR.outputs.pr_url }}
               run: |
                 echo "- ${prTitle} ([${prNumber}](${prUrl}))" >> SPRINTLOG.md
-                
+            
+            - name: Commit and push changes
+              run: |
+                git config user.name github-actions
+                git config user.email github-actions@github.com
+                git add .
+                git commit -m "new line to sprintlog"
+                git push
