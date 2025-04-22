@@ -10,6 +10,8 @@
 ---
 name: Sprintlog
 on: [pull_request] # should be pull request
+env: 
+  FILE_TO_UPDATE: 'SPRINTLOG.md'
 jobs:
   Sprintlog:
     runs-on: ubuntu-latest
@@ -30,7 +32,27 @@ jobs:
         run: |
           echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> SPRINTLOG.md
 
+      - name: Check for changes
+        id: git_diff
+        run: |
+          if [ ! -f "$FILE_TO_UPDATE" ]; then
+              echo 'no such file'
+              echo "changes_detected=false" >> $GITHUB_ENV
+          else
+              set +e
+              git diff --quiet HEAD $FILE_TO_UPDATE
+              if [ $? -ne 0 ]; then
+              echo 'changes detected'
+              echo "changes_detected=true" >> $GITHUB_ENV
+              else
+              echo 'changes not detected'
+              echo "changes_detected=false" >> $GITHUB_ENV
+              fi
+              set -e
+          fi
+
       - name: Commit changes
+        if: env.changes_detected == 'true'
         run: |
           echo "Committing changes..."
           FILES_CHANGED=$(git status --porcelain | awk '{print $2}')
