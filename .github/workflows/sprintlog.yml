@@ -10,39 +10,39 @@
 ---
 name: Sprintlog
 on: [push] # should be pull request
-jobs: 
-    Sprintlog:
-        runs-on: ubuntu-latest
-        steps: 
-            - name: Checkout repository
-              uses: actions/checkout@v4
-            
-            - name: Get current PR
-              uses: 8BitJonny/gh-get-current-pr@3.0.0
-              id: PR
-            
-            - name: Modify sprintlog
-              if: steps.PR.outputs.pr_found == 'true'
-              env: 
-                prTitle: ${{ steps.PR.outputs.pr_title }}
-                prNumber: ${{ steps.PR.outputs.number }}
-                prUrl: ${{ steps.PR.outputs.pr_url }}
-              run: |
-                echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> SPRINTLOG.md
-                          
-            - name: Commit changes
-              run: |
-                echo "Committing changes..."
-                FILES_CHANGED=$(git status --porcelain | awk '{print $2}')
-                for file in $FILES_CHANGED; do
-                  CONTENT=$(base64 -w 0 $file)
-                  FILENAME=$(basename $file)
-                  SHA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                    https://api.github.com/repos/${{ github.repository }}/contents/$file?ref=${GITHUB_REF##*/} | jq -r .sha)
-                  if [ "$SHA" == "null" ]; then
-                    SHA=""
-                  fi
-                  curl -s -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                    -d "{\"message\":\"Update $FILENAME\", \"content\":\"$CONTENT\", \"branch\":\"${GITHUB_REF##*/}\", \"sha\":\"$SHA\"}" \
-                    https://api.github.com/repos/${{ github.repository }}/contents/$file
-                done
+jobs:
+  Sprintlog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get current PR
+        uses: 8BitJonny/gh-get-current-pr@3.0.0
+        id: PR
+
+      - name: Modify sprintlog
+        if: steps.PR.outputs.pr_found == 'true'
+        env:
+          prTitle: ${{ steps.PR.outputs.pr_title }}
+          prNumber: ${{ steps.PR.outputs.number }}
+          prUrl: ${{ steps.PR.outputs.pr_url }}
+        run: |
+          echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> SPRINTLOG.md
+
+      - name: Commit changes
+        run: |
+          echo "Committing changes..."
+          FILES_CHANGED=$(git status --porcelain | awk '{print $2}')
+          for file in $FILES_CHANGED; do
+            CONTENT=$(base64 -w 0 $file)
+            FILENAME=$(basename $file)
+            SHA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/repos/${{ github.repository }}/contents/$file?ref=${GITHUB_REF##*/} | jq -r .sha)
+            if [ "$SHA" == "null" ]; then
+              SHA=""
+            fi
+            curl -s -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -d "{\"message\":\"Update $FILENAME\", \"content\":\"$CONTENT\", \"branch\":\"${GITHUB_REF##*/}\", \"sha\":\"$SHA\"}" \
+              https://api.github.com/repos/${{ github.repository }}/contents/$file
+          done
