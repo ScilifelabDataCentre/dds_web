@@ -489,3 +489,4 @@ _Nothing merged during this sprint_
 - Remove docker-compose.yml version (obsolete) ([#1598](https://github.com/ScilifelabDataCentre/dds_web/pull/1598))
 - New GitHub Action for adding a line to the sprintlog ([1599](https://github.com/ScilifelabDataCentre/dds_web/pull/1599))
 - New GitHub Action for adding a line to the sprintlog ([#1599](https://github.com/ScilifelabDataCentre/dds_web/pull/1599))
+- New GitHub Action for adding a line to the sprintlog ([#1599](https://github.com/ScilifelabDataCentre/dds_web/pull/1599))
