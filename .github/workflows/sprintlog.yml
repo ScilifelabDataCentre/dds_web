@@ -21,7 +21,7 @@ jobs:
                 prNumber: ${{ steps.PR.outputs.number }}
                 prUrl: ${{ steps.PR.outputs.pr_url }}
               run: |
-                echo "- ${prTitle} ([${prNumber}](${prUrl}))" >> SPRINTLOG.md
+                echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> SPRINTLOG.md
             
             - name: Commit and push changes
               run: |
