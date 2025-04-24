@@ -491,4 +491,3 @@ _Nothing merged during this sprint_
 
 - Adapted Message of the Day function to work asynchronous using the Redis Queue. ([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))
 - Remove docker-compose.yml version (obsolete) ([#1598](https://github.com/ScilifelabDataCentre/dds_web/pull/1598))
-
