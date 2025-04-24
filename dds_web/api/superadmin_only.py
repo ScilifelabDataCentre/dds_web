@@ -173,7 +173,10 @@ class SendMOTD(flask_restful.Resource):
 
         BaseUser = models.UnitUser if unit_only else models.User
         users_to_send = (
-            db.session.query(BaseUser.username, models.Email.email).outerjoin(models.Email).all()
+            db.session.query(BaseUser.username, models.Email.email)
+            .outerjoin(models.Email)
+            .filter(models.Email.primary == True)
+            .all()
         )
 
         # Get redis connection to add a job to delete project contents
