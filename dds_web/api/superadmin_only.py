@@ -190,10 +190,7 @@ class SendMOTD(flask_restful.Resource):
         # Possible improvement: Divide the users into smaller chunks to avoid sending too many emails at once
         job = q.enqueue(utils.send_motd_to_user_list, users_to_send, subject, body, html)
 
-        if unit_only:
-            recipients = "unit personnel"
-        else:
-            recipients = "all users"
+        recipients = "unit personnel" if unit_only else "all users"
 
         return_msg = f"MOTD #{motd_id} is scheduled for delivery to {recipients}"
         return {"message": return_msg}
