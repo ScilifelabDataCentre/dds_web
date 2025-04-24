@@ -57,7 +57,7 @@ jobs:
           fi
 
       - name: Commit changes
-        if: env.changes_detected == 'true'
+        # if: env.changes_detected == 'true'
         run: |
           echo "Committing changes..."
           FILES_CHANGED=$(git status --porcelain | awk '{print $2}')
