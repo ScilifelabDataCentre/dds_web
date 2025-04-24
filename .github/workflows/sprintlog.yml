@@ -9,7 +9,9 @@
 # git push
 ---
 name: Sprintlog
-on: [push] # does not work with pull_request
+on:
+  pull_request:
+    types: [opened, reopened]
 env:
   FILE_TO_UPDATE: "SPRINTLOG.md"
 jobs:
@@ -18,19 +20,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Get current PR
-        uses: 8BitJonny/gh-get-current-pr@3.0.0
-        id: PR
-
+      
       - name: Modify sprintlog
-        if: steps.PR.outputs.pr_found == 'true'
-        env:
-          prTitle: ${{ steps.PR.outputs.pr_title }}
-          prNumber: ${{ steps.PR.outputs.number }}
-          prUrl: ${{ steps.PR.outputs.pr_url }}
         run: |
-          echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> ${FILE_TO_UPDATE}
+          echo "- ${{ github.event.pull_request.title }}" >> ${FILE_TO_UPDATE}
+      # - name: Get current PR
+      #   uses: 8BitJonny/gh-get-current-pr@3.0.0
+      #   id: PR
+
+      # - name: Modify sprintlog
+      #   if: steps.PR.outputs.pr_found == 'true'
+      #   env:
+      #     prTitle: ${{ steps.PR.outputs.pr_title }}
+      #     prNumber: ${{ steps.PR.outputs.number }}
+      #     prUrl: ${{ steps.PR.outputs.pr_url }}
+      #   run: |
+      #     echo "- ${prTitle} ([#${prNumber}](${prUrl}))" >> ${FILE_TO_UPDATE}
 
       - name: Check for changes
         id: git_diff
