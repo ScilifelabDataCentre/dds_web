@@ -508,9 +508,6 @@ def send_motd_to_user_list(users_to_send, subject, body, html):
         for user in users_to_send:  # ('unituser_1', 'unituser1@mailtrap.io')
             username = user[0]
             primary_email = user[1]
-            if not primary_email:
-                flask.current_app.logger.warning(f"No primary email found for user '{username}'.")
-                continue
             msg = flask_mail.Message(
                 subject=subject, recipients=[primary_email], body=body, html=html
             )
