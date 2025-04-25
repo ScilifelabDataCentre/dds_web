@@ -501,6 +501,33 @@ def send_email_with_retry(msg, times_retried=0, obj=None):
             send_email_with_retry(msg, times_retried=retry, obj=obj)
 
 
+def send_motd_to_user_list(users_to_send, subject, body, html):
+    """Send MOTD email to a list of users."""
+
+    with mail.connect() as conn:
+        for user in users_to_send:  # ('unituser_1', 'unituser1@mailtrap.io')
+            username = user[0]
+            primary_email = user[1]
+            msg = flask_mail.Message(
+                subject=subject, recipients=[primary_email], body=body, html=html
+            )
+            msg.attach(
+                "scilifelab_logo.png",
+                "image/png",
+                open(
+                    os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"),
+                    "rb",
+                ).read(),
+                "inline",
+                headers=[
+                    ["Content-ID", "<Logo>"],
+                ],
+            )
+
+            # Enqueue function to send the email
+            send_email_with_retry(msg, obj=conn)
+
+
 def create_one_time_password_email(user, hotp_value):
     """Create HOTP email."""
     msg = flask_mail.Message(
