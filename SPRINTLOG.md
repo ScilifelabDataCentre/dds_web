@@ -491,3 +491,5 @@ _Nothing merged during this sprint_
 
 - Set MOTD as a background task([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))
 - Remove docker-compose.yml version (obsolete) ([#1598](https://github.com/ScilifelabDataCentre/dds_web/pull/1598))
+- New github action for adding a new row to the sprintlog ([#1602](https://github.com/ScilifelabDataCentre/dds_web/pull/1602))
+- New github action for adding a new row to the sprintlog ([#1602](https://github.com/ScilifelabDataCentre/dds_web/pull/1602))
