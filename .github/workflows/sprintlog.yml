@@ -35,5 +35,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git add --all
-          git commit -S -a -m "New line to ${FILE_TO_UPDATE}"
+          git commit -m "New line to ${FILE_TO_UPDATE}"
           git push
