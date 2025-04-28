@@ -234,4 +234,7 @@ class DDSEndpoint:
     STATS = BASE_ENDPOINT + "/stats"
     USER_EMAILS = BASE_ENDPOINT + "/user/emails"
 
+    # Queue
+    QUEUE_JOB_INFO = BASE_ENDPOINT + "/queue/job/info"
+
     TIMEOUT = 5

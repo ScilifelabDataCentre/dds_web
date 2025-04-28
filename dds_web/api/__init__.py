@@ -14,6 +14,7 @@ from dds_web.api import project
 from dds_web.api import s3
 from dds_web.api import files
 from dds_web.api import superadmin_only
+from dds_web.api import queue
 
 ####################################################################################################
 # BLUEPRINTS ########################################################################## BLUEPRINTS #
@@ -104,6 +105,9 @@ def add_resources(api):
 
     # Invoicing ############################################################################ Invoicing #
     api.add_resource(user.ShowUsage, "/usage", endpoint="usage")
+
+    # Queue ###################################################################################### Queue #
+    api.add_resource(queue.JobInfo, "/queue/job/info", endpoint="job_info")
 
 
 add_resources(api)
