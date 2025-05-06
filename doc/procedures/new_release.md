@@ -1,59 +1,58 @@
 # How to create a new release
 
-1.  Create a PR from `dev` to `master`: "New release"
-2.  Confirm that the development instance works and that the newest changes have been deployed. If not, make a new redeployment of dds-dev (via argocd).
+> ### Inform the users of an upcoming release
+>
+> Always inform users of an upcoming new release _at least_ a week prior to a new release:
+>
+> 1. Adding a "Message of the Day": `dds motd add`
+> 2. Getting the MOTD ID: `dds motd ls`
+> 3. Sending the MOTD to the users: `dds motd send [MOTD ID]`
 
-    1. _In general_, e.g. that it's up and running
-    2. _Specific feature has been added or changed:_ Confirm that it also works in the development instance
-    3. _The change is in the API:_ Confirm that the development instance works together with the CLI
+## Automatic Release Drafts
 
-3.  Fork a new branch from `dev` (locally)
-4.  Update the version [changelog](../../CHANGELOG.rst), located at `dds_web/CHANGELOG.rst`
+When changes are pushed to `dev` or `master`, a Draft Release is created/updated. The draft will be displayed here: https://github.com/ScilifelabDataCentre/dds_web/releases. The draft will also have a suggestion for what the next version should be, based on PR labels.
 
-    **Tip:** Create a [release **draft**](https://github.com/ScilifelabDataCentre/dds_web/releases/new) with `Target: dev`, click `Generate release notes` and copy paste the release notes into the Changelog. **DO NOT PUBLISH THE RELEASE**
+## Go through these steps
 
-    - The new version should be at the top of the page
-    - List the changes that the users will / may notice
-    - Do not add information regarding workflow (e.g. GitHub Actions) etc
+1.  Confirm that the development instance works and that the newest changes have been deployed. If not, make a new redeployment of dds-dev (via argocd).
+    
+    > * Verify that it's up and running.
+    > * Confirm that new features / functionality works as it should.
+    > * Confirm that the development instance works together with the CLI
 
-5.  Update the version in [`version.py`](../../dds_web/version.py)
+2. Create a PR from `dev` to `master` and verify that the PRs included in the changes have the correct labels.
 
-    - _Minor changes, e.g. bug fix_: Minor version upgrade, e.g. `1.0.1 --> 1.0.2`
-    - _Small changes, e.g. new feature_: Mid version upgrade, e.g. `1.1.0 --> 1.2.0`
-    - _Breaking changes or large new feature(s)_: Major version upgrade, e.g. `1.0.0 --> 2.0.0` _AVOID THIS -- NEED TO INFORM USERS WELL IN ADVANCE IN THAT CASE SINCE IT WILL BLOCK THE USERS FROM USING ANY OLDER VERSIONS_
+   > Check out the [Release Drafter config file](../../.github/release-drafter.yml) and/or the [PR template](../../.github/pull_request_template.md) for info on which code changes give which labels.
 
-      > Will break if CLI version not bumped as well
+3. Check the release draft: Does the suggestion version seem appropriate? If not: Check the PRs and their labels, again.
 
-6.  Push version change to branch
-7.  Create a new PR from `<your-branch>` to `dev`: "New version & changelog"
+   > **Note** that a _major version upgrade SHOULD NEVER BE DONE UNLESS THE CLI ALSO HAS THIS IDENTICAL CHANGE_
 
-    Wait for approval and merge by Product Owner or admin.
+4. Fork a new branch from `dev`: `new-version_[new version]`
+5. Update the version in [`version.py`](../../dds_cli/version.py)
+6. Update the [changelog](../../CHANGELOG.rst).
 
-8.  Go back to the PR to `master` ("New release", step 1 above)
+   > Copy-paste the contents of the release draft into the top of the changelog; Follow the same structure/format as previous versions.
 
-    - Are you bumping the major version (e.g. 1.x.x to 2.x.x)?
-      - Yes: Add this info to the PR.
-    - Do the changes affect the CLI in any way?
-      - Yes:
-        - Add how the CLI is affected in the PR.
-        - Make the corresponding changes to the CLI and create a PR _before_ you merge this PR.
-    - _Backward compatibility:_ Check whether or not the dds_cli master branch works with the code in the PR. Note if the dds_web changes work with the previous version of the dds_cli. If something might break - give detailed information about what. **This information should also be included in the MOTD.**
-    - All changes should be approved in the PRs to dev so reviewing the changes a second time in this PR is not necessary. Instead, the team should look through the code just to see if something looks weird.
-    - All sections and checks in the PR template should be filled in and checked. Follow the instruction in the PR description field.
-    - There should be at least one approval of the PR.
-    - _Everything looks ok and there's at least one approval?_ Merge it.
+7. Push the changelog and version to the `new-version_[new version]` branch
+8. Create a new PR from `new-version_[new version]` to `dev`, and verify that the new images look OK.
+9. Create a PR from `dev` to `master`
 
-9.  [Draft a new release](https://github.com/ScilifelabDataCentre/dds_web/releases)
+   > **Do the changes affect the CLI in any way?**
+   > If yes:
+   >
+   > - Add how the CLI is affected in the PR.
+   > - Make the corresponding changes to the CLI and create a PR _before_ you merge this PR.
+   >
+   > **Re: PR approval**
+   >
+   > - All changes should be approved in the PRs to dev so reviewing the changes a second time in this PR is not necessary.Instead, the team should look through the code just to see if something looks weird.
+   > - When there's at least one approval: Merge it.
 
-    1. `Choose a tag` &rarr; `Find or create a new tag` &rarr; Fill in the new version, e.g. if the new version is `1.0.0`, you should fill in `v1.0.0`.
-    2. `Target` should be set to `master`
-    3. `Release title` field should be set to the same as the tag, e.g. `v1.0.0`
-    4. `Write` &rarr; `Generate release notes`.
+10. [Publish the Release Draft](https://github.com/ScilifelabDataCentre/dds_web/releases)
 
-       You can also fill in something to describe what has been changed in this release, if you feel that the auto-generated release notes are missing something etc.
+    > A new image is automatically published to GitHub Container Repository (GHCR). 
 
-    5. `Publish release`.
+11. Redeploy the production instance during a maintenance window.
 
-       An image of the web / api will be published to the [GitHub Container Registry](https://codefresh.io/csdp-docs/docs/integrations/container-registries/github-cr/)
-
-10. Perform redeployment during maintenance window.
+    > Valentin, Alvaro: Please suggest a guide here (if needed). Could be good for new team members.
