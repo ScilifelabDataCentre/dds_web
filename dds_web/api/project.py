@@ -485,11 +485,11 @@ class ProjectStatus(flask_restful.Resource):
             )
             self.rm_project_user_keys(project=project)
 
+            # Only mark as inactive after all deletion operations succeed
+            project.is_active = False
             # Delete metadata from project row
             self.delete_project_info(proj=project)
 
-            # Only mark as inactive after all deletion operations succeed
-            project.is_active = False
         except (TypeError, DatabaseError, DeletionError, BucketNotFoundError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
@@ -530,13 +530,13 @@ class ProjectStatus(flask_restful.Resource):
             delete_message = f"\nAll files in {project.public_id} deleted"
             self.rm_project_user_keys(project=project)
 
+            # Only mark as inactive after all deletion operations succeed
+            project.is_active = False
             # Delete metadata from project row
             if aborted:
                 project = self.delete_project_info(project)
                 delete_message += " and project info cleared"
 
-            # Only mark as inactive after all deletion operations succeed
-            project.is_active = False
         except (TypeError, DatabaseError, DeletionError, BucketNotFoundError) as err:
             flask.current_app.logger.exception(err)
             db.session.rollback()
