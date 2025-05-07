@@ -15,43 +15,43 @@ When changes are pushed to `dev` or `master`, a Draft Release is created/updated
 ## Go through these steps
 
 1.  Confirm that the development instance works and that the newest changes have been deployed. If not, make a new redeployment of dds-dev (via argocd).
-    
-    > * Verify that it's up and running.
-    > * Confirm that new features / functionality works as it should.
-    > * Confirm that the development instance works together with the CLI
 
-2. Create a PR from `dev` to `master` and verify that the PRs included in the changes have the correct labels.
+    > - Verify that it's up and running.
+    > - Confirm that new features / functionality works as it should.
+    > - Confirm that the development instance works together with the CLI
 
-   > Check out the [Release Drafter config file](../../.github/release-drafter.yml) and/or the [PR template](../../.github/pull_request_template.md) for info on which code changes give which labels.
+2.  Create a PR from `dev` to `master` and verify that the PRs included in the changes have the correct labels.
 
-3. Check the release draft: Does the suggestion version seem appropriate? If not: Check the PRs and their labels, again.
+    > Check out the [Release Drafter config file](../../.github/release-drafter.yml) and/or the [PR template](../../.github/pull_request_template.md) for info on which code changes give which labels.
 
-   > **Note** that a _major version upgrade SHOULD NEVER BE DONE UNLESS THE CLI ALSO HAS THIS IDENTICAL CHANGE_
+3.  Check the release draft: Does the suggestion version seem appropriate? If not: Check the PRs and their labels, again.
 
-4. Fork a new branch from `dev`: `new-version_[new version]`
-5. Update the version in [`version.py`](../../dds_cli/version.py)
-6. Update the [changelog](../../CHANGELOG.rst).
+    > **Note** that a _major version upgrade SHOULD NEVER BE DONE UNLESS THE CLI ALSO HAS THIS IDENTICAL CHANGE_
 
-   > Copy-paste the contents of the release draft into the top of the changelog; Follow the same structure/format as previous versions.
+4.  Fork a new branch from `dev`: `new-version_[new version]`
+5.  Update the version in [`version.py`](../../dds_web/version.py)
+6.  Update the [changelog](../../CHANGELOG.rst).
 
-7. Push the changelog and version to the `new-version_[new version]` branch
-8. Create a new PR from `new-version_[new version]` to `dev`, and verify that the new images look OK.
-9. Create a PR from `dev` to `master`
+    > Copy-paste the contents of the release draft into the top of the changelog; Follow the same structure/format as previous versions.
 
-   > **Do the changes affect the CLI in any way?**
-   > If yes:
-   >
-   > - Add how the CLI is affected in the PR.
-   > - Make the corresponding changes to the CLI and create a PR _before_ you merge this PR.
-   >
-   > **Re: PR approval**
-   >
-   > - All changes should be approved in the PRs to dev so reviewing the changes a second time in this PR is not necessary.Instead, the team should look through the code just to see if something looks weird.
-   > - When there's at least one approval: Merge it.
+7.  Push the changelog and version to the `new-version_[new version]` branch
+8.  Create a new PR from `new-version_[new version]` to `dev`, and verify that the new images look OK.
+9.  Create a PR from `dev` to `master`
+
+    > **Do the changes affect the CLI in any way?**
+    > If yes:
+    >
+    > - Add how the CLI is affected in the PR.
+    > - Make the corresponding changes to the CLI and create a PR _before_ you merge this PR.
+    >
+    > **Re: PR approval**
+    >
+    > - All changes should be approved in the PRs to dev so reviewing the changes a second time in this PR is not necessary.Instead, the team should look through the code just to see if something looks weird.
+    > - When there's at least one approval: Merge it.
 
 10. [Publish the Release Draft](https://github.com/ScilifelabDataCentre/dds_web/releases)
 
-    > A new image is automatically published to GitHub Container Repository (GHCR). 
+    > A new image is automatically published to GitHub Container Repository (GHCR).
 
 11. Redeploy the production instance during a maintenance window.
 

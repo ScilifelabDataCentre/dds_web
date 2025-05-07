@@ -25,7 +25,7 @@ If there is a field which you are unsure about, enter the edit mode of this desc
 _If you do not want this change to be included in release notes, add the label `skip-changelog`._
 
 - `type: breaking`: Changes in this PR will cause existing functionality to not work as expected. The master branch of the API will no longer work with the CLI dev branch (and vice versa).
-- `type: feature`: You've added new functionality or updated an existing one. This includes database changes in most cases. Ask if you're unsure. 
+- `type: feature`: You've added new functionality or updated an existing one. This includes database changes in most cases. Ask if you're unsure.
   _Remember to include a new migration version **or** explain in the description/comments why it's not needed._
 - `type: bug`: The PR fixes a bug.
 - `type: docs`: The PR _only_ updates documentation.
