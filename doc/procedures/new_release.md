@@ -29,7 +29,7 @@ When changes are pushed to `dev` or `master`, a Draft Release is created/updated
     > **Note** that a _major version upgrade SHOULD NEVER BE DONE UNLESS THE CLI ALSO HAS THIS IDENTICAL CHANGE_
 
 4.  Fork a new branch from `dev`: `new-version_[new version]`
-5.  Update the version in [`version.py`](../../dds_web/version.py)
+5.  Update the version in [`version.py`](../../dds_web/version.py) and [`tests/test_version.py`](../../tests/test_version.py)
 6.  Update the [changelog](../../CHANGELOG.rst).
 
     > Copy-paste the contents of the release draft into the top of the changelog; Follow the same structure/format as previous versions.
