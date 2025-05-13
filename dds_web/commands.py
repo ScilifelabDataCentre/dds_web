@@ -1328,7 +1328,7 @@ def monitor_usage():
 @flask.cli.with_appcontext
 def restart_redis_worker():
     """
-    This function restarts the redis worker intialized by the Flask application.
+    This function restarts the redis worker(s) intialized by the Flask application.
     It will shutdown any existing workers and start a new one.
     The Redis URL is specified in the Flask application's configuration.
     The worker listens to the "default" queue and processes jobs from it.

@@ -10,6 +10,7 @@ import pathlib
 import sys
 import os
 import multiprocessing
+import socket
 
 # Installed
 import flask
@@ -351,11 +352,12 @@ def create_app(testing=False, database_uri=None):
             from flask_swagger_ui import get_swaggerui_blueprint
 
             # Redis Worker needs to run as its own process, we initialize it here.
-            # If some worker was already running, it will not be started again.
+            # There will be a worker for each instance of the app running
             redis_url = app.config.get("REDIS_URL")
             redis_connection = Redis.from_url(redis_url)
+            hostmame = socket.gethostname()
 
-            worker = Worker(["default"], connection=redis_connection)
+            worker = Worker(["default"], connection=redis_connection, name=hostmame)
             worker.log = app.logger
             p = multiprocessing.Process(target=worker.work, daemon=True)
             p.start()
