@@ -557,6 +557,7 @@ def test_projectstatus_archived_project_db_fail(
 
     assert project.is_active
 
+
 def test_projectstatus_aborted_project(module_client, boto3_session):
     """Create a project and try to abort it"""
     # Create unit admins to allow project creation
@@ -1571,8 +1572,16 @@ def test_projectstatus_failed_delete_project_content(module_client, boto3_sessio
 
     def mock_attributeerror():
         raise AttributeError
-    for func in [mock_deletionerror, mock_sqlalchemyerror, mock_operationalerror, mock_attributeerror]:
-        with unittest.mock.patch("dds_web.api.project.RemoveContents.delete_project_contents", func):
+
+    for func in [
+        mock_deletionerror,
+        mock_sqlalchemyerror,
+        mock_operationalerror,
+        mock_attributeerror,
+    ]:
+        with unittest.mock.patch(
+            "dds_web.api.project.RemoveContents.delete_project_contents", func
+        ):
             response = module_client.post(
                 tests.DDSEndpoint.PROJECT_STATUS,
                 headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
@@ -1720,6 +1729,7 @@ def test_projectstatus_released_post_deletion_and_archivation_errors(module_clie
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
             assert project.is_active
+
 
 # GetPublic
 
