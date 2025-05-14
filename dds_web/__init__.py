@@ -185,6 +185,7 @@ def setup_logging(app):
     # Add custom filter to the logger
     logging.getLogger("general").addFilter(FilterMaintenanceExc)
 
+
 def start_redis_worker(app):
     """Start the redis worker"""
     from rq import Worker
@@ -198,6 +199,7 @@ def start_redis_worker(app):
     worker.log = app.logger
     p = multiprocessing.Process(target=worker.work, daemon=True)
     p.start()
+
 
 def create_app(testing=False, database_uri=None):
     try:
@@ -363,7 +365,6 @@ def create_app(testing=False, database_uri=None):
             from dds_web.web.root import pages
             from dds_web.web.user import auth_blueprint
             from flask_swagger_ui import get_swaggerui_blueprint
-
 
             start_redis_worker(app)
 
