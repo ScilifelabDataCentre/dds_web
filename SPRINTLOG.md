@@ -494,4 +494,4 @@ _Nothing merged during this sprint_
 
 # 2025-05-12 - 2025-05-23
 
-- Bump jinja2 from 3.1.3 to 3.1.5 ([#1606](https://github.com/ScilifelabDataCentre/dds_web/pull/1606))
+- Bump jinja2 from 3.1.3 to 3.1.6 ([#1606](https://github.com/ScilifelabDataCentre/dds_web/pull/1606))
