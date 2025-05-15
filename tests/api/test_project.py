@@ -116,6 +116,23 @@ def test_project(module_client):
 def mock_sqlalchemyerror(_=None):
     raise sqlalchemy.exc.SQLAlchemyError()
 
+def mock_typeerror(_=None):
+    raise TypeError
+
+def mock_databaseerror(_=None):
+    raise DatabaseError
+
+def mock_deletionerror(_=None):
+    raise DeletionError()
+
+def mock_bucketnotfounderror(_=None):
+    raise BucketNotFoundError()
+
+def mock_operationalerror(_=None):
+    raise sqlalchemy.exc.OperationalError
+
+def mock_attributeerror():
+    raise AttributeError
 
 # ProjectStatus
 
@@ -1519,18 +1536,6 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
     project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
 
-    def mock_typeerror():
-        raise TypeError
-
-    def mock_databaseerror():
-        raise DatabaseError
-
-    def mock_deletionerror():
-        raise DeletionError()
-
-    def mock_bucketnotfounderror():
-        raise BucketNotFoundError()
-
     for func in [mock_typeerror, mock_databaseerror, mock_deletionerror, mock_bucketnotfounderror]:
         with unittest.mock.patch("dds_web.api.project.ProjectStatus.delete_project_info", func):
             response = module_client.post(
@@ -1560,18 +1565,6 @@ def test_projectstatus_failed_delete_project_content(module_client, boto3_sessio
     assert response.status_code == http.HTTPStatus.OK
     project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
-
-    def mock_deletionerror():
-        raise DeletionError()
-
-    def mock_sqlalchemyerror():
-        raise sqlalchemy.exc.SQLAlchemyError
-
-    def mock_operationalerror():
-        raise sqlalchemy.exc.OperationalError
-
-    def mock_attributeerror():
-        raise AttributeError
 
     for func in [
         mock_deletionerror,
@@ -1609,12 +1602,6 @@ def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session)
     assert response.status_code == http.HTTPStatus.OK
     project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
-
-    def mock_sqlalchemyerror():
-        raise sqlalchemy.exc.SQLAlchemyError
-
-    def mock_operationalerror():
-        raise sqlalchemy.exc.OperationalError
 
     for func in [mock_sqlalchemyerror, mock_operationalerror]:
         with unittest.mock.patch("dds_web.api.project.ProjectStatus.rm_project_user_keys", func):
@@ -1705,18 +1692,6 @@ def test_projectstatus_released_post_deletion_and_archivation_errors(module_clie
         json={"new_status": "Available"},
     )
     assert response.status_code == http.HTTPStatus.OK
-
-    def mock_typeerror():
-        raise TypeError
-
-    def mock_databaseerror():
-        raise DatabaseError
-
-    def mock_deletionerror():
-        raise DeletionError()
-
-    def mock_bucketnotfounderror():
-        raise BucketNotFoundError()
 
     for func in [mock_typeerror, mock_databaseerror, mock_deletionerror, mock_bucketnotfounderror]:
         with unittest.mock.patch("dds_web.api.project.ProjectStatus.delete_project_info", func):
