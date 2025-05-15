@@ -116,23 +116,30 @@ def test_project(module_client):
 def mock_sqlalchemyerror(_=None):
     raise sqlalchemy.exc.SQLAlchemyError()
 
+
 def mock_typeerror(_=None):
     raise TypeError
+
 
 def mock_databaseerror(_=None):
     raise DatabaseError
 
+
 def mock_deletionerror(_=None):
     raise DeletionError()
+
 
 def mock_bucketnotfounderror(_=None):
     raise BucketNotFoundError()
 
+
 def mock_operationalerror(_=None):
     raise sqlalchemy.exc.OperationalError
 
+
 def mock_attributeerror():
     raise AttributeError
+
 
 # ProjectStatus
 
@@ -573,6 +580,7 @@ def test_projectstatus_archived_project_db_fail(
     )
 
     assert project.is_active
+
 
 def test_projectstatus_aborted_project(module_client, boto3_session):
     """Create a project and try to abort it"""
@@ -1582,6 +1590,7 @@ def test_projectstatus_failed_delete_project_content(module_client, boto3_sessio
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
             assert project.is_active
+
 
 def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session):
     """Mock the different expections that can occur when deleting project."""

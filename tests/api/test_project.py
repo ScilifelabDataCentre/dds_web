@@ -116,23 +116,30 @@ def test_project(module_client):
 def mock_sqlalchemyerror(_=None):
     raise sqlalchemy.exc.SQLAlchemyError()
 
+
 def mock_typeerror(_=None):
     raise TypeError
+
 
 def mock_databaseerror(_=None):
     raise DatabaseError
 
+
 def mock_deletionerror(_=None):
     raise DeletionError()
+
 
 def mock_bucketnotfounderror(_=None):
     raise BucketNotFoundError()
 
+
 def mock_operationalerror(_=None):
     raise sqlalchemy.exc.OperationalError
 
+
 def mock_attributeerror():
     raise AttributeError
+
 
 # ProjectStatus
 
