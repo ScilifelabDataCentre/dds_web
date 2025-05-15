@@ -491,3 +491,7 @@ _Nothing merged during this sprint_
 
 - Set MOTD as a background task([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))
 - Remove docker-compose.yml version (obsolete) ([#1598](https://github.com/ScilifelabDataCentre/dds_web/pull/1598))
+
+# 2025-05-12 - 2025-05-23 
+
+- Bump werkzeug from 3.0.3 to 3.0.6 ([#1607](https://github.com/ScilifelabDataCentre/dds_web/pull/1607))
