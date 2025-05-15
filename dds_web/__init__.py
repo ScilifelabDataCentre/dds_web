@@ -186,21 +186,6 @@ def setup_logging(app):
     logging.getLogger("general").addFilter(FilterMaintenanceExc)
 
 
-def start_redis_worker(app):
-    """Start the redis worker"""
-    from rq import Worker
-    from redis import Redis
-
-    # Redis Worker needs to run as its own process, we initialize it here.
-    redis_url = app.config.get("REDIS_URL")
-    redis_connection = Redis.from_url(redis_url)
-
-    worker = Worker(["default"], connection=redis_connection, name=socket.gethostname())
-    worker.log = app.logger
-    p = multiprocessing.Process(target=worker.work, daemon=True)
-    p.start()
-
-
 def create_app(testing=False, database_uri=None):
     try:
         """Construct the core application."""
@@ -366,7 +351,14 @@ def create_app(testing=False, database_uri=None):
             from dds_web.web.user import auth_blueprint
             from flask_swagger_ui import get_swaggerui_blueprint
 
-            start_redis_worker(app)
+            # Redis Worker needs to run as its own process, we initialize it here.
+            redis_url = app.config.get("REDIS_URL")
+            redis_connection = Redis.from_url(redis_url)
+
+            worker = Worker(["default"], connection=redis_connection, name=socket.gethostname())
+            worker.log = app.logger
+            p = multiprocessing.Process(target=worker.work, daemon=True)
+            p.start()
 
             # base url for the api documentation
             SWAGGER_URL_1 = "/api/documentation/v1"
