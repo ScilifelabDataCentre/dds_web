@@ -778,7 +778,8 @@ class RemoveContents(flask_restful.Resource):
         q = Queue(connection=r)
 
         # Enqueue job to delete project contents
-        job = q.enqueue(self.delete_project_contents, project.public_id)
+        timeout = flask.current_app.config.get("RQ_JOBS_DEFAULT_TIMEOUT")
+        job = q.enqueue(self.delete_project_contents, args=(project.public_id,), timeout=timeout)
 
         # TODO - return job id to client to check status of deletion
         msg = "Data deletion has started. This might take some time. The DDS is handling this in the background."

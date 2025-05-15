@@ -191,7 +191,17 @@ class SendMOTD(flask_restful.Resource):
         html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
 
         # Possible improvement: Divide the users into smaller chunks to avoid sending too many emails at once
-        job = q.enqueue(utils.send_motd_to_user_list, users_to_send, subject, body, html)
+        timeout = flask.current_app.config.get("RQ_JOBS_DEFAULT_TIMEOUT")
+        job = q.enqueue(
+            utils.send_motd_to_user_list,
+            args=(
+                users_to_send,
+                subject,
+                body,
+                html,
+            ),
+            timeout=timeout,
+        )
 
         recipients = "unit personnel" if unit_only else "all users"
 
