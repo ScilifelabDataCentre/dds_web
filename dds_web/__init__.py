@@ -24,7 +24,7 @@ import flask_login
 import flask_migrate
 import rq_dashboard
 from redis import Redis
-from rq import Worker
+from rq import Worker, Queue
 
 # import flask_qrcode
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -354,6 +354,9 @@ def create_app(testing=False, database_uri=None):
             # Redis Worker needs to run as its own process, we initialize it here.
             redis_url = app.config.get("REDIS_URL")
             redis_connection = Redis.from_url(redis_url)
+
+            # Set the default timeout for the jobs
+            Queue.DEFAULT_TIMEOUT = flask.current_app.config.get("RQ_JOBS_DEFAULT_TIMEOUT")
 
             worker = Worker(["default"], connection=redis_connection, name=socket.gethostname())
             worker.log = app.logger
