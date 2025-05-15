@@ -494,4 +494,5 @@ _Nothing merged during this sprint_
 
 # 2025-05-12 - 2025-05-23
 
+- New Github Action for automatically creating release draft: Release Drafter ([#1604](https://github.com/ScilifelabDataCentre/dds_web/pull/1604))
 - Fix RQ worker missconfigurations([#1603](https://github.com/ScilifelabDataCentre/dds_web/pull/1603))
