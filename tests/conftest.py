@@ -597,6 +597,9 @@ def mock_enqueue():
 
     def _mock_enqueue(*args, **kwargs):
 
+        # Remove 'depends_on' if it exists (not needed for testing)
+        kwargs.pop("depends_on", None)
+
         # Extract the function from args (RQ expects it to be the first argument)
         f = args[0]
         function_args = args[1:]  # Remaining args passed to function
