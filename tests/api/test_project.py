@@ -117,6 +117,30 @@ def mock_sqlalchemyerror(_=None):
     raise sqlalchemy.exc.SQLAlchemyError()
 
 
+def mock_typeerror(_=None):
+    raise TypeError
+
+
+def mock_databaseerror(_=None):
+    raise DatabaseError
+
+
+def mock_deletionerror(_=None):
+    raise DeletionError()
+
+
+def mock_bucketnotfounderror(_=None):
+    raise BucketNotFoundError()
+
+
+def mock_operationalerror(_=None):
+    raise sqlalchemy.exc.OperationalError
+
+
+def mock_attributeerror():
+    raise AttributeError
+
+
 # ProjectStatus
 
 # get
@@ -576,6 +600,7 @@ def test_projectstatus_archived_project_db_fail_no_queue(
     )
     assert response.status_code == http.HTTPStatus.OK
     project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
 
     # change status and mock fail in DB operation
     mock_query = MagicMock()
@@ -598,6 +623,8 @@ def test_projectstatus_archived_project_db_fail_no_queue(
         "Project bucket contents were deleted, but they were not deleted from the database. Please contact SciLifeLab Data Centre"
         in err
     )
+
+    assert project.is_active
 
 
 def test_projectstatus_archived_project_queue(module_client, boto3_session, mock_queue_redis):
@@ -1228,6 +1255,7 @@ def test_projectstatus_set_project_to_archived(module_client, test_project, boto
     assert not max(project.project_statuses, key=lambda x: x.date_created).is_aborted
     assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
     assert not project.project_user_keys
+    assert not project.is_active
 
 
 def test_projectstatus_invalid_transitions_from_archived(module_client, test_project):
@@ -1697,21 +1725,8 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
     project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
 
-    def mock_typeerror():
-        raise TypeError
-
-    def mock_databaseerror():
-        raise DatabaseError
-
-    def mock_deletionerror():
-        raise DeletionError()
-
-    def mock_bucketnotfounderror():
-        raise BucketNotFoundError()
-
     for func in [mock_typeerror, mock_databaseerror, mock_deletionerror, mock_bucketnotfounderror]:
         with unittest.mock.patch("dds_web.api.project.ProjectStatus.delete_project_info", func):
-            # Release project
             response = module_client.post(
                 tests.DDSEndpoint.PROJECT_STATUS,
                 headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
@@ -1720,6 +1735,74 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            assert project.is_active
+
+
+def test_projectstatus_failed_delete_project_content(module_client, boto3_session):
+    """Mock the different expections that can occur when deleting project."""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    for func in [
+        mock_deletionerror,
+        mock_sqlalchemyerror,
+        mock_operationalerror,
+        mock_attributeerror,
+    ]:
+        with unittest.mock.patch(
+            "dds_web.api.project.RemoveContents.delete_project_contents", func
+        ):
+            response = module_client.post(
+                tests.DDSEndpoint.PROJECT_STATUS,
+                headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+                query_string={"project": project_id},
+                json={"new_status": "Deleted"},
+            )
+            assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+            assert "Server Error: Status was not updated" in response.json["message"]
+            assert project.is_active
+
+
+def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session):
+    """Mock the different expections that can occur when deleting project."""
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+    project = project_row(project_id=project_id)
+
+    for func in [mock_sqlalchemyerror, mock_operationalerror]:
+        with unittest.mock.patch("dds_web.api.project.ProjectStatus.rm_project_user_keys", func):
+            response = module_client.post(
+                tests.DDSEndpoint.PROJECT_STATUS,
+                headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+                query_string={"project": project_id},
+                json={"new_status": "Deleted"},
+            )
+            assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+            assert "Server Error: Status was not updated" in response.json["message"]
+            assert project.is_active
 
 
 def test_projectstatus_post_archiving_without_aborting(module_client, boto3_session):
@@ -1773,7 +1856,7 @@ def test_projectstatus_post_archiving_without_aborting(module_client, boto3_sess
     )
 
 
-def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):
+def test_projectstatus_released_post_deletion_and_archivation_errors(module_client, boto3_session):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -1790,6 +1873,7 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
     project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
 
+    # Release project
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
@@ -1798,21 +1882,8 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
     )
     assert response.status_code == http.HTTPStatus.OK
 
-    def mock_typeerror():
-        raise TypeError
-
-    def mock_databaseerror():
-        raise DatabaseError
-
-    def mock_deletionerror():
-        raise DeletionError()
-
-    def mock_bucketnotfounderror():
-        raise BucketNotFoundError()
-
     for func in [mock_typeerror, mock_databaseerror, mock_deletionerror, mock_bucketnotfounderror]:
         with unittest.mock.patch("dds_web.api.project.ProjectStatus.delete_project_info", func):
-            # Release project
             response = module_client.post(
                 tests.DDSEndpoint.PROJECT_STATUS,
                 headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
@@ -1821,6 +1892,7 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            assert project.is_active
 
 
 # GetPublic
