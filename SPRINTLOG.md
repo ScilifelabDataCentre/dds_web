@@ -492,3 +492,7 @@ _Nothing merged during this sprint_
 - Set MOTD as a background task([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))
 - Remove docker-compose.yml version (obsolete) ([#1598](https://github.com/ScilifelabDataCentre/dds_web/pull/1598))
 - New Github Action for automatically creating release draft: Release Drafter ([#1604](https://github.com/ScilifelabDataCentre/dds_web/pull/1604))
+
+# 2025-05-12 - 2025-05-23
+
+- Add queuing for archiving projects([#1595](https://github.com/ScilifelabDataCentre/dds_web/pull/1595))
