@@ -70,7 +70,7 @@ class Config(object):
 
     INVITATION_EXPIRES_IN_HOURS = 7 * 24
 
-    RQ_JOBS_DEFAULT_TIMEOUT = 3600 * 24  # 24 hours
+    RQ_JOBS_DEFAULT_TIMEOUT = 3600 * 2  # 2 hours
 
     # Argon2id settings
     # Key derivation - No config to avoid changing important settings by "accident"

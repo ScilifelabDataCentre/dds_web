@@ -10,7 +10,6 @@ import pathlib
 import sys
 import os
 import multiprocessing
-import socket
 
 # Installed
 import flask
@@ -358,7 +357,7 @@ def create_app(testing=False, database_uri=None):
             # Set the default timeout for the jobs
             Queue.DEFAULT_TIMEOUT = flask.current_app.config.get("RQ_JOBS_DEFAULT_TIMEOUT")
 
-            worker = Worker(["default"], connection=redis_connection, name=socket.gethostname())
+            worker = Worker(["default"], connection=redis_connection)
             worker.log = app.logger
             p = multiprocessing.Process(target=worker.work, daemon=True)
             p.start()
