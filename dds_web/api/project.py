@@ -142,10 +142,6 @@ class ProjectStatus(flask_restful.Resource):
                     message="No status transition provided. Specify the new status."
                 )
 
-            is_queue_operation = json_input.get(
-                "is_queue_operation", False
-            )  # If the operation is performed in queue. It will only take effect for archive and deletion
-
             # Override default to send email
             send_email = json_input.get("send_email", True)
 
@@ -153,6 +149,7 @@ class ProjectStatus(flask_restful.Resource):
             curr_date = dds_web.utils.current_time()
             delete_message = ""
             is_aborted = False
+            is_queue_operation = False
 
             # Moving to Available
             if new_status == "Available":
@@ -173,6 +170,7 @@ class ProjectStatus(flask_restful.Resource):
                 )
             elif new_status == "Archived":
                 is_aborted = json_input.get("is_aborted", False)
+                is_queue_operation = True
                 new_status_row, delete_message = self.archive_project(
                     project=project,
                     current_time=curr_date,
