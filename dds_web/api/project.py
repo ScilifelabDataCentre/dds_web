@@ -142,10 +142,6 @@ class ProjectStatus(flask_restful.Resource):
                     message="No status transition provided. Specify the new status."
                 )
 
-            is_queue_operation = json_input.get(
-                "is_queue_operation", False
-            )  # If the operation is performed in queue. It will only take effect for archive and deletion
-
             # Override default to send email
             send_email = json_input.get("send_email", True)
 
@@ -153,6 +149,7 @@ class ProjectStatus(flask_restful.Resource):
             curr_date = dds_web.utils.current_time()
             delete_message = ""
             is_aborted = False
+            is_queue_operation = False
 
             # Moving to Available
             if new_status == "Available":
@@ -173,11 +170,11 @@ class ProjectStatus(flask_restful.Resource):
                 )
             elif new_status == "Archived":
                 is_aborted = json_input.get("is_aborted", False)
+                is_queue_operation = True
                 new_status_row, delete_message = self.archive_project(
                     project=project,
                     current_time=curr_date,
                     aborted=is_aborted,
-                    is_enqueded=is_queue_operation,
                 )
             else:
                 raise DDSArgumentError(message="Invalid status")
@@ -524,13 +521,11 @@ class ProjectStatus(flask_restful.Resource):
         project: models.Project,
         current_time: datetime.datetime,
         aborted: bool = False,
-        is_enqueded: bool = False,
     ):
         """Archive project: Make status Archived.
 
         Only possible from In Progress, Available and Expired. Optional aborted flag if something
         has gone wrong.
-        If the flag is_enqueued is set to True, the operation will be performed in the queue.
         """
         # Check if valid status transition
         self.check_transition_possible(current_status=project.current_status, new_status="Archived")
@@ -542,55 +537,25 @@ class ProjectStatus(flask_restful.Resource):
                 )
         project.is_active = False
 
-        if is_enqueded:
+        # Get redis connection to add a job if needed
+        redis_url = flask.current_app.config.get("REDIS_URL")
+        r = Redis.from_url(redis_url)
+        q = Queue(connection=r)
 
-            # Get redis connection to add a job if needed
-            redis_url = flask.current_app.config.get("REDIS_URL")
-            r = Redis.from_url(redis_url)
-            q = Queue(connection=r)
+        job_delete_contents = q.enqueue(
+            self.archive_project_queue_delete_contents,
+            project_id=project.public_id,  # It is not possible to pass the project object directly to the queue
+        )
 
-            job_delete_contents = q.enqueue(
-                self.archive_project_queue_delete_contents,
-                project_id=project.public_id,  # It is not possible to pass the project object directly to the queue
-            )
+        job_update_db = q.enqueue(
+            self.archive_project_queue_update_db,
+            project_id=project.public_id,
+            current_time=current_time,
+            aborted=aborted,
+            depends_on=job_delete_contents,  # This job is only executed after success of delete contents
+        )
 
-            job_update_db = q.enqueue(
-                self.archive_project_queue_update_db,
-                project_id=project.public_id,
-                current_time=current_time,
-                aborted=aborted,
-                depends_on=job_delete_contents,  # This job is only executed after success of delete contents
-            )
-
-            return None, ""  # Dummy returns to not break the main function
-        else:
-            try:
-                # Deletes files (also commits session in the function - possibly refactor later)
-                RemoveContents().delete_project_contents(
-                    project_id=project.public_id, delete_bucket=True
-                )
-                delete_message = f"\nAll files in {project.public_id} deleted"
-                self.rm_project_user_keys(project=project)
-
-                # Delete metadata from project row
-                if aborted:
-                    project = self.delete_project_info(project)
-                    delete_message += " and project info cleared"
-            except (TypeError, DatabaseError, DeletionError, BucketNotFoundError) as err:
-                flask.current_app.logger.exception(err)
-                db.session.rollback()
-                raise DeletionError(
-                    project=project.public_id,
-                    message="Server Error: Status was not updated",
-                    pass_message=True,
-                ) from err
-
-            return (
-                models.ProjectStatuses(
-                    status="Archived", date_created=current_time, is_aborted=aborted
-                ),
-                delete_message,
-            )
+        return None, ""  # Dummy returns to not break the main function
 
     def archive_project_queue_delete_contents(self, project_id: int, aborted: bool = False):
         """Delete the project contents for archiving operation."""
