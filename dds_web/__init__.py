@@ -23,7 +23,7 @@ import flask_login
 import flask_migrate
 import rq_dashboard
 from redis import Redis
-from rq import Worker
+from rq import Worker, Queue
 
 # import flask_qrcode
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -351,16 +351,16 @@ def create_app(testing=False, database_uri=None):
             from flask_swagger_ui import get_swaggerui_blueprint
 
             # Redis Worker needs to run as its own process, we initialize it here.
-            # If some worker was already running, it will not be started again.
             redis_url = app.config.get("REDIS_URL")
             redis_connection = Redis.from_url(redis_url)
 
-            workers = Worker.all(redis_connection)
-            if not workers:
-                worker = Worker(["default"], connection=redis_connection)
-                worker.log = app.logger
-                p = multiprocessing.Process(target=worker.work, daemon=True)
-                p.start()
+            # Set the default timeout for the jobs
+            Queue.DEFAULT_TIMEOUT = flask.current_app.config.get("RQ_JOBS_DEFAULT_TIMEOUT")
+
+            worker = Worker(["default"], connection=redis_connection)
+            worker.log = app.logger
+            p = multiprocessing.Process(target=worker.work, daemon=True)
+            p.start()
 
             # base url for the api documentation
             SWAGGER_URL_1 = "/api/documentation/v1"
