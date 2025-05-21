@@ -551,6 +551,7 @@ class ProjectStatus(flask_restful.Resource):
             job_delete_contents = q.enqueue(
                 self.archive_project_queue_delete_contents,
                 project_id=project.public_id,  # It is not possible to pass the project object directly to the queue
+                aborted=aborted,
             )
 
             job_update_db = q.enqueue(
@@ -591,6 +592,7 @@ class ProjectStatus(flask_restful.Resource):
                 delete_message,
             )
 
+    @dbsession
     def archive_project_queue_delete_contents(self, project_id: int, aborted: bool = False):
         """Delete the project contents for archiving operation."""
 
@@ -618,6 +620,7 @@ class ProjectStatus(flask_restful.Resource):
                 pass_message=True,
             ) from err
 
+    @dbsession
     def archive_project_queue_update_db(
         self, project_id: int, current_time: datetime.datetime, aborted: bool
     ):
