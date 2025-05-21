@@ -538,7 +538,7 @@ def test_projectstatus_archived_project_queue(module_client, boto3_session, mock
 
 
 def test_projectstatus_archived_project_db_fail(
-    module_client, boto3_session, capfd: LogCaptureFixture
+    module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
 ):
     """Create a project and archive it fails in DB update"""
 
@@ -672,7 +672,7 @@ def test_projectstatus_archived_project_new_row_fail_queue(
     assert project.is_active
 
 
-def test_projectstatus_aborted_project(module_client, boto3_session):
+def test_projectstatus_aborted_project(module_client, boto3_session, mock_queue_redis):
     """Create a project and try to abort it"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -728,7 +728,9 @@ def test_projectstatus_aborted_project(module_client, boto3_session):
     assert len(project.researchusers) == 0
 
 
-def test_projectstatus_abort_from_in_progress_once_made_available(module_client, boto3_session):
+def test_projectstatus_abort_from_in_progress_once_made_available(
+    module_client, boto3_session, mock_queue_redis
+):
     """Create project and abort it from In Progress after it has been made available"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -818,7 +820,9 @@ def test_projectstatus_abort_from_in_progress_once_made_available(module_client,
     assert not project.project_user_keys
 
 
-def test_projectstatus_check_invalid_transitions_from_in_progress(module_client, boto3_session):
+def test_projectstatus_check_invalid_transitions_from_in_progress(
+    module_client, boto3_session, mock_queue_redis
+):
     """Check all invalid transitions from In Progress"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -1140,7 +1144,9 @@ def test_projectstatus_invalid_transitions_from_expired(module_client, test_proj
     )
 
 
-def test_projectstatus_set_project_to_archived(module_client, test_project, boto3_session):
+def test_projectstatus_set_project_to_archived(
+    module_client, test_project, boto3_session, mock_queue_redis
+):
     """Archive an expired project"""
 
     new_status = {"new_status": "Archived"}
@@ -1165,7 +1171,9 @@ def test_projectstatus_set_project_to_archived(module_client, test_project, boto
     assert not project.is_active
 
 
-def test_projectstatus_invalid_transitions_from_archived(module_client, test_project):
+def test_projectstatus_invalid_transitions_from_archived(
+    module_client, test_project, mock_queue_redis
+):
     """Check all invalid transitions from Archived"""
 
     # Archived to In progress
@@ -1763,7 +1771,9 @@ def test_projectstatus_post_archiving_without_aborting(module_client, boto3_sess
     )
 
 
-def test_projectstatus_released_post_deletion_and_archivation_errors(module_client, boto3_session):
+def test_projectstatus_released_post_deletion_and_archivation_errors(
+    module_client, boto3_session, mock_queue_redis
+):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
