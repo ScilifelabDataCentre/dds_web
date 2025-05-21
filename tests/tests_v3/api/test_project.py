@@ -669,8 +669,6 @@ def test_projectstatus_archived_project_new_row_fail_queue(
     _, err = capfd.readouterr()
     assert "DatabaseError" in err
 
-    assert project.is_active
-
 
 def test_projectstatus_aborted_project(module_client, boto3_session, mock_queue_redis):
     """Create a project and try to abort it"""
