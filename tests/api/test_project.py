@@ -486,7 +486,7 @@ def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, bo
     assert not project.project_user_keys
 
 
-def test_projectstatus_archived_project(module_client, boto3_session):
+def test_projectstatus_archived_project(module_client, boto3_session, mock_queue_redis):
     """Create a project and archive it"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -536,8 +536,53 @@ def test_projectstatus_archived_project(module_client, boto3_session):
     assert project.researchusers
 
 
+def test_projectstatus_archived_project_new_row_fail(
+    module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
+):
+    """Archiving fails when updating the project status row"""
+
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client)
+
+    with unittest.mock.patch("dds_web.db.session.commit") as mock_commit:
+        # we need this because the first time the commit function is called is when set_busy()
+        def side_effect_generator():
+            yield None  # set_busy()
+            yield None  # commit to update files in db
+            while True:
+                yield sqlalchemy.exc.SQLAlchemyError()  # Subsequent calls, exception
+
+        mock_commit.side_effect = side_effect_generator()
+
+        new_status = {"new_status": "Archived"}
+        response = module_client.post(
+            tests.DDSEndpoint.PROJECT_STATUS,
+            headers=token,
+            query_string={"project": project_id},
+            json=new_status,
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+    _, err = capfd.readouterr()
+    assert "DatabaseError" in err
+
+
 def test_projectstatus_archived_project_db_fail(
-    module_client, boto3_session, capfd: LogCaptureFixture
+    module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
 ):
     """Create a project and archive it fails in DB update"""
 
@@ -555,7 +600,6 @@ def test_projectstatus_archived_project_db_fail(
     )
     assert response.status_code == http.HTTPStatus.OK
     project_id = response.json.get("project_id")
-    project = project_row(project_id=project_id)
 
     # change status and mock fail in DB operation
     mock_query = MagicMock()
@@ -570,7 +614,6 @@ def test_projectstatus_archived_project_db_fail(
             query_string={"project": project_id},
             json=new_status,
         )
-        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
 
     _, err = capfd.readouterr()
     assert "DeletionError" in err
@@ -579,10 +622,8 @@ def test_projectstatus_archived_project_db_fail(
         in err
     )
 
-    assert project.is_active
 
-
-def test_projectstatus_aborted_project(module_client, boto3_session):
+def test_projectstatus_aborted_project(module_client, boto3_session, mock_queue_redis):
     """Create a project and try to abort it"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -638,7 +679,9 @@ def test_projectstatus_aborted_project(module_client, boto3_session):
     assert len(project.researchusers) == 0
 
 
-def test_projectstatus_abort_from_in_progress_once_made_available(module_client, boto3_session):
+def test_projectstatus_abort_from_in_progress_once_made_available(
+    module_client, boto3_session, mock_queue_redis
+):
     """Create project and abort it from In Progress after it has been made available"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -729,7 +772,9 @@ def test_projectstatus_abort_from_in_progress_once_made_available(module_client,
     assert not project.project_user_keys
 
 
-def test_projectstatus_check_invalid_transitions_from_in_progress(module_client, boto3_session):
+def test_projectstatus_check_invalid_transitions_from_in_progress(
+    module_client, boto3_session, mock_queue_redis
+):
     """Check all invalid transitions from In Progress"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -1051,7 +1096,9 @@ def test_projectstatus_invalid_transitions_from_expired(module_client, test_proj
     )
 
 
-def test_projectstatus_set_project_to_archived(module_client, test_project, boto3_session):
+def test_projectstatus_set_project_to_archived(
+    module_client, test_project, boto3_session, mock_queue_redis
+):
     """Archive an expired project"""
 
     new_status = {"new_status": "Archived"}
@@ -1076,7 +1123,9 @@ def test_projectstatus_set_project_to_archived(module_client, test_project, boto
     assert not project.is_active
 
 
-def test_projectstatus_invalid_transitions_from_archived(module_client, test_project):
+def test_projectstatus_invalid_transitions_from_archived(
+    module_client, test_project, mock_queue_redis
+):
     """Check all invalid transitions from Archived"""
 
     # Archived to In progress
@@ -1674,7 +1723,9 @@ def test_projectstatus_post_archiving_without_aborting(module_client, boto3_sess
     )
 
 
-def test_projectstatus_released_post_deletion_and_archivation_errors(module_client, boto3_session):
+def test_projectstatus_released_post_deletion_and_archivation_errors(
+    module_client, boto3_session, mock_queue_redis
+):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:

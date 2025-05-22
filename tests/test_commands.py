@@ -1493,7 +1493,7 @@ def test_set_available_to_expired(client, cli_runner):
 
 
 @mock.patch("boto3.session.Session")
-def test_set_expired_to_archived(_: MagicMock, client, cli_runner):
+def test_set_expired_to_archived(_: MagicMock, client, cli_runner, mock_queue_redis):
     units: List = db.session.query(models.Unit).all()
 
     for unit in units:
@@ -1523,7 +1523,7 @@ def test_set_expired_to_archived(_: MagicMock, client, cli_runner):
 
 @mock.patch("boto3.session.Session")
 def test_set_expired_to_archived_db_failed(
-    _: MagicMock, client, cli_runner, capfd: LogCaptureFixture
+    _: MagicMock, client, cli_runner, capfd: LogCaptureFixture, mock_queue_redis
 ):
     """Reproduce the error when the s3 bucket is deleted but the DB update fails."""
     # Get the project and set up as expired
