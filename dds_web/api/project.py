@@ -175,7 +175,6 @@ class ProjectStatus(flask_restful.Resource):
                     project=project,
                     current_time=curr_date,
                     aborted=is_aborted,
-                    is_enqueded=is_queue_operation,
                 )
             else:
                 raise DDSArgumentError(message="Invalid status")
@@ -213,14 +212,11 @@ class ProjectStatus(flask_restful.Resource):
 
             # Return messages to user
             if is_queue_operation:
-                return_message = (
-                    f"{project.public_id} has started the process of being updated to {new_status} in the background. "
-                    "It may take some time"
-                )
+                return_message = f"It may take some time. {project.public_id} has started, in the background, the process of being updated to {new_status}. "
             else:
-                return_message = f"{project.public_id} updated to status {new_status}" + (
-                    " (aborted)" if new_status == "Archived" and is_aborted else ""
-                )
+                return_message = f"{project.public_id} updated to status {new_status}"
+
+            return_message += " (Aborted)" if new_status == "Archived" and is_aborted else ""
 
             if new_status != "Available":
                 return_message += delete_message + "."
@@ -524,13 +520,11 @@ class ProjectStatus(flask_restful.Resource):
         project: models.Project,
         current_time: datetime.datetime,
         aborted: bool = False,
-        is_enqueded: bool = False,
     ):
         """Archive project: Make status Archived.
 
         Only possible from In Progress, Available and Expired. Optional aborted flag if something
         has gone wrong.
-        If the flag is_enqueued is set to True, the operation will be performed in the queue.
         """
         # Check if valid status transition
         self.check_transition_possible(current_status=project.current_status, new_status="Archived")
@@ -541,60 +535,31 @@ class ProjectStatus(flask_restful.Resource):
                     "Please abort the project if you wish to proceed."
                 )
 
-        if is_enqueded:
+        # Get redis connection to add a job if needed
+        redis_url = flask.current_app.config.get("REDIS_URL")
+        r = Redis.from_url(redis_url)
+        q = Queue(connection=r)
 
-            # Get redis connection to add a job if needed
-            redis_url = flask.current_app.config.get("REDIS_URL")
-            r = Redis.from_url(redis_url)
-            q = Queue(connection=r)
+        job_delete_contents = q.enqueue(
+            self.archive_project_queue_delete_contents,
+            project_id=project.public_id,  # It is not possible to pass the project object directly to the queue
+            aborted=aborted,
+        )
 
-            job_delete_contents = q.enqueue(
-                self.archive_project_queue_delete_contents,
-                project_id=project.public_id,  # It is not possible to pass the project object directly to the queue
-                aborted=aborted,
-            )
+        job_update_db = q.enqueue(
+            self.archive_project_queue_update_db,
+            project_id=project.public_id,
+            current_time=current_time,
+            aborted=aborted,
+            depends_on=job_delete_contents,  # This job is only executed after success of delete contents
+        )
 
-            job_update_db = q.enqueue(
-                self.archive_project_queue_update_db,
-                project_id=project.public_id,
-                current_time=current_time,
-                aborted=aborted,
-                depends_on=job_delete_contents,  # This job is only executed after success of delete contents
-            )
-
-            return None, ""  # Dummy returns to not break the main function
-        else:
-            try:
-                # Deletes files (also commits session in the function - possibly refactor later)
-                RemoveContents().delete_project_contents(
-                    project_id=project.public_id, delete_bucket=True
-                )
-                delete_message = f"\nAll files in {project.public_id} deleted"
-                self.rm_project_user_keys(project=project)
-
-                # Delete metadata from project row
-                if aborted:
-                    project = self.delete_project_info(project)
-                    delete_message += " and project info cleared"
-            except (TypeError, DatabaseError, DeletionError, BucketNotFoundError) as err:
-                flask.current_app.logger.exception(err)
-                db.session.rollback()
-                raise DeletionError(
-                    project=project.public_id,
-                    message="Server Error: Status was not updated",
-                    pass_message=True,
-                ) from err
-
-            return (
-                models.ProjectStatuses(
-                    status="Archived", date_created=current_time, is_aborted=aborted
-                ),
-                delete_message,
-            )
+        return None, ""  # Dummy returns to not break the main function
 
     @dbsession
     def archive_project_queue_delete_contents(self, project_id: int, aborted: bool = False):
-        """Delete the project contents for archiving operation."""
+        """Delete the project contents for the archiving operation.
+        Function to be called by the queue."""
 
         project = models.Project.query.filter_by(public_id=project_id).one_or_none()
 
@@ -624,8 +589,8 @@ class ProjectStatus(flask_restful.Resource):
     def archive_project_queue_update_db(
         self, project_id: int, current_time: datetime.datetime, aborted: bool
     ):
-        """When the delete contents operation has being sucesfully executed in the queue.
-        Perform the update in the DB.
+        """When the delete contents operation has being sucesfully executed. Perform the update in the DB.
+        Function to be called by the queue.
         """
 
         project = models.Project.query.filter_by(public_id=project_id).one_or_none()

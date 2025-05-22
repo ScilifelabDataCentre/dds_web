@@ -486,8 +486,8 @@ def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, bo
     assert not project.project_user_keys
 
 
-def test_projectstatus_archived_project_queue(module_client, boto3_session, mock_queue_redis):
-    """Create a project and archive it - queue function"""
+def test_projectstatus_archived_project(module_client, boto3_session, mock_queue_redis):
+    """Create a project and archive it"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -515,12 +515,12 @@ def test_projectstatus_archived_project_queue(module_client, boto3_session, mock
 
     assert file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
 
-    json_data = {"new_status": "Archived", "is_queue_operation": True}
+    new_status = {"new_status": "Archived"}
     response = module_client.post(
         tests.DDSEndpoint.PROJECT_STATUS,
         headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
         query_string={"project": project_id},
-        json=json_data,
+        json=new_status,
     )
 
     assert response.status_code == http.HTTPStatus.OK
@@ -536,10 +536,10 @@ def test_projectstatus_archived_project_queue(module_client, boto3_session, mock
     assert project.researchusers
 
 
-def test_projectstatus_archived_project_new_row_fail_queue(
+def test_projectstatus_archived_project_new_row_fail(
     module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
 ):
-    """Archiving fails when updating the project status row - using queue"""
+    """Archiving fails when updating the project status row"""
 
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -568,12 +568,12 @@ def test_projectstatus_archived_project_new_row_fail_queue(
 
         mock_commit.side_effect = side_effect_generator()
 
-        json_data = {"new_status": "Archived", "is_queue_operation": True}
+        new_status = {"new_status": "Archived"}
         response = module_client.post(
             tests.DDSEndpoint.PROJECT_STATUS,
             headers=token,
             query_string={"project": project_id},
-            json=json_data,
+            json=new_status,
         )
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -581,10 +581,10 @@ def test_projectstatus_archived_project_new_row_fail_queue(
     assert "DatabaseError" in err
 
 
-def test_projectstatus_archived_project_db_fail_queue(
+def test_projectstatus_archived_project_db_fail(
     module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
 ):
-    """Create a project and archive it fails in DB update - queue"""
+    """Create a project and archive it fails in DB update"""
 
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -607,12 +607,12 @@ def test_projectstatus_archived_project_db_fail_queue(
         "OperationalError", "test", "sqlalchemy"
     )
     with patch("dds_web.database.models.File.query", mock_query):
-        json_data = {"new_status": "Archived", "is_queue_operation": True}
+        new_status = {"new_status": "Archived"}
         response = module_client.post(
             tests.DDSEndpoint.PROJECT_STATUS,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
             query_string={"project": project_id},
-            json=json_data,
+            json=new_status,
         )
 
     _, err = capfd.readouterr()

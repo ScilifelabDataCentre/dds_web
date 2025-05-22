@@ -720,15 +720,13 @@ def set_expired_to_archived():
                     )
 
                     try:
-                        new_status_row, delete_message = archive.archive_project(
+                        _, _ = archive.archive_project(
                             project=project,
                             current_time=current_time(),
                         )
-                        project.project_statuses.append(new_status_row)
-                        flask.current_app.logger.debug(delete_message.strip())
-                        db.session.commit()
                         flask.current_app.logger.debug(
-                            "Project: %s has status Archived now!", project.public_id
+                            "Project: %s is being changed to Archived by the queue!",
+                            project.public_id,
                         )
                     except (
                         sqlalchemy.exc.OperationalError,
