@@ -181,7 +181,7 @@ class ProjectStatus(flask_restful.Resource):
 
             # If operations was not handled by a queue, commit the changes
             if not is_queue_operation:
-                update_status_project(project=project, new_status_row=new_status_row)
+                self.update_status_project(project=project, new_status_row=new_status_row)
 
             # Mail users once project is made available
             if new_status == "Available" and send_email:
@@ -578,7 +578,7 @@ class ProjectStatus(flask_restful.Resource):
         new_status_row = models.ProjectStatuses(
             status="Archived", date_created=current_time, is_aborted=aborted
         )
-        update_status_project(project=project, new_status_row=new_status_row)
+        self.update_status_project(project=project, new_status_row=new_status_row)
 
     @dbsession
     def update_status_project(
