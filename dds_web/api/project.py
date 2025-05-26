@@ -181,27 +181,7 @@ class ProjectStatus(flask_restful.Resource):
 
             # If operations was not handled by a queue, commit the changes
             if not is_queue_operation:
-                try:
-                    project.project_statuses.append(new_status_row)
-                    project.busy = False  # TODO: Use set_busy instead?
-                    db.session.commit()
-                    flask.current_app.logger.info(
-                        f"Busy status set. Project: '{project.public_id}', Busy: False"
-                    )
-                except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-                    flask.current_app.logger.exception(err)
-                    db.session.rollback()
-                    raise DatabaseError(
-                        message=str(err),
-                        alt_message=(
-                            "Status was not updated"
-                            + (
-                                ": Database malfunction."
-                                if isinstance(err, sqlalchemy.exc.OperationalError)
-                                else ": Server Error."
-                            )
-                        ),
-                    ) from err
+                update_status_project(project=project, new_status_row=new_status_row)
 
             # Mail users once project is made available
             if new_status == "Available" and send_email:
@@ -598,6 +578,13 @@ class ProjectStatus(flask_restful.Resource):
         new_status_row = models.ProjectStatuses(
             status="Archived", date_created=current_time, is_aborted=aborted
         )
+        update_status_project(project=project, new_status_row=new_status_row)
+
+    @dbsession
+    def update_status_project(
+        self, project: models.Project, new_status_row: models.ProjectStatuses
+    ):
+        """Update the project status in the database."""
         try:
             project.project_statuses.append(new_status_row)
             project.busy = False  # TODO: Use set_busy instead?
