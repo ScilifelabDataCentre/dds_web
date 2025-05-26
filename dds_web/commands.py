@@ -1326,24 +1326,28 @@ def monitor_usage():
 @flask.cli.with_appcontext
 def restart_redis_worker():
     """
-    This function restarts the redis worker intialized by the Flask application.
+    ONLY FOR DEVELOPMENT USE!
+    This function restarts the redis worker(s) intialized by the Flask application.
     It will shutdown any existing workers and start a new one.
-    The Redis URL is specified in the Flask application's configuration.
-    The worker listens to the "default" queue and processes jobs from it.
-
-    Configuration:
-        - The Redis server URL should be specified in the Flask application's
-        configuration under the key "REDIS_URL".
-        - The worker can be further customized, see https://python-rq.org/docs/workers/
+    This is useful for development purposes when you want to ensure that the worker is running with the latest code changes.
     """
+    import rich.prompt
 
-    redis_url = flask.current_app.config.get("REDIS_URL")
-    redis_connection = Redis.from_url(redis_url)
+    # ask the user for confirmation
+    do_restart = rich.prompt.Confirm.ask(
+        "Are you sure you want to restart the Redis worker? This is only for development use!",
+        default=False,
+    )
+    if not do_restart:
+        flask.current_app.logger.info("Redis worker restart cancelled by user.")
+        return
+    else:
+        redis_url = flask.current_app.config.get("REDIS_URL")
+        redis_connection = Redis.from_url(redis_url)
 
-    workers = Worker.all(redis_connection)
-    for worker in workers:
-        send_shutdown_command(redis_connection, worker.name)  # Tells worker to shutdown
+        workers = Worker.all(redis_connection)
+        for worker in workers:
+            send_shutdown_command(redis_connection, worker.name)  # Tells worker to shutdown
 
-    new_worker = Worker(["default"], connection=redis_connection)
-    new_worker.log = flask.current_app.logger
-    new_worker.work()
+        new_worker = Worker(["default"], connection=redis_connection)
+        new_worker.work()
