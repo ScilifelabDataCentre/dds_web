@@ -498,4 +498,3 @@ _Nothing merged during this sprint_
 - Improve set-expired-to-archived command to insure project are not inactivated without being deleted ([#1605](https://github.com/ScilifelabDataCentre/dds_web/pull/1605))
 - Fix RQ worker missconfigurations([#1603](https://github.com/ScilifelabDataCentre/dds_web/pull/1603))
 - Add queuing for archiving projects([#1595](https://github.com/ScilifelabDataCentre/dds_web/pull/1595))
-
